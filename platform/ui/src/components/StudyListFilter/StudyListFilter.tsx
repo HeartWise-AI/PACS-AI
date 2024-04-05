@@ -67,7 +67,6 @@ const StudyListFilter = ({
                     {t('ClearFilters')}
                   </LegacyButton>
                 )}
-
                 <Typography
                   variant="h6"
                   className="mr-2"

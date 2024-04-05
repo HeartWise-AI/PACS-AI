@@ -40,7 +40,6 @@ aren't as concerned with syncing updates, then follow these steps:
 
 ## Developing
 
-
 ### Branches
 
 #### `master` branch - The latest dev (beta) release

@@ -10,7 +10,6 @@ Please find below the list of datasets used on the demo page, along with their r
 
 
 ## Platforms
-
 ### NIH NCI IDC
 
 - Fedorov, A., Longabaugh, W.J., Pot, D., Clunie, D.A., Pieper, S., Aerts, H.J., Homeyer, A., Lewis, R., Akbarzadeh, A., Bontempi, D. and Clifford, W., 2021. NCI imaging data commons. Cancer research, 81(16), p.4188.

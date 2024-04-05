@@ -13,8 +13,10 @@
   "Page": "Page",
   "PatientName": "Patient Name",
   "Previous": "< Back",
-  "Results per page": "Results per page",
+  "ResultsPerPage": "Results per page",
+  "Studies": "Studies",
   "StudyDate": "Study Date",
+  "StudyDescription": "Description",
   "StudyList": "Study List",
   "Upload": "Upload"
 }

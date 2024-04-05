@@ -1,5 +1,4 @@
 // External
-
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
@@ -7,16 +6,12 @@ import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
 
 import Compose from './routes/Mode/Compose';
-import {
-  ExtensionManager,
-  CommandsManager,
-  HotkeysManager,
-  ServiceProvidersManager,
-} from '@ohif/core';
+import { ServicesManager, ExtensionManager, CommandsManager, HotkeysManager, ServiceProvidersManager } from '@ohif/core';
 import {
   DialogProvider,
   Modal,
   ModalProvider,
+  SnackbarProvider,
   ThemeWrapper,
   ViewportDialogProvider,
   ViewportGridProvider,
@@ -120,6 +115,7 @@ function App({
     [CineProvider, { service: cineService }],
     [NotificationProvider, { service: uiNotificationService }],
     [TooltipProvider],
+    [SnackbarProvider, { service: uiNotificationService }],
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
     [ShepherdJourneyProvider],
