@@ -5,6 +5,8 @@ import { ErrorBoundary } from '@ohif/ui-next';
 // Route Components
 import DataSourceWrapper from './DataSourceWrapper';
 import WorkList from './WorkList';
+import Login from './Login';
+import ResetPassword from './ResetPassword';
 import Local from './Local';
 import Debug from './Debug';
 import NotFound from './NotFound';
@@ -108,10 +110,26 @@ const createRoutes = ({
     props: { children: WorkList, servicesManager, extensionManager },
   };
 
+  const LoginRoute = {
+    path: '/login',
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Login, servicesManager, extensionManager },
+  };
+
+  const ResetPasswordRoute = {
+    path: '/reset-password',
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: ResetPassword, servicesManager, extensionManager },
+  };
+
   const customRoutes = customizationService.getGlobalCustomization('customRoutes');
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
+    ...(showStudyList ? [LoginRoute] : []),
+    ...(showStudyList ? [ResetPasswordRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
