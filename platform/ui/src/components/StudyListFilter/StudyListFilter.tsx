@@ -6,6 +6,8 @@ import LegacyButton from '../LegacyButton';
 import Icon from '../Icon';
 import Typography from '../Typography';
 import InputGroup from '../InputGroup';
+import Dropdown from '../Dropdown';
+import IconButton from '../IconButton';
 
 const StudyListFilter = ({
   filtersMeta,
@@ -17,7 +19,7 @@ const StudyListFilter = ({
   onUploadClick,
   getDataSourceConfigurationComponent,
 }) => {
-  const { t } = useTranslation('StudyList');
+  const { t } = useTranslation('Studies');
   const { sortBy, sortDirection } = filterValues;
   const filterSorting = { sortBy, sortDirection };
   const setFilterSorting = sortingValues => {
@@ -31,7 +33,7 @@ const StudyListFilter = ({
   return (
     <React.Fragment>
       <div>
-        <div className="bg-black">
+        <div className="bg-[#151815]">
           <div className="container relative mx-auto flex flex-col pt-5">
             <div className="mb-5 flex flex-row justify-between">
               <div className="flex min-w-[1px] shrink flex-row items-center gap-6">
@@ -39,7 +41,7 @@ const StudyListFilter = ({
                   variant="h6"
                   className="text-white"
                 >
-                  {t('StudyList')}
+                  {t('Studies')}
                 </Typography>
                 {getDataSourceConfigurationComponent && getDataSourceConfigurationComponent()}
                 {onUploadClick && (
@@ -54,7 +56,7 @@ const StudyListFilter = ({
               </div>
               <div className="flex flex-row">
                 {/* TODO revisit the completely rounded style of button used for clearing the study list filter - for now use LegacyButton*/}
-                {isFiltering && (
+                {/* {isFiltering && (
                   <LegacyButton
                     rounded="full"
                     variant="outlined"
@@ -79,7 +81,32 @@ const StudyListFilter = ({
                   className="text-primary-light self-end pb-1"
                 >
                   {t('Studies')}
-                </Typography>
+                </Typography> */}
+                <div className="flex items-center">
+                  <span className="text-common-light mr-3 text-lg">Hi, Juan</span>
+                  <button
+                    id="dropdownDefaultButton"
+                    data-dropdown-toggle="dropdown"
+                    className="inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-center text-sm font-medium text-white !ring-0"
+                    type="button"
+                  >
+                    <svg
+                      className="ms-3 h-2.5 w-2.5"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 10 6"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="m1 1 4 4 4-4"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
