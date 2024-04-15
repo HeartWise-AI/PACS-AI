@@ -10,7 +10,7 @@ const sizeClasses = {
 };
 
 const layoutClasses =
-  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center px-[10px] outline-none rounded';
+  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center outline-none rounded';
 
 const baseFontTextClasses = 'leading-[1.2] font-sans text-center whitespace-nowrap';
 
@@ -24,7 +24,7 @@ const baseEnabledEffectClasses = 'transition duration-300 ease-in-out focus:outl
 const enabledEffectClasses = {
   [ButtonEnums.type.primary]: classnames(
     baseEnabledEffectClasses,
-    'hover:bg-customblue-80 active:bg-customblue-40'
+    'hover:pacs-gradient-bg active:pacs-gradient-bg'
   ),
   [ButtonEnums.type.secondary]: classnames(
     baseEnabledEffectClasses,
@@ -32,11 +32,11 @@ const enabledEffectClasses = {
   ),
 };
 
-const baseEnabledClasses = 'text-white';
+const baseEnabledClasses = 'text-black ';
 
 const enabledClasses = {
   [ButtonEnums.type.primary]: classnames(
-    'bg-primary-main',
+    'bg-gray-300',
     baseEnabledClasses,
     enabledEffectClasses[ButtonEnums.type.primary]
   ),
@@ -113,6 +113,9 @@ const Button = ({
       ref={buttonElement}
       onClick={handleOnClick}
       data-cy={dataCY}
+      style={{
+        background: 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)',
+      }}
     >
       {startIconTooltip ? <Tooltip content={startIconTooltip}>{startIcon}</Tooltip> : startIcon}
       {children}
