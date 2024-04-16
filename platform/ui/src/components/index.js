@@ -31,6 +31,7 @@ import Select from './Select';
 import SegmentationTable from './SegmentationTable';
 import SegmentationGroupTable from './SegmentationGroupTable';
 import SidePanel from './SidePanel';
+import Sidebar from './Sidebar';
 import SplitButton from './SplitButton';
 import StudyBrowser from './StudyBrowser';
 import StudyItem from './StudyItem';
@@ -132,6 +133,7 @@ export {
   SegmentationTable,
   SegmentationGroupTable,
   SidePanel,
+  Sidebar,
   SplitButton,
   StudyBrowser,
   StudyItem,
