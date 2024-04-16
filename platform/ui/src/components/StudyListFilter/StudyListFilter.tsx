@@ -33,8 +33,8 @@ const StudyListFilter = ({
   return (
     <React.Fragment>
       <div>
-        <div className="bg-[#151815]">
-          <div className="container relative mx-auto flex flex-col pt-5">
+        <div className="bg-transparent my-5">
+          <div className="w-full relative mx-auto pt-5">
             <div className="mb-5 flex flex-row justify-between">
               <div className="flex min-w-[1px] shrink flex-row items-center gap-6">
                 <Typography
@@ -112,8 +112,8 @@ const StudyListFilter = ({
           </div>
         </div>
       </div>
-      <div className="sticky -top-1 z-10 mx-auto border-b-4 border-black">
-        <div className="bg-primary-dark pt-3 pb-3">
+      <div className="sticky w-full -top-1 z-10 mx-auto rounded-xl border border-white  border-opacity-10 mb-5 bg-white bg-opacity-[5%]">
+        <div className="bg-transparent p-5">
           <InputGroup
             inputMeta={filtersMeta}
             values={filterValues}
@@ -124,7 +124,7 @@ const StudyListFilter = ({
           />
         </div>
         {numOfStudies > 100 && (
-          <div className="container m-auto">
+          <div className="w-full m-auto">
             <div className="bg-primary-main rounded-b py-1 text-center text-base">
               <p className="text-white">
                 {t('Filter list to 100 studies or less to enable sorting')}

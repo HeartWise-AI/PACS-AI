@@ -24,7 +24,8 @@ const InputText = ({
         id={id}
         className="mt-2"
         type="text"
-        containerClassName="mr-2"
+        containerClassName=""
+        placeholder={placeholder}
         value={value}
         onChange={event => {
           onChange(event.target.value);

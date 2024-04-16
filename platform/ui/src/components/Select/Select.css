@@ -1,9 +1,9 @@
 .customSelect__wrapper .customSelect__control {
-  @apply border-secondary-light w-full rounded border bg-black text-sm leading-tight text-white shadow transition duration-300;
-  min-height: 28px;
+  @apply w-full rounded-xl border-none bg-white bg-opacity-10 text-lg leading-tight text-white shadow transition duration-300;
+  min-height: 51px;
 }
 .customSelect__wrapper .customSelect__control:hover {
-  @apply border-gray-500;
+  @apply border-none;
 }
 
 .customSelect__control {
@@ -23,7 +23,7 @@
 
 .customSelect__wrapper .customSelect__control:focus,
 .customSelect__wrapper .customSelect__control--menu-is-open {
-  @apply border-gray-500 outline-none;
+  @apply border-none outline-none;
 }
 
 .customSelect--is-disabled .customSelect__control--is-disabled {

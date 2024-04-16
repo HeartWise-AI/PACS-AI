@@ -15,13 +15,13 @@ const StudyListTableRow = props => {
         data-cy={dataCY}
       >
         <td
-          className={classnames('border-0 p-0', {
-            'border-secondary-light bg-primary-dark border-b': isExpanded,
+          className={classnames('rounded-lg border-0', {
+            '': isExpanded,
           })}
         >
           <div
             className={classnames(
-              'w-full transition duration-300',
+              'my-1 w-full rounded-lg bg-gray-100 bg-opacity-[5%] transition duration-300',
               {
                 'border-primary-light hover:border-secondary-light mb-2 overflow-visible rounded border':
                   isExpanded,
@@ -31,15 +31,15 @@ const StudyListTableRow = props => {
               }
             )}
           >
-            <table className={classnames('w-full p-4')}>
-              <tbody>
+            <table className={classnames('w-full bg-transparent p-4')}>
+              <tbody className="bg-transparent">
                 <tr
                   className={classnames(
-                    'hover:bg-secondary-main cursor-pointer transition duration-300',
+                    'cursor-pointer rounded-lg transition duration-300 hover:bg-none',
                     {
-                      'bg-primary-dark': !isExpanded,
+                      '': !isExpanded,
                     },
-                    { 'bg-secondary-dark': isExpanded }
+                    { '': isExpanded }
                   )}
                   onClick={onClickRow}
                   data-cy={clickableCY}
@@ -50,8 +50,8 @@ const StudyListTableRow = props => {
                       <td
                         key={index}
                         className={classnames(
-                          'truncate px-4 py-2 text-base',
-                          { 'border-secondary-light border-b': !isExpanded },
+                          'truncate bg-transparent px-4 py-2 text-base',
+                          { 'border-none': !isExpanded },
                           getGridWidthClass(gridCol) || ''
                         )}
                         style={{
@@ -59,7 +59,7 @@ const StudyListTableRow = props => {
                         }}
                         title={title}
                       >
-                        <div className="flex">
+                        <div className="flex bg-transparent">
                           {index === 0 && (
                             <div>
                               <Icon
@@ -79,7 +79,7 @@ const StudyListTableRow = props => {
                   })}
                 </tr>
                 {isExpanded && (
-                  <tr className="max-h-0 w-full select-text overflow-hidden bg-black">
+                  <tr className="max-h-0 w-full select-text overflow-hidden !bg-transparent">
                     <td colSpan={row.length}>{expandedContent}</td>
                   </tr>
                 )}
