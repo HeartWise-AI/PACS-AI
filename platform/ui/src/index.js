@@ -74,6 +74,7 @@ export {
   LegacyViewportActionBar,
   LoadingIndicatorProgress,
   LoadingIndicatorTotalPercent,
+  Logo,
   MeasurementTable,
   Modal,
   NavBar,
