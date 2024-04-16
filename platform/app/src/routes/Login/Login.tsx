@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Button, Input, Typography } from '@ohif/ui';
+import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+// import pacsLogo from 'platform/ui/src/assets/pacs/images/pacs-ai-logo.svg';
 
 const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
@@ -23,7 +24,12 @@ const LoginPage = () => {
         {showLoginForm && (
           <div className="flex h-full flex-col justify-between">
             <div>
-              <h1 className="text-3xl text-white">PACS AI LOGO</h1>
+              {/* <h1 className="text-3xl text-white">PACS AI LOGO</h1>
+              <img
+                src={pacsLogo}
+                alt="PACS logo"
+              /> */}
+              <Logo width='200' />
               <Typography
                 variant="body"
                 className="mt-2 text-white"

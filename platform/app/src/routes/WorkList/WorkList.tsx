@@ -478,14 +478,14 @@ function WorkList({
     customizationService.get('ohif.dataSourceConfigurationComponent') ?? {};
 
   return (
-    <div className="h-screen w-screen bg-[#151815]">
+    <div className="h-screen w-screen bg-[#151815] overflow-x-hidden">
       {/* <Header
         isSticky
         menuOptions={menuOptions}
         isReturnEnabled={false}
         WhiteLabeling={appConfig.whiteLabeling}
       /> */}
-      <div className="w-full flex">
+      <div className="w-full flex bg-[#151815] ">
         <Sidebar />
         <div className="ohif-scrollbar flex grow flex-col overflow-y-auto mr-5">
           <StudyListFilter
@@ -503,7 +503,7 @@ function WorkList({
             }
           />
           {hasStudies ? (
-            <div className="flex flex-col rounded-xl border border-white  border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="flex flex-col rounded-xl border border-white  border-opacity-10 bg-white bg-opacity-[5%] p-5 mb-5">
               <StudyListTable
                 tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
                 numOfStudies={numOfStudies}
