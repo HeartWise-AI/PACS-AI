@@ -9,7 +9,7 @@ const sizeClasses = {
 };
 
 const layoutClasses =
-  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center outline-none rounded';
+  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center outline-none rounded px-3';
 
 const baseFontTextClasses = 'leading-[1.2] font-sans text-center whitespace-nowrap';
 
