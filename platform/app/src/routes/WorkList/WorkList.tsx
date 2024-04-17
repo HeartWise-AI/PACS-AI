@@ -14,6 +14,7 @@ import { utils, hotkeys } from '@ohif/core';
 
 import {
   Icon,
+  Button,
   StudyListExpandedRow,
   EmptyStudies,
   StudyListTable,
@@ -323,8 +324,8 @@ function WorkList({
               <Icon
                 name="group-layers"
                 className={classnames('mr-2 inline-flex w-4', {
-                  'text-primary-active': isExpanded,
-                  'text-secondary-light': !isExpanded,
+                  'text-green-300': isExpanded,
+                  'text-gray-300': !isExpanded,
                 })}
               />
               {instances}
@@ -532,16 +533,16 @@ function WorkList({
     customizationService.get('ohif.dataSourceConfigurationComponent') ?? {};
 
   return (
-    <div className="h-screen w-screen bg-[#151815] overflow-x-hidden">
+    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       {/* <Header
         isSticky
         menuOptions={menuOptions}
         isReturnEnabled={false}
         WhiteLabeling={appConfig.whiteLabeling}
       /> */}
-      <div className="w-full flex bg-[#151815] ">
+      <div className="flex w-full bg-[#151815] ">
         <Sidebar />
-        <div className="ohif-scrollbar flex grow flex-col overflow-y-auto mr-5">
+        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <StudyListFilter
             numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
             filtersMeta={filtersMeta}
@@ -557,7 +558,7 @@ function WorkList({
             }
           />
           {hasStudies ? (
-            <div className="flex flex-col rounded-xl border border-white  border-opacity-10 bg-white bg-opacity-[5%] p-5 mb-5">
+            <div className="mb-5 flex flex-col rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
               <StudyListTable
                 tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
                 numOfStudies={numOfStudies}

@@ -15,7 +15,7 @@ const layoutClasses =
 const baseFontTextClasses = 'leading-[1.2] font-sans text-center whitespace-nowrap';
 
 const fontTextClasses = {
-  [ButtonEnums.type.primary]: classnames(baseFontTextClasses, 'font-semibold'),
+  [ButtonEnums.type.primary]: classnames(baseFontTextClasses, 'font-medium'),
   [ButtonEnums.type.secondary]: classnames(baseFontTextClasses, 'font-400'),
 };
 
@@ -47,7 +47,8 @@ const enabledClasses = {
   ),
 };
 
-const disabledClasses = 'bg-inputfield-placeholder text-common-light cursor-default';
+const disabledClasses =
+  'bg-inputfield-placeholder text-common-light cursor-default text-black opacity-30';
 
 const defaults = {
   color: 'default',
