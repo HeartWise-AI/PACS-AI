@@ -12,7 +12,7 @@ const StudyListExpandedRow = ({ seriesTableColumns, seriesTableDataSource, child
   const { t } = useTranslation('StudyList');
 
   return (
-    <div className="w-full bg-black py-4 pl-12 pr-2">
+    <div className="w-full bg-transparent p-5">
       <div className="block">{children}</div>
       <div className="mt-4">
         <Table>
