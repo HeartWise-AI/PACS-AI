@@ -89,13 +89,13 @@
   @apply text-aqua-pale pl-1.5;
 }
 
-.customSelect__menu-portal .customSelect__menu-list::-webkit-scrollbar-thumb {
-  background-color: #0944b3;
+.ohif-select .customSelect__menu-list::-webkit-scrollbar-thumb {
+  background-color: #C8F469;
   border-radius: 10px;
 }
 
 .customSelect__option--is-focused {
-  background-color: #0944b391 !important;
+  background-color: #C8F469 !important;
 }
 
 .customSelect__menu-portal .customSelect__option:hover {

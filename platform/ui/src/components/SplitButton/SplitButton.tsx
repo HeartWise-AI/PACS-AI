@@ -12,7 +12,7 @@ const baseClasses = {
   Button: 'flex items-center rounded-md border-transparent group/button',
   Primary: 'h-full rounded-tl-md rounded-bl-md group/primary',
   Secondary:
-    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-2 border-transparent group/secondary',
+    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-transparent group/secondary',
   SecondaryIcon: 'w-4 h-full stroke-1',
   Separator: 'border-l py-3 ml-0.5',
   Content: 'absolute z-10 top-0 mt-12',
@@ -38,7 +38,7 @@ const classes = {
     classNames(
       baseClasses.Secondary,
       isExpanded
-        ? 'bg-primary-light !rounded-tr-md !rounded-br-md'
+        ? 'bg-transparent !rounded-tr-md !rounded-br-md'
         : primary.isActive
           ? 'bg-secondary-dark'
           : 'hover:bg-primary-dark bg-secondary-dark group-hover/button:border-primary-dark'

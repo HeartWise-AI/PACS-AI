@@ -14,6 +14,7 @@ const ToolbarButton = ({
   onInteraction,
   dropdownContent = null,
   //
+  isActive,
   className,
   disabled,
   disabledText,
@@ -23,7 +24,22 @@ const ToolbarButton = ({
   ...rest
   //
 }) => {
-  const shouldShowDropdown = !!dropdownContent;
+  const classes = {
+    tool: isActive ? 'text-black bg-[#C8F469]' : 'text-white hover:!bg-[#C8F469] hover:text-black',
+    toggle: isActive
+      ? '!text-[#348CFD] bg-[#C8F469]'
+      : 'text-white hover:!bg-[#C8F469] hover:text-black',
+    action: isActive
+      ? 'text-black bg-[#C8F469]'
+      : 'text-white hover:!bg-[#C8F469] hover:text-black',
+  };
+
+  const bgClasses = {
+    toggle: isActive && 'bg-transparent',
+  };
+
+  const activeClass = isActive ? 'active' : '';
+  const shouldShowDropdown = !!isActive && !!dropdownContent;
   const iconEl = icon ? <Icon name={icon} /> : <div>{label || 'Missing icon and label'}</div>;
 
   const sizeToUse = size ?? 'toolbar';
