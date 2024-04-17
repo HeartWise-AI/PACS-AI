@@ -19,13 +19,6 @@ const Sidebar = () => {
       <div className="border-1  h-full overflow-y-auto rounded-xl border border-white  border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
           <div className="flex items-start justify-between">
-            {/* <Logo width="115" /> */}
-            {/* <Typography
-              variant="caption"
-              className="mt-2 text-white"
-            >
-              {t('PACS AI LOGO')}
-            </Typography> */}
             <svg
               width="117"
               height="30"
