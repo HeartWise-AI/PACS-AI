@@ -36,16 +36,16 @@ module.exports = {
       },
 
       inputfield: {
-        main: '#3a3f99',
+        main: '#C8F469',
         disabled: '#2b166b',
         focus: '#5acce6',
         placeholder: '#39383f',
       },
 
       secondary: {
-        light: '#3a3f99',
+        light: '#C8F469',
         main: '#2b166b',
-        dark: '#041c4a',
+        dark: '#C8F469',
         active: '#1f1f27',
       },
 

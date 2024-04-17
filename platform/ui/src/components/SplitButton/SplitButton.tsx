@@ -13,11 +13,11 @@ const baseClasses = {
   Primary:
     // By default border on left, top and bottom for hover effect and only rounded on left side.
     // Extra padding on right to compensate for no right border.
-    'h-full border-l-2 border-t-2 border-b-2 rounded-tl-md rounded-bl-md group/primary !pl-2 !py-2',
+    'h-full rounded-tl-md rounded-bl-md group/primary !pl-2 !py-2',
   Secondary:
-    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-2 border-transparent group/secondary',
+    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-transparent group/secondary',
   SecondaryIcon: 'w-4 h-full stroke-1',
-  Separator: 'border-l py-2.5',
+  Separator: 'py-2.5',
   Content: 'absolute z-10 top-0 mt-12',
 };
 
@@ -25,7 +25,9 @@ const classes = {
   Button: ({ isExpanded, primary }) =>
     classNames(
       baseClasses.Button,
-      !isExpanded && !primary.isActive && 'hover:!bg-primary-dark hover:border-primary-dark'
+      !isExpanded &&
+        !primary.isActive &&
+        'hover:!bg-primary-dark hover:border-none hover:!text-black'
     ),
   Interface: 'h-full flex flex-row items-center',
   Primary: ({ primary, isExpanded }) =>
@@ -33,18 +35,14 @@ const classes = {
       baseClasses.Primary,
       primary.isActive
         ? isExpanded
-          ? 'border-primary-dark !bg-primary-dark hover:border-primary-dark !text-primary-light'
-          : `${
-              primary.isToggle
-                ? 'border-secondary-dark bg-secondary-light'
-                : 'border-primary-light bg-primary-light'
-            }
+          ? 'border-none !bg-transparent hover:border-none !text-black'
+          : `${primary.isToggle ? 'border-none bg-secondary-light' : 'border-none bg-transparent'}
             border-2 rounded-md !p-2` // Full, rounded border with less right padding when active.
-        : `focus:!text-black focus:!rounded-md focus:!border-primary-light focus:!bg-primary-light
+        : `focus:!text-black focus:!rounded-md focus:!border-none focus:!bg-transparent
         ${
           isExpanded
-            ? 'border-primary-dark bg-primary-dark !text-primary-light'
-            : 'border-secondary-dark bg-secondary-dark group-hover/button:border-primary-dark group-hover/button:text-primary-light hover:!bg-primary-dark hover:border-primary-dark focus:!text-black'
+            ? 'border-none bg-transparent !text-black'
+            : 'border-none bg-none group-hover/button:border-none group-hover/button:text-black hover:!bg-primary-dark hover:!text-black hover:border-none focus:!text-black'
         }
         `
     ),
@@ -52,15 +50,17 @@ const classes = {
     classNames(
       baseClasses.Secondary,
       isExpanded
-        ? 'bg-primary-light !rounded-tr-md !rounded-br-md'
+        ? 'bg-transparent !rounded-tr-md !rounded-br-md'
         : primary.isActive
-        ? 'bg-secondary-dark'
-        : 'hover:bg-primary-dark bg-secondary-dark group-hover/button:border-primary-dark'
+        ? 'bg-none'
+        : 'hover:bg-primary-dark bg-none group-hover/button:border-none hover:!text-black'
     ),
   SecondaryIcon: ({ isExpanded }) =>
     classNames(
       baseClasses.SecondaryIcon,
-      isExpanded ? 'text-primary-dark' : 'text-[#348cfd] group-hover/secondary:text-primary-light'
+      isExpanded
+        ? 'text-primary-dark'
+        : 'text-white group-hover/secondary:text-black hover:!text-black'
     ),
   Separator: ({ primary, isExpanded, isHovering }) =>
     classNames(

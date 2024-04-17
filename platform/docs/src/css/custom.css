@@ -8,21 +8,21 @@
 /* https://infima.dev/docs/utilities/colors */
 /* https://docs.theochu.com/docusaurus/styling/ */
 :root {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: rgb(33, 175, 144);
-  --ifm-color-primary-darker: rgb(31, 165, 136);
-  --ifm-color-primary-darkest: rgb(26, 136, 112);
-  --ifm-color-primary-light: rgb(70, 203, 174);
-  --ifm-color-primary-lighter: rgb(102, 212, 189);
-  --ifm-color-primary-lightest: rgb(146, 224, 208);
+  --ifm-color-primary: #C8F469;
+  --ifm-color-primary-dark: #C8F469;
+  --ifm-color-primary-darker: #C8F469;
+  --ifm-color-primary-darkest: #C8F469;
+  --ifm-color-primary-light: #C8F469;
+  --ifm-color-primary-lighter: #C8F469;
+  --ifm-color-primary-lightest: #C8F469;
   --ifm-font-color-base: #474747;
-  --ifm-color-primary: #0151d9;
-  --ifm-color-primary-dark: #0149c3;
-  --ifm-color-primary-darker: #0145b8;
-  --ifm-color-primary-darkest: #013998;
-  --ifm-color-primary-light: #0159ef;
-  --ifm-color-primary-lighter: #015dfa;
-  --ifm-color-primary-lightest: #1d71fe;
+  --ifm-color-primary: #C8F469;
+  --ifm-color-primary-dark: #C8F469;
+  --ifm-color-primary-darker: #C8F469;
+  --ifm-color-primary-darkest: #C8F469;
+  --ifm-color-primary-light: #C8F469;
+  --ifm-color-primary-lighter: #C8F469;
+  --ifm-color-primary-lightest: #C8F469;
   --ifm-color-secondary: #e8f7f7;
   --ifm-code-font-size: 95%;
   --ifm-background-color: #ffffff;
@@ -47,13 +47,13 @@ html[data-theme='dark'] .header-github-link:before {
 
 html[data-theme='dark'] {
   --ifm-menu-link-sublist-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 24 24"><path fill="rgba(0,0,0,0.4)" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
-  --ifm-color-primary: #5acce6;
-  --ifm-color-primary-dark: #3ec3e2;
-  --ifm-color-primary-darker: #30bfe0;
-  --ifm-color-primary-darkest: #1da4c3;
-  --ifm-color-primary-light: #76d5ea;
-  --ifm-color-primary-lighter: #84d9ec;
-  --ifm-color-primary-lightest: #ade6f3;
+  --ifm-color-primary: #C8F469;
+  --ifm-color-primary-dark: #C8F469;
+  --ifm-color-primary-darker: #C8F469;
+  --ifm-color-primary-darkest: #C8F469;
+  --ifm-color-primary-light: #C8F469;
+  --ifm-color-primary-lighter: #C8F469;
+  --ifm-color-primary-lightest: #C8F469;
   --ifm-font-color-base: #ffffff;
   --ifm-color-secondary: #050719;
   --ifm-blockquote-color: #7bb2ce;

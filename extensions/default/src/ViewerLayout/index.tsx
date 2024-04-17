@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { SidePanel, ErrorBoundary, LoadingIndicatorProgress } from '@ohif/ui';
+import { SidePanel, Sidebar, ErrorBoundary, LoadingIndicatorProgress, Typography } from '@ohif/ui';
 import { ServicesManager, HangingProtocolService, CommandsManager } from '@ohif/core';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
+import { useTranslation } from 'react-i18next';
 
 function ViewerLayout({
   // From Extension Module Params
@@ -22,6 +23,7 @@ function ViewerLayout({
   rightPanelDefaultClosed = false,
 }): React.FunctionComponent {
   const [appConfig] = useAppConfig();
+  const { t } = useTranslation();
 
   const { hangingProtocolService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
@@ -105,52 +107,101 @@ function ViewerLayout({
   const viewportComponents = viewports.map(getViewportComponentData);
 
   return (
-    <div>
-      <ViewerHeader
-        hotkeysManager={hotkeysManager}
-        extensionManager={extensionManager}
-        servicesManager={servicesManager}
-      />
-      <div
-        className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden bg-black"
-        style={{ height: 'calc(100vh - 52px' }}
-      >
-        <React.Fragment>
-          {showLoadingIndicator && <LoadingIndicatorProgress className="h-full w-full bg-black" />}
-          {/* LEFT SIDEPANELS */}
-          {leftPanelComponents.length ? (
-            <ErrorBoundary context="Left Panel">
-              <SidePanelWithServices
-                side="left"
-                activeTabIndex={leftPanelDefaultClosed ? null : 0}
-                tabs={leftPanelComponents}
-                servicesManager={servicesManager}
-              />
-            </ErrorBoundary>
-          ) : null}
-          {/* TOOLBAR + GRID */}
-          <div className="flex h-full flex-1 flex-col">
-            <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black">
-              <ErrorBoundary context="Grid">
-                <ViewportGridComp
-                  servicesManager={servicesManager}
-                  viewportComponents={viewportComponents}
-                  commandsManager={commandsManager}
-                />
-              </ErrorBoundary>
+    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
+      <div className="flex w-full bg-[#151815] ">
+        <Sidebar />
+
+        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
+          <div className="bg-transparent">
+            <div className="relative mx-auto w-full pt-5">
+              <div className="mb-5 flex flex-row justify-between">
+                <div className="flex min-w-[1px] shrink flex-row items-center gap-6">
+                  <Typography
+                    variant="h6"
+                    className="text-white"
+                  >
+                    {t('Viewer')}
+                  </Typography>
+                </div>
+                <div className="flex flex-row">
+                  <div className="flex items-center">
+                    <span className="text-common-light mr-3 text-lg">Hi, Juan</span>
+                    <button
+                      id="dropdownDefaultButton"
+                      data-dropdown-toggle="dropdown"
+                      className="inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-center text-sm font-medium text-white !ring-0"
+                      type="button"
+                    >
+                      <svg
+                        className="ms-3 h-2.5 w-2.5"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 10 6"
+                      >
+                        <path
+                          stroke="currentColor"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="m1 1 4 4 4-4"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          {rightPanelComponents.length ? (
-            <ErrorBoundary context="Right Panel">
-              <SidePanelWithServices
-                side="right"
-                activeTabIndex={rightPanelDefaultClosed ? null : 0}
-                tabs={rightPanelComponents}
-                servicesManager={servicesManager}
-              />
-            </ErrorBoundary>
-          ) : null}
-        </React.Fragment>
+          <ViewerHeader
+            hotkeysManager={hotkeysManager}
+            extensionManager={extensionManager}
+            servicesManager={servicesManager}
+          />
+          <div
+            className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent"
+            style={{ height: 'calc(100vh - 143px' }}
+          >
+            <React.Fragment>
+              {showLoadingIndicator && (
+                <LoadingIndicatorProgress className="h-full w-full bg-transparent" />
+              )}
+              {/* LEFT SIDEPANELS */}
+              {leftPanelComponents.length ? (
+                <ErrorBoundary context="Left Panel">
+                  <SidePanelWithServices
+                    side="left"
+                    activeTabIndex={leftPanelDefaultClosed ? null : 0}
+                    tabs={leftPanelComponents}
+                    servicesManager={servicesManager}
+                  />
+                </ErrorBoundary>
+              ) : null}
+              {/* TOOLBAR + GRID */}
+              <div className="flex h-full flex-1 flex-col">
+                <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-white bg-opacity-10">
+                  <ErrorBoundary context="Grid">
+                    <ViewportGridComp
+                      servicesManager={servicesManager}
+                      viewportComponents={viewportComponents}
+                      commandsManager={commandsManager}
+                    />
+                  </ErrorBoundary>
+                </div>
+              </div>
+              {rightPanelComponents.length ? (
+                <ErrorBoundary context="Right Panel">
+                  <SidePanelWithServices
+                    side="right"
+                    activeTabIndex={rightPanelDefaultClosed ? null : 0}
+                    tabs={rightPanelComponents}
+                    servicesManager={servicesManager}
+                  />
+                </ErrorBoundary>
+              ) : null}
+            </React.Fragment>
+          </div>
+        </div>
       </div>
     </div>
   );

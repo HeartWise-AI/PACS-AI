@@ -100,18 +100,13 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
   }
 
   return (
-    <Header
-      menuOptions={menuOptions}
-      isReturnEnabled={!!appConfig.showStudyList}
-      onClickReturnButton={onClickReturnButton}
-      WhiteLabeling={appConfig.whiteLabeling}
-    >
+    <div className="w-full rounded-lg bg-white bg-opacity-10 py-1">
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center">
           <Toolbar servicesManager={servicesManager} />
         </div>
       </ErrorBoundary>
-    </Header>
+    </div>
   );
 }
 

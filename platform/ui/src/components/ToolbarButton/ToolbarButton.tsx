@@ -21,15 +21,13 @@ const ToolbarButton = ({
   //
 }) => {
   const classes = {
-    tool: isActive
-      ? 'text-black'
-      : 'text-common-bright hover:!bg-primary-dark hover:text-primary-light',
+    tool: isActive ? 'text-black bg-[#C8F469]' : 'text-white hover:!bg-[#C8F469] hover:text-black',
     toggle: isActive
-      ? '!text-[#348CFD]'
-      : 'text-common-bright hover:!bg-primary-dark hover:text-primary-light',
+      ? '!text-[#348CFD] bg-[#C8F469]'
+      : 'text-white hover:!bg-[#C8F469] hover:text-black',
     action: isActive
-      ? 'text-black'
-      : 'text-common-bright hover:!bg-primary-dark hover:text-primary-light',
+      ? 'text-black bg-[#C8F469]'
+      : 'text-white hover:!bg-[#C8F469] hover:text-black',
   };
 
   const bgClasses = {
