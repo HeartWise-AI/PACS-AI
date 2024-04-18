@@ -23,7 +23,7 @@ const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
 
 const baseClasses =
-  'transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
+  'transition-all duration-300 ease-in-out bg-transparent border-none justify-start box-content flex flex-col';
 
 const classesMap = {
   open: {
@@ -115,7 +115,7 @@ const getTabStyle = (numTabs: number) => {
 
 const getTabIconClassNames = (numTabs: number, isActiveTab: boolean) => {
   return classnames('h-full w-full flex items-center justify-center', {
-    'bg-customblue-40': isActiveTab,
+    'bg-transparent': isActiveTab,
     rounded: isActiveTab,
   });
 };
@@ -216,7 +216,7 @@ const SidePanel = ({
       <>
         <div
           className={classnames(
-            'bg-secondary-dark flex h-[28px] w-full cursor-pointer items-center rounded-md',
+            'flex h-[28px] w-full cursor-pointer items-center rounded-md bg-transparent',
             side === 'left' ? 'justify-end pr-2' : 'justify-start pl-2'
           )}
           onClick={() => {
@@ -304,11 +304,11 @@ const SidePanel = ({
                 {tabIndex % numCols !== 0 && (
                   <div
                     className={classnames(
-                      'flex h-[28px] w-[2px] items-center bg-black',
+                      'flex h-[28px] w-[2px] items-center bg-transparent',
                       tabSpacerWidth
                     )}
                   >
-                    <div className="bg-primary-dark h-[20px] w-full"></div>
+                    <div className="h-[20px] w-full bg-transparent"></div>
                   </div>
                 )}
                 <Tooltip
