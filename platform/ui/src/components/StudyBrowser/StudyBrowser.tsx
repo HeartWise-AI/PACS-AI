@@ -71,7 +71,7 @@ const StudyBrowser = ({
   return (
     <React.Fragment>
       <div
-        className="w-100 border-secondary-light bg-primary-dark flex h-16 flex-row items-center justify-center border-b p-4"
+        className="w-100 border-secondary-light flex h-16 flex-row items-center justify-center border-b bg-transparent p-4"
         data-cy={'studyBrowser-panel'}
       >
         {/* TODO Revisit design of LegacyButtonGroup later - for now use LegacyButton for its children.*/}
@@ -95,10 +95,10 @@ const StudyBrowser = ({
             return (
               <LegacyButton
                 key={name}
-                className={'min-w-18 p-2 text-base text-white'}
+                className={'min-w-18 p-2 text-base hover:!text-black active:!text-black '}
                 size="initial"
                 color={color}
-                bgColor={isActive ? 'bg-primary-main' : 'bg-black'}
+                bgColor={isActive ? 'bg-primary-main bg-opacity-10' : 'bg-transparent'}
                 onClick={() => {
                   onClickTab(name);
                 }}

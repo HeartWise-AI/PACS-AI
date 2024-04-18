@@ -100,7 +100,7 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
   }
 
   return (
-    <div className="w-full rounded-lg bg-white bg-opacity-10 py-1">
+    <div className="mb-2 w-full rounded-lg bg-white bg-opacity-10 py-1">
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center">
           <Toolbar servicesManager={servicesManager} />

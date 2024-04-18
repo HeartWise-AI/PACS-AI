@@ -19,7 +19,7 @@ const StudyItem = ({
   return (
     <div
       className={classnames(
-        isActive ? 'bg-secondary-dark' : 'hover:bg-secondary-main bg-black',
+        isActive ? 'bg-transparent' : 'hover:bg-secondary-main bg-black',
         baseClasses
       )}
       onClick={onClick}
@@ -30,24 +30,24 @@ const StudyItem = ({
       <div className="flex flex-1 flex-col px-4 pb-2">
         <div className="flex flex-row items-center justify-between pt-2 pb-2">
           <div className="text-base text-white">{date}</div>
-          <div className="flex flex-row items-center text-base text-blue-300">
+          <div className="flex flex-row items-center text-base text-white">
             <Icon
               name="group-layers"
-              className="mx-2 w-4 text-blue-300"
+              className="mx-2 w-4 text-white"
             />
             {numInstances}
           </div>
         </div>
         <div className="flex flex-row py-1">
-          <div className="pr-5 text-xl text-blue-300">{modalities}</div>
-          <div className="truncate-2-lines break-words text-base text-blue-300">{description}</div>
+          <div className="pr-5 text-xl text-white">{modalities}</div>
+          <div className="truncate-2-lines break-words text-base text-white">{description}</div>
         </div>
       </div>
       {!!trackedSeries && (
         <div className="flex-2 flex">
           <div
             className={classnames(
-              'bg-secondary-main mt-2 flex flex-row py-1 pl-2 pr-4 text-base text-white ',
+              'bg-secondary-main mt-2 flex flex-row py-1 pl-2 pr-4 text-base text-white',
               isActive
                 ? 'border-secondary-light flex-1 justify-center border-t'
                 : 'mx-4 mb-4 rounded-sm'
