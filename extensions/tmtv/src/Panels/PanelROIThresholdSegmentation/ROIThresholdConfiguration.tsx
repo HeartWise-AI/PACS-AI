@@ -20,7 +20,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
           <Select
             label={t('Strategy')}
             closeMenuOnSelect={true}
-            className="border-primary-main mr-2 bg-black text-white "
+            className="border-primary-main mr-2 bg-transparent !text-black "
             options={options}
             placeholder={options.find(option => option.value === config.strategy).placeHolder}
             value={config.strategy}
@@ -104,7 +104,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                     <Input
                       label={t('')}
                       labelClassName="text-white"
-                      className="border-primary-main mt-2 bg-black"
+                      className="border-primary-main mt-2 bg-transparent"
                       type="text"
                       containerClassName="mr-2"
                       value={config.ctLower}
@@ -120,7 +120,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                     <Input
                       label={t('')}
                       labelClassName="text-white"
-                      className="border-primary-main mt-2 bg-black"
+                      className="border-primary-main mt-2 bg-transparent"
                       type="text"
                       containerClassName="mr-2"
                       value={config.ctUpper}
@@ -148,7 +148,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                     <Input
                       label={t('')}
                       labelClassName="text-white"
-                      className="border-primary-main mt-2 bg-black"
+                      className="border-primary-main mt-2 bg-transparent"
                       type="text"
                       containerClassName="mr-2"
                       value={config.ptLower}
@@ -164,7 +164,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                     <Input
                       label={t('')}
                       labelClassName="text-white"
-                      className="border-primary-main mt-2 bg-black"
+                      className="border-primary-main mt-2 bg-transparent"
                       type="text"
                       containerClassName="mr-2"
                       value={config.ptUpper}
