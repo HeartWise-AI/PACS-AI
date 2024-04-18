@@ -66,7 +66,7 @@ const Tooltip = ({ content, isSticky, position, className, tight, children, isDi
       >
         <div
           className={classnames(
-            'tooltip-box bg-primary-dark border-secondary-light w-max-content relative inset-x-auto top-full rounded border text-base text-white',
+            'tooltip-box bg-primary-dark border-secondary-light w-max-content relative inset-x-auto top-full rounded border text-base text-black',
             {
               'py-1 px-4': !tight,
             }
