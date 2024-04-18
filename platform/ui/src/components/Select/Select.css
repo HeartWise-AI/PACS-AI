@@ -86,11 +86,12 @@
 .ohif-select .customSelect__option:hover {
   background-color: #c8f469;
   color: #000000;
+  cursor: pointer;
 }
 
 .ohif-select .customSelect__menu {
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   background-color: #111827 !important;
 }
 
