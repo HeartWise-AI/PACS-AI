@@ -7,16 +7,18 @@ const Sidebar = () => {
   const { t } = useTranslation();
 
   const handleMinimizeSidebarClick = () => {
-    setSidebarMini((prevSidebarMini) => !prevSidebarMini);
+    setSidebarMini(prevSidebarMini => !prevSidebarMini);
   };
 
   return (
     <aside
       id="default-sidebar"
-      className={`sticky top-0 left-0 z-40 h-screen ${sidebarMini ? 'min-w-[70px]' : 'min-w-[350px]'} p-5`}
+      className={`sticky top-0 left-0 z-40 h-screen ${
+        sidebarMini ? 'min-w-[70px]' : 'min-w-[350px]'
+      } p-5`}
       aria-label="Sidebar"
     >
-      <div className="border-1  h-full overflow-y-auto rounded-xl border border-white  border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
+      <div className="border-1 h-full overflow-y-auto rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
           <div className="flex items-start justify-between">
             <svg
@@ -104,9 +106,10 @@ const Sidebar = () => {
               </defs>
             </svg>
 
-            <button className="flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10"
-             onClick={handleMinimizeSidebarClick}
-             >
+            <button
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10"
+              onClick={handleMinimizeSidebarClick}
+            >
               <svg
                 width="18"
                 height="19"

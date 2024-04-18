@@ -187,12 +187,14 @@ export default function PanelRoiThresholdSegmentation({ servicesManager, command
             <Button onClick={handleROIThresholding}>Run</Button>
           </div>
           <div
-            className="bg-secondary-dark border-secondary-light mb-2 flex h-8 cursor-pointer select-none items-center justify-around border-t outline-none first:border-0"
+            className="bg-secondary-dark border-secondary-light mx-2 mb-2 flex h-8 cursor-pointer select-none items-center justify-around rounded-md bg-opacity-20 outline-none first:border-0"
             onClick={() => {
               setShowConfig(!showConfig);
             }}
           >
-            <div className="px-4 text-base text-white">{t('ROI Threshold Configuration')}</div>
+            <div className="text-primary-active px-4 text-base">
+              {t('ROI Threshold Configuration')}
+            </div>
           </div>
           {showConfig && (
             <ROIThresholdConfiguration
@@ -235,7 +237,7 @@ export default function PanelRoiThresholdSegmentation({ servicesManager, command
             ) : null}
           </div>
           {tmtvValue !== null ? (
-            <div className="bg-secondary-dark mt-4 flex items-baseline justify-between px-2 py-1">
+            <div className="mt-4 flex items-baseline justify-between bg-transparent px-2 py-1">
               <span className="text-base font-bold uppercase tracking-widest text-white">
                 {'TMTV:'}
               </span>

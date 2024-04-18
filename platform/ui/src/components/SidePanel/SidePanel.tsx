@@ -20,7 +20,7 @@ const baseStyle = {
   // To align the top of the side panel with the top of the viewport grid, use position relative and offset the
   // top by the same top offset as the viewport grid. Also adjust the height so that there is no overflow.
   position: 'relative',
-  top: '0.2%',
+  top: '0',
   height: '99.8%',
 };
 
@@ -37,7 +37,7 @@ const styleMap = {
 };
 
 const baseClasses =
-  'transition-all duration-300 ease-in-out bg-transparent border-none justify-start box-content flex flex-col';
+  'transition-all duration-300 ease-in-out border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg rounded-lg justify-start box-content flex flex-col';
 
 const classesMap = {
   open: {
