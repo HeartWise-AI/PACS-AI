@@ -358,7 +358,7 @@ function WorkList({
               return (
                 mode.displayName && (
                   <Link
-                    className={isValidMode ? '' : 'cursor-not-allowed'}
+                    className={isValidMode ? 'mr-2' : 'cursor-not-allowed  mr-2'}
                     key={i}
                     to={`${dataPath ? '../../' : ''}${mode.routeName}${
                       dataPath || ''
