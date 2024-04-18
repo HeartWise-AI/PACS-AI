@@ -103,8 +103,8 @@ function ToolbarSplitButtonWithServices({
           'whitespace-pre text-base',
           isActive && 'bg-primary-dark',
           isActive
-            ? 'text-[#348CFD]'
-            : 'text-common-bright hover:bg-primary-dark hover:text-primary-light'
+            ? 'text-black'
+            : 'text-common-bright hover:bg-primary-dark hover:text-black'
         )}
       >
         {icon && (

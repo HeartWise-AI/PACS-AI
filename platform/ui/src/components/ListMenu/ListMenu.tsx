@@ -19,7 +19,7 @@ const ListMenu = ({ items = [], renderer, onClick }) => {
 
     return (
       <div
-        className={classnames(flex, theme, 'cursor-pointer')}
+        className={classnames(flex, theme, 'cursor-pointer hover:!text-black active:!text-black')}
         onClick={onClickHandler}
         data-cy={item.id}
       >
@@ -29,7 +29,7 @@ const ListMenu = ({ items = [], renderer, onClick }) => {
   };
 
   return (
-    <div className="bg-secondary-dark flex flex-col rounded-md pt-2 pb-2">
+    <div className="bg-gray-900 flex flex-col rounded-md pt-2 pb-2">
       {items.map((item, index) => {
         return (
           <ListItem
