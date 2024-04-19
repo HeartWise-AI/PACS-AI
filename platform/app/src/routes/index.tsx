@@ -14,6 +14,7 @@ import buildModeRoutes from './buildModeRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import Members from './Members';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -124,12 +125,20 @@ const createRoutes = ({
     props: { children: ResetPassword, servicesManager, extensionManager },
   };
 
+  const MembersRoute = {
+    path: '/members',
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Members, servicesManager, extensionManager },
+  };
+
   const customRoutes = customizationService.getGlobalCustomization('customRoutes');
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
     ...(showStudyList ? [LoginRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
+    ...(showStudyList ? [MembersRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
