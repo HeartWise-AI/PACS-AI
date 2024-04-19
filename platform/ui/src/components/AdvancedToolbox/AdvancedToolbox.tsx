@@ -44,7 +44,7 @@ const AdvancedToolbox = ({ title, items }) => {
                 >
                   <div
                     className={classnames(
-                      'text-primary-active grid h-[40px] w-[40px] place-items-center rounded-md bg-black  ',
+                      'text-primary-active grid h-[40px] w-[40px] place-items-center rounded-md bg-transparent  ',
                       activeItemName === item.name && 'bg-primary-light text-black',
                       item.disabled && 'opacity-50',
                       !item.disabled &&

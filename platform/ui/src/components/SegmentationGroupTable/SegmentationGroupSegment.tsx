@@ -185,7 +185,7 @@ const HoveringIcons = ({
   segmentationId,
   segmentIndex,
 }) => {
-  const iconClass = 'w-5 h-5 hover:cursor-pointer hover:opacity-60';
+  const iconClass = 'w-5 h-5 hover:cursor-pointer';
 
   const handleIconClick = (e, action) => {
     e.stopPropagation();
@@ -195,7 +195,7 @@ const HoveringIcons = ({
   const createIcon = (name, action, color = null) => (
     <Icon
       name={name}
-      className={classnames(iconClass, color ?? 'text-white')}
+      className={classnames(iconClass, color ?? '!text-black')}
       onClick={e => handleIconClick(e, action)}
     />
   );

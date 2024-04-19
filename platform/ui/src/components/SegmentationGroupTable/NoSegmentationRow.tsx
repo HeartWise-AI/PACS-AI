@@ -9,7 +9,7 @@ function NoSegmentationRow({ onSegmentationAdd, addSegmentationClassName }) {
       className={`group ${addSegmentationClassName}`}
       onClick={onSegmentationAdd}
     >
-      <div className="text-primary-active group-hover:bg-secondary-dark flex items-center rounded-[4px] group-hover:cursor-pointer">
+      <div className="text-primary-active flex items-center rounded-[4px] group-hover:cursor-pointer group-hover:bg-gray-900 group-hover:bg-opacity-30">
         <div className="grid h-[28px] w-[28px] place-items-center">
           <Icon name="icon-add" />
         </div>

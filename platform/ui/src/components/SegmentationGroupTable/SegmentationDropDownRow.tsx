@@ -119,7 +119,7 @@ function SegmentationDropDownRow({
           isSearchable={false}
           options={selectOptions}
           value={selectOptions?.find(o => o.value === activeSegmentation.id)}
-          className="text-aqua-pale h-[26px] w-1/2 text-[13px]"
+          className="h-[26px] w-1/2 text-[13px] text-white"
         />
       )}
       <div className="flex items-center">
