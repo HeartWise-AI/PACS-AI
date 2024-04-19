@@ -15,6 +15,7 @@ import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Members from './Members';
+import KibanaLogs from './KibanaLogs';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -132,6 +133,13 @@ const createRoutes = ({
     props: { children: Members, servicesManager, extensionManager },
   };
 
+  const KibanaLogsRoute = {
+    path: '/kibana-logs',
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: KibanaLogs, servicesManager, extensionManager },
+  };
+
   const customRoutes = customizationService.getGlobalCustomization('customRoutes');
   const allRoutes = [
     ...routes,
@@ -139,6 +147,7 @@ const createRoutes = ({
     ...(showStudyList ? [LoginRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
     ...(showStudyList ? [MembersRoute] : []),
+    ...(showStudyList ? [KibanaLogsRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
