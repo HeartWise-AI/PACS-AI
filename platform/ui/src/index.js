@@ -33,6 +33,8 @@ export {
 export {
   ActionButtons,
   AboutModal,
+  AdminHeader,
+  AdminTable,
   AdvancedToolbox,
   AllInOneMenu,
   HotkeyField,
@@ -94,6 +96,7 @@ export {
   StudyListExpandedRow,
   StudyListFilter,
   Sidebar,
+  SidebarAdmin,
   StudyListPagination,
   StudyListTable,
   StudyListTableRow,

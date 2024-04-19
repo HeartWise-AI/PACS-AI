@@ -1,4 +1,6 @@
 import AboutModal from './AboutModal';
+import AdminHeader from './AdminHeader';
+import AdminTable from './AdminTable';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
 import { ButtonEnums } from './Button';
@@ -34,6 +36,7 @@ import SegmentationTable from './SegmentationTable';
 import { SegmentationGroupTable, SegmentationGroupTableExpanded } from './SegmentationGroupTable';
 import SidePanel from './SidePanel';
 import Sidebar from './Sidebar';
+import SidebarAdmin from './SidebarAdmin';
 import SplitButton from './SplitButton';
 import StudyBrowser from './StudyBrowser';
 import StudyItem from './StudyItem';
@@ -102,6 +105,8 @@ import StudyBrowserSort from './StudyBrowserSort';
 export {
   ActionButtons,
   AboutModal,
+  AdminHeader,
+  AdminTable,
   AdvancedToolbox,
   AllInOneMenu,
   HotkeyField,
@@ -157,6 +162,7 @@ export {
   SegmentationGroupTableExpanded,
   SidePanel,
   Sidebar,
+  SidebarAdmin,
   SplitButton,
   StudyBrowser,
   StudyItem,
