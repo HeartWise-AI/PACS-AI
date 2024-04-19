@@ -22,7 +22,7 @@ const Dialog = ({
 }) => {
   const [value, setValue] = useState(defaultValue);
 
-  const theme = 'bg-primary-dark';
+  const theme = 'bg-gray-900';
   const flex = 'flex flex-col';
   const border = 'border-0 rounded';
   const outline = 'outline-none focus:outline-none';
