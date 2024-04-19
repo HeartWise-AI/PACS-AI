@@ -46,8 +46,7 @@ const enabledClasses = {
   ),
 };
 
-const disabledClasses =
-  'bg-inputfield-placeholder text-common-light cursor-default text-black opacity-30';
+const disabledClasses = 'bg-inputfield-placeholder cursor-default text-white opacity-70';
 
 const defaults = {
   color: 'default',
