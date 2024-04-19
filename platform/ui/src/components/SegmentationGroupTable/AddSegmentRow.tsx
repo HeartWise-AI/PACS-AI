@@ -8,8 +8,8 @@ function AddSegmentRow({ onClick }) {
       onClick={onClick}
     >
       <div className="h-[28px] w-[28px]"></div>
-      <div className="group ml-2.5 mt-1">
-        <div className="text-primary-active group-hover:bg-secondary-dark flex items-center rounded-[4px] pr-2">
+      <div className="group ml-2.5 mt-7">
+        <div className="text-primary-active flex items-center rounded-[4px] pr-2 group-hover:bg-gray-900 group-hover:bg-opacity-30">
           <div className="grid h-[28px] w-[28px] place-items-center">
             <Icon name="icon-add" />
           </div>

@@ -95,7 +95,7 @@ function SegmentationDropDownRow({
             ],
           ]}
         >
-          <div className="hover:bg-secondary-dark mx-1 grid h-[28px] w-[28px]  cursor-pointer place-items-center rounded-[4px]">
+          <div className="mx-1 grid h-[28px] w-[28px] cursor-pointer place-items-center  rounded-[4px] hover:bg-gray-900 group-hover:bg-opacity-30">
             <Icon name="icon-more-menu"></Icon>
           </div>
         </Dropdown>
@@ -116,12 +116,12 @@ function SegmentationDropDownRow({
           isSearchable={false}
           options={selectOptions}
           value={selectOptions?.find(o => o.value === activeSegmentation.id)}
-          className="text-aqua-pale h-[26px] w-1/2 text-[13px]"
+          className="h-[26px] w-1/2 text-[13px] text-white"
         />
       )}
       <div className="flex items-center">
         <div
-          className="hover:bg-secondary-dark ml-3 mr-1 grid h-[28px]  w-[28px] cursor-pointer place-items-center rounded-[4px]"
+          className="ml-3 mr-1 grid h-[28px] w-[28px] cursor-pointer  place-items-center rounded-[4px] hover:bg-gray-900 group-hover:bg-opacity-30"
           onClick={() => onToggleSegmentationVisibility(activeSegmentation.id)}
         >
           {activeSegmentation.isVisible ? (

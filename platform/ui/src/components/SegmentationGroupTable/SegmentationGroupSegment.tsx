@@ -27,7 +27,9 @@ const SegmentItem = ({
 
   return (
     <div
-      className={classnames('text-aqua-pale group/row flex min-h-[28px] bg-black')}
+      className={classnames(
+        'text-primary-dark group/row bg-primary-dark flex min-h-[28px] bg-opacity-20'
+      )}
       onClick={e => {
         e.stopPropagation();
         onClick(segmentationId, segmentIndex);
@@ -36,17 +38,20 @@ const SegmentItem = ({
       data-cy={'segment-item'}
     >
       <div
-        className={classnames('bg-primary-dark group/number grid w-[32px] place-items-center', {
-          'bg-primary-light border-primary-light rounded-l-[4px] border text-black': isActive,
-          'border-primary-dark border': !isActive,
-        })}
+        className={classnames(
+          'bg-primary-dark group/number grid w-[32px] place-items-center rounded-l-[4px] text-black ',
+          {
+            'bg-primary-light border-primary-light border !text-black': isActive,
+            'border-primary-dark border ': !isActive,
+          }
+        )}
         onMouseEnter={() => setIsNumberBoxHovering(true)}
         onMouseLeave={() => setIsNumberBoxHovering(false)}
       >
         {isNumberBoxHovering && showDelete ? (
           <Icon
             name="close"
-            className={classnames('h-[8px] w-[8px]', {
+            className={classnames('h-[8px] w-[8px] text-black', {
               'hover:cursor-pointer hover:opacity-60': !disableEditing,
             })}
             onClick={e => {
@@ -63,7 +68,8 @@ const SegmentItem = ({
       </div>
       <div
         className={classnames('relative flex w-full', {
-          'border-primary-light bg-primary-dark rounded-r-[4px] border border-l-0': isActive,
+          'border-primary-light bg-primary-dark rounded-r-[4px] border border-l-0 !text-black':
+            isActive,
           'border border-l-0 border-transparent': !isActive,
         })}
       >
@@ -95,7 +101,7 @@ const SegmentItem = ({
             {!isVisible && (
               <Icon
                 name="row-hidden"
-                className="h-5 w-5 text-[#3d5871]"
+                className="h-5 w-5 text-black"
                 onClick={e => {
                   e.stopPropagation();
                   onToggleVisibility(segmentationId, segmentIndex);
@@ -110,7 +116,7 @@ const SegmentItem = ({
               <div className="flex">
                 <Icon
                   name="row-lock"
-                  className="h-5 w-5 text-[#3d5871]"
+                  className="h-5 w-5 text-black"
                   onClick={e => {
                     e.stopPropagation();
                     onToggleLocked(segmentationId, segmentIndex);
@@ -157,7 +163,7 @@ const HoveringIcons = ({
   segmentationId,
   segmentIndex,
 }) => {
-  const iconClass = 'w-5 h-5 hover:cursor-pointer hover:opacity-60';
+  const iconClass = 'w-5 h-5 hover:cursor-pointer';
 
   const handleIconClick = (e, action) => {
     e.stopPropagation();
@@ -167,7 +173,7 @@ const HoveringIcons = ({
   const createIcon = (name, action, color = null) => (
     <Icon
       name={name}
-      className={classnames(iconClass, color ?? 'text-white')}
+      className={classnames(iconClass, color ?? '!text-black')}
       onClick={e => handleIconClick(e, action)}
     />
   );

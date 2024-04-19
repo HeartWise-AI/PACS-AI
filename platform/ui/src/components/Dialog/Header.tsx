@@ -21,7 +21,7 @@ CloseButton.propTypes = {
 };
 
 const Header = ({ title, noCloseButton, onClose }) => {
-  const theme = 'bg-primary-dark';
+  const theme = 'bg-gray-900';
   const flex = 'flex items-center justify-between';
   const padding = 'pb-[20px]';
 
