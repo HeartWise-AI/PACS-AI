@@ -196,11 +196,14 @@ const SidebarAdmin = () => {
             <li
               className="my-2 rounded-lg"
               style={{
-                background: 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)',
+                background:
+                  location.pathname === '/members'
+                    ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                    : undefined,
               }}
             >
               <a
-                href="#"
+                href="/members"
                 className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -257,16 +260,26 @@ const SidebarAdmin = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className="ms-3 ml-2 font-medium text-black"
+                    className={`ms-3 ml-2 font-medium  ${
+                      location.pathname === '/members' ? 'text-black' : 'text-white text-opacity-50'
+                    }`}
                   >
                     {t('Members')}
                   </Typography>
                 )}
               </a>
             </li>
-            <li>
+            <li
+              className="my-2 rounded-lg"
+              style={{
+                background:
+                  location.pathname === '/kibana-logs'
+                    ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                    : undefined,
+              }}
+            >
               <a
-                href="#"
+                href="/kibana-logs"
                 className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -287,14 +300,26 @@ const SidebarAdmin = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className="ms-3 ml-2 font-light text-white text-opacity-50"
+                    className={`ms-3 ml-2 font-medium  ${
+                      location.pathname === '/kibana-logs'
+                        ? 'text-black'
+                        : 'text-white text-opacity-50'
+                    }`}
                   >
                     {t('Kibana Logs')}
                   </Typography>
                 )}
               </a>
             </li>
-            <li>
+            <li
+              className="my-2 rounded-lg"
+              style={{
+                background:
+                  location.pathname === '/workspace-settings'
+                    ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                    : undefined,
+              }}
+            >
               <a
                 href="#"
                 className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
@@ -328,7 +353,11 @@ const SidebarAdmin = () => {
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
-                      className="ms-3 ml-2 font-light text-white text-opacity-50"
+                      className={`ms-3 ml-2 font-medium  ${
+                        location.pathname === '/workspace-settings'
+                          ? 'text-black'
+                          : 'text-white text-opacity-50'
+                      }`}
                     >
                       {t('Workspace Settings')}
                     </Typography>
