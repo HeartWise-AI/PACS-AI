@@ -36,6 +36,8 @@ export {
 /** COMPONENTS */
 export {
   AboutModal,
+  AdminHeader,
+  AdminTable,
   AdvancedToolbox,
   HotkeyField,
   Header,
@@ -92,6 +94,7 @@ export {
   StudyListExpandedRow,
   StudyListFilter,
   Sidebar,
+  SidebarAdmin,
   StudyListPagination,
   StudyListTable,
   StudyListTableRow,
