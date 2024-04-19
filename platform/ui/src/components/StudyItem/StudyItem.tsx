@@ -21,7 +21,7 @@ const StudyItem = ({
   return (
     <div
       className={classnames(
-        isActive ? 'bg-transparent' : 'hover:bg-secondary-main bg-black',
+        isActive ? 'bg-transparent' : 'bg-transparent hover:bg-gray-900 hover:bg-opacity-50',
         baseClasses
       )}
       onClick={onClick}
