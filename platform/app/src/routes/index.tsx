@@ -16,6 +16,7 @@ import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Members from './Members';
 import KibanaLogs from './KibanaLogs';
+import AIModels from './AIModels';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -126,6 +127,13 @@ const createRoutes = ({
     props: { children: ResetPassword, servicesManager, extensionManager },
   };
 
+  const AIModelsRoute = {
+    path: '/ai-models',
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: AIModels, servicesManager, extensionManager },
+  };
+
   const MembersRoute = {
     path: '/members',
     children: DataSourceWrapper,
@@ -146,6 +154,7 @@ const createRoutes = ({
     ...(showStudyList ? [WorkListRoute] : []),
     ...(showStudyList ? [LoginRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
+    ...(showStudyList ? [AIModelsRoute] : []),
     ...(showStudyList ? [MembersRoute] : []),
     ...(showStudyList ? [KibanaLogsRoute] : []),
     ...(customRoutes?.routes || []),
