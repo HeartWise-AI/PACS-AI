@@ -113,6 +113,17 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
           },
         },
         cssToJavaScript,
+        {
+          test: /\.(png|jpe?g|gif)$/i,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: '[name].[ext]',
+              },
+            },
+          ],
+        },
         // Note: Only uncomment the following if you are using the old style of stylus in v2
         // Also you need to uncomment this platform/app/.webpack/rules/extractStyleChunks.js
         // stylusToJavaScript,
