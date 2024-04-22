@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
-// import pacsLogo from 'platform/ui/src/assets/pacs/images/pacs-ai-logo.svg';
+import loginBG from './../../assets/pacs/bg/login-bg.png';
 
 const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
@@ -24,15 +24,10 @@ const LoginPage = () => {
         {showLoginForm && (
           <div className="flex h-full flex-col justify-between">
             <div>
-              {/* <h1 className="text-3xl text-white">PACS AI LOGO</h1>
-              <img
-                src={pacsLogo}
-                alt="PACS logo"
-              /> */}
-              <Logo width="200" />
+              <Logo class="h-auto w-[200px]" />
               <Typography
                 variant="body"
-                className="mt-2 text-white"
+                className="mt-4 text-white"
               >
                 {t('PACS AI (1234567890-00)')}
               </Typography>
@@ -124,7 +119,14 @@ const LoginPage = () => {
           </div>
         )}
       </div>
-      <div className="col-span-12  bg-gray-900 p-10 sm:col-span-4 md:col-span-7 xl:col-span-8"></div>
+      <div
+        style={{
+          backgroundImage: `url(${loginBG})`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+        }}
+        className="col-span-12 p-10 sm:col-span-4 md:col-span-7 xl:col-span-8"
+      ></div>
     </div>
   );
 };
