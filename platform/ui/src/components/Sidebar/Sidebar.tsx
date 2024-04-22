@@ -96,7 +96,9 @@ const Sidebar = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className="ms-3 ml-2 font-medium text-black"
+                    className={`ms-3 ml-2 font-medium  ${
+                      location.pathname === '/' ? 'text-black' : 'text-white text-opacity-50'
+                    }`}
                   >
                     {t('Studies')}
                   </Typography>
@@ -135,7 +137,11 @@ const Sidebar = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className="ms-3 ml-2 font-light text-white text-opacity-50"
+                    className={`ms-3 ml-2 font-medium  ${
+                      location.pathname === '/ai-models'
+                        ? 'text-black'
+                        : 'text-white text-opacity-50'
+                    }`}
                   >
                     {t('AI Models')}
                   </Typography>
@@ -166,7 +172,11 @@ const Sidebar = () => {
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
-                      className="ms-3 ml-2 font-light text-white text-opacity-50"
+                      className={`ms-3 ml-2 font-medium  ${
+                        location.pathname === '/ai-predictions'
+                          ? 'text-black'
+                          : 'text-white text-opacity-50'
+                      }`}
                     >
                       {t('AI Predictions')}
                     </Typography>
