@@ -67,7 +67,9 @@ const Sidebar = () => {
               className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background:
-                  location.pathname === '/'
+                  location.pathname === '/' ||
+                  location.pathname === '/viewer' ||
+                  location.pathname === '/segmentation'
                     ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                     : undefined,
               }}
@@ -78,26 +80,34 @@ const Sidebar = () => {
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
-                {location.pathname === '/' && (
+                {(location.pathname === '/' ||
+                  location.pathname === '/viewer' ||
+                  location.pathname === '/segmentation') && (
                   <img
                     src={studiesActiveIcon}
                     alt="Studies icon"
                     className="w-[18px]"
                   />
                 )}
-                {location.pathname !== '/' && (
-                  <img
-                    src={studiesInActiveIcon}
-                    alt="Studies icon"
-                    className="w-[18px]"
-                  />
-                )}
+                {location.pathname !== '/' &&
+                  location.pathname !== '/viewer' &&
+                  location.pathname !== '/segmentation' && (
+                    <img
+                      src={studiesInActiveIcon}
+                      alt="Studies icon"
+                      className="w-[18px]"
+                    />
+                  )}
 
                 {!sidebarMini && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
-                      location.pathname === '/' ? 'text-black' : 'text-white text-opacity-50'
+                      location.pathname === '/' ||
+                      location.pathname === '/viewer' ||
+                      location.pathname === '/segmentation'
+                        ? 'text-black'
+                        : 'text-white text-opacity-50'
                     }`}
                   >
                     {t('Studies')}
