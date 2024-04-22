@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Typography, Logo } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import logoIcon from './../../assets/pacs/logo/pacs-ai-icon-logo.png';
-import drawerLeftArrow from './../../assets/pacs/icon/align-from-left-gradient.png';
-import studiesActiveIcon from './../../assets/pacs/icon/studies-active.png';
-import studiesInActiveIcon from './../../assets/pacs/icon/studies-inactive.png';
-import aiModelsActiveIcon from './../../assets/pacs/icon/ai-models-active.png';
-import aiModelsInActiveIcon from './../../assets/pacs/icon/ai-models-inactive.png';
-import aiPredictionsInActiveIcon from './../../assets/pacs/icon/ai-predictions-inactive.png';
-import comingSoonImg from './../../assets/pacs/icon/coming-soon.png';
+import drawerLeftArrow from './../../assets/pacs/icons/align-from-left-gradient.png';
+import studiesActiveIcon from './../../assets/pacs/icons/studies-active.png';
+import studiesInActiveIcon from './../../assets/pacs/icons/studies-inactive.png';
+import aiModelsActiveIcon from './../../assets/pacs/icons/ai-models-active.png';
+import aiModelsInActiveIcon from './../../assets/pacs/icons/ai-models-inactive.png';
+import aiPredictionsInActiveIcon from './../../assets/pacs/icons/ai-predictions-inactive.png';
+import comingSoonImg from './../../assets/pacs/icons/coming-soon.png';
 
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
@@ -159,7 +159,7 @@ const Sidebar = () => {
               >
                 <img
                   src={aiPredictionsInActiveIcon}
-                  alt="AI Models icon"
+                  alt="AI Predictions icon"
                   className="w-[18px]"
                 />
                 {!sidebarMini && (
@@ -172,7 +172,7 @@ const Sidebar = () => {
                     </Typography>
                     <img
                       src={comingSoonImg}
-                      alt="AI Models icon"
+                      alt="AI Predictions icon"
                       className="h-[17px] w-auto"
                     />
                   </div>
