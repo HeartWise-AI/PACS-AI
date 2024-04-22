@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
@@ -29,12 +29,14 @@ const StudyListFilter = ({
     });
   };
   const isSortingEnabled = numOfStudies > 0 && numOfStudies <= 100;
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
 
   return (
     <React.Fragment>
       <div>
-        <div className="bg-transparent my-5">
-          <div className="w-full relative mx-auto pt-5">
+        <div className="my-5 bg-transparent">
+          <div className="relative mx-auto w-full pt-5">
             <div className="mb-5 flex flex-row justify-between">
               <div className="flex min-w-[1px] shrink flex-row items-center gap-6">
                 <Typography
@@ -55,41 +57,16 @@ const StudyListFilter = ({
                 )}
               </div>
               <div className="flex flex-row">
-                {/* TODO revisit the completely rounded style of button used for clearing the study list filter - for now use LegacyButton*/}
-                {/* {isFiltering && (
-                  <LegacyButton
-                    rounded="full"
-                    variant="outlined"
-                    color="primaryActive"
-                    border="primaryActive"
-                    className="mx-8"
-                    startIcon={<Icon name="cancel" />}
-                    onClick={clearFilters}
-                  >
-                    {t('ClearFilters')}
-                  </LegacyButton>
-                )}
-                <Typography
-                  variant="h6"
-                  className="mr-2"
-                  data-cy={'num-studies'}
+                <div
+                  className="relative flex items-center"
+                  ref={ref}
                 >
-                  {numOfStudies > 100 ? '>100' : numOfStudies}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  className="text-primary-light self-end pb-1"
-                >
-                  {t('Studies')}
-                </Typography> */}
-                <div className="flex items-center">
-                  <span className="text-common-light mr-3 text-lg">Hi, Juan</span>
                   <button
-                    id="dropdownDefaultButton"
-                    data-dropdown-toggle="dropdown"
+                    onClick={() => setIsOpen(!isOpen)}
                     className="inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-center text-sm font-medium text-white !ring-0"
                     type="button"
                   >
+                    <span className="text-common-light mr-3 text-lg">Hi, Juan</span>
                     <svg
                       className="ms-3 h-2.5 w-2.5"
                       aria-hidden="true"
@@ -99,20 +76,46 @@ const StudyListFilter = ({
                     >
                       <path
                         stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
                         d="m1 1 4 4 4-4"
                       />
                     </svg>
                   </button>
+
+                  {isOpen && (
+                    <div
+                      className="absolute z-10 w-28 divide-y divide-gray-100 rounded-lg bg-gray-900 shadow "
+                      style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
+                    >
+                      <ul className="py-2 text-sm text-white">
+                        <li>
+                          <a
+                            href="/settings"
+                            className="block px-4 py-2 hover:bg-gray-700"
+                          >
+                            Settings
+                          </a>
+                        </li>
+                        <li>
+                          <a
+                            href="#"
+                            className="block px-4 py-2 hover:bg-gray-700"
+                          >
+                            Logout
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="sticky w-full -top-1 z-10 mx-auto rounded-xl border border-white  border-opacity-10 mb-5 bg-white bg-opacity-[5%]">
+      <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
         <div className="bg-transparent p-5">
           <InputGroup
             inputMeta={filtersMeta}
@@ -124,7 +127,7 @@ const StudyListFilter = ({
           />
         </div>
         {numOfStudies > 100 && (
-          <div className="w-full m-auto">
+          <div className="m-auto w-full">
             <div className="bg-primary-main rounded-b py-1 text-center text-base">
               <p className="text-white">{t('NumOfStudiesHiggerThan100Message')}</p>
             </div>
