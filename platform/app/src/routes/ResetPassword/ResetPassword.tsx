@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Input, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+import loginBG from './../../assets/pacs/bg/login-bg.png';
 
 const ResetPasswordPage = () => {
   const { t } = useTranslation();
@@ -51,7 +52,14 @@ const ResetPasswordPage = () => {
           </div>
         </div>
       </div>
-      <div className="col-span-12  bg-gray-900 p-10 sm:col-span-4 md:col-span-7 xl:col-span-8"></div>
+      <div
+        style={{
+          backgroundImage: `url(${loginBG})`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+        }}
+        className="col-span-12 p-10 sm:col-span-4 md:col-span-7 xl:col-span-8"
+      ></div>
     </div>
   );
 };
