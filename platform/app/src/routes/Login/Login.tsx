@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
+import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 
 const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
@@ -87,9 +88,14 @@ const LoginPage = () => {
             <div>
               <button
                 type="button"
-                className="text-md rounded-lg bg-transparent p-0 font-medium text-white text-opacity-70 !ring-0"
+                className="text-md flex items-center rounded-lg bg-transparent p-0 font-medium text-white text-opacity-70 !ring-0"
                 onClick={handleBackToLoginClick}
               >
+                <img
+                  src={chevronLeft}
+                  alt="Chevron left"
+                  className="w-8"
+                />{' '}
                 Back to login
               </button>
             </div>
