@@ -48,7 +48,7 @@ const AdminHeader = ({ title }) => {
 
             {isOpen && (
               <div
-                className="absolute z-10 w-28 divide-y divide-gray-100 rounded-lg bg-gray-900 shadow "
+                className="absolute z-10 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
                 style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
               >
                 <ul className="py-2 text-sm text-white">
