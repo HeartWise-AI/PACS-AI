@@ -1,13 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import aiModelsIcon from './../../assets/pacs/icons/ai-models-gradient.png';
 import Icon from '../Icon';
 import Thumbnail from '../Thumbnail';
 import Tooltip from '../Tooltip';
 import { StringNumber } from '../../types';
-import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
-import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 
 const ThumbnailTracked = ({
   displaySetInstanceUID,
@@ -27,8 +24,6 @@ const ThumbnailTracked = ({
   isTracked,
   isActive,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
   const trackedIcon = isTracked ? 'circled-checkmark' : 'dotted-circle';
   const viewportIdentificatorLabel = viewportIdentificator.join(', ');
   const renderViewportLabels = () => {
@@ -73,7 +68,7 @@ const ThumbnailTracked = ({
       <div className="flex-2 flex flex-col items-center">
         <div
           className={classnames(
-            'relative mb-2 flex cursor-pointer flex-col items-center justify-start p-1',
+            'relative flex cursor-pointer flex-col items-center justify-start p-1',
             isTracked && 'rounded-sm hover:bg-gray-900'
           )}
         >
@@ -104,73 +99,10 @@ const ThumbnailTracked = ({
           >
             <Icon
               name={trackedIcon}
-              className="text-primary-light mb-2 w-4"
+              className="text-primary-light w-4"
             />
           </Tooltip>
-          <div
-            className="relative flex items-center"
-            ref={ref}
-          >
-            <button
-              className="h-[28px] w-[28px] rounded-lg bg-transparent bg-white bg-opacity-10 p-1"
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              <img
-                src={aiModelsIcon}
-                alt="AI Model icon"
-              />
-            </button>
 
-            {isOpen && (
-              <div
-                className="absolute z-10 w-[225px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
-                style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
-              >
-                <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-                  <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                    <img
-                      src={playerPlayIcon}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                    <h1 className="text-sm">Apply X3D LVEF detection</h1>
-                    <img
-                      src={helpInactive}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                  </li>
-                  <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                    <img
-                      src={playerPlayIcon}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                    <h1 className="text-sm">Apply X4D LVEF detection</h1>
-                    <img
-                      src={helpInactive}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                  </li>
-                  <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                    <img
-                      src={playerPlayIcon}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                    <h1 className="text-sm">Apply X5D LVEF detection</h1>
-                    <img
-                      src={helpInactive}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
           <div
             className="text-center text-xl leading-tight text-white"
             data-cy={'thumbnail-viewport-labels'}
