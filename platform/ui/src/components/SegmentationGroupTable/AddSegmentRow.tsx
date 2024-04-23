@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 function AddSegmentRow({ onClick, onToggleSegmentationVisibility = null, segmentation = null }) {
   const { t } = useTranslation('SegmentationTable');
   return (
-    <div className="flex justify-between bg-black pl-[34px] hover:cursor-pointer">
+    <div className="flex justify-between bg-transparent pl-[34px] hover:cursor-pointer">
       <div
         className="group py-[5px] pb-[5px]"
         onClick={onClick}
