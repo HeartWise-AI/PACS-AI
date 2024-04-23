@@ -65,7 +65,7 @@ function ThumbnailTracked({
           >
             <Icon
               name={trackedIcon}
-              className="text-primary-light mb-2 w-4"
+              className="text-primary-light w-4"
             />
           </Tooltip>
         </div>
