@@ -143,13 +143,13 @@ Here is a schematic representation of our development workflow:
 
 ### Getting Started
 
-1. [Fork this repository][how-to-fork]
-2. [Clone your forked repository][how-to-clone]
-   - `git clone https://github.com/YOUR-USERNAME/Viewers.git`
-3. Navigate to the cloned project's directory
-4. Add this repo as a `remote` named `upstream`
-   - `git remote add upstream https://github.com/OHIF/Viewers.git`
-5. `yarn install` to restore dependencies and link projects
+1. Installer NVM (brew install nvm)
+2. Installer node version 16 (nvm install 16)
+3. Git clone le repo (git clone https://github.com/HeartWise-AI/PACS-AI.git) et cd dans le repo
+4. Installer yarn (npm install --global yarn)
+5. enable yarn workspaces (yarn config set workspaces-experimental true)
+6. installer les packages du frontend (yarn install)
+7. lancer le mode dev du frontend (yarn start)
 
 #### To Develop
 
