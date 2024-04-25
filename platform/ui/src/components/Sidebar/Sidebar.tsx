@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Typography, Logo } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import logoIcon from './../../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../../assets/pacs/icons/studies-active.png';
@@ -13,6 +14,7 @@ import comingSoonImg from './../../assets/pacs/icons/coming-soon.png';
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
@@ -75,8 +77,8 @@ const Sidebar = () => {
               }}
             >
               <a
-                href="/"
-                className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
+                onClick={() => navigate('/')}
+                className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
@@ -125,8 +127,8 @@ const Sidebar = () => {
               }}
             >
               <a
-                href="ai-models"
-                className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
+                onClick={() => navigate('/ai-models')}
+                className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
