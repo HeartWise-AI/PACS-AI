@@ -80,7 +80,7 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
                   {t('Next')}
                 </LegacyButton>
               </LegacyButtonGroup>
-              <Typography className="text-base opacity-60 mt-2">
+              <Typography className="mt-2 text-base opacity-60">
                 {t('Page')} {currentPage}
               </Typography>
             </div>

@@ -44,7 +44,7 @@ const config = {
         commonjs: '@ohif/mode-longitudinal',
         amd: '@ohif/mode-longitudinal',
         root: '@ohif/mode-longitudinal',
-      }
+      },
     },
   ],
   module: {

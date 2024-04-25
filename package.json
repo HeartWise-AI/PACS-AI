@@ -53,12 +53,15 @@
     "lerna:cache": "./netlify-lerna-cache.sh",
     "lerna:restore": "./netlify-lerna-restore.sh",
     "lerna:customVersion": "node version.mjs",
-    "link-list": "npm ls --depth=0 --link=true"
+    "link-list": "npm ls --depth=0 --link=true",
+    "lint": "prettier --check . && eslint .",
+    "format": "prettier --write . && eslint --fix ."
   },
   "dependencies": {
     "@babel/runtime": "^7.20.13",
     "@kitware/vtk.js": "27.3.1",
-    "core-js": "^3.2.1"
+    "core-js": "^3.2.1",
+    "firebase": "^10.11.0"
   },
   "peerDependencies": {
     "react": "17.0.2",
@@ -90,7 +93,6 @@
     "copy-webpack-plugin": "^9.0.1",
     "cross-env": "^5.2.0",
     "css-loader": "^6.8.1",
-    "dotenv": "^8.1.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^7.2.0",
     "eslint-config-react-app": "^6.0.0",

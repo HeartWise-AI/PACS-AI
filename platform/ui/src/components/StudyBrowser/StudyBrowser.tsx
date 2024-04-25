@@ -66,7 +66,7 @@ const StudyBrowser = ({
                   style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
                 >
                   <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-                    <li className="hover:bg-primary-dark flex items-center gap-2 p-1 hover:text-black cursor-pointer">
+                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
                       <img
                         src={playerPlayIcon}
                         alt="Player play icon"
@@ -79,7 +79,7 @@ const StudyBrowser = ({
                         className="w-5"
                       />
                     </li>
-                    <li className="hover:bg-primary-dark flex items-center gap-2 p-1 hover:text-black cursor-pointer">
+                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
                       <img
                         src={playerPlayIcon}
                         alt="Player play icon"
@@ -92,7 +92,7 @@ const StudyBrowser = ({
                         className="w-5"
                       />
                     </li>
-                    <li className="hover:bg-primary-dark flex items-center gap-2 p-1 hover:text-black cursor-pointer">
+                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
                       <img
                         src={playerPlayIcon}
                         alt="Player play icon"

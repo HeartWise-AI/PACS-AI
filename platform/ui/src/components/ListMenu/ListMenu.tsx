@@ -29,7 +29,7 @@ const ListMenu = ({ items = [], renderer, onClick }) => {
   };
 
   return (
-    <div className="bg-[#4C504B] flex flex-col rounded-md pt-2 pb-2">
+    <div className="flex flex-col rounded-md bg-[#4C504B] pt-2 pb-2">
       {items.map((item, index) => {
         return (
           <ListItem
