@@ -1,5 +1,5 @@
 import React from 'react';
-import { AdminHeader, ButtonSecondary, Sidebar } from '@ohif/ui';
+import { AdminHeader, ButtonSecondary, Sidebar, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 
 const AIModelsPage = () => {
@@ -57,38 +57,101 @@ const AIModelsPage = () => {
           <div className="grid grid-cols-3 gap-5">
             {aiModelData.map(item => (
               <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-                <h1 className="text-xl text-white">{item.title}</h1>
-
-                <p className="my-2 text-sm font-light text-white text-opacity-70">{item.desc}</p>
+                <Typography
+                  variant="h6"
+                  className="text-white"
+                >
+                  {item.title}
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="my-2 text-sm font-light text-white text-opacity-70"
+                >
+                  {item.desc}
+                </Typography>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">{t('Name')}</h2>
-                  <h2 className="text-sm font-light text-white">{item.name}</h2>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
+                    {t('Name')}
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.name}
+                  </Typography>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
                     {t('Approval Date')}
-                  </h2>
-                  <h2 className="text-sm font-light text-white">{item.approvalDate}</h2>
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.approvalDate}
+                  </Typography>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">{t('Date')}</h2>
-                  <h2 className="text-sm font-light text-white">{item.date}</h2>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
+                    {t('Date')}
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.date}
+                  </Typography>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
                     {t('Last Update')}
-                  </h2>
-                  <h2 className="text-sm font-light text-white">{item.lastUpdate}</h2>
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.lastUpdate}
+                  </Typography>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
                     {t('Licensed to')}
-                  </h2>
-                  <h2 className="text-sm font-light text-white">{item.lastUpdate}</h2>
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.licensedTo}
+                  </Typography>
                 </div>
                 <div className="flex items-center justify-between pt-2">
-                  <h2 className="text-sm font-light text-white text-opacity-70">{t('Version')}</h2>
-                  <h2 className="text-sm font-light text-white">{item.version}</h2>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white text-opacity-70"
+                  >
+                    {t('Version')}
+                  </Typography>
+                  <Typography
+                    variant="body"
+                    className="font-light text-white"
+                  >
+                    {item.version}
+                  </Typography>
                 </div>
                 <ButtonSecondary
                   onClick={() => {}}
