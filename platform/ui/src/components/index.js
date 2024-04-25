@@ -3,6 +3,7 @@ import AdminHeader from './AdminHeader';
 import AdminTable from './AdminTable';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
+import ButtonSecondary from './ButtonSecondary';
 import { ButtonEnums } from './Button';
 import ContextMenu from './ContextMenu';
 import CinePlayer from './CinePlayer';
@@ -115,6 +116,7 @@ export {
   HotkeysPreferences,
   Button,
   ButtonGroup,
+  ButtonSecondary,
   ButtonEnums,
   CheckBox,
   CinePlayer,

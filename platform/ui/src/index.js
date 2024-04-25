@@ -43,6 +43,7 @@ export {
   HotkeysPreferences,
   Button,
   ButtonGroup,
+  ButtonSecondary,
   ButtonEnums,
   ContextMenu,
   CheckBox,
