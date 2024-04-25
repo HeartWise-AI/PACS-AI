@@ -20,7 +20,7 @@ import Local from './Local.json';
 import ErrorBoundary from './ErrorBoundary.json';
 
 export default {
-  'zh': {
+  zh: {
     AboutModal,
     Buttons,
     CineDialog,

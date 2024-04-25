@@ -66,7 +66,7 @@ function ViewportPane({
       className={classnames(
         'group/pane h-full w-full overflow-hidden rounded-md transition duration-300',
         {
-          'border-transparent border-2': isActive,
+          'border-2 border-transparent': isActive,
           'border-2 border-transparent': !isActive,
         },
         className
