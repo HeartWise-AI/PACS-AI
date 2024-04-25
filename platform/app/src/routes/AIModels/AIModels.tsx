@@ -1,5 +1,5 @@
 import React from 'react';
-import { AdminHeader, Sidebar } from '@ohif/ui';
+import { AdminHeader, ButtonSecondary, Sidebar } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 
 const AIModelsPage = () => {
@@ -58,6 +58,7 @@ const AIModelsPage = () => {
             {aiModelData.map(item => (
               <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
                 <h1 className="text-xl text-white">{item.title}</h1>
+
                 <p className="my-2 text-sm font-light text-white text-opacity-70">{item.desc}</p>
                 <div className="flex items-center justify-between pt-2">
                   <h2 className="text-sm font-light text-white text-opacity-70">{t('Name')}</h2>
@@ -89,12 +90,12 @@ const AIModelsPage = () => {
                   <h2 className="text-sm font-light text-white text-opacity-70">{t('Version')}</h2>
                   <h2 className="text-sm font-light text-white">{item.version}</h2>
                 </div>
-                <button className="relative mt-5 w-full overflow-hidden rounded-lg border-[1px] border-[rgba(62,241,209,.8)] py-2 px-4 text-white">
-                  <span className="relative z-10 bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)] bg-clip-text text-lg font-bold text-transparent">
-                    View More
-                  </span>
-                  <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-[rgba(108,105,244,0.1)] to-[rgba(62,241,209,0.1)]"></span>
-                </button>
+                <ButtonSecondary
+                  onClick={() => {}}
+                  className="mt-5 h-[40px] w-full"
+                >
+                  {'View More'}
+                </ButtonSecondary>
               </div>
             ))}
           </div>
