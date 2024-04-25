@@ -357,40 +357,27 @@ function WorkList({
               query.append('StudyInstanceUIDs', studyInstanceUid);
               return (
                 mode.displayName && (
-                  <Link
-                    className={isValidMode ? 'mr-2' : 'cursor-not-allowed  mr-2'}
+                  <Button
                     key={i}
-                    to={`${dataPath ? '../../' : ''}${mode.routeName}${
-                      dataPath || ''
-                    }?${query.toString()}`}
+                    disabled={!isValidMode}
+                    endIcon={<Icon name="launch-arrow" />}
+                    className="h-[35px] w-auto rounded-lg px-2 font-light text-white"
                     onClick={event => {
                       // In case any event bubbles up for an invalid mode, prevent the navigation.
                       // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
                       if (!isValidMode) {
                         event.preventDefault();
                       }
-                    }}
-                    // to={`${mode.routeName}/dicomweb?StudyInstanceUIDs=${studyInstanceUid}`}
-                  >
-                    {/* TODO revisit the completely rounded style of buttons used for launching a mode from the worklist later - for now use LegacyButton*/}
 
-                    {/* <LegacyButton
-                      rounded="full"
-                      variant={isValidMode ? 'contained' : 'disabled'}
-                      disabled={!isValidMode}
-                      endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
-                      onClick={() => {}}
-                    >
-                      {t(`Modes:${mode.displayName}`)}
-                    </LegacyButton> */}
-                    <Button
-                      disabled={!isValidMode}
-                      endIcon={<Icon name="launch-arrow" />}
-                      className="h-[35px] w-full rounded-lg px-2 font-light text-white"
-                    >
-                      {t(`Modes:${mode.displayName}`)}
-                    </Button>
-                  </Link>
+                      navigate(
+                        `${dataPath ? '../../' : ''}${mode.routeName}${
+                          dataPath || ''
+                        }?${query.toString()}`
+                      );
+                    }}
+                  >
+                    {t(`Modes:${mode.displayName}`)}
+                  </Button>
                 )
               );
             })}
