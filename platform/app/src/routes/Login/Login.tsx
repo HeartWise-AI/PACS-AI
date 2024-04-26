@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
+import { Button, Input, Logo, Typography } from '@ohif/ui';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './../../firebase';
+import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 
 const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { t } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -17,6 +25,33 @@ const LoginPage = () => {
   const handleBackToLoginClick = () => {
     setShowLoginForm(true);
     setShowForgotPasswordForm(false);
+  };
+
+  auth.tenantId = 'qhn-mha-nzjew';
+  const onLogin = e => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    signInWithEmailAndPassword(auth, email, password)
+      .then(userCredential => {
+        // Signed-in in firebase auth
+        userRepository
+          .Login({
+            tenantId: auth.tenantId,
+            idToken: userCredential._tokenResponse.idToken,
+          })
+          .then(response => {
+            console.log('123', response.data.sessionToken);
+            localStorage.setItem('sessionToken', response.data.sessionToken);
+            setIsLoggingIn(false);
+            navigate('/')
+          });
+      })
+      .catch(error => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(errorCode, errorMessage);
+        setIsLoggingIn(false);
+      });
   };
 
   return (
@@ -52,6 +87,7 @@ const LoginPage = () => {
                 id="email"
                 className="mb-4 w-full"
                 type="text"
+                onChange={e => setEmail(e.target.value)}
               />
               <Input
                 placeholder="Password"
@@ -59,6 +95,7 @@ const LoginPage = () => {
                 id="password"
                 className="mb-4 w-full"
                 type="password"
+                onChange={e => setPassword(e.target.value)}
               />
               <div className="mb-7 flex justify-end">
                 <button
@@ -70,16 +107,20 @@ const LoginPage = () => {
                 </button>
               </div>
               <Button
-                disabled={false}
+                disabled={isLoggingIn}
                 className="h-[51px] w-full rounded-lg !px-0"
+                onClick={onLogin}
               >
-                {'Login'}
+                {isLoggingIn ? '...' : 'Login'}
               </Button>
             </div>
             <div>
-              <h1 className="text-center text-base text-white text-opacity-70">
-                © 2024 PACS AI. All rights reserved.
-              </h1>
+              <Typography
+                variant="body"
+                className="text-center font-light text-white text-opacity-70"
+              >
+                {t('© 2024 PACS AI. All rights reserved.')}
+              </Typography>
             </div>
           </div>
         )}
@@ -95,15 +136,28 @@ const LoginPage = () => {
                   src={chevronLeft}
                   alt="Chevron left"
                   className="w-8"
-                />{' '}
-                Back to login
+                />
+                <Typography
+                  variant="subtitle"
+                  className="text-center font-light text-white text-opacity-70"
+                >
+                  {t(' Back to login')}
+                </Typography>
               </button>
             </div>
             <div>
-              <h1 className="text-[32px] text-white">Forgot Password</h1>
-              <h2 className="mb-5 text-sm text-white text-opacity-70">
-                To reset your password, please provide your registered email address.
-              </h2>
+              <Typography
+                variant="h3"
+                className="text-white"
+              >
+                {t('Forgot Password')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mb-5 text-white text-opacity-70"
+              >
+                {t('To reset your password, please provide your registered email address.')}
+              </Typography>
               <Input
                 placeholder="Email address"
                 autoFocus
@@ -119,9 +173,12 @@ const LoginPage = () => {
                 {'Reset Password'}
               </Button>
             </div>
-            <h1 className="text-center text-base text-white text-opacity-70">
-              © 2024 PACS AI. All rights reserved.
-            </h1>
+            <Typography
+              variant="body"
+              className="text-center font-light text-white text-opacity-70"
+            >
+              {t('© 2024 PACS AI. All rights reserved.')}
+            </Typography>
           </div>
         )}
       </div>
