@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAppConfig } from '@state';
+import { useDebounce, useSearchParams } from '@hooks';
+import { utils, hotkeys, ServicesManager, user } from '@ohif/core';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
-import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import qs from 'query-string';
 import isEqual from 'lodash.isequal';
-import { useTranslation } from 'react-i18next';
-//
 import filtersMeta from './filtersMeta.js';
-import { useAppConfig } from '@state';
-import { useDebounce, useSearchParams } from '@hooks';
-import { utils, hotkeys, ServicesManager } from '@ohif/core';
+import userRepository from '../../api/userRepository';
 
 import {
   Icon,
@@ -55,6 +55,7 @@ function WorkList({
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { show, hide } = useModal();
   const { t } = useTranslation();
+  const [currentUser, setCurrentUser] = useState(null);
   // ~ Modes
   const [appConfig] = useAppConfig();
   // ~ Filters
@@ -220,6 +221,21 @@ function WorkList({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedRows, studies]);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const userData = await userRepository.GetCurrentUser();
+        setCurrentUser(userData);
+        console.log('123123', userData.data.name);
+      } catch (error) {
+        navigate('/login');
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  });
 
   const isFiltering = (filterValues, defaultFilterValues) => {
     return !isEqual(filterValues, defaultFilterValues);
