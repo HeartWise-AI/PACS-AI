@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export default () => {
-  const apiUrl = 'http://localhost:8000';
+  const apiUrl = process.env.REACT_APP_PUBLIC_API_URL;
   const token = localStorage.getItem('sessionToken');
 
   return axios.create({

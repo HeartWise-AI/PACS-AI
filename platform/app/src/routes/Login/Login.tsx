@@ -34,17 +34,19 @@ const LoginPage = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then(userCredential => {
         // Signed-in in firebase auth
-        userRepository
+       userRepository
           .Login({
             tenantId: auth.tenantId,
             idToken: userCredential._tokenResponse.idToken,
           })
-          .then(response => {
-            console.log('123', response.data.sessionToken);
-            localStorage.setItem('sessionToken', response.data.sessionToken);
+          .then((response) => {
+            const sessionToken = response.data.sessionToken;
+            if (sessionToken) {
+              localStorage.setItem('sessionToken', sessionToken);
+             navigate('/change-password')
+            }
             setIsLoggingIn(false);
-            navigate('/')
-          });
+          })
       })
       .catch(error => {
         const errorCode = error.code;
