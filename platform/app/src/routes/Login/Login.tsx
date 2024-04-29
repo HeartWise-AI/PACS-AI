@@ -18,6 +18,7 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const tenantId = process.env.REACT_APP_TENANT_ID
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -29,7 +30,7 @@ const LoginPage = () => {
     setShowForgotPasswordForm(false);
   };
 
-  auth.tenantId = process.env.REACT_APP_TENANT_ID
+  auth.tenantId = tenantId
   const onLogin = e => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -54,7 +55,7 @@ const LoginPage = () => {
               if (!response.data.isEmailVerified) {
                 navigate('/change-password');
               } else {
-                navigate('/')
+                navigate(`/`)
               }
             })
             setIsLoggingIn(false);

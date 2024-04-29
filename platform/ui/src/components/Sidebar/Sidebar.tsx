@@ -15,6 +15,7 @@ const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const tenantId = process.env.REACT_APP_TENANT_ID
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
@@ -127,7 +128,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate('/ai-models')}
+                onClick={() => navigate(`/${tenantId}/ai-models`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}

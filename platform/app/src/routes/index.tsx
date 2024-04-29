@@ -107,58 +107,58 @@ const createRoutes = ({
     }) || [];
 
   const { customizationService } = servicesManager.services;
-
+ const tenantId = process.env.REACT_APP_TENANT_ID
   const WorkListRoute = {
-    path: '/',
+    path: `/`,
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkList, servicesManager, extensionManager },
   };
 
   const LoginRoute = {
-    path: '/login',
+    path: `${tenantId}/login`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Login, servicesManager, extensionManager },
   };
 
   const ChangePasswordRoute = {
-    path: '/change-password',
+    path: `${tenantId}/change-password`,
     children: DataSourceWrapper,
     private: true,
     props: { children: ChangePassword, servicesManager, extensionManager },
   };
 
   const ResetPasswordRoute = {
-    path: '/reset-password',
+    path: `${tenantId}/reset-password`,
     children: DataSourceWrapper,
     private: true,
     props: { children: ResetPassword, servicesManager, extensionManager },
   };
 
   const AIModelsRoute = {
-    path: '/ai-models',
+    path: `${tenantId}/ai-models`,
     children: DataSourceWrapper,
     private: true,
     props: { children: AIModels, servicesManager, extensionManager },
   };
 
   const MembersRoute = {
-    path: '/members',
+    path: `${tenantId}/members`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Members, servicesManager, extensionManager },
   };
 
   const KibanaLogsRoute = {
-    path: '/kibana-logs',
+    path: `${tenantId}/kibana-logs`,
     children: DataSourceWrapper,
     private: true,
     props: { children: KibanaLogs, servicesManager, extensionManager },
   };
 
   const SettingsRoute = {
-    path: '/settings',
+    path: `${tenantId}/settings`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Settings, servicesManager, extensionManager },
