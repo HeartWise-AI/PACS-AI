@@ -12,6 +12,12 @@ const HeaderPanel = ({ title }) => {
   const navigate = useNavigate();
   let name: string = 'User'
 
+  const logoutUser = () => {
+      localStorage.removeItem('sessionToken');
+      navigate('/login')
+  };
+
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -26,7 +32,7 @@ const HeaderPanel = ({ title }) => {
   }, [userRepository]);
 
   if (currentUser) {
-    name = currentUser.name;
+    name = currentUser.name.split(' ')[0];
   }
 
   return (
@@ -70,7 +76,7 @@ const HeaderPanel = ({ title }) => {
 
             {isOpen && (
               <div
-                className="absolute z-10 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
+                className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
                 style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
               >
                 <ul className="py-2 text-sm text-white">
@@ -84,8 +90,8 @@ const HeaderPanel = ({ title }) => {
                   </li>
                   <li>
                     <a
-                      href="#"
-                      className="block px-4 py-2 hover:bg-gray-700"
+                      className="block px-4 py-2 hover:bg-gray-700 cursor-pointer"
+                      onClick={logoutUser}
                     >
                       Logout
                     </a>
