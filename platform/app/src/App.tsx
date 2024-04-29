@@ -31,6 +31,7 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
+import { AlertProvider } from './AlertProvider';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -159,12 +160,14 @@ function App({
   }
 
   return (
+    <AlertProvider>
     <CombinedProviders>
       <BrowserRouter basename={routerBasename}>
         {authRoutes}
         {appRoutes}
       </BrowserRouter>
     </CombinedProviders>
+    </AlertProvider>
   );
 }
 
