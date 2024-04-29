@@ -23,10 +23,10 @@ const ChangePasswordPage = () => {
         setCurrentUser(response.data);
 
         if (currentUser.isEmailVerified) {
-          navigate('/');
+          navigate(`/`);
         }
       } catch (error) {
-       navigate('/login')
+       navigate(`/${tenantId}/login`)
       }
     };
 

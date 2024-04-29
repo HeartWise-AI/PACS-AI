@@ -10,11 +10,12 @@ const HeaderPanel = ({ title }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
   const navigate = useNavigate();
+  const tenantId = process.env.REACT_APP_TENANT_ID
   let name: string = 'User'
 
   const logoutUser = () => {
       localStorage.removeItem('sessionToken');
-      navigate('/login')
+      navigate(`${tenantId}/login`)
   };
 
 
@@ -24,7 +25,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-       navigate('/login')
+       navigate(`${tenantId}/login`)
       }
     };
 
