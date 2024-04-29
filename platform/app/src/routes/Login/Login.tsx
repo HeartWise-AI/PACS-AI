@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button, Input, Logo, Typography } from '@ohif/ui';
@@ -7,15 +7,17 @@ import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
+import { AlertContext } from '../../AlertProvider';
 
 const LoginPage = () => {
-  const [showLoginForm, setShowLoginForm] = useState(true);
-  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const showAlert = useContext(AlertContext);
+  const [showLoginForm, setShowLoginForm] = useState(true);
+  const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -27,7 +29,7 @@ const LoginPage = () => {
     setShowForgotPasswordForm(false);
   };
 
-  auth.tenantId = 'qhn-mha-nzjew';
+  auth.tenantId = process.env.REACT_APP_TENANT_ID
   const onLogin = e => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -40,18 +42,32 @@ const LoginPage = () => {
             idToken: userCredential._tokenResponse.idToken,
           })
           .then((response) => {
+            // save sessionToken in localStorage
             const sessionToken = response.data.sessionToken;
             if (sessionToken) {
               localStorage.setItem('sessionToken', sessionToken);
-             navigate('/change-password')
+
             }
+
+            // check if user is verified
+            userRepository.GetCurrentUser().then((response) => {
+              if (!response.data.isEmailVerified) {
+                navigate('/change-password');
+              } else {
+                navigate('/')
+              }
+            })
             setIsLoggingIn(false);
+            showAlert(response.message, 'success');
+          }).catch(error => {
+            showAlert(error.message, 'error');
           })
       })
       .catch(error => {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorCode, errorMessage);
+        showAlert(errorMessage, 'error');
         setIsLoggingIn(false);
       });
   };
