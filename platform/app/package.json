@@ -80,6 +80,7 @@
     "dcmjs": "*",
     "detect-gpu": "^4.0.16",
     "dicom-parser": "^1.8.9",
+    "dotenv": "^16.4.5",
     "dotenv-webpack": "^1.7.0",
     "file-loader": "^6.2.0",
     "firebase": "^10.11.1",

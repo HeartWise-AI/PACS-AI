@@ -79,6 +79,10 @@ module.exports = (env, argv) => {
         path.resolve(__dirname, '../../../node_modules'),
         SRC_DIR,
       ],
+      fallback: {
+        "os": false,
+        "crypto": false
+      }
     },
     plugins: [
       // For debugging re-renders
