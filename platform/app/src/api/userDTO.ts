@@ -1,22 +1,27 @@
+export interface ChangePasswordRequest {
+  id: string
+  tenantId: string
+  newPassword: string
+}
 export interface LoginRequest {
   tenantId: string;
   idToken: string;
 }
 
 export interface LoginResponse {
-  sessionToken: string
+  readonly sessionToken: string
 }
 
 export interface UserResponse {
-  id: string
-  tenantId: string
-  role: string
-  name: string
-  email: string
-  licenseNo: number
-  specialty: string
-  isEmailVerified: boolean
-  isAccountDisabled: boolean
-  createdAt: number
-  updatedAt: number
+ readonly id: string
+ readonly  tenantId: string
+ readonly  role: string
+ readonly  name: string
+ readonly  email: string
+ readonly  licenseNo: number
+ readonly  specialty: string
+ readonly  isEmailVerified: boolean
+ readonly  isAccountDisabled: boolean
+ readonly  createdAt: number
+ readonly  updatedAt: number
 }

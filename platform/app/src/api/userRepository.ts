@@ -1,7 +1,7 @@
 import type { AxiosResponse, AxiosError } from 'axios'
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
-import { LoginRequest, LoginResponse, UserResponse } from './userDTO';
+import { ChangePasswordRequest, LoginRequest, LoginResponse, UserResponse } from './userDTO';
 
 export default {
   /**
@@ -40,4 +40,23 @@ export default {
         throw response?.data !== undefined ? response.data : {}
       })
   },
+  /**
+   * Update user password
+   *
+   * @param   {ChangePasswordRequest<APIResponse><>>>}  request
+   *
+   * @return  {Promise<APIResponse><>>>}
+   */
+  UpdatePassword(request: ChangePasswordRequest): Promise<APIResponse<{}>> {
+    return Api()
+      .put(`/v1/user/password/update`, request)
+      .then((response: AxiosResponse<APIResponse<{}>>) => {
+        const {data} = response
+
+        return data
+      }).catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error
+        throw response?.data !== undefined ? response.data : {}
+      })
+  }
 };
