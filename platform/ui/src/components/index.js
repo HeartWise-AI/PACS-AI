@@ -1,5 +1,4 @@
 import AboutModal from './AboutModal';
-import AdminHeader from './AdminHeader';
 import AdminTable from './AdminTable';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
@@ -106,7 +105,6 @@ import StudyBrowserSort from './StudyBrowserSort';
 export {
   ActionButtons,
   AboutModal,
-  AdminHeader,
   AdminTable,
   AdvancedToolbox,
   AllInOneMenu,

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { AdminHeader, SidebarAdmin, Sidebar, Typography } from '@ohif/ui';
+import { useTranslation } from 'react-i18next';
+import { SidebarAdmin, Sidebar, Typography } from '@ohif/ui';
+import HeaderPanel from '/components/HeaderPanel';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
-import { useTranslation } from 'react-i18next';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ const SettingsPage = () => {
       <div className="flex w-full bg-[#151815] ">
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <AdminHeader title="Settings" />
+          <HeaderPanel title="Settings" />
           <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="">
               <h1 className="text-2xl text-white">{t('General Settings')}</h1>

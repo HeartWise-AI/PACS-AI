@@ -33,7 +33,6 @@ export {
 export {
   ActionButtons,
   AboutModal,
-  AdminHeader,
   AdminTable,
   AdvancedToolbox,
   AllInOneMenu,

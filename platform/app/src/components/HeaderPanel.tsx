@@ -1,11 +1,33 @@
-import React, { useState, useRef } from 'react';
-import { Typography } from '@ohif/ui';
+import React, { useState,useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
+import { Typography } from '@ohif/ui';
+import userRepository from '../api/userRepository';
 
-const AdminHeader = ({ title }) => {
+const HeaderPanel = ({ title }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
+  const navigate = useNavigate();
+  let name: string = 'User'
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await userRepository.GetCurrentUser();
+        setCurrentUser(response.data);
+      } catch (error) {
+       navigate('/login')
+      }
+    };
+
+    fetchCurrentUser();
+  }, [userRepository]);
+
+  if (currentUser) {
+    name = currentUser.name;
+  }
 
   return (
     <div className="relative mx-auto w-full pt-5">
@@ -28,7 +50,7 @@ const AdminHeader = ({ title }) => {
               className="inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-center text-sm font-medium text-white !ring-0"
               type="button"
             >
-              <span className="text-common-light mr-3 text-lg">Hi, Juan</span>
+              <span className="text-common-light mr-3 text-lg">Hi, {name}</span>
               <svg
                 className="ms-3 h-2.5 w-2.5"
                 aria-hidden="true"
@@ -78,4 +100,4 @@ const AdminHeader = ({ title }) => {
   );
 };
 
-export default AdminHeader;
+export default HeaderPanel;
