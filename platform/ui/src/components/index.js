@@ -1,5 +1,4 @@
 import AboutModal from './AboutModal';
-import AdminHeader from './AdminHeader';
 import AdminTable from './AdminTable';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
@@ -88,7 +87,6 @@ import LegacyButtonGroup from './LegacyButtonGroup';
 
 export {
   AboutModal,
-  AdminHeader,
   AdminTable,
   AdvancedToolbox,
   HotkeyField,

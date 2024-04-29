@@ -36,7 +36,6 @@ export {
 /** COMPONENTS */
 export {
   AboutModal,
-  AdminHeader,
   AdminTable,
   AdvancedToolbox,
   HotkeyField,

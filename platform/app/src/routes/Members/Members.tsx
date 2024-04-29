@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { AdminHeader, AdminTable, Button, Input, Logo, SidebarAdmin, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+import { AdminTable, Button, Input, Logo, SidebarAdmin, Typography } from '@ohif/ui';
+import HeaderPanel from '/components/HeaderPanel';
 
 const MembersPage = () => {
   const headers = ['ID', 'Name', 'Email', 'License No.', 'Specialty', 'Email Status', 'Created At'];
@@ -57,7 +58,7 @@ const MembersPage = () => {
       <div className="flex w-full bg-[#151815] ">
         <SidebarAdmin />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <AdminHeader title="Members" />
+          <HeaderPanel title="Members" />
           {/* filter container */}
           <div className="flex justify-between rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <Input

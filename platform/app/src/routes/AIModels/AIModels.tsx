@@ -1,6 +1,7 @@
 import React from 'react';
-import { AdminHeader, ButtonSecondary, Sidebar, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
+import { ButtonSecondary, Sidebar, Typography } from '@ohif/ui';
+import HeaderPanel from '/components/HeaderPanel';
 
 const AIModelsPage = () => {
   const { t } = useTranslation();
@@ -53,7 +54,7 @@ const AIModelsPage = () => {
       <div className="flex w-full bg-[#151815]">
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <AdminHeader title="AI Models" />
+          <HeaderPanel title="AI Models" />
           <div className="grid grid-cols-3 gap-5">
             {aiModelData.map(item => (
               <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
