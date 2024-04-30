@@ -1,6 +1,6 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
@@ -18,7 +18,7 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const tenantId = process.env.REACT_APP_TENANT_ID;
+  let { tenantId } = useParams();
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -52,9 +52,9 @@ const LoginPage = () => {
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
               if (!response.data.isEmailVerified) {
-                navigate('/change-password');
+                navigate(`/${tenantId}/change-password`);
               } else {
-                navigate(`/`);
+                navigate(`/${tenantId}`);
               }
             });
             setIsLoggingIn(false);
@@ -72,6 +72,20 @@ const LoginPage = () => {
         setIsLoggingIn(false);
       });
   };
+
+  const getCurrentUser = () => {
+    userRepository.GetCurrentUser().then(response => {
+      if (response.success) {
+        navigate(`/${tenantId}`);
+      } else {
+        localStorage.removeItem('sessionToken');
+      }
+    });
+  };
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
 
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">

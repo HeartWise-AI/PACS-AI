@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Typography } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 
@@ -10,12 +10,12 @@ const HeaderPanel = ({ title }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
   const navigate = useNavigate();
-  const tenantId = process.env.REACT_APP_TENANT_ID;
+  let {tenantId} = useParams();
   let name: string = 'User';
 
   const logoutUser = () => {
     localStorage.removeItem('sessionToken');
-    navigate(`${tenantId}/login`);
+    navigate(`/${tenantId}/login`);
   };
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        navigate(`${tenantId}/login`);
+        logoutUser();
       }
     };
 
