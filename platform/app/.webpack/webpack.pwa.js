@@ -71,9 +71,9 @@ module.exports = (env, argv) => {
         SRC_DIR,
       ],
       fallback: {
-        "os": false,
-        "crypto": false
-      }
+        os: false,
+        crypto: false,
+      },
     },
     plugins: [
       new Dotenv(),

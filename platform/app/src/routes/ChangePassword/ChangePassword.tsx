@@ -14,7 +14,7 @@ const ChangePasswordPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const tenantId = process.env.REACT_APP_TENANT_ID
+  const tenantId = process.env.REACT_APP_TENANT_ID;
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -26,7 +26,7 @@ const ChangePasswordPage = () => {
           navigate(`/`);
         }
       } catch (error) {
-       navigate(`/${tenantId}/login`)
+        navigate(`/${tenantId}/login`);
       }
     };
 
@@ -37,16 +37,20 @@ const ChangePasswordPage = () => {
     e.preventDefault();
     setIsChangingPassword(true);
 
-  // validate the new password
-  const passwordErrors = validatePassword(newPassword);
-  const hasErrors = Object.values(passwordErrors).some(error => error);
+    // validate the new password
+    const passwordErrors = validatePassword(newPassword);
+    const hasErrors = Object.values(passwordErrors).some(error => error);
 
-  if (hasErrors) {
-    setIsChangingPassword(false);
-    showAlert(Object.values(passwordErrors).filter(error => error).join(', '), 'error');
-    return;
-  }
-
+    if (hasErrors) {
+      setIsChangingPassword(false);
+      showAlert(
+        Object.values(passwordErrors)
+          .filter(error => error)
+          .join(', '),
+        'error'
+      );
+      return;
+    }
 
     if (newPassword !== confirmNewPassword) {
       setIsChangingPassword(false);
@@ -54,84 +58,85 @@ const ChangePasswordPage = () => {
       return;
     }
 
-    userRepository.UpdatePassword({
-      id: currentUser.id,
-      tenantId: tenantId,
-      newPassword,
-    }).then(() => {
-      setIsChangingPassword(false);
-      showAlert('Updated password successfully', 'success');
-      navigate('/');
-    }).catch((error) => {
-      setIsChangingPassword(false);
-      console.log(error);
-    });
-  }
+    userRepository
+      .UpdatePassword({
+        id: currentUser.id,
+        tenantId: tenantId,
+        newPassword,
+      })
+      .then(() => {
+        setIsChangingPassword(false);
+        showAlert('Updated password successfully', 'success');
+        navigate('/');
+      })
+      .catch(error => {
+        setIsChangingPassword(false);
+        console.log(error);
+      });
+  };
 
-  const validatePassword = (value) => {
+  const validatePassword = value => {
     return {
       required: !value && 'Password is required',
       minLength: value.length < 8 && 'Minimum 8 characters required',
       hasUpperCase: !/[A-Z]/.test(value) && 'At least one uppercase letter required',
       hasLowerCase: !/[a-z]/.test(value) && 'At least one lowercase letter required',
       hasNumber: !/\d/.test(value) && 'At least one number required',
-      hasSpecialChar: !/[!@#$%^&*()_+={};:'"|,.<>?]+/.test(value) && 'At least one special character required'
+      hasSpecialChar:
+        !/[!@#$%^&*()_+={};:'"|,.<>?]+/.test(value) && 'At least one special character required',
     };
   };
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">
       <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-5 xl:col-span-4">
-
-          <div className="flex h-full flex-col justify-between">
-            <div>
-            </div>
-            <div>
-              <Typography
-                variant="h3"
-                className="mt-2 text-white"
-              >
-                {t('Change Password')}
-              </Typography>
-              <Typography
-                variant="body"
-                className="mb-5 text-white text-opacity-70"
-              >
-                {t('Please provide your default and new password to continue.')}
-              </Typography>
-              <Input
-                placeholder="New Password"
-                autoFocus
-                id="password"
-                className="mb-4 w-full"
-                type="password"
-                onChange={e => setNewPassword(e.target.value)}
-              />
-              <Input
-                placeholder="Confirm New Password"
-                autoFocus
-                id="password"
-                className="mb-4 w-full"
-                type="password"
-                onChange={e => setConfirmNewPassword(e.target.value)}
-              />
-              <Button
-                disabled={isChangingPassword}
-                className="h-[51px] w-full rounded-lg !px-0"
-                onClick={changePassword}
-              >
-                {isChangingPassword ? '...' : 'Confirm'}
-              </Button>
-            </div>
-            <div>
-              <Typography
-                variant="body"
-                className="text-center font-light text-white text-opacity-70"
-              >
-                {t('© 2024 PACS AI. All rights reserved.')}
-              </Typography>
-            </div>
+        <div className="flex h-full flex-col justify-between">
+          <div></div>
+          <div>
+            <Typography
+              variant="h3"
+              className="mt-2 text-white"
+            >
+              {t('Change Password')}
+            </Typography>
+            <Typography
+              variant="body"
+              className="mb-5 text-white text-opacity-70"
+            >
+              {t('Please provide your default and new password to continue.')}
+            </Typography>
+            <Input
+              placeholder="New Password"
+              autoFocus
+              id="password"
+              className="mb-4 w-full"
+              type="password"
+              onChange={e => setNewPassword(e.target.value)}
+            />
+            <Input
+              placeholder="Confirm New Password"
+              autoFocus
+              id="password"
+              className="mb-4 w-full"
+              type="password"
+              onChange={e => setConfirmNewPassword(e.target.value)}
+            />
+            <Button
+              disabled={isChangingPassword}
+              className="h-[51px] w-full rounded-lg !px-0"
+              onClick={changePassword}
+            >
+              {isChangingPassword ? '...' : 'Confirm'}
+            </Button>
           </div>
-
+          <div>
+            <Typography
+              variant="body"
+              className="text-center font-light text-white text-opacity-70"
+            >
+              {t('© 2024 PACS AI. All rights reserved.')}
+            </Typography>
+          </div>
+        </div>
       </div>
       <div
         style={{

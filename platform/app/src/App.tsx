@@ -108,12 +108,12 @@ function App({ config, defaultExtensions, defaultModes }) {
 
   return (
     <AlertProvider>
-    <CombinedProviders>
-      <BrowserRouter basename={routerBasename}>
-        {authRoutes}
-        {appRoutes}
-      </BrowserRouter>
-    </CombinedProviders>
+      <CombinedProviders>
+        <BrowserRouter basename={routerBasename}>
+          {authRoutes}
+          {appRoutes}
+        </BrowserRouter>
+      </CombinedProviders>
     </AlertProvider>
   );
 }

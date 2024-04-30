@@ -18,7 +18,7 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const tenantId = process.env.REACT_APP_TENANT_ID
+  const tenantId = process.env.REACT_APP_TENANT_ID;
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -30,39 +30,39 @@ const LoginPage = () => {
     setShowForgotPasswordForm(false);
   };
 
-  auth.tenantId = tenantId
+  auth.tenantId = tenantId;
   const onLogin = e => {
     e.preventDefault();
     setIsLoggingIn(true);
     signInWithEmailAndPassword(auth, email, password)
       .then(userCredential => {
         // Signed-in in firebase auth
-       userRepository
+        userRepository
           .Login({
             tenantId: auth.tenantId,
             idToken: userCredential._tokenResponse.idToken,
           })
-          .then((response) => {
+          .then(response => {
             // save sessionToken in localStorage
             const sessionToken = response.data.sessionToken;
             if (sessionToken) {
               localStorage.setItem('sessionToken', sessionToken);
-
             }
 
             // check if user is verified
-            userRepository.GetCurrentUser().then((response) => {
+            userRepository.GetCurrentUser().then(response => {
               if (!response.data.isEmailVerified) {
                 navigate('/change-password');
               } else {
-                navigate(`/`)
+                navigate(`/`);
               }
-            })
+            });
             setIsLoggingIn(false);
             showAlert(response.message, 'success');
-          }).catch(error => {
-            showAlert(error.message, 'error');
           })
+          .catch(error => {
+            showAlert(error.message, 'error');
+          });
       })
       .catch(error => {
         const errorCode = error.code;

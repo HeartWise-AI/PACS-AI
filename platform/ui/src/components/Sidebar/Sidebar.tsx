@@ -15,7 +15,7 @@ const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const tenantId = process.env.REACT_APP_TENANT_ID
+  const tenantId = process.env.REACT_APP_TENANT_ID;
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
