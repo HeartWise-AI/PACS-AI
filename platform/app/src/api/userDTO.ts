@@ -1,7 +1,7 @@
 export interface ChangePasswordRequest {
-  id: string
-  tenantId: string
-  newPassword: string
+  id: string;
+  tenantId: string;
+  newPassword: string;
 }
 export interface LoginRequest {
   tenantId: string;
@@ -9,19 +9,19 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  readonly sessionToken: string
+  readonly sessionToken: string;
 }
 
 export interface UserResponse {
- readonly id: string
- readonly  tenantId: string
- readonly  role: string
- readonly  name: string
- readonly  email: string
- readonly  licenseNo: number
- readonly  specialty: string
- readonly  isEmailVerified: boolean
- readonly  isAccountDisabled: boolean
- readonly  createdAt: number
- readonly  updatedAt: number
+  readonly id: string;
+  readonly tenantId: string;
+  readonly role: string;
+  readonly name: string;
+  readonly email: string;
+  readonly licenseNo: number;
+  readonly specialty: string;
+  readonly isEmailVerified: boolean;
+  readonly isAccountDisabled: boolean;
+  readonly createdAt: number;
+  readonly updatedAt: number;
 }

@@ -1,4 +1,4 @@
-import React, { useState,useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Typography } from '@ohif/ui';
@@ -10,14 +10,13 @@ const HeaderPanel = ({ title }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
   const navigate = useNavigate();
-  const tenantId = process.env.REACT_APP_TENANT_ID
-  let name: string = 'User'
+  const tenantId = process.env.REACT_APP_TENANT_ID;
+  let name: string = 'User';
 
   const logoutUser = () => {
-      localStorage.removeItem('sessionToken');
-      navigate(`${tenantId}/login`)
+    localStorage.removeItem('sessionToken');
+    navigate(`${tenantId}/login`);
   };
-
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -25,7 +24,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-       navigate(`${tenantId}/login`)
+        navigate(`${tenantId}/login`);
       }
     };
 
@@ -91,7 +90,7 @@ const HeaderPanel = ({ title }) => {
                   </li>
                   <li>
                     <a
-                      className="block px-4 py-2 hover:bg-gray-700 cursor-pointer"
+                      className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                       onClick={logoutUser}
                     >
                       Logout

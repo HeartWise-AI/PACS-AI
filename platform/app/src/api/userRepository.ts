@@ -1,4 +1,4 @@
-import type { AxiosResponse, AxiosError } from 'axios'
+import type { AxiosResponse, AxiosError } from 'axios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
 import { ChangePasswordRequest, LoginRequest, LoginResponse, UserResponse } from './userDTO';
@@ -15,13 +15,14 @@ export default {
     return Api()
       .post(`/v1/iam/login`, request)
       .then((response: AxiosResponse<APIResponse<LoginResponse>>) => {
-        const {data} = response
+        const { data } = response;
 
-        return data
-      }).catch((error:AxiosError<ErrorAPIResponse>) => {
-        const { response } = error
-        throw response?.data !== undefined ? response.data : {}
+        return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : {};
+      });
   },
   /**
    * Get current user info
@@ -32,13 +33,14 @@ export default {
     return Api()
       .get(`/v1/user/me`)
       .then((response: AxiosResponse<APIResponse<UserResponse>>) => {
-        const {data} = response
+        const { data } = response;
 
-        return data
-      }).catch((error: AxiosError<ErrorAPIResponse>) => {
-        const { response } = error
-        throw response?.data !== undefined ? response.data : {}
+        return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : {};
+      });
   },
   /**
    * Update user password
@@ -51,12 +53,13 @@ export default {
     return Api()
       .put(`/v1/user/password/update`, request)
       .then((response: AxiosResponse<APIResponse<{}>>) => {
-        const {data} = response
+        const { data } = response;
 
-        return data
-      }).catch((error: AxiosError<ErrorAPIResponse>) => {
-        const { response } = error
-        throw response?.data !== undefined ? response.data : {}
+        return data;
       })
-  }
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : {};
+      });
+  },
 };

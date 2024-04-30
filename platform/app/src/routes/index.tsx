@@ -107,7 +107,7 @@ const createRoutes = ({
     }) || [];
 
   const { customizationService } = servicesManager.services;
- const tenantId = process.env.REACT_APP_TENANT_ID
+  const tenantId = process.env.REACT_APP_TENANT_ID;
   const WorkListRoute = {
     path: `/`,
     children: DataSourceWrapper,

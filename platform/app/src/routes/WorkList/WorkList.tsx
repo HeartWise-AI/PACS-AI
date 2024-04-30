@@ -243,7 +243,6 @@ function WorkList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedRows, studies]);
 
-
   const isFiltering = (filterValues, defaultFilterValues) => {
     return !isEqual(filterValues, defaultFilterValues);
   };
@@ -546,7 +545,7 @@ function WorkList({
       <div className="flex w-full bg-[#151815] ">
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-        <HeaderPanel title="Worklist" />
+          <HeaderPanel title="Worklist" />
           <StudyListFilter
             numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
             filtersMeta={filtersMeta}
