@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 export const AlertContext = React.createContext();
 
+// eslint-disable-next-line react/prop-types
 export const AlertProvider = ({ children }) => {
   const [alert, setAlert] = useState({ message: '', variant: '' });
 

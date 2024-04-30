@@ -23,7 +23,9 @@ const SidebarAdmin = () => {
       try {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     fetchCurrentUser();
