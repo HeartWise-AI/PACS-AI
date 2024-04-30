@@ -19,7 +19,7 @@ import {
   StudyListTable,
   StudyListPagination,
   StudyListFilter,
-  Sidebar,
+  // Sidebar,
   TooltipClipboard,
   Header,
   useModal,
@@ -28,7 +28,7 @@ import {
   LoadingIndicatorProgress,
 } from '@ohif/ui';
 import HeaderPanel from '/components/HeaderPanel';
-
+import Sidebar from '/components/Sidebar';
 import i18n from '@ohif/i18n';
 
 const { sortBySeriesDate } = utils;

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AdminTable, Button, Input, Logo, SidebarAdmin, Typography } from '@ohif/ui';
+import { AdminTable, Button, Input, Logo, Typography } from '@ohif/ui';
 import HeaderPanel from '/components/HeaderPanel';
+import SidebarAdmin from '../../components/SidebarAdmin';
 
 const KibanaLogsPage = () => {
   const headers = ['ID', 'Name', 'Email', 'License No.', 'Specialty', 'Email Status', 'Created At'];
