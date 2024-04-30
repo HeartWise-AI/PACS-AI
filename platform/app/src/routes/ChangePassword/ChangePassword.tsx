@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Button, Input, Typography } from '@ohif/ui';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
@@ -14,7 +14,7 @@ const ChangePasswordPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  let { tenantId } = useParams();
+  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -23,10 +23,10 @@ const ChangePasswordPage = () => {
         setCurrentUser(response.data);
 
         if (currentUser.isEmailVerified) {
-          navigate(`/${tenantId}`);
+          navigate(`/?t=${tenantId}`);
         }
       } catch (error) {
-        navigate(`/${tenantId}/login`);
+        navigate(`/login?t=${tenantId}`);
       }
     };
 
@@ -64,14 +64,14 @@ const ChangePasswordPage = () => {
         tenantId: tenantId,
         newPassword,
       })
-      .then(() => {
+      .then(response => {
         setIsChangingPassword(false);
-        showAlert('Updated password successfully', 'success');
-        navigate(`/${tenantId}`);
+        showAlert(response.message, 'success');
+        navigate(`/?t=${tenantId}`);
       })
       .catch(error => {
         setIsChangingPassword(false);
-        console.log(error);
+        showAlert(error.message, 'error');
       });
   };
 

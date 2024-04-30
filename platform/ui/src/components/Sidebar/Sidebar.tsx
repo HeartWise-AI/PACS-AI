@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Typography, Logo } from '@ohif/ui';
 import logoIcon from './../../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../../assets/pacs/icons/align-from-left-gradient.png';
@@ -15,7 +15,7 @@ const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  let { tenantId } = useParams();
+  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
@@ -75,31 +75,29 @@ const Sidebar = () => {
               className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background:
-                  isPageActive(`/${tenantId}`) ||
-                  isPageActive(`/${tenantId}/viewer`) ||
-                  isPageActive(`/${tenantId}/segmentation`)
+                  isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
                     ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                     : undefined,
               }}
             >
               <a
-                onClick={() => navigate(`/${tenantId}`)}
+                onClick={() => navigate(`/?t=${tenantId}`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
-                {(isPageActive(`/${tenantId}`) ||
-                  isPageActive(`/${tenantId}/viewer`) ||
-                  isPageActive(`/${tenantId}/segmentation`)) && (
+                {(isPageActive(`/`) ||
+                  isPageActive(`/viewer`) ||
+                  isPageActive(`/segmentation`)) && (
                   <img
                     src={studiesActiveIcon}
                     alt="Studies icon"
                     className="w-[18px]"
                   />
                 )}
-                {!isPageActive(`/${tenantId}`) &&
-                  !isPageActive(`/${tenantId}/viewer`) &&
-                  !isPageActive(`/${tenantId}/segmentation`) && (
+                {!isPageActive(`/`) &&
+                  !isPageActive(`/viewer`) &&
+                  !isPageActive(`/segmentation`) && (
                     <img
                       src={studiesInActiveIcon}
                       alt="Studies icon"
@@ -111,9 +109,7 @@ const Sidebar = () => {
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
-                      isPageActive(`/${tenantId}`) ||
-                      isPageActive(`/${tenantId}/viewer`) ||
-                      isPageActive(`/${tenantId}/segmentation`)
+                      isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
                         ? 'text-black'
                         : 'text-white text-opacity-50'
                     }`}
@@ -126,25 +122,25 @@ const Sidebar = () => {
             <li
               className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
-                background: isPageActive(`/${tenantId}/ai-models`)
+                background: isPageActive(`/ai-models`)
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                   : undefined,
               }}
             >
               <a
-                onClick={() => navigate(`/${tenantId}/ai-models`)}
+                onClick={() => navigate(`/ai-models?t=${tenantId}`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
-                {isPageActive(`/${tenantId}/ai-models`) && (
+                {isPageActive(`/ai-models`) && (
                   <img
                     src={aiModelsActiveIcon}
                     alt="AI Models icon"
                     className="w-[18px]"
                   />
                 )}
-                {!isPageActive(`/${tenantId}/ai-models`) && (
+                {!isPageActive(`/ai-models`) && (
                   <img
                     src={aiModelsInActiveIcon}
                     alt="AI Models icon"
@@ -155,9 +151,7 @@ const Sidebar = () => {
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
-                      isPageActive(`/${tenantId}/ai-models`)
-                        ? 'text-black'
-                        : 'text-white text-opacity-50'
+                      isPageActive(`/ai-models`) ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
                     {t('AI Models')}

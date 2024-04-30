@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppConfig } from '@state';
 import { useDebounce, useSearchParams } from '@hooks';
 import classnames from 'classnames';
@@ -68,7 +68,7 @@ function WorkList({
 
   const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
-  let { tenantId } = useParams();
+  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   /*
    * The default sort value keep the filters synchronized with runtime conditional sorting
@@ -186,8 +186,8 @@ function WorkList({
     });
 
     navigate({
-      pathname: `/${tenantId}`,
-      search: search ? `?${search}` : undefined,
+      pathname: `/`,
+      search: `?t=${tenantId}${search ? `&${search}` : ''}`,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFilterValues]);
@@ -372,7 +372,7 @@ function WorkList({
                       navigate(
                         `${dataPath ? '../../' : ''}${mode.routeName}${
                           dataPath || ''
-                        }?${query.toString()}`
+                        }?${query.toString()}&t=${tenantId}`
                       );
                     }}
                   >
