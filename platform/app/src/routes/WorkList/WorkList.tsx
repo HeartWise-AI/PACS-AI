@@ -478,7 +478,7 @@ function WorkList({
       <div className="flex w-full bg-[#151815] ">
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <HeaderPanel title="Worklist" />
+          <HeaderPanel title="Studies" />
           <StudyListFilter
             numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
             filtersMeta={filtersMeta}
