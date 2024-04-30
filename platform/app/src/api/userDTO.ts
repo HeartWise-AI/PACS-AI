@@ -1,6 +1,4 @@
 export interface ChangePasswordRequest {
-  id: string;
-  tenantId: string;
   newPassword: string;
 }
 

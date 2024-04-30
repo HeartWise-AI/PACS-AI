@@ -25,9 +25,7 @@ const ChangePasswordPage = () => {
         if (currentUser.isEmailVerified) {
           navigate(`/?t=${tenantId}`);
         }
-      } catch (error) {
-        navigate(`/login?t=${tenantId}`);
-      }
+      } catch (error) {}
     };
 
     fetchCurrentUser();
@@ -60,8 +58,6 @@ const ChangePasswordPage = () => {
 
     userRepository
       .UpdatePassword({
-        id: currentUser.id,
-        tenantId: tenantId,
         newPassword,
       })
       .then(response => {
