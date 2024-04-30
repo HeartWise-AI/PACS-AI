@@ -18,7 +18,10 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const tenantId = new URLSearchParams(useLocation().search).get('t');
+
+  auth.tenantId = tenantId;
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -30,7 +33,7 @@ const LoginPage = () => {
     setShowForgotPasswordForm(false);
   };
 
-  auth.tenantId = tenantId;
+  // User login
   const onLogin = e => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -73,6 +76,7 @@ const LoginPage = () => {
       });
   };
 
+  // Get current user info
   const getCurrentUser = () => {
     userRepository.GetCurrentUser().then(response => {
       if (response.success) {
@@ -81,6 +85,24 @@ const LoginPage = () => {
         localStorage.removeItem('sessionToken');
       }
     });
+  };
+
+  // User reset password
+  const resetPassword = e => {
+    e.preventDefault();
+    setIsResettingPassword(true);
+    userRepository
+      .ForgotPassword({ tenantId, email })
+      .then(response => {
+        setIsResettingPassword(false);
+        showAlert(response.message, 'success');
+        setShowForgotPasswordForm(false);
+        setShowLoginForm(true);
+      })
+      .catch(error => {
+        setIsResettingPassword(false);
+        showAlert(error.message, 'error');
+      });
   };
 
   useEffect(() => {
@@ -197,13 +219,15 @@ const LoginPage = () => {
                 id="email"
                 className="mb-4 w-full"
                 type="text"
+                onChange={e => setEmail(e.target.value)}
               />
 
               <Button
-                disabled={false}
-                className="mt-7 h-[51px] w-full rounded-lg"
+                disabled={isResettingPassword}
+                className="mt-7 h-[51px] w-full rounded-lg !px-0"
+                onClick={resetPassword}
               >
-                {'Reset Password'}
+                {isResettingPassword ? '...' : 'Reset Password'}
               </Button>
             </div>
             <Typography
