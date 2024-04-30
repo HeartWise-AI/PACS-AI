@@ -44,7 +44,7 @@ const NotFoundStudy = () => {
           One or more of the requested studies are not available at this time. Return to the{' '}
           <Link
             className="text-primary-light"
-            to={`/:tenantId`}
+            to={`/`}
           >
             study list
           </Link>{' '}
@@ -108,56 +108,56 @@ const createRoutes = ({
 
   const { customizationService } = servicesManager.services;
   const WorkListRoute = {
-    path: `/:tenantId`,
+    path: `/`,
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkList, servicesManager, extensionManager },
   };
 
   const LoginRoute = {
-    path: `/:tenantId/login`,
+    path: `/login`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Login, servicesManager, extensionManager },
   };
 
   const ChangePasswordRoute = {
-    path: `/:tenantId/change-password`,
+    path: `/change-password`,
     children: DataSourceWrapper,
     private: true,
     props: { children: ChangePassword, servicesManager, extensionManager },
   };
 
   const ResetPasswordRoute = {
-    path: `/:tenantId/reset-password`,
+    path: `/reset-password`,
     children: DataSourceWrapper,
     private: true,
     props: { children: ResetPassword, servicesManager, extensionManager },
   };
 
   const AIModelsRoute = {
-    path: `/:tenantId/ai-models`,
+    path: `/ai-models`,
     children: DataSourceWrapper,
     private: true,
     props: { children: AIModels, servicesManager, extensionManager },
   };
 
   const MembersRoute = {
-    path: `/:tenantId/members`,
+    path: `/members`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Members, servicesManager, extensionManager },
   };
 
   const KibanaLogsRoute = {
-    path: `/:tenantId/kibana-logs`,
+    path: `/kibana-logs`,
     children: DataSourceWrapper,
     private: true,
     props: { children: KibanaLogs, servicesManager, extensionManager },
   };
 
   const SettingsRoute = {
-    path: `/:tenantId/settings`,
+    path: `/settings`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Settings, servicesManager, extensionManager },

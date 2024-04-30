@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
@@ -18,7 +18,7 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  let { tenantId } = useParams();
+  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -52,9 +52,9 @@ const LoginPage = () => {
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
               if (!response.data.isEmailVerified) {
-                navigate(`/${tenantId}/change-password`);
+                navigate(`/change-password?t=${tenantId}`);
               } else {
-                navigate(`/${tenantId}`);
+                navigate(`/?t=${tenantId}`);
               }
             });
             setIsLoggingIn(false);
@@ -76,7 +76,7 @@ const LoginPage = () => {
   const getCurrentUser = () => {
     userRepository.GetCurrentUser().then(response => {
       if (response.success) {
-        navigate(`/${tenantId}`);
+        navigate(`/?t=${tenantId}`);
       } else {
         localStorage.removeItem('sessionToken');
       }
