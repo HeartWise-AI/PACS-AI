@@ -25,7 +25,9 @@ const ChangePasswordPage = () => {
         if (currentUser.isEmailVerified) {
           navigate(`/?t=${tenantId}`);
         }
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     fetchCurrentUser();
@@ -99,7 +101,7 @@ const ChangePasswordPage = () => {
               variant="body"
               className="mb-5 text-white text-opacity-70"
             >
-              {t('Please provide your default and new password to continue.')}
+              {t('Please change your default password to continue.')}
             </Typography>
             <Input
               placeholder="New Password"

@@ -1,4 +1,5 @@
 import type { AxiosResponse, AxiosError } from 'axios';
+import { object } from 'prop-types';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
 import {
@@ -9,7 +10,7 @@ import {
   UserResponse,
 } from './userDTO';
 
-export default {
+const userRepository = {
   /**
    * Forgot password
    *
@@ -17,7 +18,7 @@ export default {
    *
    * @return  {Promise<APIResponse><void>}
    */
-  ForgotPassword(request: ForgotPasswordRequest): Promise<APIResponse<void>> {
+  async ForgotPassword(request: ForgotPasswordRequest): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/iam/forgot-password`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
@@ -26,7 +27,7 @@ export default {
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
-        throw response?.data !== undefined ? response.data : {};
+        throw response?.data !== undefined ? response.data : object;
       });
   },
   /**
@@ -36,7 +37,7 @@ export default {
    *
    * @return  {Promise<APIResponse><LoginResponse>}
    */
-  Login(request: LoginRequest): Promise<APIResponse<LoginResponse>> {
+  async Login(request: LoginRequest): Promise<APIResponse<LoginResponse>> {
     return Api()
       .post(`/v1/iam/login`, request)
       .then((response: AxiosResponse<APIResponse<LoginResponse>>) => {
@@ -46,7 +47,7 @@ export default {
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
-        throw response?.data !== undefined ? response.data : {};
+        throw response?.data !== undefined ? response.data : object;
       });
   },
   /**
@@ -54,7 +55,7 @@ export default {
    *
    * @return  {Promise<APIResponse><UserResponse>}
    */
-  GetCurrentUser(): Promise<APIResponse<UserResponse>> {
+  async GetCurrentUser(): Promise<APIResponse<UserResponse>> {
     return Api()
       .get(`/v1/user/me`)
       .then((response: AxiosResponse<APIResponse<UserResponse>>) => {
@@ -64,7 +65,7 @@ export default {
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
-        throw response?.data !== undefined ? response.data : {};
+        throw response?.data !== undefined ? response.data : object;
       });
   },
   /**
@@ -74,17 +75,19 @@ export default {
    *
    * @return  {Promise<APIResponse><>>>}
    */
-  UpdatePassword(request: ChangePasswordRequest): Promise<APIResponse<{}>> {
+  async UpdatePassword(request: ChangePasswordRequest): Promise<APIResponse<object>> {
     return Api()
       .put(`/v1/user/password/update`, request)
-      .then((response: AxiosResponse<APIResponse<{}>>) => {
+      .then((response: AxiosResponse<APIResponse<object>>) => {
         const { data } = response;
 
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
-        throw response?.data !== undefined ? response.data : {};
+        throw response?.data !== undefined ? response.data : object;
       });
   },
 };
+
+export default userRepository;
