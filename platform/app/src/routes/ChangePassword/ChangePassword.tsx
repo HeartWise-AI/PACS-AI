@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Button, Input, Typography } from '@ohif/ui';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
@@ -14,7 +14,7 @@ const ChangePasswordPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const tenantId = process.env.REACT_APP_TENANT_ID;
+  let { tenantId } = useParams();
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -23,7 +23,7 @@ const ChangePasswordPage = () => {
         setCurrentUser(response.data);
 
         if (currentUser.isEmailVerified) {
-          navigate(`/`);
+          navigate(`/${tenantId}`);
         }
       } catch (error) {
         navigate(`/${tenantId}/login`);
@@ -67,7 +67,7 @@ const ChangePasswordPage = () => {
       .then(() => {
         setIsChangingPassword(false);
         showAlert('Updated password successfully', 'success');
-        navigate('/');
+        navigate(`/${tenantId}`);
       })
       .catch(error => {
         setIsChangingPassword(false);
@@ -75,6 +75,7 @@ const ChangePasswordPage = () => {
       });
   };
 
+  // Check if password is valid
   const validatePassword = value => {
     return {
       required: !value && 'Password is required',

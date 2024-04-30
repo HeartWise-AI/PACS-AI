@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppConfig } from '@state';
 import { useDebounce, useSearchParams } from '@hooks';
 import classnames from 'classnames';
@@ -90,6 +90,7 @@ function WorkList({
 
   const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
+  let { tenantId } = useParams();
 
   /*
    * The default sort value keep the filters synchronized with runtime conditional sorting
@@ -208,7 +209,7 @@ function WorkList({
     });
 
     navigate({
-      pathname: '/',
+      pathname: `/${tenantId}`,
       search: search ? `?${search}` : undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
