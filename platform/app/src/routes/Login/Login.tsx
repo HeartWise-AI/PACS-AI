@@ -67,11 +67,8 @@ const LoginPage = () => {
             showAlert(error.message, 'error');
           });
       })
-      .catch(error => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorCode, errorMessage);
-        showAlert(errorMessage, 'error');
+      .catch(() => {
+        showAlert('Invalid email or password', 'error');
         setIsLoggingIn(false);
       });
   };
