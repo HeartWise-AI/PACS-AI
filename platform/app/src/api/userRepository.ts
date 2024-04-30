@@ -1,9 +1,34 @@
 import type { AxiosResponse, AxiosError } from 'axios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
-import { ChangePasswordRequest, LoginRequest, LoginResponse, UserResponse } from './userDTO';
+import {
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  UserResponse,
+} from './userDTO';
 
 export default {
+  /**
+   * Forgot password
+   *
+   * @param   {ForgotPasswordRequest<APIResponse><void>}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  ForgotPassword(request: ForgotPasswordRequest): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/iam/forgot-password`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : {};
+      });
+  },
   /**
    * User login
    *

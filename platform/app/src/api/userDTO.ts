@@ -3,6 +3,12 @@ export interface ChangePasswordRequest {
   tenantId: string;
   newPassword: string;
 }
+
+export interface ForgotPasswordRequest {
+  tenantId: string;
+  email: string;
+}
+
 export interface LoginRequest {
   tenantId: string;
   idToken: string;
