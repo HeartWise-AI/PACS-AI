@@ -43,6 +43,7 @@ export {
   Button,
   ButtonGroup,
   ButtonSecondary,
+  ButtonGradient,
   ButtonEnums,
   ContextMenu,
   CheckBox,
