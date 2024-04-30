@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SidebarAdmin, Sidebar, Typography } from '@ohif/ui';
+import { Typography } from '@ohif/ui';
 import HeaderPanel from '/components/HeaderPanel';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
+import Sidebar from '../../components/Sidebar';
 
 const SettingsPage = () => {
   const { t } = useTranslation();

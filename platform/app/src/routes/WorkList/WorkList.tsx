@@ -23,7 +23,7 @@ import {
   StudyListTable,
   StudyListPagination,
   StudyListFilter,
-  Sidebar,
+  // Sidebar,
   TooltipClipboard,
   useModal,
   AboutModal,
@@ -40,6 +40,7 @@ import { Header } from '@ohif/ui-next';
 
 import { Types } from '@ohif/ui';
 
+import Sidebar from '/components/Sidebar';
 import i18n from '@ohif/i18n';
 import { Onboarding, ScrollArea } from '@ohif/ui-next';
 
