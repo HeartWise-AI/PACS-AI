@@ -153,7 +153,8 @@ const LoginPage = () => {
                 id="email"
                 className="mb-4 w-full"
                 type="text"
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value.toLowerCase())}
+                onKeyPress={e => e.key === ' ' && e.preventDefault()}
               />
               <Input
                 placeholder="Password"
@@ -229,7 +230,8 @@ const LoginPage = () => {
                 id="email"
                 className="mb-4 w-full"
                 type="text"
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value.toLowerCase())}
+                onKeyPress={e => e.key === ' ' && e.preventDefault()}
               />
 
               <Button
