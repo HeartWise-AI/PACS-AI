@@ -33,7 +33,7 @@ const LoginPage = () => {
         });
         setTenantInfo(response.data);
       } catch (error) {
-        console.error(`Can't fetch tenant info: ${error}`);
+        navigate('/tenantnotfound');
       }
     };
     fetchTenantInfo();
