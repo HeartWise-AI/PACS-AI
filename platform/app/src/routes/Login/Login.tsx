@@ -143,7 +143,6 @@ const LoginPage = () => {
               />
               <Input
                 placeholder="Password"
-                autoFocus
                 id="password"
                 className="mb-4 w-full"
                 type="password"
