@@ -106,7 +106,7 @@ const ChangePasswordPage = () => {
             <Input
               placeholder="New Password"
               autoFocus
-              id="password"
+              id="newPassword"
               className="mb-4 w-full"
               type="password"
               onChange={e => setNewPassword(e.target.value)}
@@ -114,7 +114,7 @@ const ChangePasswordPage = () => {
             <Input
               placeholder="Confirm New Password"
               autoFocus
-              id="password"
+              id="confirmNewPassword"
               className="mb-4 w-full"
               type="password"
               onChange={e => setConfirmNewPassword(e.target.value)}
