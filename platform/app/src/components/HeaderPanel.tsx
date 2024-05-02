@@ -13,11 +13,6 @@ const HeaderPanel = ({ title }) => {
   const tenantId = new URLSearchParams(useLocation().search).get('t');
   let name: string = 'User';
 
-  const logoutUser = () => {
-    localStorage.removeItem('sessionToken');
-    navigate(`/login?t=${tenantId}`);
-  };
-
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -30,6 +25,11 @@ const HeaderPanel = ({ title }) => {
 
     fetchCurrentUser();
   }, [userRepository]);
+
+  const logoutUser = () => {
+    localStorage.removeItem('sessionToken');
+    navigate(`/login?t=${tenantId}`);
+  };
 
   if (currentUser) {
     name = currentUser.name.split(' ')[0];
@@ -82,8 +82,8 @@ const HeaderPanel = ({ title }) => {
                 <ul className="py-2 text-sm text-white">
                   <li>
                     <a
-                      href="/settings"
-                      className="block px-4 py-2 hover:bg-gray-700"
+                      className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                      onClick={() => navigate(`/settings?t=${tenantId}`)}
                     >
                       Settings
                     </a>
