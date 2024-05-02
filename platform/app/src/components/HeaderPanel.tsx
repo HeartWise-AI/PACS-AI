@@ -10,7 +10,7 @@ const HeaderPanel = ({ title }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
   const navigate = useNavigate();
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
+  const tenantId = localStorage.getItem('tenantId') || '';
   let name: string = 'User';
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        logoutUser();
+        console.error(error);
       }
     };
 
@@ -27,8 +27,9 @@ const HeaderPanel = ({ title }) => {
   }, [userRepository]);
 
   const logoutUser = () => {
-    localStorage.removeItem('sessionToken');
     navigate(`/login?t=${tenantId}`);
+    localStorage.removeItem('sessionToken');
+    localStorage.removeItem('tenantId');
   };
 
   if (currentUser) {
@@ -83,7 +84,7 @@ const HeaderPanel = ({ title }) => {
                   <li>
                     <a
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                      onClick={() => navigate(`/settings?t=${tenantId}`)}
+                      onClick={() => navigate(`/settings`)}
                     >
                       Settings
                     </a>

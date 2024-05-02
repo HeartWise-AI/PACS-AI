@@ -16,8 +16,8 @@ const SidebarAdmin = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
   let role = '';
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -98,7 +98,7 @@ const SidebarAdmin = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/members?t=${tenantId}`)}
+                onClick={() => navigate(`/members`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -139,7 +139,7 @@ const SidebarAdmin = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/kibana-logs?t=${tenantId}`)}
+                onClick={() => navigate(`/kibana-logs`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -180,7 +180,7 @@ const SidebarAdmin = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/workspace-settings?t=${tenantId}`)}
+                onClick={() => navigate(`/workspace-settings`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -221,7 +221,7 @@ const SidebarAdmin = () => {
         {(role === 'OWNER' || role === 'ADMIN') && (
           <ButtonGradient
             className="h-[47px] w-full !px-0"
-            onClick={() => navigate(`/?t=${tenantId}`)}
+            onClick={() => navigate(`/`)}
           >
             {'Launch PACS AI'}
           </ButtonGradient>

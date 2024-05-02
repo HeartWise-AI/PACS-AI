@@ -24,7 +24,7 @@ const SettingsPage = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
   const showAlert = useContext(AlertContext);
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -32,7 +32,7 @@ const SettingsPage = () => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        logoutUser();
+        console.error(error);
       }
     };
 
@@ -112,11 +112,6 @@ const SettingsPage = () => {
 
   const handleTabChange = (tab: string) => {
     setSelectedTab(tab);
-  };
-
-  const logoutUser = () => {
-    localStorage.removeItem('sessionToken');
-    navigate(`/login?t=${tenantId}`);
   };
 
   // Check if password is valid
