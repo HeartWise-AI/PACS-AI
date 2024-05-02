@@ -8,6 +8,7 @@ import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { AlertContext } from '../../AlertProvider';
+import { GetPublicTenantByIDResponse } from '../../api/userDTO';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -17,11 +18,27 @@ const LoginPage = () => {
   const showAlert = useContext(AlertContext);
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   auth.tenantId = tenantId;
+
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await userRepository.GetPublicTenantByID({
+          tenantId,
+        });
+        setTenantInfo(response.data);
+      } catch (error) {
+        console.error(`Can't fetch tenant info: ${error}`);
+      }
+    };
+    fetchTenantInfo();
+    getCurrentUser();
+  }, [userRepository]);
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -102,10 +119,6 @@ const LoginPage = () => {
       });
   };
 
-  useEffect(() => {
-    getCurrentUser();
-  }, []);
-
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">
       <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-5 xl:col-span-4">
@@ -117,7 +130,7 @@ const LoginPage = () => {
                 variant="body"
                 className="mt-4 text-white"
               >
-                {t('PACS AI (1234567890-00)')}
+                {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
               </Typography>
             </div>
             <div>
