@@ -9,7 +9,7 @@ import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import logoVertical from './../../assets/pacs/logo/pacs-ai-logo-v.png';
 import userRepository from '../../api/userRepository';
-import { UserResponse } from '../../api/userDTO';
+import { GetPublicTenantByIDResponse, UserResponse } from '../../api/userDTO';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 
@@ -17,6 +17,7 @@ const SettingsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
   const [selectedTab, setSelectedTab] = useState<string>('general');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -35,7 +36,19 @@ const SettingsPage = () => {
       }
     };
 
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await userRepository.GetPublicTenantByID({
+          tenantId,
+        });
+        setTenantInfo(response.data);
+      } catch (error) {
+        console.error(`Can't fetch tenant info: ${error}`);
+      }
+    };
+
     fetchCurrentUser();
+    fetchTenantInfo();
   }, [userRepository]);
 
   const changePassword = e => {
@@ -202,7 +215,7 @@ const SettingsPage = () => {
             variant="subtitle"
             className="mt-5 text-center font-light text-white text-opacity-80"
           >
-            {t('Montreal Heart Institute (qha-mha-123)')}
+            {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
           </Typography>
           <Typography
             variant="subtitle"

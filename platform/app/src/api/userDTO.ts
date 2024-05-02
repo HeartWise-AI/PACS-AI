@@ -7,6 +7,16 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
+export interface GetPublicTenantByIDResponse {
+  readonly id: string;
+  readonly name: string;
+  readonly address: string;
+}
+
+export interface GetPublicTenantByIDRequest {
+  tenantId: string;
+}
+
 export interface LoginRequest {
   tenantId: string;
   idToken: string;
