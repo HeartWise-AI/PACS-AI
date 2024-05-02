@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ButtonSecondary, Sidebar, Typography } from '@ohif/ui';
+import { ButtonGradient, Sidebar, Typography } from '@ohif/ui';
 import HeaderPanel from '/components/HeaderPanel';
 
 const AIModelsPage = () => {
@@ -154,12 +154,12 @@ const AIModelsPage = () => {
                     {item.version}
                   </Typography>
                 </div>
-                <ButtonSecondary
+                <ButtonGradient
                   onClick={() => {}}
                   className="mt-5 h-[40px] w-full"
                 >
                   {'View More'}
-                </ButtonSecondary>
+                </ButtonGradient>
               </div>
             ))}
           </div>
