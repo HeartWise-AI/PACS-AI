@@ -91,7 +91,6 @@ function WorkList({
 
   const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   /*
    * The default sort value keep the filters synchronized with runtime conditional sorting
@@ -211,7 +210,7 @@ function WorkList({
 
     navigate({
       pathname: `/`,
-      search: `?t=${tenantId}${search ? `&${search}` : ''}`,
+      search: `${search ? `&${search}` : ''}`,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFilterValues]);
@@ -414,7 +413,7 @@ function WorkList({
                       navigate(
                         `${dataPath ? '../../' : ''}${mode.routeName}${
                           dataPath || ''
-                        }?${query.toString()}&t=${tenantId}`
+                        }?${query.toString()}`
                       );
                     }}
                   >

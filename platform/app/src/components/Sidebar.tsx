@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
@@ -17,8 +17,8 @@ const Sidebar = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
   let role = '';
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -100,7 +100,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/?t=${tenantId}`)}
+                onClick={() => navigate(`/`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
@@ -147,7 +147,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/ai-models?t=${tenantId}`)}
+                onClick={() => navigate(`/ai-models`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
@@ -222,12 +222,12 @@ const Sidebar = () => {
           </ul>
         </div>
         {(role === 'OWNER' || role === 'ADMIN') && (
-          <ButtonGradient
-            className="h-[47px] w-full !px-0"
-            onClick={() => navigate(`/members?t=${tenantId}`)}
+          <Link
+            to="/members"
+            target="_blank"
           >
-            {'Admin Console'}
-          </ButtonGradient>
+            <ButtonGradient className="h-[47px] w-full !px-0">{'Admin Console'}</ButtonGradient>
+          </Link>
         )}
       </div>
     </aside>

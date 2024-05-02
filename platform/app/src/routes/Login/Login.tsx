@@ -5,10 +5,10 @@ import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
+import { GetPublicTenantByIDResponse } from '../../api/userDTO';
+import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
-import { AlertContext } from '../../AlertProvider';
-import { GetPublicTenantByIDResponse } from '../../api/userDTO';
 
 const LoginPage = () => {
   const { t } = useTranslation();
@@ -72,10 +72,11 @@ const LoginPage = () => {
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
               if (!response.data.isEmailVerified) {
-                navigate(`/change-password?t=${tenantId}`);
+                navigate(`/change-password`);
               } else {
-                navigate(`/?t=${tenantId}`);
+                navigate(`/`);
               }
+              localStorage.setItem('tenantId', auth.tenantId);
             });
             setIsLoggingIn(false);
             showAlert(response.message, 'success');
@@ -94,7 +95,7 @@ const LoginPage = () => {
   const getCurrentUser = () => {
     userRepository.GetCurrentUser().then(response => {
       if (response.success) {
-        navigate(`/?t=${tenantId}`);
+        navigate(`/`);
       } else {
         localStorage.removeItem('sessionToken');
       }

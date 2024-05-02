@@ -15,7 +15,6 @@ const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
@@ -81,7 +80,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/?t=${tenantId}`)}
+                onClick={() => navigate(`/`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
@@ -128,7 +127,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/ai-models?t=${tenantId}`)}
+                onClick={() => navigate(`/ai-models`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}

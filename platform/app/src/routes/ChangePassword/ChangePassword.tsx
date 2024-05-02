@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Button, Input, Typography } from '@ohif/ui';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
@@ -14,7 +14,6 @@ const ChangePasswordPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -23,7 +22,7 @@ const ChangePasswordPage = () => {
         setCurrentUser(response.data);
 
         if (currentUser.isEmailVerified) {
-          navigate(`/?t=${tenantId}`);
+          navigate(`/`);
         }
       } catch (error) {
         console.error(error);
@@ -65,7 +64,7 @@ const ChangePasswordPage = () => {
       .then(response => {
         setIsChangingPassword(false);
         showAlert(response.message, 'success');
-        navigate(`/?t=${tenantId}`);
+        navigate(`/`);
       })
       .catch(error => {
         setIsChangingPassword(false);
