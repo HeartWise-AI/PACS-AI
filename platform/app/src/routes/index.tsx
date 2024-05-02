@@ -19,6 +19,7 @@ import Members from './Members';
 import KibanaLogs from './KibanaLogs';
 import AIModels from './AIModels';
 import Settings from './Settings';
+import TenantNotFound from './TenantNotFound';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -72,6 +73,10 @@ const bakedInRoutes = [
   {
     path: '/debug',
     children: Debug,
+  },
+  {
+    path: '/tenantnotfound',
+    children: TenantNotFound,
   },
   {
     path: '/local',
