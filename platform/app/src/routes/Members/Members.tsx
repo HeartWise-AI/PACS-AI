@@ -323,6 +323,19 @@ const MembersPage = () => {
                 }}
               </Table>
             )}
+            {listOfUsers.length === 0 && (
+              <div
+                role="status"
+                className={`grid max-w-full animate-pulse grid-cols-9 gap-4`}
+              >
+                {Array.from({ length: 9 }, (_, i) => (
+                  <div key={i}>
+                    <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                    <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           {/* add and edit member modal */}
           {isOpenAddEditMemberModal && (
