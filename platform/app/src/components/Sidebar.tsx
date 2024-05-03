@@ -11,6 +11,7 @@ import aiModelsActiveIcon from './../assets/pacs/icons/ai-models-active.png';
 import aiModelsInActiveIcon from './../assets/pacs/icons/ai-models-inactive.png';
 import aiPredictionsInActiveIcon from './../assets/pacs/icons/ai-predictions-inactive.png';
 import comingSoonImg from './../assets/pacs/icons/coming-soon.png';
+import { UserRole } from '../api/userDTO';
 
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
@@ -221,7 +222,7 @@ const Sidebar = () => {
             </li>
           </ul>
         </div>
-        {(role === 'OWNER' || role === 'ADMIN') && (
+        {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
           <Link
             to="/members"
             target="_blank"

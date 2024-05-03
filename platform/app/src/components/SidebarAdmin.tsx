@@ -10,6 +10,7 @@ import membersInActiveIcon from './../assets/pacs/icons/members-inactive.png';
 import kibanaLogsActiveIcon from './../assets/pacs/icons/kibana-logs-active.png';
 import kibanaLogsInActiveIcon from './../assets/pacs/icons/kibana-logs-inactive.png';
 import workplaceSettingsInActiveIcon from './../assets/pacs/icons/settings-inactive.png';
+import { UserRole } from '../api/userDTO';
 
 const SidebarAdmin = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
@@ -218,7 +219,7 @@ const SidebarAdmin = () => {
             </li>
           </ul>
         </div>
-        {(role === 'OWNER' || role === 'ADMIN') && (
+        {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
           <ButtonGradient
             className="h-[47px] w-full !px-0"
             onClick={() => navigate(`/`)}
