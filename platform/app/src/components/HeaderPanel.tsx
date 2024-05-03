@@ -19,7 +19,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        console.error(error);
+        logoutUser();
       }
     };
 
