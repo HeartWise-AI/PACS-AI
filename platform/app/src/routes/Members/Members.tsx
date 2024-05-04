@@ -210,7 +210,7 @@ const MembersPage = () => {
                   const [isOpen, setIsOpen] = useState(false);
                   // id
                   if (header.value === 'id') {
-                    return cell.slice(0, 6) + '...' + cell.slice(-4);
+                    return cell.slice(0, 4) + '...' + cell.slice(-4);
                   }
 
                   // role

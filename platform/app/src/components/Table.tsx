@@ -10,7 +10,7 @@ const Table = ({ headers, data, children }) => {
               <th
                 key={index}
                 scope="col"
-                className={`px-4 py-2 text-${header.align}`}
+                className={`px-2 py-2 text-${header.align}`}
               >
                 {header.text}
               </th>
@@ -26,7 +26,7 @@ const Table = ({ headers, data, children }) => {
               {headers.map((header, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className={`whitespace-nowrap px-4 py-2 text-${header.align}`}
+                  className={`max-w-[170px] break-words px-2 py-2 text-${header.align}`}
                 >
                   {children(item[header.value], header, item)}
                 </td>
