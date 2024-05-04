@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
+import { GetPublicTenantByIDResponse, UserRole } from '../api/userDTO';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../assets/pacs/icons/studies-active.png';
@@ -11,13 +12,14 @@ import aiModelsActiveIcon from './../assets/pacs/icons/ai-models-active.png';
 import aiModelsInActiveIcon from './../assets/pacs/icons/ai-models-inactive.png';
 import aiPredictionsInActiveIcon from './../assets/pacs/icons/ai-predictions-inactive.png';
 import comingSoonImg from './../assets/pacs/icons/coming-soon.png';
-import { UserRole } from '../api/userDTO';
 
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
   let role = '';
 
   useEffect(() => {
@@ -29,7 +31,17 @@ const Sidebar = () => {
         console.error(error);
       }
     };
-
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await userRepository.GetPublicTenantByID({
+          tenantId,
+        });
+        setTenantInfo(response.data);
+      } catch (error) {
+        navigate('/tenantnotfound');
+      }
+    };
+    fetchTenantInfo();
     fetchCurrentUser();
   }, [userRepository]);
 
@@ -87,7 +99,7 @@ const Sidebar = () => {
               variant="caption"
               className="mt-7 text-white text-opacity-90"
             >
-              {t('PACS AI (1234567890-00)')}
+              {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
             </Typography>
           )}
           <ul className="mt-5 space-y-2 font-medium">
