@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
+import { GetPublicTenantByIDResponse, UserRole } from '../api/userDTO';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import membersActiveIcon from './../assets/pacs/icons/members-active.png';
@@ -10,13 +11,14 @@ import membersInActiveIcon from './../assets/pacs/icons/members-inactive.png';
 import kibanaLogsActiveIcon from './../assets/pacs/icons/kibana-logs-active.png';
 import kibanaLogsInActiveIcon from './../assets/pacs/icons/kibana-logs-inactive.png';
 import workplaceSettingsInActiveIcon from './../assets/pacs/icons/settings-inactive.png';
-import { UserRole } from '../api/userDTO';
 
 const SidebarAdmin = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
   let role = '';
 
   useEffect(() => {
@@ -28,7 +30,17 @@ const SidebarAdmin = () => {
         console.error(error);
       }
     };
-
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await userRepository.GetPublicTenantByID({
+          tenantId,
+        });
+        setTenantInfo(response.data);
+      } catch (error) {
+        navigate('/tenantnotfound');
+      }
+    };
+    fetchTenantInfo();
     fetchCurrentUser();
   }, [userRepository]);
 
@@ -86,7 +98,7 @@ const SidebarAdmin = () => {
               variant="caption"
               className="mt-7 text-white text-opacity-90"
             >
-              {t('PACS AI (1234567890-00)')}
+              {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
             </Typography>
           )}
           <ul className="mt-5 space-y-2 font-medium">
