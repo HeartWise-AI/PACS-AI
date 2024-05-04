@@ -13,6 +13,10 @@ _Requirements:_
 
 ### Developing Locally
 
+> Before running this repository, you need to run the PACS AI backend first.
+>
+> You can easily do so by following https://github.com/HeartWise-AI/pacs-ai-backend/blob/master/api-pacs/README.md
+
 In your cloned repository's root folder, run:
 
 ```js
