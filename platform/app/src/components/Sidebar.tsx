@@ -12,6 +12,7 @@ import aiModelsActiveIcon from './../assets/pacs/icons/ai-models-active.png';
 import aiModelsInActiveIcon from './../assets/pacs/icons/ai-models-inactive.png';
 import aiPredictionsInActiveIcon from './../assets/pacs/icons/ai-predictions-inactive.png';
 import comingSoonImg from './../assets/pacs/icons/coming-soon.png';
+import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
@@ -239,7 +240,15 @@ const Sidebar = () => {
             to="/members"
             target="_blank"
           >
-            <ButtonGradient className="h-[47px] w-full !px-0">{'Admin Console'}</ButtonGradient>
+            <ButtonGradient className="h-[47px] w-full !px-0">
+              <div className="flex items-center justify-between px-3">
+                <div className="!text-primary-dark font-light">{'Admin Console'}</div>
+                <img
+                  src={newTabActiveIcon}
+                  alt="New tab icon"
+                />
+              </div>
+            </ButtonGradient>
           </Link>
         )}
       </div>

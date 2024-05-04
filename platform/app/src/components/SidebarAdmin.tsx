@@ -11,6 +11,7 @@ import membersInActiveIcon from './../assets/pacs/icons/members-inactive.png';
 import kibanaLogsActiveIcon from './../assets/pacs/icons/kibana-logs-active.png';
 import kibanaLogsInActiveIcon from './../assets/pacs/icons/kibana-logs-inactive.png';
 import workplaceSettingsInActiveIcon from './../assets/pacs/icons/settings-inactive.png';
+import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const SidebarAdmin = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
@@ -236,7 +237,13 @@ const SidebarAdmin = () => {
             className="h-[47px] w-full !px-0"
             onClick={() => navigate(`/`)}
           >
-            {'Launch PACS AI'}
+            <div className="flex items-center justify-between px-3">
+              <div className="!text-primary-dark font-light">{'Launch PACS AI'}</div>
+              <img
+                src={newTabActiveIcon}
+                alt="New tab icon"
+              />
+            </div>
           </ButtonGradient>
         )}
       </div>
