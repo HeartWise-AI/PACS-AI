@@ -399,15 +399,17 @@ const MembersPage = () => {
                       }
                       className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                     >
-                      {Object.values(UserRole).map(role => (
-                        <option
-                          key={role}
-                          value={role}
-                          className="!cursor-pointer !bg-[#323631] !py-2"
-                        >
-                          {role}
-                        </option>
-                      ))}
+                      {Object.values(UserRole)
+                        .filter(role => role !== UserRole.OWNER)
+                        .map(role => (
+                          <option
+                            key={role}
+                            value={role}
+                            className="!cursor-pointer !bg-[#323631] !py-2"
+                          >
+                            {role}
+                          </option>
+                        ))}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                       <img
@@ -442,7 +444,7 @@ const MembersPage = () => {
                   />
                   <div className="relative">
                     <select
-                      id="user-role"
+                      id="user-specialty"
                       value={selectedUser.specialty}
                       onChange={e =>
                         setSelectedUser({ ...selectedUser, specialty: e.target.value as string })
