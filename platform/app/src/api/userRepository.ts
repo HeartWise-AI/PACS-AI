@@ -10,6 +10,7 @@ import {
   GetDoctorSpecialtiesResponse,
   GetPublicTenantByIDRequest,
   GetPublicTenantByIDResponse,
+  GetTenantInfoResponse,
   LoginRequest,
   LoginResponse,
   UpdateTenantUserRequest,
@@ -85,6 +86,23 @@ const userRepository = {
     return Api()
       .get(`/v1/tenant/public`, { params: request })
       .then((response: AxiosResponse<APIResponse<GetPublicTenantByIDResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get tenant info
+   *
+   * @return  {GetTenantInfoResponse}
+   */
+  async GetTenantInfo(): Promise<APIResponse<GetTenantInfoResponse>> {
+    return Api()
+      .get(`/v1/tenant`)
+      .then((response: AxiosResponse<APIResponse<GetTenantInfoResponse>>) => {
         const { data } = response;
         return data;
       })

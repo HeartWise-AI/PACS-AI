@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
-import { GetPublicTenantByIDResponse, UserRole } from '../api/userDTO';
+import { GetTenantInfoResponse, UserRole } from '../api/userDTO';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../assets/pacs/icons/studies-active.png';
@@ -17,10 +17,9 @@ import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const tenantId = localStorage.getItem('tenantId') || '';
   let role = '';
 
   useEffect(() => {
@@ -34,9 +33,7 @@ const Sidebar = () => {
     };
     const fetchTenantInfo = async () => {
       try {
-        const response = await userRepository.GetPublicTenantByID({
-          tenantId,
-        });
+        const response = await userRepository.GetTenantInfo();
         setTenantInfo(response.data);
       } catch (error) {
         console.error(error);
