@@ -20,6 +20,7 @@ import KibanaLogs from './KibanaLogs';
 import AIModels from './AIModels';
 import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
+import WorkspaceSettings from './WorkspaceSettings';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -154,6 +155,13 @@ const createRoutes = ({
     props: { children: Members, servicesManager, extensionManager },
   };
 
+  const WorkspaceSettingsRoute = {
+    path: `/workspace-settings`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: WorkspaceSettings, servicesManager, extensionManager },
+  };
+
   const KibanaLogsRoute = {
     path: `/kibana-logs`,
     children: DataSourceWrapper,
@@ -179,6 +187,7 @@ const createRoutes = ({
     ...(showStudyList ? [MembersRoute] : []),
     ...(showStudyList ? [KibanaLogsRoute] : []),
     ...(showStudyList ? [SettingsRoute] : []),
+    ...(showStudyList ? [WorkspaceSettingsRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
