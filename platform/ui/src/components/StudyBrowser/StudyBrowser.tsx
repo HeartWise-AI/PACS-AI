@@ -63,7 +63,7 @@ const StudyBrowser = ({
               {isOpen && (
                 <div
                   className="absolute z-10 w-[225px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
-                  style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
+                  style={{ top: ref.current ? ref.current.offsetHeight : 150 }}
                 >
                   <ul className="flex flex-col gap-1 py-2 text-sm text-white">
                     <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
@@ -112,7 +112,7 @@ const StudyBrowser = ({
                 <img
                   src={refreshIcon}
                   className="h-5 w-5"
-                  alt="AI Models icon"
+                  alt="Refresh icon"
                 />
                 <span className="text-sm !text-white text-transparent">Refresh</span>
               </button>
@@ -147,7 +147,7 @@ const StudyBrowser = ({
   return (
     <React.Fragment>
       <div
-        className="w-100 border-secondary-light flex h-16 flex-row items-center justify-center border-b bg-transparent p-4"
+        className="w-100 flex h-16 flex-row items-center justify-center border-b border-white border-opacity-10 bg-transparent p-4"
         data-cy={'studyBrowser-panel'}
       >
         {/* TODO Revisit design of LegacyButtonGroup later - for now use LegacyButton for its children.*/}

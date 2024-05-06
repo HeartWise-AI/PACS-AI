@@ -1,13 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useDrag } from 'react-dnd';
 import Icon from '../Icon';
 import { StringNumber } from '../../types';
 import DisplaySetMessageListTooltip from '../DisplaySetMessageListTooltip';
-import aiModelsIcon from './../../assets/pacs/icons/ai-models-gradient.png';
-import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
-import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 
 /**
  * Display a thumbnail for a display set.
@@ -27,8 +24,6 @@ const Thumbnail = ({
   onClick,
   onDoubleClick,
 }): React.ReactNode => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
   // specified item.
@@ -44,7 +39,7 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        'group mb-8 flex flex-1 cursor-pointer select-none flex-col px-2 outline-none'
+        'group mb-8 flex flex-1 cursor-pointer select-none flex-col outline-none'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
       data-cy={`study-browser-thumbnail`}
@@ -53,70 +48,6 @@ const Thumbnail = ({
       role="button"
       tabIndex="0"
     >
-      <div
-        className="relative flex items-center pb-2"
-        ref={ref}
-      >
-        <button
-          className="h-[28px] w-[28px] rounded-lg bg-transparent"
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <img
-            src={aiModelsIcon}
-            alt="AI Model icon"
-          />
-        </button>
-
-        {isOpen && (
-          <div
-            className="absolute z-50 w-[200px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow"
-            style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
-          >
-            <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-              <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                <img
-                  src={playerPlayIcon}
-                  alt="Player play icon"
-                  className="w-5"
-                />
-                <h1 className="text-[11px]">Apply X3D LVEF detection</h1>
-                <img
-                  src={helpInactive}
-                  alt="Player play icon"
-                  className="w-4"
-                />
-              </li>
-              <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                <img
-                  src={playerPlayIcon}
-                  alt="Player play icon"
-                  className="w-5"
-                />
-                <h1 className="text-[11px]">Apply X4D LVEF detection</h1>
-                <img
-                  src={helpInactive}
-                  alt="Player play icon"
-                  className="w-4"
-                />
-              </li>
-              <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                <img
-                  src={playerPlayIcon}
-                  alt="Player play icon"
-                  className="w-5"
-                />
-                <h1 className="text-[11px]">Apply X5D LVEF detection</h1>
-                <img
-                  src={helpInactive}
-                  alt="Player play icon"
-                  className="w-4"
-                />
-              </li>
-            </ul>
-          </div>
-        )}
-      </div>
       <div ref={drag}>
         <div
           className={classnames(

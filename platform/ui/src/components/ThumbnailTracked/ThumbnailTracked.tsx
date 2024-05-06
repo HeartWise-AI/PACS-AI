@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import Icon from '../Icon';
 import Thumbnail from '../Thumbnail';
 import Tooltip from '../Tooltip';
 import { StringNumber } from '../../types';
+import aiModelsIcon from './../../assets/pacs/icons/ai-models-gradient.png';
+import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
+import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 
 const ThumbnailTracked = ({
   displaySetInstanceUID,
@@ -26,6 +29,8 @@ const ThumbnailTracked = ({
 }) => {
   const trackedIcon = isTracked ? 'circled-checkmark' : 'dotted-circle';
   const viewportIdentificatorLabel = viewportIdentificator.join(', ');
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
   const renderViewportLabels = () => {
     const MAX_LABELS_PER_COL = 3;
     const shouldShowStack = viewportIdentificator.length > MAX_LABELS_PER_COL;
@@ -59,16 +64,13 @@ const ThumbnailTracked = ({
 
   return (
     <div
-      className={classnames(
-        'flex flex-1 cursor-pointer flex-row px-3 py-2 outline-none',
-        className
-      )}
+      className={classnames('flex cursor-pointer flex-col px-2 py-2 outline-none', className)}
       id={`thumbnail-${displaySetInstanceUID}`}
     >
-      <div className="flex-2 flex flex-col items-center">
+      <div className="mb-2 flex items-center rounded-lg bg-white bg-opacity-10 py-1">
         <div
           className={classnames(
-            'relative flex cursor-pointer flex-col items-center justify-start p-1',
+            'relative flex w-full cursor-pointer flex-col items-center justify-start p-1',
             isTracked && 'rounded-sm hover:bg-gray-900'
           )}
         >
@@ -99,7 +101,7 @@ const ThumbnailTracked = ({
           >
             <Icon
               name={trackedIcon}
-              className="text-primary-light w-4"
+              className="text-primary-light w-5"
             />
           </Tooltip>
 
@@ -118,7 +120,73 @@ const ThumbnailTracked = ({
             />
           </div>
         )}
+        <div
+          className="relative flex w-full items-center"
+          ref={ref}
+        >
+          <button
+            className="h-auto w-full rounded-lg bg-transparent"
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <img
+              src={aiModelsIcon}
+              alt="AI Model icon"
+              className="mx-auto block w-6"
+            />
+          </button>
+
+          {isOpen && (
+            <div
+              className="absolute z-50 w-[200px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow"
+              style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
+            >
+              <ul className="flex flex-col gap-1 py-2 text-sm text-white">
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X3D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X4D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X5D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
+
       <Thumbnail
         displaySetInstanceUID={displaySetInstanceUID}
         imageSrc={imageSrc}

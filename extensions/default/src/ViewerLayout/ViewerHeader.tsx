@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
-import { ErrorBoundary, UserPreferences, AboutModal, Header, useModal } from '@ohif/ui';
+import {
+  ErrorBoundary,
+  UserPreferences,
+  AboutModal,
+  Header,
+  useModal,
+  AIModelButton,
+} from '@ohif/ui';
 import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { useAppConfig } from '@state';
@@ -103,7 +110,10 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
     <div className="mb-2 w-full rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] py-1">
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center">
-          <Toolbar servicesManager={servicesManager} />
+          <div className="flex items-center">
+            <Toolbar servicesManager={servicesManager} />
+            <AIModelButton isShowBG={true} />
+          </div>
         </div>
       </ErrorBoundary>
     </div>

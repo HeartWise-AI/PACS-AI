@@ -38,6 +38,7 @@ export {
   AboutModal,
   AdminTable,
   AdvancedToolbox,
+  AIModelButton,
   HotkeyField,
   Header,
   UserPreferences,
