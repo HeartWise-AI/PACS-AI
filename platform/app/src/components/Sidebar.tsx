@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
-import { GetTenantInfoResponse, UserRole } from '../api/userDTO';
+import tenantRepository from '../api/tenantRepository';
+import { UserRole } from '../api/userDTO';
+import { GetTenantInfoResponse } from '../api/tenantDTO';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../assets/pacs/icons/studies-active.png';
@@ -33,7 +35,7 @@ const Sidebar = () => {
     };
     const fetchTenantInfo = async () => {
       try {
-        const response = await userRepository.GetTenantInfo();
+        const response = await tenantRepository.GetTenantInfo();
         setTenantInfo(response.data);
       } catch (error) {
         console.error(error);
@@ -41,7 +43,7 @@ const Sidebar = () => {
     };
     fetchCurrentUser();
     fetchTenantInfo();
-  }, [userRepository]);
+  }, [userRepository, tenantRepository]);
 
   const handleMinimizeSidebarClick = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);

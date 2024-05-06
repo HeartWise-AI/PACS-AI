@@ -5,7 +5,8 @@ import { Button, Input, Logo, Typography } from '@ohif/ui';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
-import { GetPublicTenantByIDResponse } from '../../api/userDTO';
+import tenantRepository from '../../api/tenantRepository';
+import { GetPublicTenantByIDResponse } from '../../api/tenantDTO';
 import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
@@ -28,7 +29,7 @@ const LoginPage = () => {
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {
-        const response = await userRepository.GetPublicTenantByID({
+        const response = await tenantRepository.GetPublicTenantByID({
           tenantId,
         });
         setTenantInfo(response.data);
@@ -38,7 +39,7 @@ const LoginPage = () => {
     };
     fetchTenantInfo();
     getCurrentUser();
-  }, [userRepository]);
+  }, [userRepository, tenantRepository]);
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
