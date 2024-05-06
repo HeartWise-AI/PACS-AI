@@ -39,11 +39,11 @@ const Sidebar = () => {
         });
         setTenantInfo(response.data);
       } catch (error) {
-        navigate('/tenantnotfound');
+        console.error(error);
       }
     };
-    fetchTenantInfo();
     fetchCurrentUser();
+    fetchTenantInfo();
   }, [userRepository]);
 
   const handleMinimizeSidebarClick = () => {
