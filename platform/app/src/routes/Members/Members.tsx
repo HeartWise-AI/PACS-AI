@@ -14,6 +14,7 @@ import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 const MembersPage = () => {
   const { t } = useTranslation();
   const ref = useRef(null);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [listOfUsers, setListOfUsers] = useState([]);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
   const showAlert = useContext(AlertContext);
@@ -83,6 +84,69 @@ const MembersPage = () => {
     setIsAddMember(true);
   };
 
+  /**
+   * Table action button
+   *
+   * @param param0 row
+   * @returns
+   */
+  const ActionButton = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef();
+
+    return (
+      <div
+        className="relative flex items-center justify-center"
+        ref={ref}
+      >
+        <button
+          onClick={() => {
+            setIsOpen(!isOpen);
+          }}
+        >
+          <img
+            src={dotsVertical}
+            alt="Dots vertical icon"
+          />
+        </button>
+        {isOpen && (
+          <div
+            className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+            style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
+          >
+            <ul className="py-2 text-sm text-white">
+              <li>
+                <a
+                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                  onClick={() => {
+                    setSelectedUser(row);
+                    setIsAddMember(false);
+                    setIsOpenAddEditMemberModal(true);
+                    setIsOpen(false);
+                  }}
+                >
+                  Edit
+                </a>
+              </li>
+              <li>
+                <a
+                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                  onClick={() => {
+                    setIsOpenDeleteMemberModal(true);
+                    setSelectedUserToDelete({ id: row.id });
+                    setIsOpen(false);
+                  }}
+                >
+                  Delete
+                </a>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const clearSelectedUser = () => {
     setSelectedUser({
       id: '',
@@ -133,6 +197,7 @@ const MembersPage = () => {
         };
       });
       setListOfUsers(listOfUsers);
+      setFilteredItems(listOfUsers);
     } catch (error) {
       console.error(error);
     }
@@ -175,6 +240,23 @@ const MembersPage = () => {
     setIsUpdatingMember(false);
     setIsAddMember(true);
   };
+
+  /**
+   * Table search
+   *
+   * @param searchValue
+   */
+  const searchItems = (searchValue: string) => {
+    if (searchValue === '') {
+      setFilteredItems(listOfUsers);
+    } else {
+      const filteredData = listOfUsers.filter(item => {
+        return Object.values(item).join(' ').toLowerCase().includes(searchValue.toLowerCase());
+      });
+      setFilteredItems(filteredData);
+    }
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815] ">
@@ -188,6 +270,7 @@ const MembersPage = () => {
               placeholder="Search member name, email, license no., etc."
               className="w-[40%]"
               type="text"
+              onChange={e => searchItems(e.target.value)}
             />
             <Button
               disabled={false}
@@ -201,13 +284,12 @@ const MembersPage = () => {
           </div>
           {/* table container */}
           <div className="mt-5 mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            {listOfUsers && (
+            {listOfUsers.length === 0 ? null : filteredItems && filteredItems.length > 0 ? (
               <Table
                 headers={headers}
-                data={listOfUsers}
+                data={filteredItems}
               >
                 {(cell, header, row) => {
-                  const [isOpen, setIsOpen] = useState(false);
                   // id
                   if (header.value === 'id') {
                     return cell.slice(0, 4) + '...' + cell.slice(-4);
@@ -267,61 +349,13 @@ const MembersPage = () => {
 
                   // action
                   if (header.value === 'action') {
-                    return (
-                      <div
-                        className="relative flex items-center justify-center"
-                        ref={ref}
-                      >
-                        <button
-                          onClick={() => {
-                            setIsOpen(!isOpen);
-                          }}
-                        >
-                          <img
-                            src={dotsVertical}
-                            alt="Dots vertical icon"
-                          />
-                        </button>
-                        {isOpen && (
-                          <div
-                            className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
-                            style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
-                          >
-                            <ul className="py-2 text-sm text-white">
-                              <li>
-                                <a
-                                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                                  onClick={() => {
-                                    setSelectedUser(row);
-                                    setIsAddMember(false);
-                                    setIsOpenAddEditMemberModal(true);
-                                    setIsOpen(false);
-                                  }}
-                                >
-                                  Edit
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                                  onClick={() => {
-                                    setIsOpenDeleteMemberModal(true);
-                                    setSelectedUserToDelete({ id: row.id });
-                                    setIsOpen(false);
-                                  }}
-                                >
-                                  Delete
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    );
+                    return <ActionButton row={row} />;
                   }
                   return cell;
                 }}
               </Table>
+            ) : (
+              <p className="text-center text-white opacity-60">No Data Found</p>
             )}
             {listOfUsers.length === 0 && (
               <div
