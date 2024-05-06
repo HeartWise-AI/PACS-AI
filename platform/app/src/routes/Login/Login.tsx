@@ -71,12 +71,12 @@ const LoginPage = () => {
 
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
+              localStorage.setItem('tenantId', auth.tenantId);
               if (!response.data.isEmailVerified) {
                 navigate(`/change-password`);
               } else {
                 navigate(`/`);
               }
-              localStorage.setItem('tenantId', auth.tenantId);
             });
             setIsLoggingIn(false);
             showAlert(response.message, 'success');
