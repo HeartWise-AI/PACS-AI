@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 
@@ -7,6 +7,9 @@ import Thumbnail from '../Thumbnail';
 import Tooltip from '../Tooltip';
 import { StringNumber } from '../../types';
 import { useTranslation } from 'react-i18next';
+import aiModelsIcon from './../../assets/pacs/icons/ai-models-gradient.png';
+import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
+import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 
 // Todo: This class to me feels like it belongs in an extension, not in platform/ui
 // because it is dealing with mode specific components/information
@@ -36,7 +39,7 @@ function ThumbnailTracked({
       className={classnames('flex flex-1 cursor-pointer flex-row px-3 outline-none', className)}
       id={`thumbnail-${displaySetInstanceUID}`}
     >
-      <div className="flex-2 flex flex-col items-center">
+      <div className="mb-2 flex items-center rounded-lg bg-white bg-opacity-10 py-1">
         <div
           className={classnames(
             'relative mb-2 flex cursor-pointer flex-col items-center justify-start p-2',
@@ -65,7 +68,7 @@ function ThumbnailTracked({
           >
             <Icon
               name={trackedIcon}
-              className="text-primary-light w-4"
+              className="text-primary-light w-5"
             />
           </Tooltip>
         </div>
@@ -77,7 +80,73 @@ function ThumbnailTracked({
             />
           </div>
         )}
+        <div
+          className="relative flex w-full items-center"
+          ref={ref}
+        >
+          <button
+            className="h-auto w-full rounded-lg bg-transparent"
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <img
+              src={aiModelsIcon}
+              alt="AI Model icon"
+              className="mx-auto block w-6"
+            />
+          </button>
+
+          {isOpen && (
+            <div
+              className="absolute z-50 w-[200px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow"
+              style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
+            >
+              <ul className="flex flex-col gap-1 py-2 text-sm text-white">
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X3D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X4D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+                <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="text-[11px]">Apply X5D LVEF detection</h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="w-4"
+                  />
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
+
       <Thumbnail
         displaySetInstanceUID={displaySetInstanceUID}
         imageSrc={imageSrc}

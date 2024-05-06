@@ -72,7 +72,7 @@ const StudyBrowser = ({
               {isOpen && (
                 <div
                   className="absolute z-10 w-[225px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
-                  style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
+                  style={{ top: ref.current ? ref.current.offsetHeight : 150 }}
                 >
                   <ul className="flex flex-col gap-1 py-2 text-sm text-white">
                     <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
@@ -121,7 +121,7 @@ const StudyBrowser = ({
                 <img
                   src={refreshIcon}
                   className="h-5 w-5"
-                  alt="AI Models icon"
+                  alt="Refresh icon"
                 />
                 <span className="text-sm !text-white text-transparent">Refresh</span>
               </button>

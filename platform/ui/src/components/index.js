@@ -1,5 +1,6 @@
 import AboutModal from './AboutModal';
 import AdminTable from './AdminTable';
+import AIModelButton from './AIModelButton';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
 import ButtonSecondary from './ButtonSecondary';
@@ -107,6 +108,7 @@ export {
   ActionButtons,
   AboutModal,
   AdminTable,
+  AIModelButton,
   AdvancedToolbox,
   AllInOneMenu,
   HotkeyField,
