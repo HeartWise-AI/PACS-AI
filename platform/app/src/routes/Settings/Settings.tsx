@@ -9,22 +9,23 @@ import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import logoVertical from './../../assets/pacs/logo/pacs-ai-logo-v.png';
 import userRepository from '../../api/userRepository';
-import { GetPublicTenantByIDResponse, UserResponse } from '../../api/userDTO';
+import { UserResponse } from '../../api/userDTO';
+import { GetTenantInfoResponse } from '../../api/tenantDTO';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
+import tenantRepository from '../../api/tenantRepository';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
-  const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedTab, setSelectedTab] = useState<string>('general');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
   const showAlert = useContext(AlertContext);
-  const tenantId = localStorage.getItem('tenantId') || '';
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -38,9 +39,7 @@ const SettingsPage = () => {
 
     const fetchTenantInfo = async () => {
       try {
-        const response = await userRepository.GetPublicTenantByID({
-          tenantId,
-        });
+        const response = await tenantRepository.GetTenantInfo();
         setTenantInfo(response.data);
       } catch (error) {
         console.error(`Can't fetch tenant info: ${error}`);
@@ -49,7 +48,7 @@ const SettingsPage = () => {
 
     fetchCurrentUser();
     fetchTenantInfo();
-  }, [userRepository]);
+  }, [userRepository, tenantRepository]);
 
   const changePassword = e => {
     e.preventDefault();
