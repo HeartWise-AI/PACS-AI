@@ -10,3 +10,8 @@ export interface ErrorAPIResponse {
   readonly message: string;
   readonly errorCode?: string;
 }
+
+export enum LogsAuditType {
+  INFERENCE = 'Audit Inference',
+  DATABASE = 'Audit Database',
+}
