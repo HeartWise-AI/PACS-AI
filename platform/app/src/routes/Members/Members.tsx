@@ -375,7 +375,7 @@ const MembersPage = () => {
           {isOpenAddEditMemberModal && (
             <Modal
               isOpen={isOpenAddEditMemberModal}
-              size="max-w-lg"
+              size="max-w-[520px]"
               onClose={() => {
                 setIsAddMember(true);
                 setIsOpenAddEditMemberModal(false);
@@ -522,7 +522,7 @@ const MembersPage = () => {
           {isOpenDeleteMemberModal && (
             <Modal
               isOpen={isOpenDeleteMemberModal}
-              size="max-w-lg"
+              size="min-w-[400px]"
               onClose={() => {
                 setIsOpenDeleteMemberModal(false);
               }}

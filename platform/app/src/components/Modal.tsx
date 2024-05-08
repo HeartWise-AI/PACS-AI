@@ -32,7 +32,7 @@ const Modal = ({ children, isOpen, onClose, size }) => {
             </span>
 
             <div
-              className={`relative inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:${size} sm:align-middle`}
+              className={`relative inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 ${size} sm:align-middle`}
             >
               {/* close button */}
               <button
@@ -53,6 +53,13 @@ const Modal = ({ children, isOpen, onClose, size }) => {
       )}
     </React.Fragment>
   );
+};
+
+Modal.defaultProps = {
+  children: '',
+  onClose: () => {},
+  isOpen: false,
+  size: 'max-w-[400px]',
 };
 
 Modal.propTypes = {
