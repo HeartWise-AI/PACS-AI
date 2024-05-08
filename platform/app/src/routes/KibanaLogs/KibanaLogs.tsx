@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, InputDateRange, InputMultiSelect, Logo, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -120,6 +120,12 @@ const KibanaLogsPage = () => {
       deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
     },
   ];
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Admin Kibana Logs - PACS AI';
+  }, []);
+
   const AuditInferenceTable = () => {
     return (
       <Table

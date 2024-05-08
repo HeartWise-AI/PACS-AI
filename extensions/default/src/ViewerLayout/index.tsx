@@ -35,6 +35,10 @@ function ViewerLayout({
   const [hasLeftPanels, setHasLeftPanels] = useState(hasPanels('left'));
   const [leftPanelClosedState, setLeftPanelClosed] = useState(leftPanelClosed);
   const [rightPanelClosedState, setRightPanelClosed] = useState(rightPanelClosed);
+  // Set page title
+  useEffect(() => {
+    document.title = 'Viewer - PACS AI';
+  }, []);
 
   /**
    * Set body classes (tailwindcss) that don't allow vertical

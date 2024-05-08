@@ -16,6 +16,11 @@ const WorkspaceSettingsPage = () => {
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Admin Workspace Settings - PACS AI';
+  }, []);
+
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {

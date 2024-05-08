@@ -27,6 +27,11 @@ const SettingsPage = () => {
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
   const showAlert = useContext(AlertContext);
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Settings - PACS AI';
+  }, []);
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
