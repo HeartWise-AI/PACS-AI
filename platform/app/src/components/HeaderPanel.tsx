@@ -29,7 +29,6 @@ const HeaderPanel = ({ title }) => {
   const logoutUser = () => {
     navigate(`/login?t=${tenantId}`);
     localStorage.removeItem('sessionToken');
-    localStorage.removeItem('tenantId');
   };
 
   if (currentUser) {
