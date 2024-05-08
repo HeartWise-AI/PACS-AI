@@ -279,7 +279,7 @@ const MembersPage = () => {
                 setIsOpenAddEditMemberModal(true);
               }}
             >
-              {'Add Member'}
+              {t('Add Member')}
             </Button>
           </div>
           {/* table container */}
@@ -375,6 +375,7 @@ const MembersPage = () => {
           {isOpenAddEditMemberModal && (
             <Modal
               isOpen={isOpenAddEditMemberModal}
+              size="max-w-lg"
               onClose={() => {
                 setIsAddMember(true);
                 setIsOpenAddEditMemberModal(false);
@@ -521,6 +522,7 @@ const MembersPage = () => {
           {isOpenDeleteMemberModal && (
             <Modal
               isOpen={isOpenDeleteMemberModal}
+              size="max-w-lg"
               onClose={() => {
                 setIsOpenDeleteMemberModal(false);
               }}

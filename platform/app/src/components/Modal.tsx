@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 
-const Modal = ({ children, isOpen, onClose }) => {
+const Modal = ({ children, isOpen, onClose, size }) => {
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
@@ -31,7 +31,9 @@ const Modal = ({ children, isOpen, onClose }) => {
               &#8203;
             </span>
 
-            <div className="relative inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+            <div
+              className={`relative inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:${size} sm:align-middle`}
+            >
               {/* close button */}
               <button
                 onClick={handleClose}
