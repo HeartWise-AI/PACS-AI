@@ -7,7 +7,6 @@ import { AlertContext } from '../../AlertProvider';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import tenantRepository from '../../api/tenantRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
-import mode from 'modes/basic-dev-mode/src';
 import Modal from '../../components/Modal';
 
 const WorkspaceSettingsPage = () => {
