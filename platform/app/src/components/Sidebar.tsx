@@ -99,7 +99,7 @@ const Sidebar = () => {
               variant="caption"
               className="mt-7 text-white text-opacity-90"
             >
-              {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
+              {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
             </Typography>
           )}
           <ul className="mt-5 space-y-2 font-medium">

@@ -130,9 +130,9 @@ const LoginPage = () => {
               <Logo class="h-auto w-[200px]" />
               <Typography
                 variant="body"
-                className="mt-4 text-white"
+                className="mt-4 min-h-[17px] text-white"
               >
-                {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
+                {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
               </Typography>
             </div>
             <div>
