@@ -13,6 +13,11 @@ const AIModelsPage = () => {
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'AI Models - PACS AI';
+  }, []);
+
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {
@@ -29,49 +34,6 @@ const AIModelsPage = () => {
     setSelectedAIModel(model);
     setIsOpenAIModelModal(true);
   };
-
-  const aiModelData = [
-    {
-      title: 'X2D LVEF detection',
-      desc: 'CathEF is a video-based deep neural network (DNN) designed to predict left ventricular ejection fraction (LVEF) from left coronary angiograms.',
-      name: 'CathEF',
-      approvalDate: '2023-04-17',
-      date: '2023-03-01',
-      lastUpdate: '2023-04-17',
-      licensedTo: 'Montreal Heart Institute',
-      version: '1.0',
-    },
-    {
-      title: 'X2D LVEF detection',
-      desc: 'CathEF is a video-based deep neural network (DNN) designed to predict left ventricular ejection fraction (LVEF) from left coronary angiograms.',
-      name: 'CathEF',
-      approvalDate: '2023-04-17',
-      date: '2023-03-01',
-      lastUpdate: '2023-04-17',
-      licensedTo: 'Montreal Heart Institute',
-      version: '1.0',
-    },
-    {
-      title: 'X2D LVEF detection',
-      desc: 'CathEF is a video-based deep neural network (DNN) designed to predict left ventricular ejection fraction (LVEF) from left coronary angiograms.',
-      name: 'CathEF',
-      approvalDate: '2023-04-17',
-      date: '2023-03-01',
-      lastUpdate: '2023-04-17',
-      licensedTo: 'Montreal Heart Institute',
-      version: '1.0',
-    },
-    {
-      title: 'X2D LVEF detection',
-      desc: 'CathEF is a video-based deep neural network (DNN) designed to predict left ventricular ejection fraction (LVEF) from left coronary angiograms.',
-      name: 'CathEF',
-      approvalDate: '2023-04-17',
-      date: '2023-03-01',
-      lastUpdate: '2023-04-17',
-      licensedTo: 'Montreal Heart Institute',
-      version: '1.0',
-    },
-  ];
 
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">

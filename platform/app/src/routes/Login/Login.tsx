@@ -26,6 +26,11 @@ const LoginPage = () => {
 
   auth.tenantId = tenantId;
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Login - PACS AI';
+  }, []);
+
   useEffect(() => {
     const fetchTenantInfo = async () => {
       try {

@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Input, Typography } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 
 const ResetPasswordPage = () => {
   const { t } = useTranslation();
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Reset Password - PACS AI';
+  }, []);
 
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">

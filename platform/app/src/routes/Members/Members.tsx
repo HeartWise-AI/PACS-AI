@@ -54,6 +54,11 @@ const MembersPage = () => {
     { text: 'Action', value: 'action', align: 'center' },
   ];
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Admin Members - PACS AI';
+  }, []);
+
   useEffect(() => {
     getAllTenantUsers();
     getDoctorSpecialties();

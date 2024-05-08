@@ -28,6 +28,11 @@ function ViewerLayout({
   const { hangingProtocolService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Viewer - PACS AI';
+  }, []);
+
   /**
    * Set body classes (tailwindcss) that don't allow vertical
    * or horizontal overflow (no scrolling). Also guarantee window
