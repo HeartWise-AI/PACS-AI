@@ -27,8 +27,8 @@ import {
   UserPreferences,
   LoadingIndicatorProgress,
 } from '@ohif/ui';
-import HeaderPanel from '/components/HeaderPanel';
-import Sidebar from '/components/Sidebar';
+import HeaderPanel from '../../components/HeaderPanel';
+import Sidebar from '../../components/Sidebar';
 import i18n from '@ohif/i18n';
 
 const { sortBySeriesDate } = utils;
