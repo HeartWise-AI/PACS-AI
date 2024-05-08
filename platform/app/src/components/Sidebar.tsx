@@ -236,7 +236,7 @@ const Sidebar = () => {
         </div>
         {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
           <Link
-            to="/members"
+            to="/admin/members"
             target="_blank"
           >
             <ButtonGradient className="h-[47px] w-full !px-0">

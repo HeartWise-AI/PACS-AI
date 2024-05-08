@@ -149,21 +149,21 @@ const createRoutes = ({
   };
 
   const MembersRoute = {
-    path: `/members`,
+    path: `/admin/members`,
     children: DataSourceWrapper,
     private: true,
     props: { children: Members, servicesManager, extensionManager },
   };
 
   const WorkspaceSettingsRoute = {
-    path: `/workspace-settings`,
+    path: `/admin/workspace-settings`,
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkspaceSettings, servicesManager, extensionManager },
   };
 
   const KibanaLogsRoute = {
-    path: `/kibana-logs`,
+    path: `/admin/kibana-logs`,
     children: DataSourceWrapper,
     private: true,
     props: { children: KibanaLogs, servicesManager, extensionManager },

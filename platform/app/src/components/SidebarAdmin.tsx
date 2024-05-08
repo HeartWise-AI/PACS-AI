@@ -105,25 +105,25 @@ const SidebarAdmin = () => {
             <li
               className="my-2 rounded-lg"
               style={{
-                background: isPageActive('/members')
+                background: isPageActive('/admin/members')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                   : undefined,
               }}
             >
               <a
-                onClick={() => navigate(`/members`)}
+                onClick={() => navigate(`/admin/members`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
-                {isPageActive('/members') && (
+                {isPageActive('/admin/members') && (
                   <img
                     src={membersActiveIcon}
                     alt="Members icon"
                     className="w-[18px]"
                   />
                 )}
-                {!isPageActive('/members') && (
+                {!isPageActive('/admin/members') && (
                   <img
                     src={membersInActiveIcon}
                     alt="Members icon"
@@ -135,7 +135,7 @@ const SidebarAdmin = () => {
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
-                      isPageActive('/members') ? 'text-black' : 'text-white text-opacity-50'
+                      isPageActive('/admin/members') ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
                     {t('Members')}
@@ -146,25 +146,25 @@ const SidebarAdmin = () => {
             <li
               className="my-2 rounded-lg"
               style={{
-                background: isPageActive('/kibana-logs')
+                background: isPageActive('/admin/kibana-logs')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                   : undefined,
               }}
             >
               <a
-                onClick={() => navigate(`/kibana-logs`)}
+                onClick={() => navigate(`/admin/kibana-logs`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
-                {isPageActive('/kibana-logs') && (
+                {isPageActive('/admin/kibana-logs') && (
                   <img
                     src={kibanaLogsActiveIcon}
                     alt="Kibana logs icon"
                     className="w-[18px]"
                   />
                 )}
-                {!isPageActive('/kibana-logs') && (
+                {!isPageActive('/admin/kibana-logs') && (
                   <img
                     src={kibanaLogsInActiveIcon}
                     alt="Kibana logs icon"
@@ -176,7 +176,9 @@ const SidebarAdmin = () => {
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
-                      isPageActive('/kibana-logs') ? 'text-black' : 'text-white text-opacity-50'
+                      isPageActive('/admin/kibana-logs')
+                        ? 'text-black'
+                        : 'text-white text-opacity-50'
                     }`}
                   >
                     {t('Kibana Logs')}
@@ -187,25 +189,25 @@ const SidebarAdmin = () => {
             <li
               className="my-2 rounded-lg"
               style={{
-                background: isPageActive('/workspace-settings')
+                background: isPageActive('/admin/workspace-settings')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                   : undefined,
               }}
             >
               <a
-                onClick={() => navigate(`/workspace-settings`)}
+                onClick={() => navigate(`/admin/workspace-settings`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
-                {isPageActive('/workspace-settings') && (
+                {isPageActive('/admin/workspace-settings') && (
                   <img
                     src={workplaceSettingsInActiveIcon}
                     alt="Cogs icon"
                     className="w-[18px]"
                   />
                 )}
-                {!isPageActive('/workspace-settings') && (
+                {!isPageActive('/admin/workspace-settings') && (
                   <img
                     src={workplaceSettingsInActiveIcon}
                     alt="Cogs icon"
@@ -218,7 +220,7 @@ const SidebarAdmin = () => {
                     <Typography
                       variant="body"
                       className={`ms-3 ml-2 font-medium  ${
-                        isPageActive('/workspace-settings')
+                        isPageActive('/admin/workspace-settings')
                           ? 'text-black'
                           : 'text-white text-opacity-50'
                       }`}
