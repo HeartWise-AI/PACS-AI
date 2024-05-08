@@ -79,6 +79,21 @@ const AIModelsPage = () => {
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="AI Models" />
+          {!tenantInfo.availableModels && (
+            <div
+              role="tenantInfo"
+              className="grid grid-cols-3 gap-5"
+            >
+              {Array.from({ length: 3 }, (_, i) => (
+                <div
+                  key={i}
+                  className="w-full animate-pulse"
+                >
+                  <div className='className="mb-2 mb-2 h-[330px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-5">
             {tenantInfo.availableModels &&
               tenantInfo.availableModels.map((item, index) => (

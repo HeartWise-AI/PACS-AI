@@ -59,18 +59,46 @@ const WorkspaceSettingsPage = () => {
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="Workspace Settings" />
           <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            <div className="">
-              <h1 className="text-2xl text-white">{tenantInfo.name}</h1>
-            </div>
-            <div className="flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center">
-              <div className="flex items-center sm:ml-1">
-                {tenantInfo.id}
-                <CopyToClipboardButton text={tenantInfo.id} />
+            {tenantInfo.name ? (
+              <div>
+                <h1 className="text-2xl text-white">{tenantInfo.name}</h1>
+                <div className="flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center">
+                  <div className="flex items-center sm:ml-1">
+                    {tenantInfo.id}
+                    <CopyToClipboardButton text={tenantInfo.id} />
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div
+                role="tenantInfo"
+                className={`grid max-w-full animate-pulse grid-cols-9 gap-4`}
+              >
+                <div>
+                  <div className='className="mb-2 mb-2 h-7 w-[250px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                  <div className='className="mb-2 mb-2 h-2 w-[150px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-5 mb-3">
               <h1 className="text-2xl text-white">{t('Available AI Models')}</h1>
             </div>
+            {!tenantInfo.availableModels && (
+              <div
+                role="tenantInfo"
+                className="grid grid-cols-3 gap-5"
+              >
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="w-full animate-pulse"
+                  >
+                    <div className='className="mb-2 mb-2 h-[330px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-5">
               {tenantInfo.availableModels &&
                 tenantInfo.availableModels.map((item, index) => (
