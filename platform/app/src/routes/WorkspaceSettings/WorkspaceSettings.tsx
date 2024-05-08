@@ -126,7 +126,7 @@ const WorkspaceSettingsPage = () => {
         {isOpenAIModelModal && (
           <Modal
             isOpen={isOpenAIModelModal}
-            size="max-w-[90%]"
+            size="max-w-[80%]"
             onClose={() => {
               setIsOpenAIModelModal(false);
             }}
