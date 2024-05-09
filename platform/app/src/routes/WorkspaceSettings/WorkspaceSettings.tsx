@@ -104,7 +104,7 @@ const WorkspaceSettingsPage = () => {
                 ))}
               </div>
             )}
-            <div  className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
               {tenantInfo.availableModels &&
                 tenantInfo.availableModels.map((item, index) => (
                   <div

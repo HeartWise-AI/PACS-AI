@@ -118,7 +118,7 @@ const InputGroup = ({
   };
   return (
     <div className="relative m-auto flex flex-col">
-      <div className="flex w-full flex-row gap-1">
+      <div className="flex w-full flex-wrap gap-1 xl:flex-nowrap">
         {inputMeta.map(inputMeta => {
           return (
             <div
