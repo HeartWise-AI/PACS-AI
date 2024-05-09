@@ -144,7 +144,7 @@ const SettingsPage = () => {
           width="55"
           className="rounded-lg border border-gray-200 p-2"
         /> */}
-          <div className="h-10 min-w-10 rounded-lg bg-white opacity-10"></div>
+          <div className="min-w-10 h-10 rounded-lg bg-white opacity-10"></div>
           {currentUser.name ? (
             <div className="ml-3">
               <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
@@ -159,7 +159,7 @@ const SettingsPage = () => {
           ) : (
             <div
               role="userInfo"
-              className={`grid max-w-full animate-pulse grid-cols-9 gap-4 ml-3 mt-1`}
+              className={`ml-3 mt-1 grid max-w-full animate-pulse grid-cols-9 gap-4`}
             >
               <div>
                 <div className='className="mb-2 mb-2 h-3 w-[150px] rounded-lg bg-gray-200 bg-opacity-30'></div>
