@@ -273,7 +273,7 @@ const MembersPage = () => {
             <Input
               id="search"
               placeholder="Search member name, email, license no., etc."
-              className="w-[40%]"
+              className="w-[70%] lg:w-[40%]"
               type="text"
               onChange={e => searchItems(e.target.value)}
             />
