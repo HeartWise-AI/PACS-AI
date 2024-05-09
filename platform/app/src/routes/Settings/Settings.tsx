@@ -144,17 +144,29 @@ const SettingsPage = () => {
           width="55"
           className="rounded-lg border border-gray-200 p-2"
         /> */}
-          <div className="h-10 w-10 rounded-lg bg-white opacity-10"></div>
-          <div className="ml-3">
-            <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
-            <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center ">
-              <div className="text-left capitalize">{currentUser.specialty} •</div>
-              <div className="flex items-center sm:ml-1">
-                {currentUser.licenseNo}
-                <CopyToClipboardButton text={currentUser.licenseNo} />
+          <div className="h-10 min-w-10 rounded-lg bg-white opacity-10"></div>
+          {currentUser.name ? (
+            <div className="ml-3">
+              <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
+              <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center ">
+                <div className="text-left capitalize">{currentUser.specialty} •</div>
+                <div className="flex items-center sm:ml-1">
+                  {currentUser.licenseNo}
+                  <CopyToClipboardButton text={currentUser.licenseNo} />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              role="userInfo"
+              className={`grid max-w-full animate-pulse grid-cols-9 gap-4 ml-3 mt-1`}
+            >
+              <div>
+                <div className='className="mb-2 mb-2 h-3 w-[150px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                <div className='className="mb-2 mb-2 h-2 w-[70px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="pt-7">
           <h1 className="text-lg font-normal text-white">{t('Security')}</h1>
