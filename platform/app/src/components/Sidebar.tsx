@@ -62,7 +62,7 @@ const Sidebar = () => {
     <aside
       id="default-sidebar"
       className={`sticky top-0 left-0 z-40 h-screen ${
-        sidebarMini ? 'min-w-[80px]' : 'min-w-[350px]'
+        sidebarMini ? 'min-w-[110px]' : 'min-w-[350px]'
       } p-5`}
       aria-label="Sidebar"
     >
@@ -240,8 +240,14 @@ const Sidebar = () => {
             target="_blank"
           >
             <ButtonGradient className="h-[47px] w-full !px-0">
-              <div className="flex items-center justify-between px-3">
-                <div className="!text-primary-dark font-light">{'Admin Console'}</div>
+              <div
+                className={`flex items-center px-3 ${
+                  sidebarMini ? 'justify-center' : 'justify-between'
+                }`}
+              >
+                {!sidebarMini && (
+                  <div className="!text-primary-dark font-light">{'Admin Console'}</div>
+                )}
                 <img
                   src={newTabActiveIcon}
                   alt="New tab icon"
