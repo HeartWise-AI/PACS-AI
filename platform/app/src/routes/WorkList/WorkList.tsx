@@ -169,11 +169,6 @@ function WorkList({
     });
   };
 
-  // Set page title
-  useEffect(() => {
-    document.title = 'Studies - PACS AI';
-  }, []);
-
   // Set body style
   useEffect(() => {
     document.body.classList.add('bg-black');
