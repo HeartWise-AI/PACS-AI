@@ -17,7 +17,10 @@ import workplaceSettingsActiveIcon from './../assets/pacs/icons/settings-active.
 import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const SidebarAdmin = () => {
-  const [sidebarMini, setSidebarMini] = useState(false);
+  const [sidebarMini, setSidebarMini] = useState<boolean>(() => {
+    const width = window.innerWidth;
+    return  width <= 1024;
+  });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const { t } = useTranslation();
