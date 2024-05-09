@@ -43,8 +43,8 @@ const AIModelsPage = () => {
           <HeaderPanel title="AI Models" />
           {!tenantInfo.availableModels && (
             <div
-              role="tenantInfo"
-              className="grid grid-cols-3 gap-5"
+              role="aiModels"
+              className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5"
             >
               {Array.from({ length: 3 }, (_, i) => (
                 <div
@@ -56,7 +56,7 @@ const AIModelsPage = () => {
               ))}
             </div>
           )}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
             {tenantInfo.availableModels &&
               tenantInfo.availableModels.map((item, index) => (
                 <div
