@@ -340,7 +340,7 @@ function WorkList({
               : []
           }
         >
-          <div className="flex flex-row gap-6">
+          <div className="flex flex-wrap gap-3">
             {appConfig.loadedModes.map((mode, i) => {
               const modalitiesToCheck = modalities.replaceAll('/', '\\');
 
