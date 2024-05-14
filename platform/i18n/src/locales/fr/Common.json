@@ -1,4 +1,6 @@
 {
+  "AI Models": "Modèles AI",
+  "Available AI Models": "Modèles AI disponibles",
   "Image": "Image",
   "Layout": "Disposition",
   "More": "Plus",
@@ -6,5 +8,6 @@
   "Play": "Play",
   "Previous": "Précédent",
   "Reset": "Reset",
-  "Stop": "Stop"
+  "Stop": "Stop",
+  "View More": "Voir plus"
 }
