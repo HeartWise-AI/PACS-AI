@@ -3,6 +3,7 @@ import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import Header from './Header.json';
 import HeaderPanel from './HeaderPanel.json';
+import Members from './Members.json';
 import Onboarding from './Onboarding.json';
 import Settings from './Settings.json';
 import Sidebar from './Sidebar.json';
@@ -15,6 +16,7 @@ export default {
     Common,
     Header,
     HeaderPanel,
+    Members,
     Onboarding,
     Settings,
     Sidebar,
