@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Button, Input, Typography } from '@ohif/ui';
+import i18n from '@ohif/i18n';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
@@ -14,9 +15,10 @@ import { GetTenantInfoResponse } from '../../api/tenantDTO';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
+import { Languages } from '../../api/dto';
 
 const SettingsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Settings');
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
@@ -199,14 +201,37 @@ const SettingsPage = () => {
                 {t('Change your preferred language')}
               </h2>
             </div>
-            <button className="flex h-[45px] w-[200px] items-center justify-between rounded-lg bg-white bg-opacity-10 px-3 text-lg font-light text-white">
-              <span> {t('English')}</span>
-              <img
-                src={chevronDown}
-                alt="Chevron down icon"
-                className="h-5 w-5"
-              />
-            </button>
+            <div className="relative">
+              <select
+                id="language"
+                value={Languages[i18n.language.toLocaleUpperCase()]}
+                onChange={e => {
+                  const enumKey = Object.keys(Languages).find(
+                    key => Languages[key] === e.target.value
+                  );
+
+                  i18n.changeLanguage(enumKey.toLowerCase());
+                }}
+                className="mb-4 block h-[51px] w-[140px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+              >
+                {Object.values(Languages).map(lang => (
+                  <option
+                    key={lang}
+                    value={Languages[lang]}
+                    className="!cursor-pointer !bg-[#323631] !py-2"
+                  >
+                    {lang}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <img
+                  src={chevronDown}
+                  alt="Chevron down icon"
+                  className="w-5"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -254,7 +279,7 @@ const SettingsPage = () => {
               showIcon={false}
               className="text-primary-dark text-base font-light"
             >
-              Privacy Policy
+              {t('Privacy Policy')}
             </Link>
             <span className="text-white text-opacity-80">&</span>
             <Link
@@ -262,7 +287,7 @@ const SettingsPage = () => {
               showIcon={false}
               className="text-primary-dark text-base font-light"
             >
-              Terms and conditions
+              {t('Terms and Conditions')}
             </Link>
           </div>
         </div>

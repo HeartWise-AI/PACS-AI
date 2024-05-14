@@ -12,7 +12,7 @@ import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 
 const LoginPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Onboarding');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ const LoginPage = () => {
                 {t('Enter your email and password to sign in.')}
               </Typography>
               <Input
-                placeholder="Email address"
+                placeholder={t('Email address')}
                 autoFocus
                 id="email"
                 className="mb-4 w-full"
@@ -163,7 +163,7 @@ const LoginPage = () => {
                 onKeyPress={e => e.key === ' ' && e.preventDefault()}
               />
               <Input
-                placeholder="Password"
+                placeholder={t('Password')}
                 id="password"
                 className="mb-4 w-full"
                 type="password"
@@ -175,7 +175,7 @@ const LoginPage = () => {
                   className="text-md rounded-lg bg-transparent p-0 font-medium text-white text-opacity-70 !ring-0"
                   onClick={handleForgotPasswordClick}
                 >
-                  {'Forgot password?'}
+                  {t('Forgot Password')}?
                 </button>
               </div>
               <Button
@@ -183,7 +183,7 @@ const LoginPage = () => {
                 className="h-[51px] w-full rounded-lg !px-0"
                 onClick={onLogin}
               >
-                {isLoggingIn ? '...' : 'Login'}
+                {isLoggingIn ? '...' : t('Login')}
               </Button>
             </div>
             <div>
@@ -213,7 +213,7 @@ const LoginPage = () => {
                   variant="subtitle"
                   className="text-center font-light text-white text-opacity-70"
                 >
-                  {t(' Back to login')}
+                  {t('Back to login')}
                 </Typography>
               </button>
             </div>
@@ -231,7 +231,7 @@ const LoginPage = () => {
                 {t('To reset your password, please provide your registered email address.')}
               </Typography>
               <Input
-                placeholder="Email address"
+                placeholder={t('Email address')}
                 autoFocus
                 id="email"
                 className="mb-4 w-full"
@@ -245,7 +245,7 @@ const LoginPage = () => {
                 className="mt-7 h-[51px] w-full rounded-lg !px-0"
                 onClick={resetPassword}
               >
-                {isResettingPassword ? '...' : 'Reset Password'}
+                {isResettingPassword ? '...' : t('Reset Password')}
               </Button>
             </div>
             <Typography

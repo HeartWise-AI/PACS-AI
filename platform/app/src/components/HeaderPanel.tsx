@@ -7,7 +7,7 @@ import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import chevronDownIcon from './../assets/pacs/icons/chevron-down.png';
 
 const HeaderPanel = ({ title }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('HeaderPanel');
   const [isOpen, setIsOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
@@ -56,7 +56,7 @@ const HeaderPanel = ({ title }) => {
                     onClick={() => navigate(`/`)}
                     className="text-primary-dark inline-flex cursor-pointer items-center text-sm font-light"
                   >
-                    Studies
+                    {t('Studies')}
                   </a>
                 </li>
                 <li>
@@ -70,8 +70,8 @@ const HeaderPanel = ({ title }) => {
                       className="ml-2 text-sm font-light text-white text-opacity-70"
                     >
                       {location.pathname.split('?')[0].includes('/viewer')
-                        ? 'Viewer'
-                        : 'Segmentation'}
+                        ? t('Viewer')
+                        : t('Segmentation')}
                     </a>
                   </div>
                 </li>
@@ -89,7 +89,9 @@ const HeaderPanel = ({ title }) => {
               className="inline-flex items-center rounded-lg bg-transparent px-5 py-2.5 text-center text-sm font-medium text-white !ring-0"
               type="button"
             >
-              <span className="text-common-light mr-3 text-lg">Hi, {name}</span>
+              <span className="text-common-light mr-3 text-lg">
+                {t('Hi')}, {name}
+              </span>
               <img
                 src={chevronDownIcon}
                 alt="Chevron down icon"
@@ -99,7 +101,7 @@ const HeaderPanel = ({ title }) => {
 
             {isOpen && (
               <div
-                className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+                className="min-w-28 absolute z-50 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
                 style={{ top: ref.current ? ref.current.offsetHeight : 0 }}
               >
                 <ul className="py-2 text-sm text-white">
@@ -108,7 +110,7 @@ const HeaderPanel = ({ title }) => {
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                       onClick={() => navigate(`/settings`)}
                     >
-                      Settings
+                      {t('Settings')}
                     </a>
                   </li>
                   <li>
@@ -116,7 +118,7 @@ const HeaderPanel = ({ title }) => {
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                       onClick={logoutUser}
                     >
-                      Logout
+                      {t('Logout')}
                     </a>
                   </li>
                 </ul>

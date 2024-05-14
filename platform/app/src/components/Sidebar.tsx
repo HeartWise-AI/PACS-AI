@@ -23,7 +23,7 @@ const Sidebar = () => {
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
-  const { t } = useTranslation();
+  const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
   let role = '';
 
@@ -249,7 +249,7 @@ const Sidebar = () => {
                 }`}
               >
                 {!sidebarMini && (
-                  <div className="!text-primary-dark font-light">{'Admin Console'}</div>
+                  <div className="!text-primary-dark font-light"> {t('Admin Console')}</div>
                 )}
                 <img
                   src={newTabActiveIcon}
