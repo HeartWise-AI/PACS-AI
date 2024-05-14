@@ -8,7 +8,7 @@ import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
 
 const AIModelsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Common');
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
@@ -100,7 +100,7 @@ const AIModelsPage = () => {
                     onClick={() => handleSelectModel(item.en)}
                     className="mt-5 h-[40px] w-full"
                   >
-                    {'View More'}
+                    {t('View More')}
                   </ButtonGradient>
                 </div>
               ))}

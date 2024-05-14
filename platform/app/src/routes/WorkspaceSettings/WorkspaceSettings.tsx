@@ -10,7 +10,7 @@ import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
 
 const WorkspaceSettingsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
