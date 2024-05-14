@@ -67,6 +67,63 @@ function WrappedCinePlayer({
       }
     });
 
+    return isPlaying
+      ? cineService.playClip(enabledVPElement, { framesPerSecond: validFrameRate, viewportId })
+      : cineService.stopClip(enabledVPElement);
+  }, [cines, viewportId, enabledVPElement, cineService]);
+
+  console.log('isCineEnable : ', isCineEnabled);
+
+  const newDisplaySetHandler = useCallback(() => {
+    // if (!enabledVPElement || !isCineEnabled) {
+    //   return;
+    // }
+    const { viewports } = viewportGridService.getState();
+    const { displaySetInstanceUIDs } = viewports.get(viewportId);
+
+    let frameRate = 24;
+    let isPlaying = cines[viewportId]?.isPlaying || false;
+
+    displaySetInstanceUIDs.forEach(displaySetInstanceUID => {
+      const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
+
+      console.log('isCineEnable : ', isCineEnabled);
+
+      //Getting the modality to see if Cine should be enabled
+      if (displaySet.Modality.includes('US') || displaySet.Modality.includes('XA')) {
+        // US and XA modalities are typically cine
+        isPlaying = true;
+        cineService.setIsCineEnabled(true);
+        console.log('isCine Should autoplay because ', displaySet.Modality);
+      }
+      if (!enabledVPElement || !isCineEnabled) {
+        return;
+      }
+
+      if (displaySet.FrameRate) {
+        // displaySet.FrameRate corresponds to DICOM tag (0018,1063) which is defined as the the frame time in milliseconds
+        // So a bit of math to get the actual frame rate.
+        frameRate = Math.round(1000 / displaySet.FrameRate);
+        isPlaying ||= !!appConfig.autoPlayCine;
+      }
+
+      // check if the displaySet is dynamic and set the dynamic info
+      if (displaySet.isDynamicVolume) {
+        const { dynamicVolumeInfo } = displaySet;
+        const numTimePoints = dynamicVolumeInfo.timePoints.length;
+        const label = dynamicVolumeInfo.splittingTag;
+        const timePointIndex = dynamicVolumeInfo.timePointIndex || 0;
+        setDynamicInfo({
+          volumeId: displaySet.displaySetInstanceUID,
+          timePointIndex,
+          numTimePoints,
+          label,
+        });
+      } else {
+        setDynamicInfo(null);
+      }
+    });
+
     if (isPlaying) {
       cineService.setIsCineEnabled(isPlaying);
     }
@@ -74,6 +131,9 @@ function WrappedCinePlayer({
     setNewStackFrameRate(frameRate);
   }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement]);
 
+  /**
+   * Use effect for handling new display set
+   */
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -244,5 +304,4 @@ function RenderCinePlayer({
     />
   );
 }
-
 export default WrappedCinePlayer;

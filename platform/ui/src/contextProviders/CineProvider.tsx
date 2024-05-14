@@ -11,7 +11,6 @@ const DEFAULT_STATE = {
 };
 
 const DEFAULT_CINE = { isPlaying: false, frameRate: 24 };
-
 export const CineContext = createContext(DEFAULT_STATE);
 
 export default function CineProvider({ children, service }) {
