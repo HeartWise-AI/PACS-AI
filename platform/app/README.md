@@ -30,6 +30,11 @@ yarn install
 // Get the env values from Robert Avram
 cp ./platform/app/.env.example ./platform/app/env
 
+// For Orthanc study list, modify the APP_CONFIG with the following values:
+APP_CONFIG=config/default.js // default connection to OHIF viewer test data
+APP_CONFIG=config/local_pacs_ai.js // connect to local orthanc (you need to run pacs-ai-backend first)
+APP_CONFIG=config/staging_pacs_ai.js // connect to staging orthanc
+
 // Stands up local server to host Viewer.
 // Viewer connects to our public cloud PACS by default
 yarn start
