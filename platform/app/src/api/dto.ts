@@ -15,3 +15,8 @@ export enum LogsAuditType {
   INFERENCE = 'Audit Inference',
   DATABASE = 'Audit Database',
 }
+
+export enum Languages {
+  EN = 'English',
+  FR = 'French',
+}

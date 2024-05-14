@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 
 const ResetPasswordPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Onboarding');
 
   // Set page title
   useEffect(() => {
@@ -30,14 +30,14 @@ const ResetPasswordPage = () => {
               {t('Provide your new password for abc@gmail.com account.')}
             </Typography>
             <Input
-              placeholder="New Password"
+              placeholder={t('New Password')}
               autoFocus
               id="newPassword"
               className="mb-4 w-full"
               type="password"
             />
             <Input
-              placeholder="Confirm New Password"
+              placeholder={t('Confirm New Password')}
               autoFocus
               id="confirmNewPassword"
               className="mb-4 w-full"
@@ -47,12 +47,12 @@ const ResetPasswordPage = () => {
               disabled={false}
               className="mt-7 h-[51px] w-full rounded-lg !px-0"
             >
-              {'Confirm'}
+              {t('Confirm')}
             </Button>
           </div>
           <div>
             <h1 className="text-center text-base text-white text-opacity-70">
-              © 2024 PACS AI. All rights reserved.
+              {t('© 2024 PACS AI. All rights reserved.')}
             </h1>
           </div>
         </div>

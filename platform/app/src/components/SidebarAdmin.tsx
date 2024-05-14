@@ -23,7 +23,7 @@ const SidebarAdmin = () => {
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
-  const { t } = useTranslation();
+  const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
   let role = '';
 
@@ -246,7 +246,7 @@ const SidebarAdmin = () => {
               }`}
             >
               {!sidebarMini && (
-                <div className="!text-primary-dark font-light">{'Launch PACS AI'}</div>
+                <div className="!text-primary-dark font-light">{t('Launch PACS AI')}</div>
               )}
               <img
                 src={newTabActiveIcon}
