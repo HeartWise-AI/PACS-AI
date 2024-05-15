@@ -48,6 +48,7 @@ const StudyBrowser = ({
         return (
           <React.Fragment key={studyInstanceUid}>
             <div className="flex w-full gap-3 p-4">
+              {/* TODO: Added AI Models button and Refresh button */}
               <button
                 className="flex w-full items-center gap-2 rounded-lg bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)] px-2 py-2"
                 type="button"

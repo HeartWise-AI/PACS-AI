@@ -112,6 +112,7 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
         <div className="relative flex justify-center">
           <div className="flex items-center">
             <Toolbar servicesManager={servicesManager} />
+            {/* TODO: Added AIModelButton component */}
             <AIModelButton isShowBG={true} />
           </div>
         </div>
