@@ -1,13 +1,19 @@
 {
-  "AccessionNumber": "Eingangsnummer",
-  "Accession": "Eingangsnummer",
-  "Empty": "Leer",
-  "MRN": "MRN",
-  "Modality": "Modalität",
-  "Patient Name": "Patientenname",
-  "Study date": "Studiendatum",
+  "AccessionNumber": "Zugangsnummer",
+  "ClearFilters": "Filter löschen",
   "Description": "Beschreibung",
-  "Study list": "Studienliste",
+  "Empty": "Leer",
   "Instances": "Instanzen",
-  "Studies": "Studien"
+  "MRN": "MRN",
+  "NumOfStudiesHiggerThan100Message": "Filtern Sie die Liste auf 100 oder weniger Studien, um die Sortierung zu aktivieren",
+  "Modality": "Modalität",
+  "PatientName": "Patientenname",
+  "Previous": "< Zurück",
+  "Page": "Seite",
+  "Next": "Weiter >",
+  "ResultsPerPage": "Ergebnisse pro Seite",
+  "Studies": "Studien",
+  "StudyDate": "Studientag",
+  "StudyDescription": "Beschreibung",
+  "StudyList": "Studienliste"
 }
