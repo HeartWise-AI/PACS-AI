@@ -1,6 +1,9 @@
 {
   "Cancel": "$t(Buttons:Cancel)",
+  "No hotkeys found": "Aucun raccourci clavier n'est configuré pour cette application. Les raccourcis clavier peuvent être configurés dans le fichier app-config.js de l'application.",
   "Reset to Defaults": "$t(Buttons:Reset to Defaults)",
+  "ResetDefaultMessage": "Préférences réinitialisées avec succès aux valeurs par défaut. <br /> Vous devez <strong>Enregistrer</strong> pour effectuer cette action.",
   "Save": "$t(Buttons:Save)",
+  "SaveMessage": "Préférences enregistrées",
   "User Preferences": "Préférences utilisateur"
 }

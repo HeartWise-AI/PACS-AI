@@ -8,6 +8,7 @@ import Onboarding from './Onboarding.json';
 import Settings from './Settings.json';
 import Sidebar from './Sidebar.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
+import StudyList from './StudyList.json';
 
 export default {
   fr: {
@@ -21,5 +22,6 @@ export default {
     Settings,
     Sidebar,
     UserPreferencesModal,
+    StudyList,
   },
 };
