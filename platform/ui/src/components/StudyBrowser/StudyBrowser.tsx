@@ -67,7 +67,7 @@ const StudyBrowser = ({
                   className="h-5 w-5"
                   alt="AI Models icon"
                 />
-                <span className="text-sm !text-white text-transparent">AI Models</span>
+                <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
               </button>
               {isOpen && (
                 <div
@@ -123,7 +123,7 @@ const StudyBrowser = ({
                   className="h-5 w-5"
                   alt="Refresh icon"
                 />
-                <span className="text-sm !text-white text-transparent">Refresh</span>
+                <span className="text-sm !text-white text-transparent">{t('Refresh')}</span>
               </button>
             </div>
             <StudyItem
