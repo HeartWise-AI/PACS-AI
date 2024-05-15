@@ -128,9 +128,11 @@ function ViewerHeader({
         )
       }
     >
-      <div className="relative flex justify-center gap-[4px]">
-        <Toolbar servicesManager={servicesManager} />
-      </div>
+      <div className="flex items-center">
+            <Toolbar servicesManager={servicesManager} />
+            {/* TODO: Added AIModelButton component */}
+            <AIModelButton isShowBG={true} />
+          </div>
     </Header>
   );
 }

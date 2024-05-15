@@ -80,6 +80,7 @@ function ThumbnailTracked({
             />
           </div>
         )}
+        {/* TODO: Added AI Models button */}
         <div
           className="relative flex w-full items-center"
           ref={ref}

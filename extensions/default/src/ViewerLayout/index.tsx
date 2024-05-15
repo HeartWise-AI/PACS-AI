@@ -119,9 +119,10 @@ function ViewerLayout({
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815] ">
+        {/* TODO: Added Sidebar component */}
         <Sidebar />
-
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
+          {/* TODO: Added HeaderPanel component */}
           <HeaderPanel title="Viewer" />
           <ViewerHeader
             hotkeysManager={hotkeysManager}
