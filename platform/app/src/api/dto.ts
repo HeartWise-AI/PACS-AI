@@ -19,4 +19,5 @@ export enum LogsAuditType {
 export enum Languages {
   EN = 'English',
   FR = 'French',
+  ES = 'Spanish',
 }

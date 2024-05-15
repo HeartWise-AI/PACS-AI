@@ -1,9 +1,14 @@
 {
+  "AI Models": "Modelos de IA",
+  "Available AI Models": "Modelos de IA disponibles",
+  "Close": "Close",
   "Image": "Imagen",
   "Layout": "Formato",
+  "LOAD": "CARGA",
   "Measurements": "Medidas",
   "More": "Más",
   "Next": "Siguiente",
+  "NoStudyDate": "Sin fecha de estudio",
   "Play": "Play",
   "Previous": "Anterior",
   "Reset": "Restaurar",
@@ -11,5 +16,6 @@
   "Series": "Secuencia",
   "Show": "Mostrar",
   "Stop": "Detener",
-  "StudyDate": "Fecha de estudo"
+  "StudyDate": "Fecha de estudo",
+  "View More": "Ver más"
 }

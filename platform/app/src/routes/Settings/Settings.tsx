@@ -370,7 +370,7 @@ const SettingsPage = () => {
                 <div className="mt-5">
                   <Input
                     id="newPassword"
-                    placeholder="New Password"
+                    placeholder={t('New Password')}
                     className="mb-4 w-full"
                     type="password"
                     onChange={e => setNewPassword(e.target.value)}
@@ -378,7 +378,7 @@ const SettingsPage = () => {
                   />
                   <Input
                     id="confirmNewPassword"
-                    placeholder="Confirm New Password"
+                    placeholder={t('Confirm New Password')}
                     className="mb-4 w-full"
                     type="password"
                     onChange={e => setConfirmNewPassword(e.target.value)}
@@ -390,7 +390,7 @@ const SettingsPage = () => {
                     className="h-[41px] w-[111px] rounded-lg"
                     onClick={changePassword}
                   >
-                    {isChangingPassword ? '...' : 'Confirm'}
+                    {isChangingPassword ? '...' : t('Confirm')}
                   </Button>
                 </div>
               </div>
