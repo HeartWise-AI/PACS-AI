@@ -21,4 +21,5 @@ export enum Languages {
   FR = 'French',
   ES = 'Spanish',
   DE = 'German',
+  AR = 'Arabic',
 }

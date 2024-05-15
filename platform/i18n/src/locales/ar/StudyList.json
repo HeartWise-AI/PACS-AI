@@ -1,0 +1,19 @@
+{
+  "AccessionNumber": "رقم الوصول",
+  "ClearFilters": "مسح الفلاتر",
+  "Description": "الوصف",
+  "Empty": "فارغ",
+  "Instances": "الحالات",
+  "MRN": "رقم المريض الطبي",
+  "NumOfStudiesHiggerThan100Message": "يرجى تصفية القائمة لعرض 100 دراسة أو أقل لتمكين الترتيب",
+  "Modality": "الوضعية",
+  "PatientName": "اسم المريض",
+  "Previous": "< السابق",
+  "Page": "الصفحة",
+  "Next": "التالي >",
+  "ResultsPerPage": "النتائج في الصفحة",
+  "Studies": "الدراسات",
+  "StudyDate": "تاريخ الدراسة",
+  "StudyDescription": "الوصف",
+  "StudyList": "قائمة الدراسات"
+}
