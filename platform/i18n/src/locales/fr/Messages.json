@@ -1,0 +1,15 @@
+{
+  "1": "Aucune instance valide trouvée dans la série.",
+  "2": "L'ensemble d'affichage manque d'informations de position.",
+  "3": "L'ensemble d'affichage n'est pas un volume 3D reconstructible.",
+  "4": "Les ensembles d'affichage multi-cadres n'ont pas d'informations de mesure de pixels.",
+  "5": "Les ensembles d'affichage multi-cadres n'ont pas d'informations d'orientation.",
+  "6": "Les ensembles d'affichage multi-cadres n'ont pas d'informations de position.",
+  "7": "Il manque des cadres à l'ensemble d'affichage.",
+  "8": "L'ensemble d'affichage a un espacement irrégulier.",
+  "9": "L'ensemble d'affichage a des dimensions incohérentes entre les cadres.",
+  "10": "L'ensemble d'affichage a des cadres avec un nombre incohérent de composants.",
+  "11": "L'ensemble d'affichage a des cadres avec des orientations incohérentes.",
+  "12": "L'ensemble d'affichage a des informations de position incohérentes.",
+  "13": "Ensemble d'affichage non pris en charge."
+}
