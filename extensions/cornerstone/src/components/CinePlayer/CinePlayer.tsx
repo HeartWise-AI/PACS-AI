@@ -4,6 +4,7 @@ import { Enums, eventTarget, cache } from '@cornerstonejs/core';
 import { Enums as StreamingEnums } from '@cornerstonejs/streaming-image-volume-loader';
 import { useAppConfig } from '@state';
 import { display } from 'html2canvas/dist/types/css/property-descriptors/display';
+import { useLocation } from 'react-router-dom';
 
 function WrappedCinePlayer({
   enabledVPElement,
@@ -20,6 +21,13 @@ function WrappedCinePlayer({
   const [appConfig] = useAppConfig();
   const isMountedRef = useRef(null);
 
+  const location = useLocation(); // Get the current location
+
+  useEffect(() => {
+    // This will run when the location (i.e., the page) changes
+    cineService.setIsCineEnabled(false);
+  }, [location]); // Add location to the dependency array
+
   const cineHandler = useCallback(() => {
     if (!cines?.[viewportId] || !enabledVPElement) {
       return;
@@ -33,12 +41,7 @@ function WrappedCinePlayer({
       : cineService.stopClip(enabledVPElement);
   }, [cines, viewportId, enabledVPElement, cineService]);
 
-  console.log('isCineEnable : ', isCineEnabled);
-
   const newDisplaySetHandler = useCallback(() => {
-    // if (!enabledVPElement || !isCineEnabled) {
-    //   return;
-    // }
     const { viewports } = viewportGridService.getState();
     const { displaySetInstanceUIDs } = viewports.get(viewportId);
 
@@ -48,15 +51,13 @@ function WrappedCinePlayer({
     displaySetInstanceUIDs.forEach(displaySetInstanceUID => {
       const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
 
-      console.log('isCineEnable : ', isCineEnabled);
-
       //Getting the modality to see if Cine should be enabled
       if (displaySet.Modality.includes('US') || displaySet.Modality.includes('XA')) {
         // US and XA modalities are typically cine
         isPlaying = true;
         cineService.setIsCineEnabled(true);
-        console.log('isCine Should autoplay because ', displaySet.Modality);
       }
+
       if (!enabledVPElement || !isCineEnabled) {
         return;
       }
