@@ -4,7 +4,7 @@
   "Description": "Description",
   "Empty": "Vide",
   "Instances": "Instances",
-  "MRN": "Numéro de dossier médical",
+  "MRN": "MRN",
   "NumOfStudiesHiggerThan100Message": "Filtrez la liste à 100 études ou moins pour activer le tri",
   "Modality": "Modalité",
   "PatientName": "Nom du patient",
