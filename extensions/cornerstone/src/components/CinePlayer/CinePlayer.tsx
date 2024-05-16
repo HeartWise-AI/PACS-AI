@@ -72,12 +72,7 @@ function WrappedCinePlayer({
       : cineService.stopClip(enabledVPElement);
   }, [cines, viewportId, enabledVPElement, cineService]);
 
-  console.log('isCineEnable : ', isCineEnabled);
-
   const newDisplaySetHandler = useCallback(() => {
-    // if (!enabledVPElement || !isCineEnabled) {
-    //   return;
-    // }
     const { viewports } = viewportGridService.getState();
     const { displaySetInstanceUIDs } = viewports.get(viewportId);
 
@@ -87,15 +82,13 @@ function WrappedCinePlayer({
     displaySetInstanceUIDs.forEach(displaySetInstanceUID => {
       const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
 
-      console.log('isCineEnable : ', isCineEnabled);
-
       //Getting the modality to see if Cine should be enabled
       if (displaySet.Modality.includes('US') || displaySet.Modality.includes('XA')) {
         // US and XA modalities are typically cine
         isPlaying = true;
         cineService.setIsCineEnabled(true);
-        console.log('isCine Should autoplay because ', displaySet.Modality);
       }
+
       if (!enabledVPElement || !isCineEnabled) {
         return;
       }
