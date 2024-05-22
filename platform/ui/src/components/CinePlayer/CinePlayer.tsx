@@ -15,7 +15,6 @@ export type CinePlayerProps = {
   maxFrameRate?: number;
   stepFrameRate?: number;
   frameRate?: number;
-  onFrameRateChange: (value: number) => void;
   onPlayPauseChange: (value: boolean) => void;
   onClose: () => void;
   updateDynamicInfo?: () => void;
@@ -37,14 +36,12 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
   stepFrameRate,
   frameRate: defaultFrameRate,
   dynamicInfo = {},
-  onFrameRateChange,
   onPlayPauseChange,
   onClose,
   updateDynamicInfo,
 }) => {
   const isDynamic = !!dynamicInfo?.numTimePoints;
   const [frameRate, setFrameRate] = useState(defaultFrameRate);
-  const debouncedSetFrameRate = useCallback(debounce(onFrameRateChange, 100), [onFrameRateChange]);
 
   const getPlayPauseIconName = () => (isPlaying ? 'icon-pause' : 'icon-play');
 
@@ -125,18 +122,6 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             position="top"
             className="group/fps cine-fps-range-tooltip"
             tight={true}
-            content={
-              <InputRange
-                containerClassName="h-9 px-2"
-                inputClassName="w-40"
-                value={frameRate}
-                minValue={minFrameRate}
-                maxValue={maxFrameRate}
-                step={stepFrameRate}
-                onChange={handleSetFrameRate}
-                showLabel={false}
-              />
-            }
           >
             <div className="flex items-center justify-center gap-1">
               <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
@@ -172,7 +157,6 @@ CinePlayer.defaultProps = {
   stepFrameRate: 1,
   frameRate: 24,
   onPlayPauseChange: noop,
-  onFrameRateChange: noop,
   onClose: noop,
   isDynamic: false,
   dynamicInfo: {},
@@ -189,7 +173,6 @@ CinePlayer.propTypes = {
   /** 'true' if playing, 'false' if paused */
   isPlaying: PropTypes.bool.isRequired,
   onPlayPauseChange: PropTypes.func,
-  onFrameRateChange: PropTypes.func,
   onClose: PropTypes.func,
   isDynamic: PropTypes.bool,
   dynamicInfo: PropTypes.shape({

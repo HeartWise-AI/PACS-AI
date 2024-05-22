@@ -246,12 +246,6 @@ function WrappedCinePlayer({
             isPlaying,
           });
         }}
-        onFrameRateChange={frameRate =>
-          cineService.setCine({
-            id: viewportId,
-            frameRate,
-          })
-        }
         dynamicInfo={dynamicInfo}
         updateDynamicInfo={updateDynamicInfo}
       />
