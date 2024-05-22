@@ -95,7 +95,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
       )}
       <div
         className={
-          'border-secondary-light/60 bg-primary-dark inline-flex select-none items-center gap-2 rounded border px-2 py-2'
+          'border-secondary-light/60 inline-flex select-none items-center gap-2 rounded border bg-[#4C504B] px-2 py-2'
         }
       >
         <Icon
@@ -114,7 +114,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           </div>
         )}
 
-        <div className="border-secondary-light ml-4 flex h-6 items-stretch gap-1 rounded border">
+        <div className="ml-4 flex h-6 items-stretch gap-1 rounded border border-none">
           <div
             className={`${fpsButtonClassNames} rounded-l`}
             onClick={() => handleSetFrameRate(frameRate - 1)}
@@ -141,7 +141,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             <div className="flex items-center justify-center gap-1">
               <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
                 <span className="inline-block text-right">{`${frameRate} `}</span>
-                <span className="text-aqua-pale whitespace-nowrap text-xs">{' FPS'}</span>
+                <span className="whitespace-nowrap text-xs text-white">{' FPS'}</span>
               </div>
             </div>
           </Tooltip>

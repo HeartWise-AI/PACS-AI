@@ -4,14 +4,14 @@ input[type='range'] {
 
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
-  @apply border-primary-dark  bg-primary-light border-[2px] border-solid;
+  @apply border-primary-dark  border-[2px] border-solid bg-[#000000];
   height: 13px;
   width: 13px;
   border-radius: 50%;
 }
 
 input[type='range']::-moz-range-thumb {
-  @apply border-primary-dark  bg-primary-light border-[2px] border-solid;
+  @apply border-primary-dark  border-[2px] border-solid bg-[#000000];
   height: 13px;
   width: 13px;
   border-radius: 50%;
