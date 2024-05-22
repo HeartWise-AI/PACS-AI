@@ -75,13 +75,13 @@ const ThumbnailTracked = ({
           )}
         >
           <Tooltip
-            position="right"
+            position="bottom-left"
             content={
               <div className="flex flex-1 flex-row">
                 <div className="flex-2 flex items-center justify-center pr-4">
                   <Icon
                     name="info-link"
-                    className="text-primary-active"
+                    className="text-black"
                   />
                 </div>
                 <div className="flex flex-1 flex-col">
