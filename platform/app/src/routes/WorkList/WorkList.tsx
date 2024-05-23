@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import filtersMeta from './filtersMeta.js';
-import { Button, Input, InputDateRange, DateRange, Select } from '@ohif/ui';
-import i18n from '@ohif/i18n';
+import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
 import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
+import Select from 'react-select';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -140,7 +140,11 @@ function WorkList() {
     });
   };
 
-  // TODO: issue in multiple select
+  /**
+   * Handle select for modalities filter
+   *
+   * @param selectedOptions
+   */
   const handleModalitiesChange = selectedOptions => {
     const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
 
@@ -148,7 +152,8 @@ function WorkList() {
       ...prevFilter,
       modalitiesInStudy: updatedModalitiesInStudy,
     }));
-    console.log(studyListFilter.modalitiesInStudy, updatedModalitiesInStudy);
+
+    setIsStudyListDataLoading(true);
     debounceSearch();
   };
 
@@ -217,6 +222,39 @@ function WorkList() {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Intl.DateTimeFormat('en-US', options).format(date);
   }
+
+  const selectCustomStyles = {
+    control: styles => ({
+      ...styles,
+      height: '50px',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      border: 'none',
+      outline: 'none',
+    }),
+    option: (styles, { isFocused }) => ({
+      ...styles,
+      border: isFocused ? 'none' : '',
+      cursor: 'pointer',
+      outline: 'none',
+    }),
+    multiValue: styles => ({
+      ...styles,
+      backgroundColor: '#c8f469',
+      margin: '1px',
+      borderRadius: '4px',
+      color: 'white',
+    }),
+    multiValueRemove: styles => ({
+      ...styles,
+      color: '#1e427e',
+      ':hover': {
+        backgroundColor: '#1e427e',
+        color: 'white',
+        borderRadius: '0 3px 3px 0',
+      },
+    }),
+  };
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -255,28 +293,13 @@ function WorkList() {
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
               <Select
-                id="SelectModalities"
-                placeholder={t('Modalities')}
-                className="min-w-[150px]"
+                isMulti
+                placeholder={t('Modality')}
                 options={filtersMeta[4].inputProps.options}
-                value={studyListFilter.modalitiesInStudy}
-                isMulti={true}
-                isClearable={false}
-                isSearchable={false}
-                closeMenuOnSelect={false}
-                hideSelectedOptions={false}
-                onChange={(selectedOptions, action) => {
-                  switch (action) {
-                    case 'select-option':
-                    case 'remove-value':
-                    case 'deselect-option':
-                    case 'clear':
-                      handleModalitiesChange(selectedOptions);
-                      break;
-                    default:
-                      break;
-                  }
-                }}
+                onChange={handleModalitiesChange}
+                styles={selectCustomStyles}
+                className="min-w-[200px] bg-transparent"
+                classNamePrefix="select"
               />
               <Input
                 id="Accession"
@@ -404,7 +427,10 @@ function WorkList() {
                     </tbody>
                   ) : (
                     <tr>
-                      <td colSpan={12} className="p-5 text-center">
+                      <td
+                        colSpan={12}
+                        className="p-5 text-center"
+                      >
                         <div className="flex h-full w-full items-center justify-center">
                           <span className="text-lg font-normal text-white text-opacity-70">
                             {t('No data found')}
