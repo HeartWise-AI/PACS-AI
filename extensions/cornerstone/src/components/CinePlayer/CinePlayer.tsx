@@ -62,8 +62,16 @@ function WrappedCinePlayer({
         return;
       }
 
+      if (displaySet.FrameRate) {
+        // displaySet.FrameRate corresponds to DICOM tag (0018,1063) which is defined as the the frame time in milliseconds
+        // So a bit of math to get the actual frame rate.
+        frameRate = Math.round(1000 / displaySet.FrameRate);
+        isPlaying ||= !!appConfig.autoPlayCine;
+      }
+
       if (displaySet.instance.CineRate) {
-        // displaySet..instance.CineRate corresponds to DICOM tag (0018,0040) which is defined as the the frame time
+        // displaySet.instance.CineRate corresponds to DICOM tag (0018,0040) which is defined as the the frame time
+        // It should be the default, that's why we are using it and the FrameRate is a fallback
         frameRate = displaySet.instance.CineRate;
         isPlaying ||= !!appConfig.autoPlayCine;
       }

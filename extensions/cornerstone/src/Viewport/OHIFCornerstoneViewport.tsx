@@ -112,7 +112,7 @@ const OHIFCornerstoneViewport = React.memo(props => {
   } = props;
 
   const viewportId = viewportOptions.viewportId;
-  const [scrollbarHeight, setScrollbarHeight] = useState('100px');
+  const [scrollbarWidth, setScrollbarWidth] = useState('100px');
   const [enabledVPElement, setEnabledVPElement] = useState(null);
   const elementRef = useRef();
 
@@ -130,16 +130,16 @@ const OHIFCornerstoneViewport = React.memo(props => {
 
   const [viewportDialogState] = useViewportDialog();
   // useCallback for scroll bar height calculation
-  const setImageScrollBarHeight = useCallback(() => {
-    const scrollbarHeight = `${elementRef.current.clientHeight - 20}px`;
-    setScrollbarHeight(scrollbarHeight);
+  const setImageScrollBarWidth = useCallback(() => {
+    const scrollbarWidth = `${elementRef.current.clientWidth - 20}px`;
+    setScrollbarWidth(scrollbarWidth);
   }, [elementRef]);
 
   // useCallback for onResize
   const onResize = useCallback(() => {
     if (elementRef.current) {
       cornerstoneViewportService.resize();
-      setImageScrollBarHeight();
+      setImageScrollBarWidth();
     }
   }, [elementRef]);
 
@@ -188,7 +188,7 @@ const OHIFCornerstoneViewport = React.memo(props => {
 
     eventTarget.addEventListener(Enums.Events.ELEMENT_ENABLED, elementEnabledHandler);
 
-    setImageScrollBarHeight();
+    setImageScrollBarWidth();
 
     return () => {
       const viewportInfo = cornerstoneViewportService.getViewportInfo(viewportId);
@@ -364,7 +364,7 @@ const OHIFCornerstoneViewport = React.memo(props => {
           viewportId={viewportId}
           toolBarService={toolbarService}
           element={elementRef.current}
-          scrollbarHeight={scrollbarHeight}
+          scrollbarWidth={scrollbarWidth}
           servicesManager={servicesManager}
         />
         <CinePlayer
