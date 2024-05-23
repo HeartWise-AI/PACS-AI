@@ -44,10 +44,14 @@
   background-color: #999;
   border: none;
   cursor: pointer;
-  width: 10px; /* Width of the thumb */
-  height: 20px; /* Height of the thumb */
-  margin-top: -3px; /* Adjust vertical alignment */
-  margin-left: -10px; /* Adjust horizontal alignment */
+  width: 10px;
+  /* Width of the thumb */
+  height: 20px;
+  /* Height of the thumb */
+  margin-top: -3px;
+  /* Adjust vertical alignment */
+  margin-left: -10px;
+  /* Adjust horizontal alignment */
 }
 
 .scroll .scroll-holder .imageSlider::-webkit-slider-thumb:active {
@@ -58,8 +62,10 @@
   background-color: #999;
   border: none;
   cursor: pointer;
-  width: 10px; /* Width of the thumb */
-  height: 20px; /* Height of the thumb */
+  width: 10px;
+  /* Width of the thumb */
+  height: 20px;
+  /* Height of the thumb */
   z-index: 7;
 }
 
@@ -71,8 +77,10 @@
   background-color: #999;
   border: none;
   cursor: pointer;
-  width: 10px; /* Width of the thumb */
-  height: 20px; /* Height of the thumb */
+  width: 10px;
+  /* Width of the thumb */
+  height: 20px;
+  /* Height of the thumb */
 }
 
 .scroll .scroll-holder .imageSlider::-ms-thumb:active {
@@ -83,7 +91,8 @@
   display: none;
 }
 
-@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+@media screen and (-ms-high-contrast: active),
+(-ms-high-contrast: none) {
   .imageSlider {
     top: 50px;
   }

@@ -15,7 +15,6 @@ export type CinePlayerProps = {
   maxFrameRate?: number;
   stepFrameRate?: number;
   frameRate?: number;
-  onFrameRateChange: (value: number) => void;
   onPlayPauseChange: (value: boolean) => void;
   onClose: () => void;
   updateDynamicInfo?: () => void;
@@ -44,17 +43,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
 }) => {
   const isDynamic = !!dynamicInfo?.numTimePoints;
   const [frameRate, setFrameRate] = useState(defaultFrameRate);
-  const debouncedSetFrameRate = useCallback(debounce(onFrameRateChange, 100), [onFrameRateChange]);
-
   const getPlayPauseIconName = () => (isPlaying ? 'icon-pause' : 'icon-play');
-
-  const handleSetFrameRate = (frameRate: number) => {
-    if (frameRate < minFrameRate || frameRate > maxFrameRate) {
-      return;
-    }
-    setFrameRate(frameRate);
-    debouncedSetFrameRate(frameRate);
-  };
 
   useEffect(() => {
     setFrameRate(defaultFrameRate);
@@ -178,7 +167,6 @@ CinePlayer.propTypes = {
   /** 'true' if playing, 'false' if paused */
   isPlaying: PropTypes.bool.isRequired,
   onPlayPauseChange: PropTypes.func,
-  onFrameRateChange: PropTypes.func,
   onClose: PropTypes.func,
   isDynamic: PropTypes.bool,
   dynamicInfo: PropTypes.shape({
