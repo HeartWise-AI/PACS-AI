@@ -37,6 +37,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
   stepFrameRate,
   frameRate: defaultFrameRate,
   dynamicInfo = {},
+  onFrameRateChange,
   onPlayPauseChange,
   onClose,
   updateDynamicInfo,
@@ -149,10 +150,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             className={`${fpsButtonClassNames} rounded-r`}
             onClick={() => handleSetFrameRate(frameRate + 1)}
           >
-            <Icon
-              name="arrow-right-small"
-              className="cursor-pointer text-black hover:bg-white hover:text-black"
-            />
+            <Icon name="arrow-right-small" />
           </div>
         </div>
         <Icon
