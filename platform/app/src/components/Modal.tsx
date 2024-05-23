@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 
-const Modal = ({ children, isOpen, onClose, size }) => {
+const Modal = ({ children, isOpen, onClose, size, isCloseable }) => {
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
@@ -35,15 +35,17 @@ const Modal = ({ children, isOpen, onClose, size }) => {
               className={`relative inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 ${size} sm:align-middle`}
             >
               {/* close button */}
-              <button
-                onClick={handleClose}
-                className="absolute top-4 right-4 z-[999999999]"
-              >
-                <img
-                  src={closeIcon}
-                  alt="Close icon"
-                />
-              </button>
+              {isCloseable && (
+                <button
+                  onClick={handleClose}
+                  className="absolute top-4 right-4 z-[999999999]"
+                >
+                  <img
+                    src={closeIcon}
+                    alt="Close icon"
+                  />
+                </button>
+              )}
 
               {/* content */}
               {children}
@@ -60,6 +62,7 @@ Modal.defaultProps = {
   onClose: () => {},
   isOpen: false,
   size: 'max-w-[400px]',
+  isCloseable: true,
 };
 
 Modal.propTypes = {
@@ -67,6 +70,7 @@ Modal.propTypes = {
   size: PropTypes.string,
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
+  isCloseable: PropTypes.bool,
 };
 
 export default Modal;
