@@ -8,7 +8,7 @@ import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
 
 const AIModelsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Common');
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
@@ -43,8 +43,8 @@ const AIModelsPage = () => {
           <HeaderPanel title="AI Models" />
           {!tenantInfo.availableModels && (
             <div
-              role="tenantInfo"
-              className="grid grid-cols-3 gap-5"
+              role="aiModels"
+              className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3"
             >
               {Array.from({ length: 3 }, (_, i) => (
                 <div
@@ -56,7 +56,7 @@ const AIModelsPage = () => {
               ))}
             </div>
           )}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
             {tenantInfo.availableModels &&
               tenantInfo.availableModels.map((item, index) => (
                 <div
@@ -100,7 +100,7 @@ const AIModelsPage = () => {
                     onClick={() => handleSelectModel(item.en)}
                     className="mt-5 h-[40px] w-full"
                   >
-                    {'View More'}
+                    {t('View More')}
                   </ButtonGradient>
                 </div>
               ))}

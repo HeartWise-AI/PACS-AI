@@ -12,7 +12,7 @@ import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 
 const MembersPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Members');
   const ref = useRef(null);
   const [filteredItems, setFilteredItems] = useState([]);
   const [listOfUsers, setListOfUsers] = useState([]);
@@ -43,15 +43,15 @@ const MembersPage = () => {
     id: '',
   });
   const headers = [
-    { text: 'ID', value: 'id', align: 'left' },
-    { text: 'Name', value: 'name', align: 'left' },
-    { text: 'Role', value: 'role', align: 'center' },
-    { text: 'Email', value: 'email', align: 'left' },
-    { text: 'License No.', value: 'licenseNo', align: 'left' },
-    { text: 'Specialty', value: 'specialty', align: 'left' },
-    { text: 'Email Status', value: 'isEmailVerified', align: 'center' },
-    { text: 'Created At', value: 'createdAt', align: 'left' },
-    { text: 'Action', value: 'action', align: 'center' },
+    { text: t('ID'), value: 'id', align: 'left' },
+    { text: t('Name'), value: 'name', align: 'left' },
+    { text: t('Role'), value: 'role', align: 'center' },
+    { text: t('Email'), value: 'email', align: 'left' },
+    { text: t('License No.'), value: 'licenseNo', align: 'left' },
+    { text: t('Specialty'), value: 'specialty', align: 'left' },
+    { text: t('Email Status'), value: 'isEmailVerified', align: 'center' },
+    { text: t('Created At'), value: 'createdAt', align: 'left' },
+    { text: t('Action'), value: 'action', align: 'center' },
   ];
 
   // Set page title
@@ -130,7 +130,7 @@ const MembersPage = () => {
                     setIsOpen(false);
                   }}
                 >
-                  Edit
+                  {t('Edit')}
                 </a>
               </li>
               <li>
@@ -142,7 +142,7 @@ const MembersPage = () => {
                     setIsOpen(false);
                   }}
                 >
-                  Delete
+                  {t('Delete')}
                 </a>
               </li>
             </ul>
@@ -272,14 +272,14 @@ const MembersPage = () => {
           <div className="flex justify-between rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <Input
               id="search"
-              placeholder="Search member name, email, license no., etc."
-              className="w-[40%]"
+              placeholder={t('Search member name, email, license no., etc.')}
+              className="w-[70%] lg:w-[40%]"
               type="text"
               onChange={e => searchItems(e.target.value)}
             />
             <Button
               disabled={false}
-              className="h-[51px] w-36 rounded-lg !px-0"
+              className="min-w-36 h-[51px] rounded-lg !px-0"
               onClick={() => {
                 setIsOpenAddEditMemberModal(true);
               }}
@@ -360,7 +360,7 @@ const MembersPage = () => {
                 }}
               </Table>
             ) : (
-              <p className="text-center text-white opacity-60">No Data Found</p>
+              <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
             )}
             {listOfUsers.length === 0 && (
               <div
@@ -410,7 +410,7 @@ const MembersPage = () => {
                   <div className="flex gap-4">
                     <Input
                       id="firstname"
-                      placeholder="First Name"
+                      placeholder={t('First Name')}
                       className="mb-4 w-full"
                       type="text"
                       autoFocus
@@ -421,7 +421,7 @@ const MembersPage = () => {
                     />
                     <Input
                       id="lastname"
-                      placeholder="Last Name"
+                      placeholder={t('Last Name')}
                       className="mb-4 w-full"
                       type="text"
                       value={selectedUser.lastName}
@@ -463,7 +463,7 @@ const MembersPage = () => {
                   <Input
                     id="email"
                     disabled={!isAddMember}
-                    placeholder="Email"
+                    placeholder={t('Email')}
                     className="mb-4 w-full"
                     type="text"
                     value={selectedUser.email}
@@ -474,7 +474,7 @@ const MembersPage = () => {
                   />
                   <Input
                     id="licenseNo"
-                    placeholder="License No."
+                    placeholder={t('License No.')}
                     className="mb-4 w-full"
                     type="text"
                     value={selectedUser.licenseNo}
@@ -516,7 +516,7 @@ const MembersPage = () => {
                     className="h-[41px] w-[111px] rounded-lg"
                     onClick={isAddMember ? addTenantUser : udpateTenantUser}
                   >
-                    {isAddingMember || isUpdatingMember ? '...' : 'Save'}
+                    {isAddingMember || isUpdatingMember ? '...' : t('Save')}
                   </Button>
                 </div>
               </div>
@@ -552,14 +552,14 @@ const MembersPage = () => {
                     className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
                     onClick={() => setIsOpenDeleteMemberModal(false)}
                   >
-                    {isDeletingMember ? '...' : 'Cancel'}
+                    {isDeletingMember ? '...' : t('Cancel')}
                   </button>
                   <button
                     disabled={isDeletingMember}
                     className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
                     onClick={deleteTenantUser}
                   >
-                    {isDeletingMember ? '...' : 'Delete'}
+                    {isDeletingMember ? '...' : t('Delete')}
                   </button>
                 </div>
               </div>

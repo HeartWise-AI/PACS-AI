@@ -1,10 +1,21 @@
 {
+  "AI Models": "Modèles AI",
+  "Available AI Models": "Modèles AI disponibles",
+  "Close": "Close",
   "Image": "Image",
   "Layout": "Disposition",
+  "LOAD": "LOAD",
+  "Measurements": "Measurements",
   "More": "Plus",
   "Next": "Suivant",
+  "NoStudyDate": "No Study Date",
   "Play": "Play",
   "Previous": "Précédent",
   "Reset": "Reset",
-  "Stop": "Stop"
+  "RowsPerPage": "rows per page",
+  "Series": "Series",
+  "Show": "Show",
+  "Stop": "Stop",
+  "StudyDate": "Study Date",
+  "View More": "Voir plus"
 }

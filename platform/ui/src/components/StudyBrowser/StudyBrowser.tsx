@@ -48,6 +48,7 @@ const StudyBrowser = ({
         return (
           <React.Fragment key={studyInstanceUid}>
             <div className="flex w-full gap-3 p-4">
+              {/* TODO: Added AI Models button and Refresh button */}
               <button
                 className="flex w-full items-center gap-2 rounded-lg bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)] px-2 py-2"
                 type="button"
@@ -58,7 +59,7 @@ const StudyBrowser = ({
                   className="h-5 w-5"
                   alt="AI Models icon"
                 />
-                <span className="text-sm !text-white text-transparent">AI Models</span>
+                <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
               </button>
               {isOpen && (
                 <div
@@ -114,7 +115,7 @@ const StudyBrowser = ({
                   className="h-5 w-5"
                   alt="Refresh icon"
                 />
-                <span className="text-sm !text-white text-transparent">Refresh</span>
+                <span className="text-sm !text-white text-transparent">{t('Refresh')}</span>
               </button>
             </div>
             <StudyItem

@@ -13,13 +13,17 @@ import membersInActiveIcon from './../assets/pacs/icons/members-inactive.png';
 import kibanaLogsActiveIcon from './../assets/pacs/icons/kibana-logs-active.png';
 import kibanaLogsInActiveIcon from './../assets/pacs/icons/kibana-logs-inactive.png';
 import workplaceSettingsInActiveIcon from './../assets/pacs/icons/settings-inactive.png';
+import workplaceSettingsActiveIcon from './../assets/pacs/icons/settings-active.png';
 import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const SidebarAdmin = () => {
-  const [sidebarMini, setSidebarMini] = useState(false);
+  const [sidebarMini, setSidebarMini] = useState<boolean>(() => {
+    const width = window.innerWidth;
+    return width <= 1024;
+  });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
-  const { t } = useTranslation();
+  const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
   let role = '';
 
@@ -61,7 +65,7 @@ const SidebarAdmin = () => {
     <aside
       id="default-sidebar"
       className={`sticky top-0 left-0 z-40 h-screen ${
-        sidebarMini ? 'min-w-[80px]' : 'min-w-[350px]'
+        sidebarMini ? 'min-w-[110px]' : 'min-w-[350px]'
       } p-5`}
       aria-label="Sidebar"
     >
@@ -82,7 +86,7 @@ const SidebarAdmin = () => {
             {!sidebarMini && <Logo class="h-auto w-[117px]" />}
             <button
               className={`flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10 ${
-                sidebarMini ? 'ml-1 mt-4 rotate-180' : ''
+                sidebarMini ? 'mx-auto mt-4 rotate-180' : ''
               }`}
               onClick={handleMinimizeSidebarClick}
             >
@@ -103,7 +107,7 @@ const SidebarAdmin = () => {
           )}
           <ul className="mt-5 space-y-2 font-medium">
             <li
-              className="my-2 rounded-lg"
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/members')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -113,7 +117,7 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/members`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/members') && (
@@ -144,7 +148,7 @@ const SidebarAdmin = () => {
               </a>
             </li>
             <li
-              className="my-2 rounded-lg"
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/kibana-logs')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -154,7 +158,7 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/kibana-logs`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/kibana-logs') && (
@@ -187,7 +191,7 @@ const SidebarAdmin = () => {
               </a>
             </li>
             <li
-              className="my-2 rounded-lg"
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/workspace-settings')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -197,12 +201,12 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/workspace-settings`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/workspace-settings') && (
                   <img
-                    src={workplaceSettingsInActiveIcon}
+                    src={workplaceSettingsActiveIcon}
                     alt="Cogs icon"
                     className="w-[18px]"
                   />
@@ -216,18 +220,16 @@ const SidebarAdmin = () => {
                 )}
 
                 {!sidebarMini && (
-                  <div className="items-enter flex gap-2">
-                    <Typography
-                      variant="body"
-                      className={`ms-3 ml-2 font-medium  ${
-                        isPageActive('/admin/workspace-settings')
-                          ? 'text-black'
-                          : 'text-white text-opacity-50'
-                      }`}
-                    >
-                      {t('Workspace Settings')}
-                    </Typography>
-                  </div>
+                  <Typography
+                    variant="body"
+                    className={`ms-3 ml-2 font-medium  ${
+                      isPageActive('/admin/workspace-settings')
+                        ? 'text-black'
+                        : 'text-white text-opacity-50'
+                    }`}
+                  >
+                    {t('Workspace Settings')}
+                  </Typography>
                 )}
               </a>
             </li>
@@ -238,8 +240,14 @@ const SidebarAdmin = () => {
             className="h-[47px] w-full !px-0"
             onClick={() => navigate(`/`)}
           >
-            <div className="flex items-center justify-between px-3">
-              <div className="!text-primary-dark font-light">{'Launch PACS AI'}</div>
+            <div
+              className={`flex items-center ${
+                sidebarMini ? 'justify-center' : 'justify-between px-3'
+              }`}
+            >
+              {!sidebarMini && (
+                <div className="!text-primary-dark font-light">{t('Launch PACS AI')}</div>
+              )}
               <img
                 src={newTabActiveIcon}
                 alt="New tab icon"

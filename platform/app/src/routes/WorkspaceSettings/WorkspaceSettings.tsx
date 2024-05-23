@@ -10,7 +10,7 @@ import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
 
 const WorkspaceSettingsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
@@ -92,7 +92,7 @@ const WorkspaceSettingsPage = () => {
             {!tenantInfo.availableModels && (
               <div
                 role="tenantInfo"
-                className="grid grid-cols-3 gap-5"
+                className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3"
               >
                 {Array.from({ length: 3 }, (_, i) => (
                   <div
@@ -104,7 +104,7 @@ const WorkspaceSettingsPage = () => {
                 ))}
               </div>
             )}
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
               {tenantInfo.availableModels &&
                 tenantInfo.availableModels.map((item, index) => (
                   <div

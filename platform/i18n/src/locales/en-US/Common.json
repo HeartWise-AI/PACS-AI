@@ -1,4 +1,6 @@
 {
+  "AI Models": "AI Models",
+  "Available AI Models": "Available AI Models",
   "Close": "Close",
   "Image": "Image",
   "Layout": "Layout",
@@ -14,5 +16,6 @@
   "Series": "Series",
   "Show": "Show",
   "Stop": "Stop",
-  "StudyDate": "Study Date"
+  "StudyDate": "Study Date",
+  "View More": "View More"
 }

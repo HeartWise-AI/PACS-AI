@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 
 const ResetPasswordPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('Onboarding');
 
   // Set page title
   useEffect(() => {
@@ -13,7 +13,7 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">
-      <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-5 xl:col-span-4">
+      <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
         <div className="flex h-full flex-col justify-between">
           <div></div>
           <div>
@@ -30,14 +30,14 @@ const ResetPasswordPage = () => {
               {t('Provide your new password for abc@gmail.com account.')}
             </Typography>
             <Input
-              placeholder="New Password"
+              placeholder={t('New Password')}
               autoFocus
               id="newPassword"
               className="mb-4 w-full"
               type="password"
             />
             <Input
-              placeholder="Confirm New Password"
+              placeholder={t('Confirm New Password')}
               autoFocus
               id="confirmNewPassword"
               className="mb-4 w-full"
@@ -45,14 +45,14 @@ const ResetPasswordPage = () => {
             />
             <Button
               disabled={false}
-              className="mt-7 h-[51px] w-full rounded-lg"
+              className="mt-7 h-[51px] w-full rounded-lg !px-0"
             >
-              {'Confirm'}
+              {t('Confirm')}
             </Button>
           </div>
           <div>
             <h1 className="text-center text-base text-white text-opacity-70">
-              © 2024 PACS AI. All rights reserved.
+              {t('© 2024 PACS AI. All rights reserved.')}
             </h1>
           </div>
         </div>
@@ -63,7 +63,7 @@ const ResetPasswordPage = () => {
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
         }}
-        className="col-span-12 p-10 sm:col-span-4 md:col-span-7 xl:col-span-8"
+        className="col-span-12 hidden p-10 sm:col-span-4 sm:block md:col-span-5 xl:col-span-8"
       ></div>
     </div>
   );

@@ -25,7 +25,7 @@ const InputMultiSelect = ({
       <Select
         id={id}
         placeholder={placeholder}
-        className="mt-2"
+        className="mt-2 min-w-[150px]"
         options={options}
         value={value}
         isMulti={true}
