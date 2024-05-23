@@ -17,6 +17,7 @@
   "Okay": "Okay",
   "PatientName": "Patient Name",
   "Previous": "< Back",
+  "No data found": "No data found",
   "ResultsPerPage": "Results per page",
   "Studies": "Studies",
   "StudyDate": "Study Date",
@@ -25,5 +26,6 @@
   "Upload": "Upload",
   "State": "State",
   "Segmentation": "Segmentation",
+  "Searching for data": "Searching for data",
   "Tools": "Tools"
 }
