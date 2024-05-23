@@ -153,10 +153,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             onClick={() => handleSetFrameRate(frameRate + 1)}
             data-cy={'cine-player-right-arrow'}
           >
-            <Icon
-              name="arrow-right-small"
-              className="cursor-pointer text-black hover:bg-white hover:text-black"
-            />
+            <Icon name="arrow-right-small" />
           </div>
         </div>
         <Icon
