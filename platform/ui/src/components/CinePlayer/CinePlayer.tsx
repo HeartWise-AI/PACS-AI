@@ -15,6 +15,7 @@ export type CinePlayerProps = {
   maxFrameRate?: number;
   stepFrameRate?: number;
   frameRate?: number;
+  onFrameRateChange: (value: number) => void;
   onPlayPauseChange: (value: boolean) => void;
   onClose: () => void;
   updateDynamicInfo?: () => void;
@@ -26,7 +27,7 @@ export type CinePlayerProps = {
 };
 
 const fpsButtonClassNames =
-  'cursor-pointer text-primary-active active:text-primary-light hover:bg-white w-4 flex items-center justify-center';
+  'cursor-pointer text-primary-active active:text-primary-light hover:bg-customblue-300 w-4 flex items-center justify-center';
 
 const CinePlayer: React.FC<CinePlayerProps> = ({
   className,
@@ -43,6 +44,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
 }) => {
   const isDynamic = !!dynamicInfo?.numTimePoints;
   const [frameRate, setFrameRate] = useState(defaultFrameRate);
+  const debouncedSetFrameRate = useCallback(debounce(onFrameRateChange, 100), [onFrameRateChange]);
 
   const getPlayPauseIconName = () => (isPlaying ? 'icon-pause' : 'icon-play');
 
@@ -98,7 +100,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
       >
         <Icon
           name={getPlayPauseIconName()}
-          className="cursor-pointer text-black hover:bg-white hover:text-black"
+          className="active:text-primary-light hover:bg-customblue-300 cursor-pointer text-white hover:rounded"
           onClick={() => onPlayPauseChange(!isPlaying)}
           data-cy={'cine-player-play-pause'}
         />
@@ -119,18 +121,27 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             onClick={() => handleSetFrameRate(frameRate - 1)}
             data-cy={'cine-player-left-arrow'}
           >
-            <Icon
-              name="arrow-left-small"
-              className="cursor-pointer text-black hover:bg-white hover:text-black"
-            />
+            <Icon name="arrow-left-small" />
           </div>
           <Tooltip
             position="top"
             className="group/fps cine-fps-range-tooltip"
             tight={true}
+            content={
+              <InputRange
+                containerClassName="h-9 px-2"
+                inputClassName="w-40"
+                value={frameRate}
+                minValue={minFrameRate}
+                maxValue={maxFrameRate}
+                step={stepFrameRate}
+                onChange={handleSetFrameRate}
+                showLabel={false}
+              />
+            }
           >
             <div className="flex items-center justify-center gap-1">
-              <div className="text-grey-700 flex-shrink-0 text-center text-sm leading-[22px]">
+              <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
                 <span className="inline-block text-right">{`${frameRate} `}</span>
                 <span className="text-grey-700 whitespace-nowrap text-xs">{' FPS'}</span>
               </div>
@@ -150,7 +161,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
         </div>
         <Icon
           name="icon-close"
-          className="cursor-pointer text-black hover:bg-white hover:text-black"
+          className="text-primary-active active:text-primary-light hover:bg-customblue-300 cursor-pointer hover:rounded"
           onClick={onClose}
           data-cy={'cine-player-close'}
         />
@@ -170,6 +181,7 @@ CinePlayer.propTypes = {
   /** 'true' if playing, 'false' if paused */
   isPlaying: PropTypes.bool.isRequired,
   onPlayPauseChange: PropTypes.func,
+  onFrameRateChange: PropTypes.func,
   onClose: PropTypes.func,
   isDynamic: PropTypes.bool,
   dynamicInfo: PropTypes.shape({
