@@ -15,6 +15,7 @@
   "Previous": "< Back",
   "Page": "Page",
   "Next": "Next >",
+  "No data found": "No data found",
   "ResultsPerPage": "Results per page",
   "Studies": "Studies",
   "StudyDate": "Study Date",
@@ -22,5 +23,6 @@
   "StudyList": "Study List",
   "State": "State",
   "Segmentation": "Segmentation",
+  "Searching for data": "Searching for data",
   "Tools": "Tools"
 }

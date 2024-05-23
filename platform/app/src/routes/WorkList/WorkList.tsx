@@ -14,6 +14,7 @@ function WorkList() {
   const { t } = useTranslation('StudyList');
   const navigate = useNavigate();
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
+  const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [expandedTableRows, setExpandedTableRows] = useState({});
   const [studyListFilter, setStudyListFilter] = useState({
@@ -68,6 +69,7 @@ function WorkList() {
    */
   const fetchStudyListData = async () => {
     setTableDataSource([]);
+    setIsStudyListDataLoading(true);
     try {
       const response = await orthancRepository.GetModalityStudies(filterRef.current);
       setTableDataSource(response.data.studies);
@@ -75,6 +77,7 @@ function WorkList() {
     } catch (error) {
       console.error(error);
     }
+    setIsStudyListDataLoading(false);
   };
 
   /**
@@ -130,6 +133,8 @@ function WorkList() {
         [field]: `*${value}*`,
       };
       filterRef.current = updatedFilter;
+
+      setIsStudyListDataLoading(true);
       debounceSearch();
       return updatedFilter;
     });
@@ -284,101 +289,132 @@ function WorkList() {
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="mx-auto w-full overflow-x-auto">
-              <table className="mb-4 min-w-full rounded-xl border-none bg-transparent">
-                <thead className="bg-transparent">
-                  <tr className="bg-transparent">
-                    <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('PatientName')}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('MRN')}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('StudyDate')}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('Description')}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('Modality')}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('AccessionNumber')}
-                    </th>
-                    <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
-                      {t('Instances')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="!rounded-lg bg-transparent">
-                  {tableDataSource.map((row, index) => (
-                    <React.Fragment key={index}>
-                      <tr
-                        className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
-                        onClick={() => toggleRow(index)}
-                      >
-                        <td
-                          className={`text-md py-2 px-4 font-normal ${
-                            expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                          }`}
-                        >
-                          {row.patientName}
-                        </td>
-                        <td className="text-md py-2 px-4 font-normal">
-                          {row.patientID.substring(0, 10)}....
-                          {row.patientID.substring(row.patientID.length - 10)}
-                        </td>
-                        <td className="text-md py-2 px-4 font-normal">
-                          {formatDate(row.studyDate)}
-                        </td>
-                        <td className="text-md py-2 px-4 font-normal">{row.studyDescription}</td>
-                        <td className="text-md py-2 px-4 font-normal">{row.modalitiesInStudy}</td>
-                        <td className="py-2 px-4">{row.accessionNumber}</td>
-                        <td
-                          className={`py-2 px-4 text-sm font-normal ${
-                            expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                          }`}
-                        >
-                          {row.numberOfStudyRelatedSeries}
-                        </td>
-                      </tr>
-                      {expandedTableRows[index] && (
-                        <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
-                          <td
-                            colSpan={7}
-                            className="rounded-bl-lg rounded-br-lg py-4 px-4"
+              {isStudyListDataLoading ? (
+                <div className="flex items-center justify-center p-5 text-center text-white">
+                  <span className="text-lg font-normal text-opacity-70">
+                    {t('Searching for data')}
+                  </span>
+                </div>
+              ) : (
+                <table className="mb-4 min-w-full rounded-xl border-none bg-transparent">
+                  <thead className="bg-transparent">
+                    <tr className="bg-transparent">
+                      <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('PatientName')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('MRN')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('StudyDate')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Description')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Modality')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('AccessionNumber')}
+                      </th>
+                      <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Instances')}
+                      </th>
+                    </tr>
+                  </thead>
+                  {tableDataSource.length > 0 ? (
+                    <tbody className="!rounded-lg bg-transparent">
+                      {tableDataSource.map((row, index) => (
+                        <React.Fragment key={index}>
+                          <tr
+                            className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
+                            onClick={() => toggleRow(index)}
                           >
-                            <div className="flex items-center gap-3">
-                              <h1 className="text-lg text-white text-opacity-70">{t('Tools')}</h1>
-                              <Button
-                                onClick={() => {
-                                  viewStudy(studyQueryId, index, 'viewer', row.studyInstanceUID);
-                                }}
+                            <td
+                              className={`text-md py-2 px-4 font-normal ${
+                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                              }`}
+                            >
+                              {row.patientName}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.patientID.substring(0, 10)}....
+                              {row.patientID.substring(row.patientID.length - 10)}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {formatDate(row.studyDate)}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.studyDescription}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.modalitiesInStudy}
+                            </td>
+                            <td className="py-2 px-4">{row.accessionNumber}</td>
+                            <td
+                              className={`py-2 px-4 text-sm font-normal ${
+                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                              }`}
+                            >
+                              {row.numberOfStudyRelatedSeries}
+                            </td>
+                          </tr>
+                          {expandedTableRows[index] && (
+                            <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
+                              <td
+                                colSpan={7}
+                                className="rounded-bl-lg rounded-br-lg py-4 px-4"
                               >
-                                {t('BasicViewer')}
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  viewStudy(
-                                    studyQueryId,
-                                    index,
-                                    'segmentation',
-                                    row.studyInstanceUID
-                                  );
-                                }}
-                              >
-                                {t('Segmentation')}
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      {/* adding an empty row for spacing */}
-                      <tr className="h-3"></tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+                                <div className="flex items-center gap-3">
+                                  <h1 className="text-lg text-white text-opacity-70">
+                                    {t('Tools')}
+                                  </h1>
+                                  <Button
+                                    onClick={() => {
+                                      viewStudy(
+                                        studyQueryId,
+                                        index,
+                                        'viewer',
+                                        row.studyInstanceUID
+                                      );
+                                    }}
+                                  >
+                                    {t('BasicViewer')}
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      viewStudy(
+                                        studyQueryId,
+                                        index,
+                                        'segmentation',
+                                        row.studyInstanceUID
+                                      );
+                                    }}
+                                  >
+                                    {t('Segmentation')}
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          {/* adding an empty row for spacing */}
+                          <tr className="h-3"></tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  ) : (
+                    <tr>
+                      <td colSpan={12} className="p-5 text-center">
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="text-lg font-normal text-white text-opacity-70">
+                            {t('No data found')}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </table>
+              )}
             </div>
           </div>
         </div>
