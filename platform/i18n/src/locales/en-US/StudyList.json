@@ -12,8 +12,8 @@
   "No studies available": "No studies available",
   "Number of studies": "Number of studies",
   "Page": "Page",
-  "OrthancServiceProgress": "Orthanc Service Progress",
-  "OrthancServiceProgressMessage": "The job is currently paused or failed, please try again later.",
+  "OrthancServiceProgress": "Syncing Orthanc Images...",
+  "OrthancServiceProgressMessage": "The job encountered an issue. Please try again later.",
   "Okay": "Okay",
   "PatientName": "Patient Name",
   "Previous": "< Back",
@@ -25,6 +25,7 @@
   "StudyList": "Study List",
   "Upload": "Upload",
   "State": "State",
+  "Status": "Status",
   "Segmentation": "Segmentation",
   "Searching for data": "Searching for data",
   "Tools": "Tools"

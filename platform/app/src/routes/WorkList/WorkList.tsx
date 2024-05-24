@@ -452,7 +452,7 @@ function WorkList() {
             ></div>
           </div>
           <h2 className="mt-4 text-white">
-            <span className="text-white text-opacity-70">{t('State')}:</span> {jobInfo.state}
+            <span className="text-white text-opacity-70">{t('Status')}:</span> {jobInfo.state}
           </h2>
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
