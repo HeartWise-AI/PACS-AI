@@ -71,7 +71,7 @@
   border-radius: 10px;
 }
 .ohif-select .customSelect__placeholder {
-  @apply text-aqua-pale pl-1.5;
+  @apply -mb-5 pl-1.5 text-white text-opacity-40;
 }
 
 .ohif-select .customSelect__menu-list::-webkit-scrollbar-thumb {

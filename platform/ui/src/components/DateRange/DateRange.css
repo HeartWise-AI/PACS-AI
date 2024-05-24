@@ -26,7 +26,7 @@
   @apply bg-no-repeat;
 }
 .DateInput_input {
-  @apply mt-2 w-full cursor-pointer appearance-none rounded-lg border-none bg-white bg-opacity-10 py-2 px-3 pl-8 text-sm font-light leading-tight text-white shadow transition duration-300;
+  @apply w-full cursor-pointer appearance-none rounded-lg border-none bg-white bg-opacity-10 py-2 px-3 pl-8 text-sm font-light leading-tight text-white shadow transition duration-300;
 }
 .DateInput_input:hover {
   @apply border-gray-500;

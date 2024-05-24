@@ -1,149 +1,51 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAppConfig } from '@state';
-import { useDebounce, useSearchParams } from '@hooks';
-import classnames from 'classnames';
-import PropTypes from 'prop-types';
-import moment from 'moment';
-import qs from 'query-string';
-import isEqual from 'lodash.isequal';
+import { useNavigate } from 'react-router-dom';
 import filtersMeta from './filtersMeta.js';
-import { utils, hotkeys, ServicesManager, user } from '@ohif/core';
-import {
-  Icon,
-  Button,
-  StudyListExpandedRow,
-  LegacyButton,
-  EmptyStudies,
-  StudyListTable,
-  StudyListPagination,
-  StudyListFilter,
-  // Sidebar,
-  TooltipClipboard,
-  Header,
-  useModal,
-  AboutModal,
-  UserPreferences,
-  LoadingIndicatorProgress,
-} from '@ohif/ui';
+import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
+import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
-import i18n from '@ohif/i18n';
+import Modal from '../../components/Modal';
+import { JobState } from '../../api/orthancDTO';
+import Select from 'react-select';
 
-const { sortBySeriesDate } = utils;
-
-const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
-
-const seriesInStudiesMap = new Map();
-
-/**
- * TODO:
- * - debounce `setFilterValues` (150ms?)
- */
-function WorkList({
-  data: studies,
-  dataTotal: studiesTotal,
-  isLoadingData,
-  dataSource,
-  hotkeysManager,
-  dataPath,
-  onRefresh,
-  servicesManager,
-}) {
-  const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
-  const { show, hide } = useModal();
-  const { t } = useTranslation();
-  // ~ Modes
-  const [appConfig] = useAppConfig();
-  // ~ Filters
-  const searchParams = useSearchParams();
+function WorkList() {
+  const { t } = useTranslation('StudyList');
   const navigate = useNavigate();
-  const STUDIES_LIMIT = 101;
-  const queryFilterValues = _getQueryFilterValues(searchParams);
-  const [filterValues, _setFilterValues] = useState({
-    ...defaultFilterValues,
-    ...queryFilterValues,
+  const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
+  const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
+  const [tableDataSource, setTableDataSource] = useState([]);
+  const [expandedTableRows, setExpandedTableRows] = useState({});
+  const [studyListFilter, setStudyListFilter] = useState({
+    accessionNumber: '',
+    institutionName: '',
+    modalitiesInStudy: '',
+    numberOfStudyRelatedSeries: '',
+    patientBirthDate: '',
+    patientID: '',
+    patientName: '',
+    patientSex: '',
+    referringPhysicianName: '',
+    requestingPhysician: '',
+    studyDate: '',
+    studyDescription: '',
+    studyID: '',
+    studyInstanceUID: '',
+    studyTime: '',
   });
+  const [jobInfo, setJobInfo] = useState({
+    id: '',
+    priority: 0,
+    progress: 0,
+    state: JobState.PENDING,
+  });
+  const [studyQueryId, setStudyQueryId] = useState('');
+  const filterRef = useRef(studyListFilter);
 
-  const debouncedFilterValues = useDebounce(filterValues, 200);
-  const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
-
-  /*
-   * The default sort value keep the filters synchronized with runtime conditional sorting
-   * Only applied if no other sorting is specified and there are less than 101 studies
-   */
-
-  const canSort = studiesTotal < STUDIES_LIMIT;
-  const shouldUseDefaultSort = sortBy === '' || !sortBy;
-  const sortModifier = sortDirection === 'descending' ? 1 : -1;
-  const defaultSortValues =
-    shouldUseDefaultSort && canSort ? { sortBy: 'studyDate', sortDirection: 'ascending' } : {};
-  const sortedStudies = studies;
-
-  if (canSort) {
-    studies.sort((s1, s2) => {
-      if (shouldUseDefaultSort) {
-        const ascendingSortModifier = -1;
-        return _sortStringDates(s1, s2, ascendingSortModifier);
-      }
-
-      const s1Prop = s1[sortBy];
-      const s2Prop = s2[sortBy];
-
-      if (typeof s1Prop === 'string' && typeof s2Prop === 'string') {
-        return s1Prop.localeCompare(s2Prop) * sortModifier;
-      } else if (typeof s1Prop === 'number' && typeof s2Prop === 'number') {
-        return (s1Prop > s2Prop ? 1 : -1) * sortModifier;
-      } else if (!s1Prop && s2Prop) {
-        return -1 * sortModifier;
-      } else if (!s2Prop && s1Prop) {
-        return 1 * sortModifier;
-      } else if (sortBy === 'studyDate') {
-        return _sortStringDates(s1, s2, sortModifier);
-      }
-
-      return 0;
-    });
-  }
-
-  // ~ Rows & Studies
-  const [expandedRows, setExpandedRows] = useState([]);
-  const [studiesWithSeriesData, setStudiesWithSeriesData] = useState([]);
-  const numOfStudies = studiesTotal;
-  const querying = useMemo(() => {
-    return isLoadingData || expandedRows.length > 0;
-  }, [isLoadingData, expandedRows]);
-
-  const setFilterValues = val => {
-    if (filterValues.pageNumber === val.pageNumber) {
-      val.pageNumber = 1;
-    }
-    _setFilterValues(val);
-    setExpandedRows([]);
-  };
-
-  const onPageNumberChange = newPageNumber => {
-    const oldPageNumber = filterValues.pageNumber;
-    const rollingPageNumberMod = Math.floor(101 / filterValues.resultsPerPage);
-    const rollingPageNumber = oldPageNumber % rollingPageNumberMod;
-    const isNextPage = newPageNumber > oldPageNumber;
-    const hasNextPage = Math.max(rollingPageNumber, 1) * resultsPerPage < numOfStudies;
-
-    if (isNextPage && !hasNextPage) {
-      return;
-    }
-
-    setFilterValues({ ...filterValues, pageNumber: newPageNumber });
-  };
-
-  const onResultsPerPageChange = newResultsPerPage => {
-    setFilterValues({
-      ...filterValues,
-      pageNumber: 1,
-      resultsPerPage: Number(newResultsPerPage),
-    });
-  };
+  useEffect(() => {
+    filterRef.current = studyListFilter;
+  }, [studyListFilter]);
 
   // Set page title
   useEffect(() => {
@@ -158,459 +60,427 @@ function WorkList({
     };
   }, []);
 
-  // Sync URL query parameters with filters
   useEffect(() => {
-    if (!debouncedFilterValues) {
-      return;
+    fetchStudyListData();
+  }, [orthancRepository]);
+
+  /**
+   * Get study list data
+   */
+  const fetchStudyListData = async () => {
+    setTableDataSource([]);
+    setIsStudyListDataLoading(true);
+    try {
+      const response = await orthancRepository.GetModalityStudies(filterRef.current);
+      setTableDataSource(response.data.studies);
+      setStudyQueryId(response.data.queryId);
+    } catch (error) {
+      console.error(error);
     }
-
-    const queryString = {};
-    Object.keys(defaultFilterValues).forEach(key => {
-      const defaultValue = defaultFilterValues[key];
-      const currValue = debouncedFilterValues[key];
-
-      // TODO: nesting/recursion?
-      if (key === 'studyDate') {
-        if (currValue.startDate && defaultValue.startDate !== currValue.startDate) {
-          queryString.startDate = currValue.startDate;
-        }
-        if (currValue.endDate && defaultValue.endDate !== currValue.endDate) {
-          queryString.endDate = currValue.endDate;
-        }
-      } else if (key === 'modalities' && currValue.length) {
-        queryString.modalities = currValue.join(',');
-      } else if (currValue !== defaultValue) {
-        queryString[key] = currValue;
-      }
-    });
-
-    const search = qs.stringify(queryString, {
-      skipNull: true,
-      skipEmptyString: true,
-    });
-
-    navigate({
-      pathname: `/`,
-      search: `${search ? `&${search}` : ''}`,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedFilterValues]);
-
-  // Query for series information
-  useEffect(() => {
-    const fetchSeries = async studyInstanceUid => {
-      try {
-        const series = await dataSource.query.series.search(studyInstanceUid);
-        seriesInStudiesMap.set(studyInstanceUid, sortBySeriesDate(series));
-        setStudiesWithSeriesData([...studiesWithSeriesData, studyInstanceUid]);
-      } catch (ex) {
-        // TODO: UI Notification Service
-        console.warn(ex);
-      }
-    };
-
-    // TODO: WHY WOULD YOU USE AN INDEX OF 1?!
-    // Note: expanded rows index begins at 1
-    for (let z = 0; z < expandedRows.length; z++) {
-      const expandedRowIndex = expandedRows[z] - 1;
-      const studyInstanceUid = sortedStudies[expandedRowIndex].studyInstanceUid;
-
-      if (studiesWithSeriesData.includes(studyInstanceUid)) {
-        continue;
-      }
-
-      fetchSeries(studyInstanceUid);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expandedRows, studies]);
-
-  const isFiltering = (filterValues, defaultFilterValues) => {
-    return !isEqual(filterValues, defaultFilterValues);
+    setIsStudyListDataLoading(false);
   };
 
-  const rollingPageNumberMod = Math.floor(101 / resultsPerPage);
-  const rollingPageNumber = (pageNumber - 1) % rollingPageNumberMod;
-  const offset = resultsPerPage * rollingPageNumber;
-  const offsetAndTake = offset + resultsPerPage;
-  const tableDataSource = sortedStudies.map((study, key) => {
-    const rowKey = key + 1;
-    const isExpanded = expandedRows.some(k => k === rowKey);
-    const {
-      studyInstanceUid,
-      accession,
-      modalities,
-      instances,
-      description,
-      mrn,
-      patientName,
-      date,
-      time,
-    } = study;
-    const studyDate =
-      date &&
-      moment(date, ['YYYYMMDD', 'YYYY.MM.DD'], true).isValid() &&
-      moment(date, ['YYYYMMDD', 'YYYY.MM.DD']).format('MMM-DD-YYYY');
-    const studyTime =
-      time &&
-      moment(time, ['HH', 'HHmm', 'HHmmss', 'HHmmss.SSS']).isValid() &&
-      moment(time, ['HH', 'HHmm', 'HHmmss', 'HHmmss.SSS']).format('hh:mm A');
+  /**
+   * Table toggle for expandable rows
+   * @param index
+   */
+  const toggleRow = index => {
+    setExpandedTableRows(prevState => ({
+      ...prevState,
+      [index]: !prevState[index],
+    }));
+  };
 
-    return {
-      row: [
-        {
-          key: 'patientName',
-          content: patientName ? (
-            <TooltipClipboard>{patientName}</TooltipClipboard>
-          ) : (
-            <span className="text-gray-700">(Empty)</span>
-          ),
-          gridCol: 4,
-        },
-        {
-          key: 'mrn',
-          content: <TooltipClipboard>{mrn}</TooltipClipboard>,
-          gridCol: 3,
-        },
-        {
-          key: 'studyDate',
-          content: (
-            <>
-              {studyDate && <span className="mr-4">{studyDate}</span>}
-              {studyTime && <span>{studyTime}</span>}
-            </>
-          ),
-          title: `${studyDate || ''} ${studyTime || ''}`,
-          gridCol: 5,
-        },
-        {
-          key: 'description',
-          content: <TooltipClipboard>{description}</TooltipClipboard>,
-          gridCol: 4,
-        },
-        {
-          key: 'modality',
-          content: modalities,
-          title: modalities,
-          gridCol: 3,
-        },
-        {
-          key: 'accession',
-          content: <TooltipClipboard>{accession}</TooltipClipboard>,
-          gridCol: 3,
-        },
-        {
-          key: 'instances',
-          content: (
-            <>
-              <Icon
-                name="group-layers"
-                className={classnames('mr-2 inline-flex w-4', {
-                  'text-green-300': isExpanded,
-                  'text-gray-300': !isExpanded,
-                })}
-              />
-              {instances}
-            </>
-          ),
-          title: (instances || 0).toString(),
-          gridCol: 4,
-        },
-      ],
-      // Todo: This is actually running for all rows, even if they are
-      // not clicked on.
-      expandedContent: (
-        <StudyListExpandedRow
-          seriesTableColumns={{
-            description: 'Description',
-            seriesNumber: 'Series',
-            modality: 'Modality',
-            instances: 'Instances',
-          }}
-          seriesTableDataSource={
-            seriesInStudiesMap.has(studyInstanceUid)
-              ? seriesInStudiesMap.get(studyInstanceUid).map(s => {
-                  return {
-                    description: s.description || '(empty)',
-                    seriesNumber: s.seriesNumber ?? '',
-                    modality: s.modality || '',
-                    instances: s.numSeriesInstances || '',
-                  };
-                })
-              : []
-          }
-        >
-          <div className="flex flex-wrap gap-3">
-            {appConfig.loadedModes.map((mode, i) => {
-              const modalitiesToCheck = modalities.replaceAll('/', '\\');
+  /**
+   * Debounce search
+   */
+  const debounceSearch = useCallback(
+    debounce(() => {
+      fetchStudyListData();
+    }, 2000),
+    []
+  );
 
-              const isValidMode = mode.isValidMode({
-                modalities: modalitiesToCheck,
-                study,
-              });
-              // TODO: Modes need a default/target route? We mostly support a single one for now.
-              // We should also be using the route path, but currently are not
-              // mode.routeName
-              // mode.routes[x].path
-              // Don't specify default data source, and it should just be picked up... (this may not currently be the case)
-              // How do we know which params to pass? Today, it's just StudyInstanceUIDs and configUrl if exists
-              const query = new URLSearchParams();
-              if (filterValues.configUrl) {
-                query.append('configUrl', filterValues.configUrl);
-              }
-              query.append('StudyInstanceUIDs', studyInstanceUid);
-              return (
-                mode.displayName && (
-                  <Button
-                    key={i}
-                    disabled={!isValidMode}
-                    endIcon={<Icon name="launch-arrow" />}
-                    className="h-[35px] w-auto rounded-lg px-2 font-light text-white"
-                    onClick={event => {
-                      // In case any event bubbles up for an invalid mode, prevent the navigation.
-                      // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
-                      if (!isValidMode) {
-                        event.preventDefault();
-                      }
-
-                      navigate(
-                        `${dataPath ? '../../' : ''}${mode.routeName}${
-                          dataPath || ''
-                        }?${query.toString()}`
-                      );
-                    }}
-                  >
-                    {t(`Modes:${mode.displayName}`)}
-                  </Button>
-                )
-              );
-            })}
-          </div>
-        </StudyListExpandedRow>
-      ),
-      onClickRow: () =>
-        setExpandedRows(s => (isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey])),
-      isExpanded,
+  /**
+   * Debounce function implementation
+   *
+   * @param func
+   * @param wait
+   * @returns
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
     };
-  });
-
-  const hasStudies = numOfStudies > 0;
-  const versionNumber = process.env.VERSION_NUMBER;
-  const commitHash = process.env.COMMIT_HASH;
-
-  const menuOptions = [
-    {
-      title: t('Header:About'),
-      icon: 'info',
-      onClick: () =>
-        show({
-          content: AboutModal,
-          title: 'About OHIF Viewer',
-          contentProps: { versionNumber, commitHash },
-        }),
-    },
-    {
-      title: t('Header:Preferences'),
-      icon: 'settings',
-      onClick: () =>
-        show({
-          title: t('UserPreferencesModal:User Preferences'),
-          content: UserPreferences,
-          contentProps: {
-            hotkeyDefaults: hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
-            hotkeyDefinitions,
-            onCancel: hide,
-            currentLanguage: currentLanguage(),
-            availableLanguages,
-            defaultLanguage,
-            onSubmit: state => {
-              if (state.language.value !== currentLanguage().value) {
-                i18n.changeLanguage(state.language.value);
-              }
-              hotkeysManager.setHotkeys(state.hotkeyDefinitions);
-              hide();
-            },
-            onReset: () => hotkeysManager.restoreDefaultBindings(),
-            hotkeysModule: hotkeys,
-          },
-        }),
-    },
-  ];
-
-  if (appConfig.oidc) {
-    menuOptions.push({
-      icon: 'power-off',
-      title: t('Header:Logout'),
-      onClick: () => {
-        navigate(`/logout?redirect_uri=${encodeURIComponent(window.location.href)}`);
-      },
-    });
   }
 
-  const { customizationService } = servicesManager.services;
-  const { component: dicomUploadComponent } =
-    customizationService.get('dicomUploadComponent') ?? {};
-  const uploadProps =
-    dicomUploadComponent && dataSource.getConfig()?.dicomUploadEnabled
-      ? {
-          title: 'Upload files',
-          closeButton: true,
-          shouldCloseOnEsc: false,
-          shouldCloseOnOverlayClick: false,
-          content: dicomUploadComponent.bind(null, {
-            dataSource,
-            onComplete: () => {
-              hide();
-              onRefresh();
-            },
-            onStarted: () => {
-              show({
-                ...uploadProps,
-                // when upload starts, hide the default close button as closing the dialogue must be handled by the upload dialogue itself
-                closeButton: false,
-              });
-            },
-          }),
+  /**
+   * Handle input change filter
+   *
+   * @param field
+   * @param value
+   */
+  const handleInputChange = (field, value) => {
+    setStudyListFilter(prevFilter => {
+      const updatedFilter = {
+        ...prevFilter,
+        [field]: `*${value}*`,
+      };
+      filterRef.current = updatedFilter;
+
+      setIsStudyListDataLoading(true);
+      debounceSearch();
+      return updatedFilter;
+    });
+  };
+
+  /**
+   * Handle select for modalities filter
+   *
+   * @param selectedOptions
+   */
+  const handleModalitiesChange = selectedOptions => {
+    const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+
+    setStudyListFilter(prevFilter => ({
+      ...prevFilter,
+      modalitiesInStudy: updatedModalitiesInStudy,
+    }));
+
+    setIsStudyListDataLoading(true);
+    debounceSearch();
+  };
+
+  // TODO: issue in date range select
+  const handleDateRangeFieldChange = ({ startDate, endDate }) => {
+    console.log({ startDate, endDate });
+    setStudyListFilter(prevFilter => {
+      const updatedFilter = {
+        ...prevFilter,
+        studyDate: `${startDate}`,
+      };
+      filterRef.current = updatedFilter;
+      debounceSearch();
+      return updatedFilter;
+    });
+  };
+
+  /**
+   * View selected study
+   *
+   * @param queryID
+   * @param index
+   * @param type
+   * @param studyInstanceUID
+   */
+  const viewStudy = async (queryID, index, type, studyInstanceUID) => {
+    setIsOpenOrthancServiceModal(true);
+    const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
+      queryID,
+      answerIndex: index,
+    });
+    const jobInfoResponse = await orthancRepository.GetJobInfo({
+      jobID: modalityStudyResponse.data.id,
+    });
+    console.log('jobInfo', jobInfoResponse);
+    setJobInfo({
+      id: jobInfoResponse.data.id,
+      priority: jobInfoResponse.data.priority,
+      progress: jobInfoResponse.data.progress,
+      state: JobState[jobInfoResponse.data.state.toUpperCase()],
+    });
+
+    setTimeout(() => {
+      console.log(jobInfoResponse.data.state, JobState.SUCCESS, type);
+      if (jobInfoResponse.data.state === JobState.SUCCESS) {
+        if (type === 'viewer') {
+          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
         }
-      : undefined;
+        if (type === 'segmentation') {
+          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+        }
+      }
+    }, 2000);
+  };
 
-  const { component: dataSourceConfigurationComponent } =
-    customizationService.get('ohif.dataSourceConfigurationComponent') ?? {};
+  /**
+   * Format date
+   */
+  function formatDate(dateString) {
+    const year = dateString.substring(0, 4);
+    const month = dateString.substring(4, 6) - 1; // Months are 0-indexed in JavaScript
+    const day = dateString.substring(6, 8);
 
+    const date = new Date(year, month, day);
+
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+  }
+
+  const selectCustomStyles = {
+    control: styles => ({
+      ...styles,
+      height: '50px',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      border: 'none',
+      outline: 'none',
+    }),
+    option: (styles, { isFocused }) => ({
+      ...styles,
+      border: isFocused ? 'none' : '',
+      cursor: 'pointer',
+      outline: 'none',
+    }),
+    multiValue: styles => ({
+      ...styles,
+      backgroundColor: '#c8f469',
+      margin: '1px',
+      borderRadius: '4px',
+      color: 'white',
+    }),
+    multiValueRemove: styles => ({
+      ...styles,
+      color: '#1e427e',
+      ':hover': {
+        backgroundColor: '#1e427e',
+        color: 'white',
+        borderRadius: '0 3px 3px 0',
+      },
+    }),
+  };
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815] ">
-        {/* TODO: Added Sidebar component */}
+      <div className="flex w-full bg-[#151815]">
+        {/* Sidebar component */}
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          {/* TODO: Added HeaderPanel component */}
+          {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
-          {/* TODO: Updated design */}
-          <StudyListFilter
-            numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
-            filtersMeta={filtersMeta}
-            filterValues={{ ...filterValues, ...defaultSortValues }}
-            onChange={setFilterValues}
-            clearFilters={() => setFilterValues(defaultFilterValues)}
-            isFiltering={isFiltering(filterValues, defaultFilterValues)}
-            onUploadClick={uploadProps ? () => show(uploadProps) : undefined}
-            getDataSourceConfigurationComponent={
-              dataSourceConfigurationComponent
-                ? () => dataSourceConfigurationComponent()
-                : undefined
-            }
-          />
-          {hasStudies ? (
-            <div className="mb-5 flex flex-col rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-              {/* TODO: Updated design */}
-              <StudyListTable
-                tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
-                numOfStudies={numOfStudies}
-                querying={querying}
-                filtersMeta={filtersMeta}
+          <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
+            <div className="flex items-center gap-3 bg-transparent p-5">
+              <Input
+                placeholder={t('Patient name')}
+                id="PatientName"
+                className="w-full"
+                type="text"
+                onChange={e => handleInputChange('patientName', e.target.value)}
               />
-              <div className="grow">
-                {/* TODO: Updated design */}
-                <StudyListPagination
-                  onChangePage={onPageNumberChange}
-                  onChangePerPage={onResultsPerPageChange}
-                  currentPage={pageNumber}
-                  perPage={resultsPerPage}
-                />
-              </div>
+              <Input
+                placeholder={t('MRN')}
+                id="MRN"
+                className="w-full"
+                type="text"
+                onChange={e => handleInputChange('patientID', e.target.value)}
+              />
+
+              <InputDateRange
+                id="DateRangeFilter"
+                label=""
+                onChange={handleDateRangeFieldChange}
+              />
+              <Input
+                placeholder={t('Description')}
+                id="Description"
+                className="w-full"
+                type="text"
+                onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
+              />
+              <Select
+                isMulti
+                placeholder={t('Modality')}
+                options={filtersMeta[4].inputProps.options}
+                onChange={handleModalitiesChange}
+                styles={selectCustomStyles}
+                className="min-w-[200px] bg-transparent"
+                classNamePrefix="select"
+              />
+              <Input
+                id="Accession"
+                placeholder={t('Accession #')}
+                className="w-full"
+                type="text"
+                onChange={e => handleInputChange('accessionNumber', e.target.value)}
+              />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center pt-48">
-              {appConfig.showLoadingIndicator && isLoadingData ? (
-                <LoadingIndicatorProgress className={'h-full w-full bg-black'} />
+          </div>
+          <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="mx-auto w-full overflow-x-auto">
+              {isStudyListDataLoading ? (
+                <div className="flex items-center justify-center p-5 text-center text-white">
+                  <span className="text-lg font-normal text-opacity-70">
+                    {t('Searching for data')}
+                  </span>
+                </div>
               ) : (
-                <EmptyStudies />
+                <table className="mb-4 min-w-full rounded-xl border-none bg-transparent">
+                  <thead className="bg-transparent">
+                    <tr className="bg-transparent">
+                      <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('PatientName')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('MRN')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('StudyDate')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Description')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Modality')}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('AccessionNumber')}
+                      </th>
+                      <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        {t('Instances')}
+                      </th>
+                    </tr>
+                  </thead>
+                  {tableDataSource.length > 0 ? (
+                    <tbody className="!rounded-lg bg-transparent">
+                      {tableDataSource.map((row, index) => (
+                        <React.Fragment key={index}>
+                          <tr
+                            className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
+                            onClick={() => toggleRow(index)}
+                          >
+                            <td
+                              className={`text-md py-2 px-4 font-normal ${
+                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                              }`}
+                            >
+                              {row.patientName}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.patientID.substring(0, 10)}....
+                              {row.patientID.substring(row.patientID.length - 10)}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {formatDate(row.studyDate)}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.studyDescription}
+                            </td>
+                            <td className="text-md py-2 px-4 font-normal">
+                              {row.modalitiesInStudy}
+                            </td>
+                            <td className="py-2 px-4">{row.accessionNumber}</td>
+                            <td
+                              className={`py-2 px-4 text-sm font-normal ${
+                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                              }`}
+                            >
+                              {row.numberOfStudyRelatedSeries}
+                            </td>
+                          </tr>
+                          {expandedTableRows[index] && (
+                            <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
+                              <td
+                                colSpan={7}
+                                className="rounded-bl-lg rounded-br-lg py-4 px-4"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <h1 className="text-lg text-white text-opacity-70">
+                                    {t('Tools')}
+                                  </h1>
+                                  <Button
+                                    onClick={() => {
+                                      viewStudy(
+                                        studyQueryId,
+                                        index,
+                                        'viewer',
+                                        row.studyInstanceUID
+                                      );
+                                    }}
+                                  >
+                                    {t('BasicViewer')}
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      viewStudy(
+                                        studyQueryId,
+                                        index,
+                                        'segmentation',
+                                        row.studyInstanceUID
+                                      );
+                                    }}
+                                  >
+                                    {t('Segmentation')}
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          {/* adding an empty row for spacing */}
+                          <tr className="h-3"></tr>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={12}
+                        className="p-5 text-center"
+                      >
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="text-lg font-normal text-white text-opacity-70">
+                            {t('No data found')}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </table>
               )}
             </div>
-          )}
+          </div>
         </div>
+        <Modal
+          isOpen={isOpenOrthancServiceModal}
+          size="min-w-[400px]"
+          isCloseable={false}
+        >
+          <h1 className="mb-4 text-center text-xl text-white">{t('OrthancServiceProgress')}</h1>
+          <div className="h-2.5 w-full rounded-full bg-gray-500">
+            <div
+              className={`bg-primary-main h-2.5 rounded-full`}
+              style={{ width: `${jobInfo.progress}%` }}
+            ></div>
+          </div>
+          <h2 className="mt-4 text-white">
+            <span className="text-white text-opacity-70">{t('State')}:</span> {jobInfo.state}
+          </h2>
+          {(jobInfo.state === JobState.PAUSED ||
+            jobInfo.state === JobState.RETRY ||
+            jobInfo.state === JobState.FAILURE) && (
+            <div className="mt-2">
+              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  className="block h-5 w-11"
+                  onClick={() => {
+                    setIsOpenOrthancServiceModal(false);
+                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                  }}
+                >
+                  {t('Okay')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );
-}
-
-WorkList.propTypes = {
-  data: PropTypes.array.isRequired,
-  dataSource: PropTypes.shape({
-    query: PropTypes.object.isRequired,
-    getConfig: PropTypes.func,
-  }).isRequired,
-  isLoadingData: PropTypes.bool.isRequired,
-  servicesManager: PropTypes.instanceOf(ServicesManager),
-};
-
-const defaultFilterValues = {
-  patientName: '',
-  mrn: '',
-  studyDate: {
-    startDate: null,
-    endDate: null,
-  },
-  description: '',
-  modalities: [],
-  accession: '',
-  sortBy: '',
-  sortDirection: 'none',
-  pageNumber: 1,
-  resultsPerPage: 10,
-  datasources: '',
-  configUrl: null,
-};
-
-function _tryParseInt(str, defaultValue) {
-  let retValue = defaultValue;
-  if (str && str.length > 0) {
-    if (!isNaN(str)) {
-      retValue = parseInt(str);
-    }
-  }
-  return retValue;
-}
-
-function _getQueryFilterValues(params) {
-  const queryFilterValues = {
-    patientName: params.get('patientname'),
-    mrn: params.get('mrn'),
-    studyDate: {
-      startDate: params.get('startdate') || null,
-      endDate: params.get('enddate') || null,
-    },
-    description: params.get('description'),
-    modalities: params.get('modalities') ? params.get('modalities').split(',') : [],
-    accession: params.get('accession'),
-    sortBy: params.get('sortby'),
-    sortDirection: params.get('sortdirection'),
-    pageNumber: _tryParseInt(params.get('pagenumber'), undefined),
-    resultsPerPage: _tryParseInt(params.get('resultsperpage'), undefined),
-    datasources: params.get('datasources'),
-    configUrl: params.get('configurl'),
-  };
-
-  // Delete null/undefined keys
-  Object.keys(queryFilterValues).forEach(
-    key => queryFilterValues[key] == null && delete queryFilterValues[key]
-  );
-
-  return queryFilterValues;
-}
-
-function _sortStringDates(s1, s2, sortModifier) {
-  // TODO: Delimiters are non-standard. Should we support them?
-  const s1Date = moment(s1.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
-  const s2Date = moment(s2.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
-
-  if (s1Date.isValid() && s2Date.isValid()) {
-    return (s1Date.toISOString() > s2Date.toISOString() ? 1 : -1) * sortModifier;
-  } else if (s1Date.isValid()) {
-    return sortModifier;
-  } else if (s2Date.isValid()) {
-    return -1 * sortModifier;
-  }
 }
 
 export default WorkList;

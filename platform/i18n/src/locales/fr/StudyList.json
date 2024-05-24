@@ -1,5 +1,6 @@
 {
   "AccessionNumber": "Numéro d'accès",
+  "BasicViewer": "Visionneuse de base",
   "ClearFilters": "Effacer les filtres",
   "Description": "Description",
   "Empty": "Vide",
@@ -7,13 +8,21 @@
   "MRN": "MRN",
   "NumOfStudiesHiggerThan100Message": "Filtrez la liste à 100 études ou moins pour activer le tri",
   "Modality": "Modalité",
+  "OrthancServiceProgress": "Progrès du service Orthanc",
+  "OrthancServiceProgressMessage": "La tâche est actuellement suspendue ou a échoué. Veuillez réessayer plus tard.",
+  "Okay": "D'accord",
   "PatientName": "Nom du patient",
   "Previous": "< Précédent",
   "Page": "Page",
   "Next": "Suivant >",
+  "No data found": "Aucune donnée disponible",
   "ResultsPerPage": "Résultats par page",
   "Studies": "Études",
   "StudyDate": "Date de l'étude",
   "StudyDescription": "Description de l'étude",
-  "StudyList": "Liste des études"
+  "StudyList": "Liste des études",
+  "State": "État",
+  "Segmentation": "Segmentation",
+  "Searching for data": "Recherche de données",
+  "Tools": "Outils"
 }

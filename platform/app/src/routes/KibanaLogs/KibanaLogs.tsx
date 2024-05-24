@@ -9,6 +9,7 @@ import downloadIcon from './../../assets/pacs/icons/download-black.png';
 import { LogsAuditType } from '../../api/dto';
 
 const KibanaLogsPage = () => {
+  const { t } = useTranslation();
   const [selectedAuditType, setSelectedAuditType] = useState<LogsAuditType>(
     LogsAuditType.INFERENCE
   );
@@ -35,90 +36,90 @@ const KibanaLogsPage = () => {
     { text: 'Deleted Series', value: 'deletedSeries', align: 'left' },
   ];
   const auditInferenceData = [
-    {
-      author: 'denis.corbin@e-mhicc.org',
-      timestamp: 'Mar 20, 2024 14:19',
-      algorithm: 'Cath-EF',
-      pythonVersion: 'Python 3.9.18',
-      cudaVersion: '12.1',
-      pytorchVersion: '2.1.0+cu121',
-      modelVersion: '1.0.0',
-      mrn: '556342B',
-      studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
-      accessionNumber: '-',
-      series: 'Series 1',
-      seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      detectedVessel: 'Stenting',
-      lvef: 0,
-    },
-    {
-      author: 'denis.corbin@e-mhicc.org',
-      timestamp: 'Mar 20, 2024 14:19',
-      algorithm: 'Cath-EF',
-      pythonVersion: 'Python 3.9.18',
-      cudaVersion: '12.1',
-      pytorchVersion: '2.1.0+cu121',
-      modelVersion: '1.0.0',
-      mrn: '556342B',
-      studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
-      accessionNumber: '-',
-      series: 'Series 1',
-      seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      detectedVessel: 'Stenting',
-      lvef: 0,
-    },
-    {
-      author: 'denis.corbin@e-mhicc.org',
-      timestamp: 'Mar 20, 2024 14:19',
-      algorithm: 'Cath-EF',
-      pythonVersion: 'Python 3.9.18',
-      cudaVersion: '12.1',
-      pytorchVersion: '2.1.0+cu121',
-      modelVersion: '1.0.0',
-      mrn: '556342B',
-      studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
-      accessionNumber: '-',
-      series: 'Series 1',
-      seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
-      detectedVessel: 'Stenting',
-      lvef: 0,
-    },
+    // {
+    //   author: 'denis.corbin@e-mhicc.org',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   algorithm: 'Cath-EF',
+    //   pythonVersion: 'Python 3.9.18',
+    //   cudaVersion: '12.1',
+    //   pytorchVersion: '2.1.0+cu121',
+    //   modelVersion: '1.0.0',
+    //   mrn: '556342B',
+    //   studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
+    //   accessionNumber: '-',
+    //   series: 'Series 1',
+    //   seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   detectedVessel: 'Stenting',
+    //   lvef: 0,
+    // },
+    // {
+    //   author: 'denis.corbin@e-mhicc.org',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   algorithm: 'Cath-EF',
+    //   pythonVersion: 'Python 3.9.18',
+    //   cudaVersion: '12.1',
+    //   pytorchVersion: '2.1.0+cu121',
+    //   modelVersion: '1.0.0',
+    //   mrn: '556342B',
+    //   studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
+    //   accessionNumber: '-',
+    //   series: 'Series 1',
+    //   seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   detectedVessel: 'Stenting',
+    //   lvef: 0,
+    // },
+    // {
+    //   author: 'denis.corbin@e-mhicc.org',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   algorithm: 'Cath-EF',
+    //   pythonVersion: 'Python 3.9.18',
+    //   cudaVersion: '12.1',
+    //   pytorchVersion: '2.1.0+cu121',
+    //   modelVersion: '1.0.0',
+    //   mrn: '556342B',
+    //   studyInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.128435439123456789',
+    //   accessionNumber: '-',
+    //   series: 'Series 1',
+    //   seriesInstanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   instanceUID: '1.3.6.1.4.1.14538.0.101.76.6279.6001.123456789123456789',
+    //   detectedVessel: 'Stenting',
+    //   lvef: 0,
+    // },
   ];
 
   const auditDatabaseData = [
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
-    {
-      author: 'System',
-      timestamp: 'Mar 20, 2024 14:19',
-      deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
-    },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
+    // {
+    //   author: 'System',
+    //   timestamp: 'Mar 20, 2024 14:19',
+    //   deletedSeries: '62cc4f41-9b1679c0-6ad19a2e-71fccb6f-07a3d16d',
+    // },
   ];
 
   // Set page title
@@ -128,26 +129,46 @@ const KibanaLogsPage = () => {
 
   const AuditInferenceTable = () => {
     return (
-      <Table
-        headers={auditInferenceHeaders}
-        data={auditInferenceData}
-      >
-        {cell => {
-          return cell;
-        }}
-      </Table>
+      <div>
+        {auditInferenceData.length > 0 ? (
+          <Table
+            headers={auditInferenceHeaders}
+            data={auditInferenceData}
+          >
+            {cell => {
+              return cell;
+            }}
+          </Table>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-lg font-normal text-white text-opacity-70">
+              {t('No data found')}
+            </span>
+          </div>
+        )}
+      </div>
     );
   };
   const AuditDatabaseTable = () => {
     return (
-      <Table
-        headers={auditDatabaseHeaders}
-        data={auditDatabaseData}
-      >
-        {cell => {
-          return cell;
-        }}
-      </Table>
+      <div>
+        {auditDatabaseData.length > 0 ? (
+          <Table
+            headers={auditDatabaseHeaders}
+            data={auditDatabaseData}
+          >
+            {cell => {
+              return cell;
+            }}
+          </Table>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-lg font-normal text-white text-opacity-70">
+              {t('No data found')}
+            </span>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -165,7 +186,7 @@ const KibanaLogsPage = () => {
           <HeaderPanel title="Kibana Logs" />
           {/* filter container */}
           <div className="flex w-full justify-between gap-2 rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            <div className="-mt-2 w-1/4">
+            <div className="w-1/4">
               <InputDateRange
                 id="KibanaLogsInputDateRange"
                 label=""
@@ -180,6 +201,12 @@ const KibanaLogsPage = () => {
                     id="SelectMRN"
                     className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                   >
+                    <option
+                      value=""
+                      disabled
+                      selected
+                      hidden
+                    ></option>
                     {Object.values(auditInferenceData).map(item => (
                       <option
                         key={item.mrn}
@@ -204,6 +231,12 @@ const KibanaLogsPage = () => {
                     id="SelectAuthor"
                     className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                   >
+                    <option
+                      value=""
+                      disabled
+                      selected
+                      hidden
+                    ></option>
                     {Object.values(auditInferenceData).map(item => (
                       <option
                         key={item.author}

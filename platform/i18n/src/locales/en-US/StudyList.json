@@ -1,5 +1,6 @@
 {
   "AccessionNumber": "Accession #",
+  "BasicViewer": "Basic Viewer",
   "ClearFilters": "Clear Filters",
   "Description": "Description",
   "Empty": "Empty",
@@ -7,13 +8,21 @@
   "MRN": "MRN",
   "NumOfStudiesHiggerThan100Message": "Filter the list to 100 studies or less to enable sorting",
   "Modality": "Modality",
+  "OrthancServiceProgress": "Orthanc Service Progress",
+  "OrthancServiceProgressMessage": "The job is currently paused or failed, please try again later.",
+  "Okay": "Okay",
   "PatientName": "Patient Name",
   "Previous": "< Back",
   "Page": "Page",
   "Next": "Next >",
+  "No data found": "No data found",
   "ResultsPerPage": "Results per page",
   "Studies": "Studies",
   "StudyDate": "Study Date",
   "StudyDescription": "Description",
-  "StudyList": "Study List"
+  "StudyList": "Study List",
+  "State": "State",
+  "Segmentation": "Segmentation",
+  "Searching for data": "Searching for data",
+  "Tools": "Tools"
 }
