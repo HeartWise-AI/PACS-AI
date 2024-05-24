@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
+import { DateRangePicker } from 'react-dates';
 import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -10,6 +11,7 @@ import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
+import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -43,6 +45,9 @@ function WorkList() {
   });
   const [studyQueryId, setStudyQueryId] = useState('');
   const filterRef = useRef(studyListFilter);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [focusedInput, setFocusedInput] = useState(null);
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -153,20 +158,47 @@ function WorkList() {
     debounceSearch();
   };
 
-  // TODO: issue in date range select
-  const handleDateRangeFieldChange = ({ startDate, endDate }) => {
-    console.log({ startDate, endDate });
-    setStudyListFilter(prevFilter => {
-      const updatedFilter = {
+  /**
+   * Handle select for date range filter
+   *
+   * @param startDate
+   * @param endDate
+   */
+  const handleDateRangeChange = ({ startDate, endDate }) => {
+    if (startDate && endDate) {
+      const formattedStartDate = startDate.format('YYYYMMDD');
+      const formattedEndDate = endDate.format('YYYYMMDD');
+      const formattedDateRange = `${formattedStartDate}-${formattedEndDate}`;
+      console.log('Formatted Date Range:', formattedDateRange);
+
+      setStudyListFilter(prevFilter => ({
         ...prevFilter,
-        studyDate: `${startDate}`,
-      };
-      filterRef.current = updatedFilter;
+        studyDate: formattedDateRange,
+      }));
+
+      setIsStudyListDataLoading(true);
       debounceSearch();
-      return updatedFilter;
-    });
+    }
+
+    setStartDate(startDate);
+    setEndDate(endDate);
   };
 
+  /**
+   * Clear date range
+   */
+  const handleClearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+
+    setStudyListFilter(prevFilter => ({
+      ...prevFilter,
+      studyDate: '',
+    }));
+
+    setIsStudyListDataLoading(true);
+    debounceSearch();
+  };
   /**
    * View selected study
    *
@@ -268,6 +300,7 @@ function WorkList() {
       },
     }),
   };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -292,12 +325,29 @@ function WorkList() {
                 type="text"
                 onChange={e => handleInputChange('patientID', e.target.value)}
               />
-
-              <InputDateRange
-                id="DateRangeFilter"
-                label=""
-                onChange={handleDateRangeFieldChange}
-              />
+              <div className="relative w-[250px]">
+                <DateRangePicker
+                  startDate={startDate}
+                  startDateId="FilterStartDate"
+                  endDate={endDate}
+                  endDateId="FilterEndDate"
+                  onDatesChange={handleDateRangeChange}
+                  focusedInput={focusedInput}
+                  onFocusChange={focusedInput => {
+                    setFocusedInput(focusedInput);
+                  }}
+                  isOutsideRange={() => false}
+                />
+                {(startDate || endDate) && (
+                  <button onClick={handleClearDates}>
+                    <img
+                      src={closeInactive}
+                      alt="Close icon"
+                      className="absolute right-[10px] top-1/2 w-4 -translate-y-1/2"
+                    />
+                  </button>
+                )}
+              </div>
               <Input
                 placeholder={t('Description')}
                 id="Description"
