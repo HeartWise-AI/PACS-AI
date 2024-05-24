@@ -315,18 +315,18 @@ function WorkList() {
           {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
-            <div className="flex items-center gap-3 bg-transparent p-5">
+            <div className="flex w-full flex-wrap items-center gap-3 gap-1 bg-transparent p-5 xl:flex-nowrap">
               <Input
                 placeholder={t('Patient name')}
                 id="PatientName"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
               <Input
                 placeholder={t('MRN')}
                 id="MRN"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('patientID', e.target.value)}
               />
@@ -356,7 +356,7 @@ function WorkList() {
               <Input
                 placeholder={t('Description')}
                 id="Description"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
@@ -372,7 +372,7 @@ function WorkList() {
               <Input
                 id="Accession"
                 placeholder={t('Accession #')}
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('accessionNumber', e.target.value)}
               />
