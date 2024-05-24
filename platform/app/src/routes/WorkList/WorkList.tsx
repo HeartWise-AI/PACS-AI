@@ -181,32 +181,49 @@ function WorkList() {
    */
   const viewStudy = async (queryID, index, type, studyInstanceUID) => {
     setIsOpenOrthancServiceModal(true);
+
+    let jobInfoResponse;
+
+    // retrieve modalidy study
     const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
       queryID,
       answerIndex: index,
     });
-    const jobInfoResponse = await orthancRepository.GetJobInfo({
-      jobID: modalityStudyResponse.data.id,
-    });
-    console.log('jobInfo', jobInfoResponse);
-    setJobInfo({
-      id: jobInfoResponse.data.id,
-      priority: jobInfoResponse.data.priority,
-      progress: jobInfoResponse.data.progress,
-      state: JobState[jobInfoResponse.data.state.toUpperCase()],
-    });
 
-    setTimeout(() => {
-      console.log(jobInfoResponse.data.state, JobState.SUCCESS, type);
-      if (jobInfoResponse.data.state === JobState.SUCCESS) {
-        if (type === 'viewer') {
-          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
-        }
-        if (type === 'segmentation') {
-          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
-        }
+    // get job info with interval of 3 seconds
+    let intervalId = setInterval(async () => {
+      jobInfoResponse = await orthancRepository.GetJobInfo({
+        jobID: modalityStudyResponse.data.id,
+      });
+      // clear interval if job is not in running state
+      if (
+        jobInfoResponse.data.state === JobState.FAILURE ||
+        jobInfoResponse.data.state === JobState.RETRY ||
+        jobInfoResponse.data.state === JobState.PAUSED ||
+        jobInfoResponse.data.state === JobState.SUCCESS
+      ) {
+        clearInterval(intervalId);
       }
-    }, 2000);
+      // set job info
+      setJobInfo({
+        id: jobInfoResponse.data.id,
+        priority: jobInfoResponse.data.priority,
+        progress: jobInfoResponse.data.progress,
+        state: JobState[jobInfoResponse.data.state.toUpperCase()],
+      });
+
+      // redirect to viewer if job is in success state
+      setTimeout(() => {
+        if (jobInfoResponse.data.state === JobState.SUCCESS) {
+          if (type === 'viewer') {
+            navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+          }
+          if (type === 'segmentation') {
+            navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+          }
+        }
+      }, 2000);
+    }, 3000);
   };
 
   /**
