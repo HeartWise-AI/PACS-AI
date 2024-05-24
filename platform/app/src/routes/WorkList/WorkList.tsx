@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import filtersMeta from './filtersMeta.js';
+import Select from 'react-select';
 import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
+import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
-import Select from 'react-select';
+import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -466,6 +467,18 @@ function WorkList() {
           size="min-w-[400px]"
           isCloseable={false}
         >
+          {(JobState.PENDING === jobInfo.state || JobState.RUNNING === jobInfo.state) && (
+            <div
+              role="status"
+              className="mb-3"
+            >
+              <img
+                src={circularLoading}
+                alt="Circular loading"
+                className="mx-auto w-8 animate-spin"
+              />
+            </div>
+          )}
           <h1 className="mb-4 text-center text-xl text-white">{t('OrthancServiceProgress')}</h1>
           <div className="h-2.5 w-full rounded-full bg-gray-500">
             <div
