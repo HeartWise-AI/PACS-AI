@@ -41,7 +41,7 @@ const AIModelsPage = () => {
     const renderTable = (performanceData: {
       [key: string]: { [key: string]: string | number };
     }) => (
-      <table className="mb-4 w-[70%] border-collapse border border-gray-600">
+      <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
         <thead>
           <tr>
             <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
