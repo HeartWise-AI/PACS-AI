@@ -64,6 +64,7 @@ const HeaderPanel = ({ title }) => {
                     <img
                       src={chevronRightIcon}
                       alt="Chevron right icon"
+                      className="h-auto w-4"
                     />
                     <a
                       href="#"
