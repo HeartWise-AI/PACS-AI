@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
+import { DateRangePicker } from 'react-dates';
+import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
-import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
 import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
-import Select from 'react-select';
+import circularLoading from './../../assets/pacs/icons/circular-loading.png';
+import closeInactive from './../../assets/pacs/icons/close-inactive.png';
+import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
+import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -16,6 +21,8 @@ function WorkList() {
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [tableDataSource, setTableDataSource] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [expandedTableRows, setExpandedTableRows] = useState({});
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
@@ -42,6 +49,14 @@ function WorkList() {
   });
   const [studyQueryId, setStudyQueryId] = useState('');
   const filterRef = useRef(studyListFilter);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [focusedInput, setFocusedInput] = useState(null);
+  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
+  const currentItems = tableDataSource.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -72,6 +87,7 @@ function WorkList() {
     setIsStudyListDataLoading(true);
     try {
       const response = await orthancRepository.GetModalityStudies(filterRef.current);
+
       setTableDataSource(response.data.studies);
       setStudyQueryId(response.data.queryId);
     } catch (error) {
@@ -120,6 +136,11 @@ function WorkList() {
     };
   }
 
+  // Handle page change
+  const handlePageChange = page => {
+    setCurrentPage(page);
+  };
+
   /**
    * Handle input change filter
    *
@@ -130,7 +151,7 @@ function WorkList() {
     setStudyListFilter(prevFilter => {
       const updatedFilter = {
         ...prevFilter,
-        [field]: `*${value}*`,
+        [field]: value ? `*${value}*` : '',
       };
       filterRef.current = updatedFilter;
 
@@ -157,20 +178,46 @@ function WorkList() {
     debounceSearch();
   };
 
-  // TODO: issue in date range select
-  const handleDateRangeFieldChange = ({ startDate, endDate }) => {
-    console.log({ startDate, endDate });
-    setStudyListFilter(prevFilter => {
-      const updatedFilter = {
+  /**
+   * Handle select for date range filter
+   *
+   * @param startDate
+   * @param endDate
+   */
+  const handleDateRangeChange = ({ startDate, endDate }) => {
+    if (startDate && endDate) {
+      const formattedStartDate = startDate.format('YYYYMMDD');
+      const formattedEndDate = endDate.format('YYYYMMDD');
+      const formattedDateRange = `${formattedStartDate}-${formattedEndDate}`;
+
+      setStudyListFilter(prevFilter => ({
         ...prevFilter,
-        studyDate: `${startDate}`,
-      };
-      filterRef.current = updatedFilter;
+        studyDate: formattedDateRange,
+      }));
+
+      setIsStudyListDataLoading(true);
       debounceSearch();
-      return updatedFilter;
-    });
+    }
+
+    setStartDate(startDate);
+    setEndDate(endDate);
   };
 
+  /**
+   * Clear date range
+   */
+  const handleClearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+
+    setStudyListFilter(prevFilter => ({
+      ...prevFilter,
+      studyDate: '',
+    }));
+
+    setIsStudyListDataLoading(true);
+    debounceSearch();
+  };
   /**
    * View selected study
    *
@@ -181,32 +228,50 @@ function WorkList() {
    */
   const viewStudy = async (queryID, index, type, studyInstanceUID) => {
     setIsOpenOrthancServiceModal(true);
+
+    let jobInfoResponse;
+
+    // retrieve modalidy study
     const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
       queryID,
       answerIndex: index,
-    });
-    const jobInfoResponse = await orthancRepository.GetJobInfo({
-      jobID: modalityStudyResponse.data.id,
-    });
-    console.log('jobInfo', jobInfoResponse);
-    setJobInfo({
-      id: jobInfoResponse.data.id,
-      priority: jobInfoResponse.data.priority,
-      progress: jobInfoResponse.data.progress,
-      state: JobState[jobInfoResponse.data.state.toUpperCase()],
+      studyInstanceUID,
     });
 
-    setTimeout(() => {
-      console.log(jobInfoResponse.data.state, JobState.SUCCESS, type);
-      if (jobInfoResponse.data.state === JobState.SUCCESS) {
-        if (type === 'viewer') {
-          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
-        }
-        if (type === 'segmentation') {
-          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
-        }
+    // get job info with interval of 3 seconds
+    let intervalId = setInterval(async () => {
+      jobInfoResponse = await orthancRepository.GetJobInfo({
+        jobID: modalityStudyResponse.data.id,
+      });
+      // clear interval if job is not in running state
+      if (
+        jobInfoResponse.data.state === JobState.FAILURE ||
+        jobInfoResponse.data.state === JobState.RETRY ||
+        jobInfoResponse.data.state === JobState.PAUSED ||
+        jobInfoResponse.data.state === JobState.SUCCESS
+      ) {
+        clearInterval(intervalId);
       }
-    }, 2000);
+      // set job info
+      setJobInfo({
+        id: jobInfoResponse.data.id,
+        priority: jobInfoResponse.data.priority,
+        progress: jobInfoResponse.data.progress,
+        state: JobState[jobInfoResponse.data.state.toUpperCase()],
+      });
+
+      // redirect to viewer if job is in success state
+      setTimeout(() => {
+        if (jobInfoResponse.data.state === JobState.SUCCESS) {
+          if (type === 'viewer') {
+            navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+          }
+          if (type === 'segmentation') {
+            navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+          }
+        }
+      }, 2000);
+    }, 3000);
   };
 
   /**
@@ -255,6 +320,56 @@ function WorkList() {
       },
     }),
   };
+
+  // table pagination actions
+  const TablePagination = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+    return (
+      <div className="pagination flex items-center justify-center gap-1">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          className={`h-5 w-5 bg-transparent ${currentPage === 1 ? 'invisible' : 'visible'}`}
+        >
+          <img
+            src={chevronLefttIcon}
+            alt="Chevron left icon"
+          />
+        </button>
+        {pageNumbers.map(number => (
+          <button
+            key={number}
+            onClick={() => handlePageChange(number)}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
+            style={{
+              background:
+                number === currentPage
+                  ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                  : 'rgba(204, 204, 204, 0.1)',
+            }}
+          >
+            {number}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
+        >
+          <img
+            src={chevronRightIcon}
+            alt="Chevron right icon"
+          />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -264,31 +379,48 @@ function WorkList() {
           {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
-            <div className="flex items-center gap-3 bg-transparent p-5">
+            <div className="flex w-full flex-wrap items-center gap-3 gap-1 bg-transparent p-5 xl:flex-nowrap">
               <Input
                 placeholder={t('Patient name')}
                 id="PatientName"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
               <Input
                 placeholder={t('MRN')}
                 id="MRN"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('patientID', e.target.value)}
               />
-
-              <InputDateRange
-                id="DateRangeFilter"
-                label=""
-                onChange={handleDateRangeFieldChange}
-              />
+              <div className="relative w-[250px]">
+                <DateRangePicker
+                  startDate={startDate}
+                  startDateId="FilterStartDate"
+                  endDate={endDate}
+                  endDateId="FilterEndDate"
+                  onDatesChange={handleDateRangeChange}
+                  focusedInput={focusedInput}
+                  onFocusChange={focusedInput => {
+                    setFocusedInput(focusedInput);
+                  }}
+                  isOutsideRange={() => false}
+                />
+                {(startDate || endDate) && (
+                  <button onClick={handleClearDates}>
+                    <img
+                      src={closeInactive}
+                      alt="Close icon"
+                      className="absolute right-[10px] top-1/2 w-4 -translate-y-1/2"
+                    />
+                  </button>
+                )}
+              </div>
               <Input
                 placeholder={t('Description')}
                 id="Description"
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
@@ -304,7 +436,7 @@ function WorkList() {
               <Input
                 id="Accession"
                 placeholder={t('Accession #')}
-                className="w-full"
+                className="min-w-[150px]"
                 type="text"
                 onChange={e => handleInputChange('accessionNumber', e.target.value)}
               />
@@ -347,7 +479,7 @@ function WorkList() {
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
-                      {tableDataSource.map((row, index) => (
+                      {currentItems.map((row, index) => (
                         <React.Fragment key={index}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
@@ -361,8 +493,8 @@ function WorkList() {
                               {row.patientName}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
-                              {row.patientID.substring(0, 10)}....
-                              {row.patientID.substring(row.patientID.length - 10)}
+                              {row.patientID.substring(0, 7)}....
+                              {row.patientID.substring(row.patientID.length - 7)}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
                               {formatDate(row.studyDate)}
@@ -442,6 +574,7 @@ function WorkList() {
                 </table>
               )}
             </div>
+            {totalPages > 1 && <TablePagination />}
           </div>
         </div>
         <Modal
@@ -449,6 +582,18 @@ function WorkList() {
           size="min-w-[400px]"
           isCloseable={false}
         >
+          {(JobState.PENDING === jobInfo.state || JobState.RUNNING === jobInfo.state) && (
+            <div
+              role="status"
+              className="mb-3"
+            >
+              <img
+                src={circularLoading}
+                alt="Circular loading"
+                className="mx-auto w-8 animate-spin"
+              />
+            </div>
+          )}
           <h1 className="mb-4 text-center text-xl text-white">{t('OrthancServiceProgress')}</h1>
           <div className="h-2.5 w-full rounded-full bg-gray-500">
             <div
@@ -457,7 +602,7 @@ function WorkList() {
             ></div>
           </div>
           <h2 className="mt-4 text-white">
-            <span className="text-white text-opacity-70">{t('State')}:</span> {jobInfo.state}
+            <span className="text-white text-opacity-70">{t('Status')}:</span> {jobInfo.state}
           </h2>
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||

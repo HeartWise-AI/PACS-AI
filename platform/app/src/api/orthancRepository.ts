@@ -57,7 +57,9 @@ const orthancRepository = {
     request: RetrieveModalityStudyRequest
   ): Promise<APIResponse<RetrieveModalityStudyResponse>> {
     return Api()
-      .post(`/v1/orthanc/retrieve/query/${request.queryID}/answer/${request.answerIndex}`)
+      .post(`/v1/orthanc/retrieve/query/${request.queryID}/answer/${request.answerIndex}`, {
+        studyInstanceUID: request.studyInstanceUID,
+      })
       .then((response: AxiosResponse<APIResponse<RetrieveModalityStudyResponse>>) => {
         const { data } = response;
         return data;

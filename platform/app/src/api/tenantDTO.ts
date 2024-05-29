@@ -21,6 +21,7 @@ export interface ModelDetails {
   Changelogs: { [key: string]: string };
   Summary: { [key: string]: string };
   Mechanism: { [key: string]: string };
+  Validation_and_performance: { [key: string]: { [key: string]: string | number } };
   Other_information: { [key: string]: string };
   Other_results: { [key: string]: string };
   Uses_and_directions: { [key: string]: string };

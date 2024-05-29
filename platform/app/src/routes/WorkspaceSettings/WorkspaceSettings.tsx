@@ -57,6 +57,60 @@ const WorkspaceSettingsPage = () => {
     setIsOpenAIModelModal(true);
   };
 
+  const ValidationAndPerfomanceTable = ({ data }) => {
+    const { Validation_and_performance } = data;
+
+    const renderTable = (performanceData: {
+      [key: string]: { [key: string]: string | number };
+    }) => (
+      <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
+        <thead>
+          <tr>
+            <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
+            {Object.keys(performanceData).map(dataset => (
+              <th
+                key={dataset}
+                className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
+              >
+                {dataset.replace(/_/g, ' ')}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(performanceData[Object.keys(performanceData)[0]]).map(metric => (
+            <tr key={metric}>
+              <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
+                {metric.replace(/_/g, ' ')}
+              </td>
+              {Object.keys(performanceData).map(dataset => (
+                <td
+                  key={dataset + metric}
+                  className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
+                >
+                  {performanceData[dataset][metric]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+    return (
+      <div>
+        <Typography
+          variant="h6"
+          className="mb-2 font-medium text-white"
+        >
+          {t('Validation and Perfomance')}
+        </Typography>
+        {Object.keys(Validation_and_performance).map(key => (
+          <div key={key}>{renderTable(Validation_and_performance[key])}</div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -259,6 +313,10 @@ const WorkspaceSettingsPage = () => {
                     </Typography>
                   </div>
                 ))}
+              </div>
+              {/* validation and performance */}
+              <div className="border-b border-white border-opacity-10 py-2">
+                <ValidationAndPerfomanceTable data={selectedAIModel} />
               </div>
               {/* uses and directions */}
               <div className="border-b border-white border-opacity-10 py-2">
