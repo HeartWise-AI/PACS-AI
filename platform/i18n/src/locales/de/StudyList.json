@@ -1,5 +1,6 @@
 {
   "AccessionNumber": "Zugangsnummer",
+  "BasicViewer": "Basisbetrachter",
   "ClearFilters": "Filter löschen",
   "Description": "Beschreibung",
   "Empty": "Leer",
@@ -11,13 +12,21 @@
   "Study list": "Studienliste",
   "Instances": "Instanzen",
   "Number of studies": "Studien",
+  "OrthancServiceProgress": "Orthanc-Bilder werden synchronisiert...",
+  "OrthancServiceProgressMessage": "Bei dem Auftrag ist ein Problem aufgetreten. Bitte versuchen Sie es später erneut.",
+  "Okay": "Okay",
   "PatientName": "Patientenname",
   "Previous": "< Zurück",
   "Page": "Seite",
   "Next": "Weiter >",
+  "No data found": "Keine Daten gefunden",
   "ResultsPerPage": "Ergebnisse pro Seite",
   "Studies": "Studien",
   "StudyDate": "Studientag",
   "StudyDescription": "Beschreibung",
-  "StudyList": "Studienliste"
+  "StudyList": "Studienliste",
+  "Status": "Status",
+  "Segmentation": "Segmentierung",
+  "Searching for data": "Daten werden gesucht",
+  "Tools": "Werkzeuge"
 }

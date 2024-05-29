@@ -1,5 +1,6 @@
 {
   "AccessionNumber": "Num. Adhesión",
+  "BasicViewer": "Visor Básico",
   "ClearFilters": "Limpiar filtros",
   "Description": "Descripción",
   "Empty": "vacío",
@@ -7,12 +8,23 @@
   "Instances": "Instancias",
   "MRN": "MRN",
   "Modality": "Modalidad",
+  "OrthancServiceProgress": "Sincronizando Imágenes de Orthanc...",
+  "OrthancServiceProgressMessage": "El trabajo encontró un problema. Por favor, inténtelo de nuevo más tarde.",
+  "Okay": "De acuerdo",
   "PatientName": "Nombre paciente",
   "Previous": "< Anterior",
   "Page": "Página",
   "Next": "Siguiente >",
   "Results per page": "Resultados por página",
   "Number of studies": "Estudios",
+  "No data found": "No se encontraron datos",
+  "ResultsPerPage": "Resultados por página",
+  "Studies": "Estudios",
   "StudyDate": "Fecha del estudio",
-  "StudyList": "Lista de Estudios"
+  "StudyDescription": "Descripción",
+  "StudyList": "Lista de Estudios",
+  "Status": "Estado",
+  "Segmentation": "Segmentación",
+  "Searching for data": "Buscando datos",
+  "Tools": "Herramientas"
 }
