@@ -1,5 +1,6 @@
 {
   "AccessionNumber": "رقم الوصول",
+  "BasicViewer": "عارض أساسي",
   "ClearFilters": "مسح الفلاتر",
   "Description": "الوصف",
   "Empty": "فارغ",
@@ -7,13 +8,21 @@
   "MRN": "رقم المريض الطبي",
   "NumOfStudiesHiggerThan100Message": "يرجى تصفية القائمة لعرض 100 دراسة أو أقل لتمكين الترتيب",
   "Modality": "الوضعية",
+  "OrthancServiceProgress": "جارٍ مزامنة صور أورثانك...",
+  "OrthancServiceProgressMessage": "واجهت المهمة مشكلة. يرجى المحاولة مرة أخرى لاحقاً.",
+  "Okay": "حسناً",
   "PatientName": "اسم المريض",
   "Previous": "< السابق",
   "Page": "الصفحة",
   "Next": "التالي >",
+  "No data found": "لم يتم العثور على بيانات",
   "ResultsPerPage": "النتائج في الصفحة",
   "Studies": "الدراسات",
   "StudyDate": "تاريخ الدراسة",
   "StudyDescription": "الوصف",
-  "StudyList": "قائمة الدراسات"
+  "StudyList": "قائمة الدراسات",
+  "Status": "الحالة",
+  "Segmentation": "التقسيم",
+  "Searching for data": "جاري البحث عن البيانات",
+  "Tools": "الأدوات"
 }
