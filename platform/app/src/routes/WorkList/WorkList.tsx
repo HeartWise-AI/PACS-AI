@@ -230,6 +230,7 @@ function WorkList() {
     const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
       queryID,
       answerIndex: index,
+      studyInstanceUID,
     });
 
     // get job info with interval of 3 seconds

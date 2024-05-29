@@ -51,6 +51,7 @@ export interface GetJobInfoRequest {
 export interface RetrieveModalityStudyRequest {
   queryID: string;
   answerIndex: number;
+  studyInstanceUID: string;
 }
 
 export interface RetrieveModalityStudyResponse {
