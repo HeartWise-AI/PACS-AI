@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
-import { Button, Input, InputDateRange, DateRange } from '@ohif/ui';
+import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -12,6 +12,8 @@ import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
+import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
+import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -19,6 +21,8 @@ function WorkList() {
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [tableDataSource, setTableDataSource] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [expandedTableRows, setExpandedTableRows] = useState({});
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
@@ -48,6 +52,11 @@ function WorkList() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [focusedInput, setFocusedInput] = useState(null);
+  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
+  const currentItems = tableDataSource.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -78,6 +87,7 @@ function WorkList() {
     setIsStudyListDataLoading(true);
     try {
       const response = await orthancRepository.GetModalityStudies(filterRef.current);
+
       setTableDataSource(response.data.studies);
       setStudyQueryId(response.data.queryId);
     } catch (error) {
@@ -125,6 +135,11 @@ function WorkList() {
       timeout = setTimeout(later, wait);
     };
   }
+
+  // Handle page change
+  const handlePageChange = page => {
+    setCurrentPage(page);
+  };
 
   /**
    * Handle input change filter
@@ -174,7 +189,6 @@ function WorkList() {
       const formattedStartDate = startDate.format('YYYYMMDD');
       const formattedEndDate = endDate.format('YYYYMMDD');
       const formattedDateRange = `${formattedStartDate}-${formattedEndDate}`;
-      console.log('Formatted Date Range:', formattedDateRange);
 
       setStudyListFilter(prevFilter => ({
         ...prevFilter,
@@ -306,6 +320,55 @@ function WorkList() {
     }),
   };
 
+  // table pagination actions
+  const TablePagination = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+    return (
+      <div className="pagination flex items-center justify-center gap-1">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          className={`h-5 w-5 bg-transparent ${currentPage === 1 ? 'invisible' : 'visible'}`}
+        >
+          <img
+            src={chevronLefttIcon}
+            alt="Chevron left icon"
+          />
+        </button>
+        {pageNumbers.map(number => (
+          <button
+            key={number}
+            onClick={() => handlePageChange(number)}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
+            style={{
+              background:
+                number === currentPage
+                  ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                  : 'rgba(204, 204, 204, 0.1)',
+            }}
+          >
+            {number}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
+        >
+          <img
+            src={chevronRightIcon}
+            alt="Chevron right icon"
+          />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -415,7 +478,7 @@ function WorkList() {
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
-                      {tableDataSource.map((row, index) => (
+                      {currentItems.map((row, index) => (
                         <React.Fragment key={index}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
@@ -429,8 +492,8 @@ function WorkList() {
                               {row.patientName}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
-                              {row.patientID.substring(0, 10)}....
-                              {row.patientID.substring(row.patientID.length - 10)}
+                              {row.patientID.substring(0, 7)}....
+                              {row.patientID.substring(row.patientID.length - 7)}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
                               {formatDate(row.studyDate)}
@@ -510,6 +573,7 @@ function WorkList() {
                 </table>
               )}
             </div>
+            {totalPages > 1 && <TablePagination />}
           </div>
         </div>
         <Modal
