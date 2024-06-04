@@ -234,7 +234,7 @@ function WorkList() {
     });
 
     // get job info with interval of 3 seconds
-    let intervalId = setInterval(async () => {
+    const intervalId = setInterval(async () => {
       jobInfoResponse = await orthancRepository.GetJobInfo({
         jobID: modalityStudyResponse.data.id,
       });
@@ -337,9 +337,8 @@ function WorkList() {
           <button
             key={number}
             onClick={() => handlePageChange(number)}
-            className={`h-7 w-7 rounded-md ${
-              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
-            }`}
+            className={`h-7 w-7 rounded-md ${number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+              }`}
             style={{
               background:
                 number === currentPage
@@ -352,9 +351,8 @@ function WorkList() {
         ))}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          className={`h-5 w-5 bg-transparent ${
-            currentPage === totalPages ? 'invisible' : 'visible'
-          }`}
+          className={`h-5 w-5 bg-transparent ${currentPage === totalPages ? 'invisible' : 'visible'
+            }`}
         >
           <img
             src={chevronRightIcon}
@@ -481,9 +479,8 @@ function WorkList() {
                             onClick={() => toggleRow(index)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${
-                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                              }`}
+                              className={`text-md py-2 px-4 font-normal ${expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                                }`}
                             >
                               {row.patientName}
                             </td>
@@ -502,9 +499,8 @@ function WorkList() {
                             </td>
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${
-                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                              }`}
+                              className={`py-2 px-4 text-sm font-normal ${expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                                }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
@@ -602,21 +598,21 @@ function WorkList() {
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
-            <div className="mt-2">
-              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
-              <div className="mt-6 flex justify-end">
-                <Button
-                  className="block h-5 w-11"
-                  onClick={() => {
-                    setIsOpenOrthancServiceModal(false);
-                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
-                  }}
-                >
-                  {t('Okay')}
-                </Button>
+              <div className="mt-2">
+                <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+                <div className="mt-6 flex justify-end">
+                  <Button
+                    className="block h-5 w-11"
+                    onClick={() => {
+                      setIsOpenOrthancServiceModal(false);
+                      setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    }}
+                  >
+                    {t('Okay')}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </Modal>
       </div>
     </div>
