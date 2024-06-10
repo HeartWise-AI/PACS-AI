@@ -187,7 +187,7 @@ function DataSourceWrapper(props) {
       const isDataInvalid =
         !isSamePage || (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
-      //TODO: disable for now
+      //TODO: disable old study list fetching
       // if (isDataInvalid) {
       //   getData().catch(e => {
       //     console.error(e);
