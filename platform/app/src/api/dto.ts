@@ -11,9 +11,8 @@ export interface ErrorAPIResponse {
   readonly errorCode?: string;
 }
 
-export enum LogsAuditType {
-  INFERENCE = 'Audit Inference',
-  DATABASE = 'Audit Database',
+export enum Error {
+  DUPLICATE_RECORD = 'DUPLICATE_RECORD',
 }
 
 export enum Languages {
