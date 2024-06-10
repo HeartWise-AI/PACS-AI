@@ -270,7 +270,6 @@ function WorkList() {
         }, 2000);
       }, 3000);
     } catch (error) {
-      console.error('========', error.errorCode, Error.DUPLICATE_RECORD);
       if (error.errorCode === Error.DUPLICATE_RECORD) {
         if (type === 'viewer') {
           navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
