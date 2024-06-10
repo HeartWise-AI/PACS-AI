@@ -10,6 +10,7 @@ import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
+import { Error } from '../../api/dto';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
@@ -231,47 +232,59 @@ function WorkList() {
 
     let jobInfoResponse;
 
-    // retrieve modalidy study
-    const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
-      queryID,
-      answerIndex: index,
-      studyInstanceUID,
-    });
-
-    // get job info with interval of 3 seconds
-    let intervalId = setInterval(async () => {
-      jobInfoResponse = await orthancRepository.GetJobInfo({
-        jobID: modalityStudyResponse.data.id,
-      });
-      // clear interval if job is not in running state
-      if (
-        jobInfoResponse.data.state === JobState.FAILURE ||
-        jobInfoResponse.data.state === JobState.RETRY ||
-        jobInfoResponse.data.state === JobState.PAUSED ||
-        jobInfoResponse.data.state === JobState.SUCCESS
-      ) {
-        clearInterval(intervalId);
-      }
-      // set job info
-      setJobInfo({
-        id: jobInfoResponse.data.id,
-        priority: jobInfoResponse.data.priority,
-        progress: jobInfoResponse.data.progress,
-        state: JobState[jobInfoResponse.data.state.toUpperCase()],
+    try {
+      // retrieve modalidy study
+      const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
+        queryID,
+        answerIndex: index,
+        studyInstanceUID,
       });
 
-      // redirect to viewer if job is in success state
-      setTimeout(() => {
-        if (jobInfoResponse.data.state === JobState.SUCCESS) {
-          if (type === 'viewer') {
-            navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
-          }
-          if (type === 'segmentation') {
-            navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
-          }
+      // get job info with interval of 3 seconds
+      let intervalId = setInterval(async () => {
+        jobInfoResponse = await orthancRepository.GetJobInfo({
+          jobID: modalityStudyResponse.data.id,
+        });
+        // clear interval if job is not in running state
+        if (
+          jobInfoResponse.data.state === JobState.FAILURE ||
+          jobInfoResponse.data.state === JobState.RETRY ||
+          jobInfoResponse.data.state === JobState.PAUSED ||
+          jobInfoResponse.data.state === JobState.SUCCESS
+        ) {
+          clearInterval(intervalId);
         }
-      }, 2000);
-    }, 3000);
+        // set job info
+        setJobInfo({
+          id: jobInfoResponse.data.id,
+          priority: jobInfoResponse.data.priority,
+          progress: jobInfoResponse.data.progress,
+          state: JobState[jobInfoResponse.data.state.toUpperCase()],
+        });
+
+        // redirect to viewer if job is in success state
+        setTimeout(() => {
+          if (jobInfoResponse.data.state === JobState.SUCCESS) {
+            if (type === 'viewer') {
+              navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+            }
+            if (type === 'segmentation') {
+              navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+            }
+          }
+        }, 2000);
+      }, 3000);
+    } catch (error) {
+      console.error('========', error.errorCode, Error.DUPLICATE_RECORD);
+      if (error.errorCode === Error.DUPLICATE_RECORD) {
+        if (type === 'viewer') {
+          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+        }
+        if (type === 'segmentation') {
+          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+        }
+      }
+    }
   };
 
   /**
@@ -379,7 +392,7 @@ function WorkList() {
           {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
-            <div className="flex w-full flex-wrap items-center gap-3 gap-1 bg-transparent p-5 xl:flex-nowrap">
+            <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5 xl:flex-nowrap">
               <Input
                 placeholder={t('Patient name')}
                 id="PatientName"
