@@ -1,0 +1,13 @@
+networks:
+  default:
+    name: pacs-net
+    external: true
+
+services:
+  pacs-ai:
+    container_name: pacs-ai
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:80
