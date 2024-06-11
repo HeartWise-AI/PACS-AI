@@ -14,6 +14,7 @@ import downloadIcon from './../../assets/pacs/icons/download-black.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
+import searchIcon from './../../assets/pacs/icons/search-black.png';
 
 const KibanaLogsPage = () => {
   const { t } = useTranslation();
@@ -287,7 +288,11 @@ const KibanaLogsPage = () => {
                 className="h-[51px] min-w-[51px] rounded-lg !px-0"
                 onClick={getECSLogs}
               >
-                {'Q'}
+                <img
+                  src={searchIcon}
+                  className="w-5"
+                  alt="Search icon"
+                />
               </Button>
               <Button
                 disabled={false}
