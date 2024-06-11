@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
 import moment from 'moment';
@@ -193,6 +193,25 @@ const KibanaLogsPage = () => {
     );
   };
 
+  /**
+   * Debounce search
+   */
+  const debounceSearch = useCallback(
+    debounce(() => {
+      getECSLogs();
+    }, 1000),
+    []
+  );
+
+  // Handle query search field
+  const handleQueryFieldChange = event => {
+    setSearchQuery(event.target.value);
+
+    if (!event.target.value) {
+      debounceSearch();
+    }
+  };
+
   // Handle page change
   const handlePageChange = page => {
     setCurrentPage(page);
@@ -215,6 +234,25 @@ const KibanaLogsPage = () => {
     setStartDate(null);
     setEndDate(null);
   };
+
+  /**
+   * Debounce function implementation
+   *
+   * @param func
+   * @param wait
+   * @returns
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815] ">
@@ -229,7 +267,7 @@ const KibanaLogsPage = () => {
                 id="PatientName"
                 className="w-full"
                 type="text"
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={handleQueryFieldChange}
               />
             </div>
             <div className="relative w-[25%]">
