@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Table = ({ headers, data, children }) => {
+const Table = ({ headers, data, children, className }) => {
   return (
     <div className="max-w-full overflow-x-auto">
       <table className="w-full text-left text-sm rtl:text-right ">
@@ -26,7 +26,7 @@ const Table = ({ headers, data, children }) => {
               {headers.map((header, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className={`max-w-[170px] break-words px-2 py-2 text-${header.align}`}
+                  className={`break-words px-2 py-2 text-${header.align} ${className}`}
                 >
                   {children(item[header.value], header, item)}
                 </td>

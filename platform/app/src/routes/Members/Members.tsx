@@ -293,6 +293,7 @@ const MembersPage = () => {
               <Table
                 headers={headers}
                 data={filteredItems}
+                className={'max-w-[170px]'}
               >
                 {(cell, header, row) => {
                   // id

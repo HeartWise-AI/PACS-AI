@@ -128,6 +128,7 @@ const KibanaLogsPage = () => {
           <Table
             headers={columnHeaders}
             data={currentItems}
+            className={'min-w-[170px]'}
           >
             {cell => {
               return cell;
