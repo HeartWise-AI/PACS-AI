@@ -14,6 +14,7 @@ export interface ECSLogsRequest {
   query: string;
   startDate: string;
   endDate: string;
+  export?: boolean;
 }
 
 export enum LogsType {
