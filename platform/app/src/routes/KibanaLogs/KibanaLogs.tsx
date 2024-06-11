@@ -120,6 +120,44 @@ const KibanaLogsPage = () => {
     setIsLogsDataLoading(false);
   };
 
+  /**
+   * Download ECS logs
+   */
+  const downloadLogs = async () => {
+    try {
+      const csvData = await ecsRepository.GetECSLogs({
+        index: selectedIndexType,
+        query: searchQuery ? searchQuery : tenantId,
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+        export: true,
+      });
+
+      // create a Blob from the CSV data
+      const blob = new Blob([csvData], { type: 'text/csv' });
+
+      // Generate a URL for the Blob
+      const url = window.URL.createObjectURL(blob);
+
+      // download time
+      const downloadTime = new Date().toISOString().replace(/[:.]/g, '-');
+
+      // create an anchor element and trigger the download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ecs-logs-${downloadTime}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Revoke the Object URL after some time to free up memory
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (error) {
+      console.error(error);
+      showAlert(error.message, 'error');
+    }
+  };
+
   // ECS logs table
   const ECSLogsTable = () => {
     return (
@@ -336,6 +374,7 @@ const KibanaLogsPage = () => {
               <Button
                 disabled={false}
                 className="h-[51px] min-w-[51px] rounded-lg !px-0"
+                onClick={downloadLogs}
               >
                 <img
                   src={downloadIcon}
