@@ -187,19 +187,20 @@ function DataSourceWrapper(props) {
       const isDataInvalid =
         !isSamePage || (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
-      if (isDataInvalid) {
-        getData().catch(e => {
-          console.error(e);
-          // If there is a data source configuration API, then the Worklist will popup the dialog to attempt to configure it
-          // and attempt to resolve this issue.
-          if (dataSource.getConfig().configurationAPI) {
-            return;
-          }
+      //TODO: disable old study list fetching
+      // if (isDataInvalid) {
+      //   getData().catch(e => {
+      //     console.error(e);
+      //     // If there is a data source configuration API, then the Worklist will popup the dialog to attempt to configure it
+      //     // and attempt to resolve this issue.
+      //     if (dataSource.getConfig().configurationAPI) {
+      //       return;
+      //     }
 
-          // No data source configuration API, so navigate to the not found server page.
-          navigate('/notfoundserver', '_self');
-        });
-      }
+      //     // No data source configuration API, so navigate to the not found server page.
+      //     navigate('/notfoundserver', '_self');
+      //   });
+      // }
     } catch (ex) {
       console.warn(ex);
     }

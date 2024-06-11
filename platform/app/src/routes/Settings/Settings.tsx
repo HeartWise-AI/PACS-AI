@@ -27,6 +27,7 @@ const SettingsPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
+  const [imageSrc, setImageSrc] = useState('');
   const showAlert = useContext(AlertContext);
 
   // Set page title
@@ -56,6 +57,10 @@ const SettingsPage = () => {
     fetchCurrentUser();
     fetchTenantInfo();
   }, [userRepository, tenantRepository]);
+
+  useEffect(() => {
+    fetchImage();
+  }, [currentUser.id]);
 
   const changePassword = e => {
     e.preventDefault();
@@ -116,6 +121,36 @@ const SettingsPage = () => {
     );
   };
 
+  const fetchImage = async () => {
+    if (currentUser?.id) {
+      try {
+        const response = await fetch(
+          `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.id}`,
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'image/svg+xml',
+            },
+            credentials: 'omit',
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch the image');
+        }
+        const blob = await response.blob();
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        setImageSrc(base64 as string);
+      } catch (error) {
+        console.error('Error fetching the image:', error);
+      }
+    }
+  };
+
   const handleTabChange = (tab: string) => {
     setSelectedTab(tab);
   };
@@ -140,13 +175,12 @@ const SettingsPage = () => {
           <h1 className="text-2xl text-white">{t('General Settings')}</h1>
         </div>
         <div className="flex items-center pt-7">
-          {/* <img
-          src={`https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.id}`}
-          alt="Profile"
-          width="55"
-          className="rounded-lg border border-gray-200 p-2"
-        /> */}
-          <div className="min-w-10 h-10 rounded-lg bg-white opacity-10"></div>
+          {currentUser.name ? (
+            <ProfileImage />
+          ) : (
+            <div className="min-w-10 h-10 rounded-lg bg-white opacity-10"></div>
+          )}
+
           {currentUser.name ? (
             <div className="ml-3">
               <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
@@ -295,6 +329,17 @@ const SettingsPage = () => {
     );
   };
 
+  const ProfileImage = () => {
+    return (
+      <img
+        src={imageSrc}
+        alt="Profile"
+        width="45"
+        height="45"
+        className="rounded-lg border border-gray-200 bg-white p-2"
+      />
+    );
+  };
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815] ">
