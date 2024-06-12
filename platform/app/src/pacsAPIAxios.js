@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const pacsAPIAxios = () => {
-  const apiUrl = process.env.APP_PUBLIC_API_URL + '/api';
+  const apiUrl = process.env.APP_PUBLIC_API_URL;
   const token = localStorage.getItem('sessionToken');
 
   return axios.create({
