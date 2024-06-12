@@ -120,7 +120,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
   );
 };
 
-const noop = () => { };
+const noop = () => {};
 
 CinePlayer.defaultProps = {
   isPlaying: false,
