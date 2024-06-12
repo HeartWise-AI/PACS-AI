@@ -3,32 +3,44 @@ import PropTypes from 'prop-types';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
+import ResultModal from '../ResultModal/ResultModal';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
-
 const baseFontTextClasses = 'relative z-10 text-lg font-bold';
-
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
-
 const textColor = 'text-white';
+
 const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => {
   const buttonElement = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState(null);
   const ref = useRef(null);
 
   const handleOnClick = e => {
-    buttonElement.current.blur();
     if (!disabled) {
+      setIsModalOpen(true);
+      setIsLoading(true);
+      setTimeout(() => {
+        const resultPercentage = 47;
+        setResult(resultPercentage);
+        setIsLoading(false);
+      }, 3000);
       onClick(e);
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setResult(null);
   };
 
   return (
     <div className="flex w-full">
       <button
-        className={`${baseClasses} ${className} ${textColor} ${
-          isShowBG ? backgroundClass : 'bg-transparent'
-        }`}
+        className={`${baseClasses} ${className} ${textColor} ${isShowBG ? backgroundClass : 'bg-transparent'
+          }`}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -44,39 +56,16 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
           style={{ top: ref.current ? ref.current.offsetHeight : 40 }}
         >
           <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-            <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
+            <li
+              className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+              onClick={handleOnClick}
+            >
               <img
                 src={playerPlayIcon}
                 alt="Player play icon"
                 className="w-5"
               />
-              <h1 className="text-sm">Apply X3D LVEF detection</h1>
-              <img
-                src={helpInactive}
-                alt="Player play icon"
-                className="w-5"
-              />
-            </li>
-            <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-              <img
-                src={playerPlayIcon}
-                alt="Player play icon"
-                className="w-5"
-              />
-              <h1 className="text-sm">Apply X4D LVEF detection</h1>
-              <img
-                src={helpInactive}
-                alt="Player play icon"
-                className="w-5"
-              />
-            </li>
-            <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-              <img
-                src={playerPlayIcon}
-                alt="Player play icon"
-                className="w-5"
-              />
-              <h1 className="text-sm">Apply X5D LVEF detection</h1>
+              <h1 className="text-sm">Détection de la FEVG</h1>
               <img
                 src={helpInactive}
                 alt="Player play icon"
@@ -86,6 +75,12 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
           </ul>
         </div>
       )}
+      <ResultModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        result={result}
+        isLoading={isLoading}
+      />
     </div>
   );
 };
@@ -95,7 +90,7 @@ AIModelButton.defaultProps = {
   className: '',
   disabled: false,
   isShowBG: false,
-  onClick: () => {},
+  onClick: () => { },
 };
 
 AIModelButton.propTypes = {

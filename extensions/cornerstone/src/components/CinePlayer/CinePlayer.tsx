@@ -69,6 +69,13 @@ function WrappedCinePlayer({
         isPlaying ||= !!appConfig.autoPlayCine;
       }
 
+      if (displaySet.instance.CineRate) {
+        // displaySet.instance.CineRate corresponds to DICOM tag (0018,0040) which is defined as the the frame time
+        // It should be the default, that's why we are using it and the FrameRate is a fallback
+        frameRate = displaySet.instance.CineRate;
+        isPlaying ||= !!appConfig.autoPlayCine;
+      }
+
       // check if the displaySet is dynamic and set the dynamic info
       if (displaySet.isDynamicVolume) {
         const { dynamicVolumeInfo } = displaySet;
@@ -230,7 +237,7 @@ function WrappedCinePlayer({
 
     return (
       <CinePlayerComponent
-        className="absolute left-1/2 bottom-3 -translate-x-1/2"
+        className="absolute left-1/2 bottom-8 -translate-x-1/2"
         frameRate={newStackFrameRate}
         isPlaying={isPlaying}
         onClose={() => {

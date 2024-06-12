@@ -1,0 +1,8 @@
+services:
+  pacs-ai:
+    container_name: pacs-ai
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "80"
