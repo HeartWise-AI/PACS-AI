@@ -1,4 +1,4 @@
-.imageViewerViewport.empty~.ViewportOverlay {
+.imageViewerViewport.empty ~ .ViewportOverlay {
   display: none;
 }
 

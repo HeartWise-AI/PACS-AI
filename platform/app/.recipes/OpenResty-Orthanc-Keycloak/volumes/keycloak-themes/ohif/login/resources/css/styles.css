@@ -164,18 +164,26 @@ div#kc-social-providers ul li span {
 
 a.zocial {
   border: none;
-  background: -webkit-linear-gradient(top,
-      rgba(255, 255, 255, 0.8),
-      rgba(255, 255, 255, 0.1)) !important;
-  background: -moz-linear-gradient(top,
-      rgba(255, 255, 255, 0.8),
-      rgba(255, 255, 255, 0.1)) !important;
-  background: -ms-linear-gradient(top,
-      rgba(255, 255, 255, 0.8),
-      rgba(255, 255, 255, 0.1)) !important;
-  background: -o-linear-gradient(top,
-      rgba(255, 255, 255, 0.8),
-      rgba(255, 255, 255, 0.1)) !important;
+  background: -webkit-linear-gradient(
+    top,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  ) !important;
+  background: -moz-linear-gradient(
+    top,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  ) !important;
+  background: -ms-linear-gradient(
+    top,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  ) !important;
+  background: -o-linear-gradient(
+    top,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  ) !important;
   box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.5);
   color: rgba(0, 0, 0, 0.6);
   width: 130px;

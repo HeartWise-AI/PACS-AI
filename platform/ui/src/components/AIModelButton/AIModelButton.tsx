@@ -39,8 +39,9 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   return (
     <div className="flex w-full">
       <button
-        className={`${baseClasses} ${className} ${textColor} ${isShowBG ? backgroundClass : 'bg-transparent'
-          }`}
+        className={`${baseClasses} ${className} ${textColor} ${
+          isShowBG ? backgroundClass : 'bg-transparent'
+        }`}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -90,7 +91,7 @@ AIModelButton.defaultProps = {
   className: '',
   disabled: false,
   isShowBG: false,
-  onClick: () => { },
+  onClick: () => {},
 };
 
 AIModelButton.propTypes = {
