@@ -2,6 +2,46 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
+function boxMullerRandom() {
+  let u = 0,
+    v = 0;
+  while (u === 0) {
+    u = Math.random();
+  } // Converting [0,1) to (0,1)
+  while (v === 0) {
+    v = Math.random();
+  }
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function generateNormalDistributionArray(n, mean, stdDev) {
+  const arr = [];
+  for (let i = 0; i < n; i++) {
+    const age_gen = mean + boxMullerRandom() * stdDev;
+    arr.push({ age_gen: age_gen.toFixed(1) });
+  }
+  return arr;
+}
+
+function kernelDensityEstimator(kernel, X) {
+  return function (V) {
+    return X.map(function (x) {
+      return [
+        x,
+        d3.mean(V, function (v) {
+          return kernel(x - v);
+        }),
+      ];
+    });
+  };
+}
+
+function kernelEpanechnikov(k) {
+  return function (v) {
+    return Math.abs((v /= k)) <= 1 ? (0.75 * (1 - v * v)) / k : 0;
+  };
+}
+
 const ModelHistComponent = ({ age }) => {
   const d3Container = useRef(null);
 
@@ -26,27 +66,6 @@ const ModelHistComponent = ({ age }) => {
       .attr('height', height + margin.top + margin.bottom)
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    function boxMullerRandom() {
-      let u = 0,
-        v = 0;
-      while (u === 0) {
-        u = Math.random();
-      } // Converting [0,1) to (0,1)
-      while (v === 0) {
-        v = Math.random();
-      }
-      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    }
-
-    function generateNormalDistributionArray(n, mean, stdDev) {
-      const arr = [];
-      for (let i = 0; i < n; i++) {
-        const age_gen = mean + boxMullerRandom() * stdDev;
-        arr.push({ age_gen: age_gen.toFixed(1) });
-      }
-      return arr;
-    }
 
     // Add the x Axis
     const x = d3.scaleLinear().range([0, width]).domain([18, 115]);
@@ -128,25 +147,6 @@ const ModelHistComponent = ({ age }) => {
         svg.select('.circle-text').remove();
         d3.select(this).transition().duration(150).attr('fill', lineCol).attr('r', 8);
       });
-
-    function kernelDensityEstimator(kernel, X) {
-      return function (V) {
-        return X.map(function (x) {
-          return [
-            x,
-            d3.mean(V, function (v) {
-              return kernel(x - v);
-            }),
-          ];
-        });
-      };
-    }
-
-    function kernelEpanechnikov(k) {
-      return function (v) {
-        return Math.abs((v /= k)) <= 1 ? (0.75 * (1 - v * v)) / k : 0;
-      };
-    }
   };
 
   useEffect(() => {
