@@ -237,9 +237,11 @@ const KibanaLogsPage = () => {
    */
   const debounceSearch = useCallback(
     debounce(() => {
+      const oldSelectedIndexType = selectedIndexType;
       getECSLogs();
+      setSelectedIndexType(oldSelectedIndexType);
     }, 1000),
-    []
+    [selectedIndexType]
   );
 
   // Handle query search field
