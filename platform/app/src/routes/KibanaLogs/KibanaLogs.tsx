@@ -158,31 +158,6 @@ const KibanaLogsPage = () => {
     }
   };
 
-  // ECS logs table
-  const ECSLogsTable = () => {
-    return (
-      <div>
-        {columnData.length > 0 ? (
-          <Table
-            headers={columnHeaders}
-            data={currentItems}
-            className={'min-w-[170px]'}
-          >
-            {cell => {
-              return cell;
-            }}
-          </Table>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="text-lg font-normal text-white text-opacity-70">
-              {t('No data found')}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Table pagination actions
   const TablePagination = () => {
     const pageNumbers = [];
@@ -396,7 +371,25 @@ const KibanaLogsPage = () => {
               </div>
             ) : (
               <div>
-                <ECSLogsTable />
+                <div>
+                  {columnData.length > 0 ? (
+                    <Table
+                      headers={columnHeaders}
+                      data={currentItems}
+                      className={'min-w-[170px]'}
+                    >
+                      {cell => {
+                        return cell;
+                      }}
+                    </Table>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="text-lg font-normal text-white text-opacity-70">
+                        {t('No data found')}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 {totalPages > 1 && <TablePagination />}
               </div>
             )}
