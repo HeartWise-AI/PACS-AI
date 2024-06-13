@@ -27,7 +27,7 @@ const KibanaLogsPage = () => {
   const showAlert = useContext(AlertContext);
   const [isLogsDataLoading, setIsLogsDataLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(20);
   const totalPages = Math.ceil(columnData.length / itemsPerPage);
   const currentItems = columnData.slice(
     (currentPage - 1) * itemsPerPage,
@@ -385,7 +385,7 @@ const KibanaLogsPage = () => {
             </div>
           </div>
           {/* table container */}
-          <div className="mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="my-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             {isLogsDataLoading ? (
               <div className="flex items-center justify-center p-5 text-center text-white">
                 <span className="text-lg font-normal text-opacity-70">
