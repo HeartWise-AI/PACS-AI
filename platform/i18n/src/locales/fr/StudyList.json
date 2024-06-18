@@ -9,6 +9,7 @@
   "NumOfStudiesHiggerThan100Message": "Filtrez la liste à 100 études ou moins pour activer le tri",
   "Modality": "Modalité",
   "OrthancServiceProgress": "Synchronisation des images Orthanc...",
+  "OrthancServiceInfo": "Nous synchronisons actuellement cette étude. La première synchronisation peut prendre quelques secondes à quelques minutes.",
   "OrthancServiceProgressMessage": "Le travail a rencontré un problème. Veuillez réessayer plus tard.",
   "Okay": "D'accord",
   "PatientName": "Nom du patient",
