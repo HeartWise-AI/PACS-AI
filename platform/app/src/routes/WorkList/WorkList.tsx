@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
+import moment from 'moment';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -25,6 +26,27 @@ function WorkList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [expandedTableRows, setExpandedTableRows] = useState({});
+  const [jobInfo, setJobInfo] = useState({
+    id: '',
+    priority: 0,
+    progress: 0,
+    state: JobState.PENDING,
+  });
+  const [studyQueryId, setStudyQueryId] = useState('');
+  const [focusedInput, setFocusedInput] = useState(null);
+  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
+  const currentItems = tableDataSource.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  // set default date range
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 2);
+  const startMoment = moment(thirtyDaysAgo);
+  const endMoment = moment(today);
+  const [startDate, setStartDate] = useState(startMoment);
+  const [endDate, setEndDate] = useState(endMoment);
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
     institutionName: '',
@@ -36,28 +58,13 @@ function WorkList() {
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
-    studyDate: '',
+    studyDate: `${startMoment.format('YYYYMMDD')}-${endMoment.format('YYYYMMDD')}`,
     studyDescription: '',
     studyID: '',
     studyInstanceUID: '',
     studyTime: '',
   });
-  const [jobInfo, setJobInfo] = useState({
-    id: '',
-    priority: 0,
-    progress: 0,
-    state: JobState.PENDING,
-  });
-  const [studyQueryId, setStudyQueryId] = useState('');
   const filterRef = useRef(studyListFilter);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [focusedInput, setFocusedInput] = useState(null);
-  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
-  const currentItems = tableDataSource.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   useEffect(() => {
     filterRef.current = studyListFilter;
