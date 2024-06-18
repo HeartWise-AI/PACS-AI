@@ -13,6 +13,7 @@
   "Instances": "Instanzen",
   "Number of studies": "Studien",
   "OrthancServiceProgress": "Orthanc-Bilder werden synchronisiert...",
+  "OrthancServiceInfo": "Wir synchronisieren derzeit diese Studie. Der erste Synchronisierungsvorgang kann einige Sekunden bis Minuten dauern.",
   "OrthancServiceProgressMessage": "Bei dem Auftrag ist ein Problem aufgetreten. Bitte versuchen Sie es später erneut.",
   "Okay": "Okay",
   "PatientName": "Patientenname",

@@ -9,6 +9,7 @@
   "NumOfStudiesHiggerThan100Message": "يرجى تصفية القائمة لعرض 100 دراسة أو أقل لتمكين الترتيب",
   "Modality": "الوضعية",
   "OrthancServiceProgress": "جارٍ مزامنة صور أورثانك...",
+  "OrthancServiceInfo": "نقوم حالياً بمزامنة هذه الدراسة. قد تستغرق هذه العملية بضع ثوانٍ إلى دقائق لأول مرة.",
   "OrthancServiceProgressMessage": "واجهت المهمة مشكلة. يرجى المحاولة مرة أخرى لاحقاً.",
   "Okay": "حسناً",
   "PatientName": "اسم المريض",

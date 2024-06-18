@@ -13,6 +13,7 @@
   "Number of studies": "Number of studies",
   "Page": "Page",
   "OrthancServiceProgress": "Syncing Orthanc Images...",
+  "OrthancServiceInfo": "We are currently syncing this study. This may take a few seconds to minutes for first time sync.",
   "OrthancServiceProgressMessage": "The job encountered an issue. Please try again later.",
   "Okay": "Okay",
   "PatientName": "Patient Name",

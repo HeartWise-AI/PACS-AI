@@ -32,6 +32,7 @@ function WorkList() {
     progress: 0,
     state: JobState.PENDING,
   });
+  const [syncingStudyProgress, setSyncingStudyProgress] = useState(0);
   const [studyQueryId, setStudyQueryId] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
@@ -233,7 +234,7 @@ function WorkList() {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
-
+    let intervalCounter = 0;
     try {
       // retrieve modalidy study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
@@ -256,6 +257,20 @@ function WorkList() {
         ) {
           clearInterval(intervalId);
         }
+
+        // increment the interval counter
+        intervalCounter++;
+
+        // update syncingStudyProgress every 2 intervals
+        if (intervalCounter % 2 === 0 && syncingStudyProgress < 95) {
+          setSyncingStudyProgress(prevProgress => prevProgress + 5);
+        }
+
+        // set progress to 100 if job is in success state
+        if (jobInfoResponse.data.state === JobState.SUCCESS) {
+          setSyncingStudyProgress(100);
+        }
+
         // set job info
         setJobInfo({
           id: jobInfoResponse.data.id,
@@ -393,7 +408,7 @@ function WorkList() {
     let years = [];
     const currentYear = moment().year();
 
-    // Generate a range of years for the dropdown
+    // generate a range of years for the dropdown
     for (let i = currentYear - 50; i <= currentYear + 50; i++) {
       years.push(i);
     }
@@ -640,7 +655,7 @@ function WorkList() {
         </div>
         <Modal
           isOpen={isOpenOrthancServiceModal}
-          size="min-w-[400px]"
+          size="w-[400px]"
           isCloseable={false}
         >
           {(JobState.PENDING === jobInfo.state || JobState.RUNNING === jobInfo.state) && (
@@ -659,12 +674,13 @@ function WorkList() {
           <div className="h-2.5 w-full rounded-full bg-gray-500">
             <div
               className={`bg-primary-main h-2.5 rounded-full`}
-              style={{ width: `${jobInfo.progress}%` }}
+              style={{ width: `${syncingStudyProgress}%` }}
             ></div>
           </div>
-          <h2 className="mt-4 text-white">
+          <h2 className="mt-4 text-base text-white ">{t('OrthancServiceInfo')}</h2>
+          <h3 className="mt-4 text-white">
             <span className="text-white text-opacity-70">{t('Status')}:</span> {jobInfo.state}
-          </h2>
+          </h3>
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
@@ -676,6 +692,7 @@ function WorkList() {
                   onClick={() => {
                     setIsOpenOrthancServiceModal(false);
                     setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    setSyncingStudyProgress(0);
                   }}
                 >
                   {t('Okay')}

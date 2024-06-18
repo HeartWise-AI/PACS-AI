@@ -9,6 +9,7 @@
   "MRN": "MRN",
   "Modality": "Modalidad",
   "OrthancServiceProgress": "Sincronizando Imágenes de Orthanc...",
+  "OrthancServiceInfo": "Actualmente estamos sincronizando este estudio. La primera sincronización puede tardar unos segundos o minutos.",
   "OrthancServiceProgressMessage": "El trabajo encontró un problema. Por favor, inténtelo de nuevo más tarde.",
   "Okay": "De acuerdo",
   "PatientName": "Nombre paciente",
