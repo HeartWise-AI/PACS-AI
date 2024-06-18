@@ -384,6 +384,52 @@ function WorkList() {
     );
   };
 
+  /**
+   * Dropdown for react-dates select date
+   * @param param0
+   * @returns
+   */
+  const renderMonthElement = ({ month, onMonthSelect, onYearSelect }) => {
+    let years = [];
+    const currentYear = moment().year();
+
+    // Generate a range of years for the dropdown
+    for (let i = currentYear - 50; i <= currentYear + 50; i++) {
+      years.push(i);
+    }
+
+    return (
+      <div className="MonthElementWrapper">
+        <select
+          value={month.month()}
+          onChange={e => onMonthSelect(month, e.target.value)}
+        >
+          {moment.months().map((label, index) => (
+            <option
+              key={index}
+              value={index}
+            >
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={month.year()}
+          onChange={e => onYearSelect(month, e.target.value)}
+        >
+          {years.map(year => (
+            <option
+              key={year}
+              value={year}
+            >
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -420,6 +466,7 @@ function WorkList() {
                     setFocusedInput(focusedInput);
                   }}
                   isOutsideRange={() => false}
+                  renderMonthElement={renderMonthElement}
                 />
                 {(startDate || endDate) && (
                   <button onClick={handleClearDates}>
