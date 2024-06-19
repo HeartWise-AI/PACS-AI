@@ -25,5 +25,6 @@
   "Status": "Status",
   "Segmentation": "Segmentation",
   "Searching for data": "Searching for data",
+  "searchStudyListInfo": "Search for patient name, MRN, date range, description, modality, accession no. …",
   "Tools": "Tools"
 }

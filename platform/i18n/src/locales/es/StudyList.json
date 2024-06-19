@@ -25,5 +25,6 @@
   "Status": "Estado",
   "Segmentation": "Segmentación",
   "Searching for data": "Buscando datos",
+  "searchStudyListInfo": "Busque por nombre del paciente, NHC, rango de fechas, descripción, modalidad, número de acceso…",
   "Tools": "Herramientas"
 }

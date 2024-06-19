@@ -40,14 +40,8 @@ function WorkList() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  // set default date range
-  const today = new Date();
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(today.getDate() - 2);
-  const startMoment = moment(thirtyDaysAgo);
-  const endMoment = moment(today);
-  const [startDate, setStartDate] = useState(startMoment);
-  const [endDate, setEndDate] = useState(endMoment);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
     institutionName: '',
@@ -59,7 +53,7 @@ function WorkList() {
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
-    studyDate: `${startMoment.format('YYYYMMDD')}-${endMoment.format('YYYYMMDD')}`,
+    studyDate: '',
     studyDescription: '',
     studyID: '',
     studyInstanceUID: '',
@@ -83,10 +77,6 @@ function WorkList() {
       document.body.classList.remove('bg-black');
     };
   }, []);
-
-  useEffect(() => {
-    fetchStudyListData();
-  }, [orthancRepository]);
 
   /**
    * Get study list data
@@ -121,6 +111,12 @@ function WorkList() {
    */
   const debounceSearch = useCallback(
     debounce(() => {
+      // check filters if all empty, if true return and erase data in table
+      if (Object.values(filterRef.current).every(value => value === '')) {
+        setIsStudyListDataLoading(false);
+        setTableDataSource([]);
+        return;
+      }
       fetchStudyListData();
     }, 2000),
     []
@@ -646,7 +642,7 @@ function WorkList() {
                       >
                         <div className="flex h-full w-full items-center justify-center">
                           <span className="text-lg font-normal text-white text-opacity-70">
-                            {t('No data found')}
+                            {t('searchStudyListInfo')}
                           </span>
                         </div>
                       </td>
