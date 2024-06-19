@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Typography } from '@ohif/ui';
 import userRepository from '../api/userRepository';
-import { logoutUser } from '../utils/userUtils';
+import { logoutUser } from '../service/userService';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import chevronDownIcon from './../assets/pacs/icons/chevron-down.png';
 

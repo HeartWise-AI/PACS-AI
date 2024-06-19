@@ -13,7 +13,7 @@ import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
-import { logoutUser } from './../../utils/userUtils';
+import { logoutUser } from '../../service/userService';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
