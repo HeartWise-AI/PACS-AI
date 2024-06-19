@@ -13,6 +13,7 @@ import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
+import { logoutUser } from './../../utils/userUtils';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
@@ -95,19 +96,13 @@ function WorkList() {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
       showAlert(error.message, 'error');
     }
     setIsStudyListDataLoading(false);
-  };
-
-  // logout user
-  const logoutUser = () => {
-    navigate(`/login?t=${tenantId}`);
-    localStorage.removeItem('sessionToken');
   };
 
   /**
@@ -320,7 +315,7 @@ function WorkList() {
 
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
 
         showAlert(error.message, 'error');

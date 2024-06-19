@@ -16,6 +16,7 @@ import { Error, Languages } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
+import { logoutUser } from './../../utils/userUtils';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -44,7 +45,7 @@ const SettingsPage = () => {
       } catch (error) {
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
-            logoutUser();
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 
@@ -59,7 +60,7 @@ const SettingsPage = () => {
       } catch (error) {
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
-            logoutUser();
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 
@@ -114,7 +115,7 @@ const SettingsPage = () => {
         setIsChangingPassword(false);
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
-            logoutUser();
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 
@@ -174,12 +175,6 @@ const SettingsPage = () => {
   // Handle tab change
   const handleTabChange = (tab: string) => {
     setSelectedTab(tab);
-  };
-
-  // logout user
-  const logoutUser = () => {
-    navigate(`/login?t=${tenantId}`);
-    localStorage.removeItem('sessionToken');
   };
 
   // Check if password is valid
