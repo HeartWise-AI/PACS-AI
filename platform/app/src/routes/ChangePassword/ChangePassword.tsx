@@ -6,6 +6,7 @@ import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../AlertProvider';
 import { Error } from '../../api/dto';
+import { logoutUser } from './../../utils/userUtils';
 
 const ChangePasswordPage = () => {
   const { t } = useTranslation();
@@ -75,18 +76,12 @@ const ChangePasswordPage = () => {
         setIsChangingPassword(false);
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
-            logoutUser();
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 
         showAlert(error.message, 'error');
       });
-  };
-
-  // logout user
-  const logoutUser = () => {
-    navigate(`/login?t=${tenantId}`);
-    localStorage.removeItem('sessionToken');
   };
 
   // Check if password is valid

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Typography } from '@ohif/ui';
 import userRepository from '../api/userRepository';
+import { logoutUser } from '../utils/userUtils';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import chevronDownIcon from './../assets/pacs/icons/chevron-down.png';
 
@@ -21,17 +22,12 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        logoutUser();
+        logoutUser(navigate, tenantId);
       }
     };
 
     fetchCurrentUser();
   }, [userRepository]);
-
-  const logoutUser = () => {
-    navigate(`/login?t=${tenantId}`);
-    localStorage.removeItem('sessionToken');
-  };
 
   if (currentUser) {
     name = currentUser.name.split(' ')[0];
