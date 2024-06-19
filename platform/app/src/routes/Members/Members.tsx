@@ -10,6 +10,7 @@ import { UserRole } from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
+import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 
@@ -89,7 +90,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
@@ -192,7 +193,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
@@ -222,7 +223,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
@@ -241,18 +242,12 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
       showAlert(error.message, 'error');
     }
-  };
-
-  // logout user
-  const logoutUser = () => {
-    navigate(`/login?t=${tenantId}`);
-    localStorage.removeItem('sessionToken');
   };
 
   /**
@@ -276,7 +271,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser();
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
