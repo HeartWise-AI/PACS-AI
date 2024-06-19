@@ -425,7 +425,7 @@ function WorkList() {
    * @returns
    */
   const renderMonthElement = ({ month, onMonthSelect, onYearSelect }) => {
-    let years = [];
+    const years = [];
     const currentYear = moment().year();
 
     // generate a range of years for the dropdown
@@ -544,7 +544,7 @@ function WorkList() {
               !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
-                    {t('Searching for data')}
+                    {t('Searching for data')} ...
                   </span>
                 </div>
               ) : (
