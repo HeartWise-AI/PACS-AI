@@ -25,5 +25,6 @@
   "Status": "Statut",
   "Segmentation": "Segmentation",
   "Searching for data": "Recherche de données",
+  "searchStudyListInfo": "Recherchez par nom du patient, NIP, plage de dates, description, modalité, numéro d'accès …",
   "Tools": "Outils"
 }
