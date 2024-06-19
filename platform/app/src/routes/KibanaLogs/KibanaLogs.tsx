@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
+import { useNavigate } from 'react-router';
 import moment from 'moment';
 import { Button, Input } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -8,6 +9,7 @@ import SidebarAdmin from '../../components/SidebarAdmin';
 import Table from '../../components/Table';
 import { LogsType } from '../../api/ecsDTO';
 import ecsRepository from '../../api/ecsRepository';
+import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import chevronDownIcon from './../../assets/pacs/icons/chevron-down.png';
 import downloadIcon from './../../assets/pacs/icons/download-black.png';
@@ -18,6 +20,7 @@ import searchIcon from './../../assets/pacs/icons/search-black.png';
 
 const KibanaLogsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [selectedIndexType, setSelectedIndexType] = useState<LogsType>(LogsType.LOGINS);
   const [searchQuery, setSearchQuery] = useState('');
   const [columnHeaders, setColumnHeaders] = useState([]);
@@ -114,7 +117,13 @@ const KibanaLogsPage = () => {
         setColumnData(formattedData);
       }
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
 
     setIsLogsDataLoading(false);
@@ -153,9 +162,20 @@ const KibanaLogsPage = () => {
       // Revoke the Object URL after some time to free up memory
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
       showAlert(error.message, 'error');
     }
+  };
+
+  // logout user
+  const logoutUser = () => {
+    navigate(`/login?t=${tenantId}`);
+    localStorage.removeItem('sessionToken');
   };
 
   // Table pagination actions

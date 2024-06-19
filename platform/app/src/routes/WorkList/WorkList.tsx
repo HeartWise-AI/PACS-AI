@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
@@ -12,6 +12,7 @@ import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
+import { AlertContext } from '../../AlertProvider';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
@@ -20,6 +21,7 @@ import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 function WorkList() {
   const { t } = useTranslation('StudyList');
   const navigate = useNavigate();
+  const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [tableDataSource, setTableDataSource] = useState([]);
@@ -60,6 +62,7 @@ function WorkList() {
     studyTime: '',
   });
   const filterRef = useRef(studyListFilter);
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -85,9 +88,21 @@ function WorkList() {
       setTableDataSource(response.data.studies);
       setStudyQueryId(response.data.queryId);
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
     setIsStudyListDataLoading(false);
+  };
+
+  // logout user
+  const logoutUser = () => {
+    navigate(`/login?t=${tenantId}`);
+    localStorage.removeItem('sessionToken');
   };
 
   /**
@@ -218,6 +233,7 @@ function WorkList() {
     setIsStudyListDataLoading(true);
     debounceSearch();
   };
+
   /**
    * View selected study
    *
@@ -295,6 +311,14 @@ function WorkList() {
         if (type === 'segmentation') {
           navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
         }
+      }
+
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+
+        showAlert(error.message, 'error');
       }
     }
   };
@@ -516,7 +540,8 @@ function WorkList() {
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="mx-auto w-full overflow-x-auto">
-              {isStudyListDataLoading ? (
+              {isStudyListDataLoading &&
+              !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
                     {t('Searching for data')}
@@ -636,9 +661,15 @@ function WorkList() {
                         className="p-5 text-center"
                       >
                         <div className="flex h-full w-full items-center justify-center">
-                          <span className="text-lg font-normal text-white text-opacity-70">
-                            {t('searchStudyListInfo')}
-                          </span>
+                          {Object.values(filterRef.current).every(value => value === '') ? (
+                            <span className="text-lg font-normal text-white text-opacity-70">
+                              {t('searchStudyListInfo')}
+                            </span>
+                          ) : (
+                            <span className="text-lg font-normal text-white text-opacity-70">
+                              {t('No data found')}
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>

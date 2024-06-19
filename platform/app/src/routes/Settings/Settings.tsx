@@ -12,10 +12,10 @@ import logoVertical from './../../assets/pacs/logo/pacs-ai-logo-v.png';
 import userRepository from '../../api/userRepository';
 import { UserResponse } from '../../api/userDTO';
 import { GetTenantInfoResponse } from '../../api/tenantDTO';
+import { Error, Languages } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
-import { Languages } from '../../api/dto';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -29,6 +29,7 @@ const SettingsPage = () => {
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
   const [imageSrc, setImageSrc] = useState('');
   const showAlert = useContext(AlertContext);
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   // Set page title
   useEffect(() => {
@@ -41,7 +42,13 @@ const SettingsPage = () => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        console.error(error);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser();
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
       }
     };
 
@@ -50,7 +57,13 @@ const SettingsPage = () => {
         const response = await tenantRepository.GetTenantInfo();
         setTenantInfo(response.data);
       } catch (error) {
-        console.error(`Can't fetch tenant info: ${error}`);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser();
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
       }
     };
 
@@ -62,6 +75,7 @@ const SettingsPage = () => {
     fetchImage();
   }, [currentUser.id]);
 
+  // Change password
   const changePassword = e => {
     e.preventDefault();
     setIsChangingPassword(true);
@@ -98,6 +112,12 @@ const SettingsPage = () => {
       })
       .catch(error => {
         setIsChangingPassword(false);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser();
+          }, 3000);
+        }
+
         showAlert(error.message, 'error');
       });
   };
@@ -151,8 +171,15 @@ const SettingsPage = () => {
     }
   };
 
+  // Handle tab change
   const handleTabChange = (tab: string) => {
     setSelectedTab(tab);
+  };
+
+  // logout user
+  const logoutUser = () => {
+    navigate(`/login?t=${tenantId}`);
+    localStorage.removeItem('sessionToken');
   };
 
   // Check if password is valid
