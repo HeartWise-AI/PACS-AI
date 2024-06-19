@@ -11,7 +11,7 @@ import { LogsType } from '../../api/ecsDTO';
 import ecsRepository from '../../api/ecsRepository';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
-import { logoutUser } from './../../utils/userUtils';
+import { logoutUser } from '../../service/userService';
 import chevronDownIcon from './../../assets/pacs/icons/chevron-down.png';
 import downloadIcon from './../../assets/pacs/icons/download-black.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';

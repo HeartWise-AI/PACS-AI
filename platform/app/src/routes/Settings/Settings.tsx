@@ -16,7 +16,7 @@ import { Error, Languages } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
-import { logoutUser } from './../../utils/userUtils';
+import { logoutUser } from '../../service/userService';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');

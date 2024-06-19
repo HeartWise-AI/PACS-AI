@@ -6,7 +6,7 @@ import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../AlertProvider';
 import { Error } from '../../api/dto';
-import { logoutUser } from './../../utils/userUtils';
+import { logoutUser } from '../../service/userService';
 
 const ChangePasswordPage = () => {
   const { t } = useTranslation();
