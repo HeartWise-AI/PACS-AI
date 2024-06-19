@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { Button, Input, Typography } from '@ohif/ui';
 import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import userRepository from '../../api/userRepository';
 import { UserRole } from '../../api/userDTO';
+import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
@@ -14,6 +16,7 @@ import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 const MembersPage = () => {
   const { t } = useTranslation('Members');
   const ref = useRef(null);
+  const navigate = useNavigate();
   const [filteredItems, setFilteredItems] = useState([]);
   const [listOfUsers, setListOfUsers] = useState([]);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
@@ -53,6 +56,7 @@ const MembersPage = () => {
     { text: t('Created At'), value: 'createdAt', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   // Set page title
   useEffect(() => {
@@ -83,6 +87,12 @@ const MembersPage = () => {
       setIsOpenAddEditMemberModal(false);
       getAllTenantUsers();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
       showAlert(error.message, 'error');
     }
     setIsAddingMember(false);
@@ -180,6 +190,12 @@ const MembersPage = () => {
       setIsOpenDeleteMemberModal(false);
       getAllTenantUsers();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
       showAlert(error.message, 'error');
     }
     setIsDeletingMember(false);
@@ -204,7 +220,13 @@ const MembersPage = () => {
       setListOfUsers(listOfUsers);
       setFilteredItems(listOfUsers);
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
   };
 
@@ -217,8 +239,20 @@ const MembersPage = () => {
       setListOfDoctorSpecialities(response.data);
       setSelectedUser({ ...selectedUser, specialty: response.data[0].id });
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
+  };
+
+  // logout user
+  const logoutUser = () => {
+    navigate(`/login?t=${tenantId}`);
+    localStorage.removeItem('sessionToken');
   };
 
   /**
@@ -240,6 +274,12 @@ const MembersPage = () => {
       setIsOpenAddEditMemberModal(false);
       getAllTenantUsers();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser();
+        }, 3000);
+      }
+
       showAlert(error.message, 'error');
     }
     setIsUpdatingMember(false);
