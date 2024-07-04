@@ -74,7 +74,17 @@ function WrappedCinePlayer({
 
   const newDisplaySetHandler = useCallback(() => {
     const { viewports } = viewportGridService.getState();
-    const { displaySetInstanceUIDs } = viewports.get(viewportId);
+    const viewport = viewports.get(viewportId);
+
+    if (!viewport) {
+      console.error(`No viewport found for id: ${viewportId}`);
+      return;
+    }
+    if (viewport) {
+      console.error(`Viewport found for id: ${viewportId}`);
+    }
+
+    const { displaySetInstanceUIDs } = viewport;
 
     let frameRate = 24;
     let isPlaying = cines[viewportId]?.isPlaying || false;

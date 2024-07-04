@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ModelHistComponent from '../Histogram/Histogram';
 
-const ResultModal = ({ isOpen, onClose, result, isLoading }) => {
+const ResultModal = ({ isOpen, onClose, result, detectedVessel, age, isLoading }) => {
   if (!isOpen) {
     return null;
   }
@@ -27,7 +27,7 @@ const ResultModal = ({ isOpen, onClose, result, isLoading }) => {
                 style={{ textAlign: 'left' }}
                 className="text-primary-light text-lg"
               >
-                Type de vaisseau:<span className="float-right">Coronaire Gauche</span>
+                Type de vaisseau:<span className="float-right">{detectedVessel}</span>
               </p>
               <p
                 style={{ textAlign: 'left' }}
@@ -40,7 +40,7 @@ const ResultModal = ({ isOpen, onClose, result, isLoading }) => {
                 Distribution de l&apos;âge dans l&apos;étude
               </h2>
               <div className="flex justify-center">
-                <ModelHistComponent age={80} />
+                <ModelHistComponent age={age} />
               </div>
             </div>
           )}
@@ -60,6 +60,8 @@ ResultModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   result: PropTypes.number,
+  detectedVessel: PropTypes.string,
+  age: PropTypes.number,
   isLoading: PropTypes.bool.isRequired,
 };
 

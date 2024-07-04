@@ -1,9 +1,11 @@
-import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import PropTypes, { func } from 'prop-types';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
+import predictionRepository from '/home/corelab/Downloads/Adam/PACS-AI/platform/app/src/api/predictionRepository';
+import { set } from '@kitware/vtk.js/macros';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const baseFontTextClasses = 'relative z-10 text-lg font-bold';
@@ -16,15 +18,37 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [age, setAge] = useState(null);
+  const [detectedVessel, setVessel] = useState(null);
   const ref = useRef(null);
+
+  useEffect(() => {
+    getPredictionData();
+  }, [predictionRepository]);
+
+  /**
+   * Get prediction  data
+   */
+  const getPredictionData = async () => {
+    try {
+      const response = await predictionRepository.GetPredictionResult();
+
+      setAge(response.data.age);
+      setVessel(response.data.detectedVessel);
+      setResult(response.data.prediction);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleOnClick = e => {
     if (!disabled) {
       setIsModalOpen(true);
       setIsLoading(true);
       setTimeout(() => {
-        const resultPercentage = 47;
-        setResult(resultPercentage);
+        setResult(47); // This should be replaced with the actual result
+        setAge(80); // This should be replaced with the actual result
+        setVessel('Coronaire Gauche'); // This should be replaced with the actual result
         setIsLoading(false);
       }, 3000);
       onClick(e);
@@ -34,6 +58,8 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   const closeModal = () => {
     setIsModalOpen(false);
     setResult(null);
+    setAge(null);
+    setVessel(null);
   };
 
   return (
@@ -80,6 +106,8 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
         isOpen={isModalOpen}
         onClose={closeModal}
         result={result}
+        age={age}
+        detectedVessel={detectedVessel}
         isLoading={isLoading}
       />
     </div>
