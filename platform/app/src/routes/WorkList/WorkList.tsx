@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
+import moment from 'moment';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -11,6 +12,8 @@ import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
+import { AlertContext } from '../../AlertProvider';
+import { logoutUser } from '../../service/userService';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
@@ -19,12 +22,29 @@ import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 function WorkList() {
   const { t } = useTranslation('StudyList');
   const navigate = useNavigate();
+  const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [expandedTableRows, setExpandedTableRows] = useState({});
+  const [jobInfo, setJobInfo] = useState({
+    id: '',
+    priority: 0,
+    progress: 0,
+    state: JobState.PENDING,
+  });
+  const [syncingStudyProgress, setSyncingStudyProgress] = useState(0);
+  const [studyQueryId, setStudyQueryId] = useState('');
+  const [focusedInput, setFocusedInput] = useState(null);
+  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
+  const currentItems = tableDataSource.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
     institutionName: '',
@@ -42,22 +62,8 @@ function WorkList() {
     studyInstanceUID: '',
     studyTime: '',
   });
-  const [jobInfo, setJobInfo] = useState({
-    id: '',
-    priority: 0,
-    progress: 0,
-    state: JobState.PENDING,
-  });
-  const [studyQueryId, setStudyQueryId] = useState('');
   const filterRef = useRef(studyListFilter);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [focusedInput, setFocusedInput] = useState(null);
-  const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
-  const currentItems = tableDataSource.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -76,10 +82,6 @@ function WorkList() {
     };
   }, []);
 
-  useEffect(() => {
-    fetchStudyListData();
-  }, [orthancRepository]);
-
   /**
    * Get study list data
    */
@@ -92,7 +94,13 @@ function WorkList() {
       setTableDataSource(response.data.studies);
       setStudyQueryId(response.data.queryId);
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
     setIsStudyListDataLoading(false);
   };
@@ -113,6 +121,12 @@ function WorkList() {
    */
   const debounceSearch = useCallback(
     debounce(() => {
+      // check filters if all empty, if true return and erase data in table
+      if (Object.values(filterRef.current).every(value => value === '')) {
+        setIsStudyListDataLoading(false);
+        setTableDataSource([]);
+        return;
+      }
       fetchStudyListData();
     }, 2000),
     []
@@ -219,6 +233,7 @@ function WorkList() {
     setIsStudyListDataLoading(true);
     debounceSearch();
   };
+
   /**
    * View selected study
    *
@@ -231,7 +246,7 @@ function WorkList() {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
-
+    let intervalCounter = 0;
     try {
       // retrieve modalidy study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
@@ -254,6 +269,20 @@ function WorkList() {
         ) {
           clearInterval(intervalId);
         }
+
+        // increment the interval counter
+        intervalCounter++;
+
+        // update syncingStudyProgress every 2 intervals
+        if (intervalCounter % 2 === 0 && syncingStudyProgress < 95) {
+          setSyncingStudyProgress(prevProgress => prevProgress + 5);
+        }
+
+        // set progress to 100 if job is in success state
+        if (jobInfoResponse.data.state === JobState.SUCCESS) {
+          setSyncingStudyProgress(100);
+        }
+
         // set job info
         setJobInfo({
           id: jobInfoResponse.data.id,
@@ -282,6 +311,14 @@ function WorkList() {
         if (type === 'segmentation') {
           navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
         }
+      }
+
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+
+        showAlert(error.message, 'error');
       }
     }
   };
@@ -382,6 +419,52 @@ function WorkList() {
     );
   };
 
+  /**
+   * Dropdown for react-dates select date
+   * @param param0
+   * @returns
+   */
+  const renderMonthElement = ({ month, onMonthSelect, onYearSelect }) => {
+    const years = [];
+    const currentYear = moment().year();
+
+    // generate a range of years for the dropdown
+    for (let i = currentYear - 50; i <= currentYear + 50; i++) {
+      years.push(i);
+    }
+
+    return (
+      <div className="MonthElementWrapper">
+        <select
+          value={month.month()}
+          onChange={e => onMonthSelect(month, e.target.value)}
+        >
+          {moment.months().map((label, index) => (
+            <option
+              key={index}
+              value={index}
+            >
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={month.year()}
+          onChange={e => onYearSelect(month, e.target.value)}
+        >
+          {years.map(year => (
+            <option
+              key={year}
+              value={year}
+            >
+              {year}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -418,6 +501,7 @@ function WorkList() {
                     setFocusedInput(focusedInput);
                   }}
                   isOutsideRange={() => false}
+                  renderMonthElement={renderMonthElement}
                 />
                 {(startDate || endDate) && (
                   <button onClick={handleClearDates}>
@@ -456,10 +540,11 @@ function WorkList() {
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="mx-auto w-full overflow-x-auto">
-              {isStudyListDataLoading ? (
+              {isStudyListDataLoading &&
+              !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
-                    {t('Searching for data')}
+                    {t('Searching for data')} ...
                   </span>
                 </div>
               ) : (
@@ -576,9 +661,15 @@ function WorkList() {
                         className="p-5 text-center"
                       >
                         <div className="flex h-full w-full items-center justify-center">
-                          <span className="text-lg font-normal text-white text-opacity-70">
-                            {t('No data found')}
-                          </span>
+                          {Object.values(filterRef.current).every(value => value === '') ? (
+                            <span className="text-lg font-normal text-white text-opacity-70">
+                              {t('searchStudyListInfo')}
+                            </span>
+                          ) : (
+                            <span className="text-lg font-normal text-white text-opacity-70">
+                              {t('No data found')}
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -591,7 +682,7 @@ function WorkList() {
         </div>
         <Modal
           isOpen={isOpenOrthancServiceModal}
-          size="min-w-[400px]"
+          size="w-[400px]"
           isCloseable={false}
         >
           {(JobState.PENDING === jobInfo.state || JobState.RUNNING === jobInfo.state) && (
@@ -610,12 +701,13 @@ function WorkList() {
           <div className="h-2.5 w-full rounded-full bg-gray-500">
             <div
               className={`bg-primary-main h-2.5 rounded-full`}
-              style={{ width: `${jobInfo.progress}%` }}
+              style={{ width: `${syncingStudyProgress}%` }}
             ></div>
           </div>
-          <h2 className="mt-4 text-white">
+          <h2 className="mt-4 text-base text-white ">{t('OrthancServiceInfo')}</h2>
+          <h3 className="mt-4 text-white">
             <span className="text-white text-opacity-70">{t('Status')}:</span> {jobInfo.state}
-          </h2>
+          </h3>
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
@@ -627,6 +719,7 @@ function WorkList() {
                   onClick={() => {
                     setIsOpenOrthancServiceModal(false);
                     setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    setSyncingStudyProgress(0);
                   }}
                 >
                   {t('Okay')}

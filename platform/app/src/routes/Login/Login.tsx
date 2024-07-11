@@ -10,6 +10,8 @@ import { GetPublicTenantByIDResponse } from '../../api/tenantDTO';
 import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
+import { Error } from '../../api/dto';
+import { logoutUser } from '../../service/userService';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -122,6 +124,12 @@ const LoginPage = () => {
       })
       .catch(error => {
         setIsResettingPassword(false);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
         showAlert(error.message, 'error');
       });
   };

@@ -13,6 +13,7 @@ export interface ErrorAPIResponse {
 
 export enum Error {
   DUPLICATE_RECORD = 'DUPLICATE_RECORD',
+  UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
 }
 
 export enum Languages {

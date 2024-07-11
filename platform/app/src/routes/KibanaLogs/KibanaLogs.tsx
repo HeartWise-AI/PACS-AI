@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
+import { useNavigate } from 'react-router';
 import moment from 'moment';
 import { Button, Input } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -8,7 +9,9 @@ import SidebarAdmin from '../../components/SidebarAdmin';
 import Table from '../../components/Table';
 import { LogsType } from '../../api/ecsDTO';
 import ecsRepository from '../../api/ecsRepository';
+import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
+import { logoutUser } from '../../service/userService';
 import chevronDownIcon from './../../assets/pacs/icons/chevron-down.png';
 import downloadIcon from './../../assets/pacs/icons/download-black.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
@@ -18,6 +21,7 @@ import searchIcon from './../../assets/pacs/icons/search-black.png';
 
 const KibanaLogsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [selectedIndexType, setSelectedIndexType] = useState<LogsType>(LogsType.LOGINS);
   const [searchQuery, setSearchQuery] = useState('');
   const [columnHeaders, setColumnHeaders] = useState([]);
@@ -27,7 +31,7 @@ const KibanaLogsPage = () => {
   const showAlert = useContext(AlertContext);
   const [isLogsDataLoading, setIsLogsDataLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(20);
   const totalPages = Math.ceil(columnData.length / itemsPerPage);
   const currentItems = columnData.slice(
     (currentPage - 1) * itemsPerPage,
@@ -114,7 +118,13 @@ const KibanaLogsPage = () => {
         setColumnData(formattedData);
       }
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
     }
 
     setIsLogsDataLoading(false);
@@ -153,34 +163,14 @@ const KibanaLogsPage = () => {
       // Revoke the Object URL after some time to free up memory
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
     } catch (error) {
-      console.error(error);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
       showAlert(error.message, 'error');
     }
-  };
-
-  // ECS logs table
-  const ECSLogsTable = () => {
-    return (
-      <div>
-        {columnData.length > 0 ? (
-          <Table
-            headers={columnHeaders}
-            data={currentItems}
-            className={'min-w-[170px]'}
-          >
-            {cell => {
-              return cell;
-            }}
-          </Table>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="text-lg font-normal text-white text-opacity-70">
-              {t('No data found')}
-            </span>
-          </div>
-        )}
-      </div>
-    );
   };
 
   // Table pagination actions
@@ -237,9 +227,11 @@ const KibanaLogsPage = () => {
    */
   const debounceSearch = useCallback(
     debounce(() => {
+      const oldSelectedIndexType = selectedIndexType;
       getECSLogs();
+      setSelectedIndexType(oldSelectedIndexType);
     }, 1000),
-    []
+    [selectedIndexType]
   );
 
   // Handle query search field
@@ -385,16 +377,34 @@ const KibanaLogsPage = () => {
             </div>
           </div>
           {/* table container */}
-          <div className="mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="my-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             {isLogsDataLoading ? (
               <div className="flex items-center justify-center p-5 text-center text-white">
                 <span className="text-lg font-normal text-opacity-70">
-                  {t('Searching for data')}
+                  {t('Searching for data')} ...
                 </span>
               </div>
             ) : (
               <div>
-                <ECSLogsTable />
+                <div>
+                  {columnData.length > 0 ? (
+                    <Table
+                      headers={columnHeaders}
+                      data={currentItems}
+                      className={'min-w-[170px]'}
+                    >
+                      {cell => {
+                        return cell;
+                      }}
+                    </Table>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="text-lg font-normal text-white text-opacity-70">
+                        {t('No data found')}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 {totalPages > 1 && <TablePagination />}
               </div>
             )}

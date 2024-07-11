@@ -5,6 +5,8 @@ import { Button, Input, Typography } from '@ohif/ui';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../AlertProvider';
+import { Error } from '../../api/dto';
+import { logoutUser } from '../../service/userService';
 
 const ChangePasswordPage = () => {
   const { t } = useTranslation();
@@ -14,6 +16,7 @@ const ChangePasswordPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -32,6 +35,9 @@ const ChangePasswordPage = () => {
     fetchCurrentUser();
   }, [userRepository]);
 
+  /**
+   * Change Password
+   */
   const changePassword = e => {
     e.preventDefault();
     setIsChangingPassword(true);
@@ -68,6 +74,12 @@ const ChangePasswordPage = () => {
       })
       .catch(error => {
         setIsChangingPassword(false);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
         showAlert(error.message, 'error');
       });
   };

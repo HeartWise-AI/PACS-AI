@@ -9,6 +9,7 @@
   "NumOfStudiesHiggerThan100Message": "Filtern Sie die Liste auf 100 oder weniger Studien, um die Sortierung zu aktivieren",
   "Modality": "Modalität",
   "OrthancServiceProgress": "Orthanc-Bilder werden synchronisiert...",
+  "OrthancServiceInfo": "Wir synchronisieren derzeit diese Studie. Der erste Synchronisierungsvorgang kann einige Sekunden bis Minuten dauern.",
   "OrthancServiceProgressMessage": "Bei dem Auftrag ist ein Problem aufgetreten. Bitte versuchen Sie es später erneut.",
   "Okay": "Okay",
   "PatientName": "Patientenname",
@@ -24,5 +25,6 @@
   "Status": "Status",
   "Segmentation": "Segmentierung",
   "Searching for data": "Daten werden gesucht",
+  "searchStudyListInfo": "Suchen Sie nach Patientennamen, MRN, Datumsbereich, Beschreibung, Modalität, Zugangsnr. …",
   "Tools": "Werkzeuge"
 }
