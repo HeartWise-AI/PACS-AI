@@ -49,6 +49,9 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
         setResult(47); // This should be replaced with the actual result
         setAge(80); // This should be replaced with the actual result
         setVessel('Coronaire Gauche'); // This should be replaced with the actual result
+        // setResult(result);
+        // setAge(age);
+        // setVessel(detectedVessel);
         setIsLoading(false);
       }, 3000);
       onClick(e);
