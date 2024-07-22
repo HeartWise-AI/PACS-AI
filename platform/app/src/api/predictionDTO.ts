@@ -1,14 +1,12 @@
+import { int } from '@kitware/vtk.js/types';
+
 export interface PredictionResultRequest {
-  seriesInstanceUID: string;
-  instanceUID: string;
   detectedVessel: string;
-  prediction: string;
-  age: string;
+  prediction: int;
+  age: int;
 }
 export interface PredictionResultResponse {
-  seriesInstanceUID: string;
-  instanceUID: string;
   detectedVessel: string;
-  prediction: string;
-  age: string;
+  prediction: int;
+  age: int;
 }

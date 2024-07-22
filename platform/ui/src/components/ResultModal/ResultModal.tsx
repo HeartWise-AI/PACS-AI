@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ModelHistComponent from '../Histogram/Histogram';
 
-const ResultModal = ({ isOpen, onClose, result, detectedVessel, age, isLoading }) => {
+const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) => {
   if (!isOpen) {
     return null;
   }
@@ -33,7 +33,7 @@ const ResultModal = ({ isOpen, onClose, result, detectedVessel, age, isLoading }
                 style={{ textAlign: 'left' }}
                 className="text-primary-light text-lg"
               >
-                Résultats:<span className="float-right">{result}%</span>
+                Résultats:<span className="float-right">{lvef}%</span>
               </p>
               <hr className="my-4 border-gray-700" />
               <h2 className="text-primary-light mb-4 text-xl font-bold">
@@ -59,7 +59,7 @@ const ResultModal = ({ isOpen, onClose, result, detectedVessel, age, isLoading }
 ResultModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  result: PropTypes.number,
+  lvef: PropTypes.number,
   detectedVessel: PropTypes.string,
   age: PropTypes.number,
   isLoading: PropTypes.bool.isRequired,
