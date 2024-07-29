@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import PropTypes, { func } from 'prop-types';
+import PropTypes from 'prop-types';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
-import predictionRepository from '/home/corelab/Downloads/Adam/PACS-AI/platform/app/src/api/predictionRepository';
+import predictionRepository from '../../../../app/src/api/predictionRepository';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -24,15 +24,15 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
    */
   const getPredictionData = async () => {
     try {
-      const response = await predictionRepository.GetPredictionResult({});
+      const response = await predictionRepository.GetPredictionResult({
+        dicomUrl: 'https://example.com/dicom',
+      });
 
-      const { detectedVessel, lvef, age } = response;
+      const { DetectedVessel, LVEF, Age } = response;
 
-      setAge(age || null);
-      setVessel(detectedVessel || null);
-      setLvef(lvef || null);
-
-      console.log('Object: ', response);
+      setAge(Age ? parseInt(Age, 10) : null);
+      setVessel(DetectedVessel || null);
+      setLvef(LVEF != null ? Number(LVEF.toFixed(2)) : null);
     } catch (error) {
       console.error('Error fetching prediction data:', error);
     }
@@ -46,9 +46,6 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
       setTimeout(() => {
         setIsLoading(false);
       }, 3000);
-      // setResult(47); // This should be replaced with the actual result
-      // setAge(80); // This should be replaced with the actual result
-      // setVessel('Coronaire Gauche'); // This should be replaced with the actual result
       onClick(e);
     }
   };
