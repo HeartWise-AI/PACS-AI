@@ -8,7 +8,7 @@ const predictionRepository = {
     request: PredictionResultRequest
   ): Promise<APIResponse<PredictionResultResponse>> {
     return Api()
-      .get('v1/prediction', { params: request })
+      .post('v1/prediction', request)
       .then((response: AxiosResponse<APIResponse<PredictionResultResponse>>) => {
         return response.data;
       })

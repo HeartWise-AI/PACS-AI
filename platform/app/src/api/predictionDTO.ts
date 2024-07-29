@@ -1,12 +1,10 @@
 import { int } from '@kitware/vtk.js/types';
 
 export interface PredictionResultRequest {
-  detectedVessel: string;
-  prediction: int;
-  age: int;
+  dicomUrl: string;
 }
 export interface PredictionResultResponse {
-  detectedVessel: string;
-  prediction: int;
-  age: int;
+  DetectedVessel: string;
+  LVEF: int;
+  Age: int;
 }
