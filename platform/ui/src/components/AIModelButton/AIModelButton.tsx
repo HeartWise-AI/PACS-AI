@@ -23,9 +23,13 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
    * Get prediction  data
    */
   const getPredictionData = async () => {
+    setIsLoading(true);
+    const SOPInstanceUID = '';
+    //const  SOPInstanceUID  = '1.3.12.2.1107.5.4.5.135214.30000021050710424183300000077.512';
+
     try {
       const response = await predictionRepository.GetPredictionResult({
-        dicomUrl: 'https://example.com/dicom',
+        dicomUID: SOPInstanceUID,
       });
 
       const { DetectedVessel, LVEF, Age } = response;
@@ -33,19 +37,17 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
       setAge(Age ? parseInt(Age, 10) : null);
       setVessel(DetectedVessel || null);
       setLvef(LVEF != null ? Number(LVEF.toFixed(2)) : null);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching prediction data:', error);
+      setIsLoading(false);
     }
   };
 
   const handleOnClick = e => {
     if (!disabled) {
       setIsModalOpen(true);
-      setIsLoading(true);
       getPredictionData();
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 3000);
       onClick(e);
     }
   };

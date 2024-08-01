@@ -1,7 +1,7 @@
 import { int } from '@kitware/vtk.js/types';
 
 export interface PredictionResultRequest {
-  dicomUrl: string;
+  dicomUID: string;
 }
 export interface PredictionResultResponse {
   DetectedVessel: string;

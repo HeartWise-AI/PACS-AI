@@ -7,8 +7,13 @@ const predictionRepository = {
   async GetPredictionResult(
     request: PredictionResultRequest
   ): Promise<APIResponse<PredictionResultResponse>> {
-    return Api()
-      .post('v1/prediction', request)
+    const findQueryResponse = await Api().post('v1/orthanc/tools/find', {
+      Level: 'Instances',
+      Query: { SOPInstanceUID: request.dicomUID },
+    });
+    const queryID = findQueryResponse.data.data; //'3d0069ae-97a2251d-5433aa87-8c60feb9-f8900eaf'
+    return await Api()
+      .post('v1/prediction', { ...request, queryID })
       .then((response: AxiosResponse<APIResponse<PredictionResultResponse>>) => {
         return response.data;
       })
@@ -18,5 +23,4 @@ const predictionRepository = {
       });
   },
 };
-
 export default predictionRepository;
