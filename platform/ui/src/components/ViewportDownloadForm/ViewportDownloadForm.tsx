@@ -261,7 +261,7 @@ const ViewportDownloadForm = ({
   }, [dimensions, filename, minimumSize]);
 
   return (
-    <div>
+    <div className='!bg-[#151815]'>
       <Typography variant="h6">
         {t('Please specify the dimensions, filename, and desired type for the output image.')}
       </Typography>
@@ -365,7 +365,7 @@ const ViewportDownloadForm = ({
 
       <div className="mt-8">
         <div
-          className="bg-secondary-dark border-secondary-primary w-max-content min-w-full rounded p-4"
+          className="bg-[#151815] border-secondary-primary w-max-content min-w-full rounded p-4"
           data-cy="image-preview"
         >
           <Typography variant="h5">{t('Image preview')}</Typography>

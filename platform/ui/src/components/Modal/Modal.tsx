@@ -33,7 +33,7 @@ const Modal = ({
 
   const renderHeader = () =>
     title && (
-      <header className="bg-primary-dark drag-handle flex items-center rounded-tl rounded-tr px-[20px] py-[13px]">
+      <header className="bg-[#151815] drag-handle flex items-center rounded-tl rounded-tr px-[20px] py-[13px]">
         <Typography
           variant="h6"
           color="primaryLight"
@@ -71,8 +71,8 @@ const Modal = ({
     <ReactModal
       className={
         containerDimensions
-          ? `relative text-white outline-none ${containerDimensions}`
-          : 'relative max-h-full w-11/12 text-white outline-none lg:w-10/12 xl:w-9/12'
+          ? `relative text-white outline-none !bg-[#151815] ${containerDimensions}`
+          : 'relative max-h-full w-11/12 text-white outline-none !bg-[#151815] lg:w-10/12 xl:w-9/12'
       }
       overlayClassName={
         movable
@@ -88,7 +88,7 @@ const Modal = ({
       {movable ? (
         <Draggable
           handle=".drag-handle"
-          defaultClassName="bg-primary-dark pointer-events-auto"
+          defaultClassName="bg-[#151815] pointer-events-auto"
         >
           <div>{modalContent}</div>
         </Draggable>
