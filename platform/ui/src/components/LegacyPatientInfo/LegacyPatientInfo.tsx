@@ -7,8 +7,8 @@ import Icon from '../Icon';
 import Tooltip from '../Tooltip';
 
 const classes = {
-  infoHeader: 'text-base text-primary-light',
-  infoText: 'text-base text-white max-w-24 truncate',
+  infoHeader: 'text-base !text-black',
+  infoText: 'text-base !text-black max-w-24 truncate',
   firstRow: 'flex flex-col',
   row: 'flex flex-col ml-4',
 };
@@ -42,12 +42,12 @@ function LegacyPatientInfo({
               <div className="flex pt-1">
                 <Icon
                   name="info-link"
-                  className="text-primary-main w-4"
+                  className="!text-black w-4"
                 />
               </div>
               <div className="ml-2 flex flex-col">
                 <span
-                  className="text-base font-bold text-white"
+                  className="text-base font-bold !text-black"
                   title={patientName}
                 >
                   {patientName}
