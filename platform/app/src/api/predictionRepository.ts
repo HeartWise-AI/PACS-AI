@@ -11,7 +11,7 @@ const predictionRepository = {
       Level: 'Instances',
       Query: { SOPInstanceUID: request.dicomUID },
     });
-    const queryID = findQueryResponse.data.data; //'3d0069ae-97a2251d-5433aa87-8c60feb9-f8900eaf'
+    const queryID = findQueryResponse.data.data;
     return await Api()
       .post('v1/prediction', { ...request, queryID })
       .then((response: AxiosResponse<APIResponse<PredictionResultResponse>>) => {

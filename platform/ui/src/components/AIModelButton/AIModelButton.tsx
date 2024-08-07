@@ -5,7 +5,7 @@ import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
 import predictionRepository from '../../../../app/src/api/predictionRepository';
-
+import { getEnabledElement, metaData } from '@cornerstonejs/core';
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
 const textColor = 'text-white';
@@ -20,12 +20,38 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   const ref = useRef(null);
 
   /**
+   * Get the SOPInstanceUID of the currently displayed image
+   */
+  function getSOPInstanceUID() {
+    let element: HTMLDivElement | null = null;
+
+    const foundElement = document.querySelector('[data-viewport-uid]');
+
+    if (foundElement instanceof HTMLDivElement) {
+      element = foundElement;
+    }
+    const enabledElement = getEnabledElement(element);
+    const viewport = enabledElement.viewport;
+    const imageId = viewport.getCurrentImageId();
+
+    // Use cornerstone's metaData provider to get the SOPInstanceUID
+    const sopInstanceUID = metaData.get('SOPInstanceUID', imageId);
+    console.log('SOPInstanceUID:', sopInstanceUID);
+    return sopInstanceUID;
+  }
+
+  /**
    * Get prediction  data
    */
   const getPredictionData = async () => {
     setIsLoading(true);
-    const SOPInstanceUID = '';
-    //const  SOPInstanceUID  = '1.3.12.2.1107.5.4.5.135214.30000021050710424183300000077.512';
+    const SOPInstanceUID = getSOPInstanceUID();
+
+    if (!SOPInstanceUID) {
+      console.error('Failed to get SOPInstanceUID');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await predictionRepository.GetPredictionResult({
