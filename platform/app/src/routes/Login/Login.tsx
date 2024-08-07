@@ -25,7 +25,7 @@ const LoginPage = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const tenantId = new URLSearchParams(useLocation().search).get('t');
-
+  const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
   auth.tenantId = tenantId;
 
   // Set page title
@@ -41,7 +41,8 @@ const LoginPage = () => {
         });
         setTenantInfo(response.data);
       } catch (error) {
-        navigate('/tenantnotfound');
+        navigate(`/login?t=${defaultTenant}`, { replace: true });
+        window.location.reload();
       }
     };
     fetchTenantInfo();
