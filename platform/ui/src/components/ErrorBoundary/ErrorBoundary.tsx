@@ -14,15 +14,15 @@ const DefaultFallback = ({ error, context, resetErrorBoundary, fallbackRoute }) 
   const subtitle = `Sorry, something went wrong there. Try again.`;
   return (
     <div
-      className="ErrorFallback bg-primary-dark h-full w-full"
+      className="ErrorFallback bg-[#151815] h-full w-full"
       role="alert"
     >
-      <p className="text-primary-light text-xl">{title}</p>
-      <p className="text-primary-light text-base">{subtitle}</p>
+      <p className="text-white text-xl">{title}</p>
+      <p className="text-white text-base">{subtitle}</p>
       {!isProduction && (
-        <div className="bg-secondary-dark mt-5 space-y-2 rounded-md p-5 font-mono">
-          <p className="text-primary-light">Context: {context}</p>
-          <p className="text-primary-light">Error Message: {error.message}</p>
+        <div className="bg-[#151815] mt-5 space-y-2 rounded-md p-5 font-mono">
+          <p className="text-white">Context: {context}</p>
+          <p className="text-white">Error Message: {error.message}</p>
 
           <IconButton
             variant="contained"
