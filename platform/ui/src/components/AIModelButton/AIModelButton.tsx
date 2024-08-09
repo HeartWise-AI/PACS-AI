@@ -36,7 +36,6 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
 
     // Use cornerstone's metaData provider to get the SOPInstanceUID
     const sopInstanceUID = metaData.get('SOPInstanceUID', imageId);
-    console.log('SOPInstanceUID:', sopInstanceUID);
     return sopInstanceUID;
   }
 
