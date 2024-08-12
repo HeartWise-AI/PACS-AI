@@ -54,7 +54,6 @@ function WrappedCinePlayer({
 
     const { displaySetInstanceUIDs } = viewport;
 
-
     let frameRate = 24;
     let isPlaying = cines[viewportId]?.isPlaying || false;
 
