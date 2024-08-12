@@ -43,6 +43,13 @@ function WrappedCinePlayer({
 
   const newDisplaySetHandler = useCallback(() => {
     const { viewports } = viewportGridService.getState();
+
+    // check if viewports is undefined
+    // it returns undefined when cineplayer is enabled
+    if(!viewports.get(viewportId)) {
+      return
+    }
+
     const { displaySetInstanceUIDs } = viewports.get(viewportId);
 
     let frameRate = 24;
