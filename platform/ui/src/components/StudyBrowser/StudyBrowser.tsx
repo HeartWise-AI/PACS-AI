@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { utils } from '@ohif/core';
 
+import { AIModelButton } from '@ohif/ui';
 import StudyItem from '../StudyItem';
 import LegacyButtonGroup from '../LegacyButtonGroup';
 import LegacyButton from '../LegacyButton';
@@ -58,66 +59,11 @@ const StudyBrowser = ({
           <React.Fragment key={studyInstanceUid}>
             <div className="flex w-full gap-3 p-4">
               {/* TODO: Added AI Models button and Refresh button */}
-              <button
-                className="flex w-full items-center gap-2 rounded-lg bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)] px-2 py-2"
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                <img
-                  src={aiModelsIcon}
-                  className="h-5 w-5"
-                  alt="AI Models icon"
-                />
-                <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
-              </button>
-              {isOpen && (
-                <div
-                  className="absolute z-10 w-[225px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
-                  style={{ top: ref.current ? ref.current.offsetHeight : 150 }}
-                >
-                  <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                      <img
-                        src={playerPlayIcon}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                      <h1 className="text-sm">Apply X3D LVEF detection</h1>
-                      <img
-                        src={helpInactive}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                    </li>
-                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                      <img
-                        src={playerPlayIcon}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                      <h1 className="text-sm">Apply X4D LVEF detection</h1>
-                      <img
-                        src={helpInactive}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                    </li>
-                    <li className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black">
-                      <img
-                        src={playerPlayIcon}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                      <h1 className="text-sm">Apply X5D LVEF detection</h1>
-                      <img
-                        src={helpInactive}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                    </li>
-                  </ul>
-                </div>
-              )}
+              <AIModelButton
+                isShowBG={true}
+                isShowText={true}
+                positionRight={-110}
+              />
               <button className="flex w-full items-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
                 <img
                   src={refreshIcon}
