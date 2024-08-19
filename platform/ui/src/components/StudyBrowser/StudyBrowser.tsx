@@ -47,7 +47,7 @@ const StudyBrowser = ({
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
         return (
           <React.Fragment key={studyInstanceUid}>
-            <div className="flex w-full gap-3 p-4">
+            <div className="flex w-full gap-3 p-3">
               {/* TODO: Added AI Models button and Refresh button */}
               <AIModelButton
                 isShowBG={true}
