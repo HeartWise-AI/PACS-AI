@@ -1,16 +1,19 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
 import predictionRepository from '../../../../app/src/api/predictionRepository';
+import orthancRepository from '../../../../app/src/api/orthancRepository';
 import { getEnabledElement, metaData } from '@cornerstonejs/core';
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
 const textColor = 'text-white';
 
-const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => {
+const AIModelButton = ({ children, className, disabled, onClick, isShowBG, isShowText, positionRight }) => {
+  const { t } = useTranslation('AIModelButton');
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +43,9 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   }
 
   /**
-   * Get prediction  data
+   * Apply prediction
    */
-  const getPredictionData = async () => {
+  const applyPrediction = async () => {
     setIsLoading(true);
     const SOPInstanceUID = getSOPInstanceUID();
 
@@ -53,15 +56,19 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
     }
 
     try {
-      const response = await predictionRepository.GetPredictionResult({
-        dicomUID: SOPInstanceUID,
+      const findInstanceResponse = await orthancRepository.FindInstance({
+        level: 'Instance',
+        query: { SOPInstanceUID },
+      })
+      const predictionResultResponse = await predictionRepository.ApplyPrediction({
+        queryId: findInstanceResponse.data.queryIds[0],
       });
 
-      const { DetectedVessel, LVEF, Age } = response;
+      const { vessel, LVEF, age } = predictionResultResponse.data;
 
-      setAge(Age ? parseInt(Age, 10) : null);
-      setVessel(DetectedVessel || null);
-      setLvef(LVEF != null ? Number(LVEF.toFixed(2)) : null);
+      setAge(age ? parseInt(age.toString(), 10) : null);
+      setVessel(vessel || null);
+      setLvef(LVEF != null ? Number(LVEF) : null);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching prediction data:', error);
@@ -72,7 +79,7 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   const handleOnClick = e => {
     if (!disabled) {
       setIsModalOpen(true);
-      getPredictionData();
+      applyPrediction();
       onClick(e);
     }
   };
@@ -85,9 +92,9 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
   };
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full relative">
       <button
-        className={`${baseClasses} ${className} ${textColor} ${
+        className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
         }`}
         type="button"
@@ -98,11 +105,12 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
           className="h-6 w-6"
           alt="AI Models icon"
         />
+        {isShowText && (<span className="text-sm !text-white text-transparent">{t('AI Models')}</span>)}
       </button>
       {isOpen && (
         <div
-          className="absolute z-10 w-[225px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow "
-          style={{ top: ref.current ? ref.current.offsetHeight : 40 }}
+          className="absolute z-10 min-w-[210px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow px-2"
+          style={{ top: ref.current ? ref.current.offsetHeight : 40, right: positionRight }}
         >
           <ul className="flex flex-col gap-1 py-2 text-sm text-white">
             <li
@@ -114,7 +122,7 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG }) => 
                 alt="Player play icon"
                 className="w-5"
               />
-              <h1 className="text-sm">Détection de la FEVG</h1>
+              <h1 className="text-sm">{t('DetectButton')}</h1>
               <img
                 src={helpInactive}
                 alt="Player play icon"
@@ -141,6 +149,8 @@ AIModelButton.defaultProps = {
   className: '',
   disabled: false,
   isShowBG: false,
+  isShowText: false,
+  positionRight: 0,
   onClick: () => {},
 };
 

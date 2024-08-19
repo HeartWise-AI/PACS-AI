@@ -9,9 +9,28 @@ import {
   GetJobInfoResponse,
   RetrieveModalityStudyRequest,
   RetrieveModalityStudyResponse,
+  FindInstanceRequest,
+  FindinstanceResponse,
 } from './orthancDTO';
 
 const orthancRepository = {
+  /**
+   * Find instance
+   *
+   * @return  {FindinstanceResponse}
+   */
+  async FindInstance(request: FindInstanceRequest): Promise<APIResponse<FindinstanceResponse>> {
+    return Api()
+      .post(`/v1/orthanc/find/local-resource`, request)
+      .then((response: AxiosResponse<APIResponse<FindinstanceResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
   /**
    * Get modality studies
    *
