@@ -30,7 +30,7 @@ const Modal = ({
   const renderHeader = () => {
     return (
       title && (
-        <header className="bg-[#151815] flex items-center rounded-tl rounded-tr px-[20px] py-[13px]">
+        <header className="flex items-center rounded-tl rounded-tr bg-[#151815] px-[20px] py-[13px]">
           <Typography
             variant="h6"
             color="primaryLight"
@@ -53,7 +53,7 @@ const Modal = ({
 
   return (
     <ReactModal
-      className="relative max-h-full w-11/12 text-white outline-none lg:w-10/12  xl:w-1/2 !bg-[#151815]"
+      className="relative max-h-full w-11/12 !bg-[#151815] text-white outline-none  lg:w-10/12 xl:w-1/2"
       overlayClassName="fixed top-0 left-0 right-0 bottom-0 z-50 bg-overlay flex items-start justify-center py-16"
       shouldCloseOnEsc={shouldCloseOnEsc}
       onRequestClose={handleClose}
@@ -62,7 +62,7 @@ const Modal = ({
       shouldCloseOnOverlayClick={shouldCloseOnOverlayClick}
     >
       {renderHeader()}
-      <section className="ohif-scrollbar modal-content bg-[#151815] overflow-y-auto rounded-bl rounded-br px-[20px] pt-2 pb-[20px]">
+      <section className="ohif-scrollbar modal-content overflow-y-auto rounded-bl rounded-br bg-[#151815] px-[20px] pt-2 pb-[20px]">
         {children}
       </section>
     </ReactModal>

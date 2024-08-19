@@ -113,7 +113,7 @@ const HeaderPanel = ({ title }) => {
                   <li>
                     <a
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                      onClick={()=>{
+                      onClick={() => {
                         logoutUser(navigate, tenantId);
                       }}
                     >

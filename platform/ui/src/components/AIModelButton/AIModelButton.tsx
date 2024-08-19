@@ -12,7 +12,15 @@ const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
 const textColor = 'text-white';
 
-const AIModelButton = ({ children, className, disabled, onClick, isShowBG, isShowText, positionRight }) => {
+const AIModelButton = ({
+  children,
+  className,
+  disabled,
+  onClick,
+  isShowBG,
+  isShowText,
+  positionRight,
+}) => {
   const { t } = useTranslation('AIModelButton');
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +67,7 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG, isSho
       const findInstanceResponse = await orthancRepository.FindInstance({
         level: 'Instance',
         query: { SOPInstanceUID },
-      })
+      });
       const predictionResultResponse = await predictionRepository.ApplyPrediction({
         queryId: findInstanceResponse.data.queryIds[0],
       });
@@ -92,7 +100,7 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG, isSho
   };
 
   return (
-    <div className="flex w-full relative">
+    <div className="relative flex w-full">
       <button
         className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
@@ -105,11 +113,13 @@ const AIModelButton = ({ children, className, disabled, onClick, isShowBG, isSho
           className="h-6 w-6"
           alt="AI Models icon"
         />
-        {isShowText && (<span className="text-sm !text-white text-transparent">{t('AI Models')}</span>)}
+        {isShowText && (
+          <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
+        )}
       </button>
       {isOpen && (
         <div
-          className="absolute z-10 min-w-[210px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow px-2"
+          className="absolute z-10 min-w-[210px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] px-2 shadow"
           style={{ top: ref.current ? ref.current.offsetHeight : 40, right: positionRight }}
         >
           <ul className="flex flex-col gap-1 py-2 text-sm text-white">

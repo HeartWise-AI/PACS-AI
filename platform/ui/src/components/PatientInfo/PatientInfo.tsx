@@ -42,7 +42,7 @@ function PatientInfo({
               <div className="flex pt-1">
                 <Icon
                   name="info-link"
-                  className="text-black w-4"
+                  className="w-4 text-black"
                 />
               </div>
               <div className="ml-2 flex flex-col">
@@ -88,7 +88,11 @@ function PatientInfo({
                       className={classnames(classes.infoText)}
                       title={thickness}
                     >
-                      {thickness ? thicknessUnits ? `${thickness}${thicknessUnits}` : `${thickness}` : '-'}
+                      {thickness
+                        ? thicknessUnits
+                          ? `${thickness}${thicknessUnits}`
+                          : `${thickness}`
+                        : '-'}
                     </span>
                   </div>
                   <div className={classnames(classes.row)}>
