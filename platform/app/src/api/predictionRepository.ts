@@ -1,21 +1,19 @@
 import type { AxiosResponse, AxiosError } from 'axios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
-import { PredictionResultRequest, PredictionResultResponse } from './predictionDTO';
+import { PredictionRequest, PredictionResponse } from './predictionDTO';
 import { object } from 'prop-types';
 
 const predictionRepository = {
   /**
    * Apply prediction
    *
-   * @return  {PredictionResultResponse}
+   * @return  {PredictionResponse}
    */
-  async ApplyPrediction(
-    request: PredictionResultRequest
-  ): Promise<APIResponse<PredictionResultResponse>> {
+  async ApplyPrediction(request: PredictionRequest): Promise<APIResponse<PredictionResponse>> {
     return await Api()
       .post('/v1/prediction/apply', request)
-      .then((response: AxiosResponse<APIResponse<PredictionResultResponse>>) => {
+      .then((response: AxiosResponse<APIResponse<PredictionResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -25,4 +23,5 @@ const predictionRepository = {
       });
   },
 };
+
 export default predictionRepository;
