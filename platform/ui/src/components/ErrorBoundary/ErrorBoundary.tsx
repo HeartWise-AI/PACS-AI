@@ -17,11 +17,11 @@ const DefaultFallback = ({ error, context, resetErrorBoundary = () => {}, fallba
   const subtitle = t('Sorry, something went wrong there. Try again.');
   return (
     <div
-      className="ErrorFallback bg-[#151815] h-full w-full"
+      className="ErrorFallback h-full w-full bg-[#151815]"
       role="alert"
     >
-      <p className="text-white text-xl">{title}</p>
-      <p className="text-white text-base">{subtitle}</p>
+      <p className="text-xl text-white">{title}</p>
+      <p className="text-base text-white">{subtitle}</p>
       {!isProduction && (
         <div className="bg-[#151815] mt-5 space-y-2 rounded-md p-5 font-mono">
           <p className="text-white">

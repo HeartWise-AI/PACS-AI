@@ -329,11 +329,11 @@ function _getStatusComponent(isTracked, t) {
             <div className="flex pt-1">
               <Icon
                 name="info-link"
-                className="text-black w-4"
+                className="w-4 text-black"
               />
             </div>
             <div className="ml-4 flex">
-              <span className="text-black text-base">
+              <span className="text-base text-black">
                 {isTracked ? (
                   <>{t('Series is tracked and can be viewed in the measurement panel')}</>
                 ) : (
