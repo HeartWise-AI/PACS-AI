@@ -64,7 +64,7 @@ const AIModelButton = ({
     }
 
     try {
-      const findInstanceResponse = await orthancRepository.FindInstance({
+      const findInstanceResponse = await orthancRepository.GetLocalResource({
         level: 'Instance',
         query: { SOPInstanceUID },
       });
@@ -155,8 +155,8 @@ const AIModelButton = ({
 };
 
 AIModelButton.defaultProps = {
-  children: '',
   className: '',
+  children: '',
   disabled: false,
   isShowBG: false,
   isShowText: false,
@@ -165,16 +165,21 @@ AIModelButton.defaultProps = {
 };
 
 AIModelButton.propTypes = {
+  /** Additional TailwindCSS classnames */
+  className: PropTypes.string,
   /** What is inside the button, can be text or react component */
   children: PropTypes.node,
-  /** Callback to be called when the button is clicked  */
-  onClick: PropTypes.func.isRequired,
+
   /** Whether the button should be disabled  */
   disabled: PropTypes.bool,
   /** Whether to show the gradient background  */
   isShowBG: PropTypes.bool,
-  /** Additional TailwindCSS classnames */
-  className: PropTypes.string,
+  /** Whether to show the text  */
+  isShowText: PropTypes.bool,
+  /** Set position right size  */
+  positionRight: PropTypes.number,
+  /** Callback to be called when the button is clicked  */
+  onClick: PropTypes.func.isRequired,
 };
 
 export default AIModelButton;

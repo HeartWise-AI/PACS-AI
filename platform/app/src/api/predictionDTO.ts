@@ -1,7 +1,8 @@
-export interface PredictionResultRequest {
+export interface PredictionRequest {
   queryId: string;
 }
-export interface PredictionResultResponse {
+
+export interface PredictionResponse {
   vessel: string;
   LVEF: number;
   age: number;

@@ -7,22 +7,24 @@ import {
   GetModalityStudiesResponse,
   GetJobInfoRequest,
   GetJobInfoResponse,
+  GetLocalResourceRequest,
+  GetLocalResourceResponse,
   RetrieveModalityStudyRequest,
   RetrieveModalityStudyResponse,
-  FindInstanceRequest,
-  FindinstanceResponse,
 } from './orthancDTO';
 
 const orthancRepository = {
   /**
-   * Find instance
+   * Get local resource
    *
-   * @return  {FindinstanceResponse}
+   * @return  {GetLocalResourceResponse}
    */
-  async FindInstance(request: FindInstanceRequest): Promise<APIResponse<FindinstanceResponse>> {
+  async GetLocalResource(
+    request: GetLocalResourceRequest
+  ): Promise<APIResponse<GetLocalResourceResponse>> {
     return Api()
       .post(`/v1/orthanc/find/local-resource`, request)
-      .then((response: AxiosResponse<APIResponse<FindinstanceResponse>>) => {
+      .then((response: AxiosResponse<APIResponse<GetLocalResourceResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -89,4 +91,5 @@ const orthancRepository = {
       });
   },
 };
+
 export default orthancRepository;
