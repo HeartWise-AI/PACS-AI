@@ -1,22 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import ModelHistComponent from '../Histogram/Histogram';
 
 const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) => {
+  const { t } = useTranslation('ResultModal');
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div>
-      <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center">
+      <div className="bg-overlay !fixed !inset-0 z-50 flex items-center justify-center">
         <div
           style={{ backgroundColor: 'rgb(33, 36, 33)' }}
-          className="rounded-lg p-6 text-center shadow-lg"
+          className="rounded-lg p-6 text-center shadow-lg min-w-96"
         >
-          <h2 className="text-primary-light mb-4 text-xl font-bold">
-            Résultats de la détection de la FEVG
-          </h2>
+          <h2 className="mb-4 text-xl text-white">{ isLoading ?  t('ApplyingTitle') : t('ResultTitle')}</h2>
+          {isLoading ?? (  <p className="text-md mb-4 text-white">{t('Subtext')}</p>)}
           {isLoading ? (
             <div className="flex items-center justify-center">
               <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
@@ -25,34 +25,34 @@ const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) 
             <div>
               <p
                 style={{ textAlign: 'left' }}
-                className="text-primary-light text-lg"
+                className="text-white text-lg"
               >
-                Type de vaisseau:<span className="float-right">{detectedVessel}</span>
+                {t('VesselType')}:<span className="float-right">{detectedVessel}</span>
               </p>
               <p
                 style={{ textAlign: 'left' }}
-                className="text-primary-light text-lg"
+                className="text-white text-lg"
               >
-                Résultats:<span className="float-right">{lvef}%</span>
+                {t('Results')}:<span className="float-right">{lvef}%</span>
               </p>
               <hr className="my-4 border-gray-700" />
-              <h2 className="text-primary-light mb-4 text-xl font-bold">
-                Distribution de l&apos;âge dans l&apos;étude
+              <h2 className="text-white mb-4 text-lg">
+              {t('AgeDistributions')}
               </h2>
               <div className="flex justify-center">
                 <ModelHistComponent age={age} />
               </div>
             </div>
           )}
+
           <button
-            className="mt-4 rounded bg-blue-500 px-4 py-2 text-white"
+            className="mt-4 rounded-lg bg-transparent border border-primary-light px-3 py-1 text-primary-light block ml-auto"
             onClick={onClose}
           >
-            Fermer
+            {isLoading ? t('Cancel') : t('Close')}
           </button>
         </div>
       </div>
-    </div>
   );
 };
 

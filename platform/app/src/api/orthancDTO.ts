@@ -16,6 +16,13 @@ interface Studies {
   studyInstanceUID: string;
   studyTime: string;
 }
+export interface FindInstanceRequest {
+  level: string;
+  query: { SOPInstanceUID: string };
+}
+export interface FindinstanceResponse {
+  queryIds: string[];
+}
 export interface GetModalityStudiesResponse {
   readonly queryId: string;
   readonly studies: Studies[];

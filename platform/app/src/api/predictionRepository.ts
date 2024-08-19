@@ -2,24 +2,26 @@ import type { AxiosResponse, AxiosError } from 'axios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
 import { PredictionResultRequest, PredictionResultResponse } from './predictionDTO';
+import { object } from 'prop-types';
 
 const predictionRepository = {
-  async GetPredictionResult(
+  /**
+   * Apply prediction
+   *
+   * @return  {PredictionResultResponse}
+   */
+  async ApplyPrediction(
     request: PredictionResultRequest
   ): Promise<APIResponse<PredictionResultResponse>> {
-    const findQueryResponse = await Api().post('v1/orthanc/tools/find', {
-      Level: 'Instances',
-      Query: { SOPInstanceUID: request.dicomUID },
-    });
-    const queryID = findQueryResponse.data.data;
     return await Api()
-      .post('v1/prediction', { ...request, queryID })
+      .post('/v1/prediction/apply', request)
       .then((response: AxiosResponse<APIResponse<PredictionResultResponse>>) => {
-        return response.data;
+        const { data } = response;
+        return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
-        throw response?.data !== undefined ? response.data : new Error('An unknown error occurred');
+        throw response?.data !== undefined ? response.data : object;
       });
   },
 };

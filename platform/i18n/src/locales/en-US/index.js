@@ -1,4 +1,5 @@
 import AboutModal from './AboutModal.json';
+import AIModelButton from './AIModelButton.json';
 import Buttons from './Buttons.json';
 import CineDialog from './CineDialog.json';
 import Common from './Common.json';
@@ -25,6 +26,7 @@ import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 export default {
   'en-US': {
     AboutModal,
+    AIModelButton,
     Buttons,
     CineDialog,
     Common,
