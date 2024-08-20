@@ -9,6 +9,7 @@ export interface loginLogs {
   specialty: string;
   timestamp: number;
 }
+
 export interface ECSLogsRequest {
   index: string;
   query: string;

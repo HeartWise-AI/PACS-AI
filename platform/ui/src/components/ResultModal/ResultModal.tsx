@@ -1,65 +1,69 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import ModelHistComponent from '../Histogram/Histogram';
 
-const ResultModal = ({ isOpen, onClose, result, isLoading }) => {
+const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) => {
+  const { t } = useTranslation('ResultModal');
   if (!isOpen) {
     return null;
   }
 
-  return (
-    <div>
-      <div className="bg-overlay fixed inset-0 z-50 flex items-center justify-center">
-        <div
-          style={{ backgroundColor: 'rgb(33, 36, 33)' }}
-          className="rounded-lg p-6 text-center shadow-lg"
+  return ReactDOM.createPortal(
+    <div className="bg-overlay !fixed !inset-0 z-50 flex items-center justify-center">
+      <div
+        style={{ backgroundColor: 'rgb(33, 36, 33)' }}
+        className="min-w-96 rounded-lg p-6 text-center shadow-lg"
+      >
+        <h2 className="mb-4 text-xl text-white">
+          {isLoading ? t('ApplyingTitle') : t('ResultTitle')}
+        </h2>
+        {isLoading ?? <p className="text-md mb-4 text-white">{t('Subtext')}</p>}
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
+          </div>
+        ) : (
+          <div>
+            <p
+              style={{ textAlign: 'left' }}
+              className="text-lg text-white"
+            >
+              {t('VesselType')}:<span className="float-right">{detectedVessel}</span>
+            </p>
+            <p
+              style={{ textAlign: 'left' }}
+              className="text-lg text-white"
+            >
+              {t('Results')}:<span className="float-right">{lvef}%</span>
+            </p>
+            <hr className="my-4 border-gray-700" />
+            <h2 className="mb-4 text-lg text-white">{t('AgeDistributions')}</h2>
+            <div className="flex justify-center">
+              <ModelHistComponent age={age} />
+            </div>
+          </div>
+        )}
+
+        <button
+          className="border-primary-light text-primary-light mt-4 ml-auto block rounded-lg border bg-transparent px-3 py-1"
+          onClick={onClose}
         >
-          <h2 className="text-primary-light mb-4 text-xl font-bold">
-            Résultats de la détection de la FEVG
-          </h2>
-          {isLoading ? (
-            <div className="flex items-center justify-center">
-              <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
-            </div>
-          ) : (
-            <div>
-              <p
-                style={{ textAlign: 'left' }}
-                className="text-primary-light text-lg"
-              >
-                Type de vaisseau:<span className="float-right">Coronaire Gauche</span>
-              </p>
-              <p
-                style={{ textAlign: 'left' }}
-                className="text-primary-light text-lg"
-              >
-                Résultats:<span className="float-right">{result}%</span>
-              </p>
-              <hr className="my-4 border-gray-700" />
-              <h2 className="text-primary-light mb-4 text-xl font-bold">
-                Distribution de l&apos;âge dans l&apos;étude
-              </h2>
-              <div className="flex justify-center">
-                <ModelHistComponent age={80} />
-              </div>
-            </div>
-          )}
-          <button
-            className="mt-4 rounded bg-blue-500 px-4 py-2 text-white"
-            onClick={onClose}
-          >
-            Fermer
-          </button>
-        </div>
+          {isLoading ? t('Cancel') : t('Close')}
+        </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 ResultModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  result: PropTypes.number,
+  lvef: PropTypes.number,
+  detectedVessel: PropTypes.string,
+  age: PropTypes.number,
   isLoading: PropTypes.bool.isRequired,
 };
 

@@ -42,7 +42,7 @@ function LegacyPatientInfo({
               <div className="flex pt-1">
                 <Icon
                   name="info-link"
-                  className="!text-black w-4"
+                  className="w-4 !text-black"
                 />
               </div>
               <div className="ml-2 flex flex-col">

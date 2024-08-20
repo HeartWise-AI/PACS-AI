@@ -7,11 +7,32 @@ import {
   GetModalityStudiesResponse,
   GetJobInfoRequest,
   GetJobInfoResponse,
+  GetLocalResourceRequest,
+  GetLocalResourceResponse,
   RetrieveModalityStudyRequest,
   RetrieveModalityStudyResponse,
 } from './orthancDTO';
 
 const orthancRepository = {
+  /**
+   * Get local resource
+   *
+   * @return  {GetLocalResourceResponse}
+   */
+  async GetLocalResource(
+    request: GetLocalResourceRequest
+  ): Promise<APIResponse<GetLocalResourceResponse>> {
+    return Api()
+      .post(`/v1/orthanc/find/local-resource`, request)
+      .then((response: AxiosResponse<APIResponse<GetLocalResourceResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
   /**
    * Get modality studies
    *
@@ -70,4 +91,5 @@ const orthancRepository = {
       });
   },
 };
+
 export default orthancRepository;

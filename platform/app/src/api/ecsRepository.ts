@@ -25,4 +25,5 @@ const ecsRepository = {
       });
   },
 };
+
 export default ecsRepository;

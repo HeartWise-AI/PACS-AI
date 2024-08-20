@@ -16,6 +16,16 @@ interface Studies {
   studyInstanceUID: string;
   studyTime: string;
 }
+
+export interface GetLocalResourceRequest {
+  level: string;
+  query: { SOPInstanceUID: string };
+}
+
+export interface GetLocalResourceResponse {
+  queryIds: string[];
+}
+
 export interface GetModalityStudiesResponse {
   readonly queryId: string;
   readonly studies: Studies[];
@@ -45,9 +55,11 @@ export interface GetJobInfoResponse {
   readonly progress: number;
   readonly state: string;
 }
+
 export interface GetJobInfoRequest {
   jobID: string;
 }
+
 export interface RetrieveModalityStudyRequest {
   queryID: string;
   answerIndex: number;
