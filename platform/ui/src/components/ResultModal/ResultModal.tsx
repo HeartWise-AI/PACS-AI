@@ -16,13 +16,19 @@ const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) 
         style={{ backgroundColor: 'rgb(33, 36, 33)' }}
         className="min-w-96 rounded-lg p-6 text-center shadow-lg"
       >
+        {isLoading ? (
+          <div className="mb-4 flex items-center justify-center">
+            <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
+          </div>
+        ) : (
+          ''
+        )}
         <h2 className="mb-4 text-xl text-white">
           {isLoading ? t('ApplyingTitle') : t('ResultTitle')}
         </h2>
-        {isLoading ? <p className="text-md mb-4 text-white">{t('Subtext')}</p> : ''}
         {isLoading ? (
-          <div className="flex items-center justify-center">
-            <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
+          <div>
+            <p className="mb-4 text-sm text-white text-opacity-70">{t('Subtext')}</p>
           </div>
         ) : (
           <div>
