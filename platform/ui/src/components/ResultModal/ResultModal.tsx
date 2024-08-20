@@ -19,7 +19,7 @@ const ResultModal = ({ isOpen, onClose, lvef, detectedVessel, age, isLoading }) 
         <h2 className="mb-4 text-xl text-white">
           {isLoading ? t('ApplyingTitle') : t('ResultTitle')}
         </h2>
-        {isLoading ?? <p className="text-md mb-4 text-white">{t('Subtext')}</p>}
+        {isLoading ? <p className="text-md mb-4 text-white">{t('Subtext')}</p> : ''}
         {isLoading ? (
           <div className="flex items-center justify-center">
             <div className="border-white-900 h-8 w-8 animate-spin rounded-full border-t-2 border-b-2"></div>
