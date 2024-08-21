@@ -27,8 +27,9 @@
   "Upload": "Upload",
   "State": "State",
   "Status": "Status",
+  "Search": "Search",
   "Segmentation": "Segmentation",
   "Searching for data": "Searching for data",
-  "searchStudyListInfo": "Search for patient name, MRN, date range, description, modality, accession no. …",
+  "searchStudyListInfo": "No data found. Please search by patient name, MRN, date range, description, modality, or accession number.",
   "Tools": "Tools"
 }

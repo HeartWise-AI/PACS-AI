@@ -23,8 +23,9 @@
   "StudyDescription": "Description de l'étude",
   "StudyList": "Liste des études",
   "Status": "Statut",
+  "Search": "Recherche",
   "Segmentation": "Segmentation",
   "Searching for data": "Recherche de données",
-  "searchStudyListInfo": "Recherchez par nom du patient, NIP, plage de dates, description, modalité, numéro d'accès …",
+  "searchStudyListInfo": "Aucune donnée trouvée. Veuillez rechercher par nom du patient, MRN, plage de dates, description, modalité ou numéro d'accès.",
   "Tools": "Outils"
 }
