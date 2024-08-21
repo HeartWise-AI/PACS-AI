@@ -45,6 +45,8 @@ function WorkList() {
   );
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const formattedStartDate = moment().format('YYYYMMDD');
+  const formattedEndDate = moment().format('YYYYMMDD');
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
     institutionName: '',
@@ -56,7 +58,7 @@ function WorkList() {
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
-    studyDate: '',
+    studyDate: `${formattedStartDate}-${formattedEndDate}`,
     studyDescription: '',
     studyID: '',
     studyInstanceUID: '',
@@ -80,6 +82,13 @@ function WorkList() {
     return () => {
       document.body.classList.remove('bg-black');
     };
+  }, []);
+
+  useEffect(() => {
+    // Set today's date on mount
+    const today = moment();
+    setStartDate(today);
+    setEndDate(today);
   }, []);
 
   /**
@@ -204,6 +213,7 @@ function WorkList() {
    * @param endDate
    */
   const handleDateRangeChange = ({ startDate, endDate }) => {
+    console.log(startDate, moment());
     if (startDate && endDate) {
       const formattedStartDate = startDate.format('YYYYMMDD');
       const formattedEndDate = endDate.format('YYYYMMDD');
@@ -213,9 +223,6 @@ function WorkList() {
         ...prevFilter,
         studyDate: formattedDateRange,
       }));
-
-      setIsStudyListDataLoading(true);
-      debounceSearch();
     }
 
     setStartDate(startDate);
@@ -226,16 +233,13 @@ function WorkList() {
    * Clear date range
    */
   const handleClearDates = () => {
-    setStartDate(null);
-    setEndDate(null);
+    setStartDate('');
+    setEndDate('');
 
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
       studyDate: '',
     }));
-
-    setIsStudyListDataLoading(true);
-    debounceSearch();
   };
 
   /**
@@ -521,7 +525,7 @@ function WorkList() {
               <Input
                 placeholder={t('Description')}
                 id="Description"
-                className="min-w-[150px]"
+                className="min-w-[120px]"
                 type="text"
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
@@ -531,7 +535,7 @@ function WorkList() {
                 options={filtersMeta[4].inputProps.options}
                 onChange={handleModalitiesChange}
                 styles={selectCustomStyles}
-                className="min-w-[200px] bg-transparent"
+                className="min-w-[180px] bg-transparent"
                 classNamePrefix="select"
               />
               <Input
@@ -543,7 +547,7 @@ function WorkList() {
               />
               <Button
                 disabled={isStudyListDataLoading}
-                className="h-[51px] w-[110px] rounded-lg !px-0"
+                className="h-[51px] w-[110px] rounded-lg !px-5"
                 onClick={() => {
                   searchStudyList();
                 }}
