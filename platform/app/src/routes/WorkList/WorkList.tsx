@@ -501,6 +501,7 @@ function WorkList() {
                   }}
                   isOutsideRange={() => false}
                   renderMonthElement={renderMonthElement}
+                  minimumNights={0}
                 />
                 {(startDate || endDate) && (
                   <button onClick={handleClearDates}>
