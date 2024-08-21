@@ -170,12 +170,16 @@ function WorkList() {
       };
       filterRef.current = updatedFilter;
 
-      setIsStudyListDataLoading(true);
-      debounceSearch();
       return updatedFilter;
     });
   };
 
+  /**
+   * Search study list
+   */
+  const searchStudyList = () => {
+    fetchStudyListData();
+  };
   /**
    * Handle select for modalities filter
    *
@@ -536,6 +540,15 @@ function WorkList() {
                 type="text"
                 onChange={e => handleInputChange('accessionNumber', e.target.value)}
               />
+              <Button
+                disabled={isStudyListDataLoading}
+                className="h-[51px] w-[110px] rounded-lg !px-0"
+                onClick={() => {
+                  searchStudyList();
+                }}
+              >
+                {isStudyListDataLoading ? '...' : t('Search')}
+              </Button>
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
@@ -661,15 +674,9 @@ function WorkList() {
                         className="p-5 text-center"
                       >
                         <div className="flex h-full w-full items-center justify-center">
-                          {Object.values(filterRef.current).every(value => value === '') ? (
-                            <span className="text-lg font-normal text-white text-opacity-70">
-                              {t('searchStudyListInfo')}
-                            </span>
-                          ) : (
-                            <span className="text-lg font-normal text-white text-opacity-70">
-                              {t('No data found')}
-                            </span>
-                          )}
+                          <span className="mt-5 text-lg font-normal text-white text-opacity-70">
+                            {t('searchStudyListInfo')}
+                          </span>
                         </div>
                       </td>
                     </tr>
