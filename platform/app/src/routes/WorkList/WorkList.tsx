@@ -45,6 +45,8 @@ function WorkList() {
   );
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const formattedStartDate = moment().format('YYYYMMDD');
+  const formattedEndDate = moment().format('YYYYMMDD');
   const [studyListFilter, setStudyListFilter] = useState({
     accessionNumber: '',
     institutionName: '',
@@ -56,7 +58,7 @@ function WorkList() {
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
-    studyDate: '',
+    studyDate: `${formattedStartDate}-${formattedEndDate}`,
     studyDescription: '',
     studyID: '',
     studyInstanceUID: '',
@@ -80,6 +82,13 @@ function WorkList() {
     return () => {
       document.body.classList.remove('bg-black');
     };
+  }, []);
+
+  useEffect(() => {
+    // Set today's date on mount
+    const today = moment();
+    setStartDate(today);
+    setEndDate(today);
   }, []);
 
   /**
@@ -170,12 +179,16 @@ function WorkList() {
       };
       filterRef.current = updatedFilter;
 
-      setIsStudyListDataLoading(true);
-      debounceSearch();
       return updatedFilter;
     });
   };
 
+  /**
+   * Search study list
+   */
+  const searchStudyList = () => {
+    fetchStudyListData();
+  };
   /**
    * Handle select for modalities filter
    *
@@ -200,6 +213,7 @@ function WorkList() {
    * @param endDate
    */
   const handleDateRangeChange = ({ startDate, endDate }) => {
+    console.log(startDate, moment());
     if (startDate && endDate) {
       const formattedStartDate = startDate.format('YYYYMMDD');
       const formattedEndDate = endDate.format('YYYYMMDD');
@@ -209,9 +223,6 @@ function WorkList() {
         ...prevFilter,
         studyDate: formattedDateRange,
       }));
-
-      setIsStudyListDataLoading(true);
-      debounceSearch();
     }
 
     setStartDate(startDate);
@@ -222,16 +233,13 @@ function WorkList() {
    * Clear date range
    */
   const handleClearDates = () => {
-    setStartDate(null);
-    setEndDate(null);
+    setStartDate('');
+    setEndDate('');
 
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
       studyDate: '',
     }));
-
-    setIsStudyListDataLoading(true);
-    debounceSearch();
   };
 
   /**
@@ -502,6 +510,7 @@ function WorkList() {
                   }}
                   isOutsideRange={() => false}
                   renderMonthElement={renderMonthElement}
+                  minimumNights={0}
                 />
                 {(startDate || endDate) && (
                   <button onClick={handleClearDates}>
@@ -516,7 +525,7 @@ function WorkList() {
               <Input
                 placeholder={t('Description')}
                 id="Description"
-                className="min-w-[150px]"
+                className="min-w-[120px]"
                 type="text"
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
@@ -526,7 +535,7 @@ function WorkList() {
                 options={filtersMeta[4].inputProps.options}
                 onChange={handleModalitiesChange}
                 styles={selectCustomStyles}
-                className="min-w-[200px] bg-transparent"
+                className="min-w-[180px] bg-transparent"
                 classNamePrefix="select"
               />
               <Input
@@ -536,6 +545,15 @@ function WorkList() {
                 type="text"
                 onChange={e => handleInputChange('accessionNumber', e.target.value)}
               />
+              <Button
+                disabled={isStudyListDataLoading}
+                className="h-[51px] w-[110px] rounded-lg !px-5"
+                onClick={() => {
+                  searchStudyList();
+                }}
+              >
+                {isStudyListDataLoading ? '...' : t('Search')}
+              </Button>
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
@@ -661,15 +679,9 @@ function WorkList() {
                         className="p-5 text-center"
                       >
                         <div className="flex h-full w-full items-center justify-center">
-                          {Object.values(filterRef.current).every(value => value === '') ? (
-                            <span className="text-lg font-normal text-white text-opacity-70">
-                              {t('searchStudyListInfo')}
-                            </span>
-                          ) : (
-                            <span className="text-lg font-normal text-white text-opacity-70">
-                              {t('No data found')}
-                            </span>
-                          )}
+                          <span className="mt-5 text-lg font-normal text-white text-opacity-70">
+                            {t('searchStudyListInfo')}
+                          </span>
                         </div>
                       </td>
                     </tr>

@@ -23,8 +23,9 @@
   "StudyDescription": "Descripción",
   "StudyList": "Lista de Estudios",
   "Status": "Estado",
+  "Search": "Buscar",
   "Segmentation": "Segmentación",
   "Searching for data": "Buscando datos",
-  "searchStudyListInfo": "Busque por nombre del paciente, NHC, rango de fechas, descripción, modalidad, número de acceso…",
+  "searchStudyListInfo": "No se encontraron datos. Por favor, busque por nombre del paciente, MRN, rango de fechas, descripción, modalidad o número de acceso.",
   "Tools": "Herramientas"
 }

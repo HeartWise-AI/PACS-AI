@@ -23,8 +23,9 @@
   "StudyDescription": "Beschreibung",
   "StudyList": "Studienliste",
   "Status": "Status",
+  "Search": "Suchen",
   "Segmentation": "Segmentierung",
   "Searching for data": "Daten werden gesucht",
-  "searchStudyListInfo": "Suchen Sie nach Patientennamen, MRN, Datumsbereich, Beschreibung, Modalität, Zugangsnr. …",
+  "searchStudyListInfo": "Keine Daten gefunden. Bitte suchen Sie nach Patientenname, MRN, Datumsbereich, Beschreibung, Modalität oder Zugangsnr.",
   "Tools": "Werkzeuge"
 }
