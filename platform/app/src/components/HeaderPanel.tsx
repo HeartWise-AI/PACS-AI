@@ -35,8 +35,8 @@ const HeaderPanel = ({ title }) => {
 
   return (
     <div className="relative mx-auto w-full pt-5">
-      <div className="mb-5 flex h-[83px] flex-row justify-between">
-        <div className="min-w-[1px] flex-col gap-3 pt-7">
+      <div className="mb-1 flex h-auto flex-row justify-between">
+        <div className="flex-col gap-3">
           <Typography
             variant="h6"
             className="text-white"
@@ -45,7 +45,7 @@ const HeaderPanel = ({ title }) => {
           </Typography>
           {(location.pathname.includes('/viewer') ||
             location.pathname.includes('/segmentation')) && (
-            <nav className="mt-2 flex">
+            <nav className="flex">
               <ol className="inline-flex items-center space-x-1 rtl:space-x-reverse md:space-x-2">
                 <li className="inline-flex items-center">
                   <a
