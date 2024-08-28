@@ -33,6 +33,15 @@ const HeaderPanel = ({ title }) => {
     name = currentUser.name.split(' ')[0];
   }
 
+  const handleBackButtonClick = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    // remove the StudyInstanceUIDs parameter
+    searchParams.delete('StudyInstanceUIDs');
+
+    // navigate back to the main page with the retained search parameters
+    navigate(`/?${searchParams.toString()}`);
+  };
   return (
     <div className="relative mx-auto w-full pt-5">
       <div className="mb-1 flex h-auto flex-row justify-between">
@@ -49,7 +58,7 @@ const HeaderPanel = ({ title }) => {
               <ol className="inline-flex items-center space-x-1 rtl:space-x-reverse md:space-x-2">
                 <li className="inline-flex items-center">
                   <a
-                    onClick={() => navigate(`/`)}
+                    onClick={() => handleBackButtonClick()}
                     className="text-primary-dark inline-flex cursor-pointer items-center text-sm font-light"
                   >
                     {t('Studies')}
