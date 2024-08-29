@@ -128,7 +128,7 @@ function ViewerLayout({
           />
           <div
             className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent"
-            style={{ height: 'calc(100vh - 200px)' }}
+            style={{ height: 'calc(100vh - 147px)' }}
           >
             <React.Fragment>
               {showLoadingIndicator && (

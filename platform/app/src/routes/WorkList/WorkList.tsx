@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { createSearchParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import moment from 'moment';
@@ -66,6 +66,8 @@ function WorkList() {
   });
   const filterRef = useRef(studyListFilter);
   const tenantId = localStorage.getItem('tenantId') || '';
+  const [searchParams] = useSearchParams();
+  const [selectedModalities, setSelectedModalities] = useState([]);
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -85,11 +87,100 @@ function WorkList() {
   }, []);
 
   useEffect(() => {
-    // Set today's date on mount
-    const today = moment();
-    setStartDate(today);
-    setEndDate(today);
-  }, []);
+    const params = Object.fromEntries(searchParams.entries());
+
+    // array to store promises for each state update
+    const updatePromises: Promise<void>[] = [];
+
+    // auto-fill the fields using these parameters
+    if (params.patientName) {
+      updatePromises.push(
+        new Promise(resolve => {
+          handleInputChange('patientName', params.patientName);
+          resolve();
+        })
+      );
+    }
+
+    if (params.patientID) {
+      updatePromises.push(
+        new Promise(resolve => {
+          handleInputChange('patientID', params.patientID);
+          resolve();
+        })
+      );
+    }
+
+    if (params.studyDescription) {
+      updatePromises.push(
+        new Promise(resolve => {
+          handleInputChange('studyDescription', params.studyDescription);
+          resolve();
+        })
+      );
+    }
+
+    if (params.accessionNumber) {
+      updatePromises.push(
+        new Promise(resolve => {
+          handleInputChange('accessionNumber', params.accessionNumber);
+          resolve();
+        })
+      );
+    }
+
+    if (params.modalitiesInStudy) {
+      updatePromises.push(
+        new Promise(resolve => {
+          const modalitiesArray = params.modalitiesInStudy.split('//');
+          const selectedOptions = filtersMeta[4].inputProps.options.filter(option =>
+            modalitiesArray.includes(option.value)
+          );
+          setSelectedModalities(selectedOptions);
+          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+          setStudyListFilter(prevFilter => ({
+            ...prevFilter,
+            modalitiesInStudy: updatedModalitiesInStudy,
+          }));
+          resolve();
+        })
+      );
+    }
+
+    if (params.studyDate) {
+      updatePromises.push(
+        new Promise(resolve => {
+          const [start, end] = params.studyDate.split('-');
+          const startDateMoment = moment(start, 'YYYYMMDD');
+          const endDateMoment = moment(end, 'YYYYMMDD');
+
+          setStartDate(startDateMoment);
+          setEndDate(endDateMoment);
+
+          const formattedStartDate = startDateMoment.format('YYYYMMDD');
+          const formattedEndDate = endDateMoment.format('YYYYMMDD');
+          const formattedDateRange = `${formattedStartDate}-${formattedEndDate}`;
+
+          setStudyListFilter(prevFilter => ({
+            ...prevFilter,
+            studyDate: formattedDateRange,
+          }));
+          resolve();
+        })
+      );
+    } else {
+      const today = moment();
+      setStartDate(today);
+      setEndDate(today);
+    }
+
+    // after all updates are done, call searchStudyList
+    Promise.all(updatePromises).then(() => {
+      if (Object.keys(params).length > 0) {
+        searchStudyList();
+      }
+    });
+  }, [searchParams]);
 
   /**
    * Get study list data
@@ -196,14 +287,11 @@ function WorkList() {
    */
   const handleModalitiesChange = selectedOptions => {
     const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
-
+    setSelectedModalities(selectedOptions || []);
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
       modalitiesInStudy: updatedModalitiesInStudy,
     }));
-
-    setIsStudyListDataLoading(true);
-    debounceSearch();
   };
 
   /**
@@ -255,6 +343,21 @@ function WorkList() {
 
     let jobInfoResponse;
     let intervalCounter = 0;
+
+    // create query params from the filter state
+    const viewStudyParams = Object.keys(studyListFilter).reduce((acc, key) => {
+      if (studyListFilter[key]) {
+        acc[key] = studyListFilter[key].replace(/\*/g, ''); // removing the asterisks for cleaner URL
+      }
+      return acc;
+    }, {});
+    // remove empty fields
+    Object.keys(viewStudyParams).forEach(
+      key => !viewStudyParams[key] && delete viewStudyParams[key]
+    );
+
+    const searchParams = createSearchParams(viewStudyParams);
+
     try {
       // retrieve modalidy study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
@@ -298,15 +401,14 @@ function WorkList() {
           progress: jobInfoResponse.data.progress,
           state: JobState[jobInfoResponse.data.state.toUpperCase()],
         });
-
         // redirect to viewer if job is in success state
         setTimeout(() => {
           if (jobInfoResponse.data.state === JobState.SUCCESS) {
             if (type === 'viewer') {
-              navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+              navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
             if (type === 'segmentation') {
-              navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+              navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
           }
         }, 2000);
@@ -314,10 +416,10 @@ function WorkList() {
     } catch (error) {
       if (error.errorCode === Error.DUPLICATE_RECORD) {
         if (type === 'viewer') {
-          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
         }
         if (type === 'segmentation') {
-          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}`);
+          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
         }
       }
 
@@ -482,6 +584,7 @@ function WorkList() {
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
             <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5 xl:flex-nowrap">
               <Input
+                value={studyListFilter.patientName?.replace(/\*/g, '') || ''}
                 placeholder={t('Patient name')}
                 id="PatientName"
                 className="min-w-[150px]"
@@ -489,6 +592,7 @@ function WorkList() {
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
               <Input
+                value={studyListFilter.patientID?.replace(/\*/g, '') || ''}
                 placeholder={t('MRN')}
                 id="MRN"
                 className="min-w-[150px]"
@@ -521,6 +625,7 @@ function WorkList() {
                 )}
               </div>
               <Input
+                value={studyListFilter.studyDescription?.replace(/\*/g, '') || ''}
                 placeholder={t('Description')}
                 id="Description"
                 className="min-w-[120px]"
@@ -530,6 +635,7 @@ function WorkList() {
               <Select
                 isMulti
                 placeholder={t('Modality')}
+                value={selectedModalities}
                 options={filtersMeta[4].inputProps.options}
                 onChange={handleModalitiesChange}
                 styles={selectCustomStyles}
@@ -537,6 +643,7 @@ function WorkList() {
                 classNamePrefix="select"
               />
               <Input
+                value={studyListFilter.accessionNumber?.replace(/\*/g, '') || ''}
                 id="Accession"
                 placeholder={t('Accession #')}
                 className="min-w-[150px]"
