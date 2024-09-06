@@ -4,6 +4,7 @@ import { createSearchParams, useNavigate, useSearchParams } from 'react-router-d
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import moment from 'moment';
+import { sortBy } from 'lodash';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -191,7 +192,10 @@ function WorkList() {
     try {
       const response = await orthancRepository.GetModalityStudies(filterRef.current);
 
-      setTableDataSource(response.data.studies);
+      // sort the studies
+      const sortedStudies = sortStudies(response.data.studies);
+
+      setTableDataSource(sortedStudies);
       setStudyQueryId(response.data.queryId);
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
@@ -203,6 +207,26 @@ function WorkList() {
       showAlert(error.message, 'error');
     }
     setIsStudyListDataLoading(false);
+  };
+
+  /**
+   *  Sort studies
+   *
+   * @param studies
+   * @returns
+   */
+  const sortStudies = studies => {
+    return sortBy(studies, [
+      // sort by last name
+      study => {
+        const nameParts = study.patientName.split('^');
+        const lastName = nameParts[0];
+        // remove suffixes and consider multi-word last names
+        return lastName.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, '').toLowerCase();
+      },
+      // then sort by study date in descending order
+      study => -new Date(study.studyDate).getTime(),
+    ]);
   };
 
   /**
@@ -501,8 +525,9 @@ function WorkList() {
           <button
             key={number}
             onClick={() => handlePageChange(number)}
-            className={`h-7 w-7 rounded-md ${number === currentPage ? 'text-black' : 'text-white text-opacity-70'
-              }`}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
             style={{
               background:
                 number === currentPage
@@ -515,8 +540,9 @@ function WorkList() {
         ))}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          className={`h-5 w-5 bg-transparent ${currentPage === totalPages ? 'invisible' : 'visible'
-            }`}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
         >
           <img
             src={chevronRightIcon}
@@ -664,7 +690,7 @@ function WorkList() {
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
-                !Object.values(filterRef.current).every(value => value === '') ? (
+              !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
                     {t('Searching for data')} ...
@@ -706,8 +732,9 @@ function WorkList() {
                             onClick={() => toggleRow(index)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                                }`}
+                              className={`text-md py-2 px-4 font-normal ${
+                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                              }`}
                             >
                               {row.patientName}
                             </td>
@@ -725,8 +752,9 @@ function WorkList() {
                             </td>
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                                }`}
+                              className={`py-2 px-4 text-sm font-normal ${
+                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                              }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
@@ -825,22 +853,22 @@ function WorkList() {
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
-              <div className="mt-2">
-                <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    className="block h-5 w-11"
-                    onClick={() => {
-                      setIsOpenOrthancServiceModal(false);
-                      setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
-                      setSyncingStudyProgress(0);
-                    }}
-                  >
-                    {t('Okay')}
-                  </Button>
-                </div>
+            <div className="mt-2">
+              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  className="block h-5 w-11"
+                  onClick={() => {
+                    setIsOpenOrthancServiceModal(false);
+                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    setSyncingStudyProgress(0);
+                  }}
+                >
+                  {t('Okay')}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
         </Modal>
       </div>
     </div>
