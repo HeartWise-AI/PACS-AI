@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import Compose from './routes/Mode/Compose';
 import { ServicesManager, ExtensionManager, CommandsManager, HotkeysManager } from '@ohif/core';
 import {
@@ -30,8 +31,11 @@ let commandsManager: CommandsManager,
   servicesManager: ServicesManager,
   hotkeysManager: HotkeysManager;
 
+const queryClient = new QueryClient();
+
 function App({ config, defaultExtensions, defaultModes }) {
   const [init, setInit] = useState(null);
+
   useEffect(() => {
     const run = async () => {
       appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
@@ -107,14 +111,16 @@ function App({ config, defaultExtensions, defaultModes }) {
   }
 
   return (
-    <AlertProvider>
-      <CombinedProviders>
-        <BrowserRouter basename={routerBasename}>
-          {authRoutes}
-          {appRoutes}
-        </BrowserRouter>
-      </CombinedProviders>
-    </AlertProvider>
+    <QueryClientProvider client={queryClient}>
+      <AlertProvider>
+        <CombinedProviders>
+          <BrowserRouter basename={routerBasename}>
+            {authRoutes}
+            {appRoutes}
+          </BrowserRouter>
+        </CombinedProviders>
+      </AlertProvider>
+    </QueryClientProvider>
   );
 }
 
