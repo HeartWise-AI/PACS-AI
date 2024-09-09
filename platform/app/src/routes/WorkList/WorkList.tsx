@@ -5,6 +5,7 @@ import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
+import { sortBy } from 'lodash';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -86,8 +87,10 @@ function WorkList() {
    */
   useEffect(() => {
     if (data) {
+      // sort the studies
+      const sortedStudies = sortStudies(data.data.studies);
       // update the table with the new or cached study data
-      setTableDataSource(data.data.studies);
+      setTableDataSource(sortedStudies);
       setStudyQueryId(data.data.queryId);
     }
     if (error) {
@@ -242,6 +245,26 @@ function WorkList() {
       }
     });
   }, [searchParams]);
+
+  /**
+   *  Sort studies
+   *
+   * @param studies
+   * @returns
+   */
+  const sortStudies = studies => {
+    return sortBy(studies, [
+      // sort by last name
+      study => {
+        const nameParts = study.patientName.split('^');
+        const lastName = nameParts[0];
+        // remove suffixes and consider multi-word last names
+        return lastName.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, '').toLowerCase();
+      },
+      // then sort by study date in descending order
+      study => -new Date(study.studyDate).getTime(),
+    ]);
+  };
 
   /**
    * Table toggle for expandable rows
