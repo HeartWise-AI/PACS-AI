@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { createSearchParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
+import { useQuery } from 'react-query';
 import moment from 'moment';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
@@ -68,6 +69,51 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const [selectedModalities, setSelectedModalities] = useState([]);
+
+  const { data, error, refetch } = useQuery(
+    ['studyData', JSON.stringify(studyListFilter)],
+    async () => await orthancRepository.GetModalityStudies(filterRef.current),
+    {
+      enabled: false, // manually trigger the query
+      staleTime: 30 * 60 * 1000, // 30 minutes in milliseconds
+      cacheTime: 30 * 60 * 1000, // 30 minutes in milliseconds
+    }
+  );
+
+  /**
+   * Effect hook to handle data and error states from the study data query
+   * Updates the table data source and study query ID when new data is received
+   */
+  useEffect(() => {
+    if (data) {
+      // update the table with the new or cached study data
+      setTableDataSource(data.data.studies);
+      setStudyQueryId(data.data.queryId);
+    }
+    if (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      showAlert(error.message, 'error');
+    }
+  }, [data, error]);
+
+  /**
+   * Fetches study list data
+   * This function resets the table data source, sets loading state, and triggers a refetch
+   * The refetch may return cached data if it's still fresh (within the staleTime of 30 minutes)
+   * If the cache is stale, it will trigger a new network request
+   *
+   * @async
+   */
+  const fetchStudyListData = async () => {
+    setTableDataSource([]);
+    setIsStudyListDataLoading(true);
+    await refetch();
+    setIsStudyListDataLoading(false);
+  };
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -163,42 +209,39 @@ function WorkList() {
           resolve();
         })
       );
-    } else {
+    } else if (Object.keys(params).length === 0) {
+      // if there are no parameters, set today's date
       const today = moment();
       setStartDate(today);
       setEndDate(today);
+    } else {
+      // if there are other parameters but no studyDate, clear the date fields
+      setStartDate(null);
+      setEndDate(null);
+
+      setStudyListFilter(prevFilter => ({
+        ...prevFilter,
+        studyDate: '',
+      }));
     }
 
-    // after all updates are done, call searchStudyList
+    // after all updates are done, check if it's a page refresh
     Promise.all(updatePromises).then(() => {
-      if (Object.keys(params).length > 0) {
+      // check if it's a page refresh by looking at the performance navigation type
+      const isPageRefresh =
+        (window.performance &&
+          window.performance.navigation &&
+          window.performance.navigation.type === 1) ||
+        (window.performance &&
+          performance.getEntriesByType('navigation').length > 0 &&
+          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type ===
+            'reload');
+
+      if (isPageRefresh) {
         searchStudyList();
       }
     });
   }, [searchParams]);
-
-  /**
-   * Get study list data
-   */
-  const fetchStudyListData = async () => {
-    setTableDataSource([]);
-    setIsStudyListDataLoading(true);
-    try {
-      const response = await orthancRepository.GetModalityStudies(filterRef.current);
-
-      setTableDataSource(response.data.studies);
-      setStudyQueryId(response.data.queryId);
-    } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
-
-      showAlert(error.message, 'error');
-    }
-    setIsStudyListDataLoading(false);
-  };
 
   /**
    * Table toggle for expandable rows
@@ -496,8 +539,9 @@ function WorkList() {
           <button
             key={number}
             onClick={() => handlePageChange(number)}
-            className={`h-7 w-7 rounded-md ${number === currentPage ? 'text-black' : 'text-white text-opacity-70'
-              }`}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
             style={{
               background:
                 number === currentPage
@@ -510,8 +554,9 @@ function WorkList() {
         ))}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          className={`h-5 w-5 bg-transparent ${currentPage === totalPages ? 'invisible' : 'visible'
-            }`}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
         >
           <img
             src={chevronRightIcon}
@@ -659,7 +704,7 @@ function WorkList() {
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
-                !Object.values(filterRef.current).every(value => value === '') ? (
+              !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
                     {t('Searching for data')} ...
@@ -701,8 +746,9 @@ function WorkList() {
                             onClick={() => toggleRow(index)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                                }`}
+                              className={`text-md py-2 px-4 font-normal ${
+                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                              }`}
                             >
                               {row.patientName}
                             </td>
@@ -720,8 +766,9 @@ function WorkList() {
                             </td>
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                                }`}
+                              className={`py-2 px-4 text-sm font-normal ${
+                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                              }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
@@ -820,22 +867,22 @@ function WorkList() {
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
-              <div className="mt-2">
-                <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    className="block h-5 w-11"
-                    onClick={() => {
-                      setIsOpenOrthancServiceModal(false);
-                      setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
-                      setSyncingStudyProgress(0);
-                    }}
-                  >
-                    {t('Okay')}
-                  </Button>
-                </div>
+            <div className="mt-2">
+              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  className="block h-5 w-11"
+                  onClick={() => {
+                    setIsOpenOrthancServiceModal(false);
+                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    setSyncingStudyProgress(0);
+                  }}
+                >
+                  {t('Okay')}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
         </Modal>
       </div>
     </div>
