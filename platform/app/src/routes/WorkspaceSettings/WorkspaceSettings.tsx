@@ -1,13 +1,16 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ButtonGradient, Typography } from '@ohif/ui';
+import { Button, ButtonGradient, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { AlertContext } from '../../AlertProvider';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
+import refreshIcon from './../../assets/pacs/icons/refresh.png';
+import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import tenantRepository from '../../api/tenantRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
+import Table from '../../components/Table';
 
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
@@ -15,7 +18,51 @@ const WorkspaceSettingsPage = () => {
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
-
+  const headers = [
+    { text: t('ID'), value: 'id', align: 'left' },
+    { text: t('Target AET'), value: 'targetAET', align: 'left' },
+    { text: t('Host'), value: 'host', align: 'center' },
+    { text: t('Port'), value: 'port', align: 'left' },
+    { text: t('Status'), value: 'status', align: 'left' },
+    { text: t('Action'), value: 'action', align: 'center' },
+  ];
+  const modalityDataList = [
+    {
+      id: 'MOD001',
+      targetAET: 'CT_SCANNER',
+      host: '192.168.1.100',
+      port: 11112,
+      status: true,
+    },
+    {
+      id: 'MOD002',
+      targetAET: 'MRI_MACHINE',
+      host: '192.168.1.101',
+      port: 11113,
+      status: false,
+    },
+    {
+      id: 'MOD003',
+      targetAET: 'XRAY_SYSTEM',
+      host: '192.168.1.102',
+      port: 11114,
+      status: true,
+    },
+    {
+      id: 'MOD004',
+      targetAET: 'ULTRASOUND',
+      host: '192.168.1.103',
+      port: 11115,
+      status: true,
+    },
+    {
+      id: 'MOD005',
+      targetAET: 'PET_SCANNER',
+      host: '192.168.1.104',
+      port: 11116,
+      status: false,
+    },
+  ];
   // Set page title
   useEffect(() => {
     document.title = 'Admin Workspace Settings - PACS AI';
@@ -32,6 +79,50 @@ const WorkspaceSettingsPage = () => {
     };
     fetchTenantInfo();
   }, [tenantRepository]);
+
+  /**
+   * Table action button
+   *
+   * @param param0 row
+   * @returns
+   */
+  const ActionButton = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef();
+
+    return (
+      <div
+        className="relative flex items-center justify-center"
+        ref={ref}
+      >
+        <button
+          onClick={() => {
+            setIsOpen(!isOpen);
+          }}
+        >
+          <img
+            src={dotsVertical}
+            alt="Dots vertical icon"
+          />
+        </button>
+        {isOpen && (
+          <div
+            className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+            style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
+          >
+            <ul className="py-2 text-sm text-white">
+              <li>
+                <a className="block cursor-pointer px-4 py-2 hover:bg-gray-700">{t('Edit')}</a>
+              </li>
+              <li>
+                <a className="block cursor-pointer px-4 py-2 hover:bg-gray-700">{t('Delete')}</a>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const CopyToClipboardButton = ({ text }) => {
     const copyToClipboard = () => {
@@ -139,9 +230,72 @@ const WorkspaceSettingsPage = () => {
                 </div>
               </div>
             )}
+            {/* divider */}
+            <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
+            {/* modality data */}
+            <div>
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <h1 className="text-xl text-white">{t('DICOM (Orthanc)')}</h1>
+                <Button className="h-[35px] rounded-lg">{t('New Modality')}</Button>
+              </div>
+            </div>
+            {/* table container */}
+            <div className="bg-transparent py-5">
+              {modalityDataList.length > 0 ? (
+                <Table
+                  headers={headers}
+                  data={modalityDataList}
+                  className={'max-w-[170px]'}
+                >
+                  {(cell, header, row) => {
+                    if (header.value === 'targetAET') {
+                      return <div className="w-[250px] text-white">{cell}</div>;
+                    }
+                    if (header.value === 'host') {
+                      return <div className="w-[250px] text-white">{cell}</div>;
+                    }
+                    if (header.value === 'port') {
+                      return <div className="w-[200px] text-white">{cell}</div>;
+                    }
+                    // email status
+                    if (header.value === 'status') {
+                      return (
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <div
+                            className={`inline-flex h-[27px] items-center justify-center rounded-full px-2 ${
+                              cell
+                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
+                                : 'bg-red-300 bg-opacity-10 text-red-500'
+                            }`}
+                          >
+                            <span>{cell ? 'Connected' : 'Disconnected'}</span>
+                          </div>
+                          <button className="h-[27px] w-[27px] rounded-full bg-white bg-opacity-10 p-1.5 focus:ring-0">
+                            <img
+                              src={refreshIcon}
+                              alt="refresh icon"
+                            />
+                          </button>
+                        </div>
+                      );
+                    }
 
+                    // action
+                    if (header.value === 'action') {
+                      return <ActionButton row={row} />;
+                    }
+                    return cell;
+                  }}
+                </Table>
+              ) : (
+                <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
+              )}
+            </div>
+            {/* divider */}
+            <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
+            {/* AI models */}
             <div className="mt-5 mb-3">
-              <h1 className="text-2xl text-white">{t('Available AI Models')}</h1>
+              <h1 className="text-xl text-white">{t('Available AI Models')}</h1>
             </div>
             {!tenantInfo.availableModels && (
               <div
