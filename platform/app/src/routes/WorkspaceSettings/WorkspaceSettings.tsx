@@ -52,7 +52,6 @@ const WorkspaceSettingsPage = () => {
     { text: t('Status'), value: 'status', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
-
   // Set page title
   useEffect(() => {
     document.title = 'Admin Workspace Settings - PACS AI';
