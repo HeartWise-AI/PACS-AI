@@ -57,12 +57,11 @@ export interface GetJobInfoResponse {
 }
 
 export interface GetJobInfoRequest {
-  jobID: string;
+  jobIDs: string[];
 }
 
 export interface RetrieveModalityStudyRequest {
-  queryID: string;
-  answerIndex: number;
+  aet: string;
   studyInstanceUID: string;
 }
 
