@@ -23,7 +23,7 @@ const orthancRepository = {
     request: GetLocalResourceRequest
   ): Promise<APIResponse<GetLocalResourceResponse>> {
     return Api()
-      .post(`/v1/orthanc/find/local-resource`, request)
+      .post(`/v1/orthanc/find/local-resources`, request)
       .then((response: AxiosResponse<APIResponse<GetLocalResourceResponse>>) => {
         const { data } = response;
         return data;
@@ -59,7 +59,12 @@ const orthancRepository = {
    */
   async GetJobInfo(request: GetJobInfoRequest): Promise<APIResponse<GetJobInfoResponse>> {
     return Api()
-      .get(`/v1/orthanc/job/${request.jobID}`)
+      .get(`/v1/orthanc/jobs`, {
+        params: { jobIDs: request.jobIDs },
+        paramsSerializer: params => {
+          return params.jobIDs.map(id => `jobIDs=${id}`).join('&');
+        },
+      })
       .then((response: AxiosResponse<APIResponse<GetJobInfoResponse>>) => {
         const { data } = response;
         return data;
@@ -72,16 +77,17 @@ const orthancRepository = {
   /**
    * Retrieve modality study
    *
-   * @return  {RetrieveModalityStudyResponse}
+   * @return  {RetrieveModalityStudyResponse[]}
    */
   async RetrieveModalityStudy(
     request: RetrieveModalityStudyRequest
-  ): Promise<APIResponse<RetrieveModalityStudyResponse>> {
+  ): Promise<APIResponse<RetrieveModalityStudyResponse[]>> {
     return Api()
-      .post(`/v1/orthanc/retrieve/query/${request.queryID}/answer/${request.answerIndex}`, {
+      .post(`/v1/orthanc/modality/retrieve`, {
+        aet: request.aet,
         studyInstanceUID: request.studyInstanceUID,
       })
-      .then((response: AxiosResponse<APIResponse<RetrieveModalityStudyResponse>>) => {
+      .then((response: AxiosResponse<APIResponse<RetrieveModalityStudyResponse[]>>) => {
         const { data } = response;
         return data;
       })
