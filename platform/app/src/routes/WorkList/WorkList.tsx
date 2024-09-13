@@ -9,10 +9,12 @@ import { sortBy } from 'lodash';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
+import tenantRepository from '../../api/tenantRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
+import { GetTenantInfoResponse } from '../../api/tenantDTO';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import { logoutUser } from '../../service/userService';
@@ -27,6 +29,7 @@ function WorkList() {
   const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -35,7 +38,7 @@ function WorkList() {
     id: '',
     priority: 0,
     progress: 0,
-    state: JobState.PENDING,
+    state: JobState.RUNNING,
   });
   const [syncingStudyProgress, setSyncingStudyProgress] = useState(0);
   const [studyQueryId, setStudyQueryId] = useState('');
@@ -129,6 +132,19 @@ function WorkList() {
       document.body.classList.remove('bg-black');
     };
   }, []);
+
+
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await tenantRepository.GetTenantInfo();
+        setTenantInfo(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchTenantInfo();
+  }, [tenantRepository]);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -394,12 +410,10 @@ function WorkList() {
   /**
    * View selected study
    *
-   * @param queryID
-   * @param index
    * @param type
    * @param studyInstanceUID
    */
-  const viewStudy = async (queryID, index, type, studyInstanceUID) => {
+  const viewStudy = async (type, studyInstanceUID) => {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
@@ -420,60 +434,56 @@ function WorkList() {
     const searchParams = createSearchParams(viewStudyParams);
 
     try {
-      // retrieve modalidy study
+      // retrieve modality study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
-        queryID,
-        answerIndex: index,
+        aet: tenantInfo.aet,
         studyInstanceUID,
       });
+
+      // extract job IDs from the response
+      const jobIds = modalityStudyResponse.data.map(item => item.id);
 
       // get job info with interval of 3 seconds
       let intervalId = setInterval(async () => {
         jobInfoResponse = await orthancRepository.GetJobInfo({
-          jobID: modalityStudyResponse.data.id,
+          jobIDs: jobIds,
         });
-        // clear interval if job is not in running state
-        if (
-          jobInfoResponse.data.state === JobState.FAILURE ||
-          jobInfoResponse.data.state === JobState.RETRY ||
-          jobInfoResponse.data.state === JobState.PAUSED ||
-          jobInfoResponse.data.state === JobState.SUCCESS
-        ) {
+
+        // calculate overall progress based on completed jobs
+        // total number of jobs in the response */
+        const totalJobs = jobInfoResponse.data.length;
+        // number of jobs that have completed (progress is 100%) */
+        const completedJobs = jobInfoResponse.data.filter(job => job.progress === 100).length;
+        // overall progress percentage, rounded down to nearest integer */
+        const overallProgress = Math.floor((completedJobs / totalJobs) * 100);
+
+        setSyncingStudyProgress(overallProgress);
+
+        // clear interval if all jobs are completed
+        if (overallProgress === 100) {
           clearInterval(intervalId);
-        }
-
-        // increment the interval counter
-        intervalCounter++;
-
-        // update syncingStudyProgress every 2 intervals
-        if (intervalCounter % 2 === 0 && syncingStudyProgress < 95) {
-          setSyncingStudyProgress(prevProgress => prevProgress + 5);
-        }
-
-        // set progress to 100 if job is in success state
-        if (jobInfoResponse.data.state === JobState.SUCCESS) {
-          setSyncingStudyProgress(100);
         }
 
         // set job info
         setJobInfo({
-          id: jobInfoResponse.data.id,
-          priority: jobInfoResponse.data.priority,
-          progress: jobInfoResponse.data.progress,
-          state: JobState[jobInfoResponse.data.state.toUpperCase()],
+          id: jobInfoResponse.data[0].id,
+          priority: jobInfoResponse.data[0].priority,
+          progress: overallProgress,
+          state: overallProgress === 100 ? JobState.SUCCESS : JobState.RUNNING,
         });
-        // redirect to viewer if job is in success state
-        setTimeout(() => {
-          if (jobInfoResponse.data.state === JobState.SUCCESS) {
+
+        // redirect to viewer if all jobs are in success state
+        if (overallProgress === 100) {
+          setTimeout(() => {
             if (type === 'viewer') {
               navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
             if (type === 'segmentation') {
               navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
-          }
-        }, 2000);
-      }, 3000);
+          }, 2000);
+        }
+      }, 1000);
     } catch (error) {
       if (error.errorCode === Error.DUPLICATE_RECORD) {
         if (type === 'viewer') {
@@ -809,8 +819,6 @@ function WorkList() {
                                   <Button
                                     onClick={() => {
                                       viewStudy(
-                                        studyQueryId,
-                                        index,
                                         'viewer',
                                         row.studyInstanceUID
                                       );
@@ -821,8 +829,6 @@ function WorkList() {
                                   <Button
                                     onClick={() => {
                                       viewStudy(
-                                        studyQueryId,
-                                        index,
                                         'segmentation',
                                         row.studyInstanceUID
                                       );
@@ -897,7 +903,7 @@ function WorkList() {
                   className="block h-5 w-11"
                   onClick={() => {
                     setIsOpenOrthancServiceModal(false);
-                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
+                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.RUNNING });
                     setSyncingStudyProgress(0);
                   }}
                 >
