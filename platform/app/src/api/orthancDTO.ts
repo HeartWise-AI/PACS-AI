@@ -3,7 +3,7 @@ interface Studies {
   modalitiesInStudy: string;
   numberOfStudyRelatedSeries: string;
   patientBirthDate: string;
-  patientID: string;
+  patientId: string;
   patientName: string;
   patientSex: string;
   queryRetrieveLevel: string;
@@ -12,7 +12,7 @@ interface Studies {
   specificCharacterSet: string;
   studyDate: string;
   studyDescription: string;
-  studyID: string;
+  studyId: string;
   studyInstanceUID: string;
   studyTime: string;
 }
@@ -32,19 +32,20 @@ export interface GetModalityStudiesResponse {
 }
 
 export interface GetModalityStudiesRequest {
+  modalityId: string;
   accessionNumber: string;
   institutionName: string;
   modalitiesInStudy: string;
   numberOfStudyRelatedSeries: string;
   patientBirthDate: string;
-  patientID: string;
+  patientId: string;
   patientName: string;
   patientSex: string;
   referringPhysicianName: string;
   requestingPhysician: string;
   studyDate: string;
   studyDescription: string;
-  studyID: string;
+  studyId: string;
   studyInstanceUID: string;
   studyTime: string;
 }
@@ -60,6 +61,25 @@ export interface GetJobInfoRequest {
   jobIDs: string[];
 }
 
+export interface GetDICOMModalitiesResponse {
+  modalities: {
+    [key: string]: {
+      aet: string;
+      allowEcho: boolean;
+      allowFind: boolean;
+      allowFindWorklist: boolean;
+      allowGet: boolean;
+      allowMove: boolean;
+      allowStore: boolean;
+      allowTranscoding: boolean;
+      host: string;
+      port: number;
+      timeout: number;
+      useDicomTLS: boolean;
+    };
+  };
+}
+
 export interface RetrieveModalityStudyRequest {
   aet: string;
   studyInstanceUID: string;
@@ -68,6 +88,21 @@ export interface RetrieveModalityStudyRequest {
 export interface RetrieveModalityStudyResponse {
   readonly id: string;
   readonly path: string;
+}
+
+export interface RemoveDICOMModalityRequest {
+  modalityID: string;
+}
+
+export interface TriggerDICOMEchoSCURequest {
+  modalityID: string;
+}
+
+export interface UpdateDICOMModalityRequest {
+  modalityID: string;
+  aet: string;
+  host: string;
+  port: number;
 }
 
 export enum JobState {
