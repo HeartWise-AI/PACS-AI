@@ -81,7 +81,7 @@ export interface GetDICOMModalitiesResponse {
 }
 
 export interface RetrieveModalityStudyRequest {
-  aet: string;
+  modalityID: string;
   studyInstanceUID: string;
 }
 
