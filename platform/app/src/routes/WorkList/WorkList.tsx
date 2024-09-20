@@ -13,8 +13,7 @@ import tenantRepository from '../../api/tenantRepository';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
-import { JobState } from '../../api/orthancDTO';
-import { GetTenantInfoResponse } from '../../api/tenantDTO';
+import { GetDICOMModalitiesResponse, JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
 import { logoutUser } from '../../service/userService';
@@ -29,7 +28,7 @@ function WorkList() {
   const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
-  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [modalityOptions, setModalityOptions] = useState<string[]>([]);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -53,19 +52,20 @@ function WorkList() {
   const formattedStartDate = moment().format('YYYYMMDD');
   const formattedEndDate = moment().format('YYYYMMDD');
   const [studyListFilter, setStudyListFilter] = useState({
+    modalityId: '',
     accessionNumber: '',
     institutionName: '',
     modalitiesInStudy: '',
     numberOfStudyRelatedSeries: '',
     patientBirthDate: '',
-    patientID: '',
+    patientId: '',
     patientName: '',
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
     studyDate: `${formattedStartDate}-${formattedEndDate}`,
     studyDescription: '',
-    studyID: '',
+    studyId: '',
     studyInstanceUID: '',
     studyTime: '',
   });
@@ -73,6 +73,10 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const [selectedModalities, setSelectedModalities] = useState([]);
+  const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
 
   const { data, error, refetch } = useQuery(
     ['studyData', JSON.stringify(studyListFilter)],
@@ -81,6 +85,7 @@ function WorkList() {
       enabled: false, // manually trigger the query
       staleTime: 30 * 60 * 1000, // 30 minutes in milliseconds
       cacheTime: 30 * 60 * 1000, // 30 minutes in milliseconds
+      retry: 1,
     }
   );
 
@@ -122,6 +127,42 @@ function WorkList() {
   };
 
   useEffect(() => {
+    const fetchDICOMModalities = async () => {
+      try {
+        const response = await orthancRepository.GetDICOMModalities();
+
+        const options = Object.keys(response.data.modalities);
+        setModalityOptions(options);
+
+        // check localStorage for selectedDICOMModality
+        const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+
+        if (!storedDICOMModality) {
+          // if not exist, assign the first key in the response.modalities
+          const firstDICOMModalityKey = options[0];
+          if (firstDICOMModalityKey) {
+            setSelectedDICOMModality({
+              value: firstDICOMModalityKey,
+              label: firstDICOMModalityKey,
+            });
+
+            setStudyListFilter(prevFilter => ({
+              ...prevFilter,
+              modalityId: firstDICOMModalityKey,
+            }));
+            localStorage.setItem('selectedDICOMModality', firstDICOMModalityKey);
+            fetchStudyListData();
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching DICOM modalities:', error);
+      }
+    };
+
+    fetchDICOMModalities();
+  }, [orthancRepository]);
+
+  useEffect(() => {
     filterRef.current = studyListFilter;
   }, [studyListFilter]);
 
@@ -137,19 +178,6 @@ function WorkList() {
       document.body.classList.remove('bg-black');
     };
   }, []);
-
-
-  useEffect(() => {
-    const fetchTenantInfo = async () => {
-      try {
-        const response = await tenantRepository.GetTenantInfo();
-        setTenantInfo(response.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchTenantInfo();
-  }, [tenantRepository]);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -167,10 +195,10 @@ function WorkList() {
       );
     }
 
-    if (params.patientID) {
+    if (params.patientId) {
       updatePromises.push(
         new Promise(resolve => {
-          handleInputChange('patientID', params.patientID);
+          handleInputChange('patientId', params.patientId);
           resolve();
         })
       );
@@ -247,6 +275,24 @@ function WorkList() {
         ...prevFilter,
         studyDate: '',
       }));
+    }
+
+    // include selectedDICOMModality from localStorage
+    const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+    if (storedDICOMModality) {
+      updatePromises.push(
+        new Promise(resolve => {
+          setSelectedDICOMModality({
+            value: storedDICOMModality,
+            label: storedDICOMModality,
+          });
+          setStudyListFilter(prevFilter => ({
+            ...prevFilter,
+            modalityId: storedDICOMModality,
+          }));
+          resolve();
+        })
+      );
     }
 
     // after all updates are done, check if it's a page refresh
@@ -377,6 +423,20 @@ function WorkList() {
   };
 
   /**
+   * Handle select for DICOM modality
+   *
+   * @param selectedOption
+   */
+  const handleDICOMModalityChange = selectedOption => {
+    setSelectedDICOMModality(selectedOption);
+    setStudyListFilter(prevFilter => ({
+      ...prevFilter,
+      modalityId: selectedOption.value,
+    }));
+    localStorage.setItem('selectedDICOMModality', selectedOption.value);
+  };
+
+  /**
    * Handle select for date range filter
    *
    * @param startDate
@@ -423,10 +483,9 @@ function WorkList() {
 
     let jobInfoResponse;
     let intervalCounter = 0;
-
     // create query params from the filter state
     const viewStudyParams = Object.keys(studyListFilter).reduce((acc, key) => {
-      if (studyListFilter[key]) {
+      if (studyListFilter[key] && key !== 'modalityId') {
         acc[key] = studyListFilter[key].replace(/\*/g, ''); // removing the asterisks for cleaner URL
       }
       return acc;
@@ -441,7 +500,7 @@ function WorkList() {
     try {
       // retrieve modality study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
-        aet: tenantInfo.aet,
+        modalityID: selectedDICOMModality.value,
         studyInstanceUID,
       });
 
@@ -670,12 +729,12 @@ function WorkList() {
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
               <Input
-                value={studyListFilter.patientID?.replace(/\*/g, '') || ''}
+                value={studyListFilter.patientId?.replace(/\*/g, '') || ''}
                 placeholder={t('MRN')}
                 id="MRN"
                 className="min-w-[150px]"
                 type="text"
-                onChange={e => handleInputChange('patientID', e.target.value)}
+                onChange={e => handleInputChange('patientId', e.target.value)}
               />
               <div className="relative w-[250px]">
                 <DateRangePicker
@@ -740,6 +799,27 @@ function WorkList() {
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="ml-auto flex items-center gap-3">
+              <span className="text-base text-white">DICOM Modality</span>
+              <Select
+                placeholder={t('Modality')}
+                value={selectedDICOMModality}
+                options={modalityOptions.map(option => ({ value: option, label: option }))}
+                onChange={selectedOption => {
+                  handleDICOMModalityChange(selectedOption);
+                  setSelectedDICOMModality(selectedOption);
+                }}
+                styles={{
+                  ...selectCustomStyles,
+                  singleValue: provided => ({
+                    ...provided,
+                    color: 'white', // Ensure the selected value is visible
+                  }),
+                }}
+                className="min-w-[180px] bg-transparent"
+                classNamePrefix="select"
+              />
+            </div>
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
               !Object.values(filterRef.current).every(value => value === '') ? (
@@ -791,7 +871,7 @@ function WorkList() {
                               {row.patientName}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
-                              {row.patientID.substring(0, 10)}
+                              {row.patientId.substring(0, 10)}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
                               {formatDate(row.studyDate)}
@@ -823,20 +903,14 @@ function WorkList() {
                                   </h1>
                                   <Button
                                     onClick={() => {
-                                      viewStudy(
-                                        'viewer',
-                                        row.studyInstanceUID
-                                      );
+                                      viewStudy('viewer', row.studyInstanceUID);
                                     }}
                                   >
                                     {t('BasicViewer')}
                                   </Button>
                                   <Button
                                     onClick={() => {
-                                      viewStudy(
-                                        'segmentation',
-                                        row.studyInstanceUID
-                                      );
+                                      viewStudy('segmentation', row.studyInstanceUID);
                                     }}
                                   >
                                     {t('Segmentation')}
