@@ -211,6 +211,12 @@ const WorkspaceSettingsPage = () => {
       showAlert(response.message, 'success');
       setIsOpenRemoveModalityModal(false);
       fetchDICOMModalities();
+
+      // check if the deleted modality is the same as the one in localStorage
+      const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+      if (storedDICOMModality === selectedModalityToRemove) {
+        localStorage.removeItem('selectedDICOMModality');
+      }
     } catch (error) {
       console.error(`Error removing modality: ${error}`);
       showAlert(error.message, 'error');
