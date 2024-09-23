@@ -27,7 +27,7 @@ const orthancRepository = {
     request: GetLocalResourceRequest
   ): Promise<APIResponse<GetLocalResourceResponse>> {
     return Api()
-      .post(`/v1/orthanc/find/local-resources`, request)
+      .get(`/v1/orthanc/sop-instance/${request.sopInstanceUID}/find`)
       .then((response: AxiosResponse<APIResponse<GetLocalResourceResponse>>) => {
         const { data } = response;
         return data;
