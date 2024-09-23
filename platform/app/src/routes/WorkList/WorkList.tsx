@@ -109,9 +109,7 @@ function WorkList() {
         }, 3000);
       }
 
-      if (isSearching) {
-        showAlert(error.message, 'error');
-      }
+      showAlert(error.message, 'error');
     }
   }, [data, error]);
 

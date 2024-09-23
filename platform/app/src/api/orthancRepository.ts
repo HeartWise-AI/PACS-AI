@@ -19,11 +19,11 @@ import {
 
 const orthancRepository = {
   /**
-   * Get local resource
+   * Get local SOP instance
    *
    * @return  {GetLocalResourceResponse}
    */
-  async GetLocalResource(
+  async GetLocalSOPInstance(
     request: GetLocalResourceRequest
   ): Promise<APIResponse<GetLocalResourceResponse>> {
     return Api()
