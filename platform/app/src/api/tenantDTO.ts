@@ -9,7 +9,6 @@ export interface GetTenantInfoResponse {
   readonly name: string;
   readonly address: string;
   readonly availableModels: Array<{ en: ModelDetails }>;
-  readonly aet: string
   readonly createdAt: number;
   readonly updatedAt: number;
 }

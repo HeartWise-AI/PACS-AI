@@ -11,19 +11,23 @@ import {
   GetLocalResourceResponse,
   RetrieveModalityStudyRequest,
   RetrieveModalityStudyResponse,
+  GetDICOMModalitiesResponse,
+  TriggerDICOMEchoSCURequest,
+  UpdateDICOMModalityRequest,
+  RemoveDICOMModalityRequest,
 } from './orthancDTO';
 
 const orthancRepository = {
   /**
-   * Get local resource
+   * Get local SOP instance
    *
    * @return  {GetLocalResourceResponse}
    */
-  async GetLocalResource(
+  async GetLocalSOPInstance(
     request: GetLocalResourceRequest
   ): Promise<APIResponse<GetLocalResourceResponse>> {
     return Api()
-      .post(`/v1/orthanc/find/local-resources`, request)
+      .get(`/v1/orthanc/sop-instance/${request.sopInstanceUID}/find`)
       .then((response: AxiosResponse<APIResponse<GetLocalResourceResponse>>) => {
         const { data } = response;
         return data;
@@ -75,6 +79,23 @@ const orthancRepository = {
       });
   },
   /**
+   * Get DICOM modalities
+   *
+   * @return  {Promise<APIResponse><GetDICOMModalitiesResponse>}
+   */
+  async GetDICOMModalities(): Promise<APIResponse<GetDICOMModalitiesResponse>> {
+    return Api()
+      .get(`/v1/orthanc/modalities/list`)
+      .then((response: AxiosResponse<APIResponse<GetDICOMModalitiesResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Retrieve modality study
    *
    * @return  {RetrieveModalityStudyResponse[]}
@@ -84,7 +105,7 @@ const orthancRepository = {
   ): Promise<APIResponse<RetrieveModalityStudyResponse[]>> {
     return Api()
       .post(`/v1/orthanc/modality/retrieve`, {
-        aet: request.aet,
+        modalityID: request.modalityID,
         studyInstanceUID: request.studyInstanceUID,
       })
       .then((response: AxiosResponse<APIResponse<RetrieveModalityStudyResponse[]>>) => {
@@ -96,6 +117,60 @@ const orthancRepository = {
         throw response?.data !== undefined ? response.data : object;
       });
   },
+  /**
+   * Remove DICOM modality
+   *
+   * @return  {void}
+   */
+  async RemoveDICOMModality(request: RemoveDICOMModalityRequest): Promise<APIResponse<void>> {
+    return Api()
+      .delete(`/v1/orthanc/modality/${request.modalityID}/remove`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Trigger DICOM Echo SCU
+   *
+   * @return  {void}
+   */
+  async TriggerDICOMEchoSCU(request: TriggerDICOMEchoSCURequest): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/orthanc/modality/${request.modalityID}/echo`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update DICOM modality
+   *
+   * @return  {void}
+   */
+  async UpdateDICOMModality(request: UpdateDICOMModalityRequest): Promise<APIResponse<void>> {
+    return Api()
+      .put(`/v1/orthanc/modality/${request.modalityID}/update`, {
+        aet: request.aet,
+        host: request.host,
+        port: request.port,
+      })
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
 };
-
 export default orthancRepository;
