@@ -18,8 +18,7 @@ interface Studies {
 }
 
 export interface GetLocalResourceRequest {
-  level: string;
-  query: { SOPInstanceUID: string };
+  sopInstanceUID: string;
 }
 
 export interface GetLocalResourceResponse {
