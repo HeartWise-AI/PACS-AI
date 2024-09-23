@@ -64,7 +64,7 @@ const AIModelButton = ({
     }
 
     try {
-      const findInstanceResponse = await orthancRepository.GetLocalResource({
+      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
         sopInstanceUID,
       });
       const predictionResultResponse = await predictionRepository.ApplyPrediction({
