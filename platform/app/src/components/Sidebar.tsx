@@ -58,6 +58,24 @@ const Sidebar = () => {
     return pathname === pattern;
   };
 
+  // Handle navigation to studies page
+  const handleNavigateStudiesPage = () => {
+    const pathname = window.location.pathname;
+
+    if (pathname === '/viewer' || pathname === '/segmentation') {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      // remove the StudyInstanceUIDs parameter
+      searchParams.delete('StudyInstanceUIDs');
+
+      // navigate back to the main page with the retained search parameters
+      navigate(`/?${searchParams.toString()}`);
+    } else {
+      // navigate to route '/'
+      navigate('/');
+    }
+  };
+
   if (currentUser) {
     role = currentUser.role;
   }
@@ -116,7 +134,7 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={() => navigate(`/`)}
+                onClick={()=>{handleNavigateStudiesPage()}}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
