@@ -3,6 +3,7 @@
   "BasicViewer": "Basisbetrachter",
   "ClearFilters": "Filter löschen",
   "Description": "Beschreibung",
+  "DICOM Modality": "DICOM Modality",
   "Empty": "Leer",
   "MRN": "MRN",
   "NumOfStudiesHiggerThan100Message": "Filtern Sie die Liste auf 100 oder weniger Studien, um die Sortierung zu aktivieren",

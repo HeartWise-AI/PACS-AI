@@ -3,6 +3,7 @@
   "BasicViewer": "Basic Viewer",
   "ClearFilters": "Clear Filters",
   "Description": "Description",
+  "DICOM Modality": "DICOM Modality",
   "Empty": "Empty",
   "Filter list to 100 studies or less to enable sorting": "Filter the list to 100 studies or less to enable sorting",
   "Instances": "Instances",

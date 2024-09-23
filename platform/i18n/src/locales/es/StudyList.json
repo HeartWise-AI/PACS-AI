@@ -3,6 +3,7 @@
   "BasicViewer": "Visor Básico",
   "ClearFilters": "Limpiar filtros",
   "Description": "Descripción",
+  "DICOM Modality": "Modalidad DICOM",
   "Empty": "vacío",
   "Filter list to 100 studies or less to enable sorting": "Filtre la lista a 100 estudios o menos para habilitar la clasificación",
   "Instances": "Instancias",
