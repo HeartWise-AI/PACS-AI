@@ -28,6 +28,7 @@ function WorkList() {
   const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [modalityOptions, setModalityOptions] = useState<string[]>([]);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,7 +108,10 @@ function WorkList() {
           logoutUser(navigate, tenantId);
         }, 3000);
       }
-      showAlert(error.message, 'error');
+
+      if (isSearching) {
+        showAlert(error.message, 'error');
+      }
     }
   }, [data, error]);
 
@@ -400,8 +404,9 @@ function WorkList() {
   /**
    * Search study list
    */
-  const searchStudyList = () => {
-    fetchStudyListData();
+  const searchStudyList = async () => {
+    await fetchStudyListData();
+    setIsSearching(false);
   };
   /**
    * Handle select for modalities filter
@@ -786,6 +791,7 @@ function WorkList() {
                 disabled={isStudyListDataLoading}
                 className="h-[51px] w-[110px] rounded-lg !px-5"
                 onClick={() => {
+                  setIsSearching(true);
                   searchStudyList();
                 }}
               >
