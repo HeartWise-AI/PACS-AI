@@ -395,7 +395,7 @@ function WorkList() {
     setStudyListFilter(prevFilter => {
       const updatedFilter = {
         ...prevFilter,
-        [field]: value ? `${value}*` : '',
+        [field]: value ? `${value}` : '',
       };
       filterRef.current = updatedFilter;
 
