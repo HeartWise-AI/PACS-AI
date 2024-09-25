@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 import tenantRepository from '../api/tenantRepository';
+import repository from '../api/repository';
 import { UserRole } from '../api/userDTO';
 import { GetTenantInfoResponse } from '../api/tenantDTO';
+import { GetAPIInfoResponse } from '../api/dto';
+import { FrontendVersionContext } from '../App';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import membersActiveIcon from './../assets/pacs/icons/members-active.png';
@@ -23,8 +26,10 @@ const SidebarAdmin = () => {
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
+  const frontendVersion = useContext(FrontendVersionContext);
   let role = '';
 
   useEffect(() => {
@@ -44,8 +49,17 @@ const SidebarAdmin = () => {
         console.error(error);
       }
     };
+    const fetchAPIInfo = async () => {
+      try {
+        const response = await repository.GetAPIInfo();
+        setAPIInfo(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
     fetchCurrentUser();
     fetchTenantInfo();
+    fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
   const handleMinimizeSidebarClick = () => {
@@ -61,6 +75,7 @@ const SidebarAdmin = () => {
   if (currentUser) {
     role = currentUser.role;
   }
+
   return (
     <aside
       id="default-sidebar"
@@ -235,26 +250,66 @@ const SidebarAdmin = () => {
             </li>
           </ul>
         </div>
-        {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
-          <ButtonGradient
-            className="h-[47px] w-full !px-0"
-            onClick={() => navigate(`/`)}
-          >
-            <div
-              className={`flex items-center ${
-                sidebarMini ? 'justify-center' : 'justify-between px-3'
-              }`}
+        <div>
+          {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
+            <ButtonGradient
+              className="h-[47px] w-full !px-0"
+              onClick={() => navigate(`/`)}
             >
-              {!sidebarMini && (
-                <div className="!text-primary-dark font-light">{t('Launch PACS AI')}</div>
-              )}
-              <img
-                src={newTabActiveIcon}
-                alt="New tab icon"
-              />
+              <div
+                className={`flex items-center ${
+                  sidebarMini ? 'justify-center' : 'justify-between px-3'
+                }`}
+              >
+                {!sidebarMini && (
+                  <div className="!text-primary-dark font-light">{t('Launch PACS AI')}</div>
+                )}
+                <img
+                  src={newTabActiveIcon}
+                  alt="New tab icon"
+                />
+              </div>
+            </ButtonGradient>
+          )}
+          <div
+            className={`${
+              sidebarMini ? 'hidden' : 'block'
+            } mt-4 flex w-full flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4`}
+          >
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body"
+                className="text-white text-opacity-50"
+                component="span"
+              >
+                {t('Backed')}:
+              </Typography>
+              <Typography
+                variant="body"
+                className="text-white"
+                component="span"
+              >
+                {apiInfo.version}
+              </Typography>
             </div>
-          </ButtonGradient>
-        )}
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body"
+                className="text-white text-opacity-50"
+                component="span"
+              >
+                {t('Frontend')}:
+              </Typography>
+              <Typography
+                variant="body"
+                className="text-white"
+                component="span"
+              >
+                {frontendVersion}
+              </Typography>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );
