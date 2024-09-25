@@ -64,9 +64,9 @@ const orthancRepository = {
   async GetJobInfo(request: GetJobInfoRequest): Promise<APIResponse<GetJobInfoResponse>> {
     return Api()
       .get(`/v1/orthanc/jobs`, {
-        params: { jobIDs: request.jobIDs },
+        params: { jobIds: request.jobIds },
         paramsSerializer: params => {
-          return params.jobIDs.map(id => `jobIDs=${id}`).join('&');
+          return params.jobIds.map(id => `jobIds=${id}`).join('&');
         },
       })
       .then((response: AxiosResponse<APIResponse<GetJobInfoResponse>>) => {
@@ -105,7 +105,7 @@ const orthancRepository = {
   ): Promise<APIResponse<RetrieveModalityStudyResponse[]>> {
     return Api()
       .post(`/v1/orthanc/modality/retrieve`, {
-        modalityID: request.modalityID,
+        modalityId: request.modalityId,
         studyInstanceUID: request.studyInstanceUID,
       })
       .then((response: AxiosResponse<APIResponse<RetrieveModalityStudyResponse[]>>) => {
@@ -124,7 +124,7 @@ const orthancRepository = {
    */
   async RemoveDICOMModality(request: RemoveDICOMModalityRequest): Promise<APIResponse<void>> {
     return Api()
-      .delete(`/v1/orthanc/modality/${request.modalityID}/remove`)
+      .delete(`/v1/orthanc/modality/${request.modalityId}/remove`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -141,7 +141,7 @@ const orthancRepository = {
    */
   async TriggerDICOMEchoSCU(request: TriggerDICOMEchoSCURequest): Promise<APIResponse<void>> {
     return Api()
-      .post(`/v1/orthanc/modality/${request.modalityID}/echo`)
+      .post(`/v1/orthanc/modality/${request.modalityId}/echo`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -158,7 +158,7 @@ const orthancRepository = {
    */
   async UpdateDICOMModality(request: UpdateDICOMModalityRequest): Promise<APIResponse<void>> {
     return Api()
-      .put(`/v1/orthanc/modality/${request.modalityID}/update`, {
+      .put(`/v1/orthanc/modality/${request.modalityId}/update`, {
         aet: request.aet,
         host: request.host,
         port: request.port,
