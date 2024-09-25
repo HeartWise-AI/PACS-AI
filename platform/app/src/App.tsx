@@ -1,5 +1,5 @@
 // External
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
@@ -26,11 +26,14 @@ import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { AlertProvider } from './AlertProvider';
 
-let commandsManager: CommandsManager,
-  extensionManager: ExtensionManager,
-  servicesManager: ServicesManager,
-  hotkeysManager: HotkeysManager;
+export const FrontendVersionContext = createContext('');
 
+let commandsManager: CommandsManager,
+extensionManager: ExtensionManager,
+servicesManager: ServicesManager,
+hotkeysManager: HotkeysManager;
+
+const frontendVersion = 'v0.8.0-beta';
 const queryClient = new QueryClient();
 
 function App({ config, defaultExtensions, defaultModes }) {
@@ -80,6 +83,7 @@ function App({ config, defaultExtensions, defaultModes }) {
     [SnackbarProvider, { service: uiNotificationService }],
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
+    ['FrontendVersionProvider', { value: frontendVersion }],
   ];
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 
@@ -113,12 +117,14 @@ function App({ config, defaultExtensions, defaultModes }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
-        <CombinedProviders>
-          <BrowserRouter basename={routerBasename}>
-            {authRoutes}
-            {appRoutes}
-          </BrowserRouter>
-        </CombinedProviders>
+        <FrontendVersionContext.Provider value={frontendVersion}>
+          <CombinedProviders>
+            <BrowserRouter basename={routerBasename}>
+              {authRoutes}
+              {appRoutes}
+            </BrowserRouter>
+          </CombinedProviders>
+        </FrontendVersionContext.Provider>
       </AlertProvider>
     </QueryClientProvider>
   );

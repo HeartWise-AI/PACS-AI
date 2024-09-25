@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 import tenantRepository from '../api/tenantRepository';
+import repository from '../api/repository';
 import { UserRole } from '../api/userDTO';
 import { GetTenantInfoResponse } from '../api/tenantDTO';
+import { GetAPIInfoResponse } from '../api/dto';
+import { FrontendVersionContext } from '../App';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
 import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../assets/pacs/icons/studies-active.png';
@@ -23,8 +26,10 @@ const Sidebar = () => {
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
+  const frontendVersion = useContext(FrontendVersionContext);
   let role = '';
 
   useEffect(() => {
@@ -44,8 +49,17 @@ const Sidebar = () => {
         console.error(error);
       }
     };
+    const fetchAPIInfo = async () => {
+      try {
+        const response = await repository.GetAPIInfo();
+        setAPIInfo(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
     fetchCurrentUser();
     fetchTenantInfo();
+    fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
   const handleMinimizeSidebarClick = () => {
@@ -79,6 +93,7 @@ const Sidebar = () => {
   if (currentUser) {
     role = currentUser.role;
   }
+
   return (
     <aside
       id="default-sidebar"
@@ -134,7 +149,9 @@ const Sidebar = () => {
               }}
             >
               <a
-                onClick={()=>{handleNavigateStudiesPage()}}
+                onClick={() => {
+                  handleNavigateStudiesPage();
+                }}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
@@ -255,28 +272,66 @@ const Sidebar = () => {
             </li>
           </ul>
         </div>
-        {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
-          <Link
-            to="/admin/members"
-            target="_blank"
+        <div>
+          {(role === UserRole.OWNER || role === UserRole.ADMIN) && (
+            <Link
+              to="/admin/members"
+              target="_blank"
+            >
+              <ButtonGradient className="h-[47px] w-full !px-0">
+                <div
+                  className={`flex items-center px-3 ${
+                    sidebarMini ? 'justify-center' : 'justify-between'
+                  }`}
+                >
+                  {!sidebarMini && (
+                    <div className="!text-primary-dark font-light"> {t('Admin Console')}</div>
+                  )}
+                  <img
+                    src={newTabActiveIcon}
+                    alt="New tab icon"
+                  />
+                </div>
+              </ButtonGradient>
+            </Link>
+          )}
+          <div
+            className={`${
+              sidebarMini ? 'hidden' : 'block'
+            } mt-4 flex w-full flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4`}
           >
-            <ButtonGradient className="h-[47px] w-full !px-0">
-              <div
-                className={`flex items-center px-3 ${
-                  sidebarMini ? 'justify-center' : 'justify-between'
-                }`}
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body"
+                className="text-white text-opacity-50"
               >
-                {!sidebarMini && (
-                  <div className="!text-primary-dark font-light"> {t('Admin Console')}</div>
-                )}
-                <img
-                  src={newTabActiveIcon}
-                  alt="New tab icon"
-                />
-              </div>
-            </ButtonGradient>
-          </Link>
-        )}
+                {t('Backend')}:
+              </Typography>
+              <Typography
+                variant="body"
+                className="text-white"
+              >
+                {apiInfo.version}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body"
+                className="text-white text-opacity-50"
+                component="span"
+              >
+                {t('Frontend')}:
+              </Typography>
+              <Typography
+                variant="body"
+                className="text-white"
+                component="span"
+              >
+                {frontendVersion}
+              </Typography>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
   );

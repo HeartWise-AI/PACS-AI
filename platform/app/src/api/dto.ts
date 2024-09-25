@@ -11,6 +11,10 @@ export interface ErrorAPIResponse {
   readonly errorCode?: string;
 }
 
+export interface GetAPIInfoResponse {
+  readonly version: string;
+}
+
 export enum Error {
   DUPLICATE_RECORD = 'DUPLICATE_RECORD',
   UNAUTHORIZED_ACCESS = 'UNAUTHORIZED_ACCESS',
