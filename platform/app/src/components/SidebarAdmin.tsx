@@ -282,7 +282,7 @@ const SidebarAdmin = () => {
                 className="text-white text-opacity-50"
                 component="span"
               >
-                {t('Backed')}:
+                {t('Backend')}:
               </Typography>
               <Typography
                 variant="body"

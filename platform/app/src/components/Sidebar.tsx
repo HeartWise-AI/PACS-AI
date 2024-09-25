@@ -305,7 +305,7 @@ const Sidebar = () => {
                 variant="body"
                 className="text-white text-opacity-50"
               >
-                {t('Backed')}:
+                {t('Backend')}:
               </Typography>
               <Typography
                 variant="body"
