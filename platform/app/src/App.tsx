@@ -42,7 +42,7 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 
-const frontendVersion = 'v0.8.0';
+const frontendVersion = 'v0.8.0-beta';
 const queryClient = new QueryClient();
 
 function App({
