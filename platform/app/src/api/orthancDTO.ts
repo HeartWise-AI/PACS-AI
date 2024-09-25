@@ -57,7 +57,7 @@ export interface GetJobInfoResponse {
 }
 
 export interface GetJobInfoRequest {
-  jobIDs: string[];
+  jobIds: string[];
 }
 
 export interface GetDICOMModalitiesResponse {
@@ -80,7 +80,7 @@ export interface GetDICOMModalitiesResponse {
 }
 
 export interface RetrieveModalityStudyRequest {
-  modalityID: string;
+  modalityId: string;
   studyInstanceUID: string;
 }
 
@@ -90,15 +90,15 @@ export interface RetrieveModalityStudyResponse {
 }
 
 export interface RemoveDICOMModalityRequest {
-  modalityID: string;
+  modalityId: string;
 }
 
 export interface TriggerDICOMEchoSCURequest {
-  modalityID: string;
+  modalityId: string;
 }
 
 export interface UpdateDICOMModalityRequest {
-  modalityID: string;
+  modalityId: string;
   aet: string;
   host: string;
   port: number;

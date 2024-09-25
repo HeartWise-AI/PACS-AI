@@ -103,7 +103,7 @@ const WorkspaceSettingsPage = () => {
     const updatedModalities = [...modalities];
     const modalityPromises = modalities.map(async (modality, index) => {
       try {
-        await orthancRepository.TriggerDICOMEchoSCU({ modalityID: modality.id });
+        await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
         updatedModalities[index] = { ...modality, status: 'Connected' };
       } catch (error) {
         console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
@@ -132,7 +132,7 @@ const WorkspaceSettingsPage = () => {
       )
     );
     try {
-      await orthancRepository.TriggerDICOMEchoSCU({ modalityID: modalityId });
+      await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modalityId });
       setDICOMModalities(prevModalities =>
         prevModalities.map(modality =>
           modality.id === modalityId ? { ...modality, status: 'Connected' } : modality
@@ -153,7 +153,7 @@ const WorkspaceSettingsPage = () => {
     setIsAddingModality(true);
     try {
       const response = await orthancRepository.UpdateDICOMModality({
-        modalityID: selectedModality.id,
+        modalityId: selectedModality.id,
         aet: selectedModality.aet,
         host: selectedModality.host,
         port: +selectedModality.port,
@@ -179,7 +179,7 @@ const WorkspaceSettingsPage = () => {
     setIsUpdatingModality(true);
     try {
       const response = await orthancRepository.UpdateDICOMModality({
-        modalityID: selectedModality.id,
+        modalityId: selectedModality.id,
         aet: selectedModality.aet,
         host: selectedModality.host,
         port: +selectedModality.port,
@@ -206,7 +206,7 @@ const WorkspaceSettingsPage = () => {
     setIsRemovingModality(true);
     try {
       const response = await orthancRepository.RemoveDICOMModality({
-        modalityID: selectedModalityToRemove,
+        modalityId: selectedModalityToRemove,
       });
       showAlert(response.message, 'success');
       setIsOpenRemoveModalityModal(false);
