@@ -1,5 +1,5 @@
 // External
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
@@ -33,11 +33,17 @@ import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 import { AlertProvider } from './AlertProvider';
 
+export const FrontendVersionContext = createContext('');
+
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
   servicesManager: AppTypes.ServicesManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
+
+
+const frontendVersion = 'v0.8.0';
+const queryClient = new QueryClient();
 
 function App({
   config = {
@@ -121,6 +127,7 @@ function App({
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
     [ShepherdJourneyProvider],
+    ['FrontendVersionProvider', { value: frontendVersion }],
   ];
 
   // Loop through and register each of the service providers registered with the ServiceProvidersManager.
@@ -163,12 +170,14 @@ function App({
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
-        <CombinedProviders>
-          <BrowserRouter basename={routerBasename}>
-            {authRoutes}
-            {appRoutes}
-          </BrowserRouter>
-        </CombinedProviders>
+        <FrontendVersionContext.Provider value={frontendVersion}>
+          <CombinedProviders>
+            <BrowserRouter basename={routerBasename}>
+              {authRoutes}
+              {appRoutes}
+            </BrowserRouter>
+          </CombinedProviders>
+        </FrontendVersionContext.Provider>
       </AlertProvider>
     </QueryClientProvider>
   );
