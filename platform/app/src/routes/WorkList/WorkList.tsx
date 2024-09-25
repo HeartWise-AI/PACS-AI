@@ -135,10 +135,15 @@ function WorkList() {
         const options = Object.keys(response.data.modalities);
         setModalityOptions(options);
 
+        if (options.length === 0) {
+          localStorage.removeItem('selectedDICOMModality');
+          setSelectedDICOMModality(null);
+        }
+
         // check localStorage for selectedDICOMModality
         const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
 
-        if (!storedDICOMModality) {
+        if (!storedDICOMModality && options.length > 0) {
           // if not exist, assign the first key in the response.modalities
           const firstDICOMModalityKey = options[0];
           if (firstDICOMModalityKey) {
