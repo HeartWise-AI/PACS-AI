@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
@@ -10,7 +10,6 @@ import { GetTenantInfoResponse } from '../api/tenantDTO';
 import { GetAPIInfoResponse } from '../api/dto';
 import { FrontendVersionContext } from '../App';
 import logoIcon from './../assets/pacs/logo/pacs-ai-icon-logo.png';
-import drawerLeftArrow from './../assets/pacs/icons/align-from-left-gradient.png';
 import studiesActiveIcon from './../assets/pacs/icons/studies-active.png';
 import studiesInActiveIcon from './../assets/pacs/icons/studies-inactive.png';
 import aiModelsActiveIcon from './../assets/pacs/icons/ai-models-active.png';
@@ -20,10 +19,7 @@ import comingSoonImg from './../assets/pacs/icons/coming-soon.png';
 import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const Sidebar = () => {
-  const [sidebarMini, setSidebarMini] = useState<boolean>(() => {
-    const width = window.innerWidth;
-    return width <= 1024;
-  });
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
@@ -31,6 +27,14 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const frontendVersion = useContext(FrontendVersionContext);
   let role = '';
+
+  const expandSidebar = useCallback(() => {
+    setSidebarExpanded(true);
+  }, []);
+
+  const collapseSidebar = useCallback(() => {
+    setSidebarExpanded(false);
+  }, []);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -61,10 +65,6 @@ const Sidebar = () => {
     fetchTenantInfo();
     fetchAPIInfo();
   }, [userRepository, tenantRepository]);
-
-  const handleMinimizeSidebarClick = () => {
-    setSidebarMini(prevSidebarMini => !prevSidebarMini);
-  };
 
   // Check if pathname is active
   const isPageActive = pattern => {
@@ -97,50 +97,37 @@ const Sidebar = () => {
   return (
     <aside
       id="default-sidebar"
-      className={`sticky top-0 left-0 z-40 h-screen ${
-        sidebarMini ? 'min-w-[110px]' : 'min-w-[350px]'
+      className={`relative sticky top-0 left-0 z-40 h-screen !overflow-x-hidden !transition-all !duration-300 ${
+        sidebarExpanded ? 'min-w-[280px]' : 'min-w-[110px]'
       } p-5`}
       aria-label="Sidebar"
+      onMouseEnter={expandSidebar}
+      onMouseLeave={collapseSidebar}
     >
-      <div className="border-1 flex h-full flex-col justify-between overflow-y-auto rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
+      <div className="border-1 flex h-full flex-col justify-between overflow-y-auto overflow-x-hidden rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
-          <div
-            className={`flex items-start justify-between ${
-              sidebarMini ? 'ml-1 flex-col' : 'flex-row'
-            }`}
-          >
-            {sidebarMini && (
+          <div className="flex items-start justify-between">
+            {sidebarExpanded ? (
+              <Logo class="h-auto w-[117px]" />
+            ) : (
               <img
                 src={logoIcon}
                 alt="Pacs logo"
                 className="w-[46px]"
               />
             )}
-            {!sidebarMini && <Logo class="h-auto w-[117px]" />}
-            <button
-              className={`flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10 ${
-                sidebarMini ? 'mx-auto mt-4 block rotate-180' : ''
-              }`}
-              onClick={handleMinimizeSidebarClick}
-            >
-              <img
-                src={drawerLeftArrow}
-                alt="Left arrow"
-                className="w-[80%]"
-              />
-            </button>
           </div>
-          {!sidebarMini && (
+          {sidebarExpanded && (
             <Typography
               variant="caption"
-              className="mt-7 text-white text-opacity-90"
+              className="mt-7 text-white text-opacity-90 transition-all duration-300 delay-150"
             >
               {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
             </Typography>
           )}
           <ul className="mt-5 space-y-2 font-medium">
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background:
                   isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
@@ -153,7 +140,7 @@ const Sidebar = () => {
                   handleNavigateStudiesPage();
                 }}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
+                  !sidebarExpanded ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {(isPageActive(`/`) ||
@@ -175,7 +162,7 @@ const Sidebar = () => {
                     />
                   )}
 
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
@@ -190,7 +177,7 @@ const Sidebar = () => {
               </a>
             </li>
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background: isPageActive(`/ai-models`)
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -200,7 +187,7 @@ const Sidebar = () => {
               <a
                 onClick={() => navigate(`/ai-models`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  !sidebarExpanded ? 'py-2 px-3' : 'p-2'
                 }`}
               >
                 {isPageActive(`/ai-models`) && (
@@ -217,7 +204,7 @@ const Sidebar = () => {
                     className="w-[18px]"
                   />
                 )}
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium  ${
@@ -230,7 +217,7 @@ const Sidebar = () => {
               </a>
             </li>
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background:
                   location.pathname === '/ai-predictions'
@@ -241,7 +228,7 @@ const Sidebar = () => {
               <a
                 href="#"
                 className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  !sidebarExpanded ? 'py-2 px-3' : 'p-2'
                 }`}
               >
                 <img
@@ -249,7 +236,7 @@ const Sidebar = () => {
                   alt="AI Predictions icon"
                   className="w-[18px]"
                 />
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
@@ -281,10 +268,10 @@ const Sidebar = () => {
               <ButtonGradient className="h-[47px] w-full !px-0">
                 <div
                   className={`flex items-center px-3 ${
-                    sidebarMini ? 'justify-center' : 'justify-between'
+                    !sidebarExpanded ? 'justify-center' : 'justify-between'
                   }`}
                 >
-                  {!sidebarMini && (
+                  {sidebarExpanded && (
                     <div className="!text-primary-dark font-light"> {t('Admin Console')}</div>
                   )}
                   <img
@@ -296,8 +283,8 @@ const Sidebar = () => {
             </Link>
           )}
           <div
-            className={`${
-              sidebarMini ? 'hidden' : 'block'
+            className={`transition-all duration-300 ${
+              sidebarExpanded ? 'block' : 'hidden'
             } mt-4 flex w-full flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4`}
           >
             <div className="flex items-center gap-2">
