@@ -6,7 +6,10 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
 import tenantRepository from '../../api/tenantRepository';
+import repository from '../../api/repository';
+import { GetAPIInfoResponse } from '../../api/dto';
 import { GetPublicTenantByIDResponse } from '../../api/tenantDTO';
+import { FrontendVersionContext } from '../../App';
 import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
@@ -22,9 +25,11 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
+  const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const tenantId = new URLSearchParams(useLocation().search).get('t');
+  const frontendVersion = useContext(FrontendVersionContext);
   const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
   auth.tenantId = tenantId;
 
@@ -45,8 +50,17 @@ const LoginPage = () => {
         window.location.reload();
       }
     };
+    const fetchAPIInfo = async () => {
+      try {
+        const response = await repository.GetAPIInfo();
+        setAPIInfo(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
     fetchTenantInfo();
     getCurrentUser();
+    fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
   const handleForgotPasswordClick = () => {
@@ -135,6 +149,45 @@ const LoginPage = () => {
       });
   };
 
+  const versionInfo = () => {
+    return (
+      <div
+        className={`mx-auto mt-4 block flex w-full max-w-[200px] flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4 text-center`}
+      >
+        <div className="flex items-center gap-2">
+          <Typography
+            variant="body"
+            className="text-white text-opacity-50"
+          >
+            {t('Backend')}:
+          </Typography>
+          <Typography
+            variant="body"
+            className="text-white"
+          >
+            {apiInfo.version}
+          </Typography>
+        </div>
+        <div className="flex items-center gap-2">
+          <Typography
+            variant="body"
+            className="text-white text-opacity-50"
+            component="span"
+          >
+            {t('Frontend')}:
+          </Typography>
+          <Typography
+            variant="body"
+            className="text-white"
+            component="span"
+          >
+            {frontendVersion}
+          </Typography>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">
       <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
@@ -196,9 +249,10 @@ const LoginPage = () => {
               </Button>
             </div>
             <div>
+              {versionInfo()}
               <Typography
                 variant="body"
-                className="text-center font-light text-white text-opacity-70"
+                className="mt-4 text-center font-light text-white text-opacity-70"
               >
                 {t('© 2024 PACS AI. All rights reserved.')}
               </Typography>
@@ -257,12 +311,15 @@ const LoginPage = () => {
                 {isResettingPassword ? '...' : t('Reset Password')}
               </Button>
             </div>
-            <Typography
-              variant="body"
-              className="text-center font-light text-white text-opacity-70"
-            >
-              {t('© 2024 PACS AI. All rights reserved.')}
-            </Typography>
+            <div>
+              {versionInfo()}
+              <Typography
+                variant="body"
+                className="mt-4 text-center font-light text-white text-opacity-70"
+              >
+                {t('© 2024 PACS AI. All rights reserved.')}
+              </Typography>
+            </div>
           </div>
         )}
       </div>

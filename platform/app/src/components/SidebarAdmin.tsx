@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ButtonGradient, Typography, Logo } from '@ohif/ui';
@@ -20,10 +20,7 @@ import workplaceSettingsActiveIcon from './../assets/pacs/icons/settings-active.
 import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const SidebarAdmin = () => {
-  const [sidebarMini, setSidebarMini] = useState<boolean>(() => {
-    const width = window.innerWidth;
-    return width <= 1024;
-  });
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
@@ -31,6 +28,14 @@ const SidebarAdmin = () => {
   const navigate = useNavigate();
   const frontendVersion = useContext(FrontendVersionContext);
   let role = '';
+
+  const expandSidebar = useCallback(() => {
+    setSidebarExpanded(true);
+  }, []);
+
+  const collapseSidebar = useCallback(() => {
+    setSidebarExpanded(false);
+  }, []);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -62,15 +67,11 @@ const SidebarAdmin = () => {
     fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
-  const handleMinimizeSidebarClick = () => {
-    setSidebarMini(prevSidebarMini => !prevSidebarMini);
-  };
-
-  // Check if pathname is active
-  const isPageActive = pattern => {
-    const pathname = window.location.pathname;
-    return pathname === pattern;
-  };
+    // Check if pathname is active
+    const isPageActive = pattern => {
+      const pathname = window.location.pathname;
+      return pathname === pattern;
+    };
 
   if (currentUser) {
     role = currentUser.role;
@@ -79,50 +80,37 @@ const SidebarAdmin = () => {
   return (
     <aside
       id="default-sidebar"
-      className={`sticky top-0 left-0 z-40 h-screen ${
-        sidebarMini ? 'min-w-[110px]' : 'min-w-[350px]'
+      className={`sticky top-0 left-0 z-40 h-screen !overflow-x-hidden !transition-all !duration-300 ${
+         sidebarExpanded ? 'min-w-[280px]' : 'min-w-[110px]'
       } p-5`}
       aria-label="Sidebar"
+      onMouseEnter={expandSidebar}
+      onMouseLeave={collapseSidebar}
     >
-      <div className="border-1 flex h-full flex-col justify-between overflow-y-auto rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
+      <div className="border-1 flex h-full flex-col justify-between overflow-x-hidden overflow-y-auto rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
-          <div
-            className={`flex items-start justify-between ${
-              sidebarMini ? 'ml-1 flex-col' : 'flex-row'
-            }`}
-          >
-            {sidebarMini && (
+          <div className="flex items-start justify-between">
+            {sidebarExpanded ? (
+              <Logo class="h-auto w-[117px] transition-opacity duration-300 delay-150" />
+            ) : (
               <img
                 src={logoIcon}
                 alt="Pacs logo"
                 className="w-[46px]"
               />
             )}
-            {!sidebarMini && <Logo class="h-auto w-[117px]" />}
-            <button
-              className={`flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10 ${
-                sidebarMini ? 'mx-auto mt-4 rotate-180' : ''
-              }`}
-              onClick={handleMinimizeSidebarClick}
-            >
-              <img
-                src={drawerLeftArrow}
-                alt="Left arrow"
-                className="w-[80%]"
-              />
-            </button>
           </div>
-          {!sidebarMini && (
+          {sidebarExpanded && (
             <Typography
               variant="caption"
-              className="mt-7 text-white text-opacity-90"
+              className="mt-7 text-white text-opacity-90 transition-all duration-300 delay-150"
             >
               {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
             </Typography>
           )}
           <ul className="mt-5 space-y-2 font-medium">
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/members')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -132,7 +120,7 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/members`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
+                  !sidebarExpanded ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/members') && (
@@ -150,10 +138,10 @@ const SidebarAdmin = () => {
                   />
                 )}
 
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
                       isPageActive('/admin/members') ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
@@ -163,7 +151,7 @@ const SidebarAdmin = () => {
               </a>
             </li>
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/kibana-logs')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -173,7 +161,7 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/kibana-logs`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
+                  !sidebarExpanded ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/kibana-logs') && (
@@ -191,10 +179,10 @@ const SidebarAdmin = () => {
                   />
                 )}
 
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
                       isPageActive('/admin/kibana-logs')
                         ? 'text-black'
                         : 'text-white text-opacity-50'
@@ -206,7 +194,7 @@ const SidebarAdmin = () => {
               </a>
             </li>
             <li
-              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
               style={{
                 background: isPageActive('/admin/workspace-settings')
                   ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
@@ -216,7 +204,7 @@ const SidebarAdmin = () => {
               <a
                 onClick={() => navigate(`/admin/workspace-settings`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
+                  !sidebarExpanded ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
                 {isPageActive('/admin/workspace-settings') && (
@@ -234,10 +222,10 @@ const SidebarAdmin = () => {
                   />
                 )}
 
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
                       isPageActive('/admin/workspace-settings')
                         ? 'text-black'
                         : 'text-white text-opacity-50'
@@ -258,10 +246,10 @@ const SidebarAdmin = () => {
             >
               <div
                 className={`flex items-center ${
-                  sidebarMini ? 'justify-center' : 'justify-between px-3'
+                  sidebarExpanded ? 'justify-center' : 'justify-between px-3'
                 }`}
               >
-                {!sidebarMini && (
+                {sidebarExpanded && (
                   <div className="!text-primary-dark font-light">{t('Launch PACS AI')}</div>
                 )}
                 <img
@@ -272,8 +260,8 @@ const SidebarAdmin = () => {
             </ButtonGradient>
           )}
           <div
-            className={`${
-              sidebarMini ? 'hidden' : 'block'
+            className={`transition-all duration-300 ${
+              sidebarExpanded ? 'block' : 'hidden'
             } mt-4 flex w-full flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4`}
           >
             <div className="flex items-center gap-2">
