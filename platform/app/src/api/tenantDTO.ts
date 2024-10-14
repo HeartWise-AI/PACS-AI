@@ -18,12 +18,12 @@ export interface GetPublicTenantByIDRequest {
 }
 
 export interface ModelDetails {
-  Changelogs: { [key: string]: string };
+  Changelogs: { [key: string]: string } | string;
   Summary: { [key: string]: string };
-  Mechanism: { [key: string]: string };
-  Validation_and_performance: { [key: string]: { [key: string]: string | number } };
-  Other_information: { [key: string]: string };
-  Other_results: { [key: string]: string };
-  Uses_and_directions: { [key: string]: string };
+  Mechanism: { [key: string]: string } | string;
+  Validation_and_performance: { [key: string]: { [key: string]: string | number } } | string;
+  Other_information: { [key: string]: string } | string;
+  Other_results: { [key: string]: string } | string;
+  Uses_and_directions: { [key: string]: string } | string;
   Warnings_and_limitations: { [key: string]: string };
 }
