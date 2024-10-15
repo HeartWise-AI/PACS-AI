@@ -71,7 +71,7 @@ const Thumbnail = ({
         </div>
         <div className="flex flex-1 flex-row items-center pt-2 text-base text-white">
           <div className="mr-4">
-            <span className="text-primary-main font-bold">{'S: '}</span>
+            <span className="text-primary-main font-bold">{'Series: '}</span>
             {seriesNumber}
           </div>
           <div className="flex flex-1 flex-row items-center">
