@@ -127,7 +127,7 @@ function ViewerLayout({
             servicesManager={servicesManager}
           />
           <div
-            className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent"
+            className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent gap-2"
             style={{ height: 'calc(100vh - 147px)' }}
           >
             <React.Fragment>

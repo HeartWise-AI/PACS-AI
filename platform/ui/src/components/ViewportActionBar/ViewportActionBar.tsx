@@ -26,7 +26,7 @@ const ViewportActionBar = ({
   onDoubleClick,
   getStatusComponent,
 }: ViewportActionBarProps): JSX.Element => {
-  const { label, studyDate, seriesDescription, patientInformation } = studyData;
+  const { label, studyDate, seriesDescription, patientInformation, currentSeries } = studyData;
   const { patientName, patientSex, patientAge, MRN, thickness, thicknessUnits, spacing, scanner } =
     patientInformation;
 
@@ -109,60 +109,68 @@ const ViewportActionBar = ({
   return (
     <div
       ref={componentRootElemRef}
-      className="pointer-events-auto flex h-8 shrink-0 select-none items-center overflow-visible whitespace-nowrap px-2 text-base"
+      className="pointer-events-auto flex h-8 shrink-0 select-none items-center justify-between overflow-visible whitespace-nowrap px-2 text-base"
       onDoubleClick={onDoubleClick}
     >
-      {getStatusComponent()}
-      {!!label?.length && <span className="text-aqua-pale text-large ml-1">{label}</span>}
-      <div className={separatorClasses}></div>
-      <span
-        data-cy="studyDate"
-        ref={studyDateElemRef}
-        className={studyDateClasses()}
-      >
-        {studyDate}
-      </span>
-      {showSeriesDesc && (
-        <>
-          <div className={separatorClasses}></div>
-          <span
-            ref={seriesDescElemRef}
-            className={`text-aqua-pale mr-1 ${textEllipsisClasses}`}
-          >
-            {seriesDescription}
-          </span>
-        </>
-      )}
-      {showArrows && (
-        <>
-          <Icon
-            className={`ml-auto ${arrowClasses}`}
-            name="chevron-prev"
-            onClick={() => onArrowsClick('left')}
+      <div className="flex min-w-[165px] flex-row gap-2 items-center">
+        {getStatusComponent()}
+        {!!label?.length && <span className="text-aqua-pale text-large ml-1">{label}</span>}
+        <div className={separatorClasses}></div>
+        <span
+          data-cy="studyDate"
+          ref={studyDateElemRef}
+          className={studyDateClasses()}
+        >
+          {studyDate}
+        </span>
+        {showSeriesDesc && (
+          <>
+            <div className={separatorClasses}></div>
+            <span
+              ref={seriesDescElemRef}
+              className={`text-aqua-pale mr-1 ${textEllipsisClasses}`}
+            >
+              {seriesDescription}
+            </span>
+          </>
+        )}
+      </div>
+      <div className="mx-auto flex flex-row gap-1 text-white items-center">
+        <span>Series: </span>
+        <span>{currentSeries}</span>
+      </div>
+      <div className="flex min-w-[165px] flex-row gap-2 items-center">
+        {showArrows && (
+          <>
+            <Icon
+              className={`ml-auto ${arrowClasses}`}
+              name="chevron-prev"
+              onClick={() => onArrowsClick('left')}
+            />
+            <Icon
+              className={arrowClasses}
+              name="chevron-next"
+              onClick={() => onArrowsClick('right')}
+            />
+          </>
+        )}
+        <div
+          className={patientInfoClasses()}
+          onClick={onPatientInfoClick}
+        >
+          <PatientInfo
+            showPatientInfoRef={showPatientInfoElemRef}
+            isOpen={showPatientInfo}
+            patientName={patientName}
+            patientSex={patientSex}
+            patientAge={patientAge}
+            MRN={MRN}
+            thickness={thickness}
+            thicknessUnits={thicknessUnits}
+            spacing={spacing}
+            scanner={scanner}
           />
-          <Icon
-            className={arrowClasses}
-            name="chevron-next"
-            onClick={() => onArrowsClick('right')}
-          />
-        </>
-      )}
-      <div
-        className={patientInfoClasses()}
-        onClick={onPatientInfoClick}
-      >
-        <PatientInfo
-          showPatientInfoRef={showPatientInfoElemRef}
-          isOpen={showPatientInfo}
-          patientName={patientName}
-          patientSex={patientSex}
-          patientAge={patientAge}
-          MRN={MRN}
-          thickness={thickness}
-          thicknessUnits={thicknessUnits}
-          spacing={spacing}
-          scanner={scanner}
-        />
+        </div>
       </div>
     </div>
   );
