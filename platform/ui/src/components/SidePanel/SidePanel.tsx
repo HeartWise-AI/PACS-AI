@@ -27,12 +27,12 @@ const baseClasses =
 
 const classesMap = {
   open: {
-    left: `mr-1`,
-    right: `ml-1`,
+    left: `mr-0`,
+    right: `ml-0`,
   },
   closed: {
-    left: `mr-2 items-end`,
-    right: `ml-2 items-start`,
+    left: `mr-0 items-end`,
+    right: `ml-0 items-start`,
   },
 };
 
