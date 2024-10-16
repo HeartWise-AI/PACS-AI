@@ -231,12 +231,12 @@ function WorkList() {
     if (params.modalitiesInStudy) {
       updatePromises.push(
         new Promise(resolve => {
-          const modalitiesArray = params.modalitiesInStudy.split('//');
+          const modalitiesArray = params.modalitiesInStudy.split('\\');
           const selectedOptions = filtersMeta[4].inputProps.options.filter(option =>
             modalitiesArray.includes(option.value)
           );
           setSelectedModalities(selectedOptions);
-          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('\\');
           setStudyListFilter(prevFilter => ({
             ...prevFilter,
             modalitiesInStudy: updatedModalitiesInStudy,
@@ -421,7 +421,7 @@ function WorkList() {
    * @param selectedOptions
    */
   const handleModalitiesChange = selectedOptions => {
-    const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+    const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('\\');
     setSelectedModalities(selectedOptions || []);
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
