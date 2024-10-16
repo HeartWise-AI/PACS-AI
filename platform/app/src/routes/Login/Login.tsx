@@ -151,37 +151,23 @@ const LoginPage = () => {
 
   const versionInfo = () => {
     return (
-      <div
-        className={`mx-auto mt-4 block flex w-full max-w-[200px] flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4 text-center`}
-      >
+      <div className={`mx-auto mt-4 block flex w-full justify-center gap-3 rounded-lg text-center`}>
         <div className="flex items-center gap-2">
           <Typography
             variant="body"
-            className="text-white text-opacity-50"
+            className="font-light text-white"
+            component="span"
           >
-            {t('Backend')}:
-          </Typography>
-          <Typography
-            variant="body"
-            className="text-white"
-          >
-            {apiInfo.version}
+            <span className="opacity-50">{t('Backend')}:</span> {apiInfo.version}
           </Typography>
         </div>
         <div className="flex items-center gap-2">
           <Typography
             variant="body"
-            className="text-white text-opacity-50"
+            className="font-light text-white"
             component="span"
           >
-            {t('Frontend')}:
-          </Typography>
-          <Typography
-            variant="body"
-            className="text-white"
-            component="span"
-          >
-            {frontendVersion}
+            <span className="opacity-50">{t('Frontend')}:</span> {frontendVersion}
           </Typography>
         </div>
       </div>
