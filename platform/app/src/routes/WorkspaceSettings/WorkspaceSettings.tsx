@@ -7,6 +7,8 @@ import { AlertContext } from '../../AlertProvider';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import refreshIcon from './../../assets/pacs/icons/refresh.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
+import playIcon from './../../assets/pacs/icons/play.png';
+import stopIcon from './../../assets/pacs/icons/stop.png';
 import tenantRepository from '../../api/tenantRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import Modal from '../../components/Modal';
@@ -44,7 +46,7 @@ const WorkspaceSettingsPage = () => {
   const [isOpenRemoveModalityModal, setIsOpenRemoveModalityModal] = useState<boolean>(false);
   const [isRefreshingDICOMModalities, setIsRefreshingDICOMModalities] = useState<boolean>(false);
   const [isRemovingModality, setIsRemovingModality] = useState<boolean>(false);
-  const headers = [
+  const dicomHeaders = [
     { text: t('ID'), value: 'id', align: 'left' },
     { text: t('Target AET'), value: 'aet', align: 'left' },
     { text: t('Host'), value: 'host', align: 'left' },
@@ -52,6 +54,58 @@ const WorkspaceSettingsPage = () => {
     { text: t('Status'), value: 'status', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
+  const inferenceModelHeaders = [
+    { text: t('Container ID'), value: 'id', align: 'left' },
+    { text: t('Name'), value: 'name', align: 'left' },
+    { text: t('Version'), value: 'version', align: 'left' },
+    { text: t('Image'), value: 'image', align: 'left' },
+    { text: t('Status'), value: 'status', align: 'left' },
+    { text: t('CPU %'), value: 'cpu', align: 'left' },
+    { text: t('Action'), value: 'action', align: 'center' },
+  ];
+  const [inferenceModels, setInferenceModels] = useState([
+    {
+      id: 'container1',
+      name: 'Lung Segmentation',
+      version: '1.0.0',
+      image: 'lung-seg:latest',
+      status: 'Running',
+      cpu: 25.5,
+    },
+    {
+      id: 'container2',
+      name: 'Brain Tumor Detection',
+      version: '2.1.3',
+      image: 'brain-tumor:v2',
+      status: 'Stopped',
+      cpu: 0,
+    },
+    {
+      id: 'container3',
+      name: 'Chest X-Ray Classification',
+      version: '3.0.1',
+      image: 'chest-xray:3.0',
+      status: 'Running',
+      cpu: 35.2,
+    },
+    {
+      id: 'container4',
+      name: 'Bone Fracture Detection',
+      version: '1.2.0',
+      image: 'bone-fracture:1.2',
+      status: 'Running',
+      cpu: 28.7,
+    },
+    {
+      id: 'container5',
+      name: 'Skin Lesion Analysis',
+      version: '2.3.1',
+      image: 'skin-lesion:2.3',
+      status: 'Stopped',
+      cpu: 0,
+    },
+  ]);
+
   // Set page title
   useEffect(() => {
     document.title = 'Admin Workspace Settings - PACS AI';
@@ -452,7 +506,7 @@ const WorkspaceSettingsPage = () => {
             )}
             {/* divider */}
             <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
-            {/* modality data */}
+            {/* DICOM modality data */}
             <div>
               <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                 <h1 className="text-xl text-white">{t('DICOM (Orthanc)')}</h1>
@@ -464,7 +518,7 @@ const WorkspaceSettingsPage = () => {
                 </Button>
               </div>
             </div>
-            {/* table container */}
+            {/* DICOM table container */}
             <div className="bg-transparent py-5">
               {isLoadingModalities ? (
                 <div
@@ -482,7 +536,7 @@ const WorkspaceSettingsPage = () => {
                 </div>
               ) : dicomModalities.length > 0 ? (
                 <Table
-                  headers={headers}
+                  headers={dicomHeaders}
                   data={dicomModalities}
                   className={'max-w-[170px]'}
                 >
@@ -496,7 +550,7 @@ const WorkspaceSettingsPage = () => {
                     if (header.value === 'port') {
                       return <div className="w-[200px] text-white">{cell}</div>;
                     }
-                    // email status
+                    // status
                     if (header.value === 'status') {
                       return (
                         <div className="flex min-w-[100px] items-center gap-2">
@@ -530,6 +584,97 @@ const WorkspaceSettingsPage = () => {
                     // action
                     if (header.value === 'action') {
                       return <ActionButton row={row} />;
+                    }
+                    return cell;
+                  }}
+                </Table>
+              ) : (
+                <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
+              )}
+            </div>
+            {/* divider */}
+            <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
+            {/* Inference models data */}
+            <div>
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <h1 className="text-xl text-white">{t('Inference Models')}</h1>
+                <Button
+                  className="h-[35px] rounded-lg"
+                  onClick={() => setIsOpenAddEditModalityModal(true)}
+                >
+                  {t('New Model')}
+                </Button>
+              </div>
+            </div>
+            {/* Inference models table container */}
+            <div className="bg-transparent py-5">
+              {isLoadingModalities ? (
+                <div
+                  role="status"
+                  className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
+                >
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <div key={i}>
+                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                    </div>
+                  ))}
+                </div>
+              ) : inferenceModels.length > 0 ? (
+                <Table
+                  headers={inferenceModelHeaders}
+                  data={inferenceModels}
+                  className={'max-w-[170px]'}
+                >
+                  {(cell, header, row) => {
+                    if (header.value === 'name') {
+                      return <div className="w-[250px] text-white">{cell}</div>;
+                    }
+                    if (header.value === 'version') {
+                      return <div className="w-[200px] text-white">{cell}</div>;
+                    }
+                    if (header.value === 'image') {
+                      return <div className="w-[200px] text-white">{cell}</div>;
+                    }
+                    // status
+                    if (header.value === 'status') {
+                      return (
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <div
+                            className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${
+                              cell === 'Running'
+                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
+                                : 'bg-red-300 bg-opacity-10 text-red-500'
+                            }`}
+                          >
+                            <span>{cell}</span>
+                            <div
+                              className={`h-1 w-1 rounded-full ${
+                                cell === 'Running' ? 'bg-[#6ED47C]' : 'bg-red-500'
+                              }`}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (header.value === 'cpu') {
+                      return <div className="w-[200px] text-white">{cell ? `${cell}%` : '-'}</div>;
+                    }
+                    // action
+                    if (header.value === 'action') {
+                      return (
+                        <div className="flex items-center justify-center gap-2">
+                          <button>
+                            <img
+                              src={playIcon}
+                              alt="Play icon"
+                            />
+                          </button>
+                          <ActionButton row={row} />
+                        </div>
+                      );
                     }
                     return cell;
                   }}
