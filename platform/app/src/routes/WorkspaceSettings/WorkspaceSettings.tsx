@@ -37,12 +37,24 @@ const WorkspaceSettingsPage = () => {
     host: '',
     port: '',
   });
+  const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState<string>('');
+  const [selectedInferenceModel, setSelectedInferenceModel] = useState({
+    id: '',
+    name: '',
+    image: '',
+    outputMode: '',
+  });
   const [isLoadingModalities, setIsLoadingModalities] = useState(true);
   const [isAddModality, setIsAddModality] = useState<boolean>(true);
+  const [isAddInferenceModel, setIsAddInferenceModel] = useState<boolean>(true);
   const [isUpdatingModality, setIsUpdatingModality] = useState<boolean>(false);
   const [isAddingModality, setIsAddingModality] = useState<boolean>(false);
+  const [isUpdatingInferenceModel, setIsUpdatingInferenceModel] = useState<boolean>(false);
+  const [isAddingInferenceModel, setIsAddingInferenceModel] = useState<boolean>(false);
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
   const [isOpenAddEditModalityModal, setIsOpenAddEditModalityModal] = useState<boolean>(false);
+  const [isOpenAddEditInferenceModelModal, setIsOpenAddEditInferenceModelModal] =
+    useState<boolean>(false);
   const [isOpenRemoveModalityModal, setIsOpenRemoveModalityModal] = useState<boolean>(false);
   const [isRefreshingDICOMModalities, setIsRefreshingDICOMModalities] = useState<boolean>(false);
   const [isRemovingModality, setIsRemovingModality] = useState<boolean>(false);
@@ -105,6 +117,7 @@ const WorkspaceSettingsPage = () => {
       cpu: 0,
     },
   ]);
+  const outputModeOptions = ['JSON', 'OHIF_ANNOTATIONS', 'HTML', 'WEB_APP', 'PDF'];
 
   // Set page title
   useEffect(() => {
@@ -287,6 +300,18 @@ const WorkspaceSettingsPage = () => {
       aet: '',
       host: '',
       port: '',
+    });
+  };
+
+  /**
+   * Clear selected modality
+   */
+  const clearSelectedInferenceModel = () => {
+    setSelectedInferenceModel({
+      id: '',
+      name: '',
+      image: '',
+      outputMode: '',
     });
   };
 
@@ -600,7 +625,7 @@ const WorkspaceSettingsPage = () => {
                 <h1 className="text-xl text-white">{t('Inference Models')}</h1>
                 <Button
                   className="h-[35px] rounded-lg"
-                  onClick={() => setIsOpenAddEditModalityModal(true)}
+                  onClick={() => setIsOpenAddEditInferenceModelModal(true)}
                 >
                   {t('New Model')}
                 </Button>
@@ -833,6 +858,116 @@ const WorkspaceSettingsPage = () => {
                   onClick={isAddModality ? addModality : updateModality}
                 >
                   {isAddingModality || isUpdatingModality ? '...' : t('Save')}
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* add and edit inference model modal */}
+        {isOpenAddEditInferenceModelModal && (
+          <Modal
+            isOpen={isOpenAddEditInferenceModelModal}
+            size="w-[520px] max-w-[520px]"
+            onClose={() => {
+              setIsAddInferenceModel(true);
+              setIsOpenAddEditInferenceModelModal(false);
+              clearSelectedInferenceModel();
+            }}
+          >
+            <div className="relative">
+              <Typography
+                variant="h6"
+                className="font-light text-white"
+              >
+                {t(isAddInferenceModel ? 'New Inference Model' : 'Edit Inference Model')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-2 font-light text-white text-opacity-70"
+              >
+                {t(
+                  isAddInferenceModel
+                    ? 'Add a new inference model.'
+                    : 'Update inference model information.'
+                )}
+              </Typography>
+
+              <div className="mt-4">
+                <div className="flex flex-col gap-4">
+                  {/* <Input
+                    id="modalityId"
+                    disabled={!isAddModality}
+                    placeholder={t('Modality ID')}
+                    className="w-full"
+                    type="text"
+                    autoFocus
+                    value={selectedModality.id}
+                    onChange={e => {
+                      setSelectedModality({ ...selectedModality, id: e.target.value });
+                    }}
+                  /> */}
+                  <Input
+                    id="inferenceModelName"
+                    placeholder={t('Name')}
+                    className="w-full"
+                    type="text"
+                    value={selectedInferenceModel.name}
+                    onChange={e => {
+                      setSelectedInferenceModel({
+                        ...selectedInferenceModel,
+                        name: e.target.value,
+                      });
+                    }}
+                  />
+                  <Input
+                    id="inferenceModelImage"
+                    placeholder={t('Image')}
+                    className="w-full"
+                    type="text"
+                    value={selectedInferenceModel.image}
+                    onChange={e => {
+                      setSelectedInferenceModel({
+                        ...selectedInferenceModel,
+                        image: e.target.value,
+                      });
+                    }}
+                  />
+                  <select
+                    id="inferenceModelOutputMode"
+                    className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight text-white placeholder:opacity-50 focus:outline-none"
+                    value={selectedInferenceModel.outputMode}
+                    onChange={e => {
+                      setSelectedInferenceModel({
+                        ...selectedInferenceModel,
+                        outputMode: e.target.value,
+                      });
+                    }}
+                  >
+                    <option
+                      value=""
+                      disabled
+                    >
+                      Select Output Mode
+                    </option>
+                    {outputModeOptions.map(option => (
+                      <option
+                        key={option}
+                        value={option}
+                      >
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-5 flex w-full justify-end">
+                <Button
+                  disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                  className="h-[41px] w-[111px] rounded-lg"
+                  // onClick={isAddInferenceModel ? addInferenceModel : updateInferenceModel}
+                >
+                  {isAddingInferenceModel || isUpdatingInferenceModel ? '...' : t('Save')}
                 </Button>
               </div>
             </div>
