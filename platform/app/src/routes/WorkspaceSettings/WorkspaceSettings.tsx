@@ -822,7 +822,7 @@ const WorkspaceSettingsPage = () => {
                 <h1 className="text-xl text-white">{t('Inference Models')}</h1>
                 <Button
                   className="h-[35px] rounded-lg"
-                  onClick={() => setIsOpenAddEditModalityModal(true)}
+                  onClick={() => setIsOpenAddEditInferenceModelModal(true)}
                 >
                   {t('New Model')}
                 </Button>
