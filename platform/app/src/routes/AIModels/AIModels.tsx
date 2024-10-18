@@ -39,52 +39,76 @@ const AIModelsPage = () => {
     const { Validation_and_performance } = data;
 
     const renderTable = (performanceData: {
-      [key: string]: { [key: string]: string | number };
-    }) => (
-      <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
-        <thead>
-          <tr>
-            <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
-            {Object.keys(performanceData).map(dataset => (
-              <th
-                key={dataset}
-                className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
-              >
-                {dataset.replace(/_/g, ' ')}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(performanceData[Object.keys(performanceData)[0]]).map(metric => (
-            <tr key={metric}>
-              <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
-                {metric.replace(/_/g, ' ')}
-              </td>
+      [key: string]: { [key: string]: string | number } | string;
+    }) => {
+      if (typeof performanceData === 'string') {
+        return (
+          <Typography
+            variant="body"
+            className="text-white"
+          >
+            {performanceData}
+          </Typography>
+        );
+      }
+
+      return (
+        <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
+          <thead>
+            <tr>
+              <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
               {Object.keys(performanceData).map(dataset => (
-                <td
-                  key={dataset + metric}
+                <th
+                  key={dataset}
                   className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
                 >
-                  {performanceData[dataset][metric]}
-                </td>
+                  {dataset.replace(/_/g, ' ')}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+          </thead>
+          <tbody>
+            {Object.keys(performanceData[Object.keys(performanceData)[0]]).map(metric => (
+              <tr key={metric}>
+                <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
+                  {metric.replace(/_/g, ' ')}
+                </td>
+                {Object.keys(performanceData).map(dataset => (
+                  <td
+                    key={dataset + metric}
+                    className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
+                  >
+                    {performanceData[dataset][metric]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
     return (
       <div>
         <Typography
           variant="h6"
+          component="h2"
           className="mb-2 font-medium text-white"
         >
           {t('Validation and Perfomance')}
         </Typography>
-        {Object.keys(Validation_and_performance).map(key => (
-          <div key={key}>{renderTable(Validation_and_performance[key])}</div>
-        ))}
+        {typeof Validation_and_performance === 'string' ? (
+          <Typography
+            variant="body"
+            className="text-white"
+          >
+            {Validation_and_performance}
+          </Typography>
+        ) : (
+          Object.keys(Validation_and_performance).map(key => (
+            <div key={key}>{renderTable(Validation_and_performance[key])}</div>
+          ))
+        )}
       </div>
     );
   };
@@ -277,20 +301,31 @@ const AIModelsPage = () => {
                 >
                   {t('Uses and directions')}
                 </Typography>
-                {Object.entries(selectedAIModel.Uses_and_directions).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
+                {typeof selectedAIModel.Uses_and_directions === 'string' ? (
+                  <div className="px-4 pt-2">
                     <Typography
                       variant="body"
                       className="pr-2 text-white"
                     >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
+                      <span className="font-light">{selectedAIModel.Uses_and_directions}</span>
                     </Typography>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(selectedAIModel.Uses_and_directions).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="px-4 pt-2"
+                    >
+                      <Typography
+                        variant="body"
+                        className="pr-2 text-white"
+                      >
+                        <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                        <span className="font-light"> {`${value}`}</span>
+                      </Typography>
+                    </div>
+                  ))
+                )}
               </div>
               {/* warning and limitations */}
               <div className="border-b border-white border-opacity-10 py-2">
@@ -300,20 +335,31 @@ const AIModelsPage = () => {
                 >
                   {t('Warnings')}
                 </Typography>
-                {Object.entries(selectedAIModel.Warnings_and_limitations).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
+                {typeof selectedAIModel.Warnings_and_limitations === 'string' ? (
+                  <div className="px-4 pt-2">
                     <Typography
                       variant="body"
                       className="pr-2 text-white"
                     >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
+                      <span className="font-light">{selectedAIModel.Warnings_and_limitations}</span>
                     </Typography>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(selectedAIModel.Warnings_and_limitations).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="px-4 pt-2"
+                    >
+                      <Typography
+                        variant="body"
+                        className="pr-2 text-white"
+                      >
+                        <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                        <span className="font-light"> {`${value}`}</span>
+                      </Typography>
+                    </div>
+                  ))
+                )}
               </div>
               {/* other information */}
               <div className="border-b border-white border-opacity-10 py-2">
@@ -323,20 +369,33 @@ const AIModelsPage = () => {
                 >
                   {t('Other information')}
                 </Typography>
-                {Object.entries(selectedAIModel.Other_information).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
+                {typeof selectedAIModel.Other_information === 'string' ? (
+                  <div className="px-4 pt-2">
                     <Typography
                       variant="body"
+                      component="p"
                       className="pr-2 text-white"
                     >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
+                      <span className="font-light">{selectedAIModel.Other_information}</span>
                     </Typography>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(selectedAIModel.Other_information).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="px-4 pt-2"
+                    >
+                      <Typography
+                        variant="body"
+                        component="p"
+                        className="pr-2 text-white"
+                      >
+                        <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                        <span className="font-light"> {`${value}`}</span>
+                      </Typography>
+                    </div>
+                  ))
+                )}
               </div>
               {/* other results */}
               <div className="border-b border-white border-opacity-10 py-2">
@@ -346,20 +405,33 @@ const AIModelsPage = () => {
                 >
                   {t('Other results')}
                 </Typography>
-                {Object.entries(selectedAIModel.Other_results).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
+                {typeof selectedAIModel.Other_results === 'string' ? (
+                  <div className="px-4 pt-2">
                     <Typography
                       variant="body"
+                      component="p"
                       className="pr-2 text-white"
                     >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
+                      <span className="font-light">{selectedAIModel.Other_results}</span>
                     </Typography>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(selectedAIModel.Other_results).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="px-4 pt-2"
+                    >
+                      <Typography
+                        variant="body"
+                        component="p"
+                        className="pr-2 text-white"
+                      >
+                        <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                        <span className="font-light"> {`${value}`}</span>
+                      </Typography>
+                    </div>
+                  ))
+                )}
               </div>
               {/* change logs */}
               <div className="border-b border-white border-opacity-10 py-2">
@@ -369,20 +441,33 @@ const AIModelsPage = () => {
                 >
                   {t('Change logs')}
                 </Typography>
-                {Object.entries(selectedAIModel.Changelogs).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
+                {typeof selectedAIModel.Changelogs === 'string' ? (
+                  <div className="px-4 pt-2">
                     <Typography
                       variant="body"
+                      component="p"
                       className="pr-2 text-white"
                     >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
+                      <span className="font-light">{selectedAIModel.Changelogs}</span>
                     </Typography>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(selectedAIModel.Changelogs).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="px-4 pt-2"
+                    >
+                      <Typography
+                        variant="body"
+                        component="p"
+                        className="pr-2 text-white"
+                      >
+                        <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                        <span className="font-light"> {`${value}`}</span>
+                      </Typography>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </Modal>

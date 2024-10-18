@@ -55,18 +55,17 @@ const AIModelButton = ({
    */
   const applyPrediction = async () => {
     setIsLoading(true);
-    const SOPInstanceUID = getSOPInstanceUID();
+    const sopInstanceUID = getSOPInstanceUID();
 
-    if (!SOPInstanceUID) {
+    if (!sopInstanceUID) {
       console.error('Failed to get SOPInstanceUID');
       setIsLoading(false);
       return;
     }
 
     try {
-      const findInstanceResponse = await orthancRepository.GetLocalResource({
-        level: 'Instance',
-        query: { SOPInstanceUID },
+      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
+        sopInstanceUID,
       });
       const predictionResultResponse = await predictionRepository.ApplyPrediction({
         queryId: findInstanceResponse.data.queryIds[0],

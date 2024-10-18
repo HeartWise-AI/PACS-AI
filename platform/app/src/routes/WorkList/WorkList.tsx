@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { createSearchParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
+import { useQuery } from 'react-query';
 import moment from 'moment';
+import { sortBy } from 'lodash';
 import { Button, Input } from '@ohif/ui';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
@@ -25,6 +27,8 @@ function WorkList() {
   const showAlert = useContext(AlertContext);
   const [isOpenOrthancServiceModal, setIsOpenOrthancServiceModal] = useState<boolean>(false);
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [modalityOptions, setModalityOptions] = useState<string[]>([]);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -33,7 +37,7 @@ function WorkList() {
     id: '',
     priority: 0,
     progress: 0,
-    state: JobState.PENDING,
+    state: JobState.RUNNING,
   });
   const [syncingStudyProgress, setSyncingStudyProgress] = useState(0);
   const [studyQueryId, setStudyQueryId] = useState('');
@@ -48,19 +52,20 @@ function WorkList() {
   const formattedStartDate = moment().format('YYYYMMDD');
   const formattedEndDate = moment().format('YYYYMMDD');
   const [studyListFilter, setStudyListFilter] = useState({
+    modalityId: '',
     accessionNumber: '',
     institutionName: '',
     modalitiesInStudy: '',
     numberOfStudyRelatedSeries: '',
     patientBirthDate: '',
-    patientID: '',
+    patientId: '',
     patientName: '',
     patientSex: '',
     referringPhysicianName: '',
     requestingPhysician: '',
     studyDate: `${formattedStartDate}-${formattedEndDate}`,
     studyDescription: '',
-    studyID: '',
+    studyId: '',
     studyInstanceUID: '',
     studyTime: '',
   });
@@ -68,6 +73,100 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const [selectedModalities, setSelectedModalities] = useState([]);
+  const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+
+  const { data, error, refetch } = useQuery(
+    ['studyData', JSON.stringify(studyListFilter)],
+    async () => await orthancRepository.GetModalityStudies(filterRef.current),
+    {
+      enabled: false, // manually trigger the query
+      staleTime: 30 * 60 * 1000, // 30 minutes in milliseconds
+      cacheTime: 30 * 60 * 1000, // 30 minutes in milliseconds
+      retry: 1,
+    }
+  );
+
+  /**
+   * Effect hook to handle data and error states from the study data query
+   * Updates the table data source and study query ID when new data is received
+   */
+  useEffect(() => {
+    if (data) {
+      // sort the studies
+      const sortedStudies = sortStudies(data.data.studies);
+      // update the table with the new or cached study data
+      setTableDataSource(sortedStudies);
+      setStudyQueryId(data.data.queryId);
+    }
+    if (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
+    }
+  }, [data, error]);
+
+  /**
+   * Fetches study list data
+   * This function resets the table data source, sets loading state, and triggers a refetch
+   * The refetch may return cached data if it's still fresh (within the staleTime of 30 minutes)
+   * If the cache is stale, it will trigger a new network request
+   *
+   * @async
+   */
+  const fetchStudyListData = async () => {
+    setTableDataSource([]);
+    setIsStudyListDataLoading(true);
+    await refetch();
+    setIsStudyListDataLoading(false);
+  };
+
+  useEffect(() => {
+    const fetchDICOMModalities = async () => {
+      try {
+        const response = await orthancRepository.GetDICOMModalities();
+
+        const options = Object.keys(response.data.modalities);
+        setModalityOptions(options);
+
+        if (options.length === 0) {
+          localStorage.removeItem('selectedDICOMModality');
+          setSelectedDICOMModality(null);
+        }
+
+        // check localStorage for selectedDICOMModality
+        const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+
+        if (!storedDICOMModality && options.length > 0) {
+          // if not exist, assign the first key in the response.modalities
+          const firstDICOMModalityKey = options[0];
+          if (firstDICOMModalityKey) {
+            setSelectedDICOMModality({
+              value: firstDICOMModalityKey,
+              label: firstDICOMModalityKey,
+            });
+
+            setStudyListFilter(prevFilter => ({
+              ...prevFilter,
+              modalityId: firstDICOMModalityKey,
+            }));
+            localStorage.setItem('selectedDICOMModality', firstDICOMModalityKey);
+            fetchStudyListData();
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching DICOM modalities:', error);
+      }
+    };
+
+    fetchDICOMModalities();
+  }, [orthancRepository]);
 
   useEffect(() => {
     filterRef.current = studyListFilter;
@@ -102,10 +201,10 @@ function WorkList() {
       );
     }
 
-    if (params.patientID) {
+    if (params.patientId) {
       updatePromises.push(
         new Promise(resolve => {
-          handleInputChange('patientID', params.patientID);
+          handleInputChange('patientId', params.patientId);
           resolve();
         })
       );
@@ -132,12 +231,12 @@ function WorkList() {
     if (params.modalitiesInStudy) {
       updatePromises.push(
         new Promise(resolve => {
-          const modalitiesArray = params.modalitiesInStudy.split('//');
+          const modalitiesArray = params.modalitiesInStudy.split('\\');
           const selectedOptions = filtersMeta[4].inputProps.options.filter(option =>
             modalitiesArray.includes(option.value)
           );
           setSelectedModalities(selectedOptions);
-          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('\\');
           setStudyListFilter(prevFilter => ({
             ...prevFilter,
             modalitiesInStudy: updatedModalitiesInStudy,
@@ -168,41 +267,76 @@ function WorkList() {
           resolve();
         })
       );
-    } else {
+    } else if (Object.keys(params).length === 0) {
+      // if there are no parameters, set today's date
       const today = moment();
       setStartDate(today);
       setEndDate(today);
+    } else {
+      // if there are other parameters but no studyDate, clear the date fields
+      setStartDate(null);
+      setEndDate(null);
+
+      setStudyListFilter(prevFilter => ({
+        ...prevFilter,
+        studyDate: '',
+      }));
     }
 
-    // after all updates are done, call searchStudyList
+    // include selectedDICOMModality from localStorage
+    const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+    if (storedDICOMModality) {
+      updatePromises.push(
+        new Promise(resolve => {
+          setSelectedDICOMModality({
+            value: storedDICOMModality,
+            label: storedDICOMModality,
+          });
+          setStudyListFilter(prevFilter => ({
+            ...prevFilter,
+            modalityId: storedDICOMModality,
+          }));
+          resolve();
+        })
+      );
+    }
+
+    // after all updates are done, check if it's a page refresh
     Promise.all(updatePromises).then(() => {
-      if (Object.keys(params).length > 0) {
+      // check if it's a page refresh by looking at the performance navigation type
+      const isPageRefresh =
+        (window.performance &&
+          window.performance.navigation &&
+          window.performance.navigation.type === 1) ||
+        (window.performance &&
+          performance.getEntriesByType('navigation').length > 0 &&
+          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type ===
+            'reload');
+
+      if (isPageRefresh) {
         searchStudyList();
       }
     });
   }, [searchParams]);
 
   /**
-   * Get study list data
+   *  Sort studies
+   *
+   * @param studies
+   * @returns
    */
-  const fetchStudyListData = async () => {
-    setTableDataSource([]);
-    setIsStudyListDataLoading(true);
-    try {
-      const response = await orthancRepository.GetModalityStudies(filterRef.current);
-
-      setTableDataSource(response.data.studies);
-      setStudyQueryId(response.data.queryId);
-    } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
-
-      showAlert(error.message, 'error');
-    }
-    setIsStudyListDataLoading(false);
+  const sortStudies = studies => {
+    return sortBy(studies, [
+      // sort by last name
+      study => {
+        const nameParts = study.patientName.split('^');
+        const lastName = nameParts[0];
+        // remove suffixes and consider multi-word last names
+        return lastName.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, '').toLowerCase();
+      },
+      // then sort by study date in descending order
+      study => -new Date(study.studyDate).getTime(),
+    ]);
   };
 
   /**
@@ -266,7 +400,7 @@ function WorkList() {
     setStudyListFilter(prevFilter => {
       const updatedFilter = {
         ...prevFilter,
-        [field]: value ? `*${value}*` : '',
+        [field]: value ? `${value}` : '',
       };
       filterRef.current = updatedFilter;
 
@@ -277,8 +411,9 @@ function WorkList() {
   /**
    * Search study list
    */
-  const searchStudyList = () => {
-    fetchStudyListData();
+  const searchStudyList = async () => {
+    await fetchStudyListData();
+    setIsSearching(false);
   };
   /**
    * Handle select for modalities filter
@@ -286,12 +421,26 @@ function WorkList() {
    * @param selectedOptions
    */
   const handleModalitiesChange = selectedOptions => {
-    const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('//');
+    const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('\\');
     setSelectedModalities(selectedOptions || []);
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
       modalitiesInStudy: updatedModalitiesInStudy,
     }));
+  };
+
+  /**
+   * Handle select for DICOM modality
+   *
+   * @param selectedOption
+   */
+  const handleDICOMModalityChange = selectedOption => {
+    setSelectedDICOMModality(selectedOption);
+    setStudyListFilter(prevFilter => ({
+      ...prevFilter,
+      modalityId: selectedOption.value,
+    }));
+    localStorage.setItem('selectedDICOMModality', selectedOption.value);
   };
 
   /**
@@ -333,20 +482,16 @@ function WorkList() {
   /**
    * View selected study
    *
-   * @param queryID
-   * @param index
    * @param type
    * @param studyInstanceUID
    */
-  const viewStudy = async (queryID, index, type, studyInstanceUID) => {
+  const viewStudy = async (type, studyInstanceUID) => {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
-    let intervalCounter = 0;
-
     // create query params from the filter state
     const viewStudyParams = Object.keys(studyListFilter).reduce((acc, key) => {
-      if (studyListFilter[key]) {
+      if (studyListFilter[key] && key !== 'modalityId') {
         acc[key] = studyListFilter[key].replace(/\*/g, ''); // removing the asterisks for cleaner URL
       }
       return acc;
@@ -359,60 +504,56 @@ function WorkList() {
     const searchParams = createSearchParams(viewStudyParams);
 
     try {
-      // retrieve modalidy study
+      // retrieve modality study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
-        queryID,
-        answerIndex: index,
+        modalityId: selectedDICOMModality.value,
         studyInstanceUID,
       });
+
+      // extract job IDs from the response
+      const jobIds = modalityStudyResponse.data.map(item => item.id);
 
       // get job info with interval of 3 seconds
       const intervalId = setInterval(async () => {
         jobInfoResponse = await orthancRepository.GetJobInfo({
-          jobID: modalityStudyResponse.data.id,
+          jobIds: jobIds,
         });
-        // clear interval if job is not in running state
-        if (
-          jobInfoResponse.data.state === JobState.FAILURE ||
-          jobInfoResponse.data.state === JobState.RETRY ||
-          jobInfoResponse.data.state === JobState.PAUSED ||
-          jobInfoResponse.data.state === JobState.SUCCESS
-        ) {
+
+        // calculate overall progress based on completed jobs
+        // total number of jobs in the response */
+        const totalJobs = jobInfoResponse.data.length;
+        // number of jobs that have completed (progress is 100%) */
+        const completedJobs = jobInfoResponse.data.filter(job => job.progress === 100).length;
+        // overall progress percentage, rounded down to nearest integer */
+        const overallProgress = Math.floor((completedJobs / totalJobs) * 100);
+
+        setSyncingStudyProgress(overallProgress);
+
+        // clear interval if all jobs are completed
+        if (overallProgress === 100) {
           clearInterval(intervalId);
-        }
-
-        // increment the interval counter
-        intervalCounter++;
-
-        // update syncingStudyProgress every 2 intervals
-        if (intervalCounter % 2 === 0 && syncingStudyProgress < 95) {
-          setSyncingStudyProgress(prevProgress => prevProgress + 5);
-        }
-
-        // set progress to 100 if job is in success state
-        if (jobInfoResponse.data.state === JobState.SUCCESS) {
-          setSyncingStudyProgress(100);
         }
 
         // set job info
         setJobInfo({
-          id: jobInfoResponse.data.id,
-          priority: jobInfoResponse.data.priority,
-          progress: jobInfoResponse.data.progress,
-          state: JobState[jobInfoResponse.data.state.toUpperCase()],
+          id: jobInfoResponse.data[0].id,
+          priority: jobInfoResponse.data[0].priority,
+          progress: overallProgress,
+          state: overallProgress === 100 ? JobState.SUCCESS : JobState.RUNNING,
         });
-        // redirect to viewer if job is in success state
-        setTimeout(() => {
-          if (jobInfoResponse.data.state === JobState.SUCCESS) {
+
+        // redirect to viewer if all jobs are in success state
+        if (overallProgress === 100) {
+          setTimeout(() => {
             if (type === 'viewer') {
               navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
             if (type === 'segmentation') {
               navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
             }
-          }
-        }, 2000);
-      }, 3000);
+          }, 2000);
+        }
+      }, 1000);
     } catch (error) {
       if (error.errorCode === Error.DUPLICATE_RECORD) {
         if (type === 'viewer') {
@@ -501,8 +642,9 @@ function WorkList() {
           <button
             key={number}
             onClick={() => handlePageChange(number)}
-            className={`h-7 w-7 rounded-md ${number === currentPage ? 'text-black' : 'text-white text-opacity-70'
-              }`}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
             style={{
               background:
                 number === currentPage
@@ -515,8 +657,9 @@ function WorkList() {
         ))}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          className={`h-5 w-5 bg-transparent ${currentPage === totalPages ? 'invisible' : 'visible'
-            }`}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
         >
           <img
             src={chevronRightIcon}
@@ -592,12 +735,12 @@ function WorkList() {
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
               <Input
-                value={studyListFilter.patientID?.replace(/\*/g, '') || ''}
+                value={studyListFilter.patientId?.replace(/\*/g, '') || ''}
                 placeholder={t('MRN')}
                 id="MRN"
                 className="min-w-[150px]"
                 type="text"
-                onChange={e => handleInputChange('patientID', e.target.value)}
+                onChange={e => handleInputChange('patientId', e.target.value)}
               />
               <div className="relative w-[250px]">
                 <DateRangePicker
@@ -654,6 +797,7 @@ function WorkList() {
                 disabled={isStudyListDataLoading}
                 className="h-[51px] w-[110px] rounded-lg !px-5"
                 onClick={() => {
+                  setIsSearching(true);
                   searchStudyList();
                 }}
               >
@@ -662,9 +806,30 @@ function WorkList() {
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="ml-auto flex items-center gap-3">
+              <span className="text-[16px] text-white">{t('DICOM Modality')}</span>
+              <Select
+                placeholder={t('Modality')}
+                value={selectedDICOMModality}
+                options={modalityOptions.map(option => ({ value: option, label: option }))}
+                onChange={selectedOption => {
+                  handleDICOMModalityChange(selectedOption);
+                  setSelectedDICOMModality(selectedOption);
+                }}
+                styles={{
+                  ...selectCustomStyles,
+                  singleValue: provided => ({
+                    ...provided,
+                    color: 'white', // Ensure the selected value is visible
+                  }),
+                }}
+                className="min-w-[180px] bg-transparent"
+                classNamePrefix="select"
+              />
+            </div>
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
-                !Object.values(filterRef.current).every(value => value === '') ? (
+              !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
                     {t('Searching for data')} ...
@@ -706,13 +871,14 @@ function WorkList() {
                             onClick={() => toggleRow(index)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                                }`}
+                              className={`text-md py-2 px-4 font-normal ${
+                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                              }`}
                             >
                               {row.patientName}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
-                              {row.patientID.substring(0, 10)}
+                              {row.patientId.substring(0, 10)}
                             </td>
                             <td className="text-md py-2 px-4 font-normal">
                               {formatDate(row.studyDate)}
@@ -725,8 +891,9 @@ function WorkList() {
                             </td>
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                                }`}
+                              className={`py-2 px-4 text-sm font-normal ${
+                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                              }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
@@ -743,24 +910,14 @@ function WorkList() {
                                   </h1>
                                   <Button
                                     onClick={() => {
-                                      viewStudy(
-                                        studyQueryId,
-                                        index,
-                                        'viewer',
-                                        row.studyInstanceUID
-                                      );
+                                      viewStudy('viewer', row.studyInstanceUID);
                                     }}
                                   >
                                     {t('BasicViewer')}
                                   </Button>
                                   <Button
                                     onClick={() => {
-                                      viewStudy(
-                                        studyQueryId,
-                                        index,
-                                        'segmentation',
-                                        row.studyInstanceUID
-                                      );
+                                      viewStudy('segmentation', row.studyInstanceUID);
                                     }}
                                   >
                                     {t('Segmentation')}
@@ -825,22 +982,22 @@ function WorkList() {
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
-              <div className="mt-2">
-                <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    className="block h-5 w-11"
-                    onClick={() => {
-                      setIsOpenOrthancServiceModal(false);
-                      setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.PENDING });
-                      setSyncingStudyProgress(0);
-                    }}
-                  >
-                    {t('Okay')}
-                  </Button>
-                </div>
+            <div className="mt-2">
+              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+              <div className="mt-6 flex justify-end">
+                <Button
+                  className="block h-5 w-11"
+                  onClick={() => {
+                    setIsOpenOrthancServiceModal(false);
+                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.RUNNING });
+                    setSyncingStudyProgress(0);
+                  }}
+                >
+                  {t('Okay')}
+                </Button>
               </div>
-            )}
+            </div>
+          )}
         </Modal>
       </div>
     </div>

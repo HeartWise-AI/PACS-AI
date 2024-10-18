@@ -1,9 +1,10 @@
 // External
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import Compose from './routes/Mode/Compose';
 import { ServicesManager, ExtensionManager, CommandsManager, HotkeysManager } from '@ohif/core';
 import {
@@ -25,13 +26,19 @@ import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { AlertProvider } from './AlertProvider';
 
+export const FrontendVersionContext = createContext('');
+
 let commandsManager: CommandsManager,
-  extensionManager: ExtensionManager,
-  servicesManager: ServicesManager,
-  hotkeysManager: HotkeysManager;
+extensionManager: ExtensionManager,
+servicesManager: ServicesManager,
+hotkeysManager: HotkeysManager;
+
+const frontendVersion = 'v0.8.4-beta';
+const queryClient = new QueryClient();
 
 function App({ config, defaultExtensions, defaultModes }) {
   const [init, setInit] = useState(null);
+
   useEffect(() => {
     const run = async () => {
       appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
@@ -76,6 +83,7 @@ function App({ config, defaultExtensions, defaultModes }) {
     [SnackbarProvider, { service: uiNotificationService }],
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
+    ['FrontendVersionProvider', { value: frontendVersion }],
   ];
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 
@@ -107,14 +115,18 @@ function App({ config, defaultExtensions, defaultModes }) {
   }
 
   return (
-    <AlertProvider>
-      <CombinedProviders>
-        <BrowserRouter basename={routerBasename}>
-          {authRoutes}
-          {appRoutes}
-        </BrowserRouter>
-      </CombinedProviders>
-    </AlertProvider>
+    <QueryClientProvider client={queryClient}>
+      <AlertProvider>
+        <FrontendVersionContext.Provider value={frontendVersion}>
+          <CombinedProviders>
+            <BrowserRouter basename={routerBasename}>
+              {authRoutes}
+              {appRoutes}
+            </BrowserRouter>
+          </CombinedProviders>
+        </FrontendVersionContext.Provider>
+      </AlertProvider>
+    </QueryClientProvider>
   );
 }
 
