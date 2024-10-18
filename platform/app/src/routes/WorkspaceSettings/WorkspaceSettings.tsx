@@ -43,10 +43,13 @@ const WorkspaceSettingsPage = () => {
     name: '',
     image: '',
     outputMode: '',
+    status: '',
+    cpu: '',
   });
   const [isLoadingModalities, setIsLoadingModalities] = useState(true);
   const [isAddModality, setIsAddModality] = useState<boolean>(true);
   const [isAddInferenceModel, setIsAddInferenceModel] = useState<boolean>(true);
+  const [isViewInferenceModel, setIsViewInferenceModel] = useState<boolean>(false);
   const [isUpdatingModality, setIsUpdatingModality] = useState<boolean>(false);
   const [isAddingModality, setIsAddingModality] = useState<boolean>(false);
   const [isUpdatingInferenceModel, setIsUpdatingInferenceModel] = useState<boolean>(false);
@@ -56,6 +59,8 @@ const WorkspaceSettingsPage = () => {
   const [isOpenAddEditInferenceModelModal, setIsOpenAddEditInferenceModelModal] =
     useState<boolean>(false);
   const [isOpenRemoveModalityModal, setIsOpenRemoveModalityModal] = useState<boolean>(false);
+  const [isOpenRemoveInferenceModelModal, setIsOpenRemoveInferenceModelModal] =
+    useState<boolean>(false);
   const [isRefreshingDICOMModalities, setIsRefreshingDICOMModalities] = useState<boolean>(false);
   const [isRemovingModality, setIsRemovingModality] = useState<boolean>(false);
   const dicomHeaders = [
@@ -312,6 +317,8 @@ const WorkspaceSettingsPage = () => {
       name: '',
       image: '',
       outputMode: '',
+      status: '',
+      cpu: '',
     });
   };
 
@@ -321,7 +328,7 @@ const WorkspaceSettingsPage = () => {
    * @param param0 row
    * @returns
    */
-  const ActionButton = ({ row }) => {
+  const DICOMActionButton = ({ row }) => {
     const [isOpen, setIsOpen] = useState(false);
     const buttonRef = useRef(null);
     const dropdownRef = useRef(null);
@@ -391,8 +398,96 @@ const WorkspaceSettingsPage = () => {
                   <a
                     className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                     onClick={() => {
-                      setSelectedModalityToRemove(row.id);
-                      setIsOpenRemoveModalityModal(true);
+                      setSelectedInferenceModelToRemove(row.id);
+                      setIsOpenRemoveInferenceModelModal(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {' '}
+                    {t('Delete')}{' '}
+                  </a>
+                </li>
+              </ul>
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
+  const InferenceModelActionButton = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const buttonRef = useRef(null);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = event => {
+        if (
+          buttonRef.current &&
+          !buttonRef.current.contains(event.target) &&
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, []);
+
+    const getDropdownPosition = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        return {
+          top: `${rect.top - 10}px`,
+          right: `${window.innerWidth - rect.left}px`,
+        };
+      }
+      return {};
+    };
+
+    return (
+      <div className="relative flex items-center justify-center">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <img
+            src={dotsVertical}
+            alt="Dots vertical icon"
+          />
+        </button>
+        {isOpen &&
+          createPortal(
+            <div
+              ref={dropdownRef}
+              className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+              style={getDropdownPosition()}
+            >
+              <ul className="py-2 text-sm text-white">
+                <li>
+                  <a
+                    className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                    onClick={() => {
+                      setSelectedInferenceModel(row);
+                      setIsAddInferenceModel(false);
+                      setIsViewInferenceModel(false);
+                      setIsOpenAddEditInferenceModelModal(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {t('Edit')}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                    onClick={() => {
+                      setSelectedInferenceModelToRemove(row.id);
+                      // setIsOpenRemoveInferenceModelModal(true);
                       setIsOpen(false);
                     }}
                   >
@@ -440,6 +535,13 @@ const WorkspaceSettingsPage = () => {
   const handleSelectModel = (model: ModelDetails) => {
     setSelectedAIModel(model);
     setIsOpenAIModelModal(true);
+  };
+
+  const handleInferenceModelTableRowClick = rowData => {
+    setSelectedInferenceModel(rowData);
+    setIsAddInferenceModel(false);
+    setIsViewInferenceModel(true);
+    setIsOpenAddEditInferenceModelModal(true);
   };
 
   /**
@@ -608,7 +710,7 @@ const WorkspaceSettingsPage = () => {
 
                     // action
                     if (header.value === 'action') {
-                      return <ActionButton row={row} />;
+                      return <DICOMActionButton row={row} />;
                     }
                     return cell;
                   }}
@@ -652,6 +754,7 @@ const WorkspaceSettingsPage = () => {
                   headers={inferenceModelHeaders}
                   data={inferenceModels}
                   className={'max-w-[170px]'}
+                  onRowClick={handleInferenceModelTableRowClick}
                 >
                   {(cell, header, row) => {
                     if (header.value === 'name') {
@@ -690,14 +793,17 @@ const WorkspaceSettingsPage = () => {
                     // action
                     if (header.value === 'action') {
                       return (
-                        <div className="flex items-center justify-center gap-2">
+                        <div
+                          className="flex items-center justify-center gap-2"
+                          onClick={e => e.stopPropagation()}
+                        >
                           <button>
                             <img
                               src={playIcon}
                               alt="Play icon"
                             />
                           </button>
-                          <ActionButton row={row} />
+                          <InferenceModelActionButton row={row} />
                         </div>
                       );
                     }
@@ -872,6 +978,7 @@ const WorkspaceSettingsPage = () => {
             onClose={() => {
               setIsAddInferenceModel(true);
               setIsOpenAddEditInferenceModelModal(false);
+              setIsViewInferenceModel(false);
               clearSelectedInferenceModel();
             }}
           >
@@ -880,7 +987,13 @@ const WorkspaceSettingsPage = () => {
                 variant="h6"
                 className="font-light text-white"
               >
-                {t(isAddInferenceModel ? 'New Inference Model' : 'Edit Inference Model')}
+                {t(
+                  isAddInferenceModel
+                    ? 'New Inference Model'
+                    : isViewInferenceModel
+                    ? 'View Inference'
+                    : 'Edit Inference Model'
+                )}
               </Typography>
               <Typography
                 variant="body"
@@ -889,28 +1002,38 @@ const WorkspaceSettingsPage = () => {
                 {t(
                   isAddInferenceModel
                     ? 'Add a new inference model.'
+                    : isViewInferenceModel
+                    ? 'View inference model information.'
                     : 'Update inference model information.'
                 )}
               </Typography>
 
               <div className="mt-4">
                 <div className="flex flex-col gap-4">
-                  {/* <Input
-                    id="modalityId"
-                    disabled={!isAddModality}
-                    placeholder={t('Modality ID')}
-                    className="w-full"
-                    type="text"
-                    autoFocus
-                    value={selectedModality.id}
-                    onChange={e => {
-                      setSelectedModality({ ...selectedModality, id: e.target.value });
-                    }}
-                  /> */}
+                  {(isViewInferenceModel || !isAddInferenceModel) && (
+                    <Input
+                      id="inferenceModelId"
+                      disabled={true}
+                      placeholder={t('Container ID')}
+                      className="w-full"
+                      type="text"
+                      autoFocus
+                      value={selectedInferenceModel.id}
+                      onChange={e => {
+                        setSelectedInferenceModel({
+                          ...selectedInferenceModel,
+                          id: e.target.value,
+                        });
+                      }}
+                      className="disabled:opacity-50"
+                    />
+                  )}
+
                   <Input
                     id="inferenceModelName"
                     placeholder={t('Name')}
                     className="w-full"
+                    disabled={isViewInferenceModel || !isAddInferenceModel}
                     type="text"
                     value={selectedInferenceModel.name}
                     onChange={e => {
@@ -919,11 +1042,13 @@ const WorkspaceSettingsPage = () => {
                         name: e.target.value,
                       });
                     }}
+                    className="disabled:opacity-50"
                   />
                   <Input
                     id="inferenceModelImage"
                     placeholder={t('Image')}
                     className="w-full"
+                    disabled={isViewInferenceModel}
                     type="text"
                     value={selectedInferenceModel.image}
                     onChange={e => {
@@ -932,10 +1057,59 @@ const WorkspaceSettingsPage = () => {
                         image: e.target.value,
                       });
                     }}
+                    className="disabled:opacity-50"
                   />
+                  {(isViewInferenceModel || !isAddInferenceModel) && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Typography
+                          variant="body"
+                          className="text-white text-opacity-70"
+                        >
+                          {t('Status')}
+                        </Typography>
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <div
+                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
+                              selectedInferenceModel.status === 'Running'
+                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
+                                : 'bg-red-300 bg-opacity-10 text-red-500'
+                            }`}
+                          >
+                            <span className="text-sm">{selectedInferenceModel.status}</span>
+                            <div
+                              className={`h-1 w-1 rounded-full ${
+                                selectedInferenceModel.status === 'Running'
+                                  ? 'bg-[#6ED47C]'
+                                  : 'bg-red-500'
+                              }`}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Typography
+                          variant="body"
+                          className="text-white text-opacity-70"
+                        >
+                          {t('CPU%')}
+                        </Typography>
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <div
+                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full bg-[#323631] bg-opacity-10 px-2`}
+                          >
+                            <span className="text-sm text-white">
+                              {selectedInferenceModel.cpu}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <select
                     id="inferenceModelOutputMode"
                     className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight text-white placeholder:opacity-50 focus:outline-none"
+                    disabled={isViewInferenceModel}
                     value={selectedInferenceModel.outputMode}
                     onChange={e => {
                       setSelectedInferenceModel({
@@ -961,15 +1135,19 @@ const WorkspaceSettingsPage = () => {
                   </select>
                 </div>
               </div>
-              <div className="mt-5 flex w-full justify-end">
-                <Button
-                  disabled={isAddingInferenceModel || isUpdatingInferenceModel}
-                  className="h-[41px] w-[111px] rounded-lg"
-                  // onClick={isAddInferenceModel ? addInferenceModel : updateInferenceModel}
-                >
-                  {isAddingInferenceModel || isUpdatingInferenceModel ? '...' : t('Save')}
-                </Button>
-              </div>
+              {!isViewInferenceModel && (
+                <div className="mt-5 flex w-full justify-end">
+                  <Button
+                    disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                    className="h-[41px] w-[111px] rounded-lg"
+                    // onClick={isAddInferenceModel ? addInferenceModel : updateInferenceModel}
+                  >
+                    {isAddingInferenceModel || isUpdatingInferenceModel
+                      ? '...'
+                      : t(isAddInferenceModel ? 'Add' : 'Update')}
+                  </Button>
+                </div>
+              )}
             </div>
           </Modal>
         )}
@@ -1229,6 +1407,48 @@ const WorkspaceSettingsPage = () => {
                   disabled={isRemovingModality}
                   className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
                   onClick={() => setIsOpenRemoveModalityModal(false)}
+                >
+                  {isRemovingModality ? '...' : t('Cancel')}
+                </button>
+                <button
+                  disabled={isRemovingModality}
+                  className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
+                  onClick={removeModality}
+                >
+                  {isRemovingModality ? '...' : t('Confirm')}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+        {/* remove inference model modal */}
+        {isOpenRemoveInferenceModelModal && (
+          <Modal
+            isOpen={isOpenRemoveInferenceModelModal}
+            size="min-w-[400px]"
+            onClose={() => {
+              setIsOpenRemoveInferenceModelModal(false);
+            }}
+          >
+            <div className="relative">
+              <Typography
+                variant="h6"
+                className="font-light text-white"
+              >
+                {t('Remove Modality')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-2 font-light text-white text-opacity-70"
+              >
+                {t('Are you sure you want to delete ')} {selectedInferenceModelToRemove}?
+              </Typography>
+
+              <div className="mt-4 flex w-full justify-end">
+                <button
+                  disabled={isRemovingModality}
+                  className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
+                  onClick={() => setIsOpenRemoveInferenceModelModal(false)}
                 >
                   {isRemovingModality ? '...' : t('Cancel')}
                 </button>
