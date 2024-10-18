@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Table = ({ headers, data, children, className }) => {
+const Table = ({ headers, data, children, className, onRowClick }) => {
   return (
     <div className="max-w-full overflow-x-auto">
       <table className="w-full text-left text-sm rtl:text-right ">
@@ -21,7 +21,10 @@ const Table = ({ headers, data, children, className }) => {
           {data.map((item, rowIndex) => (
             <tr
               key={rowIndex}
-              className={`bg-transparent text-base text-white`}
+              className={`bg-transparent text-base text-white ${
+                onRowClick ? 'cursor-pointer' : ''
+              } hover:bg-white hover:bg-opacity-10`}
+              onClick={() => onRowClick && onRowClick(item)}
             >
               {headers.map((header, cellIndex) => (
                 <td
