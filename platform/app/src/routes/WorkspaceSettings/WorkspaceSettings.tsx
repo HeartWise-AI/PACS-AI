@@ -45,7 +45,10 @@ const WorkspaceSettingsPage = () => {
     outputMode: '',
     status: '',
     cpu: '',
+    environmentalVariables: [],
   });
+  const [environmentalVariableKey, setEnvironmentalVariableKey] = useState<string>('');
+  const [environmentalVariableValue, setEnvironmentalVariableValue] = useState<string>('');
   const [isLoadingModalities, setIsLoadingModalities] = useState(true);
   const [isAddModality, setIsAddModality] = useState<boolean>(true);
   const [isAddInferenceModel, setIsAddInferenceModel] = useState<boolean>(true);
@@ -1106,6 +1109,107 @@ const WorkspaceSettingsPage = () => {
                       </div>
                     </div>
                   )}
+                  {/* environment variables */}
+                  <div className="border-b border-white border-opacity-10 pb-4">
+                    <Typography
+                      variant="body"
+                      className="mb-2 text-white"
+                    >
+                      {t('Environmental Variables')}
+                    </Typography>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="environmentalVariablesKey"
+                        placeholder={t('Key')}
+                        className="w-full"
+                        disabled={isViewInferenceModel || !isAddInferenceModel}
+                        type="text"
+                        value={environmentalVariableKey}
+                        onChange={e => {
+                          setEnvironmentalVariableKey(e.target.value);
+                        }}
+                        className="h-[43px] disabled:opacity-50"
+                      />
+                      <Input
+                        id="environmentalVariablesValue"
+                        placeholder={t('Value')}
+                        className="w-full"
+                        disabled={isViewInferenceModel || !isAddInferenceModel}
+                        type="text"
+                        value={environmentalVariableValue}
+                        onChange={e => {
+                          setEnvironmentalVariableValue(e.target.value);
+                        }}
+                        className="h-[43px] disabled:opacity-50"
+                      />
+                      <button
+                        disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                        className="h-[43px] w-[60px] rounded-lg bg-[#C8F469] bg-opacity-10"
+                        onClick={() => {
+                          setSelectedInferenceModel({
+                            ...selectedInferenceModel,
+                            environmentalVariables: [
+                              ...selectedInferenceModel.environmentalVariables,
+                              { key: environmentalVariableKey, value: environmentalVariableValue },
+                            ],
+                          });
+                          setEnvironmentalVariableKey('');
+                          setEnvironmentalVariableValue('');
+                        }}
+                      >
+                        <span className="text-[#C8F469]"> {t('Add')}</span>
+                      </button>
+                    </div>
+                    {/* added environment variables */}
+                    <div className="mt-4 flex flex-col gap-2">
+                      {selectedInferenceModel.environmentalVariables?.map((variable, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2"
+                        >
+                          <Input
+                            id={`env-key-${index}`}
+                            label=""
+                            value={variable.key}
+                            className="h-[43px] w-full"
+                            disabled={true}
+                            type="text"
+                          />
+                          <Input
+                            id={`env-value-${index}`}
+                            label=""
+                            value={variable.value}
+                            className="h-[43px] w-full"
+                            disabled={true}
+                            type="text"
+                          />
+                          <button
+                            disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                            className="flex h-[43px] w-[60px] items-center justify-center rounded-lg bg-red-500 bg-opacity-10"
+                            onClick={() => {
+                              setSelectedInferenceModel({
+                                ...selectedInferenceModel,
+                                environmentalVariables:
+                                  selectedInferenceModel.environmentalVariables.filter(
+                                    (_, i) => i !== index
+                                  ),
+                              });
+                            }}
+                          >
+                            <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full border border-red-500 text-red-500">
+                              <span className="-mt-[1px] text-xl">{t('-')}</span>
+                            </div>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <Typography
+                      variant="body"
+                      className="mt-1 text-white text-opacity-50"
+                    >
+                      {t('Environment Variable should contain at least a key and value.')}
+                    </Typography>
+                  </div>
                   <select
                     id="inferenceModelOutputMode"
                     className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight text-white placeholder:opacity-50 focus:outline-none"
