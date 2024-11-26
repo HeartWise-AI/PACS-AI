@@ -161,6 +161,9 @@ const WorkspaceSettingsPage = () => {
   ];
   const outputModeOptions = ['JSON', 'OHIF_ANNOTATIONS', 'HTML', 'WEB_APP', 'PDF'];
 
+  // add polling interval state
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+
   // Set page title
   useEffect(() => {
     document.title = 'Admin Workspace Settings - PACS AI';
@@ -225,7 +228,6 @@ const WorkspaceSettingsPage = () => {
   };
 
   const fetchInferenceModels = useCallback(async () => {
-    setLoadingInferenceModels(true);
     try {
       const response = await inferenceRepository.GetInferenceModels();
 
@@ -241,12 +243,32 @@ const WorkspaceSettingsPage = () => {
     } catch (error) {
       console.error('Error fetching inference models:', error);
     }
-    setLoadingInferenceModels(false);
   }, [inferenceRepository]);
 
   useEffect(() => {
+    // initial fetch
     fetchDICOMModalities();
-    fetchInferenceModels();
+    setLoadingInferenceModels(true);
+
+    const fetchInitialData = async () => {
+      await fetchInferenceModels();
+      setLoadingInferenceModels(false);
+    };
+    fetchInitialData();
+
+    // setup polling interval
+    const interval = setInterval(() => {
+      fetchInferenceModels();
+    }, 5000); // poll every 5 seconds
+
+    setPollingInterval(interval);
+
+    // cleanup function to clear interval when component unmounts
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [fetchDICOMModalities, fetchInferenceModels]);
 
   /**
