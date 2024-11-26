@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, ButtonGradient, Input, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -10,11 +11,12 @@ import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import playIcon from './../../assets/pacs/icons/play.png';
 import stopIcon from './../../assets/pacs/icons/stop.png';
 import tenantRepository from '../../api/tenantRepository';
+import orthancRepository from '../../api/orthancRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
+import { GetInferenceModelResponse } from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
-import orthancRepository from '../../api/orthancRepository';
-import { createPortal } from 'react-dom';
+import inferenceRepository from '../../api/inferenceRepository';
 
 interface DICOMModalities {
   id: string;
@@ -24,10 +26,66 @@ interface DICOMModalities {
   status: string;
 }
 
+enum InferenceContainerStatus {
+  CREATED = 'created',
+  RUNNING = 'running',
+  PAUSED = 'paused',
+  RESTARTING = 'restarting',
+  EXITED = 'exited',
+  REMOVING = 'removing',
+  DEAD = 'dead',
+}
+
+const containerStatusColors = {
+  [InferenceContainerStatus.CREATED]: {
+    bg: 'bg-blue-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-blue-300',
+    dot: 'bg-blue-300'
+  },
+  [InferenceContainerStatus.RUNNING]: {
+    bg: 'bg-[#6ED47C]',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-[#6ED47C]',
+    dot: 'bg-[#6ED47C]'
+  },
+  [InferenceContainerStatus.PAUSED]: {
+    bg: 'bg-yellow-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-yellow-300',
+    dot: 'bg-yellow-300'
+  },
+  [InferenceContainerStatus.RESTARTING]: {
+    bg: 'bg-purple-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-purple-300',
+    dot: 'bg-purple-300'
+  },
+  [InferenceContainerStatus.EXITED]: {
+    bg: 'bg-red-300',
+    bgOpacity: 'bg-opacity-10',
+    text: 'text-red-500',
+    dot: 'bg-red-500'
+  },
+  [InferenceContainerStatus.REMOVING]: {
+    bg: 'bg-orange-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-orange-300',
+    dot: 'bg-orange-300'
+  },
+  [InferenceContainerStatus.DEAD]: {
+    bg: 'bg-red-500',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-red-500',
+    dot: 'bg-red-500'
+  }
+};
+
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
   const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
+  const [inferenceModels, setInferenceModels] = useState<GetInferenceModelResponse[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
@@ -38,18 +96,30 @@ const WorkspaceSettingsPage = () => {
     port: '',
   });
   const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState<string>('');
-  const [selectedInferenceModel, setSelectedInferenceModel] = useState({
+  const [selectedInferenceModel, setSelectedInferenceModel] = useState<GetInferenceModelResponse>({
     id: '',
     name: '',
-    image: '',
+    dockerImage: '',
+    tenantId: '',
     outputMode: '',
-    status: '',
-    cpu: '',
-    environmentalVariables: [],
+    envs: [],
+    createdAt: 0,
+    updatedAt: 0,
+    container: {
+      id: '',
+      name: '',
+      status: '',
+      running: false,
+      startedAt: 0,
+      finishedAt: 0,
+      cpuPercentUsage: 0,
+      memoryInBytes: 0,
+    },
   });
   const [environmentalVariableKey, setEnvironmentalVariableKey] = useState<string>('');
   const [environmentalVariableValue, setEnvironmentalVariableValue] = useState<string>('');
-  const [isLoadingModalities, setIsLoadingModalities] = useState(true);
+  const [loadingModalities, setLoadingModalities] = useState(true);
+  const [loadingInferenceModels, setLoadingInferenceModels] = useState(true);
   const [isAddModality, setIsAddModality] = useState<boolean>(true);
   const [isAddInferenceModel, setIsAddInferenceModel] = useState<boolean>(true);
   const [isViewInferenceModel, setIsViewInferenceModel] = useState<boolean>(false);
@@ -66,6 +136,12 @@ const WorkspaceSettingsPage = () => {
     useState<boolean>(false);
   const [isRefreshingDICOMModalities, setIsRefreshingDICOMModalities] = useState<boolean>(false);
   const [isRemovingModality, setIsRemovingModality] = useState<boolean>(false);
+  const [startingInferenceModelContainer, setStartingInferenceModelContainer] =
+    useState<boolean>(false);
+  const [stoppingInferenceModelContainer, setStoppingInferenceModelContainer] =
+    useState<boolean>(false);
+  const [deletingInferenceModel, setDeletingInferenceModel] = useState<boolean>(false);
+  const [selectedContainerToStartStop, setSelectedContainerToStartStop] = useState<string>('');
   const dicomHeaders = [
     { text: t('ID'), value: 'id', align: 'left' },
     { text: t('Target AET'), value: 'aet', align: 'left' },
@@ -75,56 +151,14 @@ const WorkspaceSettingsPage = () => {
     { text: t('Action'), value: 'action', align: 'center' },
   ];
   const inferenceModelHeaders = [
-    { text: t('Container ID'), value: 'id', align: 'left' },
+    { text: t('Container ID'), value: 'containerId', align: 'left' },
     { text: t('Name'), value: 'name', align: 'left' },
     { text: t('Version'), value: 'version', align: 'left' },
-    { text: t('Image'), value: 'image', align: 'left' },
+    { text: t('Image'), value: 'dockerImage', align: 'left' },
     { text: t('Status'), value: 'status', align: 'left' },
     { text: t('CPU %'), value: 'cpu', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
-  const [inferenceModels, setInferenceModels] = useState([
-    {
-      id: 'container1',
-      name: 'Lung Segmentation',
-      version: '1.0.0',
-      image: 'lung-seg:latest',
-      status: 'Running',
-      cpu: 25.5,
-    },
-    {
-      id: 'container2',
-      name: 'Brain Tumor Detection',
-      version: '2.1.3',
-      image: 'brain-tumor:v2',
-      status: 'Stopped',
-      cpu: 0,
-    },
-    {
-      id: 'container3',
-      name: 'Chest X-Ray Classification',
-      version: '3.0.1',
-      image: 'chest-xray:3.0',
-      status: 'Running',
-      cpu: 35.2,
-    },
-    {
-      id: 'container4',
-      name: 'Bone Fracture Detection',
-      version: '1.2.0',
-      image: 'bone-fracture:1.2',
-      status: 'Running',
-      cpu: 28.7,
-    },
-    {
-      id: 'container5',
-      name: 'Skin Lesion Analysis',
-      version: '2.3.1',
-      image: 'skin-lesion:2.3',
-      status: 'Stopped',
-      cpu: 0,
-    },
-  ]);
   const outputModeOptions = ['JSON', 'OHIF_ANNOTATIONS', 'HTML', 'WEB_APP', 'PDF'];
 
   // Set page title
@@ -148,7 +182,7 @@ const WorkspaceSettingsPage = () => {
    * Fetch DICOM modalities
    */
   const fetchDICOMModalities = useCallback(async () => {
-    setIsLoadingModalities(true);
+    setLoadingModalities(true);
     try {
       const response = await orthancRepository.GetDICOMModalities();
       const modalities = Object.entries(response.data.modalities).map(
@@ -165,7 +199,7 @@ const WorkspaceSettingsPage = () => {
     } catch (error) {
       console.error('Error fetching DICOM modalities:', error);
     } finally {
-      setIsLoadingModalities(false);
+      setLoadingModalities(false);
     }
   }, [orthancRepository]);
 
@@ -190,9 +224,30 @@ const WorkspaceSettingsPage = () => {
     await Promise.all(modalityPromises);
   };
 
+  const fetchInferenceModels = useCallback(async () => {
+    setLoadingInferenceModels(true);
+    try {
+      const response = await inferenceRepository.GetInferenceModels();
+
+      // transform the data without modifying the original response and sort by createdAt
+      const transformedData = response.data
+        .map((model) => ({
+          ...model,
+          envs: model.envs.map((env) => ({ key: env.split("=")[0], value: env.split("=")[1] })),
+        }))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setInferenceModels(transformedData);
+    } catch (error) {
+      console.error('Error fetching inference models:', error);
+    }
+    setLoadingInferenceModels(false);
+  }, [inferenceRepository]);
+
   useEffect(() => {
     fetchDICOMModalities();
-  }, [fetchDICOMModalities]);
+    fetchInferenceModels();
+  }, [fetchDICOMModalities, fetchInferenceModels]);
 
   /**
    * Update modality status
@@ -243,6 +298,88 @@ const WorkspaceSettingsPage = () => {
       showAlert(error.message, 'error');
     }
     setIsAddingModality(false);
+  };
+
+  const addInferenceModel = async () => {
+    setIsAddingInferenceModel(true);
+    try {
+      // check if name contains special characters except dash
+      if (/[^a-zA-Z0-9-]/.test(selectedInferenceModel.name)) {
+        showAlert('Model name can only contain letters, numbers and dashes', 'error');
+        setIsAddingInferenceModel(false);
+        return;
+      }
+      // Check if required fields are empty
+      if (
+        !selectedInferenceModel.dockerImage ||
+        !selectedInferenceModel.outputMode ||
+        !selectedInferenceModel.name
+      ) {
+        showAlert('Docker image, output mode, and name are required', 'error');
+        setIsAddingInferenceModel(false);
+        return;
+      }
+
+      const envs = selectedInferenceModel.envs.map(
+        env => `${env.key}=${env.value}`
+      );
+      const response = await inferenceRepository.AddInferenceModel({
+        name: selectedInferenceModel.name,
+        dockerImage: selectedInferenceModel.dockerImage,
+        outputMode: selectedInferenceModel.outputMode,
+        envs,
+      });
+
+      showAlert(response.message, 'success');
+      setIsOpenAddEditInferenceModelModal(false);
+      clearSelectedInferenceModel();
+      fetchInferenceModels();
+    } catch (error) {
+      console.error(`Error adding inference model: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsAddingInferenceModel(false);
+  };
+
+  const deleteInferenceModel = async (inferenceModelId: string) => {
+    setDeletingInferenceModel(true);
+    try {
+      const response = await inferenceRepository.DeleteInferenceModel({ id: inferenceModelId });
+      showAlert(response.message, 'success');
+      fetchInferenceModels();
+    } catch (error) {
+      console.error(`Error deleting inference model: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setDeletingInferenceModel(false);
+  };
+
+  const startInferenceModelContainer = async (containerID: string) => {
+    setStartingInferenceModelContainer(true);
+    try {
+      const response = await inferenceRepository.StartInferenceModelContainer({ containerID });
+      showAlert(response.message, 'success');
+      setSelectedContainerToStartStop('');
+      fetchInferenceModels();
+    } catch (error) {
+      console.error(`Error starting inference model container: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setStartingInferenceModelContainer(false);
+  };
+
+  const stopInferenceModelContainer = async (containerID: string) => {
+    setStoppingInferenceModelContainer(true);
+    try {
+      const response = await inferenceRepository.StopInferenceModelContainer({ containerID });
+      showAlert(response.message, 'success');
+      setSelectedContainerToStartStop('');
+      fetchInferenceModels();
+    } catch (error) {
+      console.error(`Error stopping inference model container: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setStoppingInferenceModelContainer(false);
   };
 
   /**
@@ -318,10 +455,22 @@ const WorkspaceSettingsPage = () => {
     setSelectedInferenceModel({
       id: '',
       name: '',
-      image: '',
+      dockerImage: '',
+      tenantId: '',
       outputMode: '',
-      status: '',
-      cpu: '',
+      envs: [],
+      createdAt: 0,
+      updatedAt: 0,
+      container: {
+        id: '',
+        name: '',
+        status: '',
+        running: false,
+        startedAt: 0,
+        finishedAt: 0,
+        cpuPercentUsage: 0,
+        memoryInBytes: 0,
+      },
     });
   };
 
@@ -471,7 +620,7 @@ const WorkspaceSettingsPage = () => {
               style={getDropdownPosition()}
             >
               <ul className="py-2 text-sm text-white">
-                <li>
+                {/* <li>
                   <a
                     className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                     onClick={() => {
@@ -484,19 +633,49 @@ const WorkspaceSettingsPage = () => {
                   >
                     {t('Edit')}
                   </a>
+                </li> */}
+                <li>
+                  {deletingInferenceModel ? (
+                    <img
+                      src={refreshIcon}
+                      alt="Refresh icon"
+                      className="h-4 w-4 animate-spin px-3 py-2"
+                    />
+                  ) : (
+                    <a
+                      className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                      onClick={() => {
+                        setSelectedInferenceModel(row);
+                        setIsAddInferenceModel(false);
+                        setIsViewInferenceModel(true);
+                        setIsOpenAddEditInferenceModelModal(true);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {' '}
+                      {t('View Instance')}{' '}
+                    </a>
+                  )}
                 </li>
                 <li>
-                  <a
-                    className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                    onClick={() => {
-                      setSelectedInferenceModelToRemove(row.id);
-                      // setIsOpenRemoveInferenceModelModal(true);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {' '}
-                    {t('Delete')}{' '}
-                  </a>
+                  {deletingInferenceModel ? (
+                    <img
+                      src={refreshIcon}
+                      alt="Refresh icon"
+                      className="h-4 w-4 animate-spin px-3 py-2"
+                    />
+                  ) : (
+                    <a
+                      className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                      onClick={() => {
+                        deleteInferenceModel(row.id);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {' '}
+                      {t('Delete')}{' '}
+                    </a>
+                  )}
                 </li>
               </ul>
             </div>,
@@ -650,7 +829,7 @@ const WorkspaceSettingsPage = () => {
             </div>
             {/* DICOM table container */}
             <div className="bg-transparent py-5">
-              {isLoadingModalities ? (
+              {loadingModalities ? (
                 <div
                   role="status"
                   className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
@@ -738,7 +917,7 @@ const WorkspaceSettingsPage = () => {
             </div>
             {/* Inference models table container */}
             <div className="bg-transparent py-5">
-              {isLoadingModalities ? (
+              {loadingInferenceModels ? (
                 <div
                   role="status"
                   className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
@@ -757,41 +936,54 @@ const WorkspaceSettingsPage = () => {
                   headers={inferenceModelHeaders}
                   data={inferenceModels}
                   className={'max-w-[170px]'}
-                  onRowClick={handleInferenceModelTableRowClick}
                 >
                   {(cell, header, row) => {
+                    if (header.value === 'containerId') {
+                      return (
+                        <div className="w-[250px] text-white">
+                          {row.container.id?.substring(0, 12) || ''}
+                        </div>
+                      );
+                    }
                     if (header.value === 'name') {
                       return <div className="w-[250px] text-white">{cell}</div>;
                     }
                     if (header.value === 'version') {
-                      return <div className="w-[200px] text-white">{cell}</div>;
+                      return (
+                        <div className="w-[200px] text-white">
+                          {row.dockerImage?.split(':')[1] || ''}
+                        </div>
+                      );
                     }
-                    if (header.value === 'image') {
+                    if (header.value === 'dockerImage') {
                       return <div className="w-[200px] text-white">{cell}</div>;
                     }
                     // status
                     if (header.value === 'status') {
+                      const statusColor = containerStatusColors[row.container.status.toLowerCase()] || {
+                        bg: 'bg-gray-300',
+                        bgOpacity: 'bg-opacity-20',
+                        text: 'text-gray-300',
+                        dot: 'bg-gray-300'
+                      };
+
                       return (
                         <div className="flex min-w-[100px] items-center gap-2">
-                          <div
-                            className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${
-                              cell === 'Running'
-                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
-                                : 'bg-red-300 bg-opacity-10 text-red-500'
-                            }`}
-                          >
-                            <span>{cell}</span>
-                            <div
-                              className={`h-1 w-1 rounded-full ${
-                                cell === 'Running' ? 'bg-[#6ED47C]' : 'bg-red-500'
-                              }`}
-                            ></div>
+                          <div className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}>
+                            <span className="capitalize">{row.container.status}</span>
+                            <div className={`h-1 w-1 rounded-full ${statusColor.dot}`}></div>
                           </div>
                         </div>
                       );
                     }
                     if (header.value === 'cpu') {
-                      return <div className="w-[200px] text-white">{cell ? `${cell}%` : '-'}</div>;
+                      return (
+                        <div className="w-[200px] text-white">
+                          {row.container.cpuPercentUsage
+                            ? `${row.container.cpuPercentUsage.toFixed(3)}%`
+                            : '-'}
+                        </div>
+                      );
                     }
                     // action
                     if (header.value === 'action') {
@@ -800,12 +992,49 @@ const WorkspaceSettingsPage = () => {
                           className="flex items-center justify-center gap-2"
                           onClick={e => e.stopPropagation()}
                         >
-                          <button>
-                            <img
-                              src={playIcon}
-                              alt="Play icon"
-                            />
-                          </button>
+                          {row.container.status === InferenceContainerStatus.RUNNING ? (
+                            <button
+                              onClick={() => {
+                                stopInferenceModelContainer(row.container.id);
+                                setSelectedContainerToStartStop(row.container.id);
+                              }}
+                            >
+                              {stoppingInferenceModelContainer &&
+                              selectedContainerToStartStop === row.container.id ? (
+                                <img
+                                  src={refreshIcon}
+                                  alt="Refresh icon"
+                                  className="h-4 w-4 animate-spin"
+                                />
+                              ) : (
+                                <img
+                                  src={stopIcon}
+                                  alt="Stop icon"
+                                />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                startInferenceModelContainer(row.container.id);
+                                setSelectedContainerToStartStop(row.container.id);
+                              }}
+                            >
+                              {startingInferenceModelContainer &&
+                              selectedContainerToStartStop === row.container.id ? (
+                                <img
+                                  src={refreshIcon}
+                                  alt="Refresh icon"
+                                  className="h-4 w-4 animate-spin"
+                                />
+                              ) : (
+                                <img
+                                  src={playIcon}
+                                  alt="Play icon"
+                                />
+                              )}
+                            </button>
+                          )}
                           <InferenceModelActionButton row={row} />
                         </div>
                       );
@@ -1021,7 +1250,7 @@ const WorkspaceSettingsPage = () => {
                       className="w-full"
                       type="text"
                       autoFocus
-                      value={selectedInferenceModel.id}
+                      value={selectedInferenceModel.container.id}
                       onChange={e => {
                         setSelectedInferenceModel({
                           ...selectedInferenceModel,
@@ -1038,11 +1267,11 @@ const WorkspaceSettingsPage = () => {
                     className="w-full"
                     disabled={isViewInferenceModel || !isAddInferenceModel}
                     type="text"
-                    value={selectedInferenceModel.name}
+                    value={selectedInferenceModel.name.toLowerCase()}
                     onChange={e => {
                       setSelectedInferenceModel({
                         ...selectedInferenceModel,
-                        name: e.target.value,
+                        name: e.target.value.toLowerCase(),
                       });
                     }}
                     className="disabled:opacity-50"
@@ -1053,11 +1282,11 @@ const WorkspaceSettingsPage = () => {
                     className="w-full"
                     disabled={isViewInferenceModel}
                     type="text"
-                    value={selectedInferenceModel.image}
+                    value={selectedInferenceModel.dockerImage}
                     onChange={e => {
                       setSelectedInferenceModel({
                         ...selectedInferenceModel,
-                        image: e.target.value,
+                        dockerImage: e.target.value,
                       });
                     }}
                     className="disabled:opacity-50"
@@ -1072,21 +1301,19 @@ const WorkspaceSettingsPage = () => {
                           {t('Status')}
                         </Typography>
                         <div className="flex min-w-[100px] items-center gap-2">
-                          <div
-                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
-                              selectedInferenceModel.status === 'Running'
-                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
-                                : 'bg-red-300 bg-opacity-10 text-red-500'
-                            }`}
-                          >
-                            <span className="text-sm">{selectedInferenceModel.status}</span>
-                            <div
-                              className={`h-1 w-1 rounded-full ${
-                                selectedInferenceModel.status === 'Running'
-                                  ? 'bg-[#6ED47C]'
-                                  : 'bg-red-500'
-                              }`}
-                            ></div>
+                          <div className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
+                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.bg || 'bg-gray-300'
+                          } ${
+                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.bgOpacity || 'bg-opacity-20'
+                          } ${
+                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.text || 'text-gray-300'
+                          }`}>
+                            <span className="text-sm capitalize">
+                              {selectedInferenceModel.container.status}
+                            </span>
+                            <div className={`h-1 w-1 rounded-full ${
+                              containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.dot || 'bg-gray-300'
+                            }`}></div>
                           </div>
                         </div>
                       </div>
@@ -1102,7 +1329,7 @@ const WorkspaceSettingsPage = () => {
                             className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full bg-[#323631] bg-opacity-10 px-2`}
                           >
                             <span className="text-sm text-white">
-                              {selectedInferenceModel.cpu}%
+                              {selectedInferenceModel.container.cpuPercentUsage.toFixed(3)}%
                             </span>
                           </div>
                         </div>
@@ -1117,91 +1344,102 @@ const WorkspaceSettingsPage = () => {
                     >
                       {t('Environmental Variables')}
                     </Typography>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="environmentalVariablesKey"
-                        placeholder={t('Key')}
-                        className="w-full"
-                        disabled={isViewInferenceModel || !isAddInferenceModel}
-                        type="text"
-                        value={environmentalVariableKey}
-                        onChange={e => {
-                          setEnvironmentalVariableKey(e.target.value);
-                        }}
-                        className="h-[43px] disabled:opacity-50"
-                      />
-                      <Input
-                        id="environmentalVariablesValue"
-                        placeholder={t('Value')}
-                        className="w-full"
-                        disabled={isViewInferenceModel || !isAddInferenceModel}
-                        type="text"
-                        value={environmentalVariableValue}
-                        onChange={e => {
-                          setEnvironmentalVariableValue(e.target.value);
-                        }}
-                        className="h-[43px] disabled:opacity-50"
-                      />
-                      <button
-                        disabled={isAddingInferenceModel || isUpdatingInferenceModel}
-                        className="h-[43px] w-[60px] rounded-lg bg-[#C8F469] bg-opacity-10"
-                        onClick={() => {
-                          setSelectedInferenceModel({
-                            ...selectedInferenceModel,
-                            environmentalVariables: [
-                              ...selectedInferenceModel.environmentalVariables,
-                              { key: environmentalVariableKey, value: environmentalVariableValue },
-                            ],
-                          });
-                          setEnvironmentalVariableKey('');
-                          setEnvironmentalVariableValue('');
-                        }}
-                      >
-                        <span className="text-[#C8F469]"> {t('Add')}</span>
-                      </button>
-                    </div>
+                    {!isViewInferenceModel && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="environmentalVariablesKey"
+                          placeholder={t('Key')}
+                          className="w-full"
+                          disabled={!isAddInferenceModel}
+                          type="text"
+                          value={environmentalVariableKey}
+                          onChange={e => {
+                            setEnvironmentalVariableKey(e.target.value);
+                          }}
+                          className="h-[43px] disabled:opacity-50"
+                        />
+                        <Input
+                          id="environmentalVariablesValue"
+                          placeholder={t('Value')}
+                          className="w-full"
+                          disabled={!isAddInferenceModel}
+                          type="text"
+                          value={environmentalVariableValue}
+                          onChange={e => {
+                            setEnvironmentalVariableValue(e.target.value);
+                          }}
+                          className="h-[43px] disabled:opacity-50"
+                        />
+                        <button
+                          disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                          className="h-[43px] w-[60px] rounded-lg bg-[#C8F469] bg-opacity-10"
+                          onClick={() => {
+                            setSelectedInferenceModel({
+                              ...selectedInferenceModel,
+                              envs: [
+                                ...(selectedInferenceModel.envs?.filter(env => typeof env === 'object' && 'key' in env) ?? []),
+                                { key: environmentalVariableKey, value: environmentalVariableValue },
+                              ],
+                            });
+                            setEnvironmentalVariableKey('');
+                            setEnvironmentalVariableValue('');
+                          }}
+                        >
+                          <span className="text-[#C8F469]"> {t('Add')}</span>
+                        </button>
+                      </div>
+                    )}
                     {/* added environment variables */}
                     <div className="mt-4 flex flex-col gap-2">
-                      {selectedInferenceModel.environmentalVariables?.map((variable, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-2"
-                        >
-                          <Input
-                            id={`env-key-${index}`}
-                            label=""
-                            value={variable.key}
-                            className="h-[43px] w-full"
-                            disabled={true}
-                            type="text"
-                          />
-                          <Input
-                            id={`env-value-${index}`}
-                            label=""
-                            value={variable.value}
-                            className="h-[43px] w-full"
-                            disabled={true}
-                            type="text"
-                          />
-                          <button
-                            disabled={isAddingInferenceModel || isUpdatingInferenceModel}
-                            className="flex h-[43px] w-[60px] items-center justify-center rounded-lg bg-red-500 bg-opacity-10"
-                            onClick={() => {
-                              setSelectedInferenceModel({
-                                ...selectedInferenceModel,
-                                environmentalVariables:
-                                  selectedInferenceModel.environmentalVariables.filter(
-                                    (_, i) => i !== index
-                                  ),
-                              });
-                            }}
-                          >
-                            <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full border border-red-500 text-red-500">
-                              <span className="-mt-[1px] text-xl">{t('-')}</span>
-                            </div>
-                          </button>
+                      {selectedInferenceModel.envs?.length === 0 && isViewInferenceModel ? (
+                        <div className="flex h-[50px] items-center justify-center">
+                          <Typography className="text-white text-opacity-50 mb-2">
+                            {t('No environment variables added')}
+                          </Typography>
                         </div>
-                      ))}
+                      ) : (
+                        selectedInferenceModel.envs?.map((variable, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2"
+                          >
+                            <Input
+                              id={`env-key-${index}`}
+                              label=""
+                              value={variable.key}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            <Input
+                              id={`env-value-${index}`}
+                              label=""
+                              value={variable.value}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            {!isViewInferenceModel && (
+                              <button
+                                disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                                className="flex h-[43px] w-[60px] items-center justify-center rounded-lg bg-red-500 bg-opacity-10"
+                                onClick={() => {
+                                  setSelectedInferenceModel({
+                                    ...selectedInferenceModel,
+                                    envs: selectedInferenceModel.envs.filter(
+                                      (env) => typeof env === 'object' && 'key' in env
+                                    ).filter((_, i) => i !== index)
+                                  });
+                                }}
+                              >
+                                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full border border-red-500 text-red-500">
+                                  <span className="-mt-[1px] text-xl">{t('-')}</span>
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                     <Typography
                       variant="body"
@@ -1244,7 +1482,7 @@ const WorkspaceSettingsPage = () => {
                   <Button
                     disabled={isAddingInferenceModel || isUpdatingInferenceModel}
                     className="h-[41px] w-[111px] rounded-lg"
-                    // onClick={isAddInferenceModel ? addInferenceModel : updateInferenceModel}
+                    onClick={addInferenceModel}
                   >
                     {isAddingInferenceModel || isUpdatingInferenceModel
                       ? '...'
