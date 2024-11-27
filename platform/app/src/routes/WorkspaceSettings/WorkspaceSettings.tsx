@@ -41,44 +41,44 @@ const containerStatusColors = {
     bg: 'bg-blue-300',
     bgOpacity: 'bg-opacity-20',
     text: 'text-blue-300',
-    dot: 'bg-blue-300'
+    dot: 'bg-blue-300',
   },
   [InferenceContainerStatus.RUNNING]: {
     bg: 'bg-[#6ED47C]',
     bgOpacity: 'bg-opacity-20',
     text: 'text-[#6ED47C]',
-    dot: 'bg-[#6ED47C]'
+    dot: 'bg-[#6ED47C]',
   },
   [InferenceContainerStatus.PAUSED]: {
     bg: 'bg-yellow-300',
     bgOpacity: 'bg-opacity-20',
     text: 'text-yellow-300',
-    dot: 'bg-yellow-300'
+    dot: 'bg-yellow-300',
   },
   [InferenceContainerStatus.RESTARTING]: {
     bg: 'bg-purple-300',
     bgOpacity: 'bg-opacity-20',
     text: 'text-purple-300',
-    dot: 'bg-purple-300'
+    dot: 'bg-purple-300',
   },
   [InferenceContainerStatus.EXITED]: {
     bg: 'bg-red-300',
     bgOpacity: 'bg-opacity-10',
     text: 'text-red-500',
-    dot: 'bg-red-500'
+    dot: 'bg-red-500',
   },
   [InferenceContainerStatus.REMOVING]: {
     bg: 'bg-orange-300',
     bgOpacity: 'bg-opacity-20',
     text: 'text-orange-300',
-    dot: 'bg-orange-300'
+    dot: 'bg-orange-300',
   },
   [InferenceContainerStatus.DEAD]: {
     bg: 'bg-red-500',
     bgOpacity: 'bg-opacity-20',
     text: 'text-red-500',
-    dot: 'bg-red-500'
-  }
+    dot: 'bg-red-500',
+  },
 };
 
 const WorkspaceSettingsPage = () => {
@@ -233,9 +233,9 @@ const WorkspaceSettingsPage = () => {
 
       // transform the data without modifying the original response and sort by createdAt
       const transformedData = response.data
-        .map((model) => ({
+        .map(model => ({
           ...model,
-          envs: model.envs.map((env) => ({ key: env.split("=")[0], value: env.split("=")[1] })),
+          envs: model.envs.map(env => ({ key: env.split('=')[0], value: env.split('=')[1] })),
         }))
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -342,9 +342,7 @@ const WorkspaceSettingsPage = () => {
         return;
       }
 
-      const envs = selectedInferenceModel.envs.map(
-        env => `${env.key}=${env.value}`
-      );
+      const envs = selectedInferenceModel.envs.map(env => `${env.key}=${env.value}`);
       const response = await inferenceRepository.AddInferenceModel({
         name: selectedInferenceModel.name,
         dockerImage: selectedInferenceModel.dockerImage,
@@ -856,12 +854,16 @@ const WorkspaceSettingsPage = () => {
                   role="status"
                   className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
                 >
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i}>
-                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                  {Array.from({ length: 5 }, (_, c) => (
+                    <div key={c}>
+                      {Array.from({ length: 3 }, (_, r) => (
+                        <div key={r}>
+                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -944,12 +946,16 @@ const WorkspaceSettingsPage = () => {
                   role="status"
                   className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
                 >
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i}>
-                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                  {Array.from({ length: 5 }, (_, c) => (
+                    <div key={c}>
+                      {Array.from({ length: 3 }, (_, r) => (
+                        <div key={r}>
+                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -982,16 +988,20 @@ const WorkspaceSettingsPage = () => {
                     }
                     // status
                     if (header.value === 'status') {
-                      const statusColor = containerStatusColors[row.container.status.toLowerCase()] || {
+                      const statusColor = containerStatusColors[
+                        row.container.status.toLowerCase()
+                      ] || {
                         bg: 'bg-gray-300',
                         bgOpacity: 'bg-opacity-20',
                         text: 'text-gray-300',
-                        dot: 'bg-gray-300'
+                        dot: 'bg-gray-300',
                       };
 
                       return (
                         <div className="flex min-w-[100px] items-center gap-2">
-                          <div className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}>
+                          <div
+                            className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}
+                          >
                             <span className="capitalize">{row.container.status}</span>
                             <div className={`h-1 w-1 rounded-full ${statusColor.dot}`}></div>
                           </div>
@@ -1323,19 +1333,31 @@ const WorkspaceSettingsPage = () => {
                           {t('Status')}
                         </Typography>
                         <div className="flex min-w-[100px] items-center gap-2">
-                          <div className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
-                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.bg || 'bg-gray-300'
-                          } ${
-                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.bgOpacity || 'bg-opacity-20'
-                          } ${
-                            containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.text || 'text-gray-300'
-                          }`}>
+                          <div
+                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
+                              containerStatusColors[
+                                selectedInferenceModel.container.status.toLowerCase()
+                              ]?.bg || 'bg-gray-300'
+                            } ${
+                              containerStatusColors[
+                                selectedInferenceModel.container.status.toLowerCase()
+                              ]?.bgOpacity || 'bg-opacity-20'
+                            } ${
+                              containerStatusColors[
+                                selectedInferenceModel.container.status.toLowerCase()
+                              ]?.text || 'text-gray-300'
+                            }`}
+                          >
                             <span className="text-sm capitalize">
                               {selectedInferenceModel.container.status}
                             </span>
-                            <div className={`h-1 w-1 rounded-full ${
-                              containerStatusColors[selectedInferenceModel.container.status.toLowerCase()]?.dot || 'bg-gray-300'
-                            }`}></div>
+                            <div
+                              className={`h-1 w-1 rounded-full ${
+                                containerStatusColors[
+                                  selectedInferenceModel.container.status.toLowerCase()
+                                ]?.dot || 'bg-gray-300'
+                              }`}
+                            ></div>
                           </div>
                         </div>
                       </div>
@@ -1399,8 +1421,13 @@ const WorkspaceSettingsPage = () => {
                             setSelectedInferenceModel({
                               ...selectedInferenceModel,
                               envs: [
-                                ...(selectedInferenceModel.envs?.filter(env => typeof env === 'object' && 'key' in env) ?? []),
-                                { key: environmentalVariableKey, value: environmentalVariableValue },
+                                ...(selectedInferenceModel.envs?.filter(
+                                  env => typeof env === 'object' && 'key' in env
+                                ) ?? []),
+                                {
+                                  key: environmentalVariableKey,
+                                  value: environmentalVariableValue,
+                                },
                               ],
                             });
                             setEnvironmentalVariableKey('');
@@ -1415,7 +1442,7 @@ const WorkspaceSettingsPage = () => {
                     <div className="mt-4 flex flex-col gap-2">
                       {selectedInferenceModel.envs?.length === 0 && isViewInferenceModel ? (
                         <div className="flex h-[50px] items-center justify-center">
-                          <Typography className="text-white text-opacity-50 mb-2">
+                          <Typography className="mb-2 text-white text-opacity-50">
                             {t('No environment variables added')}
                           </Typography>
                         </div>
@@ -1448,9 +1475,9 @@ const WorkspaceSettingsPage = () => {
                                 onClick={() => {
                                   setSelectedInferenceModel({
                                     ...selectedInferenceModel,
-                                    envs: selectedInferenceModel.envs.filter(
-                                      (env) => typeof env === 'object' && 'key' in env
-                                    ).filter((_, i) => i !== index)
+                                    envs: selectedInferenceModel.envs
+                                      .filter(env => typeof env === 'object' && 'key' in env)
+                                      .filter((_, i) => i !== index),
                                   });
                                 }}
                               >
