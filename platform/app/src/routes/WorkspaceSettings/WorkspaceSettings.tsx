@@ -1312,11 +1312,12 @@ const WorkspaceSettingsPage = () => {
                     className="w-full disabled:opacity-50"
                     disabled={isViewInferenceModel}
                     type="text"
-                    value={selectedInferenceModel.dockerImage.trim()}
+                    value={selectedInferenceModel.dockerImage}
                     onChange={e => {
+                      const sanitizedValue = e.target.value.replace(/\s+/g, ''); // Remove all spaces
                       setSelectedInferenceModel({
                         ...selectedInferenceModel,
-                        dockerImage: e.target.value.trim(),
+                        dockerImage: sanitizedValue,
                       });
                     }}
                   />
