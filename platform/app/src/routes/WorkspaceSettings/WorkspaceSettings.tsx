@@ -237,7 +237,10 @@ const WorkspaceSettingsPage = () => {
           ...model,
           envs: model.envs.map(env => ({ key: env.split('=')[0], value: env.split('=')[1] })),
         }))
-        .sort((a, b) => new Date(b.container.startedAt).getTime() - new Date(a.container.startedAt).getTime());
+        .sort(
+          (a, b) =>
+            new Date(b.container.startedAt).getTime() - new Date(a.container.startedAt).getTime()
+        );
 
       setInferenceModels(transformedData);
     } catch (error) {
@@ -259,7 +262,7 @@ const WorkspaceSettingsPage = () => {
     // setup polling interval
     const interval = setInterval(() => {
       fetchInferenceModels();
-    }, 5000); // poll every 5 seconds
+    }, 15000); // poll every 15 seconds
 
     setPollingInterval(interval);
 
@@ -372,6 +375,15 @@ const WorkspaceSettingsPage = () => {
       showAlert(error.message, 'error');
     }
     setDeletingInferenceModel(false);
+  };
+
+  const refreshInferenceModels = () => {
+    setLoadingInferenceModels(true);
+    const fetchInitialData = async () => {
+      await fetchInferenceModels();
+      setLoadingInferenceModels(false);
+    };
+    fetchInitialData();
   };
 
   const startInferenceModelContainer = async (containerID: string) => {
@@ -672,8 +684,7 @@ const WorkspaceSettingsPage = () => {
                         setIsOpen(false);
                       }}
                     >
-                      {' '}
-                      {t('View Instance')}{' '}
+                      {t('View Instance')}
                     </a>
                   )}
                 </li>
@@ -686,14 +697,13 @@ const WorkspaceSettingsPage = () => {
                     />
                   ) : (
                     <a
-                      className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                      className="block cursor-pointer px-4 py-2 text-red-500 hover:bg-gray-700"
                       onClick={() => {
                         deleteInferenceModel(row.id);
                         setIsOpen(false);
                       }}
                     >
-                      {' '}
-                      {t('Delete')}{' '}
+                      {t('Delete')}
                     </a>
                   )}
                 </li>
@@ -931,12 +941,33 @@ const WorkspaceSettingsPage = () => {
             <div>
               <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                 <h1 className="text-xl text-white">{t('Inference Models')}</h1>
-                <Button
-                  className="h-[35px] rounded-lg"
-                  onClick={() => setIsOpenAddEditInferenceModelModal(true)}
-                >
-                  {t('New Model')}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={loadingInferenceModels}
+                    className="flex h-[35px] items-center gap-2 rounded-full bg-white bg-opacity-10 px-3"
+                    onClick={() => refreshInferenceModels()}
+                  >
+                    <img
+                      src={refreshIcon}
+                      alt="Refresh icon"
+                      className={`${loadingInferenceModels ? 'animate-spin' : ''} h-4 w-4`}
+                    />
+                    <span
+                      className={`text-white ${
+                        loadingInferenceModels ? 'opacity-40' : ''
+                      } text-[14px]`}
+                    >
+                      {t('Refresh')}
+                    </span>
+                  </button>
+                  <Button
+                    className="h-[35px] rounded-lg"
+                    onClick={() => setIsOpenAddEditInferenceModelModal(true)}
+                  >
+                    {t('New Model')}
+                  </Button>
+                </div>
               </div>
             </div>
             {/* Inference models table container */}
