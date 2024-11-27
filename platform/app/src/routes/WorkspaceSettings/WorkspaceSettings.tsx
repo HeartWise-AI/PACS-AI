@@ -344,8 +344,8 @@ const WorkspaceSettingsPage = () => {
 
       const envs = selectedInferenceModel.envs.map(env => `${env.key}=${env.value}`);
       const response = await inferenceRepository.AddInferenceModel({
-        name: selectedInferenceModel.name,
-        dockerImage: selectedInferenceModel.dockerImage,
+        name: selectedInferenceModel.name.trim(), // remove the leading and trailing spaces
+        dockerImage: selectedInferenceModel.dockerImage.replace(/\s+/g, ''), // remove all the spaces
         outputMode: selectedInferenceModel.outputMode,
         envs,
       });
@@ -1279,7 +1279,7 @@ const WorkspaceSettingsPage = () => {
                       id="inferenceModelId"
                       disabled={true}
                       placeholder={t('Container ID')}
-                      className="w-full"
+                      className="w-full disabled:opacity-50"
                       type="text"
                       autoFocus
                       value={selectedInferenceModel.container.id}
@@ -1289,14 +1289,13 @@ const WorkspaceSettingsPage = () => {
                           id: e.target.value,
                         });
                       }}
-                      className="disabled:opacity-50"
                     />
                   )}
 
                   <Input
                     id="inferenceModelName"
                     placeholder={t('Name')}
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                     disabled={isViewInferenceModel || !isAddInferenceModel}
                     type="text"
                     value={selectedInferenceModel.name.toLowerCase()}
@@ -1306,22 +1305,20 @@ const WorkspaceSettingsPage = () => {
                         name: e.target.value.toLowerCase(),
                       });
                     }}
-                    className="disabled:opacity-50"
                   />
                   <Input
                     id="inferenceModelImage"
                     placeholder={t('Image')}
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                     disabled={isViewInferenceModel}
                     type="text"
-                    value={selectedInferenceModel.dockerImage}
+                    value={selectedInferenceModel.dockerImage.trim()}
                     onChange={e => {
                       setSelectedInferenceModel({
                         ...selectedInferenceModel,
-                        dockerImage: e.target.value,
+                        dockerImage: e.target.value.trim(),
                       });
                     }}
-                    className="disabled:opacity-50"
                   />
                   {(isViewInferenceModel || !isAddInferenceModel) && (
                     <div className="flex flex-col gap-2">
@@ -1393,26 +1390,24 @@ const WorkspaceSettingsPage = () => {
                         <Input
                           id="environmentalVariablesKey"
                           placeholder={t('Key')}
-                          className="w-full"
+                          className="h-[43px] w-full disabled:opacity-50"
                           disabled={!isAddInferenceModel}
                           type="text"
                           value={environmentalVariableKey}
                           onChange={e => {
                             setEnvironmentalVariableKey(e.target.value);
                           }}
-                          className="h-[43px] disabled:opacity-50"
                         />
                         <Input
                           id="environmentalVariablesValue"
                           placeholder={t('Value')}
-                          className="w-full"
+                          className="h-[43px] w-full disabled:opacity-50"
                           disabled={!isAddInferenceModel}
                           type="text"
                           value={environmentalVariableValue}
                           onChange={e => {
                             setEnvironmentalVariableValue(e.target.value);
                           }}
-                          className="h-[43px] disabled:opacity-50"
                         />
                         <button
                           disabled={isAddingInferenceModel || isUpdatingInferenceModel}
