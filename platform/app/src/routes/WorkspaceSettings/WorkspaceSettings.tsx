@@ -1255,7 +1255,7 @@ const WorkspaceSettingsPage = () => {
                   isAddInferenceModel
                     ? 'New Inference Model'
                     : isViewInferenceModel
-                    ? 'View Inference'
+                    ? 'View Inference Model'
                     : 'Edit Inference Model'
                 )}
               </Typography>
