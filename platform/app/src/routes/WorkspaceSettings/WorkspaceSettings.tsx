@@ -237,7 +237,7 @@ const WorkspaceSettingsPage = () => {
           ...model,
           envs: model.envs.map(env => ({ key: env.split('=')[0], value: env.split('=')[1] })),
         }))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        .sort((a, b) => new Date(b.container.startedAt).getTime() - new Date(a.container.startedAt).getTime());
 
       setInferenceModels(transformedData);
     } catch (error) {
@@ -1314,7 +1314,7 @@ const WorkspaceSettingsPage = () => {
                     type="text"
                     value={selectedInferenceModel.dockerImage}
                     onChange={e => {
-                      const sanitizedValue = e.target.value.replace(/\s+/g, ''); // Remove all spaces
+                      const sanitizedValue = e.target.value.replace(/\s+/g, ''); // remove all spaces
                       setSelectedInferenceModel({
                         ...selectedInferenceModel,
                         dockerImage: sanitizedValue,
