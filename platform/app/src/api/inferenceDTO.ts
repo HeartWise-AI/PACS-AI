@@ -1,3 +1,5 @@
+import { ModelDetails } from './tenantDTO';
+
 export interface AddInferenceModelRequest {
   name: string;
   dockerImage: string;
@@ -28,6 +30,14 @@ export interface GetInferenceModelResponse {
   outputMode: string;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface GetInferenceModelFactsRequest {
+  containerID: string;
+}
+
+export interface GetInferenceModelFactsResponse {
+  en: ModelDetails;
 }
 
 export interface StartInferenceModelContainerRequest {
