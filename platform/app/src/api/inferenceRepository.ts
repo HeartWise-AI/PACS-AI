@@ -5,6 +5,8 @@ import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   AddInferenceModelRequest,
   DeleteInferenceModelRequest,
+  GetInferenceModelFactsRequest,
+  GetInferenceModelFactsResponse,
   GetInferenceModelResponse,
   StartInferenceModelContainerRequest,
   StopInferenceModelContainerRequest,
@@ -58,6 +60,27 @@ const inferenceRepository = {
     return Api()
       .get(`/v1/inference/model/list`)
       .then((response: AxiosResponse<APIResponse<GetInferenceModelResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get inference model facts
+   *
+   * @param   {GetInferenceModelFactsRequest}  request
+   *
+   * @return  {Promise<APIResponse><GetInferenceModelFactsResponse>}
+   */
+  async GetInferenceModelFacts(
+    request: GetInferenceModelFactsRequest
+  ): Promise<APIResponse<GetInferenceModelFactsResponse>> {
+    return Api()
+      .get(`/v1/inference/model/proxy/container/${request.containerID}/facts`)
+      .then((response: AxiosResponse<APIResponse<GetInferenceModelFactsResponse>>) => {
         const { data } = response;
         return data;
       })

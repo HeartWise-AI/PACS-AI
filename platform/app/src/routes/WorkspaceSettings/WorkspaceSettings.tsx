@@ -12,11 +12,12 @@ import playIcon from './../../assets/pacs/icons/play.png';
 import stopIcon from './../../assets/pacs/icons/stop.png';
 import tenantRepository from '../../api/tenantRepository';
 import orthancRepository from '../../api/orthancRepository';
+import inferenceRepository from '../../api/inferenceRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import { GetInferenceModelResponse } from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
-import inferenceRepository from '../../api/inferenceRepository';
+import ModelFactsModal from '../../components/ModelFactsModal';
 
 interface DICOMModalities {
   id: string;
@@ -87,7 +88,7 @@ const WorkspaceSettingsPage = () => {
   const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
   const [inferenceModels, setInferenceModels] = useState<GetInferenceModelResponse[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
-  const [selectedAIModel, setSelectedAIModel] = useState<Partial<ModelDetails>>({});
+  const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
   const [selectedModality, setSelectedModality] = useState({
     id: '',
@@ -127,7 +128,7 @@ const WorkspaceSettingsPage = () => {
   const [isAddingModality, setIsAddingModality] = useState<boolean>(false);
   const [isUpdatingInferenceModel, setIsUpdatingInferenceModel] = useState<boolean>(false);
   const [isAddingInferenceModel, setIsAddingInferenceModel] = useState<boolean>(false);
-  const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
+  const [isOpenModelFactsModal, setIsOpenModelFactsModal] = useState<boolean>(false);
   const [isOpenAddEditModalityModal, setIsOpenAddEditModalityModal] = useState<boolean>(false);
   const [isOpenAddEditInferenceModelModal, setIsOpenAddEditInferenceModelModal] =
     useState<boolean>(false);
@@ -648,7 +649,7 @@ const WorkspaceSettingsPage = () => {
           createPortal(
             <div
               ref={dropdownRef}
-              className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+              className="fixed z-50 w-36 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
               style={getDropdownPosition()}
             >
               <ul className="py-2 text-sm text-white">
@@ -667,33 +668,37 @@ const WorkspaceSettingsPage = () => {
                   </a>
                 </li> */}
                 <li>
-                  {deletingInferenceModel ? (
-                    <img
-                      src={refreshIcon}
-                      alt="Refresh icon"
-                      className="h-4 w-4 animate-spin px-3 py-2"
-                    />
-                  ) : (
+                  <a
+                    className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+                    onClick={() => {
+                      setSelectedInferenceModel(row);
+                      setIsAddInferenceModel(false);
+                      setIsViewInferenceModel(true);
+                      setIsOpenAddEditInferenceModelModal(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {t('View Instance')}
+                  </a>
+                </li>
+                {row.container.status === InferenceContainerStatus.RUNNING && (
+                  <li>
                     <a
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                       onClick={() => {
-                        setSelectedInferenceModel(row);
-                        setIsAddInferenceModel(false);
-                        setIsViewInferenceModel(true);
-                        setIsOpenAddEditInferenceModelModal(true);
-                        setIsOpen(false);
+                        handleViewModelFacts(row.container.id);
                       }}
                     >
-                      {t('View Instance')}
+                      {t('View Model Facts')}
                     </a>
-                  )}
-                </li>
+                  </li>
+                )}
                 <li>
                   {deletingInferenceModel ? (
                     <img
                       src={refreshIcon}
                       alt="Refresh icon"
-                      className="h-4 w-4 animate-spin px-3 py-2"
+                      className="mx-2 h-5 w-5 animate-spin"
                     />
                   ) : (
                     <a
@@ -744,9 +749,18 @@ const WorkspaceSettingsPage = () => {
    *
    * @param model
    */
-  const handleSelectModel = (model: ModelDetails) => {
-    setSelectedAIModel(model);
-    setIsOpenAIModelModal(true);
+  const handleViewModelFacts = async (containerID: string) => {
+    setIsOpenModelFactsModal(true);
+    try {
+      const response = await inferenceRepository.GetInferenceModelFacts({
+        containerID,
+      });
+      setSelectedAIModel(response.data.en);
+    } catch (error) {
+      setIsOpenModelFactsModal(false);
+      console.error('Error fetching inference model facts:', error);
+      showAlert(error.message, 'error');
+    }
   };
 
   const handleInferenceModelTableRowClick = rowData => {
@@ -754,65 +768,6 @@ const WorkspaceSettingsPage = () => {
     setIsAddInferenceModel(false);
     setIsViewInferenceModel(true);
     setIsOpenAddEditInferenceModelModal(true);
-  };
-
-  /**
-   * Validation and perfomance table
-   *
-   * @param data
-   */
-  const ValidationAndPerfomanceTable = ({ data }) => {
-    const { Validation_and_performance } = data;
-
-    const renderTable = (performanceData: {
-      [key: string]: { [key: string]: string | number };
-    }) => (
-      <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
-        <thead>
-          <tr>
-            <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
-            {Object.keys(performanceData).map(dataset => (
-              <th
-                key={dataset}
-                className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
-              >
-                {dataset.replace(/_/g, ' ')}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(performanceData[Object.keys(performanceData)[0]]).map(metric => (
-            <tr key={metric}>
-              <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
-                {metric.replace(/_/g, ' ')}
-              </td>
-              {Object.keys(performanceData).map(dataset => (
-                <td
-                  key={dataset + metric}
-                  className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
-                >
-                  {performanceData[dataset][metric]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-    return (
-      <div>
-        <Typography
-          variant="h6"
-          className="mb-2 font-medium text-white"
-        >
-          {t('Validation and Perfomance')}
-        </Typography>
-        {Object.keys(Validation_and_performance).map(key => (
-          <div key={key}>{renderTable(Validation_and_performance[key])}</div>
-        ))}
-      </div>
-    );
   };
 
   return (
@@ -1108,76 +1063,6 @@ const WorkspaceSettingsPage = () => {
               ) : (
                 <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
               )}
-            </div>
-            {/* divider */}
-            <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
-            {/* AI models */}
-            <div className="mt-5 mb-3">
-              <h1 className="text-xl text-white">{t('Available AI Models')}</h1>
-            </div>
-            {!tenantInfo.availableModels && (
-              <div
-                role="tenantInfo"
-                className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3"
-              >
-                {Array.from({ length: 3 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-full animate-pulse"
-                  >
-                    <div className='className="mb-2 mb-2 h-[330px] rounded-lg bg-gray-200 bg-opacity-30'></div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-              {tenantInfo.availableModels &&
-                tenantInfo.availableModels.map((item, index) => (
-                  <div
-                    key={index}
-                    className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5"
-                  >
-                    <Typography
-                      variant="h6"
-                      className="text-white"
-                    >
-                      {item.en.Summary['Name']}
-                    </Typography>
-                    <Typography
-                      variant="body"
-                      className="my-2 text-sm font-light text-white text-opacity-70"
-                    >
-                      {item.en.Summary['Description']}
-                    </Typography>
-                    {Object.entries(item.en.Summary)
-                      .filter(([key]) => key !== 'Description' && key !== 'Name')
-                      .map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            className="pr-2 font-light text-white text-opacity-70"
-                          >
-                            {`${key.replace(/_/g, ' ')}`}
-                          </Typography>
-                          <Typography
-                            variant="body"
-                            className="text-right font-light text-white"
-                          >
-                            {`${value}`}
-                          </Typography>
-                        </div>
-                      ))}
-                    <ButtonGradient
-                      onClick={() => handleSelectModel(item.en)}
-                      className="mt-5 h-[40px] w-full"
-                    >
-                      {'View More'}
-                    </ButtonGradient>
-                  </div>
-                ))}
             </div>
           </div>
         </div>
@@ -1570,232 +1455,14 @@ const WorkspaceSettingsPage = () => {
           </Modal>
         )}
 
-        {isOpenAIModelModal && (
-          <Modal
-            isOpen={isOpenAIModelModal}
-            size="max-w-[80%]"
+        {isOpenModelFactsModal && (
+          <ModelFactsModal
+            isOpen={isOpenModelFactsModal}
             onClose={() => {
-              setIsOpenAIModelModal(false);
+              setIsOpenModelFactsModal(false);
             }}
-          >
-            <div className="relative">
-              {/* summary */}
-              <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
-                <div className="col-span-1">
-                  <Typography
-                    variant="h6"
-                    className="font-medium text-white"
-                  >
-                    {t('Model Facts')}
-                  </Typography>
-                </div>
-                <div className="col-span-1">
-                  <Typography
-                    variant="subtitle"
-                    className="font-light text-white"
-                  >
-                    {t('Model Name')}: {selectedAIModel.Summary['Name']}
-                  </Typography>
-                </div>
-                <div className="col-span-1">
-                  <Typography
-                    variant="subtitle"
-                    className="font-light text-white"
-                  >
-                    {t('Locale')}: {selectedAIModel.Summary['Licensed_to']}
-                  </Typography>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
-                <div className="col-span-1">
-                  <Typography
-                    variant="subtitle"
-                    className="font-light text-white"
-                  >
-                    {t('Approval Date')}: {selectedAIModel.Summary['Approval_date']}
-                  </Typography>
-                </div>
-                <div className="col-span-1">
-                  <Typography
-                    variant="subtitle"
-                    className="font-light text-white"
-                  >
-                    {t('Last Update')}: {selectedAIModel.Summary['Last_update']}
-                  </Typography>
-                </div>
-                <div className="col-span-1">
-                  <Typography
-                    variant="subtitle"
-                    className="font-light text-white"
-                  >
-                    {t('Version')}: {selectedAIModel.Summary['Version']}
-                  </Typography>
-                </div>
-              </div>
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Summary')}
-                </Typography>
-                <Typography
-                  variant="body"
-                  className="mt-2 font-light text-white"
-                >
-                  {selectedAIModel.Summary['Description']}
-                </Typography>
-              </div>
-              {/* mechanism */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Mechanism')}
-                </Typography>
-                {Object.entries(selectedAIModel.Mechanism).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 font-medium text-white"
-                    >
-                      • {`${key.replace(/_/g, ' ')}`}
-                    </Typography>
-                    <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
-                    <Typography
-                      variant="body"
-                      className="pl-2 text-right font-light text-white"
-                    >
-                      {`${value}`}
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-              {/* validation and performance */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <ValidationAndPerfomanceTable data={selectedAIModel} />
-              </div>
-              {/* uses and directions */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Uses and directions')}
-                </Typography>
-                {Object.entries(selectedAIModel.Uses_and_directions).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 text-white"
-                    >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-              {/* warning and limitations */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Warnings')}
-                </Typography>
-                {Object.entries(selectedAIModel.Warnings_and_limitations).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 text-white"
-                    >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-              {/* other information */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Other information')}
-                </Typography>
-                {Object.entries(selectedAIModel.Other_information).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 text-white"
-                    >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-              {/* other results */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Other results')}
-                </Typography>
-                {Object.entries(selectedAIModel.Other_results).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 text-white"
-                    >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-              {/* change logs */}
-              <div className="border-b border-white border-opacity-10 py-2">
-                <Typography
-                  variant="h6"
-                  className="font-medium text-white"
-                >
-                  {t('Change logs')}
-                </Typography>
-                {Object.entries(selectedAIModel.Changelogs).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="px-4 pt-2"
-                  >
-                    <Typography
-                      variant="body"
-                      className="pr-2 text-white"
-                    >
-                      <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                      <span className="font-light"> {`${value}`}</span>
-                    </Typography>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Modal>
+            data={selectedAIModel}
+          />
         )}
         {/* remove modality modal */}
         {isOpenRemoveModalityModal && (
