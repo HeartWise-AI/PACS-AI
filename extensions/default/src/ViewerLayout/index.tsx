@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-
 import { SidePanel, ErrorBoundary, LoadingIndicatorProgress, Typography } from '@ohif/ui';
 import { ServicesManager, HangingProtocolService, CommandsManager } from '@ohif/core';
 import Sidebar from '../../../../platform/app/src/components/Sidebar';
@@ -9,6 +8,8 @@ import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { useTranslation } from 'react-i18next';
+import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
+import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 
 function ViewerLayout({
   // From Extension Module Params
@@ -26,6 +27,9 @@ function ViewerLayout({
 }): React.FunctionComponent {
   const [appConfig] = useAppConfig();
   const { t } = useTranslation();
+  const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
+    GetInferenceAvailableModelsResponse[]
+  >([]);
 
   const { hangingProtocolService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
@@ -100,6 +104,19 @@ function ViewerLayout({
     };
   }, [hangingProtocolService]);
 
+  useEffect(() => {
+    const fetchInferenceAvailableModels = async () => {
+      try {
+        const response = await inferenceRepository.GetInferenceAvailableModels();
+        setInferenceAvailableModels(response.data);
+      } catch (error) {
+        console.error('Error fetching available inference models:', error);
+      }
+    };
+
+    fetchInferenceAvailableModels();
+  }, [inferenceRepository]);
+
   const getViewportComponentData = viewportComponent => {
     const { entry } = getComponent(viewportComponent.namespace);
 
@@ -125,9 +142,10 @@ function ViewerLayout({
             hotkeysManager={hotkeysManager}
             extensionManager={extensionManager}
             servicesManager={servicesManager}
+            inferenceAvailableModels={inferenceAvailableModels}
           />
           <div
-            className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent gap-2"
+            className="relative flex w-full flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent"
             style={{ height: 'calc(100vh - 147px)' }}
           >
             <React.Fragment>

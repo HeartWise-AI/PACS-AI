@@ -1,13 +1,27 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { getEnabledElement, metaData } from '@cornerstonejs/core';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
 import predictionRepository from '../../../../app/src/api/predictionRepository';
 import orthancRepository from '../../../../app/src/api/orthancRepository';
-import { getEnabledElement, metaData } from '@cornerstonejs/core';
+import inferenceRepository from '../../../../app/src/api/inferenceRepository';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelHTMLResponse,
+  PredictInferenceModelJSONResponse,
+  PredictInferenceModelPDFResponse,
+  PredictInferenceModelWebappResponse,
+} from '../../../../app/src/api/inferenceDTO';
+import JSONOutputModeModal from '../../../../app/src/components/inference/JSONOutputModeModal';
+import WebappOutputModeModal from '../../../../app/src/components/inference/WebappOutputModeModal';
+import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOutputModeModal';
+import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
+import { AlertContext } from '../../../../app/src/AlertProvider';
+
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
 const textColor = 'text-white';
@@ -20,10 +34,19 @@ const AIModelButton = ({
   isShowBG,
   isShowText,
   positionRight,
+  inferenceAvailableModels,
+  modalities,
 }) => {
   const { t } = useTranslation('AIModelButton');
+  const showAlert = useContext(AlertContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [openJSONOutputModeModal, setOpenJSONOutputModeModal] = useState(false);
+  const [openWebappOutputModeModal, setOpenWebappOutputModeModal] = useState(false);
+  const [openHTMLOutputModeModal, setOpenHTMLOutputModeModal] = useState(false);
+  const [openPDFOutputModeModal, setOpenPDFOutputModeModal] = useState(false);
+  const [outputModeTitle, setOutputModeTitle] = useState('');
+  const [outputModeData, setOutputModeData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lvef, setLvef] = useState(null);
   const [age, setAge] = useState(null);
@@ -50,6 +73,7 @@ const AIModelButton = ({
     return sopInstanceUID;
   }
 
+  // TODO: to be depricated
   /**
    * Apply prediction
    */
@@ -98,14 +122,66 @@ const AIModelButton = ({
     setVessel(null);
   };
 
+  const applyPredictInferenceModel = async (containerID: string, outputMode: string) => {
+    setIsLoading(true);
+    const sopInstanceUID = getSOPInstanceUID();
+
+    if (!sopInstanceUID) {
+      console.error('Failed to get SOPInstanceUID');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      switch (outputMode) {
+        case 'JSON':
+          setOpenJSONOutputModeModal(true);
+          break;
+        case 'WEB_APP':
+          setOpenWebappOutputModeModal(true);
+          break;
+        case 'HTML':
+          setOpenHTMLOutputModeModal(true);
+          break;
+        case 'PDF':
+          setOpenPDFOutputModeModal(true);
+          break;
+        default:
+          break;
+      }
+
+      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
+        sopInstanceUID,
+      });
+
+      const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
+        containerID,
+        queryIDs: [findInstanceResponse.data.queryIds[0]],
+        outputMode,
+      });
+
+      setOutputModeData(predictionResultResponse.data);
+      setIsLoading(false);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Error fetching prediction data:', error);
+      showAlert(error.message, 'error');
+      setOpenJSONOutputModeModal(false);
+      setOpenWebappOutputModeModal(false);
+      setOpenHTMLOutputModeModal(false);
+      setOpenPDFOutputModeModal(false);
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="relative flex w-full">
       <button
         className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
-        }`}
+        } ${!inferenceAvailableModels?.length ? 'opacity-50' : ''}`}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        disabled={!inferenceAvailableModels?.length}
       >
         <img
           src={aiModelsIcon}
@@ -118,11 +194,37 @@ const AIModelButton = ({
       </button>
       {isOpen && (
         <div
-          className="absolute z-10 min-w-[210px] divide-y divide-gray-100 rounded-lg bg-[#4C504B] px-2 shadow"
+          className="absolute z-10 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
           style={{ top: ref.current ? ref.current.offsetHeight : 40, right: positionRight }}
         >
-          <ul className="flex flex-col gap-1 py-2 text-sm text-white">
-            <li
+          <ul className="flex min-w-[120%] flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
+            {inferenceAvailableModels.map((model, index) =>
+              model.supportedDicomModalities.includes(modalities) ? null : (
+                <li
+                  key={index}
+                  className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+                  onClick={() => {
+                    applyPredictInferenceModel(model.containerId, model.outputMode);
+                    setOutputModeTitle(`${model.modelName} (${model.version}-${model.outputMode})`);
+                  }}
+                >
+                  <img
+                    src={playerPlayIcon}
+                    alt="Player play icon"
+                    className="w-5"
+                  />
+                  <h1 className="whitespace-nowrap text-sm">
+                    Apply {t(model.modelName)} ({model.version}-{model.outputMode})
+                  </h1>
+                  <img
+                    src={helpInactive}
+                    alt="Player play icon"
+                    className="mr-2 w-5"
+                  />
+                </li>
+              )
+            )}
+            {/* <li
               className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
               onClick={handleOnClick}
             >
@@ -137,18 +239,54 @@ const AIModelButton = ({
                 alt="Player play icon"
                 className="w-5"
               />
-            </li>
+            </li> */}
           </ul>
         </div>
       )}
-      <ResultModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        lvef={lvef}
-        age={age}
-        detectedVessel={detectedVessel}
-        isLoading={isLoading}
-      />
+      {openJSONOutputModeModal && (
+        <JSONOutputModeModal
+          isOpen={openJSONOutputModeModal}
+          onClose={() => {
+            setOpenJSONOutputModeModal(false);
+          }}
+          data={outputModeData as PredictInferenceModelJSONResponse}
+          title={outputModeTitle}
+          loading={isLoading}
+        />
+      )}
+      {openWebappOutputModeModal && (
+        <WebappOutputModeModal
+          isOpen={openWebappOutputModeModal}
+          onClose={() => {
+            setOpenWebappOutputModeModal(false);
+          }}
+          data={outputModeData as PredictInferenceModelWebappResponse}
+          title={outputModeTitle}
+          loading={isLoading}
+        />
+      )}
+      {openHTMLOutputModeModal && (
+        <HTMLOutputModeModal
+          isOpen={openHTMLOutputModeModal}
+          onClose={() => {
+            setOpenHTMLOutputModeModal(false);
+          }}
+          data={outputModeData as PredictInferenceModelHTMLResponse}
+          title={outputModeTitle}
+          loading={isLoading}
+        />
+      )}
+      {openPDFOutputModeModal && (
+        <PDFOutputModeModal
+          isOpen={openPDFOutputModeModal}
+          onClose={() => {
+            setOpenPDFOutputModeModal(false);
+          }}
+          data={outputModeData as PredictInferenceModelPDFResponse}
+          title={outputModeTitle}
+          loading={isLoading}
+        />
+      )}
     </div>
   );
 };
@@ -168,7 +306,6 @@ AIModelButton.propTypes = {
   className: PropTypes.string,
   /** What is inside the button, can be text or react component */
   children: PropTypes.node,
-
   /** Whether the button should be disabled  */
   disabled: PropTypes.bool,
   /** Whether to show the gradient background  */

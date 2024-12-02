@@ -18,7 +18,12 @@ import Toolbar from '../Toolbar/Toolbar';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
-function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
+function ViewerHeader({
+  hotkeysManager,
+  extensionManager,
+  servicesManager,
+  inferenceAvailableModels,
+}) {
   const [appConfig] = useAppConfig();
   const navigate = useNavigate();
   const location = useLocation();
@@ -116,6 +121,7 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
             <AIModelButton
               isShowBG={true}
               positionRight={-90}
+              inferenceAvailableModels={inferenceAvailableModels}
             />
           </div>
         </div>
