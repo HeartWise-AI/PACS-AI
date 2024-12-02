@@ -119,10 +119,12 @@ const ThumbnailTracked = ({
           </div>
         )}
         {/* TODO: Added AI Models button */}
-        <AIModelButton
+        {/* <AIModelButton
           isShowBG={true}
           positionRight={0}
-        />
+          inferenceAvailableModels={inferenceAvailableModels}
+          modalities={modalities}
+        /> */}
       </div>
 
       <Thumbnail

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { AIModelButton } from '@ohif/ui';
@@ -11,6 +11,7 @@ import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
+import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx';
 
 const getTrackedSeries = displaySets => {
   let trackedSeries = 0;
@@ -35,6 +36,7 @@ const StudyBrowser = ({
   activeDisplaySetInstanceUIDs,
   servicesManager,
 }) => {
+  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
   const { t } = useTranslation('StudyBrowser');
@@ -53,6 +55,8 @@ const StudyBrowser = ({
                 isShowBG={true}
                 isShowText={true}
                 positionRight={-110}
+                inferenceAvailableModels={inferenceAvailableModels}
+                loading={fetchingAvailableModels}
               />
               <button className="flex w-full items-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
                 <img
