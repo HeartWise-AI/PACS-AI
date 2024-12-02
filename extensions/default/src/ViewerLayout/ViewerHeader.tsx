@@ -18,6 +18,8 @@ function ViewerHeader({
   extensionManager,
   servicesManager,
   appConfig,
+  inferenceAvailableModels,
+  fetchingAvailableModels,
 }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,6 +137,7 @@ function ViewerHeader({
               isShowBG={true}
               positionRight={-90}
               inferenceAvailableModels={inferenceAvailableModels}
+              loading={fetchingAvailableModels}
             />
           </div>
     </Header>
