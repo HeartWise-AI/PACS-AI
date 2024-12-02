@@ -19,15 +19,12 @@ import { AvailableModelsContext } from '../ViewerLayout/index';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
-function ViewerHeader({
-  hotkeysManager,
-  extensionManager,
-  servicesManager
-}) {
+function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
   const [appConfig] = useAppConfig();
   const navigate = useNavigate();
   const location = useLocation();
-  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
 
   const onClickReturnButton = () => {
     const { pathname } = location;

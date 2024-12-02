@@ -912,14 +912,22 @@ function WorkList() {
                                   </h1>
                                   <Button
                                     onClick={() => {
-                                      viewStudy('viewer', row.studyInstanceUID, row.modalitiesInStudy);
+                                      viewStudy(
+                                        'viewer',
+                                        row.studyInstanceUID,
+                                        row.modalitiesInStudy
+                                      );
                                     }}
                                   >
                                     {t('BasicViewer')}
                                   </Button>
                                   <Button
                                     onClick={() => {
-                                      viewStudy('segmentation', row.studyInstanceUID, row.modalitiesInStudy);
+                                      viewStudy(
+                                        'segmentation',
+                                        row.studyInstanceUID,
+                                        row.modalitiesInStudy
+                                      );
                                     }}
                                   >
                                     {t('Segmentation')}

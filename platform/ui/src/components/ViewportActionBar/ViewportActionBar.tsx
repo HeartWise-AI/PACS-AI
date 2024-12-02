@@ -112,7 +112,7 @@ const ViewportActionBar = ({
       className="pointer-events-auto flex h-8 shrink-0 select-none items-center justify-between overflow-visible whitespace-nowrap px-2 text-base"
       onDoubleClick={onDoubleClick}
     >
-      <div className="flex min-w-[165px] flex-row gap-2 items-center">
+      <div className="flex min-w-[165px] flex-row items-center gap-2">
         {getStatusComponent()}
         {!!label?.length && <span className="text-aqua-pale text-large ml-1">{label}</span>}
         <div className={separatorClasses}></div>
@@ -135,11 +135,11 @@ const ViewportActionBar = ({
           </>
         )}
       </div>
-      <div className="mx-auto flex flex-row gap-1 text-white items-center">
+      <div className="mx-auto flex flex-row items-center gap-1 text-white">
         <span>Series: </span>
         <span>{currentSeries}</span>
       </div>
-      <div className="flex min-w-[165px] flex-row gap-2 items-center">
+      <div className="flex min-w-[165px] flex-row items-center gap-2">
         {showArrows && (
           <>
             <Icon

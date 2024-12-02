@@ -36,7 +36,8 @@ const StudyBrowser = ({
   activeDisplaySetInstanceUIDs,
   servicesManager,
 }) => {
-  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
   const { t } = useTranslation('StudyBrowser');

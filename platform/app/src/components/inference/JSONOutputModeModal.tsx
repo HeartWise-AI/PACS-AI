@@ -142,9 +142,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                             </p>
                             <p className="flex justify-between rounded-md bg-transparent px-3 py-2">
                               <span className="opacity-50">Probability</span>
-                              <span className="text-[14px]">
-                                {prediction.probability}%
-                              </span>
+                              <span className="text-[14px]">{prediction.probability}%</span>
                             </p>
                             <p className="flex items-center justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
                               <span className="opacity-50">Confidence</span>

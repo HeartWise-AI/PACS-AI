@@ -67,11 +67,11 @@ const SidebarAdmin = () => {
     fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
-    // Check if pathname is active
-    const isPageActive = pattern => {
-      const pathname = window.location.pathname;
-      return pathname === pattern;
-    };
+  // Check if pathname is active
+  const isPageActive = pattern => {
+    const pathname = window.location.pathname;
+    return pathname === pattern;
+  };
 
   if (currentUser) {
     role = currentUser.role;
@@ -81,17 +81,17 @@ const SidebarAdmin = () => {
     <aside
       id="default-sidebar"
       className={`sticky top-0 left-0 z-40 h-screen !overflow-x-hidden !transition-all !duration-300 ${
-         sidebarExpanded ? 'min-w-[280px]' : 'min-w-[110px]'
+        sidebarExpanded ? 'min-w-[280px]' : 'min-w-[110px]'
       } p-5`}
       aria-label="Sidebar"
       onMouseEnter={expandSidebar}
       onMouseLeave={collapseSidebar}
     >
-      <div className="border-1 flex h-full flex-col justify-between overflow-x-hidden overflow-y-auto rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
+      <div className="border-1 flex h-full flex-col justify-between overflow-y-auto overflow-x-hidden rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
           <div className="flex items-start justify-between">
             {sidebarExpanded ? (
-              <Logo class="h-auto w-[117px] transition-opacity duration-300 delay-150" />
+              <Logo class="h-auto w-[117px] transition-opacity delay-150 duration-300" />
             ) : (
               <img
                 src={logoIcon}
@@ -103,7 +103,7 @@ const SidebarAdmin = () => {
           {sidebarExpanded && (
             <Typography
               variant="caption"
-              className="mt-7 text-white text-opacity-90 transition-all duration-300 delay-150"
+              className="mt-7 text-white text-opacity-90 transition-all delay-150 duration-300"
             >
               {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
             </Typography>
@@ -141,7 +141,7 @@ const SidebarAdmin = () => {
                 {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
+                    className={`ms-3 ml-2 font-medium transition-opacity delay-150 duration-300 ${
                       isPageActive('/admin/members') ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
@@ -182,7 +182,7 @@ const SidebarAdmin = () => {
                 {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
+                    className={`ms-3 ml-2 font-medium transition-opacity delay-150 duration-300 ${
                       isPageActive('/admin/kibana-logs')
                         ? 'text-black'
                         : 'text-white text-opacity-50'
@@ -225,7 +225,7 @@ const SidebarAdmin = () => {
                 {sidebarExpanded && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium transition-opacity duration-300 delay-150 ${
+                    className={`ms-3 ml-2 font-medium transition-opacity delay-150 duration-300 ${
                       isPageActive('/admin/workspace-settings')
                         ? 'text-black'
                         : 'text-white text-opacity-50'
