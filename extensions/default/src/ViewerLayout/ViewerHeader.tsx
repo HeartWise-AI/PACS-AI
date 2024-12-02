@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -15,6 +15,7 @@ import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { useAppConfig } from '@state';
 import Toolbar from '../Toolbar/Toolbar';
+import { AvailableModelsContext } from '../ViewerLayout/index';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
@@ -22,6 +23,8 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
   const [appConfig] = useAppConfig();
   const navigate = useNavigate();
   const location = useLocation();
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
 
   const onClickReturnButton = () => {
     const { pathname } = location;
@@ -116,6 +119,8 @@ function ViewerHeader({ hotkeysManager, extensionManager, servicesManager }) {
             <AIModelButton
               isShowBG={true}
               positionRight={-90}
+              inferenceAvailableModels={inferenceAvailableModels}
+              loading={fetchingAvailableModels}
             />
           </div>
         </div>

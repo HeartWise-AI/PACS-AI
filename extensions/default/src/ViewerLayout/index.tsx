@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-
 import { SidePanel, ErrorBoundary, LoadingIndicatorProgress, Typography } from '@ohif/ui';
 import { ServicesManager, HangingProtocolService, CommandsManager } from '@ohif/core';
 import Sidebar from '../../../../platform/app/src/components/Sidebar';
@@ -9,6 +8,15 @@ import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { useTranslation } from 'react-i18next';
+import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
+import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
+
+interface AvailableModelsContextType {
+  inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
+  fetchingAvailableModels: boolean;
+}
+
+export const AvailableModelsContext = createContext<AvailableModelsContextType | null>(null);
 
 function ViewerLayout({
   // From Extension Module Params
@@ -26,7 +34,10 @@ function ViewerLayout({
 }): React.FunctionComponent {
   const [appConfig] = useAppConfig();
   const { t } = useTranslation();
-
+  const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
+    GetInferenceAvailableModelsResponse[]
+  >([]);
+  const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false);
   const { hangingProtocolService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
 
@@ -100,6 +111,21 @@ function ViewerLayout({
     };
   }, [hangingProtocolService]);
 
+  useEffect(() => {
+    const fetchInferenceAvailableModels = async () => {
+      setFetchingAvailableModels(true);
+      try {
+        const response = await inferenceRepository.GetInferenceAvailableModels();
+        setInferenceAvailableModels(response.data);
+      } catch (error) {
+        console.error('Error fetching available inference models:', error);
+      }
+      setFetchingAvailableModels(false);
+    };
+
+    fetchInferenceAvailableModels();
+  }, [inferenceRepository]);
+
   const getViewportComponentData = viewportComponent => {
     const { entry } = getComponent(viewportComponent.namespace);
 
@@ -116,60 +142,64 @@ function ViewerLayout({
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815] ">
-        {/* TODO: Added Sidebar component */}
-        <Sidebar />
-        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          {/* TODO: Added HeaderPanel component */}
-          <HeaderPanel title="Viewer" />
-          <ViewerHeader
-            hotkeysManager={hotkeysManager}
-            extensionManager={extensionManager}
-            servicesManager={servicesManager}
-          />
-          <div
-            className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden rounded-lg bg-transparent gap-2"
-            style={{ height: 'calc(100vh - 147px)' }}
-          >
-            <React.Fragment>
-              {showLoadingIndicator && (
-                <LoadingIndicatorProgress className="h-full w-full bg-transparent" />
-              )}
-              {/* LEFT SIDEPANELS */}
-              {leftPanelComponents.length ? (
-                <ErrorBoundary context="Left Panel">
-                  <SidePanelWithServices
-                    side="left"
-                    activeTabIndex={leftPanelDefaultClosed ? null : 0}
-                    tabs={leftPanelComponents}
-                    servicesManager={servicesManager}
-                  />
-                </ErrorBoundary>
-              ) : null}
-              {/* TOOLBAR + GRID */}
-              <div className="flex h-full flex-1 flex-col">
-                <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg">
-                  <ErrorBoundary context="Grid">
-                    <ViewportGridComp
+        <AvailableModelsContext.Provider
+          value={{ inferenceAvailableModels, fetchingAvailableModels }}
+        >
+          {/* TODO: Added Sidebar component */}
+          <Sidebar />
+          <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
+            {/* TODO: Added HeaderPanel component */}
+            <HeaderPanel title="Viewer" />
+            <ViewerHeader
+              hotkeysManager={hotkeysManager}
+              extensionManager={extensionManager}
+              servicesManager={servicesManager}
+            />
+            <div
+              className="relative flex w-full flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent"
+              style={{ height: 'calc(100vh - 147px)' }}
+            >
+              <React.Fragment>
+                {showLoadingIndicator && (
+                  <LoadingIndicatorProgress className="h-full w-full bg-transparent" />
+                )}
+                {/* LEFT SIDEPANELS */}
+                {leftPanelComponents.length ? (
+                  <ErrorBoundary context="Left Panel">
+                    <SidePanelWithServices
+                      side="left"
+                      activeTabIndex={leftPanelDefaultClosed ? null : 0}
+                      tabs={leftPanelComponents}
                       servicesManager={servicesManager}
-                      viewportComponents={viewportComponents}
-                      commandsManager={commandsManager}
                     />
                   </ErrorBoundary>
+                ) : null}
+                {/* TOOLBAR + GRID */}
+                <div className="flex h-full flex-1 flex-col">
+                  <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg">
+                    <ErrorBoundary context="Grid">
+                      <ViewportGridComp
+                        servicesManager={servicesManager}
+                        viewportComponents={viewportComponents}
+                        commandsManager={commandsManager}
+                      />
+                    </ErrorBoundary>
+                  </div>
                 </div>
-              </div>
-              {rightPanelComponents.length ? (
-                <ErrorBoundary context="Right Panel">
-                  <SidePanelWithServices
-                    side="right"
-                    activeTabIndex={rightPanelDefaultClosed ? null : 0}
-                    tabs={rightPanelComponents}
-                    servicesManager={servicesManager}
-                  />
-                </ErrorBoundary>
-              ) : null}
-            </React.Fragment>
+                {rightPanelComponents.length ? (
+                  <ErrorBoundary context="Right Panel">
+                    <SidePanelWithServices
+                      side="right"
+                      activeTabIndex={rightPanelDefaultClosed ? null : 0}
+                      tabs={rightPanelComponents}
+                      servicesManager={servicesManager}
+                    />
+                  </ErrorBoundary>
+                ) : null}
+              </React.Fragment>
+            </div>
           </div>
-        </div>
+        </AvailableModelsContext.Provider>
       </div>
     </div>
   );
