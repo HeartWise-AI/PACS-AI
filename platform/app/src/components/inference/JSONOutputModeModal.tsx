@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelJSONResponse } from '../../api/inferenceDTO';
+import ReactSpeedometer from 'react-d3-speedometer';
 
 interface JSONOutputModeModalProps {
   isOpen: boolean;
@@ -11,12 +12,49 @@ interface JSONOutputModeModalProps {
   title: string;
 }
 
-const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({ isOpen, onClose, data, loading, title }) => {
+const InferenceDetails = {
+  normal: {
+    label: 'Normal',
+    color: 'success',
+  },
+  limit: {
+    label: 'Limit',
+    color: 'yellow',
+  },
+  pathological: {
+    label: 'Pathological',
+    color: 'error',
+  },
+};
+
+const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
+  isOpen,
+  onClose,
+  data,
+  loading,
+  title,
+}) => {
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
     }
   }, [onClose]);
+
+  const getInferenceDiagnosisColor = (diagnosis: string) => {
+    const diagnosisDetails = InferenceDetails[diagnosis.toLowerCase()];
+    if (!diagnosisDetails) return 'text-[#6ED47C] bg-[#6ED47C]'; // default color
+
+    switch (diagnosisDetails.color) {
+      case 'success':
+        return 'text-[#6ED47C] bg-[#6ED47C]';
+      case 'yellow':
+        return 'text-yellow-400 bg-yellow-400';
+      case 'error':
+        return 'text-red-500 bg-red-500';
+      default:
+        return 'text-[#6ED47C] bg-[#6ED47C]'; // fallback color
+    }
+  };
 
   return (
     <React.Fragment>
@@ -41,49 +79,93 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({ isOpen, onClo
             </span>
 
             <div
-              className={`relative max-w-[800px] w-[800px] inline-block transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
+              className={`relative inline-block w-[800px] max-w-[800px] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
             >
               {/* close button */}
               <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 z-[999999999]"
               >
-                <img src={closeIcon} alt="Close icon" />
+                <img
+                  src={closeIcon}
+                  alt="Close icon"
+                />
               </button>
               {/* content */}
-              <div className="w-full h-full">
-                <h1 className="text-white text-xl font-bold mb-4">{title}</h1>
+              <div className="h-full w-full">
+                <div className="mb-4 flex items-center gap-2">
+                  <h1 className="text-[18px] font-bold text-white">{title}</h1>
+                  {data?.diagnosis && (
+                    <div
+                      className={`${getInferenceDiagnosisColor(
+                        data.diagnosis
+                      )} rounded-full bg-opacity-10 px-3 py-1 text-base`}
+                    >
+                      {InferenceDetails[data.diagnosis.toLowerCase()].label}
+                    </div>
+                  )}
+                </div>
                 {loading ? (
-                  <div className="flex items-center justify-center h-40">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                  <div className="flex h-40 items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
                   </div>
                 ) : (
-                  <div className="text-white space-y-4">
+                  <div className="space-y-4 text-white">
                     <div>
-                      <h2 className="text-lg font-semibold mb-2">Diagnosis</h2>
-                      <p className="text-gray-300">{data.diagnosis}</p>
+                      <h2 className="text-[16px] font-semibold">Recommendation</h2>
+                      <p className="text-[14px] text-white text-opacity-50">
+                        {data.modelRecommendations.en}
+                      </p>
                     </div>
 
                     <div>
-                      <h2 className="text-lg font-semibold mb-2">Predictions</h2>
-                      {Object.entries(data.predictions).map(([key, prediction]) => (
-                        <div key={key} className="ml-4 mb-3">
-                          <h3 className="text-lg font-medium">{key}</h3>
-                          <div className="ml-4 text-gray-300">
-                            <p>Probability: {prediction.probability.toFixed(2)}%</p>
-                            <p>Confidence: {prediction.confidence}</p>
-                            <p>Display Result: {prediction.displayResult}</p>
-                            <p>Presentable: {prediction.presentable ? 'Yes' : 'No'}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div>
-                      <h2 className="text-lg font-semibold mb-2">Model Recommendations</h2>
-                      <div className="ml-4 text-gray-300">
-                        <p>{data.modelRecommendations.en}</p>
-                      </div>
+                      {Object.entries(data.predictions).map(
+                        ([key, prediction]) =>
+                          prediction.presentable && (
+                            <div
+                              key={key}
+                              className="mb-5"
+                            >
+                              <h3 className="mb-1 text-lg font-medium">{key}</h3>
+                              <div className="flex flex-col gap-1 text-white">
+                                <p className="flex justify-between rounded-md bg-[#252825] px-3 py-2">
+                                  <span className="opacity-50">Result</span>
+                                  <span className="text-[14px]">{prediction.displayResult}</span>
+                                </p>
+                                <p className="flex justify-between rounded-md bg-transparent px-3 py-2">
+                                  <span className="opacity-50">Probability</span>
+                                  <span className="text-[14px]">
+                                    {prediction.probability.toFixed(2)}%
+                                  </span>
+                                </p>
+                                <p className="flex items-center justify-between rounded-md bg-[#252825] px-3 py-2">
+                                  <span className="opacity-50">Confidence</span>
+                                  <div className="relative flex items-center gap-2 rounded-full bg-white bg-opacity-10 px-3 py-1">
+                                    <span className="mr-9 text-[14px] capitalize">
+                                      {prediction.confidence}
+                                    </span>
+                                    <div className="absolute right-[-8px] top-[-12px]">
+                                      <ReactSpeedometer
+                                        width={70}
+                                        height={40}
+                                        ringWidth={5}
+                                        needleHeightRatio={0.4}
+                                        maxValue={100}
+                                        customSegmentStops={[0, 25, 75, 100]}
+                                        value={prediction.probability}
+                                        segmentColors={['#6ad72d', '#FFD700', '#F64343']}
+                                        currentValueText=""
+                                        customSegmentLabels={[{}, {}, {}]}
+                                        needleTransitionDuration={3333}
+                                        needleColor={'#2A7DED'}
+                                      />
+                                    </div>
+                                  </div>
+                                </p>
+                              </div>
+                            </div>
+                          )
+                      )}
                     </div>
                   </div>
                 )}
@@ -107,16 +189,16 @@ JSONOutputModeModal.defaultProps = {
         confidence: string;
         presentable: boolean;
         displayResult: string;
-      }
+      };
     },
     modelRecommendations: {
       en: '',
       fr: '',
-      presentable: false
-    }
+      presentable: false,
+    },
   },
   loading: false,
-  title: ''
+  title: '',
 };
 
 JSONOutputModeModal.propTypes = {
@@ -124,7 +206,7 @@ JSONOutputModeModal.propTypes = {
   onClose: PropTypes.func,
   data: PropTypes.object as PropTypes.Validator<PredictInferenceModelJSONResponse>,
   loading: PropTypes.bool,
-  title: PropTypes.string
+  title: PropTypes.string,
 };
 
 export default JSONOutputModeModal;

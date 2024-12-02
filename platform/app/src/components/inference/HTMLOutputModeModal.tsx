@@ -76,11 +76,11 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
               </button>
               {/* content */}
               <div className="h-full w-full">
-                <h1 className="mb-4 text-xl font-bold text-white">{title}</h1>
+                <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
                 <div className="space-y-4">
                   {loading ? (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+                    <div className="flex h-[calc(100vh-200px)] items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
                     </div>
                   ) : (
                     <iframe

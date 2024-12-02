@@ -30,7 +30,7 @@ function ViewerLayout({
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
     GetInferenceAvailableModelsResponse[]
   >([]);
-
+  const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false);
   const { hangingProtocolService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
 
@@ -106,12 +106,14 @@ function ViewerLayout({
 
   useEffect(() => {
     const fetchInferenceAvailableModels = async () => {
+      setFetchingAvailableModels(true);
       try {
         const response = await inferenceRepository.GetInferenceAvailableModels();
         setInferenceAvailableModels(response.data);
       } catch (error) {
         console.error('Error fetching available inference models:', error);
       }
+      setFetchingAvailableModels(false);
     };
 
     fetchInferenceAvailableModels();
@@ -143,6 +145,7 @@ function ViewerLayout({
             extensionManager={extensionManager}
             servicesManager={servicesManager}
             inferenceAvailableModels={inferenceAvailableModels}
+            fetchingAvailableModels={fetchingAvailableModels}
           />
           <div
             className="relative flex w-full flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent"
