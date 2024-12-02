@@ -108,234 +108,237 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({ isOpen, onClose, data
                 onClick={handleClose}
                 className="absolute top-4 right-4 z-[999999999]"
               >
-                <img src={closeIcon} alt="Close icon" />
+                <img
+                  src={closeIcon}
+                  alt="Close icon"
+                />
               </button>
               {/* content */}
-                <div className="h-full w-full">
-                  {!data || Object.keys(data).length === 0 ? (
-                    <div className="flex h-40 items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      {/* summary */}
-                      <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
-                        <div className="col-span-1">
-                          <Typography
-                            variant="h6"
-                            className="font-medium text-white"
-                          >
-                            {t('Model Facts')}
-                          </Typography>
-                        </div>
-                        <div className="col-span-1">
-                          <Typography
-                            variant="subtitle"
-                            className="font-light text-white"
-                          >
-                            {t('Model Name')}: {data.Summary['Name']}
-                          </Typography>
-                        </div>
-                        <div className="col-span-1">
-                          <Typography
-                            variant="subtitle"
-                            className="font-light text-white"
-                          >
-                            {t('Locale')}: {data.Summary['Licensed_to']}
-                          </Typography>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
-                        <div className="col-span-1">
-                          <Typography
-                            variant="subtitle"
-                            className="font-light text-white"
-                          >
-                            {t('Approval Date')}: {data.Summary['Approval_date']}
-                          </Typography>
-                        </div>
-                        <div className="col-span-1">
-                          <Typography
-                            variant="subtitle"
-                            className="font-light text-white"
-                          >
-                            {t('Last Update')}: {data.Summary['Last_update']}
-                          </Typography>
-                        </div>
-                        <div className="col-span-1">
-                          <Typography
-                            variant="subtitle"
-                            className="font-light text-white"
-                          >
-                            {t('Version')}: {data.Summary['Version']}
-                          </Typography>
-                        </div>
-                      </div>
-                      <div className="border-b border-white border-opacity-10 py-2">
+              <div className="h-full w-full">
+                {!data || Object.keys(data).length === 0 ? (
+                  <div className="flex h-40 items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {/* summary */}
+                    <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
+                      <div className="col-span-1">
                         <Typography
                           variant="h6"
                           className="font-medium text-white"
                         >
-                          {t('Summary')}
-                        </Typography>
-                        <Typography
-                          variant="body"
-                          className="mt-2 font-light text-white"
-                        >
-                          {data.Summary['Description']}
+                          {t('Model Facts')}
                         </Typography>
                       </div>
-                      {/* mechanism */}
-                      <div className="border-b border-white border-opacity-10 py-2">
+                      <div className="col-span-1">
                         <Typography
-                          variant="h6"
-                          className="font-medium text-white"
+                          variant="subtitle"
+                          className="font-light text-white"
                         >
-                          {t('Mechanism')}
+                          {t('Model Name')}: {data.Summary['Name']}
                         </Typography>
-                        {Object.entries(data.Mechanism).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="flex items-center justify-between px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 font-medium text-white"
-                            >
-                              • {`${key.replace(/_/g, ' ')}`}
-                            </Typography>
-                            <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
-                            <Typography
-                              variant="body"
-                              className="pl-2 text-right font-light text-white"
-                            >
-                              {`${value}`}
-                            </Typography>
-                          </div>
-                        ))}
                       </div>
-                      {/* validation and performance */}
-                      <div className="border-b border-white border-opacity-10 py-2">
-                        <ValidationAndPerfomanceTable data={data} />
-                      </div>
-                      {/* uses and directions */}
-                      <div className="border-b border-white border-opacity-10 py-2">
+                      <div className="col-span-1">
                         <Typography
-                          variant="h6"
-                          className="font-medium text-white"
+                          variant="subtitle"
+                          className="font-light text-white"
                         >
-                          {t('Uses and directions')}
+                          {t('Locale')}: {data.Summary['Licensed_to']}
                         </Typography>
-                        {Object.entries(data.Uses_and_directions).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 text-white"
-                            >
-                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                              <span className="font-light"> {`${value}`}</span>
-                            </Typography>
-                          </div>
-                        ))}
-                      </div>
-                      {/* warning and limitations */}
-                      <div className="border-b border-white border-opacity-10 py-2">
-                        <Typography
-                          variant="h6"
-                          className="font-medium text-white"
-                        >
-                          {t('Warnings')}
-                        </Typography>
-                        {Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 text-white"
-                            >
-                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                              <span className="font-light"> {`${value}`}</span>
-                            </Typography>
-                          </div>
-                        ))}
-                      </div>
-                      {/* other information */}
-                      <div className="border-b border-white border-opacity-10 py-2">
-                        <Typography
-                          variant="h6"
-                          className="font-medium text-white"
-                        >
-                          {t('Other information')}
-                        </Typography>
-                        {Object.entries(data.Other_information).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 text-white"
-                            >
-                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                              <span className="font-light"> {`${value}`}</span>
-                            </Typography>
-                          </div>
-                        ))}
-                      </div>
-                      {/* other results */}
-                      <div className="border-b border-white border-opacity-10 py-2">
-                        <Typography
-                          variant="h6"
-                          className="font-medium text-white"
-                        >
-                          {t('Other results')}
-                        </Typography>
-                        {Object.entries(data.Other_results).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 text-white"
-                            >
-                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                              <span className="font-light"> {`${value}`}</span>
-                            </Typography>
-                          </div>
-                        ))}
-                      </div>
-                      {/* change logs */}
-                      <div className="border-b border-white border-opacity-10 py-2">
-                        <Typography
-                          variant="h6"
-                          className="font-medium text-white"
-                        >
-                          {t('Change logs')}
-                        </Typography>
-                        {Object.entries(data.Changelogs).map(([key, value]) => (
-                          <div
-                            key={key}
-                            className="px-4 pt-2"
-                          >
-                            <Typography
-                              variant="body"
-                              className="pr-2 text-white"
-                            >
-                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                              <span className="font-light"> {`${value}`}</span>
-                            </Typography>
-                          </div>
-                        ))}
                       </div>
                     </div>
-                  )}
-                </div>
+                    <div className="grid grid-cols-3 border-b border-white border-opacity-10 py-2">
+                      <div className="col-span-1">
+                        <Typography
+                          variant="subtitle"
+                          className="font-light text-white"
+                        >
+                          {t('Approval Date')}: {data.Summary['Approval_date']}
+                        </Typography>
+                      </div>
+                      <div className="col-span-1">
+                        <Typography
+                          variant="subtitle"
+                          className="font-light text-white"
+                        >
+                          {t('Last Update')}: {data.Summary['Last_update']}
+                        </Typography>
+                      </div>
+                      <div className="col-span-1">
+                        <Typography
+                          variant="subtitle"
+                          className="font-light text-white"
+                        >
+                          {t('Version')}: {data.Summary['Version']}
+                        </Typography>
+                      </div>
+                    </div>
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Summary')}
+                      </Typography>
+                      <Typography
+                        variant="body"
+                        className="mt-2 font-light text-white"
+                      >
+                        {data.Summary['Description']}
+                      </Typography>
+                    </div>
+                    {/* mechanism */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Mechanism')}
+                      </Typography>
+                      {Object.entries(data.Mechanism).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 font-medium text-white"
+                          >
+                            • {`${key.replace(/_/g, ' ')}`}
+                          </Typography>
+                          <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
+                          <Typography
+                            variant="body"
+                            className="pl-2 text-right font-light text-white"
+                          >
+                            {`${value}`}
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                    {/* validation and performance */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <ValidationAndPerfomanceTable data={data} />
+                    </div>
+                    {/* uses and directions */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Uses and directions')}
+                      </Typography>
+                      {Object.entries(data.Uses_and_directions).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 text-white"
+                          >
+                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                            <span className="font-light"> {`${value}`}</span>
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                    {/* warning and limitations */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Warnings')}
+                      </Typography>
+                      {Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 text-white"
+                          >
+                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                            <span className="font-light"> {`${value}`}</span>
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                    {/* other information */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Other information')}
+                      </Typography>
+                      {Object.entries(data.Other_information).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 text-white"
+                          >
+                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                            <span className="font-light"> {`${value}`}</span>
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                    {/* other results */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Other results')}
+                      </Typography>
+                      {Object.entries(data.Other_results).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 text-white"
+                          >
+                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                            <span className="font-light"> {`${value}`}</span>
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                    {/* change logs */}
+                    <div className="border-b border-white border-opacity-10 py-2">
+                      <Typography
+                        variant="h6"
+                        className="font-medium text-white"
+                      >
+                        {t('Change logs')}
+                      </Typography>
+                      {Object.entries(data.Changelogs).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="px-4 pt-2"
+                        >
+                          <Typography
+                            variant="body"
+                            className="pr-2 text-white"
+                          >
+                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                            <span className="font-light"> {`${value}`}</span>
+                          </Typography>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

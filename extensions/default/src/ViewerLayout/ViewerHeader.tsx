@@ -23,7 +23,8 @@ function ViewerHeader({
 }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
 
   const onClickReturnButton = () => {
     const { pathname } = location;

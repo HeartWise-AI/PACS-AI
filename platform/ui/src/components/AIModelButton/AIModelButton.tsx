@@ -122,7 +122,7 @@ const AIModelButton = ({
     }
   };
 
-  const handleButtonClick = (e) => {
+  const handleButtonClick = e => {
     setIsOpen(!isOpen);
     const buttonRect = e.currentTarget.getBoundingClientRect();
     setDropdownPosition({
@@ -201,50 +201,55 @@ const AIModelButton = ({
           <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
         )}
       </button>
-      {isOpen && mounted && ReactDOM.createPortal(
-        <div
-          className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
-          style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
-        >
-          {inferenceAvailableModels.some(
-            // TODO: update this hardcoded modality
-            model => model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
-          ) ? (
-            <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
-              {inferenceAvailableModels.map((model, index) => (
-                <li
-                  key={index}
-                  className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-                  onClick={() => {
-                    applyPredictInferenceModel(model.containerId, model.outputMode);
-                    setOutputModeTitle(`${model.modelName} (${model.version}-${model.outputMode})`);
-                    setContainerName(model.containerName);
-                  }}
-                >
-                  <img
-                    src={playerPlayIcon}
-                    alt="Player play icon"
-                    className="w-5"
-                  />
-                  <h1 className="whitespace-nowrap text-sm">
-                    Apply {t(model.modelName)} ({model.version}-{model.outputMode})
-                  </h1>
-                  <img
-                    src={helpInactive}
-                    alt="Player play icon"
-                    className="mr-2 w-5"
-                  />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-sm text-white text-center">
-              <p className="opacity-50">No inference models found</p>
-            </div>
-          )}
-        </div>,
-        document.body
-      )}
+      {isOpen &&
+        mounted &&
+        ReactDOM.createPortal(
+          <div
+            className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
+            style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
+          >
+            {inferenceAvailableModels.some(
+              // TODO: update this hardcoded modality
+              model =>
+                model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
+            ) ? (
+              <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
+                {inferenceAvailableModels.map((model, index) => (
+                  <li
+                    key={index}
+                    className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+                    onClick={() => {
+                      applyPredictInferenceModel(model.containerId, model.outputMode);
+                      setOutputModeTitle(
+                        `${model.modelName} (${model.version}-${model.outputMode})`
+                      );
+                      setContainerName(model.containerName);
+                    }}
+                  >
+                    <img
+                      src={playerPlayIcon}
+                      alt="Player play icon"
+                      className="w-5"
+                    />
+                    <h1 className="whitespace-nowrap text-sm">
+                      Apply {t(model.modelName)} ({model.version}-{model.outputMode})
+                    </h1>
+                    <img
+                      src={helpInactive}
+                      alt="Player play icon"
+                      className="mr-2 w-5"
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
+                <p className="opacity-50">No inference models found</p>
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
       {openJSONOutputModeModal && (
         <JSONOutputModeModal
           isOpen={openJSONOutputModeModal}

@@ -404,17 +404,17 @@ const MembersPage = () => {
                 className={`grid max-w-full animate-pulse grid-cols-7 gap-4`}
               >
                 {Array.from({ length: 7 }, (_, c) => (
-                    <div key={c}>
-                      {Array.from({ length: 3 }, (_, r) => (
-                        <div key={r}>
-                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                  <div key={c}>
+                    {Array.from({ length: 3 }, (_, r) => (
+                      <div key={r}>
+                        <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                        <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                        <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                        <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
             )}
           </div>
