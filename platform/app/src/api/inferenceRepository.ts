@@ -5,9 +5,11 @@ import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   AddInferenceModelRequest,
   DeleteInferenceModelRequest,
+  GetInferenceAvailableModelsResponse,
   GetInferenceModelFactsRequest,
   GetInferenceModelFactsResponse,
   GetInferenceModelResponse,
+  PredictInferenceModelRequest,
   StartInferenceModelContainerRequest,
   StopInferenceModelContainerRequest,
 } from './inferenceDTO';
@@ -81,6 +83,45 @@ const inferenceRepository = {
     return Api()
       .get(`/v1/inference/model/proxy/container/${request.containerID}/facts`)
       .then((response: AxiosResponse<APIResponse<GetInferenceModelFactsResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get inference available models
+   *
+   * @return  {Promise<APIResponse><GetInferenceAvailableModelsResponse>}
+   */
+  async GetInferenceAvailableModels(): Promise<APIResponse<GetInferenceAvailableModelsResponse[]>> {
+    return Api()
+      .get(`/v1/inference/model/proxy/available`)
+      .then((response: AxiosResponse<APIResponse<GetInferenceAvailableModelsResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Predict inference model
+   *
+   * @param   {PredictInferenceModelRequest}  request
+   *
+   * @return  {Promise<APIResponse><T>}
+   */
+  async PredictInferenceModel<T>(request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
+    return Api()
+      .post(`/v1/inference/model/proxy/container/${request.containerID}/predict`, {
+        queryIDs: request.queryIDs,
+        outputMode: request.outputMode,
+      })
+      .then((response: AxiosResponse<APIResponse<T>>) => {
         const { data } = response;
         return data;
       })

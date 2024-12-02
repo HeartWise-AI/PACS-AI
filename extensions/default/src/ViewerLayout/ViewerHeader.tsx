@@ -134,6 +134,7 @@ function ViewerHeader({
             <AIModelButton
               isShowBG={true}
               positionRight={-90}
+              inferenceAvailableModels={inferenceAvailableModels}
             />
           </div>
     </Header>

@@ -179,6 +179,10 @@ module.exports = (env, argv) => {
       devMiddleware: {
         writeToDisk: true,
       },
+      headers: {
+        'Cross-Origin-Embedder-Policy': '*',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+      },
     },
   });
 
