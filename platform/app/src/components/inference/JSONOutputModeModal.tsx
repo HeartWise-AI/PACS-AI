@@ -49,8 +49,8 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
   }, [onClose]);
 
   const getInferenceDiagnosisColor = (diagnosis: string) => {
-    const diagnosisDetails = InferenceDetails[diagnosis.toLowerCase()];
-    if (!diagnosisDetails) return 'text-[#6ED47C] bg-[#6ED47C]'; // default color
+    const diagnosisDetails = InferenceDetails[diagnosis?.toLowerCase()];
+    if (!diagnosisDetails) return 'text-[#6ED47C] bg-[#6ED47C]';
 
     switch (diagnosisDetails.color) {
       case 'success':
@@ -60,8 +60,36 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
       case 'error':
         return 'text-red-500 bg-red-500';
       default:
-        return 'text-[#6ED47C] bg-[#6ED47C]'; // fallback color
+        return 'text-[#6ED47C] bg-[#6ED47C]';
     }
+  };
+
+  const getPredictionResult = (prediction: any, key: string) => {
+    if (prediction.displayResult) {
+      return prediction.displayResult;
+    }
+
+    if (prediction.values && prediction.values.length > 0) {
+      return prediction.values[0].value;
+    }
+
+    if (key.toLowerCase() === 'vessels' && Array.isArray(prediction)) {
+      return prediction[0]?.vessel || 'N/A';
+    }
+
+    return 'N/A';
+  };
+
+  const getPredictionProbability = (prediction: any) => {
+    return prediction.probability || 0;
+  };
+
+  const getPredictionConfidence = (prediction: any) => {
+    return prediction.confidence || 'N/A';
+  };
+
+  const shouldShowConfidenceSection = (prediction: any) => {
+    return prediction.confidence && prediction.probability;
   };
 
   if (!isOpen || !mounted) return null;
@@ -109,7 +137,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                     data.diagnosis
                   )} rounded-full bg-opacity-10 px-3 py-1 text-base`}
                 >
-                  {InferenceDetails[data.diagnosis.toLowerCase()].label}
+                  {InferenceDetails[data.diagnosis.toLowerCase()]?.label || 'N/A'}
                 </div>
               )}
             </div>
@@ -122,33 +150,44 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                 <div>
                   <h2 className="text-[16px] font-semibold">Recommendation</h2>
                   <p className="text-[14px] text-white text-opacity-50">
-                    {data.modelRecommendations.en}
+                    {data.modelRecommendations?.en}
                   </p>
                 </div>
 
                 <div>
-                  {Object.entries(data.predictions).map(
-                    ([key, prediction]) =>
-                      prediction.presentable && (
-                        <div
-                          key={key}
-                          className="mb-5"
-                        >
-                          <h3 className="mb-1 text-lg font-medium">{key}</h3>
-                          <div className="flex flex-col gap-2 text-white">
-                            <p className="flex justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
-                              <span className="opacity-50">Result</span>
-                              <span className="text-[14px]">{prediction.displayResult}</span>
-                            </p>
+                  {Object.entries(data.predictions).map(([key, prediction]) => {
+                    const isPresentable = !Array.isArray(prediction) && prediction.presentable !== false;
+                    if (!isPresentable) return null;
+
+                    return (
+                      <div
+                        key={key}
+                        className="mb-5"
+                      >
+                        <h3 className="mb-1 text-lg font-medium">{key}</h3>
+                        <div className="flex flex-col gap-2 text-white">
+                          <p className="flex justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
+                            <span className="opacity-50">Result</span>
+                            <span className="text-[14px]">
+                              {getPredictionResult(prediction, key)}
+                            </span>
+                          </p>
+
+                          {prediction.probability && (
                             <p className="flex justify-between rounded-md bg-transparent px-3 py-2">
                               <span className="opacity-50">Probability</span>
-                              <span className="text-[14px]">{prediction.probability}%</span>
+                              <span className="text-[14px]">
+                                {getPredictionProbability(prediction)}%
+                              </span>
                             </p>
+                          )}
+
+                          {shouldShowConfidenceSection(prediction) && (
                             <p className="flex items-center justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
                               <span className="opacity-50">Confidence</span>
                               <div className="relative flex items-center gap-2 rounded-full bg-white bg-opacity-10 px-3 py-1">
                                 <span className="mr-9 text-[14px] capitalize">
-                                  {prediction.confidence}
+                                  {getPredictionConfidence(prediction)}
                                 </span>
                                 <div className="absolute right-[-8px] top-[-12px]">
                                   <ReactSpeedometer
@@ -158,7 +197,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                                     needleHeightRatio={0.4}
                                     maxValue={100}
                                     customSegmentStops={[0, 25, 75, 100]}
-                                    value={prediction.probability}
+                                    value={getPredictionProbability(prediction)}
                                     segmentColors={['#6ad72d', '#FFD700', '#F64343']}
                                     currentValueText=""
                                     customSegmentLabels={[{}, {}, {}]}
@@ -168,10 +207,11 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                                 </div>
                               </div>
                             </p>
-                          </div>
+                          )}
                         </div>
-                      )
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
