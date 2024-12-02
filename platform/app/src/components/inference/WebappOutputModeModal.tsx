@@ -10,6 +10,7 @@ interface WebappOutputModeModalProps {
   data: PredictInferenceModelWebappResponse;
   loading: boolean;
   title: string;
+  containerName: string;
 }
 
 // Handle iframe load and send message
@@ -32,6 +33,7 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
   data,
   loading,
   title,
+  containerName,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -92,7 +94,7 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
               ) : (
                 <iframe
                   id="myIframe"
-                  src={data.webappPath}
+                  src={`${process.env.APP_PUBLIC_API_URL}/proxy/${containerName}${data.webappPath}`}
                   style={{ width: '100%', height: '100vh', border: 'none' }}
                   title="Webapp Content"
                   onLoad={() => handleIframeLoad(data.webappDataBase64)}
@@ -125,6 +127,7 @@ WebappOutputModeModal.propTypes = {
   data: PropTypes.object as PropTypes.Validator<PredictInferenceModelWebappResponse>,
   loading: PropTypes.bool,
   title: PropTypes.string,
+  containerName: PropTypes.string,
 };
 
 export default WebappOutputModeModal;

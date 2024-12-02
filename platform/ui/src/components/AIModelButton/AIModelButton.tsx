@@ -56,6 +56,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
+  const [containerName, setContainerName] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -217,6 +218,7 @@ const AIModelButton = ({
                   onClick={() => {
                     applyPredictInferenceModel(model.containerId, model.outputMode);
                     setOutputModeTitle(`${model.modelName} (${model.version}-${model.outputMode})`);
+                    setContainerName(model.containerName);
                   }}
                 >
                   <img
@@ -261,6 +263,7 @@ const AIModelButton = ({
             setOpenWebappOutputModeModal(false);
           }}
           data={outputModeData as PredictInferenceModelWebappResponse}
+          containerName={containerName}
           title={outputModeTitle}
           loading={isLoading}
         />

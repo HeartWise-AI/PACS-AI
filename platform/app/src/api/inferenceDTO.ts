@@ -42,6 +42,7 @@ export interface GetInferenceModelFactsResponse {
 
 export interface GetInferenceAvailableModelsResponse {
   containerId: string;
+  containerName: string;
   modelName: string;
   version: string;
   dicomTargetLevel: string;
