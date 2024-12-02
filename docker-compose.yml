@@ -1,8 +1,14 @@
+networks:
+  pacs-net:
+    external: true
+
 services:
   pacs-ai:
     container_name: pacs-ai
     build:
       context: .
       dockerfile: Dockerfile
+    networks:
+      - pacs-net
     expose:
       - '80'
