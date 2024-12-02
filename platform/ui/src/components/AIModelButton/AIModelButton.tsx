@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { getEnabledElement, metaData } from '@cornerstonejs/core';
@@ -35,7 +36,7 @@ const AIModelButton = ({
   isShowText,
   positionRight,
   inferenceAvailableModels,
-  modalities,
+  loading,
 }) => {
   const { t } = useTranslation('AIModelButton');
   const showAlert = useContext(AlertContext);
@@ -52,6 +53,19 @@ const AIModelButton = ({
   const [age, setAge] = useState(null);
   const [detectedVessel, setVessel] = useState(null);
   const ref = useRef(null);
+  const [mounted, setMounted] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  useEffect(() => {
+    const storedModalities = localStorage.getItem('__modalitiesInStudy');
+    setModalitiesInStudy(storedModalities || '');
+  }, []);
 
   /**
    * Get the SOPInstanceUID of the currently displayed image
@@ -107,19 +121,13 @@ const AIModelButton = ({
     }
   };
 
-  const handleOnClick = e => {
-    if (!disabled) {
-      setIsModalOpen(true);
-      applyPrediction();
-      onClick(e);
-    }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setLvef(null);
-    setAge(null);
-    setVessel(null);
+  const handleButtonClick = (e) => {
+    setIsOpen(!isOpen);
+    const buttonRect = e.currentTarget.getBoundingClientRect();
+    setDropdownPosition({
+      top: buttonRect.bottom + window.scrollY,
+      left: buttonRect.left + window.scrollX - 10,
+    });
   };
 
   const applyPredictInferenceModel = async (containerID: string, outputMode: string) => {
@@ -178,10 +186,10 @@ const AIModelButton = ({
       <button
         className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
-        } ${!inferenceAvailableModels?.length ? 'opacity-50' : ''}`}
+        } ${loading ? 'opacity-50' : ''}`}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={!inferenceAvailableModels?.length}
+        onClick={handleButtonClick}
+        disabled={loading}
       >
         <img
           src={aiModelsIcon}
@@ -192,14 +200,17 @@ const AIModelButton = ({
           <span className="text-sm !text-white text-transparent">{t('AI Models')}</span>
         )}
       </button>
-      {isOpen && (
+      {isOpen && mounted && ReactDOM.createPortal(
         <div
-          className="absolute z-10 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
-          style={{ top: ref.current ? ref.current.offsetHeight : 40, right: positionRight }}
+          className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
+          style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
         >
-          <ul className="flex min-w-[120%] flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
-            {inferenceAvailableModels.map((model, index) =>
-              model.supportedDicomModalities.includes(modalities) ? null : (
+          {inferenceAvailableModels.some(
+            // TODO: update this hardcoded modality
+            model => model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
+          ) ? (
+            <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
+              {inferenceAvailableModels.map((model, index) => (
                 <li
                   key={index}
                   className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
@@ -222,26 +233,15 @@ const AIModelButton = ({
                     className="mr-2 w-5"
                   />
                 </li>
-              )
-            )}
-            {/* <li
-              className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-              onClick={handleOnClick}
-            >
-              <img
-                src={playerPlayIcon}
-                alt="Player play icon"
-                className="w-5"
-              />
-              <h1 className="text-sm">{t('DetectButton')}</h1>
-              <img
-                src={helpInactive}
-                alt="Player play icon"
-                className="w-5"
-              />
-            </li> */}
-          </ul>
-        </div>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-sm text-white text-center">
+              <p className="opacity-50">No inference models found</p>
+            </div>
+          )}
+        </div>,
+        document.body
       )}
       {openJSONOutputModeModal && (
         <JSONOutputModeModal

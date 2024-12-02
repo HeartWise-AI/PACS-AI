@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
@@ -10,6 +10,8 @@ import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
+import { useAppConfig } from '@state';
+import { AvailableModelsContext } from '../ViewerLayout/index';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
@@ -17,12 +19,11 @@ function ViewerHeader({
   hotkeysManager,
   extensionManager,
   servicesManager,
-  appConfig,
-  inferenceAvailableModels,
-  fetchingAvailableModels,
+  appConfig
 }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
 
   const onClickReturnButton = () => {
     const { pathname } = location;
