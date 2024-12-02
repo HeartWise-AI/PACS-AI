@@ -330,8 +330,8 @@ const WorkspaceSettingsPage = () => {
     setIsAddingInferenceModel(true);
     try {
       // check if name contains special characters except dash
-      if (/[^a-zA-Z0-9-]/.test(selectedInferenceModel.name)) {
-        showAlert('Model name can only contain letters, numbers and dashes', 'error');
+      if (/[^a-zA-Z0-9-.]/.test(selectedInferenceModel.name)) {
+        showAlert('Model name can only contain letters, numbers, dashes, and periods', 'error');
         setIsAddingInferenceModel(false);
         return;
       }
