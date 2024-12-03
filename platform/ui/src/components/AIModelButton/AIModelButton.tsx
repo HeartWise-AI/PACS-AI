@@ -58,6 +58,8 @@ const AIModelButton = ({
   const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
   const [containerName, setContainerName] = useState<string>('');
 
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
@@ -66,6 +68,20 @@ const AIModelButton = ({
   useEffect(() => {
     const storedModalities = localStorage.getItem('__modalitiesInStudy');
     setModalitiesInStudy(storedModalities || '');
+  }, []);
+
+  // handle dropdown close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   /**
@@ -133,6 +149,7 @@ const AIModelButton = ({
 
   const applyPredictInferenceModel = async (containerID: string, outputMode: string) => {
     setIsLoading(true);
+    setIsOpen(false);
     const sopInstanceUID = getSOPInstanceUID();
 
     if (!sopInstanceUID) {
@@ -171,7 +188,6 @@ const AIModelButton = ({
 
       setOutputModeData(predictionResultResponse.data);
       setIsLoading(false);
-      setIsOpen(false);
     } catch (error) {
       console.error('Error fetching prediction data:', error);
       showAlert(error.message, 'error');
@@ -205,6 +221,7 @@ const AIModelButton = ({
         mounted &&
         ReactDOM.createPortal(
           <div
+            ref={dropdownRef}
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
