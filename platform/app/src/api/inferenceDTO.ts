@@ -58,36 +58,21 @@ export interface PredictInferenceModelRequest {
   outputMode: string;
 }
 
-export interface PredictionValue {
-  index: number;
-  value: number;
-}
-
-export interface VesselValue {
-  index: number;
-  vessel: string;
-}
-
-export interface PredictionDetail {
-  probability?: number;
-  confidence?: string;
-  presentable?: boolean;
-  displayResult?: string | number;
-  values?: PredictionValue[];
-}
-
-export interface ModelRecommendations {
-  en: string;
-  fr: string;
-  presentable: boolean;
-}
-
 export interface PredictInferenceModelJSONResponse {
-  diagnosis?: string | null;
+  diagnosis: string;
   predictions: {
-    [key: string]: PredictionDetail | VesselValue[];
+    [key: string]: {
+      probability: number;
+      confidence: string;
+      presentable: boolean;
+      displayResult: string;
+    };
   };
-  modelRecommendations: ModelRecommendations;
+  modelRecommendations: {
+    en: string;
+    fr: string;
+    presentable: boolean;
+  };
 }
 export interface PredictInferenceModelOHIFResponse {
   metadata: {
