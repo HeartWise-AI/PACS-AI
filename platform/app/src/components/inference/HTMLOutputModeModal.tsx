@@ -94,7 +94,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                   srcDoc={parsedHTML}
                   className="h-[calc(100vh-200px)] w-full bg-white"
                   title="HTML Content"
-                  sandbox="allow-same-origin"
+                  sandbox="allow-same-origin allow-scripts"
                 />
               )}
             </div>
