@@ -48,7 +48,9 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
     }
   }, [onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   const modalContent = (
     <div
@@ -94,7 +96,7 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
               ) : (
                 <iframe
                   id="myIframe"
-                  src={`${process.env.APP_PUBLIC_API_URL}/proxy/${containerName}${data.webappPath}`}
+                  src={`${process.env.APP_PUBLIC_API_URL}/proxy/docker-inference/${containerName}${data.webappPath}`}
                   style={{ width: '100%', height: '100vh', border: 'none' }}
                   title="Webapp Content"
                   onLoad={() => handleIframeLoad(data.webappDataBase64)}
