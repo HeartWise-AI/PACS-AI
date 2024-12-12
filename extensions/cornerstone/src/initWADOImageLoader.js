@@ -69,6 +69,12 @@ export default function initWADOImageLoader(
         Object.assign(xhrRequestHeaders, headers);
       }
 
+      // override header for DICOM-WEB PROXY
+      const token = localStorage.getItem('sessionToken');
+      if (token) {
+        xhrRequestHeaders.Authorization = `Bearer ${token}`;
+      }
+
       return xhrRequestHeaders;
     },
     errorInterceptor: error => {

@@ -66,6 +66,13 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
         if (authHeaders && authHeaders.Authorization) {
           xhrRequestHeaders.Authorization = authHeaders.Authorization;
         }
+
+        // override header for DICOM-WEB PROXY
+        const token = localStorage.getItem('sessionToken');
+        if (token) {
+          xhrRequestHeaders.Authorization = `Bearer ${token}`;
+        }
+
         return xhrRequestHeaders;
       };
 
@@ -88,7 +95,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
         url: dicomWebConfig.qidoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: getAuthrorizationHeader(), // override
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
@@ -96,7 +103,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
         url: dicomWebConfig.wadoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: getAuthrorizationHeader(), // override
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
