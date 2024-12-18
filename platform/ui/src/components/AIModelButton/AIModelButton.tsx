@@ -21,6 +21,7 @@ import JSONOutputModeModal from '../../../../app/src/components/inference/JSONOu
 import WebappOutputModeModal from '../../../../app/src/components/inference/WebappOutputModeModal';
 import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOutputModeModal';
 import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
+import SelectSeriesModal from '../../../../app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '../../../../app/src/AlertProvider';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
@@ -46,6 +47,7 @@ const AIModelButton = ({
   const [openWebappOutputModeModal, setOpenWebappOutputModeModal] = useState(false);
   const [openHTMLOutputModeModal, setOpenHTMLOutputModeModal] = useState(false);
   const [openPDFOutputModeModal, setOpenPDFOutputModeModal] = useState(false);
+  const [openSelectSeriesModal, setOpenSelectSeriesModal] = useState(false);
   const [outputModeTitle, setOutputModeTitle] = useState('');
   const [outputModeData, setOutputModeData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -236,6 +238,8 @@ const AIModelButton = ({
                     key={index}
                     className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
                     onClick={() => {
+                      setOpenSelectSeriesModal(true);
+                      return;
                       applyPredictInferenceModel(model.containerId, model.outputMode);
                       setOutputModeTitle(
                         `${model.modelName} (${model.version}-${model.outputMode})`
@@ -309,6 +313,17 @@ const AIModelButton = ({
           }}
           data={outputModeData as PredictInferenceModelPDFResponse}
           title={outputModeTitle}
+          loading={isLoading}
+        />
+      )}
+      {openSelectSeriesModal && (
+        <SelectSeriesModal
+          isOpen={openSelectSeriesModal}
+          onClose={() => {
+            setOpenSelectSeriesModal(false);
+          }}
+          data={''}
+          title={'Apply CathEF (v1.0.0'}
           loading={isLoading}
         />
       )}
