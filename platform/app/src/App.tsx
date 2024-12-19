@@ -32,6 +32,7 @@ import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 import { AlertProvider } from './AlertProvider';
+import { GlobalStateProvider } from './GlobalStateProvider';
 
 export const FrontendVersionContext = createContext('');
 
@@ -170,14 +171,16 @@ function App({
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
-        <FrontendVersionContext.Provider value={frontendVersion}>
-          <CombinedProviders>
-            <BrowserRouter basename={routerBasename}>
-              {authRoutes}
-              {appRoutes}
-            </BrowserRouter>
-          </CombinedProviders>
-        </FrontendVersionContext.Provider>
+        <GlobalStateProvider>
+          <FrontendVersionContext.Provider value={frontendVersion}>
+            <CombinedProviders>
+              <BrowserRouter basename={routerBasename}>
+                {authRoutes}
+                {appRoutes}
+              </BrowserRouter>
+            </CombinedProviders>
+          </FrontendVersionContext.Provider>
+        </GlobalStateProvider>
       </AlertProvider>
     </QueryClientProvider>
   );

@@ -17,6 +17,7 @@ import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx';
+import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
 
 const getTrackedSeries = displaySets => {
   let trackedSeries = 0;
@@ -56,7 +57,11 @@ const StudyBrowser = ({
         if (!experimentalStudyBrowserSort) {
           sortStudySeries(displaySets);
         }
+        const { setDisplaySets } = useGlobalStateData();
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
+
+        setDisplaySets(displaySets);
+
         return (
           <React.Fragment key={studyInstanceUid}>
             <div className="flex w-full gap-3 p-3">
