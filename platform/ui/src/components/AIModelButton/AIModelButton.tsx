@@ -23,6 +23,7 @@ import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOu
 import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
 import SelectSeriesModal from '../../../../app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '../../../../app/src/AlertProvider';
+import * as Types from '../../types';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -38,6 +39,7 @@ const AIModelButton = ({
   positionRight,
   inferenceAvailableModels,
   loading,
+  thumbnails
 }) => {
   const { t } = useTranslation('AIModelButton');
   const showAlert = useContext(AlertContext);
@@ -238,12 +240,12 @@ const AIModelButton = ({
                     key={index}
                     className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
                     onClick={() => {
-                      setOpenSelectSeriesModal(true);
-                      return;
-                      applyPredictInferenceModel(model.containerId, model.outputMode);
                       setOutputModeTitle(
                         `${model.modelName} (${model.version}-${model.outputMode})`
                       );
+                      setOpenSelectSeriesModal(true);
+                      return;
+                      applyPredictInferenceModel(model.containerId, model.outputMode);
                       setContainerName(model.containerName);
                     }}
                   >
@@ -323,8 +325,9 @@ const AIModelButton = ({
             setOpenSelectSeriesModal(false);
           }}
           data={''}
-          title={'Apply CathEF (v1.0.0'}
+          title={outputModeTitle}
           loading={isLoading}
+          thumbnails={thumbnails}
         />
       )}
     </div>
@@ -356,6 +359,23 @@ AIModelButton.propTypes = {
   positionRight: PropTypes.number,
   /** Callback to be called when the button is clicked  */
   onClick: PropTypes.func.isRequired,
+  thumbnails: PropTypes.arrayOf(
+    PropTypes.shape({
+      displaySetInstanceUID: PropTypes.string.isRequired,
+      imageSrc: PropTypes.string,
+      imageAltText: PropTypes.string,
+      seriesDate: PropTypes.string,
+      seriesNumber: Types.StringNumber,
+      numInstances: PropTypes.number,
+      description: PropTypes.string,
+      componentType: Types.ThumbnailType.isRequired,
+      viewportIdentificator: Types.StringArray,
+      isTracked: PropTypes.bool,
+      dragData: PropTypes.shape({
+        type: PropTypes.string.isRequired,
+      }),
+    })
+  ),
 };
 
 export default AIModelButton;
