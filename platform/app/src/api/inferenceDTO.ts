@@ -49,10 +49,20 @@ export interface GetInferenceAvailableModelsResponse {
   dicomUploadMin: number;
   dicomUploadMax: number;
   supportedDicomModalities: string[];
+  supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
   outputMode: string;
 }
 
+export interface InferenceAvailableAdditionalMetadata {
+  id: string
+  name: string
+  type: string
+  required: boolean
+}
+
 export interface PredictInferenceModelRequest {
+  seriesInstanceUids: string[];
+  additionalMetadata: { [key: string]: string | null };
   containerID: string;
   queryIDs: string[];
   outputMode: string;
