@@ -39,7 +39,6 @@ const AIModelButton = ({
   positionRight,
   inferenceAvailableModels,
   loading,
-  thumbnails
 }) => {
   const { t } = useTranslation('AIModelButton');
   const showAlert = useContext(AlertContext);
@@ -244,9 +243,10 @@ const AIModelButton = ({
                         `${model.modelName} (${model.version}-${model.outputMode})`
                       );
                       setOpenSelectSeriesModal(true);
+                      setIsOpen(false);
+                      setContainerName(model.containerName);
                       return;
                       applyPredictInferenceModel(model.containerId, model.outputMode);
-                      setContainerName(model.containerName);
                     }}
                   >
                     <img
@@ -324,10 +324,8 @@ const AIModelButton = ({
           onClose={() => {
             setOpenSelectSeriesModal(false);
           }}
-          data={''}
           title={outputModeTitle}
           loading={isLoading}
-          thumbnails={thumbnails}
         />
       )}
     </div>
@@ -359,23 +357,6 @@ AIModelButton.propTypes = {
   positionRight: PropTypes.number,
   /** Callback to be called when the button is clicked  */
   onClick: PropTypes.func.isRequired,
-  thumbnails: PropTypes.arrayOf(
-    PropTypes.shape({
-      displaySetInstanceUID: PropTypes.string.isRequired,
-      imageSrc: PropTypes.string,
-      imageAltText: PropTypes.string,
-      seriesDate: PropTypes.string,
-      seriesNumber: Types.StringNumber,
-      numInstances: PropTypes.number,
-      description: PropTypes.string,
-      componentType: Types.ThumbnailType.isRequired,
-      viewportIdentificator: Types.StringArray,
-      isTracked: PropTypes.bool,
-      dragData: PropTypes.shape({
-        type: PropTypes.string.isRequired,
-      }),
-    })
-  ),
 };
 
 export default AIModelButton;

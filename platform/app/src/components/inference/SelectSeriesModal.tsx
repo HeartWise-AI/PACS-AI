@@ -5,7 +5,9 @@ import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import uncheckIcon from './../../assets/pacs/icons/check-inactive.png';
 import checkIcon from './../../assets/pacs/icons/check-active.png';
 import informationIcon from './../../assets/pacs/icons/information-circle.png';
+import copyWhiteIcon from './../../assets/pacs/icons/copy-white.png';
 import { Input } from '@ohif/ui';
+import { useGlobalStateData } from '../../GlobalStateProvider';
 
 interface SelectSeriesModalProps {
   isOpen: boolean;
@@ -19,15 +21,14 @@ interface SelectSeriesModalProps {
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   isOpen,
   onClose,
-  data,
   loading,
   title,
-  thumbnails,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [applyToStudy, setApplyToStudy] = useState(false);
+  const { displaySets } = useGlobalStateData();
 
   useEffect(() => {
     setMounted(true);
@@ -119,38 +120,39 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {thumbnails.map(thumbnail => (
+                        {displaySets.map(series => (
                           <div
-                            key={thumbnail.displaySetInstanceUID}
+                            key={series.displaySetInstanceUID}
                             className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                            onClick={() => toggleSeriesSelection(thumbnail.displaySetInstanceUID)}
+                            onClick={() => toggleSeriesSelection(series.displaySetInstanceUID)}
                           >
                             <div className="flex items-center gap-4">
                               <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
                                 <img
-                                  src={thumbnail.imageSrc}
-                                  alt="thumbnail"
+                                  src={series.imageSrc}
+                                  alt="series"
                                   className="h-full w-full rounded-lg object-cover"
                                 />
                               </div>
                               <div className="text-[14px]">
                                 <h1 className="inline text-[#C8F469]">Series: </h1>
-                                <h2 className="mr-2 inline text-white">{thumbnail.seriesNumber}</h2>
-                                <h3 className="inline text-white">{thumbnail.numInstances}</h3>
+                                <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
+                                <img src={copyWhiteIcon} alt="copy" className="h-[16px] w-[16px] ml-1 inline" />
+                                <h3 className="inline text-white">  {series.numInstances}</h3>
                                 <h4 className="block text-white opacity-70">
-                                  {thumbnail.description}
+                                  {series.description}
                                 </h4>
                               </div>
                             </div>
                             <div>
                               <img
                                 src={
-                                  selectedSeries.includes(thumbnail.displaySetInstanceUID)
+                                  selectedSeries.includes(series.displaySetInstanceUID)
                                     ? checkIcon
                                     : uncheckIcon
                                 }
                                 alt={
-                                  selectedSeries.includes(thumbnail.displaySetInstanceUID)
+                                  selectedSeries.includes(series.displaySetInstanceUID)
                                     ? 'check'
                                     : 'uncheck'
                                 }
@@ -251,7 +253,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 SelectSeriesModal.defaultProps = {
   onClose: () => {},
   isOpen: false,
-  data: '',
   loading: false,
   title: '',
 };
@@ -259,26 +260,8 @@ SelectSeriesModal.defaultProps = {
 SelectSeriesModal.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
-  data: PropTypes.string,
   loading: PropTypes.bool,
   title: PropTypes.string,
-  thumbnails: PropTypes.arrayOf(
-    PropTypes.shape({
-      displaySetInstanceUID: PropTypes.string.isRequired,
-      imageSrc: PropTypes.string,
-      imageAltText: PropTypes.string,
-      seriesDate: PropTypes.string,
-      seriesNumber: PropTypes.string,
-      numInstances: PropTypes.number,
-      description: PropTypes.string,
-      componentType: PropTypes.string.isRequired,
-      viewportIdentificator: PropTypes.arrayOf(PropTypes.string),
-      isTracked: PropTypes.bool,
-      dragData: PropTypes.shape({
-        type: PropTypes.string.isRequired,
-      }),
-    })
-  ),
 };
 
 export default SelectSeriesModal;
