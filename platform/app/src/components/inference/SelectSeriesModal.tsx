@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
@@ -8,14 +8,15 @@ import informationIcon from './../../assets/pacs/icons/information-circle.png';
 import copyWhiteIcon from './../../assets/pacs/icons/copy-white.png';
 import { Input } from '@ohif/ui';
 import { useGlobalStateData } from '../../GlobalStateProvider';
+import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
+import { AlertContext } from '../../AlertProvider';
 
 interface SelectSeriesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: string;
   loading: boolean;
   title: string;
-  thumbnails: any;
+  selectedInferenceModel: GetInferenceAvailableModelsResponse;
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
@@ -23,12 +24,14 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   onClose,
   loading,
   title,
+  selectedInferenceModel,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [applyToStudy, setApplyToStudy] = useState(false);
   const { displaySets } = useGlobalStateData();
+  const showAlert = useContext(AlertContext);
 
   useEffect(() => {
     setMounted(true);
@@ -52,6 +55,17 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   };
 
   if (!isOpen || !mounted) return null;
+
+  // step 1 handler
+  function stepOneHandler() {
+    if (selectedSeries.length >= selectedInferenceModel?.dicomUploadMin) {
+      setStepper(2);
+      return
+    }
+
+    showAlert('Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue', 'error');
+  }
+
 
   const modalContent = (
     <div
@@ -107,7 +121,16 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                         <h1 className="text-white">Select Series</h1>
                         <div
                           className="flex cursor-pointer items-center gap-2"
-                          onClick={() => setApplyToStudy(!applyToStudy)}
+                          onClick={() => {
+                            setApplyToStudy(!applyToStudy);
+                            if (!applyToStudy) {
+                              // select all series
+                              setSelectedSeries(displaySets.map(series => series.displaySetInstanceUID));
+                            } else {
+                              // deselect all series
+                              setSelectedSeries([]);
+                            }
+                          }}
                         >
                           <h2 className="text-[14px] text-white">Apply to Study</h2>
                           <img
@@ -178,7 +201,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                           }`}
                           onClick={() => {
                             if (selectedSeries.length > 0) {
-                              setStepper(2);
+                              stepOneHandler();
                             }
                           }}
                           disabled={selectedSeries.length === 0}
@@ -262,6 +285,7 @@ SelectSeriesModal.propTypes = {
   onClose: PropTypes.func,
   loading: PropTypes.bool,
   title: PropTypes.string,
+  selectedInferenceModel: PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
 };
 
 export default SelectSeriesModal;

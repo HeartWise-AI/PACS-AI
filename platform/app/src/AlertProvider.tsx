@@ -35,7 +35,7 @@ export const AlertProvider = ({ children }) => {
       {children}
       {alert.message && (
         <div
-          className={`${alert.variant} fixed left-1/2 top-0 z-[99999] w-full -translate-x-1/2 rounded-none p-3 text-center text-white`}
+          className={`${alert.variant} fixed left-1/2 top-0 z-[9999999999999] w-full -translate-x-1/2 rounded-none p-3 text-center text-white`}
         >
           {alert.message}
         </div>
