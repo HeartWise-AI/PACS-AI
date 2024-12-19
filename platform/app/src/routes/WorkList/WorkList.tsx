@@ -567,8 +567,6 @@ function WorkList() {
         showAlert(error.message, 'error');
       }
     }
-
-    localStorage.setItem('__modalitiesInStudy', modalitiesInStudy);
   };
 
   /**

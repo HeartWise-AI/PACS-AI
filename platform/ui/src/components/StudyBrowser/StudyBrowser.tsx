@@ -72,7 +72,6 @@ const StudyBrowser = ({
                 positionRight={-110}
                 inferenceAvailableModels={inferenceAvailableModels}
                 loading={fetchingAvailableModels}
-                thumbnails={displaySets}
               />
               <button className="flex w-full items-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
                 <img

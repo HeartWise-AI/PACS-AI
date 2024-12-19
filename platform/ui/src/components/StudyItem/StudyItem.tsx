@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
 import Icon from '../Icon';
+import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
 
 const baseClasses =
   'first:border-0 border-t border-white border-opacity-10 cursor-pointer select-none outline-none';
@@ -18,6 +19,10 @@ const StudyItem = ({
   onClick,
 }) => {
   const { t } = useTranslation('StudyItem');
+  const { setModalitiesInStudy } = useGlobalStateData();
+
+  setModalitiesInStudy(modalities);
+
   return (
     <div
       className={classnames(
