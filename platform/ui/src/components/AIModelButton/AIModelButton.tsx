@@ -138,6 +138,7 @@ const AIModelButton = ({
     }
   };
 
+  // handle button click
   const handleButtonClick = e => {
     setIsOpen(!isOpen);
     const buttonRect = e.currentTarget.getBoundingClientRect();
@@ -147,9 +148,12 @@ const AIModelButton = ({
     });
   };
 
-  const applyPredictInferenceModel = async (containerID: string, outputMode: string) => {
+  // apply inference model
+  const applyPredictInferenceModel = async (containerID: string, outputMode: string, seriesInstanceUids: string[], additionalMetadata: { [key: string]: string | null }) => {
     setIsLoading(true);
     setIsOpen(false);
+    setOpenSelectSeriesModal(false);
+
     const sopInstanceUID = getSOPInstanceUID();
 
     if (!sopInstanceUID) {
@@ -181,6 +185,8 @@ const AIModelButton = ({
       });
 
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
+        seriesInstanceUids,
+        additionalMetadata,
         containerID,
         queryIDs: [findInstanceResponse.data.queryIds[0]],
         outputMode,
@@ -322,6 +328,7 @@ const AIModelButton = ({
           onClose={() => {
             setOpenSelectSeriesModal(false);
           }}
+          applyPredictInferenceModel={applyPredictInferenceModel}
           title={outputModeTitle}
           loading={isLoading}
           selectedInferenceModel={selectedInferenceModel}

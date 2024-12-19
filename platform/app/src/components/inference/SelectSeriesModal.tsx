@@ -10,10 +10,12 @@ import { Input } from '@ohif/ui';
 import { useGlobalStateData } from '../../GlobalStateProvider';
 import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
 import { AlertContext } from '../../AlertProvider';
+import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
 
 interface SelectSeriesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  applyPredictInferenceModel: (containerID: string, outputMode: string, seriesInstanceUids: string[], additionalMetadata: { [key: string]: string | null }) => void;
   loading: boolean;
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
@@ -22,6 +24,7 @@ interface SelectSeriesModalProps {
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   isOpen,
   onClose,
+  applyPredictInferenceModel,
   loading,
   title,
   selectedInferenceModel,
@@ -32,11 +35,33 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [applyToStudy, setApplyToStudy] = useState(false);
   const { displaySets } = useGlobalStateData();
   const showAlert = useContext(AlertContext);
+  const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  useEffect(() => {
+    // set default values when component mounts
+    if (selectedInferenceModel?.supportedAdditionalMetadata) {
+      const defaultValues = selectedInferenceModel.supportedAdditionalMetadata.reduce((acc, metadata) => {
+        // set default values for boolean fields
+        if (metadata.type === 'boolean') {
+          acc[metadata.id] = 'true';
+        } else if (metadata.type === 'string' || metadata.type === 'number') {
+          // set default values for string and number fields
+          acc[metadata.id] = null;
+        }
+        return acc;
+      }, {} as { [key: string]: string | null });
+
+      setAdditionalDetails(prev => ({
+        ...prev,
+        ...defaultValues
+      }));
+    }
+  }, [selectedInferenceModel?.supportedAdditionalMetadata]);
 
   const handleClose = useCallback(() => {
     if (onClose) {
@@ -44,6 +69,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     }
   }, [onClose]);
 
+  // toggle series selection
   const toggleSeriesSelection = (displaySetInstanceUID: string) => {
     setSelectedSeries(prev => {
       if (prev.includes(displaySetInstanceUID)) {
@@ -54,18 +80,53 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     });
   };
 
+  // handle additional details change
+  const handleAdditionalDetailsChange = (metadata: InferenceAvailableAdditionalMetadata, value: string) => {
+    setAdditionalDetails(prev => {
+      const newDetails = { ...prev };
+
+      if (value.trim() === '' && !metadata.required) {
+        // set to null if value is empty and field is not required
+        newDetails[metadata.id] = null;
+      } else {
+        // add/update the value if it's either required or non-empty
+        newDetails[metadata.id] = value;
+      }
+
+      return newDetails;
+    });
+  };
+
   if (!isOpen || !mounted) return null;
 
   // step 1 handler
   function stepOneHandler() {
-    if (selectedSeries.length >= selectedInferenceModel?.dicomUploadMin) {
-      setStepper(2);
-      return
+    if (selectedSeries.length < selectedInferenceModel?.dicomUploadMin) {
+      showAlert('Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue', 'error');
+      return;
     }
 
-    showAlert('Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue', 'error');
+    if (selectedSeries.length > selectedInferenceModel?.dicomUploadMax) {
+      showAlert('Please select no more than ' + selectedInferenceModel?.dicomUploadMax + ' series to continue', 'error');
+      return;
+    }
+
+    setStepper(2);
   }
 
+  // validate required fields
+  const validateRequiredFields = () => {
+    const missingRequired = selectedInferenceModel?.supportedAdditionalMetadata
+      ?.filter(metadata => metadata.required)
+      .filter(metadata => !additionalDetails[metadata.id] || additionalDetails[metadata.id] === null || additionalDetails[metadata.id].trim() === '');
+
+    if (missingRequired && missingRequired.length > 0) {
+      const missingFields = missingRequired.map(field => field.id).join(', ');
+      showAlert(`Please fill in required fields: ${missingFields}`, 'error');
+      return false;
+    }
+    return true;
+  };
 
   const modalContent = (
     <div
@@ -214,24 +275,34 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                   {stepper === 2 && (
                     <div>
                       <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
-                      <div className="mt-4 flex gap-2">
-                        <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
-                          Siblings
+                      {selectedInferenceModel?.supportedAdditionalMetadata?.map((metadata) => (
+                        <div key={metadata.id} className="mt-4 flex gap-2">
+                          <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
+                            {metadata.name} {metadata.required && <span className="text-red-500 ml-1">*</span>}
+                          </div>
+                          {metadata.type === 'boolean' ? (
+                            <select
+                              className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
+                              required={metadata.required}
+                              id={metadata.id}
+                              value={additionalDetails[metadata.id] || "true"}
+                              onChange={(e) => handleAdditionalDetailsChange(metadata, e.target.value)}
+                            >
+                              <option value="true">True</option>
+                              <option value="false">False</option>
+                            </select>
+                          ) : (
+                            <Input
+                              className="h-[43px] w-full"
+                              type={metadata.type}
+                              required={metadata.required}
+                              id={metadata.id}
+                              value={additionalDetails[metadata.id] || ''}
+                              onChange={(e) => handleAdditionalDetailsChange(metadata, e.target.value)}
+                            />
+                          )}
                         </div>
-                        <Input
-                          className="h-[43px] w-full"
-                          type="text"
-                        />
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
-                          Siblings
-                        </div>
-                        <Input
-                          className="h-[43px] w-full"
-                          type="text"
-                        />
-                      </div>
+                      ))}
                       <div className="mt-3 flex items-center gap-2">
                         <img
                           src={informationIcon}
@@ -254,7 +325,11 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                         </button>
                         <button
                           className="rounded-lg bg-[#C8F469] px-4 py-2 text-black"
-                          onClick={() => {}}
+                          onClick={() => {
+                            if (validateRequiredFields()) {
+                              applyPredictInferenceModel(selectedInferenceModel.containerId, selectedInferenceModel.outputMode, selectedSeries, additionalDetails);
+                            }
+                          }}
                         >
                           Apply
                         </button>
@@ -283,6 +358,7 @@ SelectSeriesModal.defaultProps = {
 SelectSeriesModal.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
+  applyPredictInferenceModel: PropTypes.func,
   loading: PropTypes.bool,
   title: PropTypes.string,
   selectedInferenceModel: PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
