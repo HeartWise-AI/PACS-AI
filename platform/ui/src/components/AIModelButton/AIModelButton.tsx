@@ -23,7 +23,7 @@ import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOu
 import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
 import SelectSeriesModal from '../../../../app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '../../../../app/src/AlertProvider';
-import * as Types from '../../types';
+import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -58,8 +58,8 @@ const AIModelButton = ({
   const ref = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
   const [containerName, setContainerName] = useState<string>('');
+  const { modalitiesInStudy } = useGlobalStateData();
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -68,10 +68,6 @@ const AIModelButton = ({
     return () => setMounted(false);
   }, []);
 
-  useEffect(() => {
-    const storedModalities = localStorage.getItem('__modalitiesInStudy');
-    setModalitiesInStudy(storedModalities || '');
-  }, []);
 
   // handle dropdown close when clicking outside
   useEffect(() => {
