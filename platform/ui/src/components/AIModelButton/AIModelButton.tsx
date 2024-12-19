@@ -60,6 +60,7 @@ const AIModelButton = ({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
   const { modalitiesInStudy } = useGlobalStateData();
+  const [selectedInferenceModel, setSelectedInferenceModel] = useState<GetInferenceAvailableModelsResponse | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -241,6 +242,7 @@ const AIModelButton = ({
                       setOpenSelectSeriesModal(true);
                       setIsOpen(false);
                       setContainerName(model.containerName);
+                      setSelectedInferenceModel(model);
                       return;
                       applyPredictInferenceModel(model.containerId, model.outputMode);
                     }}
@@ -322,6 +324,7 @@ const AIModelButton = ({
           }}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
     </div>
