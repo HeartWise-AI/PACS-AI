@@ -33,7 +33,7 @@ let commandsManager: CommandsManager,
   servicesManager: ServicesManager,
   hotkeysManager: HotkeysManager;
 
-const frontendVersion = 'v0.9.1-beta';
+const frontendVersion = 'v0.9.3-beta';
 const queryClient = new QueryClient();
 
 function App({ config, defaultExtensions, defaultModes }) {
