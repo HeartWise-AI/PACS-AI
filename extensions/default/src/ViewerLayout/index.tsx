@@ -1,4 +1,5 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { SidePanel, ErrorBoundary, LoadingIndicatorProgress, Typography } from '@ohif/ui';
 import { ServicesManager, HangingProtocolService, CommandsManager } from '@ohif/core';
@@ -10,6 +11,8 @@ import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { useTranslation } from 'react-i18next';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
+import { logoutUser } from '../../../../platform/app/src/service/userService';
+import { Error } from '../../../../platform/app/src/api/dto';
 
 interface AvailableModelsContextType {
   inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
@@ -32,6 +35,8 @@ function ViewerLayout({
 }: withAppTypes): React.FunctionComponent {
   const [appConfig] = useAppConfig();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
     GetInferenceAvailableModelsResponse[]
   >([]);
@@ -104,6 +109,14 @@ function ViewerLayout({
         const response = await inferenceRepository.GetInferenceAvailableModels();
         setInferenceAvailableModels(response.data);
       } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          showAlert(error.message, 'error');
+
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
         console.error('Error fetching available inference models:', error);
       }
       setFetchingAvailableModels(false);
