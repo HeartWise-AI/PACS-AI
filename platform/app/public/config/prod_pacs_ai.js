@@ -39,9 +39,9 @@ window.config = {
       configuration: {
         friendlyName: 'PACSAI Orthanc',
         name: 'orthanc',
-        wadoUriRoot: 'http://sgbmpacs-ai-stg.icm.local/orthanc/dicom-web',
-        qidoRoot: 'http://sgbmpacs-ai-stg.icm.local/orthanc/dicom-web',
-        wadoRoot: 'http://sgbmpacs-ai-stg.icm.local/orthanc/dicom-web',
+        wadoUriRoot: 'http://sgbmpacs-ai-stg.icm.local/api/proxy/orthanc/dicom-web',
+        qidoRoot: 'http://sgbmpacs-ai-stg.icm.local/api/proxy/orthanc/dicom-web',
+        wadoRoot: 'http://sgbmpacs-ai-stg.icm.local/api/proxy/orthanc/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
