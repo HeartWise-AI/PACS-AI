@@ -1,6 +1,21 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <div align="center">
+  <h1>PACS AI Frontend</h1>
+</div>
+
+To setup PACS AI App (Dev or Prod), you can read and follow this directly: https://github.com/HeartWise-AI/PACS-AI/blob/main/platform/app/README.md
+
+---
+
+<div align="center">
+  <h2>Original OHIF Medical Imaging Viewer Documentation</h2>
+  <p>This project is based on the OHIF Viewer. Below is the original documentation.</p>
+</div>
+
+---
+
+<div align="center">
   <h1>OHIF Medical Imaging Viewer</h1>
   <p><strong>The OHIF Viewer</strong> is a zero-footprint medical image viewer
 provided by the <a href="https://ohif.org/">Open Health Imaging Foundation (OHIF)</a>. It is a configurable and extensible progressive web application with out-of-the-box support for image archives which support <a href="https://www.dicomstandard.org/using/dicomweb/">DICOMweb</a>.</p>
