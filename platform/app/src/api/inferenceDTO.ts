@@ -1,5 +1,3 @@
-import { ModelDetails } from './tenantDTO';
-
 export interface AddInferenceModelRequest {
   name: string;
   dockerImage: string;
@@ -50,6 +48,21 @@ export interface GetInferenceAvailableModelsResponse {
   dicomUploadMax: number;
   supportedDicomModalities: string[];
   outputMode: string;
+  modelFacts: {
+    en: ModelDetails;
+  };
+}
+
+
+export interface ModelDetails {
+  Changelogs: { [key: string]: string } | string;
+  Summary: { [key: string]: string };
+  Mechanism: { [key: string]: string } | string;
+  Validation_and_performance: { [key: string]: { [key: string]: string | number } } | string;
+  Other_information: { [key: string]: string } | string;
+  Other_results: { [key: string]: string } | string;
+  Uses_and_directions: { [key: string]: string } | string;
+  Warnings_and_limitations: { [key: string]: string };
 }
 
 export interface PredictInferenceModelRequest {
