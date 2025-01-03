@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, ButtonGradient, Input, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -18,6 +19,8 @@ import { GetInferenceModelResponse } from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
+import { logoutUser } from '../../service/userService';
+import { Error } from '../../api/dto';
 
 interface DICOMModalities {
   id: string;
@@ -85,6 +88,8 @@ const containerStatusColors = {
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
+  const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
   const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
   const [inferenceModels, setInferenceModels] = useState<GetInferenceModelResponse[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
@@ -201,6 +206,14 @@ const WorkspaceSettingsPage = () => {
       setDICOMModalities(modalities);
       updateModalitiesStatus(modalities);
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
       console.error('Error fetching DICOM modalities:', error);
     } finally {
       setLoadingModalities(false);
@@ -219,6 +232,13 @@ const WorkspaceSettingsPage = () => {
         await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
         updatedModalities[index] = { ...modality, status: 'Connected' };
       } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          showAlert(error.message, 'error');
+
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
         console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
         updatedModalities[index] = { ...modality, status: 'Disconnected' };
       }
@@ -245,6 +265,13 @@ const WorkspaceSettingsPage = () => {
 
       setInferenceModels(transformedData);
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error('Error fetching inference models:', error);
     }
   }, [inferenceRepository]);
@@ -295,6 +322,13 @@ const WorkspaceSettingsPage = () => {
         )
       );
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error triggering DICOM Echo for modality ${modalityId}:`, error);
       setDICOMModalities(prevModalities =>
         prevModalities.map(modality =>
@@ -320,6 +354,13 @@ const WorkspaceSettingsPage = () => {
       // fetch updated modalities after successful addition
       fetchDICOMModalities();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error adding modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -359,6 +400,13 @@ const WorkspaceSettingsPage = () => {
       clearSelectedInferenceModel();
       fetchInferenceModels();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error adding inference model: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -372,6 +420,13 @@ const WorkspaceSettingsPage = () => {
       showAlert(response.message, 'success');
       fetchInferenceModels();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error deleting inference model: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -395,6 +450,13 @@ const WorkspaceSettingsPage = () => {
       setSelectedContainerToStartStop('');
       fetchInferenceModels();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error starting inference model container: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -409,6 +471,13 @@ const WorkspaceSettingsPage = () => {
       setSelectedContainerToStartStop('');
       fetchInferenceModels();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error stopping inference model container: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -436,6 +505,13 @@ const WorkspaceSettingsPage = () => {
       // fetch updated modalities after successful update
       fetchDICOMModalities();
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error updating modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -463,6 +539,13 @@ const WorkspaceSettingsPage = () => {
         localStorage.removeItem('selectedDICOMModality');
       }
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error(`Error removing modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -757,6 +840,13 @@ const WorkspaceSettingsPage = () => {
       });
       setSelectedAIModel(response.data.en);
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       setIsOpenModelFactsModal(false);
       console.error('Error fetching inference model facts:', error);
       showAlert(error.message, 'error');
