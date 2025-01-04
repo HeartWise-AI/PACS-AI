@@ -11,9 +11,6 @@ const envConfigContent = `window._env_ = {
 };`;
 
 // Write the content to env-config.js
-fs.writeFileSync(
-  path.resolve(__dirname, '../public/env-config.js'),
-  envConfigContent
-);
+fs.writeFileSync(path.resolve(__dirname, '../public/env-config.js'), envConfigContent);
 
 console.log('env-config.js has been generated successfully.');

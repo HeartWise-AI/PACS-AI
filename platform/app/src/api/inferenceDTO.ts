@@ -54,7 +54,6 @@ export interface GetInferenceAvailableModelsResponse {
   };
 }
 
-
 export interface ModelDetails {
   Changelogs: { [key: string]: string } | string;
   Summary: { [key: string]: string };
@@ -67,17 +66,16 @@ export interface ModelDetails {
 }
 
 export interface InferenceAvailableAdditionalMetadata {
-  id: string
-  name: string
-  type: string
-  required: boolean
+  id: string;
+  name: string;
+  type: string;
+  required: boolean;
 }
 
 export interface PredictInferenceModelRequest {
+  containerID: string;
   seriesInstanceUids: string[];
   additionalMetadata: { [key: string]: string | null };
-  containerID: string;
-  queryIDs: string[];
   outputMode: string;
 }
 
