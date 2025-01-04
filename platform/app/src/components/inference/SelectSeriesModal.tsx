@@ -15,7 +15,12 @@ import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
 interface SelectSeriesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  applyPredictInferenceModel: (containerID: string, outputMode: string, seriesInstanceUids: string[], additionalMetadata: { [key: string]: string | null }) => void;
+  applyPredictInferenceModel: (
+    containerId: string,
+    seriesInstanceUids: string[],
+    additionalMetadata: { [key: string]: string | null },
+    outputMode: string
+  ) => void;
   loading: boolean;
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
@@ -45,20 +50,23 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   useEffect(() => {
     // set default values when component mounts
     if (selectedInferenceModel?.supportedAdditionalMetadata) {
-      const defaultValues = selectedInferenceModel.supportedAdditionalMetadata.reduce((acc, metadata) => {
-        // set default values for boolean fields
-        if (metadata.type === 'boolean') {
-          acc[metadata.id] = 'true';
-        } else if (metadata.type === 'string' || metadata.type === 'number') {
-          // set default values for string and number fields
-          acc[metadata.id] = null;
-        }
-        return acc;
-      }, {} as { [key: string]: string | null });
+      const defaultValues = selectedInferenceModel.supportedAdditionalMetadata.reduce(
+        (acc, metadata) => {
+          // set default values for boolean fields
+          if (metadata.type === 'boolean') {
+            acc[metadata.id] = 'true';
+          } else if (metadata.type === 'string' || metadata.type === 'number') {
+            // set default values for string and number fields
+            acc[metadata.id] = null;
+          }
+          return acc;
+        },
+        {} as { [key: string]: string | null }
+      );
 
       setAdditionalDetails(prev => ({
         ...prev,
-        ...defaultValues
+        ...defaultValues,
       }));
     }
   }, [selectedInferenceModel?.supportedAdditionalMetadata]);
@@ -81,7 +89,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   };
 
   // handle additional details change
-  const handleAdditionalDetailsChange = (metadata: InferenceAvailableAdditionalMetadata, value: string) => {
+  const handleAdditionalDetailsChange = (
+    metadata: InferenceAvailableAdditionalMetadata,
+    value: string
+  ) => {
     setAdditionalDetails(prev => {
       const newDetails = { ...prev };
 
@@ -97,17 +108,27 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     });
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   // step 1 handler
   function stepOneHandler() {
     if (selectedSeries.length < selectedInferenceModel?.dicomUploadMin) {
-      showAlert('Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue', 'error');
+      showAlert(
+        'Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue',
+        'error'
+      );
       return;
     }
 
     if (selectedSeries.length > selectedInferenceModel?.dicomUploadMax) {
-      showAlert('Please select no more than ' + selectedInferenceModel?.dicomUploadMax + ' series to continue', 'error');
+      showAlert(
+        'Please select no more than ' +
+          selectedInferenceModel?.dicomUploadMax +
+          ' series to continue',
+        'error'
+      );
       return;
     }
 
@@ -118,7 +139,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const validateRequiredFields = () => {
     const missingRequired = selectedInferenceModel?.supportedAdditionalMetadata
       ?.filter(metadata => metadata.required)
-      .filter(metadata => !additionalDetails[metadata.id] || additionalDetails[metadata.id] === null || additionalDetails[metadata.id].trim() === '');
+      .filter(
+        metadata =>
+          !additionalDetails[metadata.id] ||
+          additionalDetails[metadata.id] === null ||
+          additionalDetails[metadata.id].trim() === ''
+      );
 
     if (missingRequired && missingRequired.length > 0) {
       const missingFields = missingRequired.map(field => field.id).join(', ');
@@ -186,7 +212,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             setApplyToStudy(!applyToStudy);
                             if (!applyToStudy) {
                               // select all series
-                              setSelectedSeries(displaySets.map(series => series.displaySetInstanceUID));
+                              setSelectedSeries(
+                                displaySets.map(series => series.displaySetInstanceUID)
+                              );
                             } else {
                               // deselect all series
                               setSelectedSeries([]);
@@ -221,8 +249,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               <div className="text-[14px]">
                                 <h1 className="inline text-[#C8F469]">Series: </h1>
                                 <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
-                                <img src={copyWhiteIcon} alt="copy" className="h-[16px] w-[16px] ml-1 inline" />
-                                <h3 className="inline text-white">  {series.numInstances}</h3>
+                                <img
+                                  src={copyWhiteIcon}
+                                  alt="copy"
+                                  className="ml-1 inline h-[16px] w-[16px]"
+                                />
+                                <h3 className="inline text-white"> {series.numInstances}</h3>
                                 <h4 className="block text-white opacity-70">
                                   {series.description}
                                 </h4>
@@ -275,18 +307,24 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                   {stepper === 2 && (
                     <div>
                       <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
-                      {selectedInferenceModel?.supportedAdditionalMetadata?.map((metadata) => (
-                        <div key={metadata.id} className="mt-4 flex gap-2">
+                      {selectedInferenceModel?.supportedAdditionalMetadata?.map(metadata => (
+                        <div
+                          key={metadata.id}
+                          className="mt-4 flex gap-2"
+                        >
                           <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
-                            {metadata.name} {metadata.required && <span className="text-red-500 ml-1">*</span>}
+                            {metadata.name}{' '}
+                            {metadata.required && <span className="ml-1 text-red-500">*</span>}
                           </div>
                           {metadata.type === 'boolean' ? (
                             <select
                               className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
                               required={metadata.required}
                               id={metadata.id}
-                              value={additionalDetails[metadata.id] || "true"}
-                              onChange={(e) => handleAdditionalDetailsChange(metadata, e.target.value)}
+                              value={additionalDetails[metadata.id] || 'true'}
+                              onChange={e =>
+                                handleAdditionalDetailsChange(metadata, e.target.value)
+                              }
                             >
                               <option value="true">True</option>
                               <option value="false">False</option>
@@ -298,7 +336,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               required={metadata.required}
                               id={metadata.id}
                               value={additionalDetails[metadata.id] || ''}
-                              onChange={(e) => handleAdditionalDetailsChange(metadata, e.target.value)}
+                              onChange={e =>
+                                handleAdditionalDetailsChange(metadata, e.target.value)
+                              }
                             />
                           )}
                         </div>
@@ -327,7 +367,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                           className="rounded-lg bg-[#C8F469] px-4 py-2 text-black"
                           onClick={() => {
                             if (validateRequiredFields()) {
-                              applyPredictInferenceModel(selectedInferenceModel.containerId, selectedInferenceModel.outputMode, selectedSeries, additionalDetails);
+                              applyPredictInferenceModel(
+                                selectedInferenceModel.containerId,
+                                selectedSeries,
+                                additionalDetails,
+                                selectedInferenceModel.outputMode
+                              );
                             }
                           }}
                         >
@@ -361,7 +406,8 @@ SelectSeriesModal.propTypes = {
   applyPredictInferenceModel: PropTypes.func,
   loading: PropTypes.bool,
   title: PropTypes.string,
-  selectedInferenceModel: PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
+  selectedInferenceModel:
+    PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
 };
 
 export default SelectSeriesModal;

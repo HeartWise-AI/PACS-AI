@@ -120,7 +120,6 @@ const inferenceRepository = {
       .post(`/v1/inference/model/proxy/container/${request.containerID}/predict`, {
         seriesInstanceUids: request.seriesInstanceUids,
         additionalMetadata: request.additionalMetadata,
-        queryIDs: request.queryIDs,
         outputMode: request.outputMode,
       })
       .then((response: AxiosResponse<APIResponse<T>>) => {

@@ -65,7 +65,8 @@ const AIModelButton = ({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
   const { modalitiesInStudy } = useGlobalStateData();
-  const [selectedInferenceModel, setSelectedInferenceModel] = useState<GetInferenceAvailableModelsResponse | null>(null);
+  const [selectedInferenceModel, setSelectedInferenceModel] =
+    useState<GetInferenceAvailableModelsResponse | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -73,7 +74,6 @@ const AIModelButton = ({
     setMounted(true);
     return () => setMounted(false);
   }, []);
-
 
   // handle dropdown close when clicking outside
   useEffect(() => {
@@ -154,7 +154,12 @@ const AIModelButton = ({
   };
 
   // apply inference model
-  const applyPredictInferenceModel = async (containerID: string, outputMode: string, seriesInstanceUids: string[], additionalMetadata: { [key: string]: string | null }) => {
+  const applyPredictInferenceModel = async (
+    containerID: string,
+    seriesInstanceUids: string[],
+    additionalMetadata: { [key: string]: string | null },
+    outputMode: string
+  ) => {
     setIsLoading(true);
     setIsOpen(false);
     setOpenSelectSeriesModal(false);
@@ -185,15 +190,10 @@ const AIModelButton = ({
           break;
       }
 
-      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
-        sopInstanceUID,
-      });
-
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
+        containerID,
         seriesInstanceUids,
         additionalMetadata,
-        containerID,
-        queryIDs: [findInstanceResponse.data.queryIds[0]],
         outputMode,
       });
 
@@ -262,7 +262,6 @@ const AIModelButton = ({
                       setContainerName(model.containerName);
                       setSelectedInferenceModel(model);
                       return;
-                      applyPredictInferenceModel(model.containerId, model.outputMode);
                     }}
                   >
                     <img
