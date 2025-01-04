@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import ReactDOM from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { Error } from '../../../../app/src/api/dto';
+import { logoutUser } from '../../../../app/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { getEnabledElement, metaData } from '@cornerstonejs/core';
@@ -41,6 +44,8 @@ const AIModelButton = ({
   loading,
 }) => {
   const { t } = useTranslation('AIModelButton');
+  const tenantId = localStorage.getItem('tenantId') || '';
+  const navigate = useNavigate();
   const showAlert = useContext(AlertContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -195,6 +200,13 @@ const AIModelButton = ({
       setOutputModeData(predictionResultResponse.data);
       setIsLoading(false);
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       console.error('Error fetching prediction data:', error);
       showAlert(error.message, 'error');
       setOpenJSONOutputModeModal(false);

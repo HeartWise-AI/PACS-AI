@@ -208,7 +208,10 @@ const LoginPage = () => {
                 className="mb-4 w-full"
                 type="text"
                 onChange={e => setEmail(e.target.value.toLowerCase())}
-                onKeyPress={e => e.key === ' ' && e.preventDefault()}
+                onKeyPress={e => {
+                  if (e.key === ' ') e.preventDefault();
+                  if (e.key === 'Enter') onLogin(e);
+                }}
               />
               <Input
                 placeholder={t('Password')}
@@ -216,6 +219,9 @@ const LoginPage = () => {
                 className="mb-4 w-full"
                 type="password"
                 onChange={e => setPassword(e.target.value)}
+                onKeyPress={e => {
+                  if (e.key === 'Enter') onLogin(e);
+                }}
               />
               <div className="mb-7 flex justify-end">
                 <button

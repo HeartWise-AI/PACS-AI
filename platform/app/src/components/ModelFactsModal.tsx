@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@ohif/ui';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
-import { ModelDetails } from '../api/tenantDTO';
+import { ModelDetails } from '../api/inferenceDTO';
 
 interface ModelFactsModalProps {
   isOpen: boolean;

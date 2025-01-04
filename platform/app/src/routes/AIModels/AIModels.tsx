@@ -4,14 +4,19 @@ import { ButtonGradient, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
 import tenantRepository from '../../api/tenantRepository';
-import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
+import { ModelDetails } from '../../api/inferenceDTO';
 import ModelFactsModal from '../../components/ModelFactsModal';
+import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
+import inferenceRepository from '../../api/inferenceRepository';
 
 const AIModelsPage = () => {
   const { t } = useTranslation('Common');
-  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
+  const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
+  GetInferenceAvailableModelsResponse[]
+>([]);
+const [fetchingAvailableModels, setFetchingAvailableModels] = useState<boolean>(false);
 
   // set page title
   useEffect(() => {
@@ -19,15 +24,17 @@ const AIModelsPage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchTenantInfo = async () => {
+    const fetchInferenceAvailableModels = async () => {
+      setFetchingAvailableModels(true);
       try {
-        const response = await tenantRepository.GetTenantInfo();
-        setTenantInfo(response.data);
+        const response = await inferenceRepository.GetInferenceAvailableModels();
+        setInferenceAvailableModels(response.data);
       } catch (error) {
-        console.error(`Can't fetch tenant info: ${error}`);
+        console.error(`Can't fetch available inference models: ${error}`);
       }
+      setFetchingAvailableModels(false);
     };
-    fetchTenantInfo();
+    fetchInferenceAvailableModels();
   }, [tenantRepository]);
 
   const handleSelectModel = (model: ModelDetails) => {
@@ -41,7 +48,7 @@ const AIModelsPage = () => {
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="AI Models" />
-          {!tenantInfo.availableModels && (
+          {fetchingAvailableModels && (
             <div
               role="aiModels"
               className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3"
@@ -57,8 +64,8 @@ const AIModelsPage = () => {
             </div>
           )}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {tenantInfo.availableModels &&
-              tenantInfo.availableModels.map((item, index) => (
+            {!fetchingAvailableModels && inferenceAvailableModels &&
+              inferenceAvailableModels.map((item, index) => (
                 <div
                   key={index}
                   className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5"
@@ -67,15 +74,15 @@ const AIModelsPage = () => {
                     variant="h6"
                     className="text-white"
                   >
-                    {item.en.Summary['Name']}
+                    {item.modelFacts.en.Summary['Name']}
                   </Typography>
                   <Typography
                     variant="body"
                     className="my-2 text-sm font-light text-white text-opacity-70"
                   >
-                    {item.en.Summary['Description']}
+                    {item.modelFacts.en.Summary['Description']}
                   </Typography>
-                  {Object.entries(item.en.Summary)
+                  {Object.entries(item.modelFacts.en.Summary)
                     .filter(([key]) => key !== 'Description' && key !== 'Name')
                     .map(([key, value]) => (
                       <div
@@ -97,7 +104,7 @@ const AIModelsPage = () => {
                       </div>
                     ))}
                   <ButtonGradient
-                    onClick={() => handleSelectModel(item.en)}
+                    onClick={() => handleSelectModel(item.modelFacts.en)}
                     className="mt-5 h-[40px] w-full"
                   >
                     {t('View More')}
