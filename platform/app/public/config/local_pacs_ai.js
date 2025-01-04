@@ -39,9 +39,9 @@ window.config = {
       configuration: {
         friendlyName: 'PACSAI Orthanc',
         name: 'orthanc',
-        wadoUriRoot: 'http://localhost/orthanc/dicom-web',
-        qidoRoot: 'http://localhost/orthanc/dicom-web',
-        wadoRoot: 'http://localhost/orthanc/dicom-web',
+        wadoUriRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
+        qidoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
+        wadoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',

@@ -485,7 +485,7 @@ function WorkList() {
    * @param type
    * @param studyInstanceUID
    */
-  const viewStudy = async (type, studyInstanceUID) => {
+  const viewStudy = async (type, studyInstanceUID, modalitiesInStudy) => {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
@@ -572,6 +572,8 @@ function WorkList() {
         showAlert(error.message, 'error');
       }
     }
+
+    localStorage.setItem('__modalitiesInStudy', modalitiesInStudy);
   };
 
   /**
@@ -910,14 +912,22 @@ function WorkList() {
                                   </h1>
                                   <Button
                                     onClick={() => {
-                                      viewStudy('viewer', row.studyInstanceUID);
+                                      viewStudy(
+                                        'viewer',
+                                        row.studyInstanceUID,
+                                        row.modalitiesInStudy
+                                      );
                                     }}
                                   >
                                     {t('BasicViewer')}
                                   </Button>
                                   <Button
                                     onClick={() => {
-                                      viewStudy('segmentation', row.studyInstanceUID);
+                                      viewStudy(
+                                        'segmentation',
+                                        row.studyInstanceUID,
+                                        row.modalitiesInStudy
+                                      );
                                     }}
                                   >
                                     {t('Segmentation')}

@@ -120,7 +120,7 @@ const Sidebar = () => {
           {sidebarExpanded && (
             <Typography
               variant="caption"
-              className="mt-7 text-white text-opacity-90 transition-all duration-300 delay-150"
+              className="mt-7 text-white text-opacity-90 transition-all delay-150 duration-300"
             >
               {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
             </Typography>

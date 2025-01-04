@@ -1,6 +1,21 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <div align="center">
+  <h1>PACS AI Frontend</h1>
+</div>
+
+To setup PACS AI App (Dev or Prod), you can read and follow this directly: https://github.com/HeartWise-AI/PACS-AI/blob/main/platform/app/README.md
+
+---
+
+<div align="center">
+  <h2>Original OHIF Medical Imaging Viewer Documentation</h2>
+  <p>This project is based on the OHIF Viewer. Below is the original documentation.</p>
+</div>
+
+---
+
+<div align="center">
   <h1>OHIF Medical Imaging Viewer</h1>
   <p><strong>The OHIF Viewer</strong> is a zero-footprint medical image viewer
 provided by the <a href="https://ohif.org/">Open Health Imaging Foundation (OHIF)</a>. It is a configurable and extensible progressive web application with out-of-the-box support for image archives which support <a href="https://www.dicomstandard.org/using/dicomweb/">DICOMweb</a>.</p>
@@ -46,10 +61,6 @@ provided by the <a href="https://ohif.org/">Open Health Imaging Foundation (OHIF
 | <img src="platform/docs/docs/assets/img/demo-ptct.png" alt="Hanging Protocols" width="350"/> | Fusion and Custom Hanging protocols  | [Demo](https://viewer.ohif.org/tmtv?StudyInstanceUIDs=1.3.6.1.4.1.14519.5.2.1.7009.2403.334240657131972136850343327463) |
 | <img src="platform/docs/docs/assets/img/demo-microscopy.png" alt="Microscopy" width="350"/> | Slide Microscopy  | [Demo](https://viewer.ohif.org/microscopy?StudyInstanceUIDs=2.25.275741864483510678566144889372061815320) |
 | <img src="platform/docs/docs/assets/img/demo-volumeRendering.png" alt="Volume Rendering" width="350"/> | Volume Rendering  | [Demo](https://viewer.ohif.org/viewer?StudyInstanceUIDs=1.3.6.1.4.1.25403.345050719074.3824.20170125095438.5&hangingprotocolId=mprAnd3DVolumeViewport) |
-
-## PACS AI Frontend
-
-To setup PACS AI App, you can read and follow this directly: https://github.com/HeartWise-AI/PACS-AI/blob/main/platform/app/README.md
 
 ## About
 

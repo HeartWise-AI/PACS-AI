@@ -73,7 +73,7 @@ const ThumbnailTracked = ({
           )}
         >
           <Tooltip
-            position="bottom-left"
+            position="bottom"
             content={
               <div className="flex flex-1 flex-row">
                 <div className="flex-2 flex items-center justify-center pr-4">
@@ -119,10 +119,12 @@ const ThumbnailTracked = ({
           </div>
         )}
         {/* TODO: Added AI Models button */}
-        <AIModelButton
+        {/* <AIModelButton
           isShowBG={true}
           positionRight={0}
-        />
+          inferenceAvailableModels={inferenceAvailableModels}
+          modalities={modalities}
+        /> */}
       </div>
 
       <Thumbnail
