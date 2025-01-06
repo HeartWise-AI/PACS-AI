@@ -48,7 +48,6 @@ const AIModelButton = ({
   const navigate = useNavigate();
   const showAlert = useContext(AlertContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [openJSONOutputModeModal, setOpenJSONOutputModeModal] = useState(false);
   const [openWebappOutputModeModal, setOpenWebappOutputModeModal] = useState(false);
   const [openHTMLOutputModeModal, setOpenHTMLOutputModeModal] = useState(false);
@@ -57,10 +56,6 @@ const AIModelButton = ({
   const [outputModeTitle, setOutputModeTitle] = useState('');
   const [outputModeData, setOutputModeData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [lvef, setLvef] = useState(null);
-  const [age, setAge] = useState(null);
-  const [detectedVessel, setVessel] = useState(null);
-  const ref = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
@@ -89,59 +84,6 @@ const AIModelButton = ({
     };
   }, []);
 
-  /**
-   * Get the SOPInstanceUID of the currently displayed image
-   */
-  function getSOPInstanceUID() {
-    let element: HTMLDivElement | null = null;
-
-    const foundElement = document.querySelector('[data-viewport-uid]');
-
-    if (foundElement instanceof HTMLDivElement) {
-      element = foundElement;
-    }
-    const enabledElement = getEnabledElement(element);
-    const viewport = enabledElement.viewport;
-    const imageId = viewport.getCurrentImageId();
-
-    // Use cornerstone's metaData provider to get the SOPInstanceUID
-    const sopInstanceUID = metaData.get('SOPInstanceUID', imageId);
-    return sopInstanceUID;
-  }
-
-  // TODO: to be depricated
-  /**
-   * Apply prediction
-   */
-  const applyPrediction = async () => {
-    setIsLoading(true);
-    const sopInstanceUID = getSOPInstanceUID();
-
-    if (!sopInstanceUID) {
-      console.error('Failed to get SOPInstanceUID');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
-        sopInstanceUID,
-      });
-      const predictionResultResponse = await predictionRepository.ApplyPrediction({
-        queryId: findInstanceResponse.data.queryIds[0],
-      });
-
-      const { vessel, LVEF, age } = predictionResultResponse.data;
-
-      setAge(age ? parseInt(age.toString(), 10) : null);
-      setVessel(vessel || null);
-      setLvef(LVEF != null ? Number(LVEF) : null);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching prediction data:', error);
-      setIsLoading(false);
-    }
-  };
 
   // handle button click
   const handleButtonClick = e => {
@@ -155,7 +97,7 @@ const AIModelButton = ({
 
   // apply inference model
   const applyPredictInferenceModel = async (
-    containerID: string,
+    containerId: string,
     seriesInstanceUIDs: string[],
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
@@ -164,13 +106,9 @@ const AIModelButton = ({
     setIsOpen(false);
     setOpenSelectSeriesModal(false);
 
-    const sopInstanceUID = getSOPInstanceUID();
 
-    if (!sopInstanceUID) {
-      console.error('Failed to get SOPInstanceUID');
-      setIsLoading(false);
-      return;
-    }
+    const searchParams = new URLSearchParams(window.location.search);
+    const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
       switch (outputMode) {
@@ -190,8 +128,8 @@ const AIModelButton = ({
           break;
       }
 
-      const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
-        containerID,
+      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(containerId, {
+        studyInstanceUID,
         seriesInstanceUIDs,
         additionalMetadata,
         outputMode,
