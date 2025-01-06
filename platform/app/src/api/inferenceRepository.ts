@@ -118,7 +118,7 @@ const inferenceRepository = {
   async PredictInferenceModel<T>(request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
     return Api()
       .post(`/v1/inference/model/proxy/container/${request.containerID}/predict`, {
-        seriesInstanceUids: request.seriesInstanceUids,
+        seriesInstanceUIDs: request.seriesInstanceUIDs,
         additionalMetadata: request.additionalMetadata,
         outputMode: request.outputMode,
       })

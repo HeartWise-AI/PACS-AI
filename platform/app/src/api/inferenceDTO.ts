@@ -74,7 +74,7 @@ export interface InferenceAvailableAdditionalMetadata {
 
 export interface PredictInferenceModelRequest {
   containerID: string;
-  seriesInstanceUids: string[];
+  seriesInstanceUIDs: string[];
   additionalMetadata: { [key: string]: string | null };
   outputMode: string;
 }

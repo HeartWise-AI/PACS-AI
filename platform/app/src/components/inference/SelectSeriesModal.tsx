@@ -17,7 +17,7 @@ interface SelectSeriesModalProps {
   onClose: () => void;
   applyPredictInferenceModel: (
     containerId: string,
-    seriesInstanceUids: string[],
+    seriesInstanceUIDs: string[],
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => void;
