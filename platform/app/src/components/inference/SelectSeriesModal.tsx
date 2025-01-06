@@ -307,52 +307,65 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                   {stepper === 2 && (
                     <div>
                       <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
-                      {selectedInferenceModel?.supportedAdditionalMetadata?.map(metadata => (
-                        <div
-                          key={metadata.id}
-                          className="mt-4 flex gap-2"
-                        >
-                          <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
-                            {metadata.name}{' '}
-                            {metadata.required && <span className="ml-1 text-red-500">*</span>}
-                          </div>
-                          {metadata.type === 'boolean' ? (
-                            <select
-                              className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
-                              required={metadata.required}
-                              id={metadata.id}
-                              value={additionalDetails[metadata.id] || 'true'}
-                              onChange={e =>
-                                handleAdditionalDetailsChange(metadata, e.target.value)
-                              }
+                      {selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 ? (
+                        <>
+                          {selectedInferenceModel.supportedAdditionalMetadata.map(metadata => (
+                            <div
+                              key={metadata.id}
+                              className="mt-4 flex gap-2"
                             >
-                              <option value="true">True</option>
-                              <option value="false">False</option>
-                            </select>
-                          ) : (
-                            <Input
-                              className="h-[43px] w-full"
-                              type={metadata.type}
-                              required={metadata.required}
-                              id={metadata.id}
-                              value={additionalDetails[metadata.id] || ''}
-                              onChange={e =>
-                                handleAdditionalDetailsChange(metadata, e.target.value)
-                              }
+                              <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
+                                {metadata.name}{' '}
+                                {metadata.required && <span className="ml-1 text-red-500">*</span>}
+                              </div>
+                              {metadata.type === 'boolean' ? (
+                                <select
+                                  className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
+                                  required={metadata.required}
+                                  id={metadata.id}
+                                  value={additionalDetails[metadata.id] || 'true'}
+                                  onChange={e =>
+                                    handleAdditionalDetailsChange(metadata, e.target.value)
+                                  }
+                                >
+                                  <option value="true">True</option>
+                                  <option value="false">False</option>
+                                </select>
+                              ) : (
+                                <Input
+                                  className="h-[43px] w-full"
+                                  type={metadata.type}
+                                  required={metadata.required}
+                                  id={metadata.id}
+                                  value={additionalDetails[metadata.id] || ''}
+                                  onChange={e =>
+                                    handleAdditionalDetailsChange(metadata, e.target.value)
+                                  }
+                                  label=""
+                                  onFocus={() => {}}
+                                  autoFocus={false}
+                                  onKeyPress={() => {}}
+                                  disabled={false}
+                                />
+                              )}
+                            </div>
+                          ))}
+                          <div className="mt-3 flex items-center gap-2">
+                            <img
+                              src={informationIcon}
+                              alt="information"
+                              className="h-[15px] w-[15px]"
                             />
-                          )}
+                            <h1 className="text-[12px] text-white opacity-50">
+                              Additional details required fields should be answered.
+                            </h1>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="my-7 text-center text-white opacity-50">
+                          No additional details found
                         </div>
-                      ))}
-                      <div className="mt-3 flex items-center gap-2">
-                        <img
-                          src={informationIcon}
-                          alt="information"
-                          className="h-[15px] w-[15px]"
-                        />
-                        <h1 className="text-[12px] text-white opacity-50">
-                          Additional details required fields should be answered.
-                        </h1>
-                      </div>
+                      )}
                       {/* actions */}
                       <div className="mt-5 flex flex-row justify-end gap-3">
                         <button

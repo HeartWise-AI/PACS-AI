@@ -182,7 +182,6 @@ const AIModelButton = ({
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
             {inferenceAvailableModels.some(
-              // TODO: update this hardcoded modality
               model =>
                 model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
             ) ? (
