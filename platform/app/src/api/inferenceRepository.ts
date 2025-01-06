@@ -115,13 +115,9 @@ const inferenceRepository = {
    *
    * @return  {Promise<APIResponse><T>}
    */
-  async PredictInferenceModel<T>(request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
+  async PredictInferenceModel<T>(containerId: string, request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
     return Api()
-      .post(`/v1/inference/model/proxy/container/${request.containerID}/predict`, {
-        seriesInstanceUIDs: request.seriesInstanceUIDs,
-        additionalMetadata: request.additionalMetadata,
-        outputMode: request.outputMode,
-      })
+      .post(`/v1/inference/model/proxy/container/${containerId}/predict`, request)
       .then((response: AxiosResponse<APIResponse<T>>) => {
         const { data } = response;
         return data;
