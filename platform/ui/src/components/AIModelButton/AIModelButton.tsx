@@ -156,7 +156,7 @@ const AIModelButton = ({
   // apply inference model
   const applyPredictInferenceModel = async (
     containerID: string,
-    seriesInstanceUids: string[],
+    seriesInstanceUIDs: string[],
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => {
@@ -192,7 +192,7 @@ const AIModelButton = ({
 
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
         containerID,
-        seriesInstanceUids,
+        seriesInstanceUIDs,
         additionalMetadata,
         outputMode,
       });
