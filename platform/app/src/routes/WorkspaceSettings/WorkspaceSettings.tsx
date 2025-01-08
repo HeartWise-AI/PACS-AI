@@ -21,6 +21,7 @@ import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
 import { logoutUser } from '../../service/userService';
 import { Error } from '../../api/dto';
+import { DataElementDictionary } from "dicom-data-dictionary";
 
 interface DICOMModalities {
   id: string;
@@ -729,6 +730,16 @@ const WorkspaceSettingsPage = () => {
           )}
       </div>
     );
+  };
+
+  const getDICOMTagsName = (tag) => {
+    // create a dictionary instance
+    const dictionary = new DataElementDictionary();
+    // lookup the element by tag
+    const element = dictionary.lookup(tag);
+
+    // return the name or a fallback value if the tag is not found
+    return element ? element.name : "Unknown Tag";
   };
 
   const InferenceModelActionButton = ({ row }) => {
@@ -1535,6 +1546,12 @@ const WorkspaceSettingsPage = () => {
                               className="h-5 w-5 animate-spin"
                             />
                           </div>
+                        ) : selectedInferenceModelInfo.supportedDicomTags?.[0] === "*" ? (
+                          <div className="flex items-center justify-center gap-2 my-4">
+                            <Typography variant="body" className="text-white/70 text-center">
+                              All metadata are supported
+                            </Typography>
+                          </div>
                         ) : (
                           selectedInferenceModelInfo.supportedDicomTags?.map((tag, index) => (
                             <div key={index} className="flex items-center gap-2 my-2 cursor-pointer">
@@ -1553,8 +1570,8 @@ const WorkspaceSettingsPage = () => {
                                 }}
                                 className="h-4 w-4 rounded cursor-pointer accent-primary-light"
                               />
-                              <Typography variant="body" component="label" htmlFor={`tag-${index}`} className="cursor-pointer text-white text-opacity-70">
-                                {tag}
+                              <Typography variant="body" component="label" htmlFor={`tag-${index}`} className="cursor-pointer text-white">
+                                {tag} ({getDICOMTagsName(tag)})
                               </Typography>
                             </div>
                           ))
