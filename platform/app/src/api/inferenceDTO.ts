@@ -76,7 +76,6 @@ export interface PredictInferenceModelRequest {
   studyInstanceUID: string;
   seriesInstanceUIDs: string[];
   additionalMetadata: { [key: string]: string | null };
-  outputMode: string;
 }
 
 export interface PredictInferenceModelJSONResponse {

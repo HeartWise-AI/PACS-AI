@@ -132,7 +132,6 @@ const AIModelButton = ({
         studyInstanceUID,
         seriesInstanceUIDs,
         additionalMetadata,
-        outputMode,
       });
 
       setOutputModeData(predictionResultResponse.data);
