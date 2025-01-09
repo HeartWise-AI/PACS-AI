@@ -44,7 +44,7 @@ export interface GetInferenceModelInfoResponse {
   supportedDicomModalities: string[];
   supportedDicomTags: string[];
   supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
-  supportedOutputModes: string[]
+  supportedOutputModes: string[];
 }
 
 export interface GetInferenceModelFactsRequest {

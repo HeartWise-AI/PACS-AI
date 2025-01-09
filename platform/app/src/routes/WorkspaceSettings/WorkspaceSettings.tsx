@@ -21,7 +21,7 @@ import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
 import { logoutUser } from '../../service/userService';
 import { Error } from '../../api/dto';
-import { DataElementDictionary } from "dicom-data-dictionary";
+import { DataElementDictionary } from 'dicom-data-dictionary';
 
 interface DICOMModalities {
   id: string;
@@ -124,7 +124,8 @@ const WorkspaceSettingsPage = () => {
     },
     disallowedDICOMTags: [],
   });
-  const [selectedInferenceModelInfo, setSelectedInferenceModelInfo] = useState<GetInferenceModelInfoResponse>({} as GetInferenceModelInfoResponse);
+  const [selectedInferenceModelInfo, setSelectedInferenceModelInfo] =
+    useState<GetInferenceModelInfoResponse>({} as GetInferenceModelInfoResponse);
   const [fetchingInferenceModelInfo, setFetchingInferenceModelInfo] = useState<boolean>(false);
   const [environmentalVariableKey, setEnvironmentalVariableKey] = useState<string>('');
   const [environmentalVariableValue, setEnvironmentalVariableValue] = useState<string>('');
@@ -732,14 +733,14 @@ const WorkspaceSettingsPage = () => {
     );
   };
 
-  const getDICOMTagsName = (tag) => {
+  const getDICOMTagsName = tag => {
     // create a dictionary instance
     const dictionary = new DataElementDictionary();
     // lookup the element by tag
     const element = dictionary.lookup(tag);
 
     // return the name or a fallback value if the tag is not found
-    return element ? element.name : "Unknown Tag";
+    return element ? element.name : 'Unknown Tag';
   };
 
   const InferenceModelActionButton = ({ row }) => {
@@ -1396,7 +1397,7 @@ const WorkspaceSettingsPage = () => {
                     >
                       {t('Environmental Variables')}
                     </Typography>
-                    { isAddInferenceModel && (
+                    {isAddInferenceModel && (
                       <div className="flex items-center gap-2">
                         <Input
                           id="environmentalVariablesKey"
@@ -1486,38 +1487,36 @@ const WorkspaceSettingsPage = () => {
                             </button>
                           </div>
                         ))
+                      ) : selectedInferenceModel.envs?.length === 0 ? (
+                        <div className="flex h-[50px] items-center justify-center">
+                          <Typography className="mb-2 text-white text-opacity-50">
+                            {t('No environment variables added')}
+                          </Typography>
+                        </div>
                       ) : (
-                        selectedInferenceModel.envs?.length === 0 ? (
-                          <div className="flex h-[50px] items-center justify-center">
-                            <Typography className="mb-2 text-white text-opacity-50">
-                              {t('No environment variables added')}
-                            </Typography>
+                        selectedInferenceModel.envs?.map((variable, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2"
+                          >
+                            <Input
+                              id={`env-key-${index}`}
+                              label=""
+                              value={variable.key}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            <Input
+                              id={`env-value-${index}`}
+                              label=""
+                              value={variable.value}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
                           </div>
-                        ) : (
-                          selectedInferenceModel.envs?.map((variable, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2"
-                            >
-                              <Input
-                                id={`env-key-${index}`}
-                                label=""
-                                value={variable.key}
-                                className="h-[43px] w-full disabled:opacity-50"
-                                disabled={true}
-                                type="text"
-                              />
-                              <Input
-                                id={`env-value-${index}`}
-                                label=""
-                                value={variable.value}
-                                className="h-[43px] w-full disabled:opacity-50"
-                                disabled={true}
-                                type="text"
-                              />
-                            </div>
-                          ))
-                        )
+                        ))
                       )}
                     </div>
                     {isAddInferenceModel && (
@@ -1525,59 +1524,71 @@ const WorkspaceSettingsPage = () => {
                         variant="body"
                         className="mt-1 text-white text-opacity-50"
                       >
-                        <span className="text-red-500">*</span> {t('Environment Variable should contain at least a key and value.')}
+                        <span className="text-red-500">*</span>{' '}
+                        {t('Environment Variable should contain at least a key and value.')}
                       </Typography>
                     )}
                   </div>
-                    {/* Allowed DICOM Tags */}
-                    {!isAddInferenceModel && !isViewInferenceModel && (
-                      <div className="border-b border-white border-opacity-10 pb-4">
-                        <Typography
-                          variant="body"
-                          className="mb-2 text-white"
-                        >
-                          {t('Allowed DICOM Tags')}
-                        </Typography>
-                        {fetchingInferenceModelInfo ? (
-                          <div className="flex items-center justify-center">
-                            <img
-                              src={refreshIcon}
-                              alt="Refresh icon"
-                              className="h-5 w-5 animate-spin"
+                  {/* Allowed DICOM Tags */}
+                  {!isAddInferenceModel && !isViewInferenceModel && (
+                    <div className="border-b border-white border-opacity-10 pb-4">
+                      <Typography
+                        variant="body"
+                        className="mb-2 text-white"
+                      >
+                        {t('Allowed DICOM Tags')}
+                      </Typography>
+                      {fetchingInferenceModelInfo ? (
+                        <div className="flex items-center justify-center">
+                          <img
+                            src={refreshIcon}
+                            alt="Refresh icon"
+                            className="h-5 w-5 animate-spin"
+                          />
+                        </div>
+                      ) : selectedInferenceModelInfo.supportedDicomTags?.[0] === '*' ? (
+                        <div className="my-4 flex items-center justify-center gap-2">
+                          <Typography
+                            variant="body"
+                            className="text-center text-white/70"
+                          >
+                            All metadata are supported
+                          </Typography>
+                        </div>
+                      ) : (
+                        selectedInferenceModelInfo.supportedDicomTags?.map((tag, index) => (
+                          <div
+                            key={index}
+                            className="my-2 flex cursor-pointer items-center gap-2"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`tag-${index}`}
+                              checked={!selectedInferenceModel.disallowedDICOMTags?.includes(tag)}
+                              onChange={e => {
+                                const isChecked = e.target.checked;
+                                setSelectedInferenceModel(prev => ({
+                                  ...prev,
+                                  disallowedDICOMTags: isChecked
+                                    ? prev.disallowedDICOMTags?.filter(t => t !== tag)
+                                    : [...(prev.disallowedDICOMTags || []), tag],
+                                }));
+                              }}
+                              className="accent-primary-light h-4 w-4 cursor-pointer rounded"
                             />
-                          </div>
-                        ) : selectedInferenceModelInfo.supportedDicomTags?.[0] === "*" ? (
-                          <div className="flex items-center justify-center gap-2 my-4">
-                            <Typography variant="body" className="text-white/70 text-center">
-                              All metadata are supported
+                            <Typography
+                              variant="body"
+                              component="label"
+                              htmlFor={`tag-${index}`}
+                              className="cursor-pointer text-white"
+                            >
+                              {tag} ({getDICOMTagsName(tag)})
                             </Typography>
                           </div>
-                        ) : (
-                          selectedInferenceModelInfo.supportedDicomTags?.map((tag, index) => (
-                            <div key={index} className="flex items-center gap-2 my-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                id={`tag-${index}`}
-                                checked={!selectedInferenceModel.disallowedDICOMTags?.includes(tag)}
-                                onChange={(e) => {
-                                  const isChecked = e.target.checked;
-                                  setSelectedInferenceModel(prev => ({
-                                    ...prev,
-                                    disallowedDICOMTags: isChecked
-                                      ? prev.disallowedDICOMTags?.filter(t => t !== tag)
-                                      : [...(prev.disallowedDICOMTags || []), tag]
-                                  }));
-                                }}
-                                className="h-4 w-4 rounded cursor-pointer accent-primary-light"
-                              />
-                              <Typography variant="body" component="label" htmlFor={`tag-${index}`} className="cursor-pointer text-white">
-                                {tag} ({getDICOMTagsName(tag)})
-                              </Typography>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
+                        ))
+                      )}
+                    </div>
+                  )}
                   {(isViewInferenceModel || !isAddInferenceModel) && (
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
