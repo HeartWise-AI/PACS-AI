@@ -84,7 +84,6 @@ const AIModelButton = ({
     };
   }, []);
 
-
   // handle button click
   const handleButtonClick = e => {
     setIsOpen(!isOpen);
@@ -105,7 +104,6 @@ const AIModelButton = ({
     setIsLoading(true);
     setIsOpen(false);
     setOpenSelectSeriesModal(false);
-
 
     const searchParams = new URLSearchParams(window.location.search);
     const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
@@ -128,11 +126,14 @@ const AIModelButton = ({
           break;
       }
 
-      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(containerId, {
-        studyInstanceUID,
-        seriesInstanceUIDs,
-        additionalMetadata,
-      });
+      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
+        containerId,
+        {
+          studyInstanceUID,
+          seriesInstanceUIDs,
+          additionalMetadata,
+        }
+      );
 
       setOutputModeData(predictionResultResponse.data);
       setIsLoading(false);

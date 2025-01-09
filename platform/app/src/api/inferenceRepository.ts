@@ -80,7 +80,9 @@ const inferenceRepository = {
    *
    * @return  {Promise<APIResponse><GetInferenceModelInfoResponse>}
    */
-  async GetInferenceModelInfo(request: GetInferenceModelInfoRequest): Promise<APIResponse<GetInferenceModelInfoResponse>> {
+  async GetInferenceModelInfo(
+    request: GetInferenceModelInfoRequest
+  ): Promise<APIResponse<GetInferenceModelInfoResponse>> {
     return Api()
       .get(`/v1/inference/model/proxy/container/${request.containerID}/info`)
       .then((response: AxiosResponse<APIResponse<GetInferenceModelInfoResponse>>) => {
@@ -137,7 +139,10 @@ const inferenceRepository = {
    *
    * @return  {Promise<APIResponse><T>}
    */
-  async PredictInferenceModel<T>(containerId: string, request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
+  async PredictInferenceModel<T>(
+    containerId: string,
+    request: PredictInferenceModelRequest
+  ): Promise<APIResponse<T>> {
     return Api()
       .post(`/v1/inference/model/proxy/container/${containerId}/predict`, request)
       .then((response: AxiosResponse<APIResponse<T>>) => {
@@ -198,7 +203,10 @@ const inferenceRepository = {
    *
    * @return  {Promise<APIResponse><void>}
    */
-  async UpdateInferenceModel(containerID: string, request: UpdateInferenceModelRequest): Promise<APIResponse<void>> {
+  async UpdateInferenceModel(
+    containerID: string,
+    request: UpdateInferenceModelRequest
+  ): Promise<APIResponse<void>> {
     return Api()
       .put(`/v1/inference/model/${containerID}/update`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
