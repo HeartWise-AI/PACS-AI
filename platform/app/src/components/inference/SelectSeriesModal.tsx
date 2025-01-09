@@ -78,12 +78,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   }, [onClose]);
 
   // toggle series selection
-  const toggleSeriesSelection = (displaySetInstanceUID: string) => {
+  const toggleSeriesSelection = (SeriesInstanceUID: string) => {
     setSelectedSeries(prev => {
-      if (prev.includes(displaySetInstanceUID)) {
-        return prev.filter(id => id !== displaySetInstanceUID);
+      if (prev.includes(SeriesInstanceUID)) {
+        return prev.filter(id => id !== SeriesInstanceUID);
       } else {
-        return [...prev, displaySetInstanceUID];
+        return [...prev, SeriesInstanceUID];
       }
     });
   };
@@ -213,7 +213,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             if (!applyToStudy) {
                               // select all series
                               setSelectedSeries(
-                                displaySets.map(series => series.displaySetInstanceUID)
+                                displaySets.map(series => series.SeriesInstanceUID)
                               );
                             } else {
                               // deselect all series
@@ -234,9 +234,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
                         {displaySets.map(series => (
                           <div
-                            key={series.displaySetInstanceUID}
+                            key={series.SeriesInstanceUID}
                             className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                            onClick={() => toggleSeriesSelection(series.displaySetInstanceUID)}
+                            onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
                           >
                             <div className="flex items-center gap-4">
                               <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
@@ -263,12 +263,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             <div>
                               <img
                                 src={
-                                  selectedSeries.includes(series.displaySetInstanceUID)
+                                  selectedSeries.includes(series.SeriesInstanceUID)
                                     ? checkIcon
                                     : uncheckIcon
                                 }
                                 alt={
-                                  selectedSeries.includes(series.displaySetInstanceUID)
+                                  selectedSeries.includes(series.SeriesInstanceUID)
                                     ? 'check'
                                     : 'uncheck'
                                 }

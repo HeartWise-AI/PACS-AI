@@ -181,6 +181,7 @@ StudyBrowser.propTypes = {
           description: PropTypes.string,
           displaySets: PropTypes.arrayOf(
             PropTypes.shape({
+              SeriesInstanceUID: PropTypes.string,
               displaySetInstanceUID: PropTypes.string.isRequired,
               imageSrc: PropTypes.string,
               imageAltText: PropTypes.string,
