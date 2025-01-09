@@ -157,9 +157,8 @@ const AIModelButton = ({
   return (
     <div className="relative flex w-full">
       <button
-        className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
-          isShowBG ? backgroundClass : 'bg-transparent'
-        } ${loading ? 'opacity-50' : ''}`}
+        className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${isShowBG ? backgroundClass : 'bg-transparent'
+          } ${loading ? 'opacity-50' : ''}`}
         type="button"
         onClick={handleButtonClick}
         disabled={loading}
@@ -183,7 +182,7 @@ const AIModelButton = ({
           >
             {inferenceAvailableModels.some(
               model =>
-                model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
+                model.supportedDicomModalities?.some(modality => modalitiesInStudy.includes(modality))
             ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels.map((model, index) => (
@@ -293,7 +292,7 @@ AIModelButton.defaultProps = {
   isShowBG: false,
   isShowText: false,
   positionRight: 0,
-  onClick: () => {},
+  onClick: () => { },
 };
 
 AIModelButton.propTypes = {
