@@ -14,9 +14,9 @@ const AIModelsPage = () => {
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [isOpenAIModelModal, setIsOpenAIModelModal] = useState<boolean>(false);
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
-  GetInferenceAvailableModelsResponse[]
->([]);
-const [fetchingAvailableModels, setFetchingAvailableModels] = useState<boolean>(false);
+    GetInferenceAvailableModelsResponse[]
+  >([]);
+  const [fetchingAvailableModels, setFetchingAvailableModels] = useState<boolean>(false);
 
   // set page title
   useEffect(() => {
@@ -64,7 +64,8 @@ const [fetchingAvailableModels, setFetchingAvailableModels] = useState<boolean>(
             </div>
           )}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {!fetchingAvailableModels && inferenceAvailableModels &&
+            {!fetchingAvailableModels &&
+              inferenceAvailableModels &&
               inferenceAvailableModels.map((item, index) => (
                 <div
                   key={index}

@@ -8,10 +8,13 @@ import {
   GetInferenceAvailableModelsResponse,
   GetInferenceModelFactsRequest,
   GetInferenceModelFactsResponse,
+  GetInferenceModelInfoRequest,
+  GetInferenceModelInfoResponse,
   GetInferenceModelResponse,
   PredictInferenceModelRequest,
   StartInferenceModelContainerRequest,
   StopInferenceModelContainerRequest,
+  UpdateInferenceModelRequest,
 } from './inferenceDTO';
 
 const inferenceRepository = {
@@ -71,6 +74,27 @@ const inferenceRepository = {
       });
   },
   /**
+   * Get inference model info
+   *
+   * @param   {GetInferenceModelInfoRequest}  request
+   *
+   * @return  {Promise<APIResponse><GetInferenceModelInfoResponse>}
+   */
+  async GetInferenceModelInfo(
+    request: GetInferenceModelInfoRequest
+  ): Promise<APIResponse<GetInferenceModelInfoResponse>> {
+    return Api()
+      .get(`/v1/inference/model/proxy/container/${request.containerID}/info`)
+      .then((response: AxiosResponse<APIResponse<GetInferenceModelInfoResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Get inference model facts
    *
    * @param   {GetInferenceModelFactsRequest}  request
@@ -115,12 +139,12 @@ const inferenceRepository = {
    *
    * @return  {Promise<APIResponse><T>}
    */
-  async PredictInferenceModel<T>(request: PredictInferenceModelRequest): Promise<APIResponse<T>> {
+  async PredictInferenceModel<T>(
+    containerId: string,
+    request: PredictInferenceModelRequest
+  ): Promise<APIResponse<T>> {
     return Api()
-      .post(`/v1/inference/model/proxy/container/${request.containerID}/predict`, {
-        queryIDs: request.queryIDs,
-        outputMode: request.outputMode,
-      })
+      .post(`/v1/inference/model/proxy/container/${containerId}/predict`, request)
       .then((response: AxiosResponse<APIResponse<T>>) => {
         const { data } = response;
         return data;
@@ -163,6 +187,28 @@ const inferenceRepository = {
   ): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/inference/model/container/${request.containerID}/stop`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update inference model
+   *
+   * @param   {UpdateInferenceModelRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async UpdateInferenceModel(
+    containerID: string,
+    request: UpdateInferenceModelRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .put(`/v1/inference/model/${containerID}/update`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;

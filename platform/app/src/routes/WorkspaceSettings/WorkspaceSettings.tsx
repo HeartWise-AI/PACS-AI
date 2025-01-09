@@ -15,12 +15,13 @@ import tenantRepository from '../../api/tenantRepository';
 import orthancRepository from '../../api/orthancRepository';
 import inferenceRepository from '../../api/inferenceRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
-import { GetInferenceModelResponse } from '../../api/inferenceDTO';
+import { GetInferenceModelInfoResponse, GetInferenceModelResponse } from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
 import { logoutUser } from '../../service/userService';
 import { Error } from '../../api/dto';
+import { DataElementDictionary } from 'dicom-data-dictionary';
 
 interface DICOMModalities {
   id: string;
@@ -121,7 +122,11 @@ const WorkspaceSettingsPage = () => {
       cpuPercentUsage: 0,
       memoryInBytes: 0,
     },
+    disallowedDICOMTags: [],
   });
+  const [selectedInferenceModelInfo, setSelectedInferenceModelInfo] =
+    useState<GetInferenceModelInfoResponse>({} as GetInferenceModelInfoResponse);
+  const [fetchingInferenceModelInfo, setFetchingInferenceModelInfo] = useState<boolean>(false);
   const [environmentalVariableKey, setEnvironmentalVariableKey] = useState<string>('');
   const [environmentalVariableValue, setEnvironmentalVariableValue] = useState<string>('');
   const [loadingModalities, setLoadingModalities] = useState(true);
@@ -276,6 +281,25 @@ const WorkspaceSettingsPage = () => {
     }
   }, [inferenceRepository]);
 
+  const fetchInferenceModelsInfo = async (containerID: string) => {
+    setFetchingInferenceModelInfo(true);
+    try {
+      const response = await inferenceRepository.GetInferenceModelInfo({ containerID });
+      setSelectedInferenceModelInfo(response.data);
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error('Error fetching inference model info:', error);
+      showAlert(error.message, 'error');
+    }
+    setFetchingInferenceModelInfo(false);
+  };
+
   useEffect(() => {
     // initial fetch
     fetchDICOMModalities();
@@ -411,6 +435,31 @@ const WorkspaceSettingsPage = () => {
       showAlert(error.message, 'error');
     }
     setIsAddingInferenceModel(false);
+  };
+
+  const updateInferenceModel = async () => {
+    setIsUpdatingInferenceModel(true);
+    try {
+      const response = await inferenceRepository.UpdateInferenceModel(selectedInferenceModel.id, {
+        disallowedDICOMTags: selectedInferenceModel.disallowedDICOMTags,
+        outputMode: selectedInferenceModel.outputMode,
+      });
+      showAlert(response.message, 'success');
+      setIsOpenAddEditInferenceModelModal(false);
+      clearSelectedInferenceModel();
+      fetchInferenceModels();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error updating inference model: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsUpdatingInferenceModel(false);
   };
 
   const deleteInferenceModel = async (inferenceModelId: string) => {
@@ -587,6 +636,7 @@ const WorkspaceSettingsPage = () => {
         cpuPercentUsage: 0,
         memoryInBytes: 0,
       },
+      disallowedDICOMTags: [],
     });
   };
 
@@ -683,6 +733,16 @@ const WorkspaceSettingsPage = () => {
     );
   };
 
+  const getDICOMTagsName = tag => {
+    // create a dictionary instance
+    const dictionary = new DataElementDictionary();
+    // lookup the element by tag
+    const element = dictionary.lookup(tag);
+
+    // return the name or a fallback value if the tag is not found
+    return element ? element.name : 'Unknown Tag';
+  };
+
   const InferenceModelActionButton = ({ row }) => {
     const [isOpen, setIsOpen] = useState(false);
     const buttonRef = useRef(null);
@@ -736,10 +796,11 @@ const WorkspaceSettingsPage = () => {
               style={getDropdownPosition()}
             >
               <ul className="py-2 text-sm text-white">
-                {/* <li>
+                <li>
                   <a
                     className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                     onClick={() => {
+                      fetchInferenceModelsInfo(row.container.id);
                       setSelectedInferenceModel(row);
                       setIsAddInferenceModel(false);
                       setIsViewInferenceModel(false);
@@ -749,7 +810,7 @@ const WorkspaceSettingsPage = () => {
                   >
                     {t('Edit')}
                   </a>
-                </li> */}
+                </li>
                 <li>
                   <a
                     className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
@@ -1316,7 +1377,7 @@ const WorkspaceSettingsPage = () => {
                     id="inferenceModelImage"
                     placeholder={t('Image')}
                     className="w-full disabled:opacity-50"
-                    disabled={isViewInferenceModel}
+                    disabled={isViewInferenceModel || !isAddInferenceModel}
                     type="text"
                     value={selectedInferenceModel.dockerImage}
                     onChange={e => {
@@ -1327,6 +1388,207 @@ const WorkspaceSettingsPage = () => {
                       });
                     }}
                   />
+
+                  {/* environment variables */}
+                  <div className="border-b border-white border-opacity-10 pb-4">
+                    <Typography
+                      variant="body"
+                      className="mb-2 text-white"
+                    >
+                      {t('Environmental Variables')}
+                    </Typography>
+                    {isAddInferenceModel && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="environmentalVariablesKey"
+                          placeholder={t('Key')}
+                          className="h-[43px] w-full disabled:opacity-50"
+                          disabled={!isAddInferenceModel}
+                          type="text"
+                          value={environmentalVariableKey}
+                          onChange={e => {
+                            setEnvironmentalVariableKey(e.target.value);
+                          }}
+                        />
+                        <Input
+                          id="environmentalVariablesValue"
+                          placeholder={t('Value')}
+                          className="h-[43px] w-full disabled:opacity-50"
+                          disabled={!isAddInferenceModel}
+                          type="text"
+                          value={environmentalVariableValue}
+                          onChange={e => {
+                            setEnvironmentalVariableValue(e.target.value);
+                          }}
+                        />
+                        <button
+                          disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                          className="h-[43px] w-[60px] rounded-lg bg-[#C8F469] bg-opacity-10"
+                          onClick={() => {
+                            setSelectedInferenceModel({
+                              ...selectedInferenceModel,
+                              envs: [
+                                ...(selectedInferenceModel.envs?.filter(
+                                  env => typeof env === 'object' && 'key' in env
+                                ) ?? []),
+                                {
+                                  key: environmentalVariableKey,
+                                  value: environmentalVariableValue,
+                                },
+                              ],
+                            });
+                            setEnvironmentalVariableKey('');
+                            setEnvironmentalVariableValue('');
+                          }}
+                        >
+                          <span className="text-[#C8F469]"> {t('Add')}</span>
+                        </button>
+                      </div>
+                    )}
+                    {/* added environment variables */}
+                    <div className="mt-4 flex flex-col gap-2">
+                      {isAddInferenceModel ? (
+                        selectedInferenceModel.envs?.map((variable, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2"
+                          >
+                            <Input
+                              id={`env-key-${index}`}
+                              label=""
+                              value={variable.key}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            <Input
+                              id={`env-value-${index}`}
+                              label=""
+                              value={variable.value}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            <button
+                              disabled={isAddingInferenceModel || isUpdatingInferenceModel}
+                              className="flex h-[43px] w-[60px] items-center justify-center rounded-lg bg-red-500 bg-opacity-10"
+                              onClick={() => {
+                                setSelectedInferenceModel({
+                                  ...selectedInferenceModel,
+                                  envs: selectedInferenceModel.envs
+                                    .filter(env => typeof env === 'object' && 'key' in env)
+                                    .filter((_, i) => i !== index),
+                                });
+                              }}
+                            >
+                              <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full border border-red-500 text-red-500">
+                                <span className="-mt-[1px] text-xl">{t('-')}</span>
+                              </div>
+                            </button>
+                          </div>
+                        ))
+                      ) : selectedInferenceModel.envs?.length === 0 ? (
+                        <div className="flex h-[50px] items-center justify-center">
+                          <Typography className="mb-2 text-white text-opacity-50">
+                            {t('No environment variables added')}
+                          </Typography>
+                        </div>
+                      ) : (
+                        selectedInferenceModel.envs?.map((variable, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2"
+                          >
+                            <Input
+                              id={`env-key-${index}`}
+                              label=""
+                              value={variable.key}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                            <Input
+                              id={`env-value-${index}`}
+                              label=""
+                              value={variable.value}
+                              className="h-[43px] w-full disabled:opacity-50"
+                              disabled={true}
+                              type="text"
+                            />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    {isAddInferenceModel && (
+                      <Typography
+                        variant="body"
+                        className="mt-1 text-white text-opacity-50"
+                      >
+                        <span className="text-red-500">*</span>{' '}
+                        {t('Environment Variable should contain at least a key and value.')}
+                      </Typography>
+                    )}
+                  </div>
+                  {/* Allowed DICOM Tags */}
+                  {!isAddInferenceModel && !isViewInferenceModel && (
+                    <div className="border-b border-white border-opacity-10 pb-4">
+                      <Typography
+                        variant="body"
+                        className="mb-2 text-white"
+                      >
+                        {t('Allowed DICOM Tags')}
+                      </Typography>
+                      {fetchingInferenceModelInfo ? (
+                        <div className="flex items-center justify-center">
+                          <img
+                            src={refreshIcon}
+                            alt="Refresh icon"
+                            className="h-5 w-5 animate-spin"
+                          />
+                        </div>
+                      ) : selectedInferenceModelInfo.supportedDicomTags?.[0] === '*' ? (
+                        <div className="my-4 flex items-center justify-center gap-2">
+                          <Typography
+                            variant="body"
+                            className="text-center text-white/70"
+                          >
+                            All metadata are supported
+                          </Typography>
+                        </div>
+                      ) : (
+                        selectedInferenceModelInfo.supportedDicomTags?.map((tag, index) => (
+                          <div
+                            key={index}
+                            className="my-2 flex cursor-pointer items-center gap-2"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`tag-${index}`}
+                              checked={!selectedInferenceModel.disallowedDICOMTags?.includes(tag)}
+                              onChange={e => {
+                                const isChecked = e.target.checked;
+                                setSelectedInferenceModel(prev => ({
+                                  ...prev,
+                                  disallowedDICOMTags: isChecked
+                                    ? prev.disallowedDICOMTags?.filter(t => t !== tag)
+                                    : [...(prev.disallowedDICOMTags || []), tag],
+                                }));
+                              }}
+                              className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                            />
+                            <Typography
+                              variant="body"
+                              component="label"
+                              htmlFor={`tag-${index}`}
+                              className="cursor-pointer text-white"
+                            >
+                              {tag} ({getDICOMTagsName(tag)})
+                            </Typography>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                   {(isViewInferenceModel || !isAddInferenceModel) && (
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
@@ -1384,121 +1646,6 @@ const WorkspaceSettingsPage = () => {
                       </div>
                     </div>
                   )}
-                  {/* environment variables */}
-                  <div className="border-b border-white border-opacity-10 pb-4">
-                    <Typography
-                      variant="body"
-                      className="mb-2 text-white"
-                    >
-                      {t('Environmental Variables')}
-                    </Typography>
-                    {!isViewInferenceModel && (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="environmentalVariablesKey"
-                          placeholder={t('Key')}
-                          className="h-[43px] w-full disabled:opacity-50"
-                          disabled={!isAddInferenceModel}
-                          type="text"
-                          value={environmentalVariableKey}
-                          onChange={e => {
-                            setEnvironmentalVariableKey(e.target.value);
-                          }}
-                        />
-                        <Input
-                          id="environmentalVariablesValue"
-                          placeholder={t('Value')}
-                          className="h-[43px] w-full disabled:opacity-50"
-                          disabled={!isAddInferenceModel}
-                          type="text"
-                          value={environmentalVariableValue}
-                          onChange={e => {
-                            setEnvironmentalVariableValue(e.target.value);
-                          }}
-                        />
-                        <button
-                          disabled={isAddingInferenceModel || isUpdatingInferenceModel}
-                          className="h-[43px] w-[60px] rounded-lg bg-[#C8F469] bg-opacity-10"
-                          onClick={() => {
-                            setSelectedInferenceModel({
-                              ...selectedInferenceModel,
-                              envs: [
-                                ...(selectedInferenceModel.envs?.filter(
-                                  env => typeof env === 'object' && 'key' in env
-                                ) ?? []),
-                                {
-                                  key: environmentalVariableKey,
-                                  value: environmentalVariableValue,
-                                },
-                              ],
-                            });
-                            setEnvironmentalVariableKey('');
-                            setEnvironmentalVariableValue('');
-                          }}
-                        >
-                          <span className="text-[#C8F469]"> {t('Add')}</span>
-                        </button>
-                      </div>
-                    )}
-                    {/* added environment variables */}
-                    <div className="mt-4 flex flex-col gap-2">
-                      {selectedInferenceModel.envs?.length === 0 && isViewInferenceModel ? (
-                        <div className="flex h-[50px] items-center justify-center">
-                          <Typography className="mb-2 text-white text-opacity-50">
-                            {t('No environment variables added')}
-                          </Typography>
-                        </div>
-                      ) : (
-                        selectedInferenceModel.envs?.map((variable, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2"
-                          >
-                            <Input
-                              id={`env-key-${index}`}
-                              label=""
-                              value={variable.key}
-                              className="h-[43px] w-full disabled:opacity-50"
-                              disabled={true}
-                              type="text"
-                            />
-                            <Input
-                              id={`env-value-${index}`}
-                              label=""
-                              value={variable.value}
-                              className="h-[43px] w-full disabled:opacity-50"
-                              disabled={true}
-                              type="text"
-                            />
-                            {!isViewInferenceModel && (
-                              <button
-                                disabled={isAddingInferenceModel || isUpdatingInferenceModel}
-                                className="flex h-[43px] w-[60px] items-center justify-center rounded-lg bg-red-500 bg-opacity-10"
-                                onClick={() => {
-                                  setSelectedInferenceModel({
-                                    ...selectedInferenceModel,
-                                    envs: selectedInferenceModel.envs
-                                      .filter(env => typeof env === 'object' && 'key' in env)
-                                      .filter((_, i) => i !== index),
-                                  });
-                                }}
-                              >
-                                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-full border border-red-500 text-red-500">
-                                  <span className="-mt-[1px] text-xl">{t('-')}</span>
-                                </div>
-                              </button>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <Typography
-                      variant="body"
-                      className="mt-1 text-white text-opacity-50"
-                    >
-                      {t('Environment Variable should contain at least a key and value.')}
-                    </Typography>
-                  </div>
                   <select
                     id="inferenceModelOutputMode"
                     className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight text-white placeholder:opacity-50 focus:outline-none"
@@ -1533,7 +1680,7 @@ const WorkspaceSettingsPage = () => {
                   <Button
                     disabled={isAddingInferenceModel || isUpdatingInferenceModel}
                     className="h-[41px] w-[111px] rounded-lg"
-                    onClick={addInferenceModel}
+                    onClick={isAddInferenceModel ? addInferenceModel : updateInferenceModel}
                   >
                     {isAddingInferenceModel || isUpdatingInferenceModel
                       ? '...'

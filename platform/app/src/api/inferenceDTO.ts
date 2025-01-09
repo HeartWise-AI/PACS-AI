@@ -25,9 +25,26 @@ export interface GetInferenceModelResponse {
   name: string;
   dockerImage: string;
   envs: { key: string; value: string }[] | string[];
+  disallowedDICOMTags: string[];
   outputMode: string;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface GetInferenceModelInfoRequest {
+  containerID: string;
+}
+
+export interface GetInferenceModelInfoResponse {
+  modelName: string;
+  version: string;
+  dicomTargetLevel: string;
+  dicomUploadMin: number;
+  dicomUploadMax: number;
+  supportedDicomModalities: string[];
+  supportedDicomTags: string[];
+  supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
+  supportedOutputModes: string[];
 }
 
 export interface GetInferenceModelFactsRequest {
@@ -47,12 +64,13 @@ export interface GetInferenceAvailableModelsResponse {
   dicomUploadMin: number;
   dicomUploadMax: number;
   supportedDicomModalities: string[];
+  supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
+  supportedDicomTags: string[];
   outputMode: string;
   modelFacts: {
     en: ModelDetails;
   };
 }
-
 
 export interface ModelDetails {
   Changelogs: { [key: string]: string } | string;
@@ -65,10 +83,17 @@ export interface ModelDetails {
   Warnings_and_limitations: { [key: string]: string };
 }
 
+export interface InferenceAvailableAdditionalMetadata {
+  id: string;
+  name: string;
+  type: string;
+  required: boolean;
+}
+
 export interface PredictInferenceModelRequest {
-  containerID: string;
-  queryIDs: string[];
-  outputMode: string;
+  studyInstanceUID: string;
+  seriesInstanceUIDs: string[];
+  additionalMetadata: { [key: string]: string | null };
 }
 
 export interface PredictInferenceModelJSONResponse {
@@ -115,4 +140,9 @@ export interface StartInferenceModelContainerRequest {
 
 export interface StopInferenceModelContainerRequest {
   containerID: string;
+}
+
+export interface UpdateInferenceModelRequest {
+  disallowedDICOMTags: string[];
+  outputMode: string;
 }

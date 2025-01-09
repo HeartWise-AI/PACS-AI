@@ -265,6 +265,7 @@ function PanelStudyBrowserTracking({
   }, [thumbnailImageSrcMap, trackedSeries, viewports, dataSource, displaySetService]);
 
   const tabs = _createStudyBrowserTabs(
+    displaySetService,
     StudyInstanceUIDs,
     studyDisplayList,
     displaySets,
@@ -538,6 +539,7 @@ function _getComponentType(ds) {
  * @returns tabs - The prop object expected by the StudyBrowser component
  */
 function _createStudyBrowserTabs(
+  displaySetService,
   primaryStudyInstanceUIDs,
   studyDisplayList,
   displaySets,
@@ -575,6 +577,23 @@ function _createStudyBrowserTabs(
     const tabStudy = Object.assign({}, study, {
       displaySets: displaySetsForStudy,
     });
+
+    // Add SeriesInstanceUID from activeDisplaySets
+    const activeDisplaySets = displaySetService.activeDisplaySets;
+    if (activeDisplaySets) {
+      tabStudy.displaySets = tabStudy.displaySets.map(ds => {
+        const activeDs = activeDisplaySets.find(
+          ads => ads.displaySetInstanceUID === ds.displaySetInstanceUID
+        );
+        if (activeDs) {
+          return {
+            ...ds,
+            SeriesInstanceUID: activeDs.SeriesInstanceUID,
+          };
+        }
+        return ds;
+      });
+    }
 
     // Add the "tab study" to the 'primary', 'recent', and/or 'all' tab group(s)
     if (primaryStudyInstanceUIDs.includes(study.studyInstanceUid)) {

@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-
 import Icon from '../Icon';
+import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
 
 const baseClasses =
   'first:border-0 border-t border-white border-opacity-10 cursor-pointer select-none outline-none';
@@ -16,6 +16,10 @@ const StudyItem = ({
   isActive,
   onClick,
 }) => {
+  const { setModalitiesInStudy } = useGlobalStateData();
+
+  setModalitiesInStudy(modalities);
+
   return (
     <div
       className={classnames(

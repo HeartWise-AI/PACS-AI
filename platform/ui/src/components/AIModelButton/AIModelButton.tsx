@@ -24,7 +24,9 @@ import JSONOutputModeModal from '../../../../app/src/components/inference/JSONOu
 import WebappOutputModeModal from '../../../../app/src/components/inference/WebappOutputModeModal';
 import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOutputModeModal';
 import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
+import SelectSeriesModal from '../../../../app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '../../../../app/src/AlertProvider';
+import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -46,33 +48,26 @@ const AIModelButton = ({
   const navigate = useNavigate();
   const showAlert = useContext(AlertContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [openJSONOutputModeModal, setOpenJSONOutputModeModal] = useState(false);
   const [openWebappOutputModeModal, setOpenWebappOutputModeModal] = useState(false);
   const [openHTMLOutputModeModal, setOpenHTMLOutputModeModal] = useState(false);
   const [openPDFOutputModeModal, setOpenPDFOutputModeModal] = useState(false);
+  const [openSelectSeriesModal, setOpenSelectSeriesModal] = useState(false);
   const [outputModeTitle, setOutputModeTitle] = useState('');
   const [outputModeData, setOutputModeData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [lvef, setLvef] = useState(null);
-  const [age, setAge] = useState(null);
-  const [detectedVessel, setVessel] = useState(null);
-  const ref = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
   const [containerName, setContainerName] = useState<string>('');
+  const { modalitiesInStudy } = useGlobalStateData();
+  const [selectedInferenceModel, setSelectedInferenceModel] =
+    useState<GetInferenceAvailableModelsResponse | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
-  }, []);
-
-  useEffect(() => {
-    const storedModalities = localStorage.getItem('__modalitiesInStudy');
-    setModalitiesInStudy(storedModalities || '');
   }, []);
 
   // handle dropdown close when clicking outside
@@ -89,60 +84,7 @@ const AIModelButton = ({
     };
   }, []);
 
-  /**
-   * Get the SOPInstanceUID of the currently displayed image
-   */
-  function getSOPInstanceUID() {
-    let element: HTMLDivElement | null = null;
-
-    const foundElement = document.querySelector('[data-viewport-uid]');
-
-    if (foundElement instanceof HTMLDivElement) {
-      element = foundElement;
-    }
-    const enabledElement = getEnabledElement(element);
-    const viewport = enabledElement.viewport;
-    const imageId = viewport.getCurrentImageId();
-
-    // Use cornerstone's metaData provider to get the SOPInstanceUID
-    const sopInstanceUID = metaData.get('SOPInstanceUID', imageId);
-    return sopInstanceUID;
-  }
-
-  // TODO: to be depricated
-  /**
-   * Apply prediction
-   */
-  const applyPrediction = async () => {
-    setIsLoading(true);
-    const sopInstanceUID = getSOPInstanceUID();
-
-    if (!sopInstanceUID) {
-      console.error('Failed to get SOPInstanceUID');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
-        sopInstanceUID,
-      });
-      const predictionResultResponse = await predictionRepository.ApplyPrediction({
-        queryId: findInstanceResponse.data.queryIds[0],
-      });
-
-      const { vessel, LVEF, age } = predictionResultResponse.data;
-
-      setAge(age ? parseInt(age.toString(), 10) : null);
-      setVessel(vessel || null);
-      setLvef(LVEF != null ? Number(LVEF) : null);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching prediction data:', error);
-      setIsLoading(false);
-    }
-  };
-
+  // handle button click
   const handleButtonClick = e => {
     setIsOpen(!isOpen);
     const buttonRect = e.currentTarget.getBoundingClientRect();
@@ -152,16 +94,19 @@ const AIModelButton = ({
     });
   };
 
-  const applyPredictInferenceModel = async (containerID: string, outputMode: string) => {
+  // apply inference model
+  const applyPredictInferenceModel = async (
+    containerId: string,
+    seriesInstanceUIDs: string[],
+    additionalMetadata: { [key: string]: string | null },
+    outputMode: string
+  ) => {
     setIsLoading(true);
     setIsOpen(false);
-    const sopInstanceUID = getSOPInstanceUID();
+    setOpenSelectSeriesModal(false);
 
-    if (!sopInstanceUID) {
-      console.error('Failed to get SOPInstanceUID');
-      setIsLoading(false);
-      return;
-    }
+    const searchParams = new URLSearchParams(window.location.search);
+    const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
       switch (outputMode) {
@@ -181,15 +126,14 @@ const AIModelButton = ({
           break;
       }
 
-      const findInstanceResponse = await orthancRepository.GetLocalSOPInstance({
-        sopInstanceUID,
-      });
-
-      const predictionResultResponse = await inferenceRepository.PredictInferenceModel({
-        containerID,
-        queryIDs: [findInstanceResponse.data.queryIds[0]],
-        outputMode,
-      });
+      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
+        containerId,
+        {
+          studyInstanceUID,
+          seriesInstanceUIDs,
+          additionalMetadata,
+        }
+      );
 
       setOutputModeData(predictionResultResponse.data);
       setIsLoading(false);
@@ -238,7 +182,6 @@ const AIModelButton = ({
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
             {inferenceAvailableModels.some(
-              // TODO: update this hardcoded modality
               model =>
                 model.supportedDicomModalities?.some(modality => modality === modalitiesInStudy)
             ) ? (
@@ -248,11 +191,14 @@ const AIModelButton = ({
                     key={index}
                     className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
                     onClick={() => {
-                      applyPredictInferenceModel(model.containerId, model.outputMode);
                       setOutputModeTitle(
                         `${model.modelName} (${model.version}-${model.outputMode})`
                       );
+                      setOpenSelectSeriesModal(true);
+                      setIsOpen(false);
                       setContainerName(model.containerName);
+                      setSelectedInferenceModel(model);
+                      return;
                     }}
                   >
                     <img
@@ -322,6 +268,18 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelPDFResponse}
           title={outputModeTitle}
           loading={isLoading}
+        />
+      )}
+      {openSelectSeriesModal && (
+        <SelectSeriesModal
+          isOpen={openSelectSeriesModal}
+          onClose={() => {
+            setOpenSelectSeriesModal(false);
+          }}
+          applyPredictInferenceModel={applyPredictInferenceModel}
+          title={outputModeTitle}
+          loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
     </div>
