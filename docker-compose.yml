@@ -1,6 +1,6 @@
 networks:
-  pacs-net:
-    external: true
+  default:
+    name: pacs-net-default
 
 services:
   pacs-ai:
@@ -8,7 +8,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    networks:
-      - pacs-net
     expose:
       - '80'
