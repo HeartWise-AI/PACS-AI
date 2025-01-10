@@ -50,6 +50,23 @@ const StudyBrowser = ({
   const { t } = useTranslation('StudyBrowser');
   const { customizationService } = servicesManager?.services || {};
   const { experimentalStudyBrowserSort } = window.config;
+  const { setDisplaySets } = useGlobalStateData();
+
+  // Find the active tab and its display sets
+  const activeTab = tabs.find(tab => tab.name === activeTabName);
+  const activeDisplaySets = activeTab?.studies.map(study => study.displaySets).flat() || [];
+
+  // Add this before the useEffect
+  const prevDisplaySets = useRef(activeDisplaySets);
+
+  // Update display sets when they change
+  useEffect(() => {
+    if (activeDisplaySets.length > 0 && JSON.stringify(activeDisplaySets) !== JSON.stringify(prevDisplaySets.current)) {
+      setDisplaySets(activeDisplaySets);
+      prevDisplaySets.current = activeDisplaySets;
+    }
+  }, [activeDisplaySets]);
+
   const getTabContent = () => {
     const tabData = tabs.find(tab => tab.name === activeTabName);
     return tabData.studies.map(
@@ -59,8 +76,6 @@ const StudyBrowser = ({
         }
         const { setDisplaySets } = useGlobalStateData();
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
-
-        setDisplaySets(displaySets);
 
         return (
           <React.Fragment key={studyInstanceUid}>

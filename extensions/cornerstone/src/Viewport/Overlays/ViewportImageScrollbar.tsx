@@ -9,7 +9,7 @@ function CornerstoneImageScrollbar({
   element,
   imageSliceData,
   setImageSliceData,
-  scrollbarHeight,
+  scrollbarHeight = '100%',
   servicesManager,
 }: withAppTypes<{
   element: HTMLElement;
@@ -102,6 +102,10 @@ CornerstoneImageScrollbar.propTypes = {
   imageSliceData: PropTypes.object.isRequired,
   setImageSliceData: PropTypes.func.isRequired,
   servicesManager: PropTypes.object.isRequired,
+};
+
+CornerstoneImageScrollbar.defaultProps = {
+  scrollbarHeight: '100%',
 };
 
 export default CornerstoneImageScrollbar;

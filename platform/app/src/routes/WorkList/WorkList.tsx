@@ -47,8 +47,8 @@ function WorkList() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(moment());
+  const [endDate, setEndDate] = useState(moment());
   const formattedStartDate = moment().format('YYYYMMDD');
   const formattedEndDate = moment().format('YYYYMMDD');
   const [studyListFilter, setStudyListFilter] = useState({
@@ -306,7 +306,7 @@ function WorkList() {
         (window.performance &&
           performance.getEntriesByType('navigation').length > 0 &&
           (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type ===
-            'reload');
+          'reload');
 
       if (isPageRefresh) {
         searchStudyList();
@@ -465,8 +465,8 @@ function WorkList() {
    * Clear date range
    */
   const handleClearDates = () => {
-    setStartDate('');
-    setEndDate('');
+    setStartDate(null);
+    setEndDate(null);
 
     setStudyListFilter(prevFilter => ({
       ...prevFilter,
@@ -637,9 +637,8 @@ function WorkList() {
           <button
             key={number}
             onClick={() => handlePageChange(number)}
-            className={`h-7 w-7 rounded-md ${
-              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
-            }`}
+            className={`h-7 w-7 rounded-md ${number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+              }`}
             style={{
               background:
                 number === currentPage
@@ -652,9 +651,8 @@ function WorkList() {
         ))}
         <button
           onClick={() => handlePageChange(currentPage + 1)}
-          className={`h-5 w-5 bg-transparent ${
-            currentPage === totalPages ? 'invisible' : 'visible'
-          }`}
+          className={`h-5 w-5 bg-transparent ${currentPage === totalPages ? 'invisible' : 'visible'
+            }`}
         >
           <img
             src={chevronRightIcon}
@@ -824,7 +822,7 @@ function WorkList() {
             </div>
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
-              !Object.values(filterRef.current).every(value => value === '') ? (
+                !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
                   <span className="text-lg font-normal text-opacity-70">
                     {t('Searching for data')} ...
@@ -866,9 +864,8 @@ function WorkList() {
                             onClick={() => toggleRow(index)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${
-                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
-                              }`}
+                              className={`text-md py-2 px-4 font-normal ${expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                                }`}
                             >
                               {row.patientName}
                             </td>
@@ -886,9 +883,8 @@ function WorkList() {
                             </td>
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${
-                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
-                              }`}
+                              className={`py-2 px-4 text-sm font-normal ${expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                                }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
@@ -935,18 +931,20 @@ function WorkList() {
                       ))}
                     </tbody>
                   ) : (
-                    <tr>
-                      <td
-                        colSpan={12}
-                        className="p-5 text-center"
-                      >
-                        <div className="flex h-full w-full items-center justify-center">
-                          <span className="mt-5 text-lg font-normal text-white text-opacity-70">
-                            {t('searchStudyListInfo')}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
+                    <tbody>
+                      <tr>
+                        <td
+                          colSpan={12}
+                          className="p-5 text-center"
+                        >
+                          <div className="flex h-full w-full items-center justify-center">
+                            <span className="mt-5 text-lg font-normal text-white text-opacity-70">
+                              {t('searchStudyListInfo')}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
                   )}
                 </table>
               )}
@@ -985,22 +983,22 @@ function WorkList() {
           {(jobInfo.state === JobState.PAUSED ||
             jobInfo.state === JobState.RETRY ||
             jobInfo.state === JobState.FAILURE) && (
-            <div className="mt-2">
-              <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
-              <div className="mt-6 flex justify-end">
-                <Button
-                  className="block h-5 w-11"
-                  onClick={() => {
-                    setIsOpenOrthancServiceModal(false);
-                    setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.RUNNING });
-                    setSyncingStudyProgress(0);
-                  }}
-                >
-                  {t('Okay')}
-                </Button>
+              <div className="mt-2">
+                <h1 className="text-white">{t('OrthancServiceProgressMessage')}</h1>
+                <div className="mt-6 flex justify-end">
+                  <Button
+                    className="block h-5 w-11"
+                    onClick={() => {
+                      setIsOpenOrthancServiceModal(false);
+                      setJobInfo({ id: '', priority: 0, progress: 0, state: JobState.RUNNING });
+                      setSyncingStudyProgress(0);
+                    }}
+                  >
+                    {t('Okay')}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </Modal>
       </div>
     </div>
