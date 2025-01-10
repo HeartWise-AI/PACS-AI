@@ -84,7 +84,7 @@ function App({ config, defaultExtensions, defaultModes }) {
     [SnackbarProvider, { service: uiNotificationService }],
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
-    ['FrontendVersionProvider', { value: frontendVersion }],
+    [FrontendVersionContext.Provider, { value: frontendVersion }],
   ];
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 

@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import { Enums, Types, utilities } from '@cornerstonejs/core';
 import { utilities as csToolsUtils } from '@cornerstonejs/tools';
 import { ImageScrollbar } from '@ohif/ui';
-import { ServicesManger } from '@ohif/core';
+import { ServicesManager } from '@ohif/core';
+import './ViewportImageScrollbar.css';
 
 function CornerstoneImageScrollbar({
   viewportData,
@@ -11,10 +12,10 @@ function CornerstoneImageScrollbar({
   element,
   imageSliceData,
   setImageSliceData,
-  scrollbarHeight,
+  scrollbarHeight = '100%',
   servicesManager,
 }) {
-  const { cineService, cornerstoneViewportService } = (servicesManager as ServicesManger).services;
+  const { cineService, cornerstoneViewportService } = (servicesManager as ServicesManager).services;
 
   const onImageScrollbarChange = (imageIndex, viewportId) => {
     const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
@@ -109,12 +110,14 @@ function CornerstoneImageScrollbar({
   }, [viewportData, element]);
 
   return (
-    <ImageScrollbar
-      onChange={evt => onImageScrollbarChange(evt, viewportId)}
-      max={imageSliceData.numberOfSlices ? imageSliceData.numberOfSlices - 1 : 0}
-      height={scrollbarHeight}
-      value={imageSliceData.imageIndex}
-    />
+    <div className="viewport-image-scrollbar-wrapper">
+      <ImageScrollbar
+        onChange={evt => onImageScrollbarChange(evt, viewportId)}
+        max={imageSliceData.numberOfSlices ? imageSliceData.numberOfSlices - 1 : 0}
+        height={scrollbarHeight}
+        value={imageSliceData.imageIndex}
+      />
+    </div>
   );
 }
 
@@ -126,6 +129,10 @@ CornerstoneImageScrollbar.propTypes = {
   imageSliceData: PropTypes.object.isRequired,
   setImageSliceData: PropTypes.func.isRequired,
   servicesManager: PropTypes.object.isRequired,
+};
+
+CornerstoneImageScrollbar.defaultProps = {
+  scrollbarHeight: '100%',
 };
 
 export default CornerstoneImageScrollbar;

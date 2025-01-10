@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import Icon from '../Icon';
@@ -18,7 +18,11 @@ const StudyItem = ({
 }) => {
   const { setModalitiesInStudy } = useGlobalStateData();
 
-  setModalitiesInStudy(modalities);
+  useEffect(() => {
+    if (modalities) {
+      setModalitiesInStudy(modalities);
+    }
+  }, [modalities, setModalitiesInStudy]);
 
   return (
     <div
@@ -29,7 +33,7 @@ const StudyItem = ({
       onClick={onClick}
       onKeyDown={onClick}
       role="button"
-      tabIndex="0"
+      tabIndex={0}
     >
       <div className="flex flex-1 flex-col px-4 pb-2">
         <div className="flex flex-row items-center justify-between pt-2 pb-2">

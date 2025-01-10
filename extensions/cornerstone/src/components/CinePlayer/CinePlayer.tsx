@@ -45,69 +45,77 @@ function WrappedCinePlayer({
     const { viewports } = viewportGridService.getState();
     const viewport = viewports.get(viewportId);
 
-    // check if viewports is undefined
-    // it returns undefined when cineplayer is enabled
     if (!viewport) {
       console.error(`No viewport found for id: ${viewportId}`);
       return;
     }
 
     const { displaySetInstanceUIDs } = viewport;
-
     let frameRate = 24;
     let isPlaying = cines[viewportId]?.isPlaying || false;
 
-    displaySetInstanceUIDs.forEach(displaySetInstanceUID => {
+    // Extract modality check into a separate function
+    const shouldAutoPlayModality = (modality: string): boolean => {
+      return modality.includes('US') || modality.includes('XA');
+    };
+
+    // Extract frame rate calculation into a separate function
+    const calculateFrameRate = (displaySet: any): number => {
+      if (displaySet.instance?.CineRate) {
+        // DICOM tag (0018,0040) - preferred frame rate
+        return displaySet.instance.CineRate;
+      }
+      if (displaySet.FrameRate) {
+        // DICOM tag (0018,1063) - frame time in milliseconds
+        return Math.round(1000 / displaySet.FrameRate);
+      }
+      return 24; // Default frame rate
+    };
+
+    // Process each display set
+    for (const displaySetInstanceUID of displaySetInstanceUIDs) {
       const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
 
-      //Getting the modality to see if Cine should be enabled
-      if (displaySet.Modality.includes('US') || displaySet.Modality.includes('XA')) {
-        // US and XA modalities are typically cine
+      // Check if modality should autoplay
+      if (shouldAutoPlayModality(displaySet.Modality)) {
         isPlaying = true;
         cineService.setIsCineEnabled(true);
       }
 
+      // Skip if viewport is not enabled or cine is disabled
       if (!enabledVPElement || !isCineEnabled) {
-        return;
+        continue;
       }
 
-      if (displaySet.FrameRate) {
-        // displaySet.FrameRate corresponds to DICOM tag (0018,1063) which is defined as the the frame time in milliseconds
-        // So a bit of math to get the actual frame rate.
-        frameRate = Math.round(1000 / displaySet.FrameRate);
-        isPlaying ||= !!appConfig.autoPlayCine;
+      // Update frame rate
+      frameRate = calculateFrameRate(displaySet);
+
+      // Enable autoplay based on config if frame rate is available
+      if (frameRate !== 24 && appConfig.autoPlayCine) {
+        isPlaying = true;
       }
 
-      if (displaySet.instance.CineRate) {
-        // displaySet.instance.CineRate corresponds to DICOM tag (0018,0040) which is defined as the the frame time
-        // It should be the default, that's why we are using it and the FrameRate is a fallback
-        frameRate = displaySet.instance.CineRate;
-        isPlaying ||= !!appConfig.autoPlayCine;
-      }
-
-      // check if the displaySet is dynamic and set the dynamic info
+      // Handle dynamic volume info
       if (displaySet.isDynamicVolume) {
         const { dynamicVolumeInfo } = displaySet;
-        const numTimePoints = dynamicVolumeInfo.timePoints.length;
-        const label = dynamicVolumeInfo.splittingTag;
-        const timePointIndex = dynamicVolumeInfo.timePointIndex || 0;
         setDynamicInfo({
           volumeId: displaySet.displaySetInstanceUID,
-          timePointIndex,
-          numTimePoints,
-          label,
+          timePointIndex: dynamicVolumeInfo.timePointIndex || 0,
+          numTimePoints: dynamicVolumeInfo.timePoints.length,
+          label: dynamicVolumeInfo.splittingTag,
         });
       } else {
         setDynamicInfo(null);
       }
-    });
+    }
 
+    // Update cine state
     if (isPlaying) {
       cineService.setIsCineEnabled(isPlaying);
     }
     cineService.setCine({ id: viewportId, isPlaying, frameRate });
     setNewStackFrameRate(frameRate);
-  }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement]);
+  }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement, appConfig?.autoPlayCine]);
 
   useEffect(() => {
     isMountedRef.current = true;
