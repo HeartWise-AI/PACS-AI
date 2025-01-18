@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
+import { AIModelButton } from '@ohif/ui';
 import { UserPreferences, AboutModal, useModal } from '@ohif/ui';
 import { Header } from '@ohif/ui-next';
 import i18n from '@ohif/i18n';
@@ -19,7 +20,7 @@ function ViewerHeader({
   hotkeysManager,
   extensionManager,
   servicesManager,
-  appConfig
+  appConfig,
 }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,15 +134,15 @@ function ViewerHeader({
       }
     >
       <div className="flex items-center">
-            <Toolbar servicesManager={servicesManager} />
-            {/* TODO: Added AIModelButton component */}
-            <AIModelButton
-              isShowBG={true}
-              positionRight={-90}
-              inferenceAvailableModels={inferenceAvailableModels}
-              loading={fetchingAvailableModels}
-            />
-          </div>
+        <Toolbar servicesManager={servicesManager} />
+        {/* TODO: Added AIModelButton component */}
+        <AIModelButton
+          isShowBG={true}
+          positionRight={-90}
+          inferenceAvailableModels={inferenceAvailableModels}
+          loading={fetchingAvailableModels}
+        />
+      </div>
     </Header>
   );
 }

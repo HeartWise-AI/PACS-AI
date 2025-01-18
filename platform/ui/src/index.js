@@ -36,6 +36,7 @@ export {
   AdminTable,
   AdvancedToolbox,
   AllInOneMenu,
+  AIModelButton,
   HotkeyField,
   Header,
   UserPreferences,

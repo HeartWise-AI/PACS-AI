@@ -44,7 +44,8 @@ const StudyBrowser = ({
   activeDisplaySetInstanceUIDs,
   servicesManager,
 }: withAppTypes) => {
-  const { inferenceAvailableModels, fetchingAvailableModels } = useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
   const { t } = useTranslation('StudyBrowser');
@@ -61,7 +62,10 @@ const StudyBrowser = ({
 
   // Update display sets when they change
   useEffect(() => {
-    if (activeDisplaySets.length > 0 && JSON.stringify(activeDisplaySets) !== JSON.stringify(prevDisplaySets.current)) {
+    if (
+      activeDisplaySets.length > 0 &&
+      JSON.stringify(activeDisplaySets) !== JSON.stringify(prevDisplaySets.current)
+    ) {
       setDisplaySets(activeDisplaySets);
       prevDisplaySets.current = activeDisplaySets;
     }
@@ -151,7 +155,7 @@ const StudyBrowser = ({
             return (
               <LegacyButton
                 key={name}
-                className={'min-w-18 p-2 text-base hover:!text-black active:!text-black '}
+                className={'min-w-18 p-2 text-base hover:!text-black active:!text-black'}
                 size="initial"
                 color={color}
                 bgColor={isActive ? 'bg-primary-main bg-opacity-10' : 'bg-transparent'}
