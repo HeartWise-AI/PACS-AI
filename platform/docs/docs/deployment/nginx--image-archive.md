@@ -15,6 +15,7 @@ on your company's policies, this may be an appropriate setup on an internal
 network when protected with a server's basic authentication.
 
 
+
 ### Handling Web Requests
 
 We mitigate our first issue by allowing [Nginx][nginx] to handle incoming web
@@ -29,6 +30,7 @@ resources from our image archive (Orthanc), and when accessing its web admin.
 > A reverse proxy is a type of proxy server that retrieves resources on behalf
 > of a client from one or more servers. These resources are then returned to the
 > client, appearing as if they originated from the proxy server itself.
+
 
 
 This setup allows us to create a setup similar to the one pictured below:
