@@ -1,3 +1,3 @@
 import { Combobox } from './Combobox';
 
-export { Combobox};
+export { Combobox };

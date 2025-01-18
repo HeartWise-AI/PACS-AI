@@ -62,7 +62,7 @@ const DateRange = props => {
             <button
               key={text}
               type="button"
-              className={`bg-primary-main m-0 rounded-lg border-0 py-2 px-3 text-base text-white transition duration-300 hover:opacity-80`}
+              className={`bg-primary-main m-0 rounded border-0 py-2 px-3 text-base text-white transition duration-300 hover:opacity-80`}
               onClick={() =>
                 onChange({
                   startDate: start ? start.format('YYYYMMDD') : undefined,
@@ -161,7 +161,6 @@ const DateRange = props => {
       numberOfMonths={1}
       showClearDates={false}
       anchorDirection="left"
-      class="h-[51px] bg-white bg-opacity-10"
     />
   );
 };

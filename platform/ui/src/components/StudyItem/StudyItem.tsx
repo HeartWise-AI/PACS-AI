@@ -2,9 +2,8 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useTranslation } from 'react-i18next';
-
 import Icon from '../Icon';
-import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 const baseClasses =
   'first:border-0 border-t border-white border-opacity-10 cursor-pointer select-none outline-none';

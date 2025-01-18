@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 const AdminTable = ({ headers, data }) => {
   return (
-    <table className="w-full text-left text-sm rtl:text-right ">
+    <table className="w-full text-left text-sm rtl:text-right">
       <thead className="bg-transparent text-sm font-light text-white text-opacity-50">
         <tr>
           {headers.map((header, index) => (

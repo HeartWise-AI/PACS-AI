@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Error } from '../../../../app/src/api/dto';
-import { logoutUser } from '../../../../app/src/service/userService';
+import { Error } from '@ohif/app/src/api/dto';
+import { logoutUser } from '@ohif/app/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { getEnabledElement, metaData } from '@cornerstonejs/core';
@@ -10,23 +10,23 @@ import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import ResultModal from '../ResultModal/ResultModal';
-import predictionRepository from '../../../../app/src/api/predictionRepository';
-import orthancRepository from '../../../../app/src/api/orthancRepository';
-import inferenceRepository from '../../../../app/src/api/inferenceRepository';
+import predictionRepository from '@ohif/app/src/api/predictionRepository';
+import orthancRepository from '@ohif/app/src/api/orthancRepository';
+import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelHTMLResponse,
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
-} from '../../../../app/src/api/inferenceDTO';
-import JSONOutputModeModal from '../../../../app/src/components/inference/JSONOutputModeModal';
-import WebappOutputModeModal from '../../../../app/src/components/inference/WebappOutputModeModal';
-import HTMLOutputModeModal from '../../../../app/src/components/inference/HTMLOutputModeModal';
-import PDFOutputModeModal from '../../../../app/src/components/inference/PDFOutputModeModal';
-import SelectSeriesModal from '../../../../app/src/components/inference/SelectSeriesModal';
-import { AlertContext } from '../../../../app/src/AlertProvider';
-import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
+} from '@ohif/app/src/api/inferenceDTO';
+import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
+import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
+import HTMLOutputModeModal from '@ohif/app/src/components/inference/HTMLOutputModeModal';
+import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputModeModal';
+import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
+import { AlertContext } from '@ohif/app/src/AlertProvider';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -157,8 +157,9 @@ const AIModelButton = ({
   return (
     <div className="relative flex w-full">
       <button
-        className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${isShowBG ? backgroundClass : 'bg-transparent'
-          } ${loading ? 'opacity-50' : ''}`}
+        className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
+          isShowBG ? backgroundClass : 'bg-transparent'
+        } ${loading ? 'opacity-50' : ''}`}
         type="button"
         onClick={handleButtonClick}
         disabled={loading}
@@ -180,9 +181,8 @@ const AIModelButton = ({
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
-            {inferenceAvailableModels.some(
-              model =>
-                model.supportedDicomModalities?.some(modality => modalitiesInStudy.includes(modality))
+            {inferenceAvailableModels.some(model =>
+              model.supportedDicomModalities?.some(modality => modalitiesInStudy.includes(modality))
             ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels.map((model, index) => (
@@ -292,7 +292,7 @@ AIModelButton.defaultProps = {
   isShowBG: false,
   isShowText: false,
   positionRight: 0,
-  onClick: () => { },
+  onClick: () => {},
 };
 
 AIModelButton.propTypes = {

@@ -6,7 +6,13 @@ import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import Compose from './routes/Mode/Compose';
-import { ServicesManager, ExtensionManager, CommandsManager, HotkeysManager, ServiceProvidersManager } from '@ohif/core';
+import {
+  ServicesManager,
+  ExtensionManager,
+  CommandsManager,
+  HotkeysManager,
+  ServiceProvidersManager,
+} from '@ohif/core';
 import {
   DialogProvider,
   Modal,

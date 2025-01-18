@@ -1008,8 +1008,8 @@ const WorkspaceSettingsPage = () => {
                               cell === 'Connected'
                                 ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
                                 : cell === 'Disconnected'
-                                ? 'bg-red-300 bg-opacity-10 text-red-500'
-                                : 'bg-yellow-300 bg-opacity-10 text-yellow-500'
+                                  ? 'bg-red-300 bg-opacity-10 text-red-500'
+                                  : 'bg-yellow-300 bg-opacity-10 text-yellow-500'
                             }`}
                           >
                             <span>{cell}</span>
@@ -1322,8 +1322,8 @@ const WorkspaceSettingsPage = () => {
                   isAddInferenceModel
                     ? 'New Inference Model'
                     : isViewInferenceModel
-                    ? 'View Inference Model'
-                    : 'Edit Inference Model'
+                      ? 'View Inference Model'
+                      : 'Edit Inference Model'
                 )}
               </Typography>
               <Typography
@@ -1334,8 +1334,8 @@ const WorkspaceSettingsPage = () => {
                   isAddInferenceModel
                     ? 'Add a new inference model.'
                     : isViewInferenceModel
-                    ? 'View inference model information.'
-                    : 'Update inference model information.'
+                      ? 'View inference model information.'
+                      : 'Update inference model information.'
                 )}
               </Typography>
 

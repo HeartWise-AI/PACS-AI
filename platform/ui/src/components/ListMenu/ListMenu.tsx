@@ -31,7 +31,7 @@ const ListMenu = ({ items = [], renderer, onClick = () => {} }) => {
 
   return (
     <div
-      className="bg-[#4C504B] flex flex-col gap-[4px] overflow-auto rounded-md p-1"
+      className="flex flex-col gap-[4px] overflow-auto rounded-md bg-[#4C504B] p-1"
       style={{ maxHeight: 'calc(100vh - 5rem)' }}
     >
       {items.map((item, index) => {

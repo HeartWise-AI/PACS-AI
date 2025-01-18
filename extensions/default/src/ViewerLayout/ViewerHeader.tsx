@@ -11,7 +11,6 @@ import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
-import { useAppConfig } from '@state';
 import { AvailableModelsContext } from '../ViewerLayout/index';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;

@@ -15,6 +15,7 @@ export type CinePlayerProps = {
   maxFrameRate?: number;
   stepFrameRate?: number;
   frameRate?: number;
+  onFrameRateChange: (value: number) => void;
   onPlayPauseChange: (value: boolean) => void;
   onClose: () => void;
   updateDynamicInfo?: () => void;
@@ -43,7 +44,17 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
 }) => {
   const isDynamic = !!dynamicInfo?.numTimePoints;
   const [frameRate, setFrameRate] = useState(defaultFrameRate);
+  const debouncedSetFrameRate = useCallback(debounce(onFrameRateChange, 100), [onFrameRateChange]);
+
   const getPlayPauseIconName = () => (isPlaying ? 'icon-pause' : 'icon-play');
+
+  const handleSetFrameRate = (frameRate: number) => {
+    if (frameRate < minFrameRate || frameRate > maxFrameRate) {
+      return;
+    }
+    setFrameRate(frameRate);
+    debouncedSetFrameRate(frameRate);
+  };
 
   useEffect(() => {
     setFrameRate(defaultFrameRate);
@@ -84,7 +95,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
       )}
       <div
         className={
-          'border-secondary-light/60 inline-flex select-none items-center gap-2 rounded border bg-[#4C504B] px-2 py-2'
+          'border-secondary-light/60 bg-primary-dark inline-flex select-none items-center gap-2 rounded border px-2 py-2'
         }
       >
         <Icon
@@ -94,7 +105,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           data-cy={'cine-player-play-pause'}
         />
         {isDynamic && dynamicInfo && (
-          <div className="min-w-16 max-w-44 flex flex-col  text-white">
+          <div className="min-w-16 max-w-44 flex flex-col text-white">
             {/* Add Tailwind classes for monospace font and center alignment */}
             <div className="text-[11px]">
               <span className="w-2 text-white">{dynamicInfo.timePointIndex}</span>{' '}
@@ -104,7 +115,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           </div>
         )}
 
-        <div className="ml-4 flex h-6 items-stretch gap-1 rounded border border-none">
+        <div className="border-secondary-light ml-4 flex h-6 items-stretch gap-1 rounded border">
           <div
             className={`${fpsButtonClassNames} rounded-l`}
             onClick={() => handleSetFrameRate(frameRate - 1)}
@@ -132,7 +143,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             <div className="flex items-center justify-center gap-1">
               <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
                 <span className="inline-block text-right">{`${frameRate} `}</span>
-                <span className="text-grey-700 whitespace-nowrap text-xs">{' FPS'}</span>
+                <span className="text-aqua-pale whitespace-nowrap text-xs">{' FPS'}</span>
               </div>
             </div>
           </Tooltip>
@@ -167,6 +178,7 @@ CinePlayer.propTypes = {
   /** 'true' if playing, 'false' if paused */
   isPlaying: PropTypes.bool.isRequired,
   onPlayPauseChange: PropTypes.func,
+  onFrameRateChange: PropTypes.func,
   onClose: PropTypes.func,
   isDynamic: PropTypes.bool,
   dynamicInfo: PropTypes.shape({

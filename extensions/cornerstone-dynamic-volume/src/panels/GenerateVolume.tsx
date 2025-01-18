@@ -20,7 +20,7 @@ const GenerateVolume = ({
         <div className="mb-2 text-white">Computed Image</div>
         <Select
           closeMenuOnSelect={true}
-          className="border-primary-main mr-2 bg-black text-white "
+          className="border-primary-main mr-2 bg-black text-white"
           options={operationsUI}
           placeholder={operationsUI.find(option => option.value === options.Operation).placeHolder}
           value={options.Operation}

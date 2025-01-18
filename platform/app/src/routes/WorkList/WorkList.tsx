@@ -719,7 +719,7 @@ function WorkList() {
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
-          <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%]">
+          <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%]">
             <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5 xl:flex-nowrap">
               <Input
                 value={studyListFilter.patientName?.replace(/\*/g, '') || ''}
@@ -980,7 +980,7 @@ function WorkList() {
               style={{ width: `${syncingStudyProgress}%` }}
             ></div>
           </div>
-          <h2 className="mt-4 text-base text-white ">{t('OrthancServiceInfo')}</h2>
+          <h2 className="mt-4 text-base text-white">{t('OrthancServiceInfo')}</h2>
           <h3 className="mt-4 text-white">
             <span className="text-white text-opacity-70">{t('Status')}:</span> {jobInfo.state}
           </h3>

@@ -23,7 +23,7 @@ export default class SelectTreeBreadcrumb extends Component<PropType> {
             value={this.props.value}
             onChange={this.props.onSelected}
           />
-          <span className="cursor-pointer whitespace-nowrap	">
+          <span className="cursor-pointer whitespace-nowrap">
             <span className="pr-2.5">
               <Icon name="fast-backward" />
             </span>

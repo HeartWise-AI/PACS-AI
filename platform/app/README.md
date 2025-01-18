@@ -1,6 +1,6 @@
 # PACS AI OHIF Viewer
 
-[![Based on OHIF Viewers v3.7.0](https://img.shields.io/badge/OHIF-v3.7.0-blue)](https://github.com/OHIF/Viewers)
+[![Based on OHIF Viewers v3.9.0](https://img.shields.io/badge/OHIF-v3.9.0-blue)](https://github.com/OHIF/Viewers)
 
 A powerful medical imaging viewer built on top of the OHIF platform, integrated with PACS AI capabilities.
 
@@ -13,7 +13,7 @@ Before running this repository, you need to have the PACS AI backend up and runn
 ### Requirements
 
 - [nvm (Node Version Manager)](https://github.com/nvm-sh/nvm) - Recommended for easy Node.js version management
-- Node.js 18.13.0
+- Node.js 18.17.0
 - Yarn package manager
 
 ### Environment Variables

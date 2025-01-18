@@ -23,7 +23,7 @@ const DefaultFallback = ({ error, context, resetErrorBoundary = () => {}, fallba
       <p className="text-xl text-white">{title}</p>
       <p className="text-base text-white">{subtitle}</p>
       {!isProduction && (
-        <div className="bg-[#151815] mt-5 space-y-2 rounded-md p-5 font-mono">
+        <div className="mt-5 space-y-2 rounded-md bg-[#151815] p-5 font-mono">
           <p className="text-white">
             {t('Context')}: {context}
           </p>

@@ -20,7 +20,7 @@ function AddSegmentRow({ onClick, onToggleSegmentationVisibility = null, segment
       {segmentation && (
         <div className="flex items-center">
           <div
-            className="hover:bg-secondary-dark ml-3 mr-1 grid h-[28px]  w-[28px] cursor-pointer place-items-center rounded-[4px]"
+            className="hover:bg-secondary-dark ml-3 mr-1 grid h-[28px] w-[28px] cursor-pointer place-items-center rounded-[4px]"
             onClick={() => onToggleSegmentationVisibility(segmentation.id)}
           >
             {segmentation.isVisible ? (

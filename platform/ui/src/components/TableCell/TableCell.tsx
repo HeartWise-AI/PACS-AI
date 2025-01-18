@@ -22,14 +22,14 @@ const TableCell = ({
     },
     isTableHead: {
       true: '',
-      false: '',
+      false: 'border-r border-secondary-light',
     },
   };
 
   return (
     <div
       className={classnames(
-        'break-all',
+        'break-all px-2 last:border-r-0',
         `w-${colSpan}/${cellsNum}`,
         classes.align[align],
         classes.isTableHead[isTableHead],

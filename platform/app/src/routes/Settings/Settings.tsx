@@ -206,7 +206,7 @@ const SettingsPage = () => {
           {currentUser.name ? (
             <div className="ml-3">
               <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
-              <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center ">
+              <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center">
                 <div className="text-left capitalize">{currentUser.specialty} •</div>
                 <div className="flex items-center sm:ml-1">
                   {currentUser.licenseNo}
@@ -364,7 +364,7 @@ const SettingsPage = () => {
   };
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815] ">
+      <div className="flex w-full bg-[#151815]">
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="Settings" />

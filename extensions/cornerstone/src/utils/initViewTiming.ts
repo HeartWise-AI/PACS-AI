@@ -25,7 +25,7 @@ export default function initViewTiming({ element }) {
     IMAGE_TIMING_KEYS.push(
       TimingEnum.DISPLAY_SETS_TO_ALL_IMAGES,
       TimingEnum.DISPLAY_SETS_TO_FIRST_IMAGE,
-      TimingEnum.STUDY_TO_FIRST_IMAGE,
+      TimingEnum.STUDY_TO_FIRST_IMAGE
     );
   }
 

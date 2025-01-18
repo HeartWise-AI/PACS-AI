@@ -40,9 +40,9 @@ export function VolumeLighting({
   }, [viewportId, cornerstoneViewportService]);
   return (
     <>
-      <div className="all-in-one-menu-item flex  w-full flex-row !items-center justify-between gap-[10px]">
+      <div className="all-in-one-menu-item flex w-full flex-row !items-center justify-between gap-[10px]">
         <label
-          className="block  text-white"
+          className="block text-white"
           htmlFor="ambient"
         >
           Ambient
@@ -68,9 +68,9 @@ export function VolumeLighting({
           />
         )}
       </div>
-      <div className="all-in-one-menu-item flex  w-full flex-row !items-center justify-between gap-[10px]">
+      <div className="all-in-one-menu-item flex w-full flex-row !items-center justify-between gap-[10px]">
         <label
-          className="block  text-white"
+          className="block text-white"
           htmlFor="diffuse"
         >
           Diffuse
@@ -97,9 +97,9 @@ export function VolumeLighting({
         )}
       </div>
 
-      <div className="all-in-one-menu-item flex  w-full flex-row !items-center justify-between gap-[10px]">
+      <div className="all-in-one-menu-item flex w-full flex-row !items-center justify-between gap-[10px]">
         <label
-          className="block  text-white"
+          className="block text-white"
           htmlFor="specular"
         >
           Specular

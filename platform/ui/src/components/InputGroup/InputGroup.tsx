@@ -117,14 +117,13 @@ const InputGroup = ({
     }
   };
   return (
-    <div className="relative m-auto flex flex-col">
-      {/* TODO: Updated display flex (for responsiveness) */}
-      <div className="flex w-full flex-wrap gap-1 xl:flex-nowrap">
+    <div className="container relative m-auto flex flex-col">
+      <div className="flex w-full flex-row">
         {inputMeta.map(inputMeta => {
           return (
             <div
               key={inputMeta.name}
-              className={classnames('', getGridWidthClass(inputMeta.gridCol))}
+              className={classnames('pl-4 first:pl-12', getGridWidthClass(inputMeta.gridCol))}
             >
               {renderFieldInputComponent(inputMeta)}
             </div>

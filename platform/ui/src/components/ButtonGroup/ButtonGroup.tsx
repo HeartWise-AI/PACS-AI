@@ -36,8 +36,8 @@ const ButtonGroup = ({
 
   return (
     <div
-      className={classnames(wrapperClasses, ' text-[13px]', {
-        ' rounded-md  bg-black': !separated,
+      className={classnames(wrapperClasses, 'text-[13px]', {
+        'rounded-md bg-black': !separated,
       })}
     >
       {!separated && (

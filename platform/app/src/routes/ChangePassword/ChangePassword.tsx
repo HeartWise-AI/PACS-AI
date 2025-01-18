@@ -97,7 +97,7 @@ const ChangePasswordPage = () => {
     };
   };
   return (
-    <div className="relative mx-0 grid h-screen w-screen grid-cols-12 ">
+    <div className="relative mx-0 grid h-screen w-screen grid-cols-12">
       <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-5 xl:col-span-4">
         <div className="flex h-full flex-col justify-between">
           <div></div>

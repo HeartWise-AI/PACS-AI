@@ -24,11 +24,7 @@ function stringToUint8Array(str: string): Uint8Array {
   return uint;
 }
 
-function findIndexOfString(
-  data: Uint8Array,
-  str: string,
-  offset?: number
-): number {
+function findIndexOfString(data: Uint8Array, str: string, offset?: number): number {
   offset = offset || 0;
 
   const token = stringToUint8Array(str);

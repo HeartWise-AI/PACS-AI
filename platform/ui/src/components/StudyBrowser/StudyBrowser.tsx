@@ -10,14 +10,14 @@ import LegacyButton from '../LegacyButton';
 import ThumbnailList from '../ThumbnailList';
 import { StringNumber } from '../../types';
 import StudyBrowserSort from '../StudyBrowserSort';
-
-const { sortStudySeries } = utils;
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx';
-import { useGlobalStateData } from '../../../../app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+
+const { sortStudySeries } = utils;
 
 const getTrackedSeries = displaySets => {
   let trackedSeries = 0;

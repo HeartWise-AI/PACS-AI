@@ -226,7 +226,7 @@ const InputDoubleRange: React.FC<InputDoubleRangeProps> = ({
           }}
         ></div>
         <div
-          className="input-range-thumb-design absolute h-3  w-3 cursor-pointer rounded-full"
+          className="input-range-thumb-design absolute h-3 w-3 cursor-pointer rounded-full"
           style={{ left: `calc(${percentageEnd}% - 3px)` }}
         ></div>
       </div>

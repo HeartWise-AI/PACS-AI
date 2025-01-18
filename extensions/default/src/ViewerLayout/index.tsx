@@ -1,18 +1,19 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { SidePanel, ErrorBoundary, LoadingIndicatorProgress, Typography } from '@ohif/ui';
-import { ServicesManager, HangingProtocolService, CommandsManager } from '@ohif/core';
-import Sidebar from '../../../../platform/app/src/components/Sidebar';
-import HeaderPanel from '../../../../platform/app/src/components/HeaderPanel';
+import { LoadingIndicatorProgress, InvestigationalUseDialog } from '@ohif/ui';
+import { HangingProtocolService, CommandsManager } from '@ohif/core';
+import Sidebar from '@ohif/app/src/components/Sidebar';
+import HeaderPanel from '@ohif/app/src/components/HeaderPanel';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
+import { Onboarding } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
-import { logoutUser } from '../../../../platform/app/src/service/userService';
-import { Error } from '../../../../platform/app/src/api/dto';
+import { logoutUser } from '@ohif/app/src/service/userService';
+import { Error } from '@ohif/app/src/api/dto';
 
 interface AvailableModelsContextType {
   inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
@@ -171,6 +172,7 @@ function ViewerLayout({
               hotkeysManager={hotkeysManager}
               extensionManager={extensionManager}
               servicesManager={servicesManager}
+              appConfig={appConfig}
             />
             <div
               className="relative flex w-full flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent"
@@ -181,37 +183,29 @@ function ViewerLayout({
                   <LoadingIndicatorProgress className="h-full w-full bg-transparent" />
                 )}
                 {/* LEFT SIDEPANELS */}
-                {leftPanelComponents.length ? (
-                  <ErrorBoundary context="Left Panel">
-                    <SidePanelWithServices
-                      side="left"
-                      activeTabIndex={leftPanelDefaultClosed ? null : 0}
-                      tabs={leftPanelComponents}
-                      servicesManager={servicesManager}
-                    />
-                  </ErrorBoundary>
+                {hasLeftPanels ? (
+                  <SidePanelWithServices
+                    side="left"
+                    activeTabIndex={leftPanelClosedState ? null : 0}
+                    servicesManager={servicesManager}
+                  />
                 ) : null}
                 {/* TOOLBAR + GRID */}
                 <div className="flex h-full flex-1 flex-col">
                   <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg">
-                    <ErrorBoundary context="Grid">
-                      <ViewportGridComp
-                        servicesManager={servicesManager}
-                        viewportComponents={viewportComponents}
-                        commandsManager={commandsManager}
-                      />
-                    </ErrorBoundary>
+                    <ViewportGridComp
+                      servicesManager={servicesManager}
+                      viewportComponents={viewportComponents}
+                      commandsManager={commandsManager}
+                    />
                   </div>
                 </div>
-                {rightPanelComponents.length ? (
-                  <ErrorBoundary context="Right Panel">
-                    <SidePanelWithServices
-                      side="right"
-                      activeTabIndex={rightPanelDefaultClosed ? null : 0}
-                      tabs={rightPanelComponents}
-                      servicesManager={servicesManager}
-                    />
-                  </ErrorBoundary>
+                {hasRightPanels ? (
+                  <SidePanelWithServices
+                    side="right"
+                    activeTabIndex={rightPanelClosedState ? null : 0}
+                    servicesManager={servicesManager}
+                  />
                 ) : null}
               </React.Fragment>
             </div>

@@ -49,7 +49,6 @@ class DicomMicroscopyViewport extends Component {
     resizeRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })]),
   };
 
-
   /**
    * Get the nearest ROI from the mouse click point
    *

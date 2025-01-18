@@ -286,12 +286,12 @@ const KibanaLogsPage = () => {
   }
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815] ">
+      <div className="flex w-full bg-[#151815]">
         <SidebarAdmin />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="Kibana Logs" />
           {/* filter container */}
-          <div className="flex w-full justify-between gap-2 rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="flex w-full justify-between gap-2 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <div className="flex w-[45%] items-center gap-2">
               <Input
                 placeholder={t('Search for ...')}

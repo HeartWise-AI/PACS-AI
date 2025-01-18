@@ -479,7 +479,7 @@ function WorkListOld({
 
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815] ">
+      <div className="flex w-full bg-[#151815]">
         {/* TODO: Added Sidebar component */}
         <Sidebar />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
@@ -501,7 +501,7 @@ function WorkListOld({
             }
           />
           {hasStudies ? (
-            <div className="mb-5 flex flex-col rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
               {/* TODO: Updated design */}
               <StudyListTable
                 tableDataSource={tableDataSource.slice(offset, offsetAndTake)}

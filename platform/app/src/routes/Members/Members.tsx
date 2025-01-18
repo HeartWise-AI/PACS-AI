@@ -299,12 +299,12 @@ const MembersPage = () => {
 
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815] ">
+      <div className="flex w-full bg-[#151815]">
         <SidebarAdmin />
         <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
           <HeaderPanel title="Members" />
           {/* filter container */}
-          <div className="flex justify-between rounded-xl border  border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="flex justify-between rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <Input
               id="search"
               placeholder={t('Search member name, email, license no., etc.')}

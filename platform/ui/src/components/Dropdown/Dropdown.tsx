@@ -48,7 +48,7 @@ const Dropdown = ({
         <div
           key={title}
           className={classnames(
-            'hover:bg-secondary-main flex cursor-pointer items-center px-4 py-2 transition duration-300 ',
+            'hover:bg-secondary-main flex cursor-pointer items-center px-4 py-2 transition duration-300',
             titleClassName,
             showBorders && borderStyle
           )}

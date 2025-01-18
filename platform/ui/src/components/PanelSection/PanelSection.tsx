@@ -39,7 +39,7 @@ const PanelSection = ({ title, children, actionIcons = [], childrenClassName }) 
         <>
           <div className="h-[2px] bg-black"></div>
           <div
-            className={`bg-transparent flex flex-col overflow-hidden rounded-b-[4px] ${childrenClassName}`}
+            className={`flex flex-col overflow-hidden rounded-b-[4px] bg-transparent ${childrenClassName}`}
           >
             {children}
           </div>

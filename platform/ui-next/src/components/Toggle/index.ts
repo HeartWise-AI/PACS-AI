@@ -1,3 +1,3 @@
-import { Toggle, toggleVariants } from "./Toggle";
+import { Toggle, toggleVariants } from './Toggle';
 
 export { Toggle, toggleVariants };

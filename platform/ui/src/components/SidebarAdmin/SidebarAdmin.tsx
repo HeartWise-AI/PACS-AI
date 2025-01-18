@@ -97,7 +97,7 @@ const SidebarAdmin = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium ${
                       location.pathname === '/members' ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
@@ -139,7 +139,7 @@ const SidebarAdmin = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium ${
                       location.pathname === '/kibana-logs'
                         ? 'text-black'
                         : 'text-white text-opacity-50'
@@ -184,7 +184,7 @@ const SidebarAdmin = () => {
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
-                      className={`ms-3 ml-2 font-medium  ${
+                      className={`ms-3 ml-2 font-medium ${
                         location.pathname === '/workspace-settings'
                           ? 'text-black'
                           : 'text-white text-opacity-50'

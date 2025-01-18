@@ -107,7 +107,7 @@ const Sidebar = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium ${
                       isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
                         ? 'text-black'
                         : 'text-white text-opacity-50'
@@ -149,7 +149,7 @@ const Sidebar = () => {
                 {!sidebarMini && (
                   <Typography
                     variant="body"
-                    className={`ms-3 ml-2 font-medium  ${
+                    className={`ms-3 ml-2 font-medium ${
                       isPageActive(`/ai-models`) ? 'text-black' : 'text-white text-opacity-50'
                     }`}
                   >
@@ -182,7 +182,7 @@ const Sidebar = () => {
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
-                      className={`ms-3 ml-2 font-medium  ${
+                      className={`ms-3 ml-2 font-medium ${
                         location.pathname === '/ai-predictions'
                           ? 'text-black'
                           : 'text-white text-opacity-50'

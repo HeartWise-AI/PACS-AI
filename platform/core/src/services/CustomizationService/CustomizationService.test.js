@@ -243,7 +243,7 @@ describe('CustomizationService.ts', () => {
         {
           values: [{ id: 'three', obj: { v: 2 }, list: [3, 2, 1, 4] }],
         },
-        MergeEnum.Merge,
+        MergeEnum.Merge
       );
 
       const appendSet2 = customizationService.get('appendSet');
@@ -256,7 +256,10 @@ describe('CustomizationService.ts', () => {
       customizationService.init(extensionManager);
 
       customizationService.setDefaultCustomization('appendSet', {
-        values: [{ f: () => 0, id: '0' }, { f: () => 5, id: '5' }],
+        values: [
+          { f: () => 0, id: '0' },
+          { f: () => 5, id: '5' },
+        ],
       });
       const appendSet = customizationService.get('appendSet');
       expect(appendSet.values.length).toBe(2);
@@ -264,9 +267,9 @@ describe('CustomizationService.ts', () => {
       customizationService.setModeCustomization(
         'appendSet',
         {
-          values: [{ f: () => 2, id: '2' }]
+          values: [{ f: () => 2, id: '2' }],
         },
-        MergeEnum.Merge,
+        MergeEnum.Merge
       );
 
       const appendSet2 = customizationService.get('appendSet');
@@ -278,27 +281,27 @@ describe('CustomizationService.ts', () => {
     it('merges list with object', () => {
       customizationService.init(extensionManager);
 
-      const destination = [
-        1,
-        { id: 'two', value: 2, list: [5, 6], },
-        { id: 'three', value: 3 }
-      ];
+      const destination = [1, { id: 'two', value: 2, list: [5, 6] }, { id: 'three', value: 3 }];
 
       const source = {
         two: { value: 'updated2', list: { 0: 8 } },
-        1: { extraValue: 2, list: [7], },
+        1: { extraValue: 2, list: [7] },
         1.0001: { id: 'inserted', value: 1.0001 },
         '-1': {
-          value: -3
+          value: -3,
         },
       };
 
       customizationService.setDefaultCustomization('appendSet', {
         values: destination,
       });
-      customizationService.setModeCustomization('appendSet', {
-        values: source,
-      }, MergeEnum.Append);
+      customizationService.setModeCustomization(
+        'appendSet',
+        {
+          values: source,
+        },
+        MergeEnum.Append
+      );
 
       const { values } = customizationService.getCustomization('appendSet');
       const [zero, one, two, three] = values;

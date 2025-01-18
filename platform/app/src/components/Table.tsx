@@ -3,7 +3,7 @@ import React from 'react';
 const Table = ({ headers, data, children, className, onRowClick }) => {
   return (
     <div className="max-w-full overflow-x-auto">
-      <table className="w-full text-left text-sm rtl:text-right ">
+      <table className="w-full text-left text-sm rtl:text-right">
         <thead className="bg-transparent text-sm font-light text-white text-opacity-50">
           <tr>
             {headers.map((header, index) => (

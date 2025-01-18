@@ -23,7 +23,11 @@ export default async function loadSR(
 
   microscopySRDisplaySet.isLoaded = true;
 
-  const { rois, labels } = await _getROIsFromToolState(microscopyService, naturalizedDataset, FrameOfReferenceUID);
+  const { rois, labels } = await _getROIsFromToolState(
+    microscopyService,
+    naturalizedDataset,
+    FrameOfReferenceUID
+  );
 
   const managedViewer = managedViewers[0];
 
