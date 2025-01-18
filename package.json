@@ -66,11 +66,11 @@
     "format": "prettier --write . && eslint --fix ."
   },
   "dependencies": {
-    "execa": "^8.0.1",
     "@babel/runtime": "^7.20.13",
     "@kitware/vtk.js": "27.3.1",
     "core-js": "^3.2.1",
     "dicom-data-dictionary": "^0.3.1",
+    "execa": "^8.0.1",
     "react-d3-speedometer": "^2.2.1"
   },
   "optionalDependencies": {
@@ -93,6 +93,7 @@
     "@babel/preset-env": "7.24.7",
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.13.0",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@types/jest": "^27.5.0",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
