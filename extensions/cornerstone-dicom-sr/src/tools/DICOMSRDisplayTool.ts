@@ -253,9 +253,9 @@ export default class DICOMSRDisplayTool extends AnnotationTool {
       ]);
 
       canvasCoordinates.push(viewport.worldToCanvas(arrowEnd));
-
+        
       }
-
+     
 
       const arrowUID = `${index}`;
 

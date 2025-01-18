@@ -28,6 +28,7 @@ if (!anyDicomwebClient._orig_buildMultipartAcceptHeaderFieldValue) {
  * performing searches doesn't work.  This version fixes the query issue
  * by manually implementing a query option.
  */
+
 export default class StaticWadoClient extends api.DICOMwebClient {
   static studyFilterKeys = {
     studyinstanceuid: '0020000D',
