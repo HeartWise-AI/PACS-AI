@@ -63,11 +63,11 @@ const config = {
                         name: 'preset-default',
                         params: {
                           overrides: {
-                            removeViewBox: false
+                            removeViewBox: false,
                           },
                         },
                       },
-                    ]
+                    ],
                   },
                   prettier: false,
                   svgo: true,
