@@ -37,13 +37,6 @@ function WrappedCinePlayer({
     }
 
     const { viewports } = viewportGridService.getState();
-    const viewport = viewports.get(viewportId);
-
-    if (!viewport) {
-      console.error(`No viewport found for id: ${viewportId}`);
-      return;
-    }
-
     const { displaySetInstanceUIDs } = viewports.get(viewportId);
     let frameRate = 24;
     let isPlaying = cines[viewportId]?.isPlaying || false;
@@ -74,93 +67,13 @@ function WrappedCinePlayer({
       }
     });
 
-    return isPlaying
-      ? cineService.playClip(enabledVPElement, { framesPerSecond: validFrameRate, viewportId })
-      : cineService.stopClip(enabledVPElement);
-  }, [cines, viewportId, enabledVPElement, cineService]);
-
-  const newDisplaySetHandler = useCallback(() => {
-    const { viewports } = viewportGridService.getState();
-    const viewport = viewports.get(viewportId);
-
-    if (!viewport) {
-      console.error(`No viewport found for id: ${viewportId}`);
-      return;
-    }
-    if (viewport) {
-      console.error(`Viewport found for id: ${viewportId}`);
-    }
-
-    const { displaySetInstanceUIDs } = viewport;
-    let frameRate = 24;
-    let isPlaying = cines[viewportId]?.isPlaying || false;
-
-    // Extract modality check into a separate function
-    const shouldAutoPlayModality = (modality: string): boolean => {
-      return modality.includes('US') || modality.includes('XA');
-    };
-
-    // Extract frame rate calculation into a separate function
-    const calculateFrameRate = (displaySet: any): number => {
-      if (displaySet.instance?.CineRate) {
-        // DICOM tag (0018,0040) - preferred frame rate
-        return displaySet.instance.CineRate;
-      }
-      if (displaySet.FrameRate) {
-        // DICOM tag (0018,1063) - frame time in milliseconds
-        return Math.round(1000 / displaySet.FrameRate);
-      }
-      return 24; // Default frame rate
-    };
-
-    // Process each display set
-    for (const displaySetInstanceUID of displaySetInstanceUIDs) {
-      const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
-
-      // Check if modality should autoplay
-      if (shouldAutoPlayModality(displaySet.Modality)) {
-        isPlaying = true;
-        cineService.setIsCineEnabled(true);
-      }
-
-      // Skip if viewport is not enabled or cine is disabled
-      if (!enabledVPElement || !isCineEnabled) {
-        continue;
-      }
-
-      // Update frame rate
-      frameRate = calculateFrameRate(displaySet);
-
-      // Enable autoplay based on config if frame rate is available
-      if (frameRate !== 24 && appConfig.autoPlayCine) {
-        isPlaying = true;
-      }
-
-      // Handle dynamic volume info
-      if (displaySet.isDynamicVolume) {
-        const { dynamicVolumeInfo } = displaySet;
-        setDynamicInfo({
-          volumeId: displaySet.displaySetInstanceUID,
-          timePointIndex: dynamicVolumeInfo.timePointIndex || 0,
-          numTimePoints: dynamicVolumeInfo.timePoints.length,
-          label: dynamicVolumeInfo.splittingTag,
-        });
-      } else {
-        setDynamicInfo(null);
-      }
-    }
-
-    // Update cine state
     if (isPlaying) {
       cineService.setIsCineEnabled(isPlaying);
     }
     cineService.setCine({ id: viewportId, isPlaying, frameRate });
     setNewStackFrameRate(frameRate);
-  }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement, appConfig?.autoPlayCine]);
+  }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement]);
 
-  /**
-   * Use effect for handling new display set
-   */
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -331,4 +244,5 @@ function RenderCinePlayer({
     />
   );
 }
+
 export default WrappedCinePlayer;
