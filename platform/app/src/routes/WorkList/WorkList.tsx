@@ -513,8 +513,8 @@ function WorkList() {
       const jobIds = modalityStudyResponse.data.map(item => item.id);
 
       // get job info with interval of 3 seconds
-      let intervalId = setInterval(async () => {
-        jobInfoResponse = await orthancRepository.GetJobInfo({
+      const intervalId = setInterval(async () => {
+        jobInfoResponse = await orthancRepository.GetJobsInfo({
           jobIds: jobIds,
         });
 

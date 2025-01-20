@@ -57,16 +57,16 @@ const orthancRepository = {
       });
   },
   /**
-   * Get job info
+   * Get jobs info
    *
    * @return  {GetJobInfoResponse}
    */
-  async GetJobInfo(request: GetJobInfoRequest): Promise<APIResponse<GetJobInfoResponse>> {
+  async GetJobsInfo(request: GetJobInfoRequest): Promise<APIResponse<GetJobInfoResponse>> {
     return Api()
       .get(`/v1/orthanc/jobs`, {
         params: { jobIds: request.jobIds },
-        paramsSerializer: params => {
-          return params.jobIds.map(id => `jobIds=${id}`).join('&');
+        paramsSerializer: {
+          serialize: params => `jobIds=${JSON.stringify(params.jobIds)}`,
         },
       })
       .then((response: AxiosResponse<APIResponse<GetJobInfoResponse>>) => {
