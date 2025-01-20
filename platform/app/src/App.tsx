@@ -37,9 +37,12 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
+// NOTE: This is a PACS changes
 import { AlertProvider } from './AlertProvider';
+// NOTE: This is a PACS changes
 import { GlobalStateProvider } from './GlobalStateProvider';
 
+// NOTE: This is a PACS changes
 export const FrontendVersionContext = createContext('');
 
 let commandsManager: CommandsManager,
@@ -48,8 +51,19 @@ let commandsManager: CommandsManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
 
+// NOTE: This is a PACS changes
 const frontendVersion = 'v0.9.4-beta';
 const queryClient = new QueryClient();
+
+// NOTE: This is a PACS changes
+const FrontendVersionProvider = ({ value, children }) => (
+  <FrontendVersionContext.Provider value={value}>{children}</FrontendVersionContext.Provider>
+);
+
+FrontendVersionProvider.propTypes = {
+  value: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 function App({
   config = {
@@ -133,7 +147,8 @@ function App({
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
     [ShepherdJourneyProvider],
-    ['FrontendVersionProvider', { value: frontendVersion }],
+    // NOTE: This is a PACS changes
+    [FrontendVersionProvider, { value: frontendVersion }],
   ];
 
   // Loop through and register each of the service providers registered with the ServiceProvidersManager.
@@ -176,15 +191,14 @@ function App({
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
+        {/* NOTE: This is a PACS changes */}
         <GlobalStateProvider>
-          <FrontendVersionContext.Provider value={frontendVersion}>
-            <CombinedProviders>
-              <BrowserRouter basename={routerBasename}>
-                {authRoutes}
-                {appRoutes}
-              </BrowserRouter>
-            </CombinedProviders>
-          </FrontendVersionContext.Provider>
+          <CombinedProviders>
+            <BrowserRouter basename={routerBasename}>
+              {authRoutes}
+              {appRoutes}
+            </BrowserRouter>
+          </CombinedProviders>
         </GlobalStateProvider>
       </AlertProvider>
     </QueryClientProvider>
