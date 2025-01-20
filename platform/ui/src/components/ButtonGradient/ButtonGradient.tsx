@@ -13,7 +13,12 @@ const textColor =
 
 const borderClass = 'border border-solid border-primary-main border-opacity-80 border-[.5px]';
 
-const ButtonGradient = ({ children, className, disabled, onClick }) => {
+const ButtonGradient = ({
+  children = '',
+  className = '',
+  disabled = false,
+  onClick = () => {},
+}) => {
   const buttonElement = useRef(null);
 
   const handleOnClick = e => {
@@ -36,18 +41,11 @@ const ButtonGradient = ({ children, className, disabled, onClick }) => {
   );
 };
 
-ButtonGradient.defaultProps = {
-  children: '',
-  className: '',
-  disabled: false,
-  onClick: () => {},
-};
-
 ButtonGradient.propTypes = {
   /** What is inside the button, can be text or react component */
   children: PropTypes.node,
   /** Callback to be called when the button is clicked  */
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
   /** Whether the button should be disabled  */
   disabled: PropTypes.bool,
   /** Additional TailwindCSS classnames */

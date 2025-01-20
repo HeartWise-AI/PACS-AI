@@ -13,11 +13,11 @@ interface HTMLOutputModeModalProps {
 }
 
 const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
-  isOpen,
-  onClose,
-  data,
-  loading,
-  title,
+  isOpen = false,
+  onClose = () => {},
+  data = { htmlBase64: '' },
+  loading = false,
+  title = '',
 }) => {
   const [mounted, setMounted] = useState(false);
   const [parsedHTML, setParsedHTML] = useState<string>('');
@@ -28,15 +28,23 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   }, []);
 
   useEffect(() => {
-    if (data) {
+    if (data && data.htmlBase64) {
       try {
+        // Check if the string is not empty and is valid base64
+        const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+        if (!data.htmlBase64.match(base64Regex)) {
+          throw new Error('Invalid base64 string format');
+        }
+
         // decode base64 string to HTML
         const decodedHTML = atob(data.htmlBase64);
         setParsedHTML(decodedHTML);
       } catch (error) {
         console.error('Error decoding base64 HTML:', error);
-        setParsedHTML('Error decoding HTML content');
+        setParsedHTML('<div>Error: Unable to decode HTML content</div>');
       }
+    } else {
+      setParsedHTML(''); // clear content if no data
     }
   }, [data]);
 
@@ -105,16 +113,6 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-HTMLOutputModeModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  data: {
-    htmlBase64: '',
-  },
-  loading: false,
-  title: '',
 };
 
 HTMLOutputModeModal.propTypes = {

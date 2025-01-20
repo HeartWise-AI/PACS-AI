@@ -28,11 +28,14 @@ const handleIframeLoad = (data: string) => {
 };
 
 const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
-  isOpen,
-  onClose,
-  data,
-  loading,
-  title,
+  isOpen = false,
+  onClose = () => {},
+  data = {
+    webappPath: '',
+    webappDataBase64: '',
+  },
+  loading = false,
+  title = '',
   containerName,
 }) => {
   const [mounted, setMounted] = useState(false);
@@ -110,17 +113,6 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-WebappOutputModeModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  data: {
-    webappPath: '',
-    webappDataBase64: '',
-  },
-  loading: false,
-  title: '',
 };
 
 WebappOutputModeModal.propTypes = {

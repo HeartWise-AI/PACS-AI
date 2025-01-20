@@ -13,11 +13,11 @@ interface PDFOutputModeModalProps {
 }
 
 const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
-  isOpen,
-  onClose,
-  data,
-  loading,
-  title,
+  isOpen = false,
+  onClose = () => {},
+  data = { pdfBase64: '' },
+  loading = false,
+  title = '',
 }) => {
   const [mounted, setMounted] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
@@ -118,16 +118,6 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-PDFOutputModeModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  data: {
-    pdfBase64: '',
-  },
-  loading: false,
-  title: '',
 };
 
 PDFOutputModeModal.propTypes = {

@@ -29,11 +29,26 @@ const InferenceDetails = {
 };
 
 const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
-  isOpen,
-  onClose,
-  data,
-  loading,
-  title,
+  isOpen = false,
+  onClose = () => {},
+  data = {
+    diagnosis: '',
+    predictions: {} as {
+      [key: string]: {
+        probability: number;
+        confidence: string;
+        presentable: boolean;
+        displayResult: string;
+      };
+    },
+    modelRecommendations: {
+      en: '',
+      fr: '',
+      presentable: false,
+    },
+  },
+  loading = false,
+  title = '',
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -144,7 +159,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                               <span className="opacity-50">Probability</span>
                               <span className="text-[14px]">{prediction.probability}%</span>
                             </p>
-                            <p className="flex items-center justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
+                            <div className="flex items-center justify-between rounded-md bg-white bg-opacity-[5%] px-3 py-2">
                               <span className="opacity-50">Confidence</span>
                               <div className="relative flex items-center gap-2 rounded-full bg-white bg-opacity-10 px-3 py-1">
                                 <span className="mr-9 text-[14px] capitalize">
@@ -167,7 +182,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                                   />
                                 </div>
                               </div>
-                            </p>
+                            </div>
                           </div>
                         </div>
                       )
@@ -182,29 +197,6 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-JSONOutputModeModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  data: {
-    diagnosis: '',
-    predictions: {} as {
-      [key: string]: {
-        probability: number;
-        confidence: string;
-        presentable: boolean;
-        displayResult: string;
-      };
-    },
-    modelRecommendations: {
-      en: '',
-      fr: '',
-      presentable: false,
-    },
-  },
-  loading: false,
-  title: '',
 };
 
 JSONOutputModeModal.propTypes = {

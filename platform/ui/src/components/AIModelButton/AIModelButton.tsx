@@ -33,13 +33,13 @@ const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62
 const textColor = 'text-white';
 
 const AIModelButton = ({
-  children,
-  className,
-  disabled,
-  onClick,
-  isShowBG,
-  isShowText,
-  positionRight,
+  className = '',
+  children = '',
+  disabled = false,
+  isShowBG = false,
+  isShowText = false,
+  positionRight = 0,
+  onClick = () => {},
   inferenceAvailableModels,
   loading,
 }) => {
@@ -193,10 +193,10 @@ const AIModelButton = ({
                       setOutputModeTitle(
                         `${model.modelName} (${model.version}-${model.outputMode})`
                       );
-                      setOpenSelectSeriesModal(true);
                       setIsOpen(false);
                       setContainerName(model.containerName);
                       setSelectedInferenceModel(model);
+                      setOpenSelectSeriesModal(true);
                       return;
                     }}
                   >
@@ -285,31 +285,16 @@ const AIModelButton = ({
   );
 };
 
-AIModelButton.defaultProps = {
-  className: '',
-  children: '',
-  disabled: false,
-  isShowBG: false,
-  isShowText: false,
-  positionRight: 0,
-  onClick: () => {},
-};
-
 AIModelButton.propTypes = {
-  /** Additional TailwindCSS classnames */
   className: PropTypes.string,
-  /** What is inside the button, can be text or react component */
   children: PropTypes.node,
-  /** Whether the button should be disabled  */
   disabled: PropTypes.bool,
-  /** Whether to show the gradient background  */
   isShowBG: PropTypes.bool,
-  /** Whether to show the text  */
   isShowText: PropTypes.bool,
-  /** Set position right size  */
   positionRight: PropTypes.number,
-  /** Callback to be called when the button is clicked  */
-  onClick: PropTypes.func.isRequired,
+  onClick: PropTypes.func,
+  inferenceAvailableModels: PropTypes.array.isRequired,
+  loading: PropTypes.bool,
 };
 
 export default AIModelButton;
