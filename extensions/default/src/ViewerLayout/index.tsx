@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { LoadingIndicatorProgress, InvestigationalUseDialog } from '@ohif/ui';
+import { LoadingIndicatorProgress } from '@ohif/ui';
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
 import Sidebar from '@ohif/app/src/components/Sidebar';
 import HeaderPanel from '@ohif/app/src/components/HeaderPanel';
@@ -213,7 +213,8 @@ function ViewerLayout({
         </AvailableModelsContext.Provider>
       </div>
       <Onboarding />
-      <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} />
+      {/* NOTE: This is a PACS changes */}
+      {/* <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} /> */}
     </div>
   );
 }

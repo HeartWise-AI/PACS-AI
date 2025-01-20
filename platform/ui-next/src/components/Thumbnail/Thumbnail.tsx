@@ -70,7 +70,8 @@ const Thumbnail = ({
       <div
         className={classnames(
           'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]',
-          isActive && 'bg-popover rounded'
+          // NOTE: This is a PACS changes
+          isActive && 'bg-primary/10 rounded'
         )}
       >
         <div className="h-[114px] w-[128px]">
@@ -91,7 +92,8 @@ const Thumbnail = ({
               <div
                 className={classnames(
                   'h-[10px] w-[10px] rounded-[2px]',
-                  isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
+                  // NOTE: This is a PACS changes
+                  isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
                   loadingProgress && loadingProgress < 1 && 'bg-primary/25'
                 )}
               ></div>
@@ -180,8 +182,10 @@ const Thumbnail = ({
             {description}
           </div>
           <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-            <div className="text-muted-foreground pl-1 text-[11px]"> S:{seriesNumber}</div>
-            <div className="text-muted-foreground text-[11px]">
+            {/* NOTE: This is a PACS changes */}
+            <div className="pl-1 text-[11px] font-semibold text-white/80"> S:{seriesNumber}</div>
+            {/* NOTE: This is a PACS changes */}
+            <div className="text-[11px] font-semibold text-white/80">
               <div className="flex items-center gap-[4px]">
                 {countIcon ? (
                   React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
@@ -202,29 +206,34 @@ const Thumbnail = ({
       <div
         className={classnames(
           'flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]',
-          isActive && 'bg-popover rounded'
+          // NOTE: This is a PACS changes
+          isActive && 'bg-primary/10 rounded'
         )}
       >
         <div className="relative flex h-[32px] items-center gap-[8px]">
           <div
             className={classnames(
               'h-[32px] w-[4px] rounded-[2px]',
-              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
-              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
+              // NOTE: This is a PACS changes
+              isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
+              loadingProgress && loadingProgress < 1 && 'bg-primary/20'
             )}
           ></div>
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-[7px]">
-              <div className="text-[13px] font-semibold text-white">{modality}</div>
-
-              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] font-normal text-white">
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[13px] font-semibold text-white/80">{modality}</div>
+              {/* NOTE: This is a PACS changes */}
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] font-normal text-white/80">
                 {description}
               </div>
             </div>
 
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
-              <div className="text-muted-foreground text-[12px]">
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[12px] font-semibold text-white/80"> S:{seriesNumber}</div>
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[12px] font-semibold text-white/80">
                 <div className="flex items-center gap-[4px]">
                   {' '}
                   {countIcon ? (
@@ -315,7 +324,8 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        'bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col rounded outline-none',
+        // NOTE: This is a PACS changes
+        'group flex cursor-pointer select-none flex-col rounded bg-white/10 outline-none hover:bg-white/30',
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
         viewPreset === 'list' && 'col-span-2 h-[40px] w-[275px]'
       )}

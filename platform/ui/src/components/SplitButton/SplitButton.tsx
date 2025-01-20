@@ -22,7 +22,8 @@ const classes = {
   Button: ({ isExpanded }) =>
     classNames(
       baseClasses.Button,
-      !isExpanded && 'hover:!bg-primary-dark hover:border-primary-dark'
+      // NOTE: This is a PACS changes
+      !isExpanded && 'hover:!bg-primary-dark hover:border-primary-dark !text-black'
     ),
   Interface: 'h-full flex flex-row items-center',
   Primary: ({ isExpanded, isActive }) =>
@@ -30,9 +31,10 @@ const classes = {
       baseClasses.Primary,
       isActive
         ? isExpanded
-          ? 'border-primary-dark !bg-primary-dark hover:border-primary-dark !text-primary-light'
-          : 'border-primary-light bg-primary-light rounded-md'
-        : `focus:!text-black focus:!rounded-md focus:!border-primary-light focus:!bg-primary-light ${isExpanded ? 'border-primary-dark bg-primary-dark !text-primary-light' : 'border-secondary-dark bg-secondary-dark group-hover/button:border-primary-dark group-hover/button:text-primary-light hover:!bg-primary-dark hover:border-primary-dark focus:!text-black'}`
+          ? // NOTE: This is a PACS changes
+            'border-none !bg-primary-dark hover:border-none !text-black'
+          : 'border-none !bg-transparent rounded-md'
+        : `focus:!text-black focus:!rounded-md focus:!border-none focus:!bg-transparent ${isExpanded ? 'border-none bg-primary-dark !text-black' : 'border-none bg-transparent hover:!text-black group-hover/button:border-none group-hover/button:text-black hover:!bg-primary-dark hover:border-transparent focus:!text-black'}`
     ),
   Secondary: ({ isExpanded, primary }) =>
     classNames(
@@ -40,20 +42,23 @@ const classes = {
       isExpanded
         ? 'bg-transparent !rounded-tr-md !rounded-br-md'
         : primary.isActive
-          ? 'bg-secondary-dark'
-          : 'hover:bg-primary-dark bg-secondary-dark group-hover/button:border-primary-dark'
+          ? // NOTE: This is a PACS changes
+            'bg-none'
+          : 'hover:bg-primary-dark bg-none group-hover/button:border-none group-hover/button:!text-black hover:!text-black'
     ),
   SecondaryIcon: ({ isExpanded }) =>
     classNames(
       baseClasses.SecondaryIcon,
       isExpanded
         ? 'text-primary-dark'
-        : 'text-primary-active group-hover/secondary:text-primary-light'
+        : // NOTE: This is a PACS changes
+          '!text-white group-hover/secondary:!text-black hover:!text-black'
     ),
   Separator: ({ primary, isExpanded, isHovering }) =>
     classNames(
       baseClasses.Separator,
-      isHovering || isExpanded || primary.isActive ? 'border-transparent' : 'border-primary-active'
+      // NOTE: This is a PACS changes
+      isHovering || isExpanded || primary.isActive ? 'border-black/30' : 'border-white/50'
     ),
   Content: ({ isExpanded }) => classNames(baseClasses.Content, isExpanded ? 'block' : 'hidden'),
 };
@@ -66,7 +71,8 @@ const DefaultListItemRenderer = props => {
         'flex h-8 w-full select-none flex-row items-center p-3',
         'whitespace-pre text-base',
         className,
-        `${isActive ? 'hover:opacity-80' : 'hover:bg-primary-dark'}`
+        // NOTE: This is a PACS changes
+        `${isActive ? 'hover:opacity-80' : 'hover:bg-none'}`
       )}
     >
       {icon && (

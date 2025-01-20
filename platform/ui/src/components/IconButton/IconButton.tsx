@@ -21,13 +21,17 @@ const disabledClasses = {
 const variantClasses = {
   text: {
     default:
-      'text-white hover:bg-primary-light hover:text-black active:opacity-80 focus:!bg-primary-light focus:text-black',
+      // NOTE: This is a PACS changes
+      'text-white hover:bg-primary-light hover:!text-black active:opacity-80 focus:!bg-primary-light focus:!text-black',
     primary:
-      'text-primary-main hover:bg-primary-main hover:text-white active:opacity-80 focus:bg-primary-main focus:text-white',
+      // NOTE: This is a PACS changes
+      'text-primary-main hover:bg-primary-main hover:!text-black active:opacity-80 focus:bg-primary-main focus:!text-black',
     secondary:
-      'text-secondary-light hover:bg-secondary-light hover:text-white active:opacity-80 focus:bg-secondary-light focus:text-white',
+      // NOTE: This is a PACS changes
+      'text-secondary-light hover:bg-secondary-light hover:!text-black active:opacity-80 focus:bg-secondary-light focus:!text-black',
     white:
-      'text-white hover:bg-white hover:text-black active:opacity-80 focus:bg-white focus:text-black',
+      // NOTE: This is a PACS changes
+      'text-white hover:bg-white hover:!text-black active:opacity-80 focus:bg-white focus:!text-black',
     black:
       'text-black hover:bg-black hover:text-white focus:bg-black focus:text-white active:opacity-80',
   },
@@ -43,7 +47,8 @@ const variantClasses = {
       'border border-primary-main text-white hover:bg-primary-main focus:bg-primary-main hover:border-black focus:border-black',
   },
   contained: {
-    default: 'text-common-bright hover:opacity-80 active:opacity-100 focus:opacity-80',
+    // NOTE: This is a PACS changes
+    default: 'text-black hover:opacity-80 active:opacity-100 focus:opacity-80',
     primary: 'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
     secondary: 'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
     white: 'text-black hover:opacity-80 active:opacity-100 focus:opacity-80',

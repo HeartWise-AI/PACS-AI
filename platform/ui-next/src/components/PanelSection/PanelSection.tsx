@@ -49,7 +49,8 @@ export const PanelSection: React.FC<PanelSectionProps> & {
 PanelSection.Header = ({ children, className, showChevron = true }) => (
   <AccordionTrigger
     className={cn(
-      'bg-secondary-dark hover:bg-accent text-aqua-pale',
+      // NOTE: This is a PACS changes
+      'bg-primary text-black',
       'my-0.5 flex h-7 w-full items-center justify-between rounded py-2 pr-1 pl-2.5 text-[13px]',
       className
     )}

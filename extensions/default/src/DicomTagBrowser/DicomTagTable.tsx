@@ -17,7 +17,8 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
   return (
     <div
       className={classNames(
-        'bg-secondary-dark ohif-scrollbar flex w-full flex-row overflow-y-scroll'
+        // NOTE: This is a PACS changes
+        'ohif-scrollbar flex w-full flex-row overflow-y-scroll rounded-t-md bg-white/30'
       )}
       style={rowVerticalPaddingStyle}
     >
@@ -124,7 +125,8 @@ function DicomTagTable({ rows }) {
         <div
           style={{ ...style, ...rowStyle }}
           className={classNames(
-            'hover:bg-secondary-main border-secondary-light flex w-full flex-row items-center break-all bg-black text-base transition duration-300',
+            // NOTE: This is a PACS changes
+            'flex w-full flex-row items-center break-all border-white/40 bg-white/10 text-base transition duration-300 hover:bg-white/20',
             lineHeightClassName
           )}
           key={`DICOMTagRow-${index}`}
@@ -187,7 +189,8 @@ function DicomTagTable({ rows }) {
         valueRef={valueRef}
       />
       <div
-        className="relative m-auto border-2 border-black bg-black"
+        // NOTE: This is a PACS changes
+        className="relative m-auto border-none bg-transparent"
         style={{ height: '32rem' }}
       >
         {isHeaderRendered() && (

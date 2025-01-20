@@ -16,7 +16,8 @@ function PanelStudyBrowserHeader({
 }) {
   return (
     <>
-      <div className="bg-muted flex h-[40px] select-none rounded-t p-2">
+      {/* NOTE: This is a PACS changes */}
+      <div className="flex h-[40px] select-none rounded-t bg-transparent p-2">
         <div className={'flex h-[24px] w-full select-none justify-center self-center text-[14px]'}>
           <div className="flex w-full items-center gap-[10px]">
             <div className="flex items-center justify-center">
@@ -44,7 +45,8 @@ function PanelStudyBrowserHeader({
                     key={index}
                     aria-label={viewPreset.id}
                     value={viewPreset.id}
-                    className="text-actions-primary"
+                    // NOTE: This is a PACS changes
+                    className="text-primary-dark/50"
                   >
                     {React.createElement(Icons[viewPreset.iconName] || Icons.MissingIcon)}
                   </ToggleGroupItem>

@@ -42,7 +42,7 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 219 90% 15%;
     --popover-foreground: 0 0% 98%;
-    --primary: 214 98% 60%;
+    --primary: 84 89% 69%; /* NOTE: This is a PACS changes */
     --primary-foreground: 0 0% 98%;
     --secondary: 214 66% 48%;
     --secondary-foreground: 200 50% 84%;

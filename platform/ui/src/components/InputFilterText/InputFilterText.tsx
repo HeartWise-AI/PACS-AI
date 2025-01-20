@@ -55,13 +55,15 @@ const InputFilterText = ({
 
   return (
     <label className={classNames('relative', className)}>
-      <span className="absolute inset-y-0 left-0 flex items-center pl-2">
+      {/* NOTE: This is a PACS changes */}
+      {/* <span className="absolute inset-y-0 left-0 flex items-center pl-2">
         <Icon name="icon-search"></Icon>
-      </span>
+      </span> */}
       <input
         ref={searchInputRef}
         type="text"
-        className="border-inputfield-main focus:border-inputfield-focus disabled:border-inputfield-disabled placeholder:text-inputfield-placeholder block w-full appearance-none rounded-md border bg-black py-2 px-9 text-base leading-tight shadow transition duration-300 focus:outline-none"
+        // NOTE: This is a PACS changes
+        className="focus:border-primary disabled:border-inputfield-disabled placeholder:text-inputfield-placeholder block w-full appearance-none rounded-md border border-white bg-transparent py-2 px-2 text-base leading-tight shadow transition duration-300 focus:outline-none"
         placeholder={placeholder}
         onChange={event => handleFilterTextChanged(event.target.value)}
         autoComplete="off"

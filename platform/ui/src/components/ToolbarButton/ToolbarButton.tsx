@@ -25,13 +25,18 @@ const ToolbarButton = ({
   //
 }) => {
   const classes = {
-    tool: isActive ? 'text-black bg-[#C8F469]' : 'text-white hover:!bg-[#C8F469] hover:text-black',
+    tool: isActive
+      ? // NOTE: This is a PACS changes
+        '!text-black bg-[#C8F469]'
+      : '!text-white hover:!bg-[#C8F469] hover:!text-black',
     toggle: isActive
-      ? '!text-[#348CFD] bg-[#C8F469]'
-      : 'text-white hover:!bg-[#C8F469] hover:text-black',
+      ? // NOTE: This is a PACS changes
+        '!text-[#348CFD] bg-[#C8F469]'
+      : '!text-white hover:!bg-[#C8F469] hover:!text-black',
     action: isActive
-      ? 'text-black bg-[#C8F469]'
-      : 'text-white hover:!bg-[#C8F469] hover:text-black',
+      ? // NOTE: This is a PACS changes
+        '!text-black bg-[#C8F469]'
+      : '!text-white hover:!bg-[#C8F469] hover:!text-black',
   };
 
   const bgClasses = {
