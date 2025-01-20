@@ -31,10 +31,11 @@ const StudyItem = ({
     if (modalities) {
       setModalitiesInStudy(modalities as string);
     }
+
     if (displaySets) {
       setDisplaySets(displaySets);
     }
-  }, [modalities, setModalitiesInStudy]);
+  }, [modalities, setModalitiesInStudy, displaySets, setDisplaySets]);
   return (
     <Accordion
       type="single"
