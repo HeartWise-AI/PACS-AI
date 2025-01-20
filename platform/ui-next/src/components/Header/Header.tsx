@@ -55,7 +55,8 @@ function Header({
       isSticky={isSticky}
       {...props}
     >
-      <div className="relative h-[48px] items-center">
+      {/* NOTE: This is a PACS changes */}
+      <div className="relative flex h-[48px] items-center justify-center">
         {/* NOTE: This is a PACS changes */}
         {/* <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center">
           <div
@@ -73,7 +74,8 @@ function Header({
           </div>
         </div>
         <div className="absolute top-1/2 left-[250px] h-8 -translate-y-1/2">{Secondary}</div> */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform">
+        {/* NOTE: This is a PACS changes */}
+        <div>
           <div className="flex items-center justify-center space-x-2">{children}</div>
         </div>
         {/* NOTE: This is a PACS changes */}
