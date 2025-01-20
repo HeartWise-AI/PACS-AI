@@ -2,7 +2,13 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 
-const Modal = ({ children, isOpen, onClose, size, isCloseable }) => {
+const Modal = ({
+  children = '',
+  isOpen = false,
+  onClose = () => {},
+  size = 'max-w-[400px]',
+  isCloseable = true,
+}) => {
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();
@@ -55,14 +61,6 @@ const Modal = ({ children, isOpen, onClose, size, isCloseable }) => {
       )}
     </React.Fragment>
   );
-};
-
-Modal.defaultProps = {
-  children: '',
-  onClose: () => {},
-  isOpen: false,
-  size: 'max-w-[400px]',
-  isCloseable: true,
 };
 
 Modal.propTypes = {
