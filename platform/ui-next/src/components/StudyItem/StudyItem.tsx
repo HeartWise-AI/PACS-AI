@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
+// NOTE: This is a PACS changes
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 
@@ -21,6 +23,18 @@ const StudyItem = ({
   viewPreset = 'thumbnails',
   onThumbnailContextMenu,
 }: withAppTypes) => {
+  // NOTE: This is a PACS changes
+  const { setModalitiesInStudy, setDisplaySets } = useGlobalStateData();
+
+  // NOTE: This is a PACS changes
+  useEffect(() => {
+    if (modalities) {
+      setModalitiesInStudy(modalities as string);
+    }
+    if (displaySets) {
+      setDisplaySets(displaySets);
+    }
+  }, [modalities, setModalitiesInStudy]);
   return (
     <Accordion
       type="single"

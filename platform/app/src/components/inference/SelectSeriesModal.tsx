@@ -27,11 +27,11 @@ interface SelectSeriesModalProps {
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
-  isOpen,
-  onClose,
+  isOpen = false,
+  onClose = () => {},
   applyPredictInferenceModel,
-  loading,
-  title,
+  loading = false,
+  title = '',
   selectedInferenceModel,
 }) => {
   const [mounted, setMounted] = useState(false);
@@ -232,51 +232,57 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {displaySets.map(series => (
-                          <div
-                            key={series.SeriesInstanceUID}
-                            className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                            onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
-                                <img
-                                  src={series.imageSrc}
-                                  alt="series"
-                                  className="h-full w-full rounded-lg object-cover"
-                                />
-                              </div>
-                              <div className="text-[14px]">
-                                <h1 className="inline text-[#C8F469]">Series: </h1>
-                                <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
-                                <img
-                                  src={copyWhiteIcon}
-                                  alt="copy"
-                                  className="ml-1 inline h-[16px] w-[16px]"
-                                />
-                                <h3 className="inline text-white"> {series.numInstances}</h3>
-                                <h4 className="block text-white opacity-70">
-                                  {series.description}
-                                </h4>
-                              </div>
-                            </div>
-                            <div>
-                              <img
-                                src={
-                                  selectedSeries.includes(series.SeriesInstanceUID)
-                                    ? checkIcon
-                                    : uncheckIcon
-                                }
-                                alt={
-                                  selectedSeries.includes(series.SeriesInstanceUID)
-                                    ? 'check'
-                                    : 'uncheck'
-                                }
-                                className="h-[18px] w-[18px]"
-                              />
-                            </div>
+                        {!displaySets || displaySets.length === 0 ? (
+                          <div className="flex h-[200px] items-center justify-center">
+                            <p className="text-white opacity-70">No data found</p>
                           </div>
-                        ))}
+                        ) : (
+                          displaySets.map(series => (
+                            <div
+                              key={series.SeriesInstanceUID}
+                              className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                              onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
+                                  <img
+                                    src={series.imageSrc}
+                                    alt="series"
+                                    className="h-full w-full rounded-lg object-cover"
+                                  />
+                                </div>
+                                <div className="text-[14px]">
+                                  <h1 className="inline text-[#C8F469]">Series: </h1>
+                                  <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
+                                  <img
+                                    src={copyWhiteIcon}
+                                    alt="copy"
+                                    className="ml-1 inline h-[16px] w-[16px]"
+                                  />
+                                  <h3 className="inline text-white"> {series.numInstances}</h3>
+                                  <h4 className="block text-white opacity-70">
+                                    {series.description}
+                                  </h4>
+                                </div>
+                              </div>
+                              <div>
+                                <img
+                                  src={
+                                    selectedSeries.includes(series.SeriesInstanceUID)
+                                      ? checkIcon
+                                      : uncheckIcon
+                                  }
+                                  alt={
+                                    selectedSeries.includes(series.SeriesInstanceUID)
+                                      ? 'check'
+                                      : 'uncheck'
+                                  }
+                                  className="h-[18px] w-[18px]"
+                                />
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                       {/* actions */}
                       <div className="mt-4 flex flex-row justify-end gap-3">
@@ -404,13 +410,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-SelectSeriesModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  loading: false,
-  title: '',
 };
 
 SelectSeriesModal.propTypes = {

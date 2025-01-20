@@ -38,6 +38,7 @@ const StudyBrowser = ({
     const viewPreset = viewPresets
       ? viewPresets.filter(preset => preset.selected)[0]?.id
       : 'thumbnails';
+
     return tabData.studies.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
@@ -113,6 +114,8 @@ StudyBrowser.propTypes = {
           description: PropTypes.string,
           displaySets: PropTypes.arrayOf(
             PropTypes.shape({
+              // NOTE: This is a PACS changes
+              SeriesInstanceUID: PropTypes.string,
               displaySetInstanceUID: PropTypes.string.isRequired,
               imageSrc: PropTypes.string,
               imageAltText: PropTypes.string,
