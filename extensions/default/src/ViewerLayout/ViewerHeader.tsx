@@ -123,14 +123,14 @@ function ViewerHeader({
           buttonSection="secondary"
         />
       }
-      PatientInfo={
-        appConfig.showPatientInfo !== PatientInfoVisibility.DISABLED && (
-          <HeaderPatientInfo
-            servicesManager={servicesManager}
-            appConfig={appConfig}
-          />
-        )
-      }
+      // PatientInfo={
+      //   appConfig.showPatientInfo !== PatientInfoVisibility.DISABLED && (
+      //     <HeaderPatientInfo
+      //       servicesManager={servicesManager}
+      //       appConfig={appConfig}
+      //     />
+      //   )
+      // }
     >
       <div className="flex items-center">
         <Toolbar servicesManager={servicesManager} />
