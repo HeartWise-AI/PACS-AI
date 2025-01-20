@@ -150,17 +150,6 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
           },
         },
         cssToJavaScript,
-        {
-          test: /\.(png|jpe?g|gif)$/i,
-          use: [
-            {
-              loader: 'file-loader',
-              options: {
-                name: '[name].[ext]',
-              },
-            },
-          ],
-        },
         // Note: Only uncomment the following if you are using the old style of stylus in v2
         // Also you need to uncomment this platform/app/.webpack/rules/extractStyleChunks.js
         // stylusToJavaScript,
@@ -174,7 +163,13 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
             {
               loader: 'file-loader',
               options: {
-                name: 'assets/images/[name].[ext]',
+                name: resourcePath => {
+                  if (resourcePath.includes('assets/pacs/logo')) {
+                    return 'assets/pacs/logo/[name].[ext]'; // custom path for PACS logo assets
+                  }
+                  return 'assets/images/[name].[ext]'; // default path for other images
+                },
+                context: path.resolve(__dirname, '../platform/ui/src/assets'),
               },
             },
           ],
