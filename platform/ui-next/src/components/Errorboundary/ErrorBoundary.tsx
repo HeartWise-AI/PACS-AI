@@ -55,16 +55,17 @@ Stack: ${error.stack}
     toast.success(t('Copied to clipboard'));
   };
 
-  useEffect(() => {
-    toast.error(title, {
-      description: subtitle,
-      action: {
-        label: t('Show Details'),
-        onClick: () => setShowDetails(true),
-      },
-      duration: 0,
-    });
-  }, [error]);
+  // NOTE: This is a PACS changes
+  // useEffect(() => {
+  //   toast.error(title, {
+  //     description: subtitle,
+  //     action: {
+  //       label: t('Show Details'),
+  //       onClick: () => setShowDetails(true),
+  //     },
+  //     duration: 0,
+  //   });
+  // }, [error]);
 
   if (isProduction) {
     return null;
