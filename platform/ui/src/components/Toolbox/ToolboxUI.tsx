@@ -53,8 +53,8 @@ function ToolboxUI(props: withAppTypes) {
   const render = () => {
     return (
       <>
-        <div className="flex flex-col bg-black">
-          <div className="bg-primary-dark mt-0.5 flex flex-wrap py-2">
+        <div className="flex flex-col bg-transparent">
+          <div className="mt-0.5 flex flex-wrap !bg-white/10 py-2">
             {toolbarButtons.map((toolDef, index) => {
               if (!toolDef) {
                 return null;
