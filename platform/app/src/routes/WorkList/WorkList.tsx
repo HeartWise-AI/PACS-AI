@@ -100,15 +100,19 @@ function WorkList() {
       // update the table with the new or cached study data
       setTableDataSource(sortedStudies);
       setStudyQueryId(data.data.queryId);
+      setIsSearching(false); // reset searching flag after successful response
     }
     if (error) {
+      // only show error if it occurred during an explicit search
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
           logoutUser(navigate, tenantId);
         }, 3000);
       }
-
-      showAlert(error.message, 'error');
+      if (isSearching) {
+        showAlert(error.message, 'error');
+      }
+      setIsSearching(false); // reset searching flag after error
     }
   }, [data, error]);
 
@@ -408,8 +412,8 @@ function WorkList() {
    */
   const searchStudyList = async () => {
     await fetchStudyListData();
-    setIsSearching(false);
   };
+
   /**
    * Handle select for modalities filter
    *
