@@ -56,7 +56,8 @@ function Header({
       {...props}
     >
       <div className="relative h-[48px] items-center">
-        <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center">
+        {/* NOTE: This is a PACS changes */}
+        {/* <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center">
           <div
             className={classNames(
               'mr-3 inline-flex items-center',
@@ -71,10 +72,11 @@ function Header({
             </div>
           </div>
         </div>
-        <div className="absolute top-1/2 left-[250px] h-8 -translate-y-1/2">{Secondary}</div>
+        <div className="absolute top-1/2 left-[250px] h-8 -translate-y-1/2">{Secondary}</div> */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform">
           <div className="flex items-center justify-center space-x-2">{children}</div>
         </div>
+        {/* NOTE: This is a PACS changes */}
         {/* <div className="absolute right-0 top-1/2 flex -translate-y-1/2 select-none items-center">
           {PatientInfo}
           <div className="border-primary-dark mx-1.5 h-[25px] border-r"></div>
