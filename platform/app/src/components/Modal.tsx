@@ -2,13 +2,7 @@ import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 
-const Modal = ({
-  children = '',
-  isOpen = false,
-  onClose = () => {},
-  size = 'max-w-[400px]',
-  isCloseable = true,
-}) => {
+const Modal = ({ children, isOpen, onClose, size, isCloseable }) => {
   const handleClose = useCallback(() => {
     if (onClose) {
       onClose();

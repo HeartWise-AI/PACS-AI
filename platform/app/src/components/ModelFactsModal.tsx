@@ -11,7 +11,11 @@ interface ModelFactsModalProps {
   data: ModelDetails;
 }
 
-const ModelFactsModal: React.FC<ModelFactsModalProps> = ({ isOpen, onClose, data }) => {
+const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
+  isOpen = false,
+  onClose = () => {},
+  data = {} as ModelDetails,
+}) => {
   const { t } = useTranslation('Common');
   const handleClose = useCallback(() => {
     if (onClose) {
@@ -345,12 +349,6 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({ isOpen, onClose, data
       )}
     </React.Fragment>
   );
-};
-
-ModelFactsModal.defaultProps = {
-  onClose: () => {},
-  isOpen: false,
-  data: {} as ModelDetails,
 };
 
 ModelFactsModal.propTypes = {
