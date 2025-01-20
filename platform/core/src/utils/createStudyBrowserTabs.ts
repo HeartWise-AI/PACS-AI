@@ -1,5 +1,6 @@
 /**
  *
+ * @param {object} displaySetService - Service to manage display sets
  * @param {string[]} primaryStudyInstanceUIDs
  * @param {object[]} studyDisplayList
  * @param {string} studyDisplayList.studyInstanceUid

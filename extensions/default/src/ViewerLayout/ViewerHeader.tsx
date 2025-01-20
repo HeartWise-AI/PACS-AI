@@ -134,7 +134,7 @@ function ViewerHeader({
     >
       <div className="flex items-center">
         <Toolbar servicesManager={servicesManager} />
-        {/* TODO: Added AIModelButton component */}
+        {/* NOTE: Added AIModelButton component */}
         <AIModelButton
           isShowBG={true}
           positionRight={-90}
