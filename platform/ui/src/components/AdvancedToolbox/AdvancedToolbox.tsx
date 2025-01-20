@@ -23,6 +23,7 @@ const AdvancedToolbox = ({ title, items }) => {
       title={title}
       childrenClassName="flex-shrink-0"
     >
+      {/* NOTE: This is a PACS changes */}
       <div className="flex flex-col bg-transparent">
         <div className="mt-0.5 flex flex-wrap !bg-white/10 py-2">
           {items?.map(item => {
