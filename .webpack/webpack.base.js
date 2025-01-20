@@ -163,13 +163,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
             {
               loader: 'file-loader',
               options: {
-                name: resourcePath => {
-                  if (resourcePath.includes('assets/pacs/logo')) {
-                    return 'assets/pacs/logo/[name].[ext]'; // custom path for PACS logo assets
-                  }
-                  return 'assets/images/[name].[ext]'; // default path for other images
-                },
-                context: path.resolve(__dirname, '../platform/ui/src/assets'),
+                name: 'assets/images/[name].[ext]',
               },
             },
           ],
