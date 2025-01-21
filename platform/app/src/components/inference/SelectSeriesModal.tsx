@@ -132,6 +132,16 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
       return;
     }
 
+    if (!selectedInferenceModel?.supportedAdditionalMetadata?.length) {
+      applyPredictInferenceModel(
+        selectedInferenceModel.containerId,
+        selectedSeries,
+        additionalDetails,
+        selectedInferenceModel.outputMode
+      );
+      return;
+    }
+
     setStepper(2);
   }
 
@@ -299,9 +309,13 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             stepOneHandler();
                           }
                         }}
-                        disabled={selectedSeries.length === 0}
+                        disabled={selectedSeries.length === 0 || loading}
                       >
-                        Continue
+                        {loading && !selectedInferenceModel?.supportedAdditionalMetadata?.length
+                          ? '...'
+                          : selectedInferenceModel?.supportedAdditionalMetadata?.length
+                          ? 'Continue'
+                          : 'Apply'}
                       </button>
                     </div>
                   </div>
