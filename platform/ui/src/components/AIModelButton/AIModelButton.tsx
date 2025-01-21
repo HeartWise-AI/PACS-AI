@@ -5,13 +5,9 @@ import { Error } from '@ohif/app/src/api/dto';
 import { logoutUser } from '@ohif/app/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { getEnabledElement, metaData } from '@cornerstonejs/core';
 import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
-import ResultModal from '../ResultModal/ResultModal';
-import predictionRepository from '@ohif/app/src/api/predictionRepository';
-import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
@@ -122,6 +118,7 @@ const AIModelButton = ({
 
       console.log('==predictionResultResponse==', predictionResultResponse);
       setOutputModeData(predictionResultResponse.data);
+
       switch (outputMode) {
         case 'JSON':
           setOpenJSONOutputModeModal(true);
@@ -169,11 +166,6 @@ const AIModelButton = ({
       const data = outputModeData as PredictInferenceModelOHIFResponse;
       console.log('==data==', data);
 
-      // JSON start time
-      const jsonStartTime = performance.now();
-      // JSON end time
-      const jsonEndTime = performance.now();
-      console.log(`JSON parsing time: ${(jsonEndTime - jsonStartTime).toFixed(2)}ms`);
       // Decompress start time
       const decompressStartTime = performance.now();
       // Convert base64 directly to binary array
@@ -202,31 +194,37 @@ const AIModelButton = ({
         const x = remainder % width;
         labelmap[z][y][x] = decodedData[i];
       }
+
       // Decoding end time
       const decompressEndTime = performance.now();
       console.log(`Decoding time: ${(decompressEndTime - decompressStartTime).toFixed(2)}ms`);
+
       // Segmentation start time
       const segmentationStartTime = performance.now();
-      const result = await addSegmentationFromLabelmap({
+      const segmentationId = await addSegmentationFromLabelmap({
         servicesManager,
         labelmap,
         segmentationLabel: data.segmentation.label,
         segmentations: data.segmentation.segments,
       });
+
+      console.log('segmentation id:', segmentationId);
+
       const segmentationEndTime = performance.now();
       console.log(
         `Segmentation processing time: ${(segmentationEndTime - segmentationStartTime).toFixed(2)}ms`
       );
+
       // Handle measurements if they exist
       if (data.measurements && data.measurements.length > 0) {
         // TODO: Process measurements when implemented
         console.log('Measurements received:', data.measurements);
       }
-      console.timeEnd('Total frontend processing time');
-      return result;
+
+      showAlert('Successfully applied prediction annotations.', 'success');
     } catch (error) {
-      console.error('Error fetching segmentation data:', error);
-      throw error;
+      console.error('Error occurred while adding segmentation', error);
+      showAlert('Error occurred while adding segmentation', 'error');
     }
   };
 
