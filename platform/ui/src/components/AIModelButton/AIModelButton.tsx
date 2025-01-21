@@ -117,7 +117,8 @@ const AIModelButton = ({
       );
 
       console.log('==predictionResultResponse==', predictionResultResponse);
-      setOutputModeData(predictionResultResponse.data);
+      const responseData = predictionResultResponse.data;
+      setOutputModeData(responseData);
 
       switch (outputMode) {
         case 'JSON':
@@ -133,7 +134,10 @@ const AIModelButton = ({
           setOpenPDFOutputModeModal(true);
           break;
         case 'OHIF_ANNOTATIONS':
-          await addSegmentation();
+          if (!responseData?.segmentation) {
+            throw new Error('No segmentation data available in the response');
+          }
+          await addSegmentation(responseData);
           break;
         default:
           break;
@@ -160,10 +164,12 @@ const AIModelButton = ({
   };
 
   // add segmentation
-  const addSegmentation = async () => {
+  const addSegmentation = async (data) => {
     console.log('==servicesManager==addSegmentation==', servicesManager);
     try {
-      const data = outputModeData as PredictInferenceModelOHIFResponse;
+      if (!data?.segmentation) {
+        throw new Error('No segmentation data available');
+      }
       console.log('==data==', data);
 
       // Decompress start time
@@ -255,40 +261,44 @@ const AIModelButton = ({
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
-            {inferenceAvailableModels.some(model =>
-              model.supportedDicomModalities?.some(modality => modalitiesInStudy.includes(modality))
-            ) ? (
+            {inferenceAvailableModels.length > 0 ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
-                {inferenceAvailableModels.map((model, index) => (
-                  <li
-                    key={index}
-                    className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-                    onClick={() => {
-                      setOutputModeTitle(
-                        `${model.modelName} (${model.version}-${model.outputMode})`
-                      );
-                      setIsOpen(false);
-                      setContainerName(model.containerName);
-                      setSelectedInferenceModel(model);
-                      setOpenSelectSeriesModal(true);
-                      return;
-                    }}
-                  >
-                    <img
-                      src={playerPlayIcon}
-                      alt="Player play icon"
-                      className="w-5"
-                    />
-                    <h1 className="whitespace-nowrap text-sm">
-                      Apply {t(model.modelName)} ({model.version}-{model.outputMode})
-                    </h1>
-                    <img
-                      src={helpInactive}
-                      alt="Player play icon"
-                      className="mr-2 w-5"
-                    />
-                  </li>
-                ))}
+                {inferenceAvailableModels
+                  .filter(model =>
+                    model.supportedDicomModalities?.some(modality =>
+                      modalitiesInStudy.includes(modality)
+                    )
+                  )
+                  .map((model, index) => (
+                    <li
+                      key={index}
+                      className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+                      onClick={() => {
+                        setOutputModeTitle(
+                          `${model.modelName} (${model.version}-${model.outputMode})`
+                        );
+                        setIsOpen(false);
+                        setContainerName(model.containerName);
+                        setSelectedInferenceModel(model);
+                        setOpenSelectSeriesModal(true);
+                        return;
+                      }}
+                    >
+                      <img
+                        src={playerPlayIcon}
+                        alt="Player play icon"
+                        className="w-5"
+                      />
+                      <h1 className="whitespace-nowrap text-sm">
+                        Apply {t(model.modelName)} ({model.version}-{model.outputMode})
+                      </h1>
+                      <img
+                        src={helpInactive}
+                        alt="Player play icon"
+                        className="mr-2 w-5"
+                      />
+                    </li>
+                  ))}
               </ul>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">

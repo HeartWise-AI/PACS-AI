@@ -256,6 +256,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                 <h4 className="block text-white opacity-70">
                                   {series.description}
                                 </h4>
+                                <h4 className="block text-[8px] text-white opacity-70">
+                                  UID: {series.SeriesInstanceUID}
+                                </h4>
                               </div>
                             </div>
                             <div>
