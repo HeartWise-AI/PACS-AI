@@ -19,6 +19,7 @@ import {
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
+  PredictInferenceModelOHIFResponse,
 } from '@ohif/app/src/api/inferenceDTO';
 import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
 import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
@@ -27,6 +28,7 @@ import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputMode
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { addSegmentationFromLabelmap } from '../../../../../extensions/cornerstone/src/utils/addSegmentation';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -59,7 +61,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { modalitiesInStudy } = useGlobalStateData();
+  const { modalitiesInStudy, servicesManager } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
 
@@ -101,14 +103,25 @@ const AIModelButton = ({
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => {
+    console.log('==outputMode==', outputMode);
     setIsLoading(true);
     setIsOpen(false);
-    setOpenSelectSeriesModal(false);
 
     const searchParams = new URLSearchParams(window.location.search);
     const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
+      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
+        containerId,
+        {
+          studyInstanceUID,
+          seriesInstanceUIDs,
+          additionalMetadata,
+        }
+      );
+
+      console.log('==predictionResultResponse==', predictionResultResponse);
+      setOutputModeData(predictionResultResponse.data);
       switch (outputMode) {
         case 'JSON':
           setOpenJSONOutputModeModal(true);
@@ -122,20 +135,14 @@ const AIModelButton = ({
         case 'PDF':
           setOpenPDFOutputModeModal(true);
           break;
+        case 'OHIF_ANNOTATIONS':
+          await addSegmentation();
+          break;
         default:
           break;
       }
 
-      const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
-        containerId,
-        {
-          studyInstanceUID,
-          seriesInstanceUIDs,
-          additionalMetadata,
-        }
-      );
-
-      setOutputModeData(predictionResultResponse.data);
+      setOpenSelectSeriesModal(false);
       setIsLoading(false);
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
@@ -154,6 +161,75 @@ const AIModelButton = ({
       setIsLoading(false);
     }
   };
+
+  // add segmentation
+  const addSegmentation = async () => {
+    console.log('==servicesManager==addSegmentation==', servicesManager);
+    try {
+      const data = outputModeData as PredictInferenceModelOHIFResponse;
+      console.log('==data==', data);
+
+      // JSON start time
+      const jsonStartTime = performance.now();
+      // JSON end time
+      const jsonEndTime = performance.now();
+      console.log(`JSON parsing time: ${(jsonEndTime - jsonStartTime).toFixed(2)}ms`);
+      // Decompress start time
+      const decompressStartTime = performance.now();
+      // Convert base64 directly to binary array
+      const binaryString = atob(data.segmentation.labelmap);
+      // Decompress end time
+      const decodedData = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        decodedData[i] = binaryString.charCodeAt(i);
+      }
+      // Create a 3D array from the binary data
+      const [depth, height, width] = data.segmentation.dimensions;
+      const totalSize = depth * height * width;
+      // Pre-allocate arrays for better performance
+      const labelmap = new Array(depth);
+      for (let z = 0; z < depth; z++) {
+        labelmap[z] = new Array(height);
+        for (let y = 0; y < height; y++) {
+          labelmap[z][y] = new Array(width);
+        }
+      }
+      // Fill the arrays in a single pass
+      for (let i = 0; i < totalSize; i++) {
+        const z = Math.floor(i / (width * height));
+        const remainder = i % (width * height);
+        const y = Math.floor(remainder / width);
+        const x = remainder % width;
+        labelmap[z][y][x] = decodedData[i];
+      }
+      // Decoding end time
+      const decompressEndTime = performance.now();
+      console.log(`Decoding time: ${(decompressEndTime - decompressStartTime).toFixed(2)}ms`);
+      // Segmentation start time
+      const segmentationStartTime = performance.now();
+      const result = await addSegmentationFromLabelmap({
+        servicesManager,
+        labelmap,
+        segmentationLabel: data.segmentation.label,
+        segmentations: data.segmentation.segments,
+      });
+      const segmentationEndTime = performance.now();
+      console.log(
+        `Segmentation processing time: ${(segmentationEndTime - segmentationStartTime).toFixed(2)}ms`
+      );
+      // Handle measurements if they exist
+      if (data.measurements && data.measurements.length > 0) {
+        // TODO: Process measurements when implemented
+        console.log('Measurements received:', data.measurements);
+      }
+      console.timeEnd('Total frontend processing time');
+      return result;
+    } catch (error) {
+      console.error('Error fetching segmentation data:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="relative flex w-full">
       <button
