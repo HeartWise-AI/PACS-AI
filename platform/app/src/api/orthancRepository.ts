@@ -66,7 +66,7 @@ const orthancRepository = {
       .get(`/v1/orthanc/jobs`, {
         params: { jobIds: request.jobIds },
         paramsSerializer: {
-          serialize: params => `jobIds=${JSON.stringify(params.jobIds)}`,
+          serialize: params => params.jobIds.map(id => `jobIds=${id}`).join('&'),
         },
       })
       .then((response: AxiosResponse<APIResponse<GetJobInfoResponse>>) => {
