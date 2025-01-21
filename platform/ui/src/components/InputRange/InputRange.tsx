@@ -52,10 +52,14 @@ const InputRange: React.FC<InputRangeProps> = ({
   labelClassName,
   showLabel = true,
   labelPosition = 'right',
-  leftColor = '#5acce6',
-  rightColor = '#3a3f99',
-  thumbColor = '#5acce6',
-  thumbColorOuter = '#090c29',
+  // NOTE: This is a PACS changes
+  leftColor = '#C8F469',
+  // NOTE: This is a PACS changes
+  rightColor = 'rgba(200, 244, 105, 0.1)',
+  // NOTE: This is a PACS changes
+  thumbColor = '#C8F469',
+  // NOTE: This is a PACS changes
+  thumbColorOuter = '#151515',
   trackHeight = '3px',
   allowNumberEdit = false,
   showAdjustmentArrows = true,

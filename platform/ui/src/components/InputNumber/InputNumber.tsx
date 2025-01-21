@@ -52,9 +52,11 @@ const InputNumber: React.FC<{
   showAdjustmentArrows = true,
   arrowsDirection = 'vertical',
   labelPosition = 'left',
-  inputClassName = 'text-white bg-primary-dark text-[14px]',
+  // NOTE: This is a PACS changes
+  inputClassName = 'text-white border border-none bg-transparent text-[14px]',
   sizeClassName,
-  inputContainerClassName = 'bg-primary-dark border-secondary-light border rounded-[4px]',
+  // NOTE: This is a PACS changes
+  inputContainerClassName = 'bg-transparent border-white/10 border rounded-[4px] focus-visible:!ring-primary focus-visible:!ring-1 focus-visible:!outline-none hover:!border-white/10',
 }) => {
   const [numberValue, setNumberValue] = useState(value);
   const [isFocused, setIsFocused] = useState(false);

@@ -2249,7 +2249,7 @@ export const Icons = {
           ></rect>
           <rect
             id="Rectangle"
-            stroke="#348CFD"
+            stroke="currentColor"
             x="1.5"
             y="1.5"
             width="15"
@@ -2258,7 +2258,7 @@ export const Icons = {
           ></rect>
           <rect
             id="Rectangle"
-            fill="#348CFD"
+            fill="currentColor"
             x="3.5"
             y="3.5"
             width="11"
@@ -2293,7 +2293,7 @@ export const Icons = {
           ></rect>
           <rect
             id="Rectangle"
-            stroke="#348CFD"
+            stroke="currentColor"
             x="1.5"
             y="1.5"
             width="15"
@@ -2328,7 +2328,7 @@ export const Icons = {
           ></rect>
           <rect
             id="Rectangle"
-            fill="#348CFD"
+            fill="currentColor"
             x="2"
             y="2"
             width="14"

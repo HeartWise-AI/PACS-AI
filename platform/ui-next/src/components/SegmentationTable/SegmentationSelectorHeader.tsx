@@ -66,7 +66,8 @@ export const SegmentationSelectorHeader: React.FC<{ children?: React.ReactNode }
   )?.isExportable;
 
   return (
-    <div className="bg-primary-dark flex h-10 w-full items-center space-x-1 rounded-t px-1.5">
+    // NOTE: This is a PACS changes
+    <div className="flex h-10 w-full items-center space-x-1 rounded-t bg-[#4C504B] px-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -78,36 +79,55 @@ export const SegmentationSelectorHeader: React.FC<{ children?: React.ReactNode }
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => onSegmentationAdd(activeSegmentation.id)}>
-            <Icons.Add className="text-foreground" />
-            <span className="pl-2">{t('Create New Segmentation')}</span>
+            {/* NOTE: This is a PACS changes */}
+            <Icons.Add className="text-white" />
+            <span className="pl-2 !text-white">{t('Create New Segmentation')}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>{t('Manage Current Segmentation')}</DropdownMenuLabel>
+          {/* NOTE: This is a PACS changes */}
+          <DropdownMenuLabel className="!text-white">
+            {t('Manage Current Segmentation')}
+          </DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onSegmentationRemoveFromViewport(activeSegmentation.id)}>
-            <Icons.Series className="text-foreground" />
-            <span className="pl-2">{t('Remove from Viewport')}</span>
+            {/* NOTE: This is a PACS changes */}
+            <Icons.Series className="text-white" />
+            <span className="pl-2 !text-white">{t('Remove from Viewport')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSegmentationEdit(activeSegmentation.id)}>
-            <Icons.Rename className="text-foreground" />
-            <span className="pl-2">{t('Rename')}</span>
+            {/* NOTE: This is a PACS changes */}
+            <Icons.Rename className="text-white" />
+            <span className="pl-2 !text-white">{t('Rename')}</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger
               disabled={!allowExport}
               className="pl-1"
             >
-              <Icons.Export className="text-foreground" />
-              <span className="pl-2">{t('Export & Download')}</span>
+              {/* NOTE: This is a PACS changes */}
+              <Icons.Export className="text-white" />
+              <span className="pl-2 !text-white">{t('Export & Download')}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={() => storeSegmentation(activeSegmentation.id)}>
+                {/* NOTE: This is a PACS changes */}
+                <DropdownMenuItem
+                  onClick={() => storeSegmentation(activeSegmentation.id)}
+                  className="!text-white"
+                >
                   {t('Export DICOM SEG')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSegmentationDownload(activeSegmentation.id)}>
+                {/* NOTE: This is a PACS changes */}
+                <DropdownMenuItem
+                  onClick={() => onSegmentationDownload(activeSegmentation.id)}
+                  className="!text-white"
+                >
                   {t('Download DICOM SEG')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSegmentationDownloadRTSS(activeSegmentation.id)}>
+                {/* NOTE: This is a PACS changes */}
+                <DropdownMenuItem
+                  onClick={() => onSegmentationDownloadRTSS(activeSegmentation.id)}
+                  className="!text-white"
+                >
                   {t('Download DICOM RTSTRUCT')}
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
