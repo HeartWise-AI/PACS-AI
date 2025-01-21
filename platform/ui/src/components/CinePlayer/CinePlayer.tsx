@@ -93,9 +93,10 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           showLabel={false}
         />
       )}
+      {/* NOTE: This is a PACS changes */}
       <div
         className={
-          'border-secondary-light/60 bg-primary-dark inline-flex select-none items-center gap-2 rounded border px-2 py-2'
+          'inline-flex select-none items-center gap-2 rounded border border-white/50 bg-[#151515] px-2 py-2'
         }
       >
         <Icon
@@ -109,13 +110,14 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             {/* Add Tailwind classes for monospace font and center alignment */}
             <div className="text-[11px]">
               <span className="w-2 text-white">{dynamicInfo.timePointIndex}</span>{' '}
-              <span className="text-aqua-pale">{`/${dynamicInfo.numTimePoints}`}</span>
+              {/* NOTE: This is a PACS changes */}
+              <span className="text-white/50">{`/${dynamicInfo.numTimePoints}`}</span>
             </div>
             <div className="text-aqua-pale text-xs">{dynamicInfo.label}</div>
           </div>
         )}
-
-        <div className="border-secondary-light ml-4 flex h-6 items-stretch gap-1 rounded border">
+        {/* NOTE: This is a PACS changes */}s
+        <div className="ml-4 flex h-6 items-stretch gap-1 rounded border border-none">
           <div
             className={`${fpsButtonClassNames} rounded-l`}
             onClick={() => handleSetFrameRate(frameRate - 1)}

@@ -86,7 +86,8 @@ function ToolboxUI(props: withAppTypes) {
                       true,
                   })}
                 >
-                  <div className="flex rounded-md bg-black">
+                  {/* NOTE: This is a PACS changes */}
+                  <div className="flex rounded-md bg-transparent">
                     <Component
                       {...componentProps}
                       {...props}
@@ -101,7 +102,8 @@ function ToolboxUI(props: withAppTypes) {
             })}
           </div>
         </div>
-        <div className="bg-primary-dark h-auto px-2">
+        {/* NOTE: This is a PACS changes */}
+        <div className="h-auto bg-white/10 px-2">
           {activeToolOptions && <ToolSettings options={activeToolOptions} />}
         </div>
       </>

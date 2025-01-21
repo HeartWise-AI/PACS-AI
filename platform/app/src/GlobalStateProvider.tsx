@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState } from 'react';
+import { ServicesManager } from '@ohif/core';
 
 interface GlobalStateContextType {
   displaySets: any;
   modalitiesInStudy: string;
+  servicesManager: ServicesManager;
   setDisplaySets: (displaySets: any) => void;
   setModalitiesInStudy: (modalitiesInStudy: string) => void;
+  setServicesManager: (servicesManager: ServicesManager) => void;
 }
 
 interface GlobalStateProviderProps {
@@ -15,8 +18,10 @@ interface GlobalStateProviderProps {
 const GlobalStateContext = createContext<GlobalStateContextType>({
   displaySets: null,
   modalitiesInStudy: '',
-  setDisplaySets: () => {},
+  servicesManager: {} as ServicesManager,
   setModalitiesInStudy: () => {},
+  setServicesManager: () => {},
+  setDisplaySets: () => {},
 });
 
 // custom hook to use the data context
@@ -31,11 +36,14 @@ export const useGlobalStateData = () => {
 export const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({ children }) => {
   const [displaySets, setDisplaySets] = useState<any>(null);
   const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
+  const [servicesManager, setServicesManager] = useState<ServicesManager>({} as ServicesManager);
   const value = {
     displaySets,
     modalitiesInStudy,
+    servicesManager,
     setDisplaySets,
     setModalitiesInStudy,
+    setServicesManager,
   };
 
   return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;

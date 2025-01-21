@@ -59,7 +59,8 @@ const AdvancedToolbox = ({ title, items }) => {
             );
           })}
         </div>
-        <div className="bg-primary-dark h-auto px-2">
+        {/* NOTE: This is a PACS changes */}
+        <div className="h-auto bg-white/10 px-2">
           <ToolSettings options={activeItemOptions} />
         </div>
       </div>

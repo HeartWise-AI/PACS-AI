@@ -37,7 +37,8 @@ const ButtonGroup = ({
   return (
     <div
       className={classnames(wrapperClasses, 'text-[13px]', {
-        'rounded-md bg-black': !separated,
+        // NOTE: This is a PACS changes
+        'rounded-md bg-transparent': !separated,
       })}
     >
       {!separated && (
@@ -49,8 +50,10 @@ const ButtonGroup = ({
                 className: classnames(
                   'rounded-[4px] px-2 py-1',
                   index === activeIndex
-                    ? 'bg-customblue-40 text-white'
-                    : 'text-primary-active bg-black',
+                    ? // NOTE: This is a PACS changes
+                      'bg-primary text-black'
+                    : // NOTE: This is a PACS changes
+                      'text-primary-active bg-primary/10',
                   child.props.className,
                   child.props.disabled ? 'ohif-disabled' : ''
                 ),

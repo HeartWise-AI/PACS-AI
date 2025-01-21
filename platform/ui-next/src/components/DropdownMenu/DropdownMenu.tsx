@@ -48,7 +48,7 @@ const DropdownMenuSubContent = React.forwardRef<
     ref={ref}
     className={cn(
       // NOTE: This is a PACS changes
-      'bg-primary data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-input z-50 min-w-[8rem] overflow-hidden rounded border p-1 text-black shadow-lg',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-input z-50 min-w-[8rem] overflow-hidden rounded border bg-[#4C504B] p-1 text-black shadow-lg',
       className
     )}
     {...props}
@@ -66,7 +66,7 @@ const DropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         // NOTE: This is a PACS changes
-        'bg-primary border-input z-50 min-w-[8rem] overflow-hidden rounded border p-1 text-black shadow-md',
+        'z-50 min-w-[8rem] overflow-hidden rounded border border-white/10 bg-[#4C504B] p-1 text-black shadow-md',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         className
       )}

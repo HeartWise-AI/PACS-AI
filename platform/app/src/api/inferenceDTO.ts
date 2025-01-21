@@ -112,13 +112,17 @@ export interface PredictInferenceModelJSONResponse {
     presentable: boolean;
   };
 }
+
 export interface PredictInferenceModelOHIFResponse {
-  metadata: {
-    [key: string]: string;
+  segmentation: {
+    labelmap: string;
+    dimensions: number[];
+    label: string;
+    segments: {
+      [key: string]: number;
+    };
   };
-  segmentations: string[];
-  boundingBoxes: string[];
-  measurements: string[];
+  measurements: number[];
 }
 
 export interface PredictInferenceModelHTMLResponse {

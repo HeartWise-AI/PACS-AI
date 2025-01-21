@@ -195,213 +195,207 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
               ></div>
             </div>
             <div className="space-y-4">
-              {loading ? (
-                <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
-                </div>
-              ) : (
-                <div>
-                  {stepper === 1 && (
-                    <div>
-                      {/* header */}
-                      <div className="align-center mt-4 flex flex-row justify-between text-[14px]">
-                        <h1 className="text-white">Select Series</h1>
-                        <div
-                          className="flex cursor-pointer items-center gap-2"
-                          onClick={() => {
-                            setApplyToStudy(!applyToStudy);
-                            if (!applyToStudy) {
-                              // select all series
-                              setSelectedSeries(
-                                displaySets.map(series => series.SeriesInstanceUID)
-                              );
-                            } else {
-                              // deselect all series
-                              setSelectedSeries([]);
-                            }
-                          }}
-                        >
-                          <h2 className="text-[14px] text-white">Apply to Study</h2>
-                          <img
-                            src={applyToStudy ? checkIcon : uncheckIcon}
-                            alt={applyToStudy ? 'check' : 'uncheck'}
-                            className="h-[18px] w-[18px]"
-                          />
-                        </div>
+              <div>
+                {stepper === 1 && (
+                  <div>
+                    {/* header */}
+                    <div className="align-center mt-4 flex flex-row justify-between text-[14px]">
+                      <h1 className="text-white">Select Series</h1>
+                      <div
+                        className="flex cursor-pointer items-center gap-2"
+                        onClick={() => {
+                          setApplyToStudy(!applyToStudy);
+                          if (!applyToStudy) {
+                            // select all series
+                            setSelectedSeries(displaySets.map(series => series.SeriesInstanceUID));
+                          } else {
+                            // deselect all series
+                            setSelectedSeries([]);
+                          }
+                        }}
+                      >
+                        <h2 className="text-[14px] text-white">Apply to Study</h2>
+                        <img
+                          src={applyToStudy ? checkIcon : uncheckIcon}
+                          alt={applyToStudy ? 'check' : 'uncheck'}
+                          className="h-[18px] w-[18px]"
+                        />
                       </div>
+                    </div>
 
-                      {/* list of series */}
-                      <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {!displaySets || displaySets.length === 0 ? (
-                          <div className="flex h-[200px] items-center justify-center">
-                            <p className="text-white opacity-70">No data found</p>
-                          </div>
-                        ) : (
-                          displaySets.map(series => (
-                            <div
-                              key={series.SeriesInstanceUID}
-                              className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                              onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
-                                  <img
-                                    src={series.imageSrc}
-                                    alt="series"
-                                    className="h-full w-full rounded-lg object-cover"
-                                  />
-                                </div>
-                                <div className="text-[14px]">
-                                  <h1 className="inline text-[#C8F469]">Series: </h1>
-                                  <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
-                                  <img
-                                    src={copyWhiteIcon}
-                                    alt="copy"
-                                    className="ml-1 inline h-[16px] w-[16px]"
-                                  />
-                                  <h3 className="inline text-white"> {series.numInstances}</h3>
-                                  <h4 className="block text-white opacity-70">
-                                    {series.description}
-                                  </h4>
-                                </div>
-                              </div>
-                              <div>
-                                <img
-                                  src={
-                                    selectedSeries.includes(series.SeriesInstanceUID)
-                                      ? checkIcon
-                                      : uncheckIcon
-                                  }
-                                  alt={
-                                    selectedSeries.includes(series.SeriesInstanceUID)
-                                      ? 'check'
-                                      : 'uncheck'
-                                  }
-                                  className="h-[18px] w-[18px]"
-                                />
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      {/* actions */}
-                      <div className="mt-4 flex flex-row justify-end gap-3">
-                        <button
-                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
-                          onClick={handleClose}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          className={`rounded-lg px-4 py-2 ${
-                            selectedSeries.length > 0
-                              ? 'bg-[#C8F469] text-black'
-                              : 'cursor-not-allowed bg-[#C8F469] bg-opacity-50 text-black'
-                          }`}
-                          onClick={() => {
-                            if (selectedSeries.length > 0) {
-                              stepOneHandler();
-                            }
-                          }}
-                          disabled={selectedSeries.length === 0}
-                        >
-                          Continue
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  {stepper === 2 && (
-                    <div>
-                      <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
-                      {selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 ? (
-                        <>
-                          {selectedInferenceModel.supportedAdditionalMetadata.map(metadata => (
-                            <div
-                              key={metadata.id}
-                              className="mt-4 flex gap-2"
-                            >
-                              <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
-                                {metadata.name}{' '}
-                                {metadata.required && <span className="ml-1 text-red-500">*</span>}
-                              </div>
-                              {metadata.type === 'boolean' ? (
-                                <select
-                                  className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
-                                  required={metadata.required}
-                                  id={metadata.id}
-                                  value={additionalDetails[metadata.id] || 'true'}
-                                  onChange={e =>
-                                    handleAdditionalDetailsChange(metadata, e.target.value)
-                                  }
-                                >
-                                  <option value="true">True</option>
-                                  <option value="false">False</option>
-                                </select>
-                              ) : (
-                                <Input
-                                  className="h-[43px] w-full"
-                                  type={metadata.type}
-                                  required={metadata.required}
-                                  id={metadata.id}
-                                  value={additionalDetails[metadata.id] || ''}
-                                  onChange={e =>
-                                    handleAdditionalDetailsChange(metadata, e.target.value)
-                                  }
-                                  label=""
-                                  onFocus={() => {}}
-                                  autoFocus={false}
-                                  onKeyPress={() => {}}
-                                  disabled={false}
-                                />
-                              )}
-                            </div>
-                          ))}
-                          <div className="mt-3 flex items-center gap-2">
-                            <img
-                              src={informationIcon}
-                              alt="information"
-                              className="h-[15px] w-[15px]"
-                            />
-                            <h1 className="text-[12px] text-white opacity-50">
-                              Additional details required fields should be answered.
-                            </h1>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="my-7 text-center text-white opacity-50">
-                          No additional details found
+                    {/* list of series */}
+                    <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
+                      {!displaySets || displaySets.length === 0 ? (
+                        <div className="flex h-[200px] items-center justify-center">
+                          <p className="text-white opacity-70">No data found</p>
                         </div>
+                      ) : (
+                        displaySets.map(series => (
+                          <div
+                            key={series.SeriesInstanceUID}
+                            className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                            onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
+                                <img
+                                  src={series.imageSrc}
+                                  alt="series"
+                                  className="h-full w-full rounded-lg object-cover"
+                                />
+                              </div>
+                              <div className="text-[14px]">
+                                <h1 className="inline text-[#C8F469]">Series: </h1>
+                                <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
+                                <img
+                                  src={copyWhiteIcon}
+                                  alt="copy"
+                                  className="ml-1 inline h-[16px] w-[16px]"
+                                />
+                                <h3 className="inline text-white"> {series.numInstances}</h3>
+                                <h4 className="block text-white opacity-70">
+                                  {series.description}
+                                </h4>
+                              </div>
+                            </div>
+                            <div>
+                              <img
+                                src={
+                                  selectedSeries.includes(series.SeriesInstanceUID)
+                                    ? checkIcon
+                                    : uncheckIcon
+                                }
+                                alt={
+                                  selectedSeries.includes(series.SeriesInstanceUID)
+                                    ? 'check'
+                                    : 'uncheck'
+                                }
+                                className="h-[18px] w-[18px]"
+                              />
+                            </div>
+                          </div>
+                        ))
                       )}
-                      {/* actions */}
-                      <div className="mt-5 flex flex-row justify-end gap-3">
-                        <button
-                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
-                          onClick={() => {
-                            setStepper(1);
-                          }}
-                        >
-                          Back
-                        </button>
-                        <button
-                          className="rounded-lg bg-[#C8F469] px-4 py-2 text-black"
-                          onClick={() => {
-                            if (validateRequiredFields()) {
-                              applyPredictInferenceModel(
-                                selectedInferenceModel.containerId,
-                                selectedSeries,
-                                additionalDetails,
-                                selectedInferenceModel.outputMode
-                              );
-                            }
-                          }}
-                        >
-                          Apply
-                        </button>
-                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+                    {/* actions */}
+                    <div className="mt-4 flex flex-row justify-end gap-3">
+                      <button
+                        className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
+                        onClick={handleClose}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className={`rounded-lg px-4 py-2 ${
+                          selectedSeries.length > 0
+                            ? 'bg-[#C8F469] text-black'
+                            : 'cursor-not-allowed bg-[#C8F469] bg-opacity-50 text-black'
+                        }`}
+                        onClick={() => {
+                          if (selectedSeries.length > 0) {
+                            stepOneHandler();
+                          }
+                        }}
+                        disabled={selectedSeries.length === 0}
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {stepper === 2 && (
+                  <div>
+                    <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
+                    {selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 ? (
+                      <>
+                        {selectedInferenceModel.supportedAdditionalMetadata.map(metadata => (
+                          <div
+                            key={metadata.id}
+                            className="mt-4 flex gap-2"
+                          >
+                            <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
+                              {metadata.name}{' '}
+                              {metadata.required && <span className="ml-1 text-red-500">*</span>}
+                            </div>
+                            {metadata.type === 'boolean' ? (
+                              <select
+                                className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
+                                required={metadata.required}
+                                id={metadata.id}
+                                value={additionalDetails[metadata.id] || 'true'}
+                                onChange={e =>
+                                  handleAdditionalDetailsChange(metadata, e.target.value)
+                                }
+                              >
+                                <option value="true">True</option>
+                                <option value="false">False</option>
+                              </select>
+                            ) : (
+                              <Input
+                                className="h-[43px] w-full"
+                                type={metadata.type}
+                                required={metadata.required}
+                                id={metadata.id}
+                                value={additionalDetails[metadata.id] || ''}
+                                onChange={e =>
+                                  handleAdditionalDetailsChange(metadata, e.target.value)
+                                }
+                                label=""
+                                onFocus={() => {}}
+                                autoFocus={false}
+                                onKeyPress={() => {}}
+                                disabled={false}
+                              />
+                            )}
+                          </div>
+                        ))}
+                        <div className="mt-3 flex items-center gap-2">
+                          <img
+                            src={informationIcon}
+                            alt="information"
+                            className="h-[15px] w-[15px]"
+                          />
+                          <h1 className="text-[12px] text-white opacity-50">
+                            Additional details required fields should be answered.
+                          </h1>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="my-7 text-center text-white opacity-50">
+                        No additional details found
+                      </div>
+                    )}
+                    {/* actions */}
+                    <div className="mt-5 flex flex-row justify-end gap-3">
+                      <button
+                        disabled={loading}
+                        className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
+                        onClick={() => {
+                          setStepper(1);
+                        }}
+                      >
+                        Back
+                      </button>
+                      <button
+                        disabled={loading}
+                        className="min-w-[100px] rounded-lg bg-[#C8F469] px-4 py-2 text-black disabled:opacity-50"
+                        onClick={() => {
+                          if (validateRequiredFields()) {
+                            applyPredictInferenceModel(
+                              selectedInferenceModel.containerId,
+                              selectedSeries,
+                              additionalDetails,
+                              selectedInferenceModel.outputMode
+                            );
+                          }
+                        }}
+                      >
+                        {loading ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

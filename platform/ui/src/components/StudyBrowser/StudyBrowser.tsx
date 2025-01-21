@@ -15,6 +15,7 @@ import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png';
 import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
 import helpInactive from './../../assets/pacs/icons/help-inactive.png';
 import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx';
+// NOTE: This is a PACS changes
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 const { sortStudySeries } = utils;
@@ -51,6 +52,7 @@ const StudyBrowser = ({
   const { t } = useTranslation('StudyBrowser');
   const { customizationService } = servicesManager?.services || {};
   const { experimentalStudyBrowserSort } = window.config;
+  // NOTE: This is a PACS changes
   const { setDisplaySets } = useGlobalStateData();
 
   // Find the active tab and its display sets
@@ -78,7 +80,6 @@ const StudyBrowser = ({
         if (!experimentalStudyBrowserSort) {
           sortStudySeries(displaySets);
         }
-        const { setDisplaySets } = useGlobalStateData();
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
 
         return (
