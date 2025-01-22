@@ -137,7 +137,7 @@ function ViewerHeader({
         {/* NOTE: Added AIModelButton component */}
         <AIModelButton
           isShowBG={true}
-          positionRight={-90}
+          servicesManager={servicesManager}
           inferenceAvailableModels={inferenceAvailableModels}
           loading={fetchingAvailableModels}
         />
