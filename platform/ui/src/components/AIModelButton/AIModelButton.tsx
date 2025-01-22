@@ -164,7 +164,7 @@ const AIModelButton = ({
   };
 
   // add segmentation
-  const addSegmentation = async (data) => {
+  const addSegmentation = async data => {
     console.log('==servicesManager==addSegmentation==', servicesManager);
     try {
       if (!data?.segmentation) {

@@ -116,7 +116,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             <div className="text-aqua-pale text-xs">{dynamicInfo.label}</div>
           </div>
         )}
-        {/* NOTE: This is a PACS changes */}s
+        {/* NOTE: This is a PACS changes */}
         <div className="ml-4 flex h-6 items-stretch gap-1 rounded border border-none">
           <div
             className={`${fpsButtonClassNames} rounded-l`}
