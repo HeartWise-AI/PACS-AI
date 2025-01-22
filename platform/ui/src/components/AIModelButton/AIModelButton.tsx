@@ -31,13 +31,10 @@ const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62
 const textColor = 'text-white';
 
 const AIModelButton = ({
+  servicesManager,
   className = '',
-  children = '',
-  disabled = false,
   isShowBG = false,
   isShowText = false,
-  positionRight = 0,
-  onClick = () => {},
   inferenceAvailableModels,
   loading,
 }) => {
@@ -57,7 +54,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { modalitiesInStudy, servicesManager } = useGlobalStateData();
+  const { modalitiesInStudy } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
 
@@ -164,8 +161,7 @@ const AIModelButton = ({
   };
 
   // add segmentation
-  const addSegmentation = async (data) => {
-    console.log('==servicesManager==addSegmentation==', servicesManager);
+  const addSegmentation = async data => {
     try {
       if (!data?.segmentation) {
         throw new Error('No segmentation data available');
@@ -370,13 +366,10 @@ const AIModelButton = ({
 };
 
 AIModelButton.propTypes = {
+  servicesManager: PropTypes.object.isRequired,
   className: PropTypes.string,
-  children: PropTypes.node,
-  disabled: PropTypes.bool,
   isShowBG: PropTypes.bool,
   isShowText: PropTypes.bool,
-  positionRight: PropTypes.number,
-  onClick: PropTypes.func,
   inferenceAvailableModels: PropTypes.array.isRequired,
   loading: PropTypes.bool,
 };

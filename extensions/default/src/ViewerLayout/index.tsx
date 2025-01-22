@@ -14,8 +14,6 @@ import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 import { logoutUser } from '@ohif/app/src/service/userService';
 import { Error } from '@ohif/app/src/api/dto';
-// NOTE: This is a PACS changes
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 interface AvailableModelsContextType {
   inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
@@ -47,8 +45,6 @@ function ViewerLayout({
   const { panelService, hangingProtocolService } = servicesManager.services;
   const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false);
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
-  // NOTE: This is a PACS changes
-  const { setServicesManager } = useGlobalStateData();
 
   const hasPanels = useCallback(
     (side): boolean => !!panelService.getPanels(side).length,
@@ -77,14 +73,6 @@ function ViewerLayout({
       document.body.classList.remove('overflow-hidden');
     };
   }, []);
-
-  // NOTE: This is a PACS changes
-  useEffect(() => {
-    if (servicesManager) {
-      console.log('servicesManager', servicesManager);
-      setServicesManager(servicesManager);
-    }
-  }, [servicesManager, setServicesManager]);
 
   const getComponent = id => {
     const entry = extensionManager.getModuleEntry(id);

@@ -314,8 +314,8 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                         {loading && !selectedInferenceModel?.supportedAdditionalMetadata?.length
                           ? '...'
                           : selectedInferenceModel?.supportedAdditionalMetadata?.length
-                          ? 'Continue'
-                          : 'Apply'}
+                            ? 'Continue'
+                            : 'Apply'}
                       </button>
                     </div>
                   </div>
