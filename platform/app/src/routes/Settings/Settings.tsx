@@ -416,6 +416,7 @@ const SettingsPage = () => {
             <Modal
               isOpen={isOpenChangePasswordModal}
               size="max-w-[520px]"
+              isCloseable={true}
               onClose={() => {
                 setIsOpenChangePasswordModal(false);
               }}
