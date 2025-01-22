@@ -1222,6 +1222,7 @@ const WorkspaceSettingsPage = () => {
           <Modal
             isOpen={isOpenAddEditModalityModal}
             size="w-[520px] max-w-[520px]"
+            isCloseable={true}
             onClose={() => {
               setIsAddModality(true);
               setIsOpenAddEditModalityModal(false);
@@ -1306,6 +1307,7 @@ const WorkspaceSettingsPage = () => {
           <Modal
             isOpen={isOpenAddEditInferenceModelModal}
             size="w-[520px] max-w-[520px]"
+            isCloseable={true}
             onClose={() => {
               setIsAddInferenceModel(true);
               setIsOpenAddEditInferenceModelModal(false);
@@ -1706,6 +1708,7 @@ const WorkspaceSettingsPage = () => {
           <Modal
             isOpen={isOpenRemoveModalityModal}
             size="min-w-[400px]"
+            isCloseable={true}
             onClose={() => {
               setIsOpenRemoveModalityModal(false);
             }}
@@ -1748,6 +1751,7 @@ const WorkspaceSettingsPage = () => {
           <Modal
             isOpen={isOpenRemoveInferenceModelModal}
             size="min-w-[400px]"
+            isCloseable={true}
             onClose={() => {
               setIsOpenRemoveInferenceModelModal(false);
             }}
