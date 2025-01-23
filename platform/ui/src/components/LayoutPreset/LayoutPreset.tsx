@@ -21,7 +21,8 @@ function LayoutPreset({
     >
       <Icon
         name={icon}
-        className="group-hover:text-primary-light"
+        // NOTE: This is a PACS changes
+        className="group-hover:text-primary-light text-white/80"
       />
       {title && <div className="font-inter text-sm text-white">{title}</div>}
     </div>

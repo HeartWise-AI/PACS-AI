@@ -148,7 +148,7 @@ const Tooltip = ({
         ref={tooltipRef}
         className={classnames(
           // NOTE: This is a PACS changes
-          'tooltip-box bg-primary-dark border-secondary-light w-max-content relative inset-x-auto top-full rounded border text-base !text-black',
+          'tooltip-box w-max-content relative inset-x-auto top-full rounded border border-white/10 bg-[#151815] text-base !text-white',
           {
             'py-[6px] px-[8px]': !tight,
           },
@@ -156,11 +156,13 @@ const Tooltip = ({
         )}
       >
         <div>{typeof content === 'string' ? t(content) : content}</div>
-        <div className="text-aqua-pale">
+        {/* NOTE: This is a PACS changes */}
+        <div className="text-white/70">
           {typeof secondaryContent === 'string' ? t(secondaryContent) : secondaryContent}
         </div>
         <svg
-          className="text-primary-dark stroke-secondary-light absolute h-4"
+          // NOTE: This is a PACS changes
+          className="absolute h-4 stroke-white/10 text-[#151815]"
           style={arrowPositionStyle[position]}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
