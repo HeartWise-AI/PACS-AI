@@ -468,6 +468,7 @@ const WorkspaceSettingsPage = () => {
       const response = await inferenceRepository.DeleteInferenceModel({ id: inferenceModelId });
       showAlert(response.message, 'success');
       fetchInferenceModels();
+      setIsOpenRemoveInferenceModelModal(false);
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         showAlert(error.message, 'error');
@@ -716,13 +717,12 @@ const WorkspaceSettingsPage = () => {
                   <a
                     className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                     onClick={() => {
-                      setSelectedInferenceModelToRemove(row.id);
-                      setIsOpenRemoveInferenceModelModal(true);
+                      setSelectedModalityToRemove(row.id);
+                      setIsOpenRemoveModalityModal(true);
                       setIsOpen(false);
                     }}
                   >
-                    {' '}
-                    {t('Delete')}{' '}
+                    {t('Delete')}
                   </a>
                 </li>
               </ul>
@@ -848,7 +848,8 @@ const WorkspaceSettingsPage = () => {
                     <a
                       className="block cursor-pointer px-4 py-2 text-red-500 hover:bg-gray-700"
                       onClick={() => {
-                        deleteInferenceModel(row.id);
+                        setSelectedInferenceModelToRemove(row.id);
+                        setIsOpenRemoveInferenceModelModal(true);
                         setIsOpen(false);
                       }}
                     >
@@ -1761,29 +1762,31 @@ const WorkspaceSettingsPage = () => {
                 variant="h6"
                 className="font-light text-white"
               >
-                {t('Remove Modality')}
+                {t('Remove Inference Model')}
               </Typography>
               <Typography
                 variant="body"
                 className="mt-2 font-light text-white text-opacity-70"
               >
-                {t('Are you sure you want to delete ')} {selectedInferenceModelToRemove}?
+                {t('Are you sure you want to delete this model?')}
               </Typography>
 
               <div className="mt-4 flex w-full justify-end">
                 <button
-                  disabled={isRemovingModality}
+                  disabled={deletingInferenceModel}
                   className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
                   onClick={() => setIsOpenRemoveInferenceModelModal(false)}
                 >
-                  {isRemovingModality ? '...' : t('Cancel')}
+                  {deletingInferenceModel ? '...' : t('Cancel')}
                 </button>
                 <button
-                  disabled={isRemovingModality}
+                  disabled={deletingInferenceModel}
                   className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
-                  onClick={removeModality}
+                  onClick={() => {
+                    deleteInferenceModel(selectedInferenceModelToRemove);
+                  }}
                 >
-                  {isRemovingModality ? '...' : t('Confirm')}
+                  {deletingInferenceModel ? '...' : t('Confirm')}
                 </button>
               </div>
             </div>

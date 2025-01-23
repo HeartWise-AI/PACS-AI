@@ -17,6 +17,7 @@ import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
 import { logoutUser } from '../../service/userService';
+import { FrontendVersionContext } from '../../App';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -31,6 +32,7 @@ const SettingsPage = () => {
   const [imageSrc, setImageSrc] = useState('');
   const showAlert = useContext(AlertContext);
   const tenantId = localStorage.getItem('tenantId') || '';
+  const frontendVersion = useContext(FrontendVersionContext);
 
   // Set page title
   useEffect(() => {
@@ -321,13 +323,13 @@ const SettingsPage = () => {
             variant="body"
             className="mt-5 text-center font-light text-white text-opacity-80"
           >
-            {t('v1.0.2')}
+            {frontendVersion}
           </Typography>
           <Typography
             variant="body"
             className="mt-5 text-center font-light text-white text-opacity-80"
           >
-            {t('Last updated: April 26, 2023 10:00 AM')}
+            Last updated: January 23, 2025 1:38PM
           </Typography>
           <div className="mt-5 flex items-end gap-2">
             <Link

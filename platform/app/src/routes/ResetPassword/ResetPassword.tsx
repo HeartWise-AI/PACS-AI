@@ -52,7 +52,7 @@ const ResetPasswordPage = () => {
           </div>
           <div>
             <h1 className="text-center text-base text-white text-opacity-70">
-              {t('© 2024 PACS AI. All rights reserved.')}
+              {t('© 2025 PACS AI. All rights reserved.')}
             </h1>
           </div>
         </div>
