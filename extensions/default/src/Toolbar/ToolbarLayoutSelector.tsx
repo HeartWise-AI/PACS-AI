@@ -182,14 +182,17 @@ function LayoutSelector({
             className="flex"
             ref={dropdownRef}
           >
-            <div className="bg-secondary-dark flex flex-col gap-2.5 p-2">
-              <div className="text-aqua-pale text-xs">Common</div>
+            {/* NOTE: This is a PACS changes */}
+            <div className="flex flex-col gap-2.5 bg-[#151815] p-2">
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-xs text-white">Common</div>
 
               <div className="flex gap-4">
                 {commonPresets.map((preset, index) => (
                   <LayoutPreset
                     key={index}
-                    classNames="hover:bg-primary-dark group p-1 cursor-pointer"
+                    // NOTE: This is a PACS changes
+                    classNames="hover:bg-primary/10 group p-1 cursor-pointer rounded-md"
                     icon={preset.icon}
                     commandOptions={preset.commandOptions}
                     onSelection={onSelection}
@@ -197,15 +200,18 @@ function LayoutSelector({
                 ))}
               </div>
 
-              <div className="h-[2px] bg-black"></div>
+              {/* NOTE: This is a PACS changes */}
+              <div className="h-[2px] bg-white/10"></div>
 
-              <div className="text-aqua-pale text-xs">Advanced</div>
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-xs text-white">Advanced</div>
 
               <div className="flex flex-col gap-2.5">
                 {advancedPresets.map((preset, index) => (
                   <LayoutPreset
                     key={index + commonPresets.length}
-                    classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
+                    // NOTE: This is a PACS changes
+                    classNames="hover:bg-primary/10 group flex gap-2 p-1 cursor-pointer rounded-md"
                     icon={preset.icon}
                     title={preset.title}
                     disabled={preset.disabled}
@@ -216,14 +222,17 @@ function LayoutSelector({
               </div>
             </div>
 
-            <div className="bg-primary-dark flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
-              <div className="text-aqua-pale text-xs">Custom</div>
+            {/* NOTE: This is a PACS changes */}
+            <div className="flex flex-col gap-2.5 border-l-2 border-solid border-white/10 bg-[#151815] p-2">
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-xs text-white">Custom</div>
               <DropdownContent
                 rows={rows}
                 columns={columns}
                 onSelection={onSelection}
               />
-              <p className="text-aqua-pale text-xs leading-tight">
+              {/* NOTE: This is a PACS changes */}
+              <p className="text-xs leading-tight text-white">
                 Hover to select <br></br>rows and columns <br></br> Click to apply
               </p>
             </div>
