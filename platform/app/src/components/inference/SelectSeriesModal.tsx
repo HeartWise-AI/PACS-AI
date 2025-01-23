@@ -192,7 +192,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
             {/* title */}
             <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
             {/* stepper */}
-            {!loading && (
+            {!loading && selectedInferenceModel?.supportedAdditionalMetadata?.length && (
               <div className="flex items-center gap-2">
                 <div
                   className={`h-[5px] w-full rounded-full ${
