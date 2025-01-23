@@ -185,14 +185,14 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
         </span>
 
         <div
-          className={`relative inline-block w-[520px] max-w-[520px] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
+          className={`relative inline-block w-[640px] max-w-[640px] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
         >
           {/* content */}
           <div className="h-auto w-full">
             {/* title */}
             <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
             {/* stepper */}
-            {!loading && selectedInferenceModel?.supportedAdditionalMetadata?.length && (
+            {!loading && selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 && (
               <div className="flex items-center gap-2">
                 <div
                   className={`h-[5px] w-full rounded-full ${
