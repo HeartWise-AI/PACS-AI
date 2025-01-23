@@ -48,6 +48,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   }, []);
 
   useEffect(() => {
+    console.log('==displaySets==', displaySets);
     // set default values when component mounts
     if (selectedInferenceModel?.supportedAdditionalMetadata) {
       const defaultValues = selectedInferenceModel.supportedAdditionalMetadata.reduce(

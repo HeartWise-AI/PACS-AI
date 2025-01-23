@@ -2,6 +2,8 @@ import { imageLoader, metaData, Types } from '@cornerstonejs/core';
 import { SegmentationRepresentations } from '@cornerstonejs/tools/enums';
 import { getLabelmapImageIds } from '@cornerstonejs/tools/segmentation';
 import { ServicesManager } from '@ohif/core';
+import { useToggleOneUpViewportGridStore } from '../../../default/src/stores/useToggleOneUpViewportGridStore';
+import { useViewportGridStore } from '../../../default/src/stores/useViewportGridStore';
 
 /**
  * Generates a color from an index using a perceptually distinct colormap
@@ -57,12 +59,28 @@ export async function addSegmentationFromLabelmap({
   segmentations: { [key: string]: number }; // Dictionary mapping segment labels to labelmap values
 }): Promise<string> {
   const { viewportGridService, displaySetService, segmentationService } = servicesManager.services;
+  const { viewportGridState } = useViewportGridStore.getState();
+  console.log('==========viewportGridState==========', viewportGridService.getState());
+  const numRows = 1;
+  const numCols = 2;
+  await viewportGridService.setLayout({
+    numCols,
+    numRows,
+    layoutOptions: 'grid',
+  });
+
   const { viewports, activeViewportId } = viewportGridService.getState();
   const viewport = viewports.get(activeViewportId);
+  console.log('==servicesManager services==', servicesManager.services);
+  console.log('==activeViewportId==', activeViewportId);
+  console.log('==viewports==', viewports);
+  console.log('==viewport==', viewport);
 
   if (!viewport || !viewport.displaySetInstanceUIDs?.length) {
     throw new Error('No active viewport found');
   }
+  // TODO: get the displaySetInstanceUID from selected series
+  // TODO: get the viewportId of every displaySetInstanceUID(selected series) to be used in segmentationService.addSegmentationRepresentation
 
   const displaySetInstanceUID = viewport.displaySetInstanceUIDs[0];
   const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
