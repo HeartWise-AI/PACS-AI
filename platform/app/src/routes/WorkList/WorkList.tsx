@@ -89,6 +89,11 @@ function WorkList() {
     }
   );
 
+  // Set page title
+  useEffect(() => {
+    document.title = 'Studies - PACS AI';
+  }, []);
+
   /**
    * Effect hook to handle data and error states from the study data query
    * Updates the table data source and study query ID when new data is received
