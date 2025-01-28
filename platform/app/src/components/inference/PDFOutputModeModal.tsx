@@ -97,7 +97,7 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
           {/* content */}
           <div className="h-full w-full">
             <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
-            <div className="space-y-4">
+            <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {/* Display PDF content in an iframe */}
               {loading ? (
                 <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -106,7 +106,7 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
               ) : (
                 <iframe
                   src={pdfUrl}
-                  className="h-[calc(100vh-200px)] w-full bg-white"
+                  className="h-full w-full bg-white"
                   title="PDF Content"
                 />
               )}
