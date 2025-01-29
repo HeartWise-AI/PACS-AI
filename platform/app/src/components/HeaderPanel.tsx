@@ -44,7 +44,7 @@ const HeaderPanel = ({ title }) => {
   };
   return (
     <div className="relative mx-auto w-full pt-5">
-      <div className="mb-1 flex h-auto flex-row justify-between">
+      <div className="mb-1 flex h-full flex-row items-center justify-between">
         <div className="flex-col gap-3">
           <Typography
             variant="h6"

@@ -69,7 +69,7 @@ const AIModelsPage = () => {
               inferenceAvailableModels.map((item, index) => (
                 <div
                   key={index}
-                  className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5"
+                  className="flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5"
                 >
                   <Typography
                     variant="h6"
@@ -84,7 +84,9 @@ const AIModelsPage = () => {
                     {item.modelFacts.en.Summary['Description']}
                   </Typography>
                   {Object.entries(item.modelFacts.en.Summary)
-                    .filter(([key]) => key !== 'Description' && key !== 'Name')
+                    .filter(
+                      ([key, value]) => key !== 'Description' && key !== 'Name' && value !== ''
+                    )
                     .map(([key, value]) => (
                       <div
                         key={key}
@@ -104,12 +106,14 @@ const AIModelsPage = () => {
                         </Typography>
                       </div>
                     ))}
-                  <ButtonGradient
-                    onClick={() => handleSelectModel(item.modelFacts.en)}
-                    className="mt-5 h-[40px] w-full"
-                  >
-                    {t('View More')}
-                  </ButtonGradient>
+                  <div className="mt-auto pt-5">
+                    <ButtonGradient
+                      onClick={() => handleSelectModel(item.modelFacts.en)}
+                      className="h-[40px] w-full"
+                    >
+                      {t('View More')}
+                    </ButtonGradient>
+                  </div>
                 </div>
               ))}
           </div>

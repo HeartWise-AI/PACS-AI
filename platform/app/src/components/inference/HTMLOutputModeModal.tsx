@@ -92,7 +92,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
           {/* content */}
           <div className="h-full w-full">
             <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
-            <div className="space-y-4">
+            <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (
                 <div className="flex h-[calc(100vh-200px)] items-center justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
@@ -100,7 +100,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
               ) : (
                 <iframe
                   srcDoc={parsedHTML}
-                  className="h-[calc(100vh-200px)] w-full bg-white"
+                  className="h-full w-full bg-white"
                   title="HTML Content"
                   sandbox="allow-same-origin allow-scripts"
                 />
