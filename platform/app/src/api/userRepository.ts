@@ -43,7 +43,7 @@ const userRepository = {
    */
   async DeleteTenantUser(request: DeleteTenantUserRequest): Promise<APIResponse<void>> {
     return Api()
-      .delete(`/v1/user/remove`, { data: request })
+      .delete(`/v1/user/${request.userId}/remove`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
