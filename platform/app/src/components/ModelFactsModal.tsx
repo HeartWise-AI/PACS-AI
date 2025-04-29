@@ -31,53 +31,84 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
   const ValidationAndPerfomanceTable = ({ data }) => {
     const { Validation_and_performance } = data;
 
+    if (!Validation_and_performance) {
+      return (
+        <div>
+          <Typography
+            variant="h6"
+            component="h2"
+            className="mb-2 font-medium text-white"
+          >
+            {t('Validation and Perfomance')}
+          </Typography>
+          <p className="text-white font-light">No validation data available</p>
+        </div>
+      );
+    }
+
     const renderTable = (performanceData: {
       [key: string]: { [key: string]: string | number };
-    }) => (
-      <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
-        <thead>
-          <tr>
-            <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
-            {Object.keys(performanceData).map(dataset => (
-              <th
-                key={dataset}
-                className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
-              >
-                {dataset.replace(/_/g, ' ')}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(performanceData[Object.keys(performanceData)[0]]).map(metric => (
-            <tr key={metric}>
-              <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
-                {metric.replace(/_/g, ' ')}
-              </td>
+    }) => {
+      if (!performanceData || Object.keys(performanceData).length === 0) {
+        return <p className="text-white font-light">No performance data available</p>;
+      }
+
+      const firstKey = Object.keys(performanceData)[0];
+      if (!firstKey || !performanceData[firstKey]) {
+        return <p className="text-white font-light">Invalid performance data format</p>;
+      }
+
+      return (
+        <table className="mx-auto mb-4 w-[70%] border-collapse border border-gray-600">
+          <thead>
+            <tr>
+              <th className="w-1/4 border border-gray-600 px-4 py-2"></th>
               {Object.keys(performanceData).map(dataset => (
-                <td
-                  key={dataset + metric}
+                <th
+                  key={dataset}
                   className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
                 >
-                  {performanceData[dataset][metric]}
-                </td>
+                  {dataset.replace(/_/g, ' ')}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+          </thead>
+          <tbody>
+            {Object.keys(performanceData[firstKey]).map(metric => (
+              <tr key={metric}>
+                <td className="w-1/4 border border-gray-600 px-4 py-2 text-base font-medium text-white">
+                  {metric.replace(/_/g, ' ')}
+                </td>
+                {Object.keys(performanceData).map(dataset => (
+                  <td
+                    key={dataset + metric}
+                    className="w-1/4 border border-gray-600 px-4 py-2 text-base text-white"
+                  >
+                    {performanceData[dataset][metric]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
     return (
       <div>
         <Typography
           variant="h6"
+          component="h2"
           className="mb-2 font-medium text-white"
         >
           {t('Validation and Perfomance')}
         </Typography>
-        {Object.keys(Validation_and_performance).map(key => (
-          <div key={key}>{renderTable(Validation_and_performance[key])}</div>
-        ))}
+        {Object.keys(Validation_and_performance).length > 0 ?
+          Object.keys(Validation_and_performance).map(key => (
+            <div key={key}>{renderTable(Validation_and_performance[key])}</div>
+          )) :
+          <p className="text-white font-light">No validation data available</p>
+        }
       </div>
     );
   };
@@ -130,6 +161,7 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       <div className="col-span-1">
                         <Typography
                           variant="h6"
+                          component="h2"
                           className="font-medium text-white"
                         >
                           {t('Model Facts')}
@@ -138,17 +170,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       <div className="col-span-1">
                         <Typography
                           variant="subtitle"
+                          component="p"
                           className="font-light text-white"
                         >
-                          {t('Model Name')}: {data.Summary['Name']}
+                          {t('Model Name')}: {data.Summary && data.Summary['Name']}
                         </Typography>
                       </div>
                       <div className="col-span-1">
                         <Typography
                           variant="subtitle"
+                          component="p"
                           className="font-light text-white"
                         >
-                          {t('Locale')}: {data.Summary['Licensed_to']}
+                          {t('Locale')}: {data.Summary && data.Summary['Licensed_to']}
                         </Typography>
                       </div>
                     </div>
@@ -156,57 +190,64 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       <div className="col-span-1">
                         <Typography
                           variant="subtitle"
+                          component="p"
                           className="font-light text-white"
                         >
-                          {t('Approval Date')}: {data.Summary['Approval_date']}
+                          {t('Approval Date')}: {data.Summary && data.Summary['Approval_date']}
                         </Typography>
                       </div>
                       <div className="col-span-1">
                         <Typography
                           variant="subtitle"
+                          component="p"
                           className="font-light text-white"
                         >
-                          {t('Last Update')}: {data.Summary['Last_update']}
+                          {t('Last Update')}: {data.Summary && data.Summary['Last_update']}
                         </Typography>
                       </div>
                       <div className="col-span-1">
                         <Typography
                           variant="subtitle"
+                          component="p"
                           className="font-light text-white"
                         >
-                          {t('Version')}: {data.Summary['Version']}
+                          {t('Version')}: {data.Summary && data.Summary['Version']}
                         </Typography>
                       </div>
                     </div>
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Summary')}
                       </Typography>
                       <Typography
                         variant="body"
+                        component="p"
                         className="mt-2 font-light text-white"
                       >
-                        {data.Summary['Description']}
+                        {data.Summary && data.Summary['Description']}
                       </Typography>
                     </div>
                     {/* mechanism */}
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Mechanism')}
                       </Typography>
-                      {Object.entries(data.Mechanism).map(([key, value]) => (
+                      {data.Mechanism && Object.entries(data.Mechanism).map(([key, value]) => (
                         <div
                           key={key}
                           className="flex items-center justify-between px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="span"
                             className="pr-2 font-medium text-white"
                           >
                             • {`${key.replace(/_/g, ' ')}`}
@@ -214,6 +255,7 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                           <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
                           <Typography
                             variant="body"
+                            component="span"
                             className="pl-2 text-right font-light text-white"
                           >
                             {`${value}`}
@@ -229,17 +271,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Uses and directions')}
                       </Typography>
-                      {Object.entries(data.Uses_and_directions).map(([key, value]) => (
+                      {data.Uses_and_directions && Object.entries(data.Uses_and_directions).map(([key, value]) => (
                         <div
                           key={key}
                           className="px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="p"
                             className="pr-2 text-white"
                           >
                             <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
@@ -252,17 +296,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Warnings')}
                       </Typography>
-                      {Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
+                      {data.Warnings_and_limitations && Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
                         <div
                           key={key}
                           className="px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="p"
                             className="pr-2 text-white"
                           >
                             <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
@@ -275,17 +321,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Other information')}
                       </Typography>
-                      {Object.entries(data.Other_information).map(([key, value]) => (
+                      {data.Other_information && Object.entries(data.Other_information).map(([key, value]) => (
                         <div
                           key={key}
                           className="px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="p"
                             className="pr-2 text-white"
                           >
                             <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
@@ -298,17 +346,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Other results')}
                       </Typography>
-                      {Object.entries(data.Other_results).map(([key, value]) => (
+                      {data.Other_results && Object.entries(data.Other_results).map(([key, value]) => (
                         <div
                           key={key}
                           className="px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="p"
                             className="pr-2 text-white"
                           >
                             <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
@@ -321,17 +371,19 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                     <div className="border-b border-white border-opacity-10 py-2">
                       <Typography
                         variant="h6"
+                        component="h2"
                         className="font-medium text-white"
                       >
                         {t('Change logs')}
                       </Typography>
-                      {Object.entries(data.Changelogs).map(([key, value]) => (
+                      {data.Changelogs && Object.entries(data.Changelogs).map(([key, value]) => (
                         <div
                           key={key}
                           className="px-4 pt-2"
                         >
                           <Typography
                             variant="body"
+                            component="p"
                             className="pr-2 text-white"
                           >
                             <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
