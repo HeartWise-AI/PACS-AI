@@ -41,7 +41,7 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
           >
             {t('Validation and Perfomance')}
           </Typography>
-          <p className="text-white font-light">No validation data available</p>
+          <p className="font-light text-white">No validation data available</p>
         </div>
       );
     }
@@ -50,12 +50,12 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
       [key: string]: { [key: string]: string | number };
     }) => {
       if (!performanceData || Object.keys(performanceData).length === 0) {
-        return <p className="text-white font-light">No performance data available</p>;
+        return <p className="font-light text-white">No performance data available</p>;
       }
 
       const firstKey = Object.keys(performanceData)[0];
       if (!firstKey || !performanceData[firstKey]) {
-        return <p className="text-white font-light">Invalid performance data format</p>;
+        return <p className="font-light text-white">Invalid performance data format</p>;
       }
 
       return (
@@ -103,12 +103,13 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
         >
           {t('Validation and Perfomance')}
         </Typography>
-        {Object.keys(Validation_and_performance).length > 0 ?
+        {Object.keys(Validation_and_performance).length > 0 ? (
           Object.keys(Validation_and_performance).map(key => (
             <div key={key}>{renderTable(Validation_and_performance[key])}</div>
-          )) :
-          <p className="text-white font-light">No validation data available</p>
-        }
+          ))
+        ) : (
+          <p className="font-light text-white">No validation data available</p>
+        )}
       </div>
     );
   };
@@ -240,28 +241,29 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Mechanism')}
                       </Typography>
-                      {data.Mechanism && Object.entries(data.Mechanism).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="span"
-                            className="pr-2 font-medium text-white"
+                      {data.Mechanism &&
+                        Object.entries(data.Mechanism).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="flex items-center justify-between px-4 pt-2"
                           >
-                            • {`${key.replace(/_/g, ' ')}`}
-                          </Typography>
-                          <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
-                          <Typography
-                            variant="body"
-                            component="span"
-                            className="pl-2 text-right font-light text-white"
-                          >
-                            {`${value}`}
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="span"
+                              className="pr-2 font-medium text-white"
+                            >
+                              • {`${key.replace(/_/g, ' ')}`}
+                            </Typography>
+                            <div className="flex-1 border-b border-dotted border-white border-opacity-70" />
+                            <Typography
+                              variant="body"
+                              component="span"
+                              className="pl-2 text-right font-light text-white"
+                            >
+                              {`${value}`}
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                     {/* validation and performance */}
                     <div className="border-b border-white border-opacity-10 py-2">
@@ -276,21 +278,22 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Uses and directions')}
                       </Typography>
-                      {data.Uses_and_directions && Object.entries(data.Uses_and_directions).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="p"
-                            className="pr-2 text-white"
+                      {data.Uses_and_directions &&
+                        Object.entries(data.Uses_and_directions).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="px-4 pt-2"
                           >
-                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                            <span className="font-light"> {`${value}`}</span>
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="p"
+                              className="pr-2 text-white"
+                            >
+                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                              <span className="font-light"> {`${value}`}</span>
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                     {/* warning and limitations */}
                     <div className="border-b border-white border-opacity-10 py-2">
@@ -301,21 +304,22 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Warnings')}
                       </Typography>
-                      {data.Warnings_and_limitations && Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="p"
-                            className="pr-2 text-white"
+                      {data.Warnings_and_limitations &&
+                        Object.entries(data.Warnings_and_limitations).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="px-4 pt-2"
                           >
-                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                            <span className="font-light"> {`${value}`}</span>
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="p"
+                              className="pr-2 text-white"
+                            >
+                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                              <span className="font-light"> {`${value}`}</span>
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                     {/* other information */}
                     <div className="border-b border-white border-opacity-10 py-2">
@@ -326,21 +330,22 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Other information')}
                       </Typography>
-                      {data.Other_information && Object.entries(data.Other_information).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="p"
-                            className="pr-2 text-white"
+                      {data.Other_information &&
+                        Object.entries(data.Other_information).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="px-4 pt-2"
                           >
-                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                            <span className="font-light"> {`${value}`}</span>
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="p"
+                              className="pr-2 text-white"
+                            >
+                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                              <span className="font-light"> {`${value}`}</span>
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                     {/* other results */}
                     <div className="border-b border-white border-opacity-10 py-2">
@@ -351,21 +356,22 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Other results')}
                       </Typography>
-                      {data.Other_results && Object.entries(data.Other_results).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="p"
-                            className="pr-2 text-white"
+                      {data.Other_results &&
+                        Object.entries(data.Other_results).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="px-4 pt-2"
                           >
-                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                            <span className="font-light"> {`${value}`}</span>
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="p"
+                              className="pr-2 text-white"
+                            >
+                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                              <span className="font-light"> {`${value}`}</span>
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                     {/* change logs */}
                     <div className="border-b border-white border-opacity-10 py-2">
@@ -376,21 +382,22 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
                       >
                         {t('Change logs')}
                       </Typography>
-                      {data.Changelogs && Object.entries(data.Changelogs).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="px-4 pt-2"
-                        >
-                          <Typography
-                            variant="body"
-                            component="p"
-                            className="pr-2 text-white"
+                      {data.Changelogs &&
+                        Object.entries(data.Changelogs).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="px-4 pt-2"
                           >
-                            <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
-                            <span className="font-light"> {`${value}`}</span>
-                          </Typography>
-                        </div>
-                      ))}
+                            <Typography
+                              variant="body"
+                              component="p"
+                              className="pr-2 text-white"
+                            >
+                              <span className="font-medium">• {`${key.replace(/_/g, ' ')}`}:</span>{' '}
+                              <span className="font-light"> {`${value}`}</span>
+                            </Typography>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}
