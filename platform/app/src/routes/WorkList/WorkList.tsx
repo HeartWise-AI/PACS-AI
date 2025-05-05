@@ -111,7 +111,10 @@ function WorkList() {
       // only show error if it occurred during an explicit search
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          // logout user
+          localStorage.removeItem('sessionToken');
+          // redirect to login page (use window.location.href to clear the cache and state, and avoid re-rendering )
+          window.location.href = `/login?t=${tenantId}`;
         }, 3000);
       }
       if (isSearching) {
@@ -137,10 +140,13 @@ function WorkList() {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const fetchDICOMModalities = async () => {
       try {
         const response = await orthancRepository.GetDICOMModalities();
-
+        if (!isMounted) {
+          return;
+        }
         const options = Object.keys(response.data.modalities);
         setModalityOptions(options);
 
@@ -170,11 +176,17 @@ function WorkList() {
           }
         }
       } catch (error) {
+        if (!isMounted) {
+          return;
+        }
         console.error('Error fetching DICOM modalities:', error);
       }
     };
 
     fetchDICOMModalities();
+    return () => {
+      isMounted = false;
+    };
   }, [orthancRepository]);
 
   useEffect(() => {
