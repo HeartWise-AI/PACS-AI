@@ -137,13 +137,10 @@ function WorkList() {
   };
 
   useEffect(() => {
-    let isMounted = true;
     const fetchDICOMModalities = async () => {
       try {
         const response = await orthancRepository.GetDICOMModalities();
-        if (!isMounted) {
-          return;
-        }
+
         const options = Object.keys(response.data.modalities);
         setModalityOptions(options);
 
@@ -173,17 +170,11 @@ function WorkList() {
           }
         }
       } catch (error) {
-        if (!isMounted) {
-          return;
-        }
         console.error('Error fetching DICOM modalities:', error);
       }
     };
 
     fetchDICOMModalities();
-    return () => {
-      isMounted = false;
-    };
   }, [orthancRepository]);
 
   useEffect(() => {
