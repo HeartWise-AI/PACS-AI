@@ -157,6 +157,7 @@ const Menu = (props: MenuProps) => {
         {isMenuVisible && (
           <div
             className={classNames(
+              // NOTE: This is a PACS changes
               'flex select-none flex-col rounded-md bg-[#4C504B] px-1 py-1.5 text-white',
               menuClassName
             )}

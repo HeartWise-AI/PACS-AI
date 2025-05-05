@@ -7,5 +7,6 @@
 }
 
 .all-in-one-menu-item-effects {
+  /* NOTE: This is a PACS changes */
   @apply hover:bg-primary-dark cursor-pointer hover:rounded hover:!text-black;
 }

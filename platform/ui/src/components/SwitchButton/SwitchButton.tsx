@@ -41,6 +41,7 @@ const SwitchButton = ({
           onChange={onHandleChange}
           checked={isInputChecked}
         />
+        {/* NOTE: This is a PACS changes */}
         <div className="switch-button-outer block h-[16px] w-[30px] rounded-full border border-white bg-[#4C504B]"></div>
         <div className="switch-button-dot bg-common-bright absolute left-[4px] top-[3px] h-[10px] w-[10px] rounded-full transition duration-150 ease-in-out"></div>
       </div>
