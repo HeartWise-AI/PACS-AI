@@ -1,7 +1,7 @@
-export const logoutUser = (navigate, tenantId, unauthorizedUser = false) => {
+export const logoutUser = (navigate, tenantId, forcedLogout = false) => {
   localStorage.removeItem('sessionToken');
 
-  if (unauthorizedUser) {
+  if (forcedLogout) {
     // if unauthorized user error, redirect to login page using window.location.href to clear the cache and state, and avoid re-rendering
     window.location.href = `/login?t=${tenantId}`;
   } else {
