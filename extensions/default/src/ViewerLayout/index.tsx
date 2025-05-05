@@ -114,7 +114,7 @@ function ViewerLayout({
           showAlert(error.message, 'error');
 
           setTimeout(() => {
-            logoutUser(navigate, tenantId, true);
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 
