@@ -20,6 +20,7 @@ import newTabActiveIcon from './../assets/pacs/icons/new-tab-active.png';
 
 const Sidebar = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [showExpandedContent, setShowExpandedContent] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
@@ -34,7 +35,18 @@ const Sidebar = () => {
 
   const collapseSidebar = useCallback(() => {
     setSidebarExpanded(false);
+    setShowExpandedContent(false);
   }, []);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (sidebarExpanded) {
+      timeoutId = setTimeout(() => setShowExpandedContent(true), 200); // Adjust delay as needed
+    } else {
+      setShowExpandedContent(false);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [sidebarExpanded]);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -106,25 +118,37 @@ const Sidebar = () => {
     >
       <div className="border-1 flex h-full flex-col justify-between overflow-y-auto overflow-x-hidden rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] px-3 py-4 backdrop-blur-lg">
         <div>
-          <div className="flex items-start justify-between">
-            {sidebarExpanded ? (
-              <Logo class="h-auto w-[117px]" />
-            ) : (
-              <img
-                src={logoIcon}
-                alt="Pacs logo"
-                className="w-[46px]"
-              />
+          <div className="h-[58px]">
+            <div className="flex items-start justify-between">
+              {sidebarExpanded ? (
+                <Logo class="h-[30px] w-auto" />
+              ) : (
+                <img
+                  src={logoIcon}
+                  alt="Pacs logo"
+                  className="w-[46px]"
+                />
+              )}
+            </div>
+            {showExpandedContent && (
+              <div className="flex flex-col">
+                <Typography
+                  variant="caption"
+                  className="mt-1 text-white text-opacity-90 transition-all delay-150 duration-300"
+                  component="span"
+                >
+                  {tenantInfo.name ? `${tenantInfo.name}` : '‎'}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  className="mt-1 text-white text-opacity-70 transition-all delay-150 duration-300"
+                  component="span"
+                >
+                  {tenantInfo.name ? `${tenantInfo.id}` : '‎'}
+                </Typography>
+              </div>
             )}
           </div>
-          {sidebarExpanded && (
-            <Typography
-              variant="caption"
-              className="mt-7 text-white text-opacity-90 transition-all delay-150 duration-300"
-            >
-              {tenantInfo.name ? `${tenantInfo.name} (${tenantInfo.id})` : '‎'}
-            </Typography>
-          )}
           <ul className="mt-5 space-y-2 font-medium">
             <li
               className={`my-2 rounded-lg ${!sidebarExpanded && 'flex justify-center'}`}
@@ -162,7 +186,7 @@ const Sidebar = () => {
                     />
                   )}
 
-                {sidebarExpanded && (
+                {showExpandedContent && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium ${
@@ -170,6 +194,7 @@ const Sidebar = () => {
                         ? 'text-black'
                         : 'text-white text-opacity-50'
                     }`}
+                    component="span"
                   >
                     {t('Studies')}
                   </Typography>
@@ -204,12 +229,13 @@ const Sidebar = () => {
                     className="w-[18px]"
                   />
                 )}
-                {sidebarExpanded && (
+                {showExpandedContent && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium ${
                       isPageActive(`/ai-models`) ? 'text-black' : 'text-white text-opacity-50'
                     }`}
+                    component="span"
                   >
                     {t('AI Models')}
                   </Typography>
@@ -236,7 +262,7 @@ const Sidebar = () => {
                   alt="AI Predictions icon"
                   className="w-[18px]"
                 />
-                {sidebarExpanded && (
+                {showExpandedContent && (
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
@@ -245,6 +271,7 @@ const Sidebar = () => {
                           ? 'text-black'
                           : 'text-white text-opacity-50'
                       }`}
+                      component="span"
                     >
                       {t('AI Predictions')}
                     </Typography>
@@ -271,7 +298,7 @@ const Sidebar = () => {
                     !sidebarExpanded ? 'justify-center' : 'justify-between'
                   }`}
                 >
-                  {sidebarExpanded && (
+                  {showExpandedContent && (
                     <div className="!text-primary-dark font-light"> {t('Admin Console')}</div>
                   )}
                   <img
@@ -284,19 +311,21 @@ const Sidebar = () => {
           )}
           <div
             className={`transition-all duration-300 ${
-              sidebarExpanded ? 'block' : 'hidden'
+              showExpandedContent ? 'block' : 'hidden'
             } mt-4 flex w-full flex-col gap-3 rounded-lg border border-white border-opacity-10 p-4`}
           >
             <div className="flex items-center gap-2">
               <Typography
                 variant="body"
                 className="text-white text-opacity-50"
+                component="span"
               >
                 {t('Backend')}:
               </Typography>
               <Typography
                 variant="body"
                 className="text-white"
+                component="span"
               >
                 {apiInfo.version}
               </Typography>
