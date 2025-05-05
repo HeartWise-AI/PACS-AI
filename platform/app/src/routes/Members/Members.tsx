@@ -91,7 +91,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
 
@@ -213,7 +213,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
 
@@ -243,7 +243,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
 
@@ -262,7 +262,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
 
@@ -291,7 +291,7 @@ const MembersPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
 

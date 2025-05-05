@@ -111,10 +111,7 @@ function WorkList() {
       // only show error if it occurred during an explicit search
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          // logout user
-          localStorage.removeItem('sessionToken');
-          // redirect to login page (use window.location.href to clear the cache and state, and avoid re-rendering )
-          window.location.href = `/login?t=${tenantId}`;
+          logoutUser(navigate, tenantId, true);
         }, 3000);
       }
       if (isSearching) {
@@ -582,7 +579,7 @@ function WorkList() {
 
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantId, true);
         }, 3000);
 
         showAlert(error.message, 'error');
