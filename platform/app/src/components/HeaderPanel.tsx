@@ -22,7 +22,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        logoutUser(navigate, tenantId);
+        logoutUser(navigate, tenantId, false);
       }
     };
 
@@ -123,7 +123,7 @@ const HeaderPanel = ({ title }) => {
                     <a
                       className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
                       onClick={() => {
-                        logoutUser(navigate, tenantId);
+                        logoutUser(navigate, tenantId, false);
                       }}
                     >
                       {t('Logout')}
