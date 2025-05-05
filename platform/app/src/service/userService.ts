@@ -1,4 +1,4 @@
-export const logoutUser = (navigate, tenantId, forcedLogout = false) => {
+export const logoutUser = (navigate, tenantId, forcedLogout = true) => {
   localStorage.removeItem('sessionToken');
 
   if (forcedLogout) {

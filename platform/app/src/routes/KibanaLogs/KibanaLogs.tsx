@@ -120,7 +120,7 @@ const KibanaLogsPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
@@ -165,7 +165,7 @@ const KibanaLogsPage = () => {
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 

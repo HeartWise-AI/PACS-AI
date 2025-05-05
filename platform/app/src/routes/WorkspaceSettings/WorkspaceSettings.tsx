@@ -215,7 +215,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
 
@@ -241,7 +241,7 @@ const WorkspaceSettingsPage = () => {
           showAlert(error.message, 'error');
 
           setTimeout(() => {
-            logoutUser(navigate, tenantId, true);
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
         console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
@@ -274,7 +274,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error('Error fetching inference models:', error);
@@ -291,7 +291,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error('Error fetching inference model info:', error);
@@ -350,7 +350,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error triggering DICOM Echo for modality ${modalityId}:`, error);
@@ -382,7 +382,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error adding modality: ${error}`);
@@ -428,7 +428,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error adding inference model: ${error}`);
@@ -453,7 +453,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error updating inference model: ${error}`);
@@ -474,7 +474,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error deleting inference model: ${error}`);
@@ -504,7 +504,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error starting inference model container: ${error}`);
@@ -525,7 +525,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error stopping inference model container: ${error}`);
@@ -559,7 +559,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error updating modality: ${error}`);
@@ -593,7 +593,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error(`Error removing modality: ${error}`);
@@ -906,7 +906,7 @@ const WorkspaceSettingsPage = () => {
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       setIsOpenModelFactsModal(false);

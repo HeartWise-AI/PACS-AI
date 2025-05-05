@@ -76,7 +76,7 @@ const ChangePasswordPage = () => {
         setIsChangingPassword(false);
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
-            logoutUser(navigate, tenantId, true);
+            logoutUser(navigate, tenantId);
           }, 3000);
         }
 

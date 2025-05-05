@@ -111,7 +111,7 @@ function WorkList() {
       // only show error if it occurred during an explicit search
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       if (isSearching) {
@@ -579,7 +579,7 @@ function WorkList() {
 
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
 
         showAlert(error.message, 'error');

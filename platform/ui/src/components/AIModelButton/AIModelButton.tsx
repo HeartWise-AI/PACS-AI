@@ -147,7 +147,7 @@ const AIModelButton = ({
         showAlert(error.message, 'error');
 
         setTimeout(() => {
-          logoutUser(navigate, tenantId, true);
+          logoutUser(navigate, tenantId);
         }, 3000);
       }
       console.error('Error fetching prediction data:', error);
