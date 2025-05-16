@@ -29,6 +29,9 @@ interface DICOMModalities {
   host: string;
   port: number;
   status: string;
+  targetCFindEnabled: boolean;
+  targetCMoveEnabled: boolean;
+  targetCStoreEnabled: boolean;
 }
 
 enum InferenceContainerStatus {
@@ -101,6 +104,10 @@ const WorkspaceSettingsPage = () => {
     aet: '',
     host: '',
     port: '',
+    status: '',
+    targetCFindEnabled: false,
+    targetCMoveEnabled: false,
+    targetCStoreEnabled: false,
   });
   const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState<string>('');
   const [selectedInferenceModel, setSelectedInferenceModel] = useState<GetInferenceModelResponse>({
@@ -158,6 +165,9 @@ const WorkspaceSettingsPage = () => {
     { text: t('Target AET'), value: 'aet', align: 'left' },
     { text: t('Host'), value: 'host', align: 'left' },
     { text: t('Port'), value: 'port', align: 'left' },
+    { text: t('C-Find'), value: 'targetCFindEnabled', align: 'left' },
+    { text: t('C-Move'), value: 'targetCMoveEnabled', align: 'left' },
+    { text: t('C-Store'), value: 'targetCStoreEnabled', align: 'left' },
     { text: t('Status'), value: 'status', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
@@ -206,6 +216,9 @@ const WorkspaceSettingsPage = () => {
           host: modality.host,
           port: modality.port,
           status: 'Connecting',
+          targetCFindEnabled: modality.targetCFindEnabled,
+          targetCMoveEnabled: modality.targetCMoveEnabled,
+          targetCStoreEnabled: modality.targetCStoreEnabled,
         })
       );
       setDICOMModalities(modalities);
@@ -364,6 +377,16 @@ const WorkspaceSettingsPage = () => {
   };
 
   const addModality = async () => {
+    // check if at least one of the targetCFindEnabled, targetCMoveEnabled, or targetCStoreEnabled is true
+    if (
+      !selectedModality.targetCFindEnabled &&
+      !selectedModality.targetCMoveEnabled &&
+      !selectedModality.targetCStoreEnabled
+    ) {
+      showAlert('At least one of C-Find, C-Move, or C-Store must be enabled', 'error');
+      return;
+    }
+
     setIsAddingModality(true);
     try {
       const response = await orthancRepository.UpdateDICOMModality({
@@ -371,6 +394,9 @@ const WorkspaceSettingsPage = () => {
         aet: selectedModality.aet,
         host: selectedModality.host,
         port: +selectedModality.port,
+        cFindEnabled: selectedModality.targetCFindEnabled,
+        cMoveEnabled: selectedModality.targetCMoveEnabled,
+        cStoreEnabled: selectedModality.targetCStoreEnabled,
       });
       showAlert(response.message, 'success');
       setIsOpenAddEditModalityModal(false);
@@ -540,6 +566,16 @@ const WorkspaceSettingsPage = () => {
    * @param modalityId
    */
   const updateModality = async () => {
+    // check if at least one of the targetCFindEnabled, targetCMoveEnabled, or targetCStoreEnabled is true
+    if (
+      !selectedModality.targetCFindEnabled &&
+      !selectedModality.targetCMoveEnabled &&
+      !selectedModality.targetCStoreEnabled
+    ) {
+      showAlert('At least one of C-Find, C-Move, or C-Store must be enabled', 'error');
+      return;
+    }
+
     setIsUpdatingModality(true);
     try {
       const response = await orthancRepository.UpdateDICOMModality({
@@ -547,6 +583,9 @@ const WorkspaceSettingsPage = () => {
         aet: selectedModality.aet,
         host: selectedModality.host,
         port: +selectedModality.port,
+        cFindEnabled: selectedModality.targetCFindEnabled,
+        cMoveEnabled: selectedModality.targetCMoveEnabled,
+        cStoreEnabled: selectedModality.targetCStoreEnabled,
       });
       showAlert(response.message, 'success');
       setIsOpenAddEditModalityModal(false);
@@ -611,6 +650,10 @@ const WorkspaceSettingsPage = () => {
       aet: '',
       host: '',
       port: '',
+      status: '',
+      targetCFindEnabled: false,
+      targetCMoveEnabled: false,
+      targetCStoreEnabled: false,
     });
   };
 
@@ -991,12 +1034,15 @@ const WorkspaceSettingsPage = () => {
                   className={'max-w-[170px]'}
                 >
                   {(cell, header, row) => {
+                    // aet
                     if (header.value === 'aet') {
                       return <div className="w-[250px] text-white">{cell}</div>;
                     }
+                    // host
                     if (header.value === 'host') {
                       return <div className="w-[200px] text-white">{cell}</div>;
                     }
+                    // port
                     if (header.value === 'port') {
                       return <div className="w-[200px] text-white">{cell}</div>;
                     }
@@ -1030,7 +1076,24 @@ const WorkspaceSettingsPage = () => {
                         </div>
                       );
                     }
-
+                    // targetCFindEnabled
+                    if (header.value === 'targetCFindEnabled') {
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
+                    }
+                    // targetCMoveEnabled
+                    if (header.value === 'targetCMoveEnabled') {
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
+                    }
+                    // targetCStoreEnabled
+                    if (header.value === 'targetCStoreEnabled') {
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
+                    }
                     // action
                     if (header.value === 'action') {
                       return <DICOMActionButton row={row} />;
@@ -1250,7 +1313,7 @@ const WorkspaceSettingsPage = () => {
                     id="modalityId"
                     disabled={!isAddModality}
                     placeholder={t('Modality ID')}
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                     type="text"
                     autoFocus
                     value={selectedModality.id}
@@ -1288,6 +1351,84 @@ const WorkspaceSettingsPage = () => {
                       setSelectedModality({ ...selectedModality, port: e.target.value });
                     }}
                   />
+                  {/* Enabled SCUs */}
+                  <div>
+                    <Typography
+                      variant="body"
+                      className="mb-2 text-white"
+                    >
+                      {t('Enabled SCUs')}
+                    </Typography>
+                    <div className="my-2 flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="tag-c-find"
+                        checked={selectedModality.targetCFindEnabled}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setSelectedModality(prev => ({
+                            ...prev,
+                            targetCFindEnabled: isChecked,
+                          }));
+                        }}
+                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                      />
+                      <Typography
+                        variant="body"
+                        component="label"
+                        htmlFor="tag-c-find"
+                        className="cursor-pointer text-white"
+                      >
+                        {t('C-Find')}
+                      </Typography>
+                    </div>
+                    <div className="my-2 flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="tag-c-move"
+                        checked={selectedModality.targetCMoveEnabled}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setSelectedModality(prev => ({
+                            ...prev,
+                            targetCMoveEnabled: isChecked,
+                          }));
+                        }}
+                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                      />
+                      <Typography
+                        variant="body"
+                        component="label"
+                        htmlFor="tag-c-move"
+                        className="cursor-pointer text-white"
+                      >
+                        {t('C-Move')}
+                      </Typography>
+                    </div>
+                    <div className="my-2 flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="tag-c-store"
+                        checked={selectedModality.targetCStoreEnabled}
+                        onChange={e => {
+                          const isChecked = e.target.checked;
+                          setSelectedModality(prev => ({
+                            ...prev,
+                            targetCStoreEnabled: isChecked,
+                          }));
+                        }}
+                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                      />
+                      <Typography
+                        variant="body"
+                        component="label"
+                        htmlFor="tag-c-store"
+                        className="cursor-pointer text-white"
+                      >
+                        {t('C-Store')}
+                      </Typography>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="mt-5 flex w-full justify-end">

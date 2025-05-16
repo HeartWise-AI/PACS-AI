@@ -63,6 +63,8 @@ export interface GetJobInfoRequest {
 export interface GetDICOMModalitiesResponse {
   modalities: {
     [key: string]: {
+      tenantId: string;
+      modalityId: string;
       aet: string;
       allowEcho: boolean;
       allowFind: boolean;
@@ -75,6 +77,9 @@ export interface GetDICOMModalitiesResponse {
       port: number;
       timeout: number;
       useDicomTLS: boolean;
+      targetCFindEnabled: boolean;
+      targetCMoveEnabled: boolean;
+      targetCStoreEnabled: boolean;
     };
   };
 }
@@ -102,6 +107,9 @@ export interface UpdateDICOMModalityRequest {
   aet: string;
   host: string;
   port: number;
+  cFindEnabled: boolean;
+  cMoveEnabled: boolean;
+  cStoreEnabled: boolean;
 }
 
 export enum JobState {
