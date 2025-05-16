@@ -162,6 +162,9 @@ const orthancRepository = {
         aet: request.aet,
         host: request.host,
         port: request.port,
+        cFindEnabled: request.cFindEnabled,
+        cMoveEnabled: request.cMoveEnabled,
+        cStoreEnabled: request.cStoreEnabled,
       })
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
