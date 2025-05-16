@@ -1078,15 +1078,21 @@ const WorkspaceSettingsPage = () => {
                     }
                     // targetCFindEnabled
                     if (header.value === 'targetCFindEnabled') {
-                      return <div className="w-[100px] text-white">{cell ? 'True' : 'False'}</div>;
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
                     }
                     // targetCMoveEnabled
                     if (header.value === 'targetCMoveEnabled') {
-                      return <div className="w-[100px] text-white">{cell ? 'True' : 'False'}</div>;
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
                     }
                     // targetCStoreEnabled
                     if (header.value === 'targetCStoreEnabled') {
-                      return <div className="w-[100px] text-white">{cell ? 'True' : 'False'}</div>;
+                      return (
+                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
+                      );
                     }
                     // action
                     if (header.value === 'action') {
