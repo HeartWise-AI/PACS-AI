@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState } from 'react';
 import { ServicesManager } from '@ohif/core';
 
 interface GlobalStateContextType {
-  displaySets: any; // TODO: remove this
-  modalitiesInStudy: string; // TODO: remove this
   selectedModalities: { [key: string]: { modality: string; displaySets: any } };
   servicesManager: ServicesManager;
   setDisplaySets: (displaySets: any) => void;
@@ -20,8 +18,6 @@ interface GlobalStateProviderProps {
 
 // create context with initial type definition
 const GlobalStateContext = createContext<GlobalStateContextType>({
-  displaySets: null,
-  modalitiesInStudy: '',
   selectedModalities: {},
   servicesManager: {} as ServicesManager,
   setDisplaySets: () => {},
@@ -40,19 +36,13 @@ export const useGlobalStateData = () => {
 };
 
 export const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({ children }) => {
-  const [displaySets, setDisplaySets] = useState<any>(null);
-  const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
   const [selectedModalities, setSelectedModalities] = useState<{
     [key: string]: { modality: string; displaySets: any };
   }>({});
   const [servicesManager, setServicesManager] = useState<ServicesManager>({} as ServicesManager);
   const value = {
-    displaySets,
-    modalitiesInStudy,
     selectedModalities,
     servicesManager,
-    setDisplaySets,
-    setModalitiesInStudy,
     setSelectedModalities,
     setServicesManager,
   };
