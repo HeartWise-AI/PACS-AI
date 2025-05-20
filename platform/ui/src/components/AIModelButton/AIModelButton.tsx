@@ -92,15 +92,13 @@ const AIModelButton = ({
   const applyPredictInferenceModel = async (
     containerId: string,
     seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => {
     console.log('==outputMode==', outputMode);
     setIsLoading(true);
     setIsOpen(false);
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel(

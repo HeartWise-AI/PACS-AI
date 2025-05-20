@@ -18,6 +18,7 @@ interface SelectSeriesModalProps {
   applyPredictInferenceModel: (
     containerId: string,
     seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => void;
@@ -37,6 +38,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
+  const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
   const [applyToStudy, setApplyToStudy] = useState(false);
   const { selectedModalities } = useGlobalStateData();
   const showAlert = useContext(AlertContext);
@@ -136,6 +138,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
       applyPredictInferenceModel(
         selectedInferenceModel.containerId,
         selectedSeries,
+        studyInstanceUID,
         additionalDetails,
         selectedInferenceModel.outputMode
       );
@@ -230,9 +233,28 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             if (!applyToStudy) {
                               // select all series
                               setSelectedSeries(
-                                Object.entries(selectedModalities).flatMap(([key, value]) =>
-                                  value.displaySets.map(displaySet => displaySet.SeriesInstanceUID)
-                                )
+                                Object.entries(selectedModalities)
+                                  .filter(([_, value]) =>
+                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                      value.modality
+                                    )
+                                  )
+                                  .flatMap(([_, value]) =>
+                                    value.displaySets.map(
+                                      displaySet => displaySet.SeriesInstanceUID
+                                    )
+                                  )
+                              );
+                              setStudyInstanceUID(
+                                Object.entries(selectedModalities)
+                                  .filter(([_, value]) =>
+                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                      value.modality
+                                    )
+                                  )
+                                  .flatMap(([_, value]) =>
+                                    value.displaySets.map(displaySet => displaySet.StudyInstanceUID)
+                                  )[0] || ''
                               );
                             } else {
                               // deselect all series
@@ -276,9 +298,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                   <div
                                     key={displaySet.SeriesInstanceUID || index}
                                     className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                                    onClick={() =>
-                                      toggleSeriesSelection(displaySet.SeriesInstanceUID)
-                                    }
+                                    onClick={() => {
+                                      toggleSeriesSelection(displaySet.SeriesInstanceUID);
+                                      setStudyInstanceUID(displaySet.StudyInstanceUID);
+                                    }}
                                   >
                                     <div className="flex items-center gap-4">
                                       <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
@@ -443,6 +466,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               applyPredictInferenceModel(
                                 selectedInferenceModel.containerId,
                                 selectedSeries,
+                                studyInstanceUID,
                                 additionalDetails,
                                 selectedInferenceModel.outputMode
                               );
