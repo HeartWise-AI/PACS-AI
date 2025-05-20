@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
@@ -33,6 +33,27 @@ const StudyBrowser = ({
   viewPresets,
   onThumbnailContextMenu,
 }: withAppTypes) => {
+  const { setSelectedModalities } = useGlobalStateData();
+
+  useEffect(() => {
+    const tabData = tabs.find(tab => tab.name === activeTabName);
+    if (!tabData) {
+      return;
+    }
+
+    const selectedModalitiesMap = tabData.studies.reduce((acc, { modalities, displaySets }) => {
+      if (modalities) {
+        acc[modalities] = {
+          modality: modalities,
+          displaySets,
+        };
+      }
+      return acc;
+    }, {});
+
+    setSelectedModalities(selectedModalitiesMap);
+  }, [tabs, activeTabName, setSelectedModalities]);
+
   const getTabContent = () => {
     const tabData = tabs.find(tab => tab.name === activeTabName);
     const viewPreset = viewPresets
@@ -42,6 +63,7 @@ const StudyBrowser = ({
     return tabData.studies.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
+
         return (
           <React.Fragment key={studyInstanceUid}>
             <StudyItem

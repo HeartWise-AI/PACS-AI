@@ -15,7 +15,6 @@ import {
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
-  PredictInferenceModelOHIFResponse,
 } from '@ohif/app/src/api/inferenceDTO';
 import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
 import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
@@ -54,7 +53,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { modalitiesInStudy } = useGlobalStateData();
+  const { modalitiesInStudy, selectedModalities } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
 
@@ -259,6 +258,10 @@ const AIModelButton = ({
           >
             {inferenceAvailableModels.length > 0 ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
+                {/* remove test data */}
+                {Object.keys(selectedModalities).map((modality, index) => (
+                  <li key={index}>{modality}</li>
+                ))}
                 {inferenceAvailableModels
                   .filter(model =>
                     model.supportedDicomModalities?.some(modality =>
