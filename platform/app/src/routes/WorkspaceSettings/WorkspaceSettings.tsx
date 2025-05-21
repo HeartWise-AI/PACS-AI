@@ -207,6 +207,7 @@ const WorkspaceSettingsPage = () => {
    */
   const fetchDICOMModalities = useCallback(async () => {
     setLoadingModalities(true);
+    setDICOMModalities([]);
     try {
       const response = await orthancRepository.GetDICOMModalities();
       const modalities = Object.entries(response.data.modalities).map(

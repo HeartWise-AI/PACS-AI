@@ -18,6 +18,7 @@ interface SelectSeriesModalProps {
   applyPredictInferenceModel: (
     containerId: string,
     seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => void;
@@ -37,8 +38,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
+  const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
   const [applyToStudy, setApplyToStudy] = useState(false);
-  const { displaySets } = useGlobalStateData();
+  const { selectedModalities } = useGlobalStateData();
   const showAlert = useContext(AlertContext);
   const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
 
@@ -136,6 +138,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
       applyPredictInferenceModel(
         selectedInferenceModel.containerId,
         selectedSeries,
+        studyInstanceUID,
         additionalDetails,
         selectedInferenceModel.outputMode
       );
@@ -230,7 +233,28 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                             if (!applyToStudy) {
                               // select all series
                               setSelectedSeries(
-                                displaySets.map(series => series.SeriesInstanceUID)
+                                Object.entries(selectedModalities)
+                                  .filter(([_, value]) =>
+                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                      value.modality
+                                    )
+                                  )
+                                  .flatMap(([_, value]) =>
+                                    value.displaySets.map(
+                                      displaySet => displaySet.SeriesInstanceUID
+                                    )
+                                  )
+                              );
+                              setStudyInstanceUID(
+                                Object.entries(selectedModalities)
+                                  .filter(([_, value]) =>
+                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                      value.modality
+                                    )
+                                  )
+                                  .flatMap(([_, value]) =>
+                                    value.displaySets.map(displaySet => displaySet.StudyInstanceUID)
+                                  )[0] || ''
                               );
                             } else {
                               // deselect all series
@@ -249,59 +273,91 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {!displaySets || displaySets.length === 0 ? (
+                        {Object.entries(selectedModalities)
+                          .filter(([_, value]) => {
+                            const modality = value.modality;
+                            return selectedInferenceModel.supportedDicomModalities?.some(
+                              supportedModality =>
+                                modality.includes(supportedModality) ||
+                                supportedModality.includes(modality)
+                            );
+                          })
+                          .every(
+                            ([_, value]) => !value.displaySets || value.displaySets.length === 0
+                          ) ? (
                           <div className="flex h-[200px] items-center justify-center">
                             <p className="text-white opacity-70">No data found</p>
                           </div>
                         ) : (
-                          displaySets.map(series => (
-                            <div
-                              key={series.SeriesInstanceUID}
-                              className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                              onClick={() => toggleSeriesSelection(series.SeriesInstanceUID)}
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
-                                  <img
-                                    src={series.imageSrc}
-                                    alt="series"
-                                    className="h-full w-full rounded-lg object-cover"
-                                  />
-                                </div>
-                                <div className="text-[14px]">
-                                  <h1 className="inline text-[#C8F469]">Series: </h1>
-                                  <h2 className="mr-2 inline text-white">{series.seriesNumber}</h2>
-                                  <img
-                                    src={copyWhiteIcon}
-                                    alt="copy"
-                                    className="ml-1 inline h-[16px] w-[16px]"
-                                  />
-                                  <h3 className="inline text-white"> {series.numInstances}</h3>
-                                  <h4 className="block text-white opacity-70">
-                                    {series.description}
-                                  </h4>
-                                  <h4 className="mt-1 block text-[12px] text-white opacity-70">
-                                    {series.SeriesInstanceUID}
-                                  </h4>
-                                </div>
-                              </div>
-                              <div>
-                                <img
-                                  src={
-                                    selectedSeries.includes(series.SeriesInstanceUID)
-                                      ? checkIcon
-                                      : uncheckIcon
-                                  }
-                                  alt={
-                                    selectedSeries.includes(series.SeriesInstanceUID)
-                                      ? 'check'
-                                      : 'uncheck'
-                                  }
-                                  className="h-[18px] min-w-[18px]"
-                                />
-                              </div>
-                            </div>
-                          ))
+                          <>
+                            {Object.entries(selectedModalities)
+                              .filter(([_, value]) => {
+                                const modality = value.modality;
+                                return selectedInferenceModel.supportedDicomModalities?.some(
+                                  supportedModality =>
+                                    modality.includes(supportedModality) ||
+                                    supportedModality.includes(modality)
+                                );
+                              })
+                              .flatMap(([_, value]) =>
+                                value.displaySets.map((displaySet, index) => (
+                                  <div
+                                    key={index + '-' + displaySet.SeriesInstanceUID}
+                                    className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                                    onClick={() => {
+                                      toggleSeriesSelection(displaySet.SeriesInstanceUID);
+                                      setStudyInstanceUID(displaySet.StudyInstanceUID);
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
+                                        <img
+                                          src={displaySet.imageSrc}
+                                          alt="series"
+                                          className="h-full w-full rounded-lg object-cover"
+                                        />
+                                      </div>
+                                      <div className="text-[14px]">
+                                        <h1 className="inline text-[#C8F469]">Series: </h1>
+                                        <h2 className="mr-2 inline text-white">
+                                          {displaySet.seriesNumber}
+                                        </h2>
+                                        <img
+                                          src={copyWhiteIcon}
+                                          alt="copy"
+                                          className="ml-1 inline h-[16px] w-[16px]"
+                                        />
+                                        <h3 className="inline text-white">
+                                          {' '}
+                                          {displaySet.numInstances}
+                                        </h3>
+                                        <h4 className="block text-white opacity-70">
+                                          {displaySet.description}
+                                        </h4>
+                                        <h4 className="mt-1 block text-[12px] text-white opacity-70">
+                                          {displaySet.SeriesInstanceUID}
+                                        </h4>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <img
+                                        src={
+                                          selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                            ? checkIcon
+                                            : uncheckIcon
+                                        }
+                                        alt={
+                                          selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                            ? 'check'
+                                            : 'uncheck'
+                                        }
+                                        className="h-[18px] min-w-[18px]"
+                                      />
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                          </>
                         )}
                       </div>
                       {/* actions */}
@@ -416,6 +472,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               applyPredictInferenceModel(
                                 selectedInferenceModel.containerId,
                                 selectedSeries,
+                                studyInstanceUID,
                                 additionalDetails,
                                 selectedInferenceModel.outputMode
                               );

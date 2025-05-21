@@ -15,7 +15,6 @@ import {
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
-  PredictInferenceModelOHIFResponse,
 } from '@ohif/app/src/api/inferenceDTO';
 import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
 import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
@@ -54,7 +53,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { modalitiesInStudy } = useGlobalStateData();
+  const { selectedModalities } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
 
@@ -93,15 +92,13 @@ const AIModelButton = ({
   const applyPredictInferenceModel = async (
     containerId: string,
     seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => {
     console.log('==outputMode==', outputMode);
     setIsLoading(true);
     setIsOpen(false);
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
@@ -257,12 +254,20 @@ const AIModelButton = ({
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
-            {inferenceAvailableModels.length > 0 ? (
+            {inferenceAvailableModels.some(model =>
+              model.supportedDicomModalities?.some(modality =>
+                Object.keys(selectedModalities).some(selectedModality =>
+                  selectedModality.includes(modality)
+                )
+              )
+            ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels
                   .filter(model =>
                     model.supportedDicomModalities?.some(modality =>
-                      modalitiesInStudy.includes(modality)
+                      Object.keys(selectedModalities).some(selectedModality =>
+                        selectedModality.includes(modality)
+                      )
                     )
                   )
                   .map((model, index) => (
