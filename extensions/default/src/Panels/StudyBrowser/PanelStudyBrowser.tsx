@@ -346,13 +346,7 @@ function PanelStudyBrowser({
     customMapDisplaySets,
   ]);
 
-  const tabs = createStudyBrowserTabs(
-    // NOTE: This is a PACS changes
-    displaySetService,
-    StudyInstanceUIDs,
-    studyDisplayList,
-    displaySets
-  );
+  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, displaySets);
 
   // TODO: Should not fire this on "close"
   function _handleStudyClick(StudyInstanceUID) {

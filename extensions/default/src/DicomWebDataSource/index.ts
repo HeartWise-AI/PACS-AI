@@ -128,6 +128,7 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
           xhrRequestHeaders.Authorization = authHeaders.Authorization;
         }
 
+        // NOTE: This is a PACS changes
         // override header for DICOM-WEB PROXY
         const token = localStorage.getItem('sessionToken');
         if (token) {
@@ -156,7 +157,7 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
         url: dicomWebConfig.qidoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: getAuthrorizationHeader(), // override
+        headers: getAuthorizationHeader(), // override, NOTE: This is a PACS changes
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
         supportsFuzzyMatching: dicomWebConfig.supportsFuzzyMatching,
       };
@@ -165,7 +166,7 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
         url: dicomWebConfig.wadoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: getAuthrorizationHeader(), // override
+        headers: getAuthorizationHeader(), // override, NOTE: This is a PACS changes
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
         supportsFuzzyMatching: dicomWebConfig.supportsFuzzyMatching,
       };
