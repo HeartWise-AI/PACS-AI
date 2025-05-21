@@ -58,8 +58,9 @@ const closeIconWidth = 30;
 const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
 
+// NOTE: This is a PACS changes
 const baseClasses =
-  'bg-white bg-opacity-[5%] border border-white border-opacity-10 justify-start box-content flex flex-col';
+  'bg-white bg-opacity-[5%] border border-white border-opacity-10 rounded-lg justify-start box-content flex flex-col';
 
 const openStateIconName = {
   left: 'SidePanelCloseLeft',

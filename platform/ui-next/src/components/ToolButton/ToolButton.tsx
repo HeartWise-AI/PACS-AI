@@ -5,8 +5,8 @@ import { Button } from '../Button';
 import { cn } from '../../lib/utils';
 
 const baseClasses = '!rounded-lg inline-flex items-center justify-center';
-const defaultClasses = 'bg-transparent text-foreground/80 hover:bg-background hover:text-highlight';
-const activeClasses = 'bg-highlight text-background hover:!bg-highlight/80';
+const defaultClasses = 'bg-transparent text-foreground/80 hover:bg-primary hover:text-background'; // NOTE: This is a PACS changes
+const activeClasses = 'bg-primary text-background hover:!bg-primary'; // NOTE: This is a PACS changes
 const disabledClasses =
   'text-common-bright hover:bg-primary-dark hover:text-primary-light opacity-40 cursor-not-allowed';
 
@@ -105,9 +105,11 @@ function ToolButton(props: ToolButtonProps) {
           <div className="space-y-1">
             {defaultTooltip && <div className="text-sm">{defaultTooltip}</div>}
             {disabledTooltip ? (
-              <div className="text-muted-foreground text-xs">{disabledTooltip}</div>
+              // NOTE: This is a PACS changes
+              <div className="text-foreground/80 text-xs">{disabledTooltip}</div>
             ) : (
-              tooltip && <div className="text-muted-foreground text-xs">{tooltip}</div>
+              // NOTE: This is a PACS changes
+              tooltip && <div className="text-foreground/80 text-xs">{tooltip}</div>
             )}
           </div>
         )}

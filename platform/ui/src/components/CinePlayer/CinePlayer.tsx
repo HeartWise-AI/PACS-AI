@@ -144,7 +144,8 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             <div className="flex items-center justify-center gap-1">
               <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
                 <span className="inline-block text-right">{`${frameRate} `}</span>
-                <span className="text-aqua-pale whitespace-nowrap text-xs">{' FPS'}</span>
+                {/* NOTE: This is a PACS changes */}
+                <span className="whitespace-nowrap text-xs text-white">{' FPS'}</span>
               </div>
             </div>
           </Tooltip>

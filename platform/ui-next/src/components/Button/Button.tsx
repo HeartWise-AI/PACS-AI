@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary/60 text-primary-foreground hover:bg-primary/100',
+        default: 'bg-primary/60 text-background hover:bg-primary/100', // NOTE: This is a PACS changes
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline:
           'border border-primary/25 bg-background hover:bg-primary/25 text-primary hover:text-primary',

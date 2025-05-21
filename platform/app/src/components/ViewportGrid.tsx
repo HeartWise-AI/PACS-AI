@@ -192,12 +192,7 @@ function ViewerViewportGrid(props: withAppTypes) {
           };
 
           // Check if viewport can display the reference
-          if (
-            viewport.isReferenceViewable?.({
-              viewportId: id,
-              reference,
-            })
-          ) {
+          if (viewport.isReferenceViewable?.({ viewportId: id, reference })) {
             canAnyViewportDisplayMeasurement = true;
           }
         });
@@ -241,9 +236,7 @@ function ViewerViewportGrid(props: withAppTypes) {
           viewportId: viewport.viewportId,
           displaySetInstanceUID: referencedDisplaySetInstanceUID,
           referencedImageId: measurement.referencedImageId,
-          options: {
-            ...measurement.metadata,
-          },
+          options: { ...measurement.metadata },
         });
 
         event.consume();
@@ -446,7 +439,7 @@ function ViewerViewportGrid(props: withAppTypes) {
   return (
     <div
       ref={resizeRef}
-      className="border-input h-[calc(100%-0.25rem)] w-full border"
+      className="h-[calc(100%-0.25rem)] w-full border border-transparent" // NOTE: This is a PACS changes
     >
       <ViewportGrid
         numRows={numRows}

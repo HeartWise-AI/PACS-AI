@@ -17,7 +17,8 @@ const classes = {
   bottomLeft: 'overlay-bottom left-viewport',
 };
 
-function ViewportOverlay({ topLeft, topRight, bottomRight, bottomLeft, color = 'text-highlight' }) {
+// NOTE: This is a PACS changes
+function ViewportOverlay({ topLeft, topRight, bottomRight, bottomLeft, color = 'text-primary' }) {
   const overlay = 'absolute pointer-events-none viewport-overlay';
 
   return (

@@ -24,7 +24,7 @@ interface AvailableModelsContextType {
 
 export const AvailableModelsContext = createContext<AvailableModelsContextType | null>(null);
 
-const resizableHandleClassName = 'mt-[1px] bg-black';
+const resizableHandleClassName = 'mt-[1px] bg-white/10'; // NOTE: This is a PACS changes
 
 function ViewerLayout({
   // From Extension Module Params
@@ -209,13 +209,14 @@ function ViewerLayout({
               servicesManager={servicesManager}
               appConfig={appConfig}
             />
+            {/* NOTE: This is a PACS changes */}
             <div
-              className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden bg-black"
-              style={{ height: 'calc(100vh - 52px' }}
+              className="relative flex w-full flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent"
+              style={{ height: 'calc(100vh - 152px' }}
             >
               <React.Fragment>
                 {showLoadingIndicator && (
-                  <LoadingIndicatorProgress className="h-full w-full bg-black" />
+                  <LoadingIndicatorProgress className="h-full w-full bg-white bg-opacity-[5%]" /> // NOTE: This is a PACS changes
                 )}
                 <ResizablePanelGroup {...resizablePanelGroupProps}>
                   {/* LEFT SIDEPANELS */}
@@ -239,8 +240,9 @@ function ViewerLayout({
                   {/* TOOLBAR + GRID */}
                   <ResizablePanel {...resizableViewportGridPanelProps}>
                     <div className="flex h-full flex-1 flex-col">
+                      {/* NOTE: This is a PACS changes */}
                       <div
-                        className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black"
+                        className="relative flex h-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg"
                         onMouseEnter={handleMouseEnter}
                       >
                         <ViewportGridComp
@@ -283,9 +285,7 @@ function ViewerLayout({
 
 ViewerLayout.propTypes = {
   // From extension module params
-  extensionManager: PropTypes.shape({
-    getModuleEntry: PropTypes.func.isRequired,
-  }).isRequired,
+  extensionManager: PropTypes.shape({ getModuleEntry: PropTypes.func.isRequired }).isRequired,
   commandsManager: PropTypes.instanceOf(CommandsManager),
   servicesManager: PropTypes.object.isRequired,
   // From modes

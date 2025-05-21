@@ -39,7 +39,8 @@ const Header = ({ title, tooltip }) => (
         <div>{tooltip}</div>
       </TooltipContent>
     </Tooltip>
-    <span className="text-muted-foreground text-xs uppercase tracking-wide">{title}</span>
+    {/* NOTE: This is a PACS changes */}
+    <span className="text-foreground/80 text-xs uppercase tracking-wide">{title}</span>
   </div>
 );
 
