@@ -16,8 +16,6 @@ import { useSystem } from '../contextProviders/SystemProvider';
  */
 
 export function createStudyBrowserTabs(
-  // NOTE: This is a PACS changes
-  displaySetService,
   primaryStudyInstanceUIDs,
   studyDisplayList,
   displaySets,

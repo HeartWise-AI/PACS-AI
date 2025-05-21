@@ -14,7 +14,6 @@ import NotFound from './NotFound';
 import buildModeRoutes from './buildModeRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import Members from './Members';
 import KibanaLogs from './KibanaLogs';
 import AIModels from './AIModels';

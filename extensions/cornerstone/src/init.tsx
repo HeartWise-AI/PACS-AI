@@ -365,28 +365,6 @@ const createMetadataWrappedStrategy = (strategyFn: (args: any) => any) => {
   };
 };
 
-/**
- * Creates a wrapped image load strategy with metadata handling
- * @param strategyFn - The image loading strategy function to wrap
- * @returns A wrapped strategy function that handles metadata configuration
- */
-const createMetadataWrappedStrategy = (strategyFn: (args: any) => any) => {
-  return (args: any) => {
-    const clonedConfig = imageRetrieveMetadataProvider.clone();
-    imageRetrieveMetadataProvider.clear();
-
-    try {
-      const result = strategyFn(args);
-      return result;
-    } finally {
-      // Ensure metadata is always restored, even if there's an error
-      setTimeout(() => {
-        imageRetrieveMetadataProvider.restore(clonedConfig);
-      }, 10);
-    }
-  };
-};
-
 function CPUModal() {
   return (
     <div>

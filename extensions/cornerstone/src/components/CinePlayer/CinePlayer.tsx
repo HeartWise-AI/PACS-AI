@@ -267,46 +267,36 @@ function RenderCinePlayer({
     volume.dimensionGroupNumber = dimensionGroupNumber;
   }, []);
 
-      setDynamicInfo({ volumeId, timePointIndex, numTimePoints, label: splittingTag });
-    }, []);
-
-    const updateDynamicInfo = useCallback(props => {
-      const { volumeId, timePointIndex } = props;
-      const volume = cache.getVolume(volumeId, true);
-      volume.timePointIndex = timePointIndex;
-    }, []);
-
-    return (
-      <CinePlayerComponent
-        className="absolute left-1/2 bottom-8 -translate-x-1/2"
-        frameRate={newStackFrameRate}
-        isPlaying={isPlaying}
-        onClose={() => {
-          // also stop the clip
-          cineService.setCine({
-            id: viewportId,
-            isPlaying: false,
-          });
-          cineService.setIsCineEnabled(false);
-          cineService.setViewportCineClosed(viewportId);
-        }}
-        onPlayPauseChange={isPlaying => {
-          cineService.setCine({
-            id: viewportId,
-            isPlaying,
-          });
-        }}
-        onFrameRateChange={frameRate =>
-          cineService.setCine({
-            id: viewportId,
-            frameRate,
-          })
-        }
-        dynamicInfo={dynamicInfo}
-        updateDynamicInfo={updateDynamicInfo}
-      />
-    );
-  }
+  return (
+    <CinePlayerComponent
+      className="absolute left-1/2 bottom-8 -translate-x-1/2"
+      frameRate={newStackFrameRate}
+      isPlaying={isPlaying}
+      onClose={() => {
+        // also stop the clip
+        cineService.setCine({
+          id: viewportId,
+          isPlaying: false,
+        });
+        cineService.setIsCineEnabled(false);
+        cineService.setViewportCineClosed(viewportId);
+      }}
+      onPlayPauseChange={isPlaying => {
+        cineService.setCine({
+          id: viewportId,
+          isPlaying,
+        });
+      }}
+      onFrameRateChange={frameRate =>
+        cineService.setCine({
+          id: viewportId,
+          frameRate,
+        })
+      }
+      dynamicInfo={dynamicInfo}
+      updateDynamicInfo={updateDynamicInfo}
+    />
+  );
 }
 
 export default WrappedCinePlayer;
