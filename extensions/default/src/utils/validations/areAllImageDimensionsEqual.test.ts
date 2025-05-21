@@ -10,7 +10,7 @@ describe('areAllImageDimensionsEqual', () => {
     const instances = [
       { Rows: '512', Columns: '512' },
       { Rows: '512', Columns: '512' },
-      { Rows: '512', Columns: '512' }
+      { Rows: '512', Columns: '512' },
     ];
     expect(areAllImageDimensionsEqual(instances)).toBe(true);
   });
@@ -18,7 +18,7 @@ describe('areAllImageDimensionsEqual', () => {
   it('should return true when comparing string and number dimensions of same value', () => {
     const instances = [
       { Rows: 512, Columns: 512 },
-      { Rows: '512', Columns: '512' }
+      { Rows: '512', Columns: '512' },
     ];
     expect(areAllImageDimensionsEqual(instances)).toBe(true);
   });
@@ -26,7 +26,7 @@ describe('areAllImageDimensionsEqual', () => {
   it('should return false when instances have different dimensions', () => {
     const instances = [
       { Rows: '512', Columns: '512' },
-      { Rows: '256', Columns: '512' }
+      { Rows: '256', Columns: '512' },
     ];
     expect(areAllImageDimensionsEqual(instances)).toBe(false);
   });
@@ -34,7 +34,7 @@ describe('areAllImageDimensionsEqual', () => {
   it('should return false when dimensions are invalid strings', () => {
     const instances = [
       { Rows: '512', Columns: '512' },
-      { Rows: 'invalid', Columns: '512' }
+      { Rows: 'invalid', Columns: '512' },
     ];
     expect(areAllImageDimensionsEqual(instances)).toBe(false);
   });

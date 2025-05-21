@@ -59,7 +59,8 @@
 /* SELECT MONTH PICKER */
 .DateRangePicker_select {
   @apply text-secondary-active border-common-dark cursor-pointer appearance-none rounded border bg-white py-1 pl-2 pr-5 text-base; /* NEEDED FOR ARROW DOWN */
-  background-image: linear-gradient(45deg, transparent 50%, gray 50%),
+  background-image:
+    linear-gradient(45deg, transparent 50%, gray 50%),
     linear-gradient(135deg, gray 50%, transparent 50%);
   background-position:
     calc(100% - 11px) 11px,

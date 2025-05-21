@@ -12,10 +12,15 @@ const interpolateVec3 = (a: number[], b: number[], t: number) => {
   return [a[0] * (1 - t) + b[0] * t, a[1] * (1 - t) + b[1] * t, a[2] * (1 - t) + b[2] * t];
 };
 
-const drawBackground = (canvas: HTMLCanvasElement, range: Range, voiRange: VOIRange, colormap: Colormap) => {
+const drawBackground = (
+  canvas: HTMLCanvasElement,
+  range: Range,
+  voiRange: VOIRange,
+  colormap: Colormap
+) => {
   const context = canvas.getContext('2d');
   if (!context) return;
-  
+
   const { width, height } = canvas;
   const windowWidth = voiRange.max - voiRange.min;
   const rgbPoints = colormap.RGBPoints;
@@ -82,7 +87,7 @@ const drawPolygonHistogram = (
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
   histogram: Histogram,
-  options: { scale: (val: number) => number, fillColor: string, lineColor: string }
+  options: { scale: (val: number) => number; fillColor: string; lineColor: string }
 ) => {
   const xScale = canvas.width / histogram.numBins;
   const { scale } = options;
@@ -114,7 +119,7 @@ const drawBarHistogram = (
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
   histogram: Histogram,
-  options: { scale: (val: number) => number, fillColor: string, lineColor: string }
+  options: { scale: (val: number) => number; fillColor: string; lineColor: string }
 ) => {
   const xScale = canvas.width / histogram.numBins;
   const { scale } = options;
@@ -140,10 +145,10 @@ const drawHistogram = (
   canvas: HTMLCanvasElement,
   histogram: Histogram,
   options: {
-    style: 'polygon' | 'bars',
-    fillColor: string,
-    lineColor: string,
-    scale: (val: number) => number
+    style: 'polygon' | 'bars';
+    fillColor: string;
+    lineColor: string;
+    scale: (val: number) => number;
   }
 ) => {
   const context = canvas.getContext('2d');
@@ -201,10 +206,10 @@ const WindowLevelHistogram = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const context = canvas.getContext('2d');
     if (!context) return;
-    
+
     const fnIdentity = (x: number) => x;
     const options = {
       style,
