@@ -274,11 +274,14 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
                         {Object.entries(selectedModalities)
-                          .filter(([_, value]) =>
-                            selectedInferenceModel.supportedDicomModalities?.includes(
-                              value.modality
-                            )
-                          )
+                          .filter(([_, value]) => {
+                            const modality = value.modality;
+                            return selectedInferenceModel.supportedDicomModalities?.some(
+                              supportedModality =>
+                                modality.includes(supportedModality) ||
+                                supportedModality.includes(modality)
+                            );
+                          })
                           .every(
                             ([_, value]) => !value.displaySets || value.displaySets.length === 0
                           ) ? (
@@ -288,15 +291,18 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                         ) : (
                           <>
                             {Object.entries(selectedModalities)
-                              .filter(([_, value]) =>
-                                selectedInferenceModel.supportedDicomModalities?.includes(
-                                  value.modality
-                                )
-                              )
+                              .filter(([_, value]) => {
+                                const modality = value.modality;
+                                return selectedInferenceModel.supportedDicomModalities?.some(
+                                  supportedModality =>
+                                    modality.includes(supportedModality) ||
+                                    supportedModality.includes(modality)
+                                );
+                              })
                               .flatMap(([_, value]) =>
                                 value.displaySets.map((displaySet, index) => (
                                   <div
-                                    key={displaySet.SeriesInstanceUID || index}
+                                    key={index + '-' + displaySet.SeriesInstanceUID}
                                     className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
                                     onClick={() => {
                                       toggleSeriesSelection(displaySet.SeriesInstanceUID);

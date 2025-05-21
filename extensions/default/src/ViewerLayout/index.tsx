@@ -14,7 +14,7 @@ import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 import { logoutUser } from '@ohif/app/src/service/userService';
 import { Error } from '@ohif/app/src/api/dto';
-
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider'; // NOTE: This is a PACS changes
 interface AvailableModelsContextType {
   inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
   fetchingAvailableModels: boolean;
@@ -41,6 +41,7 @@ function ViewerLayout({
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
     GetInferenceAvailableModelsResponse[]
   >([]);
+  const { setSelectedModalities } = useGlobalStateData(); // NOTE: This is a PACS changes
 
   const { panelService, hangingProtocolService } = servicesManager.services;
   const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false);
@@ -58,6 +59,7 @@ function ViewerLayout({
   // Set page title
   useEffect(() => {
     document.title = 'Viewer - PACS AI';
+    setSelectedModalities({}); // NOTE: This is a PACS changes
   }, []);
 
   /**

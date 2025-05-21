@@ -256,14 +256,18 @@ const AIModelButton = ({
           >
             {inferenceAvailableModels.some(model =>
               model.supportedDicomModalities?.some(modality =>
-                Object.keys(selectedModalities).includes(modality)
+                Object.keys(selectedModalities).some(selectedModality =>
+                  selectedModality.includes(modality)
+                )
               )
             ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels
                   .filter(model =>
                     model.supportedDicomModalities?.some(modality =>
-                      Object.keys(selectedModalities).includes(modality)
+                      Object.keys(selectedModalities).some(selectedModality =>
+                        selectedModality.includes(modality)
+                      )
                     )
                   )
                   .map((model, index) => (

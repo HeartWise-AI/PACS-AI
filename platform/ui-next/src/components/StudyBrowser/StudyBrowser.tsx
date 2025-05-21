@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider'; // NOTE: This is a PACS changes
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
@@ -35,6 +35,7 @@ const StudyBrowser = ({
 }: withAppTypes) => {
   const { setSelectedModalities } = useGlobalStateData();
 
+  // NOTE: This is a PACS changes
   useEffect(() => {
     const tabData = tabs.find(tab => tab.name === activeTabName);
     if (!tabData) {
