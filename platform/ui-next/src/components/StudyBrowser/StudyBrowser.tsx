@@ -4,17 +4,7 @@ import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider'; // NOTE:
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
-
-const getTrackedSeries = displaySets => {
-  let trackedSeries = 0;
-  displaySets.forEach(displaySet => {
-    if (displaySet.isTracked) {
-      trackedSeries++;
-    }
-  });
-
-  return trackedSeries;
-};
+import { ScrollArea } from '../ScrollArea';
 
 const noop = () => {};
 
@@ -31,7 +21,8 @@ const StudyBrowser = ({
   servicesManager,
   showSettings,
   viewPresets,
-  onThumbnailContextMenu,
+  ThumbnailMenuItems,
+  StudyMenuItems,
 }: withAppTypes) => {
   const { setSelectedModalities } = useGlobalStateData();
 
@@ -60,8 +51,7 @@ const StudyBrowser = ({
     const viewPreset = viewPresets
       ? viewPresets.filter(preset => preset.selected)[0]?.id
       : 'thumbnails';
-
-    return tabData.studies.map(
+    return tabData?.studies?.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
 
@@ -74,18 +64,17 @@ const StudyBrowser = ({
               isExpanded={isExpanded}
               displaySets={displaySets}
               modalities={modalities}
-              trackedSeries={getTrackedSeries(displaySets)}
               isActive={isExpanded}
-              onClick={() => {
-                onClickStudy(studyInstanceUid);
-              }}
+              onClick={() => onClickStudy(studyInstanceUid)}
               onClickThumbnail={onClickThumbnail}
               onDoubleClickThumbnail={onDoubleClickThumbnail}
               onClickUntrack={onClickUntrack}
               activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
               data-cy="thumbnail-list"
               viewPreset={viewPreset}
-              onThumbnailContextMenu={onThumbnailContextMenu}
+              ThumbnailMenuItems={ThumbnailMenuItems}
+              StudyMenuItems={StudyMenuItems}
+              StudyInstanceUID={studyInstanceUid}
             />
           </React.Fragment>
         );
@@ -94,24 +83,28 @@ const StudyBrowser = ({
   };
 
   return (
-    <div
-      className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto pt-px"
-      data-cy={'studyBrowser-panel'}
-    >
-      {showSettings && (
-        <div className="w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] px-[8px] py-[10px]">
-          <>
-            <StudyBrowserViewOptions
-              tabs={tabs}
-              onSelectTab={onClickTab}
-              activeTabName={activeTabName}
-            />
-            <StudyBrowserSort servicesManager={servicesManager} />
-          </>
+    <ScrollArea>
+      <div
+        className="bg-bkg-low flex flex-1 flex-col gap-[4px]"
+        data-cy={'studyBrowser-panel'}
+      >
+        <div className="flex flex-col gap-[4px]">
+          {showSettings && (
+            <div className="w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] px-[8px] py-[10px]">
+              <>
+                <StudyBrowserViewOptions
+                  tabs={tabs}
+                  onSelectTab={onClickTab}
+                  activeTabName={activeTabName}
+                />
+                <StudyBrowserSort servicesManager={servicesManager} />
+              </>
+            </div>
+          )}
+          {getTabContent()}
         </div>
-      )}
-      {getTabContent()}
-    </div>
+      </div>
+    </ScrollArea>
   );
 };
 
@@ -166,6 +159,7 @@ StudyBrowser.propTypes = {
       ).isRequired,
     })
   ),
+  StudyMenuItems: PropTypes.func,
 };
 
 export { StudyBrowser };

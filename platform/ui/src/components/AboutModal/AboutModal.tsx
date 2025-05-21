@@ -4,7 +4,7 @@ import detect from 'browser-detect';
 import { useTranslation } from 'react-i18next';
 
 import Typography from '../Typography';
-import Icon from '../Icon';
+import { Icons } from '@ohif/ui-next';
 
 const Link = ({ href, children, showIcon = false }) => {
   return (
@@ -20,12 +20,7 @@ const Link = ({ href, children, showIcon = false }) => {
         className="flex items-center"
       >
         {children}
-        {!!showIcon && (
-          <Icon
-            name="external-link"
-            className="ml-2 w-5 text-white"
-          />
-        )}
+        {!!showIcon && <Icons.ExternalLink className="ml-2 w-5 text-white" />}
       </Typography>
     </a>
   );

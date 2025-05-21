@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import Icon from '../Icon';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { Icons } from '@ohif/ui-next';
 
 const baseClasses =
   'first:border-0 border-t border-white border-opacity-10 cursor-pointer select-none outline-none';
@@ -16,6 +16,7 @@ const StudyItem = ({
   trackedSeries,
   isActive,
   onClick,
+  onClickLaunch,
 }) => {
   const { t } = useTranslation('StudyItem');
   const { setModalitiesInStudy } = useGlobalStateData();
@@ -25,6 +26,17 @@ const StudyItem = ({
       setModalitiesInStudy(modalities);
     }
   }, [modalities, setModalitiesInStudy]);
+
+  const onSetActive = evt => {
+    evt.stopPropagation();
+    onClickLaunch(0);
+    return false;
+  };
+  const onLaunchWindow = evt => {
+    onClickLaunch(1);
+    evt.stopPropagation();
+    return false;
+  };
 
   return (
     <div
@@ -40,13 +52,22 @@ const StudyItem = ({
       <div className="flex flex-1 flex-col px-4 pb-2">
         <div className="flex flex-row items-center justify-between pt-2 pb-2">
           <div className="text-base text-white">{date}</div>
-          <div className="flex flex-row items-center text-base text-white">
-            <Icon
-              name="group-layers"
-              className="mx-2 w-4 text-white"
-            />
+          <div className="flex flex-row items-center text-base text-blue-300">
+            <Icons.GroupLayers className="mx-2 w-4 text-blue-300" />
             {numInstances}
           </div>
+          {!!onClickLaunch && (
+            <div className="items-right flex flex-row text-base text-blue-300">
+              <Icons.Play
+                className="mx-2 w-4 text-blue-300"
+                onClick={onSetActive}
+              />
+              <Icons.LaunchArrow
+                className="mx-2 w-4 text-blue-300"
+                onClick={onLaunchWindow}
+              />
+            </div>
+          )}
         </div>
         <div className="flex flex-row items-center py-1">
           <div className="text-l flex items-center pr-5 text-blue-300">{modalities}</div>
@@ -63,10 +84,7 @@ const StudyItem = ({
                 : 'mx-4 mb-4 rounded-sm'
             )}
           >
-            <Icon
-              name="tracked"
-              className="text-primary-light mr-2 w-4"
-            />
+            <Icons.StatusTracking className="text-primary-light mr-2 w-4" />
             {t('Tracked series', { trackedSeries: trackedSeries })}
           </div>
         </div>

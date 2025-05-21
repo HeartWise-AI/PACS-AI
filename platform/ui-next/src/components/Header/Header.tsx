@@ -29,6 +29,7 @@ interface HeaderProps {
   };
   PatientInfo?: ReactNode;
   Secondary?: ReactNode;
+  UndoRedo?: ReactNode;
 }
 
 function Header({
@@ -39,11 +40,10 @@ function Header({
   isSticky = false,
   WhiteLabeling,
   PatientInfo,
+  UndoRedo,
   Secondary,
   ...props
 }: HeaderProps): ReactNode {
-  const { t } = useTranslation('Header');
-
   const onClickReturn = () => {
     if (isReturnEnabled && onClickReturnButton) {
       onClickReturnButton();
@@ -67,7 +67,7 @@ function Header({
             onClick={onClickReturn}
             data-cy="return-to-work-list"
           >
-            {isReturnEnabled && <Icons.ChevronPatient className="text-primary-active w-8" />}
+            {isReturnEnabled && <Icons.ArrowLeft className="text-primary ml-1 h-7 w-7" />}
             <div className="ml-1">
               {WhiteLabeling?.createLogoComponentFn?.(React, props) || <Icons.OHIFLogo />}
             </div>
@@ -88,7 +88,7 @@ function Header({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-primary-active hover:bg-primary-dark mt-2 h-full w-full"
+                  className="text-primary hover:bg-primary-dark mt-2 h-full w-full"
                 >
                   <Icons.GearSettings />
                 </Button>
@@ -106,7 +106,7 @@ function Header({
                     >
                       {IconComponent && (
                         <span className="flex h-4 w-4 items-center justify-center">
-                          <IconComponent className="h-full w-full" />
+                          <Icons.ByName name={IconComponent.name} />
                         </span>
                       )}
                       <span className="flex-1">{option.title}</span>

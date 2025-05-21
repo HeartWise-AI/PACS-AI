@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import { ErrorBoundary } from '@ohif/ui-next';
 
 // Route Components
@@ -21,6 +21,7 @@ import AIModels from './AIModels';
 import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
+import { routerBase, routerBasename } from '../utils/publicUrl';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -64,15 +65,15 @@ NotFoundStudy.propTypes = {
 // TODO: Include "routes" debug route if dev build
 const bakedInRoutes = [
   {
-    path: '/notfoundserver',
+    path: `/notfoundserver`,
     children: NotFoundServer,
   },
   {
-    path: '/notfoundstudy',
+    path: `/notfoundstudy`,
     children: NotFoundStudy,
   },
   {
-    path: '/debug',
+    path: `/debug`,
     children: Debug,
   },
   {
@@ -80,11 +81,11 @@ const bakedInRoutes = [
     children: TenantNotFound,
   },
   {
-    path: '/local',
+    path: `/local`,
     children: Local.bind(null, { modePath: '' }), // navigate to the worklist
   },
   {
-    path: '/localbasic',
+    path: `/localbasic`,
     children: Local.bind(null, { modePath: 'viewer/dicomlocal' }),
   },
 ];
@@ -99,7 +100,6 @@ const createRoutes = ({
   servicesManager,
   commandsManager,
   hotkeysManager,
-  routerBasename,
   showStudyList,
 }: withAppTypes) => {
   const routes =
@@ -113,6 +113,14 @@ const createRoutes = ({
     }) || [];
 
   const { customizationService } = servicesManager.services;
+
+  const path =
+    routerBasename.length > 1 && routerBasename.endsWith('/')
+      ? routerBasename.substring(0, routerBasename.length - 1)
+      : routerBasename;
+
+  console.log('Registering worklist route', routerBasename, path);
+
   const WorkListRoute = {
     path: `/`,
     children: DataSourceWrapper,
@@ -176,7 +184,8 @@ const createRoutes = ({
     props: { children: Settings, servicesManager, extensionManager },
   };
 
-  const customRoutes = customizationService.getGlobalCustomization('customRoutes');
+  const customRoutes = customizationService.getCustomization('routes.customRoutes');
+
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),

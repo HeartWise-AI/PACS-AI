@@ -64,6 +64,11 @@ const DropdownMenuContent = React.forwardRef<
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      onKeyDown={e => {
+        // Todo: or maybe we just want to prevent arrows?
+        e.stopPropagation();
+        props.onKeyDown?.(e);
+      }}
       className={cn(
         // NOTE: This is a PACS changes
         'z-50 min-w-[8rem] overflow-hidden rounded border border-white/10 bg-[#4C504B] p-1 text-black shadow-md',

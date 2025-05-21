@@ -1,8 +1,7 @@
 import classNames from 'classnames';
 import debounce from 'lodash.debounce';
 import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import Icon from '../Icon';
+import { Icons } from '@ohif/ui-next';
 
 type InputFilterTextProps = {
   className?: string;
@@ -57,7 +56,7 @@ const InputFilterText = ({
     <label className={classNames('relative', className)}>
       {/* NOTE: This is a PACS changes */}
       {/* <span className="absolute inset-y-0 left-0 flex items-center pl-2">
-        <Icon name="icon-search"></Icon>
+        <Icons.Search />
       </span> */}
       <input
         ref={searchInputRef}
@@ -70,14 +69,13 @@ const InputFilterText = ({
         value={filterValue}
       ></input>
       <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-        <Icon
-          name="icon-clear-field"
+        <Icons.Clear
           className={classNames('cursor-pointer', filterValue ? '' : 'hidden')}
           onClick={() => {
             searchInputRef.current.value = '';
             handleFilterTextChanged('');
           }}
-        ></Icon>
+        ></Icons.Clear>
       </span>
     </label>
   );
