@@ -14,7 +14,6 @@ import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 import { logoutUser } from '@ohif/app/src/service/userService';
 import { Error } from '@ohif/app/src/api/dto';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { Onboarding, ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@ohif/ui-next';
 import useResizablePanels from './ResizablePanelsHook'; // NOTE: This is a PACS changes
 interface AvailableModelsContextType {
@@ -47,7 +46,6 @@ function ViewerLayout({
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
     GetInferenceAvailableModelsResponse[]
   >([]); // NOTE: This is a PACS changes
-  const { setSelectedModalities } = useGlobalStateData(); // NOTE: This is a PACS changes
   const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false); // NOTE: This is a PACS changes
 
   const { panelService, hangingProtocolService, customizationService } = servicesManager.services;
@@ -65,7 +63,6 @@ function ViewerLayout({
   // Set page title
   useEffect(() => {
     document.title = 'Viewer - PACS AI';
-    setSelectedModalities({}); // NOTE: This is a PACS changes
   }, []);
 
   const [
