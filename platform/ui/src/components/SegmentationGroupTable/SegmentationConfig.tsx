@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import Icon from '../Icon';
 import InputRange from '../InputRange';
 import CheckBox from '../CheckBox';
 import InputNumber from '../InputNumber';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
+import { Icons } from '@ohif/ui-next';
 
 const getRoundedValue = value => {
   return Math.round(value * 100) / 100;
@@ -138,12 +138,13 @@ const SegmentationConfig = ({
           setRenderFill={setRenderFill}
           setRenderOutline={setRenderOutline}
         />
-        <div className="mx-1 mb-[8px] h-[1px] bg-[#212456]"></div>
+        {/* NOTE: This is a PACS changes */}
+        <div className="mx-1 mb-[8px] h-[1px] bg-[#151815]"></div>
         <div
           onClick={() => setIsMinimized(!isMinimized)}
           className="flex cursor-pointer items-center pl-2 pb-[9px]"
         >
-          <Icon
+          <Icons.ByName
             name="panel-group-open-close"
             className={classNames('h-5 w-5 cursor-pointer text-white transition duration-300', {
               'rotate-90 transform': !isMinimized,

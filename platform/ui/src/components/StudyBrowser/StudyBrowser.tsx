@@ -42,6 +42,7 @@ const StudyBrowser = ({
   onClickThumbnail = noop,
   onDoubleClickThumbnail = noop,
   onClickUntrack = noop,
+  onClickLaunch,
   activeDisplaySetInstanceUIDs,
   servicesManager,
 }: withAppTypes) => {
@@ -75,7 +76,7 @@ const StudyBrowser = ({
 
   const getTabContent = () => {
     const tabData = tabs.find(tab => tab.name === activeTabName);
-    return tabData.studies.map(
+    return tabData?.studies?.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         if (!experimentalStudyBrowserSort) {
           sortStudySeries(displaySets);
@@ -112,6 +113,7 @@ const StudyBrowser = ({
               onClick={() => {
                 onClickStudy(studyInstanceUid);
               }}
+              onClickLaunch={onClickLaunch?.bind(null, studyInstanceUid)}
               data-cy="thumbnail-list"
             />
             {isExpanded && displaySets && (
@@ -146,7 +148,7 @@ const StudyBrowser = ({
             const isActive = activeTabName === name;
             const isDisabled = !studies.length;
             // Apply the contrasting color for brighter button color visibility
-            const classStudyBrowser = customizationService?.getModeCustomization(
+            const classStudyBrowser = customizationService?.getCustomization(
               'class:StudyBrowser'
             ) || {
               true: 'default',

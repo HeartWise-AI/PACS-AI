@@ -104,6 +104,10 @@ module.exports = (env, argv) => {
               ignore: ['**/config/**', '**/html-templates/**', '.DS_Store'],
             },
           },
+          {
+            from: '../../../node_modules/onnxruntime-web/dist',
+            to: `${DIST_DIR}/ort`,
+          },
           // Short term solution to make sure GCloud config is available in output
           // for our docker implementation
           {
@@ -157,6 +161,12 @@ module.exports = (env, argv) => {
       },
       proxy: {
         '/dicomweb': 'http://localhost:5000',
+        '/dicom-microscopy-viewer': {
+          target: 'http://localhost:3000',
+          pathRewrite: {
+            '^/dicom-microscopy-viewer': `/${PUBLIC_URL}/dicom-microscopy-viewer`,
+          },
+        },
       },
       static: [
         {

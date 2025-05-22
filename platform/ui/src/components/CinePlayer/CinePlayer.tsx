@@ -2,10 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import debounce from 'lodash.debounce';
 
-import Icon from '../Icon';
 import Tooltip from '../Tooltip';
 import InputRange from '../InputRange';
-
+import { Icons } from '@ohif/ui-next';
 import './CinePlayer.css';
 
 export type CinePlayerProps = {
@@ -20,8 +19,8 @@ export type CinePlayerProps = {
   onClose: () => void;
   updateDynamicInfo?: () => void;
   dynamicInfo?: {
-    timePointIndex: number;
-    numTimePoints: number;
+    dimensionGroupNumber: number;
+    numDimensionGroups: number;
     label?: string;
   };
 };
@@ -42,7 +41,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
   dynamicInfo = {},
   updateDynamicInfo,
 }) => {
-  const isDynamic = !!dynamicInfo?.numTimePoints;
+  const isDynamic = !!dynamicInfo?.numDimensionGroups;
   const [frameRate, setFrameRate] = useState(defaultFrameRate);
   const debouncedSetFrameRate = useCallback(debounce(onFrameRateChange, 100), [onFrameRateChange]);
 
@@ -60,14 +59,14 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
     setFrameRate(defaultFrameRate);
   }, [defaultFrameRate]);
 
-  const handleTimePointChange = useCallback(
-    (newIndex: number) => {
+  const handleDimensionGroupNumberChange = useCallback(
+    (newGroupNumber: number) => {
       if (isDynamic && dynamicInfo) {
         // Here, you would update the component's state or context that controls the current time point index
         // For demonstration, assuming a hypothetical function that updates the time point index
         updateDynamicInfo({
           ...dynamicInfo,
-          timePointIndex: newIndex,
+          dimensionGroupNumber: newGroupNumber,
         });
       }
     },
@@ -78,10 +77,10 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
     <div className={className}>
       {isDynamic && dynamicInfo && (
         <InputRange
-          value={dynamicInfo.timePointIndex}
-          onChange={handleTimePointChange}
-          minValue={0}
-          maxValue={dynamicInfo.numTimePoints - 1}
+          value={dynamicInfo.dimensionGroupNumber}
+          onChange={handleDimensionGroupNumberChange}
+          minValue={1}
+          maxValue={dynamicInfo.numDimensionGroups}
           step={1}
           containerClassName="mb-3 w-full"
           labelClassName="text-xs text-white"
@@ -99,7 +98,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           'inline-flex select-none items-center gap-2 rounded border border-white/50 bg-[#151515] px-2 py-2'
         }
       >
-        <Icon
+        <Icons.ByName
           name={getPlayPauseIconName()}
           className="active:text-primary-light hover:bg-customblue-300 cursor-pointer text-white hover:rounded"
           onClick={() => onPlayPauseChange(!isPlaying)}
@@ -109,9 +108,9 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
           <div className="min-w-16 max-w-44 flex flex-col text-white">
             {/* Add Tailwind classes for monospace font and center alignment */}
             <div className="text-[11px]">
-              <span className="w-2 text-white">{dynamicInfo.timePointIndex}</span>{' '}
+              <span className="w-2 text-white">{dynamicInfo.dimensionGroupNumber}</span>{' '}
               {/* NOTE: This is a PACS changes */}
-              <span className="text-white/50">{`/${dynamicInfo.numTimePoints}`}</span>
+              <span className="text-text-white/50">{`/${dynamicInfo.numDimensionGroups}`}</span>
             </div>
             <div className="text-aqua-pale text-xs">{dynamicInfo.label}</div>
           </div>
@@ -123,7 +122,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             onClick={() => handleSetFrameRate(frameRate - 1)}
             data-cy={'cine-player-left-arrow'}
           >
-            <Icon name="arrow-left-small" />
+            <Icons.ChevronLeft />
           </div>
           <Tooltip
             position="top"
@@ -145,7 +144,8 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             <div className="flex items-center justify-center gap-1">
               <div className="flex-shrink-0 text-center text-sm leading-[22px] text-white">
                 <span className="inline-block text-right">{`${frameRate} `}</span>
-                <span className="text-aqua-pale whitespace-nowrap text-xs">{' FPS'}</span>
+                {/* NOTE: This is a PACS changes */}
+                <span className="whitespace-nowrap text-xs text-white">{' FPS'}</span>
               </div>
             </div>
           </Tooltip>
@@ -155,11 +155,10 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             onClick={() => handleSetFrameRate(frameRate + 1)}
             data-cy={'cine-player-right-arrow'}
           >
-            <Icon name="arrow-right-small" />
+            <Icons.ChevronRight />
           </div>
         </div>
-        <Icon
-          name="icon-close"
+        <Icons.Close
           className="text-primary-active active:text-primary-light hover:bg-customblue-300 cursor-pointer hover:rounded"
           onClick={onClose}
           data-cy={'cine-player-close'}
@@ -184,8 +183,8 @@ CinePlayer.propTypes = {
   onClose: PropTypes.func,
   isDynamic: PropTypes.bool,
   dynamicInfo: PropTypes.shape({
-    timePointIndex: PropTypes.number,
-    numTimePoints: PropTypes.number,
+    dimensionGroupNumber: PropTypes.number,
+    numDimensionGroups: PropTypes.number,
     label: PropTypes.string,
   }),
 };

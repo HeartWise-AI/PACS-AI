@@ -2,7 +2,7 @@
 // See https://github.com/HeartWise-AI/PACS-AI/commit/31971ad7c70b8bd2e87340c9dd022e85a4c24c13 for unmodified version
 
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { CinePlayer, useCine } from '@ohif/ui';
+import { useCine } from '@ohif/ui-next';
 import { Enums, eventTarget, cache } from '@cornerstonejs/core';
 import { useAppConfig } from '@state';
 import { useLocation } from 'react-router-dom';
@@ -99,13 +99,13 @@ function WrappedCinePlayer({
       // check if the displaySet is dynamic and set the dynamic info
       if (displaySet.isDynamicVolume) {
         const { dynamicVolumeInfo } = displaySet;
-        const numTimePoints = dynamicVolumeInfo.timePoints.length;
+        const numDimensionGroups = dynamicVolumeInfo.timePoints.length;
         const label = dynamicVolumeInfo.splittingTag;
-        const timePointIndex = dynamicVolumeInfo.timePointIndex || 0;
+        const dimensionGroupNumber = dynamicVolumeInfo.dimensionGroupNumber || 1;
         setDynamicInfo({
           volumeId: displaySet.displaySetInstanceUID,
-          timePointIndex,
-          numTimePoints,
+          dimensionGroupNumber,
+          numDimensionGroups,
           label,
         });
       } else {
@@ -205,99 +205,98 @@ function WrappedCinePlayer({
       customizationService={customizationService}
     />
   );
+}
 
-  function RenderCinePlayer({
-    viewportId,
-    cineService,
-    newStackFrameRate,
-    isPlaying,
-    dynamicInfo: dynamicInfoProp,
-    customizationService,
-  }) {
-    const { component: CinePlayerComponent = CinePlayer } =
-      customizationService.get('cinePlayer') ?? {};
+function RenderCinePlayer({
+  viewportId,
+  cineService,
+  newStackFrameRate,
+  isPlaying,
+  dynamicInfo: dynamicInfoProp,
+  customizationService,
+}) {
+  const CinePlayerComponent = customizationService.getCustomization('cinePlayer');
 
-    const [dynamicInfo, setDynamicInfo] = useState(dynamicInfoProp);
+  const [dynamicInfo, setDynamicInfo] = useState(dynamicInfoProp);
 
-    useEffect(() => {
-      setDynamicInfo(dynamicInfoProp);
-    }, [dynamicInfoProp]);
+  useEffect(() => {
+    setDynamicInfo(dynamicInfoProp);
+  }, [dynamicInfoProp]);
 
-    /**
-     * Use effect for handling 4D time index changed
-     */
-    useEffect(() => {
-      if (!dynamicInfo) {
-        return;
-      }
+  /**
+   * Use effect for handling 4D time index changed
+   */
+  useEffect(() => {
+    if (!dynamicInfo) {
+      return;
+    }
 
-      const handleTimePointIndexChange = evt => {
-        const { volumeId, timePointIndex, numTimePoints, splittingTag } = evt.detail;
-        setDynamicInfo({ volumeId, timePointIndex, numTimePoints, label: splittingTag });
-      };
+    const handleDimensionGroupChange = evt => {
+      const { volumeId, dimensionGroupNumber, numDimensionGroups, splittingTag } = evt.detail;
+      setDynamicInfo({ volumeId, dimensionGroupNumber, numDimensionGroups, label: splittingTag });
+    };
 
-      eventTarget.addEventListener(
-        Enums.Events.DYNAMIC_VOLUME_TIME_POINT_INDEX_CHANGED,
-        handleTimePointIndexChange
-      );
-
-      return () => {
-        eventTarget.removeEventListener(
-          Enums.Events.DYNAMIC_VOLUME_TIME_POINT_INDEX_CHANGED,
-          handleTimePointIndexChange
-        );
-      };
-    }, [dynamicInfo]);
-
-    useEffect(() => {
-      if (!dynamicInfo) {
-        return;
-      }
-
-      const { volumeId, timePointIndex, numTimePoints, splittingTag } = dynamicInfo || {};
-      const volume = cache.getVolume(volumeId, true);
-      volume.timePointIndex = timePointIndex;
-
-      setDynamicInfo({ volumeId, timePointIndex, numTimePoints, label: splittingTag });
-    }, []);
-
-    const updateDynamicInfo = useCallback(props => {
-      const { volumeId, timePointIndex } = props;
-      const volume = cache.getVolume(volumeId, true);
-      volume.timePointIndex = timePointIndex;
-    }, []);
-
-    return (
-      <CinePlayerComponent
-        className="absolute left-1/2 bottom-8 -translate-x-1/2"
-        frameRate={newStackFrameRate}
-        isPlaying={isPlaying}
-        onClose={() => {
-          // also stop the clip
-          cineService.setCine({
-            id: viewportId,
-            isPlaying: false,
-          });
-          cineService.setIsCineEnabled(false);
-          cineService.setViewportCineClosed(viewportId);
-        }}
-        onPlayPauseChange={isPlaying => {
-          cineService.setCine({
-            id: viewportId,
-            isPlaying,
-          });
-        }}
-        onFrameRateChange={frameRate =>
-          cineService.setCine({
-            id: viewportId,
-            frameRate,
-          })
-        }
-        dynamicInfo={dynamicInfo}
-        updateDynamicInfo={updateDynamicInfo}
-      />
+    eventTarget.addEventListener(
+      Enums.Events.DYNAMIC_VOLUME_DIMENSION_GROUP_CHANGED,
+      handleDimensionGroupChange
     );
-  }
+
+    return () => {
+      eventTarget.removeEventListener(
+        Enums.Events.DYNAMIC_VOLUME_DIMENSION_GROUP_CHANGED,
+        handleDimensionGroupChange
+      );
+    };
+  }, [dynamicInfo]);
+
+  useEffect(() => {
+    if (!dynamicInfo) {
+      return;
+    }
+
+    const { volumeId, dimensionGroupNumber, numDimensionGroups, splittingTag } = dynamicInfo || {};
+    const volume = cache.getVolume(volumeId, true);
+    volume.dimensionGroupNumber = dimensionGroupNumber;
+
+    setDynamicInfo({ volumeId, dimensionGroupNumber, numDimensionGroups, label: splittingTag });
+  }, []);
+
+  const updateDynamicInfo = useCallback(props => {
+    const { volumeId, dimensionGroupNumber } = props;
+    const volume = cache.getVolume(volumeId, true);
+    volume.dimensionGroupNumber = dimensionGroupNumber;
+  }, []);
+
+  return (
+    <CinePlayerComponent
+      className="absolute left-1/2 bottom-8 -translate-x-1/2"
+      frameRate={newStackFrameRate}
+      isPlaying={isPlaying}
+      onClose={() => {
+        // also stop the clip
+        cineService.setCine({
+          id: viewportId,
+          isPlaying: false,
+        });
+        cineService.setIsCineEnabled(false);
+        cineService.setViewportCineClosed(viewportId);
+      }}
+      onPlayPauseChange={isPlaying => {
+        cineService.setCine({
+          id: viewportId,
+          isPlaying,
+        });
+      }}
+      onFrameRateChange={frameRate =>
+        cineService.setCine({
+          id: viewportId,
+          frameRate,
+        })
+      }
+      dynamicInfo={dynamicInfo}
+      updateDynamicInfo={updateDynamicInfo}
+    />
+  );
 }
 
 export default WrappedCinePlayer;

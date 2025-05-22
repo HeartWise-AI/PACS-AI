@@ -1,3 +1,5 @@
+import { useSystem } from '../contextProviders/SystemProvider';
+
 /**
  *
  * @param {object} displaySetService - Service to manage display sets
@@ -14,13 +16,15 @@
  */
 
 export function createStudyBrowserTabs(
-  // NOTE: This is a PACS changes
-  displaySetService,
   primaryStudyInstanceUIDs,
   studyDisplayList,
   displaySets,
   recentTimeframeMS = 31536000000
 ) {
+  const { servicesManager } = useSystem();
+  const { displaySetService } = servicesManager.services;
+
+  const shouldSortBySeriesUID = process.env.TEST_ENV === 'true';
   const primaryStudies = [];
   const allStudies = [];
 
@@ -28,8 +32,22 @@ export function createStudyBrowserTabs(
     const displaySetsForStudy = displaySets.filter(
       ds => ds.StudyInstanceUID === study.studyInstanceUid
     );
+
+    // sort them by seriesInstanceUID
+    let sortedDisplaySets;
+    if (shouldSortBySeriesUID) {
+      sortedDisplaySets = displaySetsForStudy.sort((a, b) => {
+        const displaySetA = displaySetService.getDisplaySetByUID(a.displaySetInstanceUID);
+        const displaySetB = displaySetService.getDisplaySetByUID(b.displaySetInstanceUID);
+
+        return displaySetA.SeriesInstanceUID.localeCompare(displaySetB.SeriesInstanceUID);
+      });
+    } else {
+      sortedDisplaySets = displaySetsForStudy;
+    }
+
     const tabStudy = Object.assign({}, study, {
-      displaySets: displaySetsForStudy,
+      displaySets: sortedDisplaySets,
     });
 
     // NOTE: This is a PACS changes
@@ -80,6 +98,7 @@ export function createStudyBrowserTabs(
 
     return dateB - dateA;
   };
+
   const tabs = [
     {
       name: 'primary',

@@ -4,13 +4,11 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 
 import NavBar from '../NavBar';
-import Svg from '../Svg';
-import Icon from '../Icon';
 import IconButton from '../IconButton';
 import Dropdown from '../Dropdown';
 import HeaderPatientInfo from '../HeaderPatientInfo';
 import { PatientInfoVisibility } from '../../types/PatientInfoVisibility';
-
+import { Icons } from '@ohif/ui-next';
 function Header({
   children,
   menuOptions,
@@ -49,14 +47,9 @@ function Header({
             onClick={onClickReturn}
             data-cy="return-to-work-list"
           >
-            {isReturnEnabled && (
-              <Icon
-                name="chevron-left"
-                className="text-primary-active w-8"
-              />
-            )}
+            {isReturnEnabled && <Icons.ChevronClosed className="text-primary-active w-8" />}
             <div className="ml-1">
-              {WhiteLabeling?.createLogoComponentFn?.(React, props) || <Svg name="logo-ohif" />}
+              {WhiteLabeling?.createLogoComponentFn?.(React, props) || <Icons.OHIFLogo />}
             </div>
           </div>
         </div>
@@ -86,7 +79,7 @@ function Header({
                 size="initial"
                 className="text-primary-active hover:bg-primary-dark h-full w-full"
               >
-                <Icon name="icon-settings" />
+                <Icons.ByName name="icon-settings" />
               </IconButton>
             </Dropdown>
           </div>

@@ -2,16 +2,13 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 
-import Icon from '../Icon';
 import Thumbnail from '../Thumbnail';
 import Tooltip from '../Tooltip';
 import { StringNumber } from '../../types';
 import { useTranslation } from 'react-i18next';
-import aiModelsIcon from './../../assets/pacs/icons/ai-models-gradient.png';
-import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
-import helpInactive from './../../assets/pacs/icons/help-inactive.png';
-import { AIModelButton } from '@ohif/ui';
+// import { AIModelButton } from '@ohif/ui';
 
+import { Icons } from '@ohif/ui-next';
 // Todo: This class to me feels like it belongs in an extension, not in platform/ui
 // because it is dealing with mode specific components/information
 function ThumbnailTracked({
@@ -52,10 +49,8 @@ function ThumbnailTracked({
             content={
               <div className="flex flex-1 flex-row">
                 <div className="flex-2 flex items-center justify-center pr-4">
-                  <Icon
-                    name="info-link"
-                    className="text-black"
-                  />
+                  {/* NOTE: This is a PACS changes */}
+                  <Icons.InfoLink className="text-black" />
                 </div>
                 <div className="flex flex-1 flex-col">
                   <span>
@@ -67,7 +62,7 @@ function ThumbnailTracked({
               </div>
             }
           >
-            <Icon
+            <Icons.ByName
               name={trackedIcon}
               className="text-primary-light w-5"
             />
@@ -75,10 +70,7 @@ function ThumbnailTracked({
         </div>
         {isTracked && (
           <div onClick={onClickUntrack}>
-            <Icon
-              name="cancel"
-              className="text-primary-active w-4"
-            />
+            <Icons.Cancel className="text-primary-active w-4" />
           </div>
         )}
         {/* TODO: Added AI Models button */}

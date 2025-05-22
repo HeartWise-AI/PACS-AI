@@ -2,10 +2,9 @@ import React, { Component } from 'react';
 import InputRadio from './InputRadio';
 import SelectTreeBreadcrumb from './SelectTreeBreadcrumb';
 import cloneDeep from 'lodash.clonedeep';
-import Icon from '../Icon';
 import Button, { ButtonEnums } from '../Button';
 import { LabelInfo } from '../Labelling/LabellingFlow';
-
+import { Icons } from '@ohif/ui-next';
 interface PropType {
   autoFocus: boolean;
   searchEnabled: boolean;
@@ -169,29 +168,14 @@ export class SelectTree extends Component<PropType> {
 
   headerItem = () => {
     const inputLeftPadding = this.props.items.length > 0 ? 'pl-8' : 'pl-4';
-    const title = this.props.selectTreeFirstTitle;
 
     return (
-      <div className="flex flex-col justify-between border-b-2 border-solid border-black p-4">
-        <div className="text-primary-active m-0 mb-5 p-2 leading-tight">
-          <span className="text-primary-light align-sub text-xl">{title}</span>
-          <div className="float-right">
-            <Icon
-              name="icon-close"
-              className="cursor-pointer"
-              onClick={() => this.props.closePopup()}
-              fill="#a3a3a3"
-            />
-          </div>
-        </div>
+      <div className="flex flex-col justify-between border-b-2 border-solid border-black p-0.5">
         {this.props.searchEnabled && (
           <div className="flex w-full flex-col">
             {this.props.items.length > 0 && (
               <div className="absolute mt-2 mr-2.5 mb-3 ml-3 h-4 w-4">
-                <Icon
-                  name="icon-search"
-                  fill="#a3a3a3"
-                />
+                <Icons.Search fill="#a3a3a3" />
               </div>
             )}
             <input
