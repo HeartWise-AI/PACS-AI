@@ -11,6 +11,10 @@ import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
 interface SeriesInfo {
   SeriesInstanceUID: string;
   info: string;
+  imageSrc?: string; // Added for thumbnail preview
+  seriesDescription?: string;
+  seriesNumber?: string;
+  modality?: string;
 }
 
 // Chat message type
@@ -245,6 +249,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   // Add state for tracking study instance UID consistently
   const [currentStudyInstanceUID, setCurrentStudyInstanceUID] = useState<string>('');
+
+  // Add state for carousel
+  const [carouselPage, setCarouselPage] = useState(0);
+  const seriesPerPage = 3; // Number of series thumbnails to show per page
 
   // Function to update the series information (kept for manual updates)
   const updateSeriesInfo = () => {
@@ -494,9 +502,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         }
 
         matchingSeries.forEach(series => {
+          // Get thumbnail image if available
+          // The thumbnailSrc property is the correct property for thumbnail images
+          const thumbnailImageSrc = series.thumbnailSrc || series.imageSrc || '';
+
           newSeriesInfo.push({
             SeriesInstanceUID: series.SeriesInstanceUID,
-            info: formatSeriesInfo(series)
+            info: formatSeriesInfo(series),
+            imageSrc: thumbnailImageSrc,
+            seriesDescription: series.SeriesDescription || series.seriesDescription || series.description || 'No description',
+            seriesNumber: String(series.SeriesNumber || series.seriesNumber || 'Unknown'),
+            modality: series.Modality || series.modality || 'Unknown'
           });
         });
       }
@@ -507,6 +523,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     // Update the series details with the new selection's info
     setSelectedSeriesDetails(newSeriesInfo);
+
+    // Reset carousel page when new series are selected
+    setCarouselPage(0);
 
     // Update the current series info display with the selected series
     const allSeriesInfo = newSeriesInfo
@@ -526,6 +545,50 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
 
     setIsSeriesModalOpen(false);
+  };
+
+  // Carousel navigation functions
+  const goToPrevPage = () => {
+    setCarouselPage(prev => Math.max(0, prev - 1));
+  };
+
+  const goToNextPage = () => {
+    const maxPage = Math.ceil(selectedSeriesDetails.length / seriesPerPage) - 1;
+    setCarouselPage(prev => Math.min(maxPage, prev + 1));
+  };
+
+  // Get current page items for carousel
+  const getCurrentPageItems = () => {
+    const startIndex = carouselPage * seriesPerPage;
+    return selectedSeriesDetails.slice(startIndex, startIndex + seriesPerPage);
+  };
+
+  // Function to remove a series from selection
+  const removeSeries = (seriesInstanceUID) => {
+    const updatedSelection = selectedSeries.filter(uid => uid !== seriesInstanceUID);
+    const updatedDetails = selectedSeriesDetails.filter(series => series.SeriesInstanceUID !== seriesInstanceUID);
+
+    setSelectedSeries(updatedSelection);
+    setSelectedSeriesDetails(updatedDetails);
+
+    // Update the current series info display
+    const allSeriesInfo = updatedDetails
+      .map(seriesInfo => seriesInfo.info)
+      .join('\n\n');
+
+    setCurrentSeriesInfo(allSeriesInfo);
+
+    // Adjust carousel page if necessary
+    const maxPage = Math.ceil(updatedDetails.length / seriesPerPage) - 1;
+    if (carouselPage > maxPage && maxPage >= 0) {
+      setCarouselPage(maxPage);
+    }
+
+    // If we have a thread ID and study instance UID, upload the updated DICOM payload
+    if (threadId && currentStudyInstanceUID) {
+      uploadDicomPayload(threadId, currentStudyInstanceUID, updatedSelection)
+        .catch(error => console.error('Failed to update DICOM payload:', error));
+    }
   };
 
   // Dummy function for the SelectSeriesModal (since we don't actually apply AI models here)
@@ -737,6 +800,120 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               animation-delay: 0.4s;
             }
 
+            /* Series carousel styling */
+            .series-carousel {
+              background-color: rgba(0, 0, 0, 0.2);
+              border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+              padding: 10px;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+            }
+            .series-carousel-title {
+              font-size: 0.875rem;
+              font-weight: 500;
+              margin-bottom: 8px;
+              color: rgba(255, 255, 255, 0.9);
+            }
+            .series-carousel-container {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .series-carousel-button {
+              background-color: rgba(255, 255, 255, 0.1);
+              border-radius: 50%;
+              width: 28px;
+              height: 28px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+            }
+            .series-carousel-button:hover {
+              background-color: rgba(255, 255, 255, 0.2);
+            }
+            .series-carousel-button:disabled {
+              opacity: 0.3;
+              cursor: not-allowed;
+            }
+            .series-thumbnails {
+              display: flex;
+              flex: 1;
+              overflow-x: hidden;
+              padding: 0 8px;
+              gap: 8px;
+            }
+            .series-thumbnail {
+              position: relative;
+              border-radius: 4px;
+              overflow: hidden;
+              width: calc(33% - 6px);
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              flex-shrink: 0;
+            }
+            .series-thumbnail:hover {
+              border-color: rgba(200, 244, 105, 0.7);
+            }
+            .series-thumbnail img {
+              width: 100%;
+              height: 80px;
+              object-fit: cover;
+              background-color: rgba(0, 0, 0, 0.3);
+            }
+            .series-thumbnail-info {
+              padding: 4px;
+              font-size: 0.75rem;
+              background-color: rgba(0, 0, 0, 0.5);
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .series-thumbnail-remove {
+              position: absolute;
+              top: 2px;
+              right: 2px;
+              background-color: rgba(0, 0, 0, 0.6);
+              border-radius: 50%;
+              width: 20px;
+              height: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              opacity: 0;
+              transition: opacity 0.2s;
+            }
+            .series-thumbnail:hover .series-thumbnail-remove {
+              opacity: 1;
+            }
+            .series-thumbnail-remove:hover {
+              background-color: rgba(255, 0, 0, 0.6);
+            }
+            .series-thumbnail-badge {
+              position: absolute;
+              top: 2px;
+              left: 2px;
+              background-color: rgba(0, 0, 0, 0.6);
+              border-radius: 4px;
+              padding: 2px 4px;
+              font-size: 0.7rem;
+              font-weight: bold;
+            }
+            .series-placeholder {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100px;
+              width: 100%;
+              background-color: rgba(0, 0, 0, 0.2);
+              border-radius: 4px;
+              font-size: 0.75rem;
+              color: rgba(255, 255, 255, 0.7);
+              text-align: center;
+              padding: 8px;
+            }
+
             /* Markdown styling */
             .markdown-content {
               font-size: 0.875rem;
@@ -875,6 +1052,80 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Series Carousel - Only show if there are selected series */}
+          {selectedSeries.length > 0 && (
+            <div className="series-carousel">
+              <div className="series-carousel-title">
+                {t('Selected Series')} ({selectedSeries.length})
+              </div>
+              <div className="series-carousel-container">
+                <button
+                  className="series-carousel-button"
+                  onClick={goToPrevPage}
+                  disabled={carouselPage === 0}
+                  aria-label="Previous series"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <div className="series-thumbnails">
+                  {getCurrentPageItems().length > 0 ? (
+                    getCurrentPageItems().map((series) => (
+                      <div key={series.SeriesInstanceUID} className="series-thumbnail">
+                        <div className="series-thumbnail-badge">
+                          {series.modality} {series.seriesNumber}
+                        </div>
+                        <button
+                          className="series-thumbnail-remove"
+                          onClick={() => removeSeries(series.SeriesInstanceUID)}
+                          aria-label="Remove series"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        {series.imageSrc ? (
+                          <img
+                            src={series.imageSrc}
+                            alt={`Series ${series.seriesNumber}`}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-[80px] w-full items-center justify-center bg-black bg-opacity-30">
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="text-sm font-bold text-[#C8F469]">{series.modality}</span>
+                              <span className="mt-1 text-xs text-white opacity-70">Series {series.seriesNumber}</span>
+                            </div>
+                          </div>
+                        )}
+                        <div className="series-thumbnail-info">
+                          {series.seriesDescription}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="series-placeholder">
+                      {t('No series selected. Click the "+" button to add series to the conversation.')}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  className="series-carousel-button"
+                  onClick={goToNextPage}
+                  disabled={carouselPage >= Math.ceil(selectedSeriesDetails.length / seriesPerPage) - 1 || selectedSeriesDetails.length <= seriesPerPage}
+                  aria-label="Next series"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
