@@ -899,6 +899,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               padding: 2px 4px;
               font-size: 0.7rem;
               font-weight: bold;
+              color: #C8F469;
             }
             .series-placeholder {
               display: flex;
@@ -1007,7 +1008,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             `}
           </style>
           <div
-            className="draggable-header flex justify-between items-center px-4 py-3 border-b border-white border-opacity-10 rounded-t-lg bg-gradient-to-r from-[rgba(40,120,255,0.8)] to-[rgba(0,210,255,0.8)]"
+            className="draggable-header flex justify-between items-center px-4 py-3 border-b border-white border-opacity-10 rounded-t-lg bg-gradient-to-r from-[rgba(100,200,100,0.8)] to-[rgba(200,244,105,0.8)]"
             style={{ cursor: 'grab' }}
           >
             <h2 className="text-white text-lg font-bold">{t('Chat')}</h2>
@@ -1022,11 +1023,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                {selectedSeries.length > 0 && (
-                  <span className="ml-1 text-xs bg-[#C8F469] text-black rounded-full px-2 py-0.5">
-                    {selectedSeries.length}
-                  </span>
-                )}
               </button>
               {/* Clear chat button */}
               <button
@@ -1144,7 +1140,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                     <p className="text-xs mt-1">{errorDetails}</p>
                     <button
                       onClick={handleRetryThreadCreation}
-                      className="mt-2 px-3 py-1 bg-[rgba(40,120,255,0.7)] rounded-md text-white hover:bg-[rgba(40,120,255,0.9)]"
+                      className="mt-2 px-3 py-1 bg-[rgba(100,180,100,0.7)] rounded-md text-white hover:bg-[rgba(100,180,100,0.9)]"
                     >
                       {t('Retry')}
                     </button>
@@ -1160,7 +1156,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
                       message.sender === 'user'
-                        ? 'bg-gradient-to-r from-[rgba(40,120,255,0.7)] to-[rgba(0,210,255,0.7)] text-white'
+                        ? 'bg-gradient-to-r from-[rgba(100,180,100,0.7)] to-[rgba(180,230,100,0.7)] text-white'
                         : 'bg-[#333633] text-white'
                     }`}
                   >
