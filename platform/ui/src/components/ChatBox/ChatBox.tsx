@@ -19,6 +19,7 @@ interface Message {
   text: string;
   sender: 'user' | 'assistant';
   timestamp: Date;
+  isThinking?: boolean; // Added for thinking animation
 }
 
 // Create an interface for the initial series selection prop for the modal
@@ -34,6 +35,179 @@ interface ChatBoxProps {
   messages: Message[];
   onMessagesChange: (messages: Message[]) => void;
   onClearChat: () => void;
+}
+
+// Utility function to parse markdown
+function parseMarkdown(text) {
+  if (!text) return '';
+
+  // Replace ** for bold
+  let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Replace * or _ for italics
+  formatted = formatted.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+
+  // Replace headings with h tags
+  formatted = formatted.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+  formatted = formatted.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+  formatted = formatted.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+
+  // First process ordered lists (important to do this before unordered)
+  let orderedListItems = [];
+  formatted = formatted.replace(/^(\d+)\. (.*?)$/gm, function(match, number, content) {
+    orderedListItems.push(content.trim());
+    return '<!-ORDERED-LIST-ITEM-!>';
+  });
+
+  if (orderedListItems.length > 0) {
+    let olHtml = '<ol>';
+    orderedListItems.forEach(item => {
+      olHtml += `<li>${item}</li>`;
+    });
+    olHtml += '</ol>';
+    formatted = formatted.replace(/<!-ORDERED-LIST-ITEM-!>(\s*<!-ORDERED-LIST-ITEM-!>)*/g, olHtml);
+  }
+
+  // Handle unordered list items
+  let unorderedListMatch = false;
+  formatted = formatted.replace(/^(- |\* |• )(.*?)$/gm, function(match, bullet, content) {
+    unorderedListMatch = true;
+    return `<li>${content.trim()}</li>`;
+  });
+
+  if (unorderedListMatch) {
+    formatted = formatted.replace(/(<li>.*?<\/li>\s*)+/g, '<ul>$&</ul>');
+  }
+
+  // Handle blockquotes
+  formatted = formatted.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+
+  // Handle tables
+  let tableRows = [];
+  let isTable = false;
+  let headerRow = null;
+
+  // Process table by splitting into lines and analyzing
+  const lines = formatted.split('\n');
+  let inTable = false;
+  let tableHtml = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Check if this is a table row (starts and ends with |)
+    if (line.startsWith('|') && line.endsWith('|')) {
+      // Skip separator rows (contains only |, -, and spaces)
+      if (line.replace(/[\|\-\s]/g, '') === '') {
+        continue;
+      }
+
+      if (!inTable) {
+        inTable = true;
+        tableHtml = '<table>';
+      }
+
+      // Parse the row content
+      const cells = line.substring(1, line.length - 1).split('|');
+
+      // Determine if this is a header row (usually the first row)
+      const isHeader = !tableHtml.includes('<tr>');
+
+      // Start row
+      tableHtml += '<tr>';
+
+      // Add cells
+      cells.forEach(cell => {
+        const tag = isHeader ? 'th' : 'td';
+        tableHtml += `<${tag}>${cell.trim()}</${tag}>`;
+      });
+
+      // End row
+      tableHtml += '</tr>';
+
+      // Replace the original line
+      lines[i] = '<!-TABLE-ROW-!>';
+    } else if (inTable) {
+      // End the table when we find a non-table row
+      tableHtml += '</table>';
+      inTable = false;
+
+      // Replace the last table marker
+      for (let j = i - 1; j >= 0; j--) {
+        if (lines[j] === '<!-TABLE-ROW-!>') {
+          lines[j] = tableHtml;
+
+          // Remove other table markers
+          for (let k = j - 1; k >= 0; k--) {
+            if (lines[k] === '<!-TABLE-ROW-!>') {
+              lines[k] = '';
+            } else {
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  // Handle any unclosed table
+  if (inTable) {
+    tableHtml += '</table>';
+
+    // Replace the last table marker
+    for (let j = lines.length - 1; j >= 0; j--) {
+      if (lines[j] === '<!-TABLE-ROW-!>') {
+        lines[j] = tableHtml;
+
+        // Remove other table markers
+        for (let k = j - 1; k >= 0; k--) {
+          if (lines[k] === '<!-TABLE-ROW-!>') {
+            lines[k] = '';
+          } else {
+            break;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  formatted = lines.join('\n');
+
+  // Links
+  formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Code blocks with ```
+  formatted = formatted.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
+
+  // Code blocks with $1 syntax (used in the example)
+  formatted = formatted.replace(/\$1([\w]*)\n([\s\S]*?)\n\$1/g, '<pre><code class="language-$1">$2</code></pre>');
+
+  // Inline code with `
+  formatted = formatted.replace(/`([^`]*?)`/g, '<code>$1</code>');
+
+  // Line breaks with two trailing spaces
+  formatted = formatted.replace(/  \n/g, '<br>\n');
+
+  // Handle paragraphs - looking for double newlines
+  formatted = formatted.replace(/\n\n+/g, '</p><p>');
+
+  // Wrap with paragraph tags if not already starting with HTML tag
+  if (!formatted.match(/^<[a-z]+>/i)) {
+    formatted = '<p>' + formatted + '</p>';
+  }
+
+  // Fix any cases where we might have broken HTML
+  formatted = formatted.replace(/<\/p><p>\s*<(ul|ol|h[1-6]|table|blockquote)/g, '</p><$1');
+  formatted = formatted.replace(/<\/(ul|ol|h[1-6]|table|blockquote)>\s*<p>/g, '</$1>');
+
+  // Replace single newlines with line breaks for remaining text (but not inside code blocks)
+  formatted = formatted.replace(/(<\/code><\/pre>|<pre><code>|<table>|<\/table>)/g, '<!-BLOCK-!>');
+  formatted = formatted.replace(/\n/g, '<br>');
+  formatted = formatted.replace(/<!-BLOCK-!>/g, '$1');
+
+  return formatted;
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({
@@ -58,6 +232,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [selectedSeriesDetails, setSelectedSeriesDetails] = useState<SeriesInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [threadCreationPending, setThreadCreationPending] = useState(false);
+  // Add state for the thinking animation
+  const [thinkingMessageId, setThinkingMessageId] = useState<string | null>(null);
 
   // Add state for thread tracking
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -417,9 +593,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       timestamp: new Date(),
     };
 
-    // Add the user message to the chat
-    const updatedMessages = [...messages, userMessage];
-    onMessagesChange(updatedMessages);
+    // Create a thinking message
+    const thinkingId = (Date.now() + 1).toString();
+    const thinkingMessage: Message = {
+      id: thinkingId,
+      text: 'Thinking...',
+      sender: 'assistant',
+      timestamp: new Date(),
+      isThinking: true,
+    };
+
+    // Add the user message and thinking message to the chat
+    const messagesWithThinking = [...messages, userMessage, thinkingMessage];
+    onMessagesChange(messagesWithThinking);
+    setThinkingMessageId(thinkingId);
     setInputValue('');
     setIsProcessing(true);
 
@@ -427,16 +614,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       // Send the message to the backend
       const responseData = await sendMessage(threadId, savedInput);
 
-      // Add the assistant's response
+      // Remove thinking message and add the assistant's response
       if (responseData && responseData.content) {
         const assistantMessage: Message = {
-          id: responseData.response_id || (Date.now() + 1).toString(), // Use response_id if available
-          text: responseData.content,
+          id: responseData.response_id || (Date.now() + 2).toString(), // Use response_id if available
+          text: responseData.content.trim(), // Trim the content to remove leading/trailing whitespace
           sender: 'assistant',
           timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
         };
 
-        onMessagesChange([...updatedMessages, assistantMessage]);
+        // Filter out the thinking message and add the real response
+        const updatedMessages = messages
+          .concat(userMessage)
+          .filter(msg => msg.id !== thinkingId)
+          .concat(assistantMessage);
+
+        onMessagesChange(updatedMessages);
       } else {
         console.warn('No content in response data:', responseData);
         throw new Error('No response content received');
@@ -444,16 +637,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     } catch (error) {
       console.error('Error handling message submission:', error);
 
-      // Add error message
+      // Add error message, replacing the thinking message
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `Error: ${error.message || 'Unknown error'}. Please try again.`,
+        id: (Date.now() + 2).toString(),
+        text: `Error: ${error.message || 'Unknown error'}. Please try again.`.trim(),
         sender: 'assistant',
         timestamp: new Date(),
       };
 
-      onMessagesChange([...updatedMessages, errorMessage]);
+      // Filter out the thinking message and add the error message
+      const updatedMessages = messages
+        .concat(userMessage)
+        .filter(msg => msg.id !== thinkingId)
+        .concat(errorMessage);
+
+      onMessagesChange(updatedMessages);
     } finally {
+      setThinkingMessageId(null);
       setIsProcessing(false);
     }
   };
@@ -489,6 +689,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     studyInstanceUID: currentStudyInstanceUID
   };
 
+  // CSS for the thinking animation (the dots)
+  const thinkingDotsStyle = {
+    animation: 'thinking-dots 1.4s infinite ease-in-out',
+    display: 'inline-block',
+  };
+
   return (
     <div
       className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white transition-all duration-300 ease-in-out shadow-xl ${
@@ -508,6 +714,121 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     >
       {isOpen && (
         <>
+          <style>
+            {`
+            @keyframes thinking-dots {
+              0%, 20% {
+                opacity: 0.2;
+              }
+              40% {
+                opacity: 1;
+              }
+              60%, 100% {
+                opacity: 0.2;
+              }
+            }
+            .thinking-dot:nth-child(1) {
+              animation-delay: 0s;
+            }
+            .thinking-dot:nth-child(2) {
+              animation-delay: 0.2s;
+            }
+            .thinking-dot:nth-child(3) {
+              animation-delay: 0.4s;
+            }
+
+            /* Markdown styling */
+            .markdown-content {
+              font-size: 0.875rem;
+              line-height: 1.5;
+            }
+            .markdown-content h1,
+            .markdown-content h2,
+            .markdown-content h3,
+            .markdown-content h4,
+            .markdown-content h5,
+            .markdown-content h6 {
+              margin-top: 0.5rem;
+              margin-bottom: 0.5rem;
+              font-weight: 600;
+            }
+            .markdown-content h1 {
+              font-size: 1.25rem;
+            }
+            .markdown-content h2 {
+              font-size: 1.15rem;
+            }
+            .markdown-content h3 {
+              font-size: 1.05rem;
+            }
+            .markdown-content p {
+              margin-bottom: 0.5rem;
+            }
+            .markdown-content ul,
+            .markdown-content ol {
+              margin-left: 1.5rem;
+              margin-bottom: 0.5rem;
+            }
+            .markdown-content ul {
+              list-style-type: disc;
+            }
+            .markdown-content ol {
+              list-style-type: decimal;
+            }
+            .markdown-content li {
+              margin-bottom: 0.25rem;
+            }
+            .markdown-content strong {
+              font-weight: 700;
+            }
+            .markdown-content em {
+              font-style: italic;
+            }
+            .markdown-content code {
+              font-family: monospace;
+              background-color: rgba(0, 0, 0, 0.2);
+              padding: 0.1rem 0.2rem;
+              border-radius: 0.25rem;
+            }
+            .markdown-content pre {
+              background-color: rgba(0, 0, 0, 0.2);
+              padding: 0.5rem;
+              border-radius: 0.25rem;
+              overflow-x: auto;
+              margin-bottom: 0.5rem;
+            }
+            .markdown-content blockquote {
+              border-left: 3px solid rgba(255, 255, 255, 0.3);
+              padding-left: 0.5rem;
+              margin-left: 0.5rem;
+              margin-bottom: 0.5rem;
+              color: rgba(255, 255, 255, 0.8);
+            }
+            .markdown-content a {
+              color: #C8F469;
+              text-decoration: underline;
+            }
+            .markdown-content hr {
+              border: 0;
+              border-top: 1px solid rgba(255, 255, 255, 0.2);
+              margin: 0.5rem 0;
+            }
+            .markdown-content table {
+              border-collapse: collapse;
+              width: 100%;
+              margin-bottom: 0.5rem;
+            }
+            .markdown-content th,
+            .markdown-content td {
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              padding: 0.25rem;
+              text-align: left;
+            }
+            .markdown-content th {
+              background-color: rgba(0, 0, 0, 0.2);
+            }
+            `}
+          </style>
           <div
             className="draggable-header flex justify-between items-center px-4 py-3 border-b border-white border-opacity-10 rounded-t-lg bg-gradient-to-r from-[rgba(40,120,255,0.8)] to-[rgba(0,210,255,0.8)]"
             style={{ cursor: 'grab' }}
@@ -592,7 +913,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         : 'bg-[#333633] text-white'
                     }`}
                   >
-                    <div className="text-sm whitespace-pre-wrap">{message.text}</div>
+                    <div className="text-sm whitespace-pre-wrap">
+                      {message.isThinking ? (
+                        <div>
+                          Thinking
+                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
+                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
+                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
+                        </div>
+                      ) : (
+                        <div
+                          className="markdown-content"
+                          dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text?.trim() || '') }}
+                        />
+                      )}
+                    </div>
                     <div className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
