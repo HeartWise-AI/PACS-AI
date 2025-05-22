@@ -21,6 +21,12 @@ interface Message {
   timestamp: Date;
 }
 
+// Create an interface for the initial series selection prop for the modal
+interface InitialSeriesSelection {
+  selectedSeries: string[];
+  studyInstanceUID: string;
+}
+
 interface ChatBoxProps {
   servicesManager: any;
   isOpen: boolean;
@@ -60,6 +66,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
+
+  // Add state for tracking study instance UID consistently
+  const [currentStudyInstanceUID, setCurrentStudyInstanceUID] = useState<string>('');
 
   // Function to update the series information (kept for manual updates)
   const updateSeriesInfo = () => {
@@ -272,30 +281,40 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   }, [threadId]);
 
-  // Function to handle selecting series - modified to add to existing selection
+  // Function to handle selecting series - modified to replace selection instead of just adding
   const handleSeriesSelected = async (seriesInstanceUIDs) => {
-    // Filter to only include new series that aren't already selected
-    const newSeriesUIDs = seriesInstanceUIDs.filter(uid => !selectedSeries.includes(uid));
-
-    if (newSeriesUIDs.length === 0) {
+    // If no series are selected, just close the modal without any changes
+    if (seriesInstanceUIDs.length === 0) {
       setIsSeriesModalOpen(false);
-      return; // No new series selected
+      return;
     }
 
-    // Get information for the newly selected series
+    // Check if the selection has changed by comparing arrays
+    const selectionChanged =
+      seriesInstanceUIDs.length !== selectedSeries.length ||
+      !seriesInstanceUIDs.every(uid => selectedSeries.includes(uid));
+
+    if (!selectionChanged) {
+      // No changes to the selection, just close the modal
+      setIsSeriesModalOpen(false);
+      return;
+    }
+
+    // Get information for the selected series
     const newSeriesInfo = [];
-    let studyInstanceUID = '';
+    let studyInstanceUID = currentStudyInstanceUID;
 
     // Iterate through all modalities to find the selected series
     for (const modality of Object.values(selectedModalities)) {
       if (modality.displaySets) {
         const matchingSeries = modality.displaySets.filter(
-          series => newSeriesUIDs.includes(series.SeriesInstanceUID)
+          series => seriesInstanceUIDs.includes(series.SeriesInstanceUID)
         );
 
         if (matchingSeries.length > 0 && !studyInstanceUID) {
           // Get studyInstanceUID from the first matching series
           studyInstanceUID = matchingSeries[0].StudyInstanceUID || matchingSeries[0].studyInstanceUID;
+          setCurrentStudyInstanceUID(studyInstanceUID);
         }
 
         matchingSeries.forEach(series => {
@@ -307,18 +326,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       }
     }
 
-    // Update states using functional updates to ensure we have the latest state
-    const updatedSeriesUIDs = [...selectedSeries, ...newSeriesUIDs];
-    const updatedSeriesDetails = [...selectedSeriesDetails, ...newSeriesInfo];
+    // Update the selected series state with the new selection
+    setSelectedSeries(seriesInstanceUIDs);
 
-    // Update the selected series state with all UIDs (existing + new)
-    setSelectedSeries(updatedSeriesUIDs);
+    // Update the series details with the new selection's info
+    setSelectedSeriesDetails(newSeriesInfo);
 
-    // Update the series details with all info (existing + new)
-    setSelectedSeriesDetails(updatedSeriesDetails);
-
-    // Update the current series info display with all selected series
-    const allSeriesInfo = updatedSeriesDetails
+    // Update the current series info display with the selected series
+    const allSeriesInfo = newSeriesInfo
       .map(seriesInfo => seriesInfo.info)
       .join('\n\n');
 
@@ -327,7 +342,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     // If we have a thread ID and study instance UID, upload the DICOM payload
     if (threadId && studyInstanceUID) {
       try {
-        await uploadDicomPayload(threadId, studyInstanceUID, newSeriesUIDs);
+        await uploadDicomPayload(threadId, studyInstanceUID, seriesInstanceUIDs);
         console.log('DICOM payload uploaded successfully');
       } catch (error) {
         console.error('Failed to upload DICOM payload:', error);
@@ -466,6 +481,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     setThreadCreationPending(false);
     setThreadId(null);
     createThread();
+  };
+
+  // Create an initial series selection object for the modal
+  const initialSeriesSelection: InitialSeriesSelection = {
+    selectedSeries: selectedSeries,
+    studyInstanceUID: currentStudyInstanceUID
   };
 
   return (
@@ -656,6 +677,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   }
                 }
               }}
+              initialSeriesSelection={initialSeriesSelection}
             />
           )}
         </>

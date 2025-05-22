@@ -12,6 +12,12 @@ import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
 import { AlertContext } from '../../AlertProvider';
 import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
 
+// Add interface for initialSeriesSelection
+interface InitialSeriesSelection {
+  selectedSeries: string[];
+  studyInstanceUID: string;
+}
+
 interface SelectSeriesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +31,7 @@ interface SelectSeriesModalProps {
   loading: boolean;
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
+  initialSeriesSelection?: InitialSeriesSelection; // Add optional initialSeriesSelection prop
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
@@ -34,6 +41,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   loading = false,
   title = '',
   selectedInferenceModel,
+  initialSeriesSelection,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
@@ -48,6 +56,14 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Initialize with the initial selection, if provided
+  useEffect(() => {
+    if (initialSeriesSelection) {
+      setSelectedSeries(initialSeriesSelection.selectedSeries || []);
+      setStudyInstanceUID(initialSeriesSelection.studyInstanceUID || '');
+    }
+  }, [initialSeriesSelection]);
 
   useEffect(() => {
     // set default values when component mounts
@@ -510,6 +526,10 @@ SelectSeriesModal.propTypes = {
   title: PropTypes.string,
   selectedInferenceModel:
     PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
+  initialSeriesSelection: PropTypes.shape({
+    selectedSeries: PropTypes.arrayOf(PropTypes.string),
+    studyInstanceUID: PropTypes.string,
+  }),
 };
 
 export default SelectSeriesModal;
