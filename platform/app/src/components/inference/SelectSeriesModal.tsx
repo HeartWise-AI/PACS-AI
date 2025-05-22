@@ -310,12 +310,18 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                     }}
                                   >
                                     <div className="flex items-center gap-4">
-                                      <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-white bg-opacity-20">
-                                        <img
-                                          src={displaySet.imageSrc}
-                                          alt="series"
-                                          className="h-full w-full rounded-lg object-cover"
-                                        />
+                                      <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
+                                        {displaySet.imageSrc ? (
+                                          <img
+                                            src={displaySet.imageSrc}
+                                            alt="series"
+                                            className="h-full w-full rounded-lg object-cover"
+                                          />
+                                        ) : (
+                                          <p className="mt-3 text-center text-xs text-white opacity-70">
+                                            No image available
+                                          </p>
+                                        )}
                                       </div>
                                       <div className="text-[14px]">
                                         <h1 className="inline text-[#C8F469]">Series: </h1>
