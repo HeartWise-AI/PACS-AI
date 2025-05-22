@@ -50,6 +50,24 @@ export function createStudyBrowserTabs(
       displaySets: sortedDisplaySets,
     });
 
+    // NOTE: This is a PACS changes
+    // Add SeriesInstanceUID from activeDisplaySets
+    const activeDisplaySets = displaySetService.activeDisplaySets;
+    if (activeDisplaySets) {
+      tabStudy.displaySets = tabStudy.displaySets.map(ds => {
+        const activeDs = activeDisplaySets.find(
+          ads => ads.displaySetInstanceUID === ds.displaySetInstanceUID
+        );
+        if (activeDs) {
+          return {
+            ...ds,
+            SeriesInstanceUID: activeDs.SeriesInstanceUID,
+          };
+        }
+        return ds;
+      });
+    }
+
     if (primaryStudyInstanceUIDs.includes(study.studyInstanceUid)) {
       primaryStudies.push(tabStudy);
     }
