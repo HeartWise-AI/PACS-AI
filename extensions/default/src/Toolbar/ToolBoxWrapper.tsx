@@ -20,7 +20,8 @@ export function ToolBoxButtonGroupWrapper({ groupId, buttonSection, ...props }) 
   const items = toolbarButtons.map(button => button.componentProps);
 
   return (
-    <div className="bg-popover flex flex-row space-x-1 rounded-md px-0 py-0">
+    // NOTE: This is a PACS changes
+    <div className="flex flex-row space-x-1 rounded-md bg-[#151815] px-0 py-0">
       {items.map(item => (
         <ToolButton
           {...item}
@@ -44,7 +45,7 @@ export function ToolBoxButtonGroupWrapper({ groupId, buttonSection, ...props }) 
 
 export function ToolBoxButtonWrapper({ onInteraction, className, options, ...props }) {
   return (
-    <div className="bg-popover flex flex-row rounded-md px-0 py-0">
+    <div className="flex flex-row rounded-md bg-[#151815] px-0 py-0">
       <ToolButton
         {...props}
         id={props.id}

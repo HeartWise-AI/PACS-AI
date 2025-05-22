@@ -94,8 +94,8 @@ export function Toolbox({ buttonSectionId, title }: { buttonSectionId: string; t
           </div>
         )}
       </PanelSection.Header>
-
-      <PanelSection.Content className="bg-muted flex-shrink-0 border-none">
+      {/* NOTE: This is a PACS changes */}
+      <PanelSection.Content className="flex-shrink-0 border-none bg-transparent">
         {showConfig && <CustomConfigComponent />}
         {toolboxSections.map(section => {
           const sectionId = section.componentProps.buttonSection;
@@ -104,7 +104,8 @@ export function Toolbox({ buttonSectionId, title }: { buttonSectionId: string; t
           return (
             <div
               key={sectionId}
-              className="bg-muted flex flex-wrap space-x-2 py-2 px-1"
+              // NOTE: This is a PACS changes
+              className="flex flex-wrap space-x-2 bg-transparent py-2 px-1"
             >
               {buttons.map(tool => {
                 if (!tool) {
@@ -131,7 +132,8 @@ export function Toolbox({ buttonSectionId, title }: { buttonSectionId: string; t
           );
         })}
         {activeToolOptions && (
-          <div className="bg-primary-dark mt-1 h-auto px-2">
+          // NOTE: This is a PACS changes
+          <div className="mt-1 h-auto bg-[#151815] px-2">
             <ToolSettings options={activeToolOptions} />
           </div>
         )}

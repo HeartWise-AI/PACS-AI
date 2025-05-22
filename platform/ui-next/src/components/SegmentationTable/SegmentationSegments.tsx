@@ -119,7 +119,8 @@ export const SegmentationSegments = ({ children = null }: { children?: React.Rea
                     className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                     style={{ backgroundColor: cssColor }}
                   ></div>
-                  <h3 className="text-muted-foreground break-words font-semibold">{label}</h3>
+                  {/* NOTE: This is a PACS changes */}
+                  <h3 className="break-words font-semibold text-white">{label}</h3>
                 </div>
 
                 <SegmentStatistics

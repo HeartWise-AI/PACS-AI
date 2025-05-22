@@ -99,7 +99,8 @@ export function Colormap({
         </div>
       )}
       <div
-        className="hover:bg-accent flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base hover:rounded"
+        // NOTE: This is a PACS changes
+        className="flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base hover:rounded hover:bg-[#151815]"
         onClick={() => setShowPreview(!showPreview)}
       >
         <span className="flex-shrink-0">Preview in viewport</span>
