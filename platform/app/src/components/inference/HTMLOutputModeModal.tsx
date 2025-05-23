@@ -9,6 +9,9 @@ interface HTMLOutputModeModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: PredictInferenceModelHTMLResponse;
+  modelName: string;
+  modelVersion: string;
+  outputMode: string;
   loading: boolean;
   title: string;
 }
@@ -17,6 +20,9 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   isOpen = false,
   onClose = () => {},
   data = { htmlBase64: '' },
+  modelName = '',
+  modelVersion = '',
+  outputMode = '',
   loading = false,
   title = '',
 }) => {
@@ -98,7 +104,12 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
               {/* store button */}
-              <StoreFileButton />
+              <StoreFileButton
+                encodedData={data.htmlBase64}
+                modelName={modelName}
+                modelVersion={modelVersion}
+                outputMode={outputMode}
+              />
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (
@@ -127,6 +138,9 @@ HTMLOutputModeModal.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
   data: PropTypes.object as PropTypes.Validator<PredictInferenceModelHTMLResponse>,
+  modelName: PropTypes.string,
+  modelVersion: PropTypes.string,
+  outputMode: PropTypes.string,
   loading: PropTypes.bool,
   title: PropTypes.string,
 };

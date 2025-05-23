@@ -339,6 +339,9 @@ const AIModelButton = ({
             setOpenHTMLOutputModeModal(false);
           }}
           data={outputModeData as PredictInferenceModelHTMLResponse}
+          modelName={selectedInferenceModel?.modelName}
+          modelVersion={selectedInferenceModel?.version}
+          outputMode={selectedInferenceModel?.outputMode}
           title={outputModeTitle}
           loading={isLoading}
         />

@@ -98,6 +98,15 @@ export interface RemoveDICOMModalityRequest {
   modalityId: string;
 }
 
+export interface StoreStudyCustomSeriesRequest {
+  modalityID: string;
+  studyInstanceUID: string;
+  modelName: string;
+  modelVersion: string;
+  encodedData: string;
+  outputMode: string;
+}
+
 export interface TriggerDICOMEchoSCURequest {
   modalityId: string;
 }

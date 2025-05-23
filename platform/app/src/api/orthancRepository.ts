@@ -15,6 +15,7 @@ import {
   TriggerDICOMEchoSCURequest,
   UpdateDICOMModalityRequest,
   RemoveDICOMModalityRequest,
+  StoreStudyCustomSeriesRequest,
 } from './orthancDTO';
 
 const orthancRepository = {
@@ -125,6 +126,31 @@ const orthancRepository = {
   async RemoveDICOMModality(request: RemoveDICOMModalityRequest): Promise<APIResponse<void>> {
     return Api()
       .delete(`/v1/orthanc/modality/${request.modalityId}/remove`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Store study custom series
+   *
+   * @return  {void}
+   */
+  async StoreStudyCustomSeries(request: StoreStudyCustomSeriesRequest): Promise<APIResponse<void>> {
+    return Api()
+      .post(
+        `/v1/orthanc/modality/${request.modalityID}/study/${request.studyInstanceUID}/series/store`,
+        {
+          modelName: request.modelName,
+          modelVersion: request.modelVersion,
+          encodedData: request.encodedData,
+          outputMode: request.outputMode,
+        }
+      )
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
