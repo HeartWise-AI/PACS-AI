@@ -103,6 +103,7 @@ import MeasurementItem from './MeasurementTable/MeasurementItem';
 import LayoutPreset from './LayoutPreset';
 import ActionButtons from './ActionButtons';
 import StudyBrowserSort from './StudyBrowserSort';
+import StoreFileButton from './StoreFileButton';
 
 export {
   ActionButtons,
@@ -178,6 +179,7 @@ export {
   StudySummary,
   SwitchButton,
   SwitchLabelLocation,
+  StoreFileButton,
   Table,
   TableBody,
   TableCell,
