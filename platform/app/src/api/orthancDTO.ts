@@ -103,8 +103,7 @@ export interface StoreStudyCustomSeriesRequest {
   studyInstanceUID: string;
   modelName: string;
   modelVersion: string;
-  encodedData: string;
-  outputMode: string;
+  file: Blob;
 }
 
 export interface TriggerDICOMEchoSCURequest {

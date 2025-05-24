@@ -1,10 +1,16 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@ohif/ui';
 import { Icons } from '@ohif/ui-next';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import PropTypes from 'prop-types';
+
+declare global {
+  interface Window {
+    html2pdf: any;
+  }
+}
 
 const StoreFileButton = ({
   encodedData = '',
@@ -15,6 +21,18 @@ const StoreFileButton = ({
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showAlert = useContext(AlertContext);
+
+  // Load html2pdf.js script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   // handle close modal
   const handleClose = () => {
@@ -30,14 +48,72 @@ const StoreFileButton = ({
   const handleConfirm = async () => {
     setLoading(true);
     try {
+      // decode base64 to HTML string
+      const htmlContent = atob(encodedData);
+
+      // create a temporary div to hold the HTML content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      document.body.appendChild(tempDiv);
+
+      // configure PDF options
+      const opt = {
+        margin: 1,
+        filename: 'document.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: true,
+        },
+        jsPDF: {
+          unit: 'in',
+          format: 'letter',
+          orientation: 'portrait',
+        },
+      };
+
+      let pdfBlob;
+      // wait for html2pdf to be available
+      if (window.html2pdf) {
+        // convert HTML to PDF
+        pdfBlob = await window
+          .html2pdf()
+          .from(tempDiv)
+          .set(opt)
+          .toPdf()
+          .get('pdf')
+          .then(pdf => pdf.output('blob'));
+
+        // download blob
+        const downloadBlob = (blob, filename) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        };
+
+        // Use the function to download the PDF blob
+        downloadBlob(pdfBlob, 'document.pdf');
+      } else {
+        throw new Error('html2pdf not loaded');
+      }
+
+      // clean up
+      document.body.removeChild(tempDiv);
+
       const searchParams = new URLSearchParams(window.location.search);
       const payload = {
         modalityID: localStorage.getItem('selectedDICOMModality') || '',
         studyInstanceUID: searchParams.get('StudyInstanceUIDs'),
         modelName: modelName,
         modelVersion: modelVersion,
-        encodedData: encodedData,
-        outputMode: outputMode,
+        file: pdfBlob,
       };
 
       await orthancRepository.StoreStudyCustomSeries(payload);
@@ -53,6 +129,7 @@ const StoreFileButton = ({
       }, 3000);
     } catch (error) {
       console.error(error);
+      showAlert('Error generating PDF or storing file', 'error');
     } finally {
       setLoading(false);
     }

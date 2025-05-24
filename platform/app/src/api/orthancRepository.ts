@@ -141,14 +141,20 @@ const orthancRepository = {
    * @return  {void}
    */
   async StoreStudyCustomSeries(request: StoreStudyCustomSeriesRequest): Promise<APIResponse<void>> {
+    const formData = new FormData();
+
+    formData.append('file', request.file, 'file.pdf');
+    formData.append('modelName', request.modelName);
+    formData.append('modelVersion', request.modelVersion);
+
     return Api()
       .post(
         `/v1/orthanc/modality/${request.modalityID}/study/${request.studyInstanceUID}/series/store`,
+        formData,
         {
-          modelName: request.modelName,
-          modelVersion: request.modelVersion,
-          encodedData: request.encodedData,
-          outputMode: request.outputMode,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
       )
       .then((response: AxiosResponse<APIResponse<void>>) => {
