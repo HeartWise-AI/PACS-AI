@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@ohif/ui';
 import { Icons } from '@ohif/ui-next';
@@ -6,14 +6,11 @@ import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import PropTypes from 'prop-types';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
-
-declare global {
-  interface Window {
-    html2pdf: any;
-  }
-}
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const StoreFileButton = ({
+  iframeRef,
   encodedData = '',
   modelName = '',
   modelVersion = '',
@@ -24,18 +21,6 @@ const StoreFileButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showAlert = useContext(AlertContext);
   const { patientInfo } = useGlobalStateData();
-
-  // Load html2pdf.js script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
 
   // handle close modal
   const handleClose = () => {
@@ -51,64 +36,47 @@ const StoreFileButton = ({
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      // decode base64 to HTML string
-      const htmlContent = atob(encodedData);
-
-      // create a temporary div to hold the HTML content
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlContent;
-      document.body.appendChild(tempDiv);
-
-      // configure PDF options
-      const opt = {
-        margin: 1,
-        filename: 'document.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 1,
-          useCORS: true,
-          logging: true,
-        },
-        jsPDF: {
-          unit: 'in',
-          format: 'letter',
-          orientation: 'portrait',
-        },
-      };
-
-      let pdfBlob;
-      // wait for html2pdf to be available
-      if (window.html2pdf) {
-        // convert HTML to PDF
-        pdfBlob = await window
-          .html2pdf()
-          .from(tempDiv)
-          .set(opt)
-          .toPdf()
-          .get('pdf')
-          .then(pdf => pdf.output('blob'));
-
-        // download blob
-        const downloadBlob = (blob, filename) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-        };
-
-        // Use the function to download the PDF blob
-        downloadBlob(pdfBlob, 'document.pdf');
-      } else {
-        throw new Error('html2pdf not loaded');
+      const iframe = iframeRef.current;
+      if (!iframe) {
+        throw new Error('Iframe not found');
       }
+      const iframeDoc = iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        throw new Error('Cannot access iframe document');
+      }
+      const iframeBody = iframeDoc.body;
 
-      // clean up
-      document.body.removeChild(tempDiv);
+      const canvas = await html2canvas(iframeBody, {
+        scale: 2, // Keep high scale for quality
+        useCORS: true,
+        logging: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: iframeBody.scrollWidth,
+        windowHeight: iframeBody.scrollHeight,
+      });
+
+      // create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'letter',
+      });
+
+      // calculate dimensions
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+
+      // calculate aspect ratio
+      const ratio = pdfWidth / imgWidth;
+      const imgHeightOnPdf = imgHeight * ratio;
+
+      // add image to PDF
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', 0, 0, pdfWidth, imgHeightOnPdf);
+
+      // get the PDF as a blob
+      const pdfBlob = pdf.output('blob');
 
       const searchParams = new URLSearchParams(window.location.search);
       const payload = {
@@ -195,6 +163,7 @@ const StoreFileButton = ({
 };
 
 StoreFileButton.propTypes = {
+  iframeRef: PropTypes.object.isRequired,
   encodedData: PropTypes.string.isRequired,
   modelName: PropTypes.string.isRequired,
   modelVersion: PropTypes.string.isRequired,

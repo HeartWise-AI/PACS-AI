@@ -75,7 +75,8 @@
   "dependencies": {
     "dicom-data-dictionary": "^0.3.1",
     "execa": "^8.0.1",
-    "html2pdf.js": "^0.10.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "react-d3-speedometer": "^2.2.1"
   },
   "optionalDependencies": {

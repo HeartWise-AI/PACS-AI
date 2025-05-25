@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
@@ -34,6 +34,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   const [parsedHTML, setParsedHTML] = useState<string>('');
   const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
     useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
@@ -122,6 +123,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
               {linkedDICOMModalityWithEnabledCStore && (
                 <StoreFileButton
+                  iframeRef={iframeRef}
                   encodedData={data.htmlBase64}
                   modelName={modelName}
                   modelVersion={modelVersion}
@@ -137,6 +139,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 </div>
               ) : (
                 <iframe
+                  ref={iframeRef}
                   srcDoc={parsedHTML}
                   className="h-full w-full bg-white"
                   title="HTML Content"
