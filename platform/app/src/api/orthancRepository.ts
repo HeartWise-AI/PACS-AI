@@ -167,6 +167,9 @@ const orthancRepository = {
     const formData = new FormData();
 
     formData.append('file', request.file, 'file.pdf');
+    formData.append('seriesInstanceUIDs', request.seriesInstanceUIDs);
+    formData.append('patientID', request.patientID);
+    formData.append('patientName', request.patientName);
     formData.append('modelName', request.modelName);
     formData.append('modelVersion', request.modelVersion);
 

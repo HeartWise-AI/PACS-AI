@@ -13,6 +13,7 @@ interface HTMLOutputModeModalProps {
   data: PredictInferenceModelHTMLResponse;
   modelName: string;
   modelVersion: string;
+  seriesInstanceUIDs: string;
   outputMode: string;
   loading: boolean;
   title: string;
@@ -25,6 +26,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   modelName = '',
   modelVersion = '',
   outputMode = '',
+  seriesInstanceUIDs = '',
   loading = false,
   title = '',
 }) => {
@@ -124,6 +126,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                   modelName={modelName}
                   modelVersion={modelVersion}
                   modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
+                  seriesInstanceUIDs={seriesInstanceUIDs}
                 />
               )}
             </div>
@@ -157,6 +160,7 @@ HTMLOutputModeModal.propTypes = {
   modelName: PropTypes.string,
   modelVersion: PropTypes.string,
   outputMode: PropTypes.string,
+  seriesInstanceUIDs: PropTypes.string,
   loading: PropTypes.bool,
   title: PropTypes.string,
 };

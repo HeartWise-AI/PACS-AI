@@ -118,6 +118,9 @@ export interface RemoveDICOMModalityRequest {
 export interface StoreStudyCustomSeriesRequest {
   modalityID: string;
   studyInstanceUID: string;
+  seriesInstanceUIDs: string;
+  patientID: string;
+  patientName: string;
   modelName: string;
   modelVersion: string;
   file: Blob;

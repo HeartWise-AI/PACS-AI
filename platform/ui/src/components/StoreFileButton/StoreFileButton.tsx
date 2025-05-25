@@ -5,6 +5,7 @@ import { Icons } from '@ohif/ui-next';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import PropTypes from 'prop-types';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 declare global {
   interface Window {
@@ -17,10 +18,12 @@ const StoreFileButton = ({
   modelName = '',
   modelVersion = '',
   modalityId = '',
+  seriesInstanceUIDs = '',
 }) => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showAlert = useContext(AlertContext);
+  const { patientInfo } = useGlobalStateData();
 
   // Load html2pdf.js script
   useEffect(() => {
@@ -111,6 +114,9 @@ const StoreFileButton = ({
       const payload = {
         modalityID: modalityId,
         studyInstanceUID: searchParams.get('StudyInstanceUIDs'),
+        seriesInstanceUIDs: seriesInstanceUIDs,
+        patientID: patientInfo.PatientID,
+        patientName: patientInfo.PatientName,
         modelName: modelName,
         modelVersion: modelVersion,
         file: pdfBlob,
@@ -193,6 +199,7 @@ StoreFileButton.propTypes = {
   modelName: PropTypes.string.isRequired,
   modelVersion: PropTypes.string.isRequired,
   modalityId: PropTypes.string.isRequired,
+  seriesInstanceUIDs: PropTypes.string.isRequired,
 };
 
 export default StoreFileButton;

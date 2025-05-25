@@ -24,6 +24,7 @@ import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesMo
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { addSegmentationFromLabelmap } from '../../../../../extensions/cornerstone/src/utils/addSegmentation';
+import usePatientInfo from '../../../../../extensions/default/src/hooks/usePatientInfo';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -56,8 +57,21 @@ const AIModelButton = ({
   const { selectedModalities } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
+  const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');
+  const { patientInfo } = usePatientInfo(servicesManager);
+  const { setPatientInfo } = useGlobalStateData();
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // check if patientInfo is not empty (has PatientName and PatientID)
+    if (patientInfo && patientInfo.PatientName && patientInfo.PatientID) {
+      setPatientInfo({
+        PatientName: patientInfo.PatientName,
+        PatientID: patientInfo.PatientID,
+      });
+    }
+  }, [patientInfo, setPatientInfo]);
 
   useEffect(() => {
     setMounted(true);
@@ -113,6 +127,13 @@ const AIModelButton = ({
       console.log('==predictionResultResponse==', predictionResultResponse);
       const responseData = predictionResultResponse.data;
       setOutputModeData(responseData);
+
+      // sort series instance uids
+      const sortedSeriesInstanceUIDsString = JSON.stringify(
+        seriesInstanceUIDs.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      );
+      // set sorted series instance uids
+      setSortedSeriesInstanceUIDs(sortedSeriesInstanceUIDsString);
 
       switch (outputMode) {
         case 'JSON':
@@ -342,6 +363,7 @@ const AIModelButton = ({
           modelName={selectedInferenceModel?.modelName}
           modelVersion={selectedInferenceModel?.version}
           outputMode={selectedInferenceModel?.outputMode}
+          seriesInstanceUIDs={sortedSeriesInstanceUIDs}
           title={outputModeTitle}
           loading={isLoading}
         />
