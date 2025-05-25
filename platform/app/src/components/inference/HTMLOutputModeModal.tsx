@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
 import { StoreFileButton } from '@ohif/ui';
+import orthancRepository from '@ohif/app/src/api/orthancRepository';
+import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
@@ -28,11 +30,24 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [parsedHTML, setParsedHTML] = useState<string>('');
+  const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
+    useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  useEffect(() => {
+    const fetchLinkedDICOMModalityWithEnabledCStore = async () => {
+      const response = await orthancRepository.GetLnkedDICOMModalityWithEnabledCStore({
+        modalityId: localStorage.getItem('selectedDICOMModality') || '',
+      });
+
+      setLinkedDICOMModalityWithEnabledCStore(response.data);
+    };
+    fetchLinkedDICOMModalityWithEnabledCStore();
+  }, [orthancRepository]);
 
   useEffect(() => {
     if (data && data.htmlBase64) {
@@ -103,13 +118,14 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
           <div className="h-full w-full">
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
-              {/* store button */}
-              <StoreFileButton
-                encodedData={data.htmlBase64}
-                modelName={modelName}
-                modelVersion={modelVersion}
-                outputMode={outputMode}
-              />
+              {linkedDICOMModalityWithEnabledCStore && (
+                <StoreFileButton
+                  encodedData={data.htmlBase64}
+                  modelName={modelName}
+                  modelVersion={modelVersion}
+                  modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
+                />
+              )}
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (

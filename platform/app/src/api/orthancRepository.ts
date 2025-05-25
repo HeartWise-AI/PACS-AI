@@ -16,6 +16,8 @@ import {
   UpdateDICOMModalityRequest,
   RemoveDICOMModalityRequest,
   StoreStudyCustomSeriesRequest,
+  GetLnkedDICOMModalityWithEnabledCStoreRequest,
+  GetLnkedDICOMModalityWithEnabledCStoreResponse,
 } from './orthancDTO';
 
 const orthancRepository = {
@@ -91,6 +93,27 @@ const orthancRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get linked DICOM modality with enabled C-Store
+   *
+   * @return  {GetLnkedDICOMModalityWithEnabledCStoreResponse}
+   */
+  async GetLnkedDICOMModalityWithEnabledCStore(
+    request: GetLnkedDICOMModalityWithEnabledCStoreRequest
+  ): Promise<APIResponse<GetLnkedDICOMModalityWithEnabledCStoreResponse>> {
+    return Api()
+      .get(`/v1/orthanc/modality/${request.modalityId}/linked/storage/enabled`)
+      .then(
+        (response: AxiosResponse<APIResponse<GetLnkedDICOMModalityWithEnabledCStoreResponse>>) => {
+          const { data } = response;
+          return data;
+        }
+      )
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

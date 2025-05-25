@@ -16,7 +16,7 @@ const StoreFileButton = ({
   encodedData = '',
   modelName = '',
   modelVersion = '',
-  outputMode = '',
+  modalityId = '',
 }) => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +62,7 @@ const StoreFileButton = ({
         filename: 'document.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-          scale: 2,
+          scale: 1,
           useCORS: true,
           logging: true,
         },
@@ -109,7 +109,7 @@ const StoreFileButton = ({
 
       const searchParams = new URLSearchParams(window.location.search);
       const payload = {
-        modalityID: localStorage.getItem('selectedDICOMModality') || '',
+        modalityID: modalityId,
         studyInstanceUID: searchParams.get('StudyInstanceUIDs'),
         modelName: modelName,
         modelVersion: modelVersion,
@@ -129,7 +129,8 @@ const StoreFileButton = ({
       }, 3000);
     } catch (error) {
       console.error(error);
-      showAlert('Error generating PDF or storing file', 'error');
+      showAlert(error.message, 'error');
+      handleClose();
     } finally {
       setLoading(false);
     }
@@ -191,7 +192,7 @@ StoreFileButton.propTypes = {
   encodedData: PropTypes.string.isRequired,
   modelName: PropTypes.string.isRequired,
   modelVersion: PropTypes.string.isRequired,
-  outputMode: PropTypes.string.isRequired,
+  modalityId: PropTypes.string.isRequired,
 };
 
 export default StoreFileButton;
