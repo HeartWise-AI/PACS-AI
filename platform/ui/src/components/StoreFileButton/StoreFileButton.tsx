@@ -104,8 +104,8 @@ const StoreFileButton = ({
     } catch (error) {
       console.error(error);
       showAlert(error.message, 'error');
-      handleClose();
     } finally {
+      handleClose();
       setLoading(false);
     }
   };
@@ -114,7 +114,7 @@ const StoreFileButton = ({
   const confirmationModal = (
     <div
       id="modal"
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-900 bg-opacity-50"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-900 bg-opacity-90"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
@@ -141,7 +141,7 @@ const StoreFileButton = ({
             className="min-w-24 h-10 rounded-lg"
             onClick={handleConfirm}
           >
-            {loading ? 'Processing...' : 'Confirm'}
+            {loading ? '...' : 'Confirm'}
           </Button>
         </div>
       </div>
