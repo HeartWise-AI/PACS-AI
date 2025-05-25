@@ -104,7 +104,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
         </span>
 
         <div
-          className={`relative inline-block h-[calc(100vh-200px)] w-[50%] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
+          className={`relative inline-block h-[calc(100vh-200px)] w-[60%] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
         >
           {/* close button */}
           <button
