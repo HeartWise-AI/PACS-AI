@@ -1,4 +1,5 @@
 {
   "DetectButton": "Appliquer la détection FEVG",
-  "AI Models": "Modèles AI"
+  "AI Models": "Modèles AI",
+  "No inference models found": "Aucun modèle d'inférence trouvé"
 }

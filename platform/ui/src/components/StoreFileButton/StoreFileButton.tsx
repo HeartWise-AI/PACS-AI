@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { useTranslation } from 'react-i18next';
 
 const StoreFileButton = ({
   iframeRef,
@@ -17,6 +18,7 @@ const StoreFileButton = ({
   modalityId = '',
   seriesInstanceUIDs = '',
 }) => {
+  const { t } = useTranslation('StoreFileButton');
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showAlert = useContext(AlertContext);
@@ -123,9 +125,12 @@ const StoreFileButton = ({
         {/* content */}
         <div className="w-full">
           <div className="mb-6">
-            <h1 className="mb-1 text-[18px] font-bold text-white">Write to Study?</h1>
+            <h1 className="mb-1 text-[18px] font-bold text-white">{t('Write to Study')}?</h1>
             <h2 className="text-[14px] text-white">
-              Are you sure you want to save the AI prediction as a new DICOM file to the study?
+              {t(
+                'Are you sure you want to save the AI prediction as a new DICOM file to the study'
+              )}
+              ?
             </h2>
           </div>
         </div>
@@ -134,14 +139,14 @@ const StoreFileButton = ({
             className="min-w-24 h-10 rounded-lg bg-[#4C504B] text-white"
             onClick={handleClose}
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <Button
             disabled={loading}
             className="min-w-24 h-10 rounded-lg"
             onClick={handleConfirm}
           >
-            {loading ? '...' : 'Confirm'}
+            {loading ? '...' : t('Confirm')}
           </Button>
         </div>
       </div>
@@ -155,7 +160,7 @@ const StoreFileButton = ({
         onClick={handleStore}
       >
         <Icons.Download className="h-5 w-5" />
-        <span>Write to Study</span>
+        <span>{t('Write to Study')}</span>
       </Button>
       {isModalOpen && createPortal(confirmationModal, document.body)}
     </div>

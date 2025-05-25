@@ -307,7 +307,7 @@ const AIModelButton = ({
               </ul>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
-                <p className="opacity-50">No inference models found</p>
+                <p className="opacity-50">{t('No inference models found')}</p>
               </div>
             )}
           </div>,
