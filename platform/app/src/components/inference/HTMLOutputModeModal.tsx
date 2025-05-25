@@ -1,13 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
+import { StoreFileButton } from '@ohif/ui';
+import orthancRepository from '@ohif/app/src/api/orthancRepository';
+import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: PredictInferenceModelHTMLResponse;
+  modelName: string;
+  modelVersion: string;
+  seriesInstanceUIDs: string;
+  outputMode: string;
   loading: boolean;
   title: string;
 }
@@ -16,16 +23,34 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   isOpen = false,
   onClose = () => {},
   data = { htmlBase64: '' },
+  modelName = '',
+  modelVersion = '',
+  outputMode = '',
+  seriesInstanceUIDs = '',
   loading = false,
   title = '',
 }) => {
   const [mounted, setMounted] = useState(false);
   const [parsedHTML, setParsedHTML] = useState<string>('');
+  const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
+    useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  useEffect(() => {
+    const fetchLinkedDICOMModalityWithEnabledCStore = async () => {
+      const response = await orthancRepository.GetLnkedDICOMModalityWithEnabledCStore({
+        modalityId: localStorage.getItem('selectedDICOMModality') || '',
+      });
+
+      setLinkedDICOMModalityWithEnabledCStore(response.data);
+    };
+    fetchLinkedDICOMModalityWithEnabledCStore();
+  }, [orthancRepository]);
 
   useEffect(() => {
     if (data && data.htmlBase64) {
@@ -54,7 +79,9 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
     }
   }, [onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   const modalContent = (
     <div
@@ -77,7 +104,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
         </span>
 
         <div
-          className={`relative inline-block h-[calc(100vh-200px)] w-[50%] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
+          className={`relative inline-block h-[calc(100vh-200px)] w-[60%] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
         >
           {/* close button */}
           <button
@@ -89,9 +116,22 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
               alt="Close icon"
             />
           </button>
+
           {/* content */}
           <div className="h-full w-full">
-            <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+            <div className="mb-4 flex items-center justify-between pr-10">
+              <h1 className="text-[18px] font-bold text-white">{title}</h1>
+              {linkedDICOMModalityWithEnabledCStore && (
+                <StoreFileButton
+                  iframeRef={iframeRef}
+                  encodedData={data.htmlBase64}
+                  modelName={modelName}
+                  modelVersion={modelVersion}
+                  modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
+                  seriesInstanceUIDs={seriesInstanceUIDs}
+                />
+              )}
+            </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (
                 <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -99,6 +139,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 </div>
               ) : (
                 <iframe
+                  ref={iframeRef}
                   srcDoc={parsedHTML}
                   className="h-full w-full bg-white"
                   title="HTML Content"
@@ -119,6 +160,10 @@ HTMLOutputModeModal.propTypes = {
   isOpen: PropTypes.bool,
   onClose: PropTypes.func,
   data: PropTypes.object as PropTypes.Validator<PredictInferenceModelHTMLResponse>,
+  modelName: PropTypes.string,
+  modelVersion: PropTypes.string,
+  outputMode: PropTypes.string,
+  seriesInstanceUIDs: PropTypes.string,
   loading: PropTypes.bool,
   title: PropTypes.string,
 };

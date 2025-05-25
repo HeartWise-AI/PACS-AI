@@ -72,6 +72,17 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     if (this.staticWado) {
       useOptions.mediaTypes = [{ mediaType: 'application/*' }];
     }
+
+    // NOTE: This is a PACS changes
+    // "transform" in config/local_pacs doesnt work
+    // https://github.com/OHIF/Viewers/issues/4256
+    if (useOptions.BulkDataURI.startsWith('http://orthanc:8042')) {
+      useOptions.BulkDataURI = useOptions.BulkDataURI.replace(
+        'http://orthanc:8042',
+        process.env.APP_PUBLIC_API_URL + '/proxy'
+      );
+    }
+
     return super
       .retrieveBulkData(useOptions)
       .then(result => (shouldFixMultipart ? fixMultipart(result) : result));

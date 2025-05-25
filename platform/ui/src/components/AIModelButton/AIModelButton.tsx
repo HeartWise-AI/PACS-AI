@@ -56,6 +56,7 @@ const AIModelButton = ({
   const { selectedModalities } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
+  const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -113,6 +114,9 @@ const AIModelButton = ({
       console.log('==predictionResultResponse==', predictionResultResponse);
       const responseData = predictionResultResponse.data;
       setOutputModeData(responseData);
+
+      // stringify series instance uids
+      setSortedSeriesInstanceUIDs(JSON.stringify(seriesInstanceUIDs));
 
       switch (outputMode) {
         case 'JSON':
@@ -303,7 +307,7 @@ const AIModelButton = ({
               </ul>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
-                <p className="opacity-50">No inference models found</p>
+                <p className="opacity-50">{t('No inference models found')}</p>
               </div>
             )}
           </div>,
@@ -339,6 +343,10 @@ const AIModelButton = ({
             setOpenHTMLOutputModeModal(false);
           }}
           data={outputModeData as PredictInferenceModelHTMLResponse}
+          modelName={selectedInferenceModel?.modelName}
+          modelVersion={selectedInferenceModel?.version}
+          outputMode={selectedInferenceModel?.outputMode}
+          seriesInstanceUIDs={sortedSeriesInstanceUIDs}
           title={outputModeTitle}
           loading={isLoading}
         />

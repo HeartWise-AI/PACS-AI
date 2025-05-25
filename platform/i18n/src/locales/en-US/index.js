@@ -15,6 +15,7 @@ import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyItem from './StudyItem.json';
 import StudyList from './StudyList.json';
+import StoreFileButton from './StoreFileButton.json';
 import TooltipClipboard from './TooltipClipboard.json';
 import ThumbnailTracked from './ThumbnailTracked.json';
 import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
@@ -42,6 +43,7 @@ export default {
     StudyBrowser,
     StudyItem,
     StudyList,
+    StoreFileButton,
     TooltipClipboard,
     ThumbnailTracked,
     TrackedCornerstoneViewport,

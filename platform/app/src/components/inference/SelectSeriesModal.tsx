@@ -300,68 +300,77 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                 );
                               })
                               .flatMap(([_, value]) =>
-                                value.displaySets.map((displaySet, index) => (
-                                  <div
-                                    key={index + '-' + displaySet.SeriesInstanceUID}
-                                    className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                                    onClick={() => {
-                                      toggleSeriesSelection(displaySet.SeriesInstanceUID);
-                                      setStudyInstanceUID(displaySet.StudyInstanceUID);
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
-                                        {displaySet.imageSrc ? (
+                                value.displaySets
+                                  .filter(displaySet =>
+                                    selectedInferenceModel.supportedDicomModalities?.some(
+                                      supportedModality =>
+                                        displaySet.modality &&
+                                        (displaySet.modality.includes(supportedModality) ||
+                                          supportedModality.includes(displaySet.modality))
+                                    )
+                                  )
+                                  .map((displaySet, index) => (
+                                    <div
+                                      key={index + '-' + displaySet.SeriesInstanceUID}
+                                      className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                                      onClick={() => {
+                                        toggleSeriesSelection(displaySet.SeriesInstanceUID);
+                                        setStudyInstanceUID(displaySet.StudyInstanceUID);
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
+                                          {displaySet.imageSrc ? (
+                                            <img
+                                              src={displaySet.imageSrc}
+                                              alt="series"
+                                              className="h-full w-full rounded-lg object-cover"
+                                            />
+                                          ) : (
+                                            <p className="mt-3 text-center text-xs text-white opacity-70">
+                                              No image available
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="text-[14px]">
+                                          <h1 className="inline text-[#C8F469]">Series: </h1>
+                                          <h2 className="mr-2 inline text-white">
+                                            {displaySet.seriesNumber}
+                                          </h2>
                                           <img
-                                            src={displaySet.imageSrc}
-                                            alt="series"
-                                            className="h-full w-full rounded-lg object-cover"
+                                            src={copyWhiteIcon}
+                                            alt="copy"
+                                            className="ml-1 inline h-[16px] w-[16px]"
                                           />
-                                        ) : (
-                                          <p className="mt-3 text-center text-xs text-white opacity-70">
-                                            No image available
-                                          </p>
-                                        )}
+                                          <h3 className="inline text-white">
+                                            {' '}
+                                            {displaySet.numInstances}
+                                          </h3>
+                                          <h4 className="block text-white opacity-70">
+                                            {displaySet.description}
+                                          </h4>
+                                          <h4 className="mt-1 block text-[12px] text-white opacity-70">
+                                            {displaySet.SeriesInstanceUID}
+                                          </h4>
+                                        </div>
                                       </div>
-                                      <div className="text-[14px]">
-                                        <h1 className="inline text-[#C8F469]">Series: </h1>
-                                        <h2 className="mr-2 inline text-white">
-                                          {displaySet.seriesNumber}
-                                        </h2>
+                                      <div>
                                         <img
-                                          src={copyWhiteIcon}
-                                          alt="copy"
-                                          className="ml-1 inline h-[16px] w-[16px]"
+                                          src={
+                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                              ? checkIcon
+                                              : uncheckIcon
+                                          }
+                                          alt={
+                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                              ? 'check'
+                                              : 'uncheck'
+                                          }
+                                          className="h-[18px] min-w-[18px]"
                                         />
-                                        <h3 className="inline text-white">
-                                          {' '}
-                                          {displaySet.numInstances}
-                                        </h3>
-                                        <h4 className="block text-white opacity-70">
-                                          {displaySet.description}
-                                        </h4>
-                                        <h4 className="mt-1 block text-[12px] text-white opacity-70">
-                                          {displaySet.SeriesInstanceUID}
-                                        </h4>
                                       </div>
                                     </div>
-                                    <div>
-                                      <img
-                                        src={
-                                          selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                            ? checkIcon
-                                            : uncheckIcon
-                                        }
-                                        alt={
-                                          selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                            ? 'check'
-                                            : 'uncheck'
-                                        }
-                                        className="h-[18px] min-w-[18px]"
-                                      />
-                                    </div>
-                                  </div>
-                                ))
+                                  ))
                               )}
                           </>
                         )}

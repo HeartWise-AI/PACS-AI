@@ -84,6 +84,23 @@ export interface GetDICOMModalitiesResponse {
   };
 }
 
+export interface GetLnkedDICOMModalityWithEnabledCStoreRequest {
+  modalityId: string;
+}
+
+export interface GetLnkedDICOMModalityWithEnabledCStoreResponse {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly modalityId: string;
+  readonly aet: string;
+  readonly hostHash: string;
+  readonly cFindEnabled: boolean;
+  readonly cMoveEnabled: boolean;
+  readonly cStoreEnabled: boolean;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+}
+
 export interface RetrieveModalityStudyRequest {
   modalityId: string;
   studyInstanceUID: string;
@@ -96,6 +113,17 @@ export interface RetrieveModalityStudyResponse {
 
 export interface RemoveDICOMModalityRequest {
   modalityId: string;
+}
+
+export interface StoreStudyCustomSeriesRequest {
+  modalityID: string;
+  studyInstanceUID: string;
+  seriesInstanceUIDs: string;
+  patientID: string;
+  patientName: string;
+  modelName: string;
+  modelVersion: string;
+  file: Blob;
 }
 
 export interface TriggerDICOMEchoSCURequest {
