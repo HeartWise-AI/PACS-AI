@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -11,10 +11,24 @@ import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
 import ChatButton from '@ohif/ui/src/components/ChatButton/ChatButton';
+import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const { servicesManager, extensionManager, commandsManager } = useSystem();
   const { customizationService } = servicesManager.services;
+  const { patientInfo } = usePatientInfo(servicesManager);
+  const { setPatientInfo } = useGlobalStateData();
+
+  useEffect(() => {
+    // check if patientInfo is not empty (has PatientName and PatientID)
+    if (patientInfo && patientInfo.PatientName && patientInfo.PatientID) {
+      setPatientInfo({
+        PatientName: patientInfo.PatientName,
+        PatientID: patientInfo.PatientID,
+      });
+    }
+  }, [patientInfo, setPatientInfo]);
 
   const navigate = useNavigate();
   const location = useLocation();

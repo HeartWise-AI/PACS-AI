@@ -1,4 +1,5 @@
 {
   "DetectButton": "Apply LVEF Detection",
-  "AI Models": "AI Models"
+  "AI Models": "AI Models",
+  "No inference models found": "No inference models found"
 }

@@ -73,8 +73,10 @@
     "format": "prettier --write . && eslint --fix ."
   },
   "dependencies": {
-    "execa": "^8.0.1",
     "dicom-data-dictionary": "^0.3.1",
+    "execa": "^8.0.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "react-d3-speedometer": "^2.2.1"
   },
   "optionalDependencies": {
@@ -97,8 +99,8 @@
     "@babel/preset-env": "7.24.7",
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.13.0",
-    "prettier": "^3.3.3",
     "patch-package": "^8.0.0",
+    "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "0.6.9"
   },
   "husky": {

@@ -105,6 +105,7 @@ export {
   StudySummary,
   SwitchButton,
   SwitchLabelLocation,
+  StoreFileButton,
   Table,
   TableBody,
   TableCell,
