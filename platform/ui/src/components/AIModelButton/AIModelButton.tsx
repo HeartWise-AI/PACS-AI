@@ -255,28 +255,18 @@ const AIModelButton = ({
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
             {inferenceAvailableModels.some(model =>
-              model.supportedDicomModalities?.some(supportedModality =>
-                Object.values(selectedModalities).some(selectedModalityObj =>
-                  selectedModalityObj.displaySets?.some(
-                    displaySet =>
-                      displaySet.modality &&
-                      (displaySet.modality.includes(supportedModality) ||
-                        supportedModality.includes(displaySet.modality))
-                  )
+              model.supportedDicomModalities?.some(modality =>
+                Object.keys(selectedModalities).some(selectedModality =>
+                  selectedModality.includes(modality)
                 )
               )
             ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels
                   .filter(model =>
-                    model.supportedDicomModalities?.some(supportedModality =>
-                      Object.values(selectedModalities).some(selectedModalityObj =>
-                        selectedModalityObj.displaySets?.some(
-                          displaySet =>
-                            displaySet.modality &&
-                            (displaySet.modality.includes(supportedModality) ||
-                              supportedModality.includes(displaySet.modality))
-                        )
+                    model.supportedDicomModalities?.some(modality =>
+                      Object.keys(selectedModalities).some(selectedModality =>
+                        selectedModality.includes(modality)
                       )
                     )
                   )
