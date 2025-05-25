@@ -115,12 +115,8 @@ const AIModelButton = ({
       const responseData = predictionResultResponse.data;
       setOutputModeData(responseData);
 
-      // sort series instance uids
-      const sortedSeriesInstanceUIDsString = JSON.stringify(
-        seriesInstanceUIDs.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-      );
-      // set sorted series instance uids
-      setSortedSeriesInstanceUIDs(sortedSeriesInstanceUIDsString);
+      // stringify series instance uids
+      setSortedSeriesInstanceUIDs(JSON.stringify(seriesInstanceUIDs));
 
       switch (outputMode) {
         case 'JSON':
