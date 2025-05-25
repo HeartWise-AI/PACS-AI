@@ -56,7 +56,11 @@ window.config = {
         // are in the series level or study level (some servers like series some study)
         bulkDataURI: {
           enabled: true,
-          relativeResolution: 'studies',
+          // NOTE: This is a PACS changes
+          // Not working, see this: https://github.com/OHIF/Viewers/issues/4256#issuecomment-2907713235
+          transform: path => {
+            return path.replace('http://orthanc:8042', window._env_.APP_PUBLIC_API_URL + '/proxy');
+          },
         },
         omitQuotationForMultipartRequest: true,
       },
@@ -88,9 +92,6 @@ window.config = {
   httpErrorHandler: error => {
     // This is 429 when rejected from the public idc sandbox too often.
     console.warn('OHIF CONFIG:', error.status);
-
-    // Could use services manager here to bring up a dialog/modal if needed.
-    console.warn('test, navigate to https://ohif.org/');
   },
   // whiteLabeling: {
   //   /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
