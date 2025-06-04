@@ -41,7 +41,8 @@ export const FooterAction: FooterActionComponent = ({ children, className }: Foo
   }
   // If both or neither are present, keep justify-between (or adjust if you like)
   return (
-    <div className={cn('flex w-full flex-shrink-0 items-center', justifyClass, className)}>
+    // NOTE: This is a PACS changes
+    <div className={cn('mt-5 flex w-full flex-shrink-0 items-center', justifyClass, className)}>
       {children}
     </div>
   );

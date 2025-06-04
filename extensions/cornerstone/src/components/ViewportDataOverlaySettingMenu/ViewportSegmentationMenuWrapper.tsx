@@ -39,7 +39,8 @@ export function ViewportSegmentationMenuWrapper({
         >
           <Icons.ViewportViews
             className={classNames(
-              'text-highlight',
+              // NOTE: This is a PACS changes
+              'text-primary',
               isActiveViewport ? 'visible' : 'invisible group-hover/pane:visible'
             )}
           />
