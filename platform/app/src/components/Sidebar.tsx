@@ -26,17 +26,32 @@ const Sidebar = () => {
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const { t } = useTranslation('Sidebar');
   const navigate = useNavigate();
+  const location = useLocation();
   const frontendVersion = useContext(FrontendVersionContext);
   let role = '';
 
+  const isViewerOrSegmentation =
+    location.pathname === '/viewer' || location.pathname === '/segmentation';
+
   const expandSidebar = useCallback(() => {
-    setSidebarExpanded(true);
-  }, []);
+    if (!isViewerOrSegmentation) {
+      setSidebarExpanded(true);
+    }
+  }, [isViewerOrSegmentation]);
 
   const collapseSidebar = useCallback(() => {
-    setSidebarExpanded(false);
-    setShowExpandedContent(false);
-  }, []);
+    if (!isViewerOrSegmentation) {
+      setSidebarExpanded(false);
+      setShowExpandedContent(false);
+    }
+  }, [isViewerOrSegmentation]);
+
+  useEffect(() => {
+    if (isViewerOrSegmentation) {
+      setSidebarExpanded(false);
+      setShowExpandedContent(false);
+    }
+  }, [isViewerOrSegmentation]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
