@@ -53,16 +53,12 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   }, [orthancRepository]);
 
   useEffect(() => {
-    if (data && data.htmlBase64) {
+    if (data?.htmlBase64) {
       try {
-        // Check if the string is not empty and is valid base64
-        const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-        if (!data.htmlBase64.match(base64Regex)) {
-          throw new Error('Invalid base64 string format');
-        }
-
-        // decode base64 string to HTML
-        const decodedHTML = atob(data.htmlBase64);
+        // Decode base64 to binary string, then convert to Uint8Array more efficiently
+        const binaryString = atob(data.htmlBase64);
+        const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
+        const decodedHTML = new TextDecoder('utf-8').decode(bytes);
         setParsedHTML(decodedHTML);
       } catch (error) {
         console.error('Error decoding base64 HTML:', error);
