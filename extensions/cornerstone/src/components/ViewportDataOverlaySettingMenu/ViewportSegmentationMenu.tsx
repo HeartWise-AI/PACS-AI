@@ -56,8 +56,9 @@ function ViewportSegmentationMenu({
   };
 
   return (
-    <div className="bg-muted flex h-full w-[262px] flex-col rounded p-3">
-      <span className="text-muted-foreground mb-2 text-xs font-semibold">Current Viewport</span>
+    <div className="flex h-full w-[262px] flex-col rounded bg-[#4C504B] p-3">
+      {/* NOTE: This is a PACS changes */}
+      <span className="mb-2 text-xs font-semibold text-white">Current Viewport</span>
       <ul className="space-y-1">
         {activeSegmentations.map(segmentation => (
           <li
@@ -67,7 +68,7 @@ function ViewportSegmentationMenu({
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground mr-2"
+              className="text-primary mr-2" // NOTE: This is a PACS changes
               onClick={() => removeSegmentationFromViewport(segmentation.segmentationId)}
             >
               <Icons.Minus className="h-6 w-6" />
@@ -77,7 +78,7 @@ function ViewportSegmentationMenu({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground"
+                className="text-primary" // NOTE: This is a PACS changes
                 onClick={() =>
                   toggleSegmentationRepresentationVisibility(
                     segmentation.segmentationId,
@@ -91,7 +92,7 @@ function ViewportSegmentationMenu({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground"
+                className="text-primary" // NOTE: This is a PACS changes
                 onClick={() =>
                   toggleSegmentationRepresentationVisibility(
                     segmentation.segmentationId,
