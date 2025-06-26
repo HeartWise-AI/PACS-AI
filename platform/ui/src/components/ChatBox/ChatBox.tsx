@@ -254,70 +254,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [carouselPage, setCarouselPage] = useState(0);
   const seriesPerPage = 3; // Number of series thumbnails to show per page
 
-  // Function to update the series information (kept for manual updates)
-  const updateSeriesInfo = () => {
-    try {
-      // Check if selectedModalities has data
-      if (selectedModalities && Object.keys(selectedModalities).length > 0) {
-        // Get the first available series from selectedModalities
-        const firstModality = Object.values(selectedModalities)[0];
-        if (firstModality.displaySets && firstModality.displaySets.length > 0) {
-          const firstDisplaySet = firstModality.displaySets[0];
-          const seriesInfo = formatSeriesInfo(firstDisplaySet);
-          setCurrentSeriesInfo(seriesInfo);
-          setErrorDetails('');
-          return;
-        }
-      }
-
-      // If not available from GlobalStateData, try using the services
-      if (!servicesManager?.services) {
-        setCurrentSeriesInfo('Services not available');
-        setErrorDetails('servicesManager.services is undefined');
-        return;
-      }
-
-      const { displaySetService } = servicesManager.services;
-
-      // If still not found, try to get any available series in the viewer
-      if (displaySetService) {
-        const allDisplaySets = displaySetService.getDisplaySets();
-
-        if (allDisplaySets && allDisplaySets.length > 0) {
-          const displaySet = allDisplaySets[0];
-          const seriesInfo = formatSeriesInfo(displaySet);
-          setCurrentSeriesInfo(seriesInfo);
-          setErrorDetails('');
-          return;
-        }
-      }
-
-      // If still nothing found
-      setCurrentSeriesInfo('No active series found');
-      setErrorDetails('Could not find active series in the viewer');
-    } catch (error) {
-      console.error('Error getting series information:', error);
-      setCurrentSeriesInfo('Error retrieving series information');
-      setErrorDetails(error instanceof Error ? error.message : String(error));
-    }
-  };
-
-  // Helper function to get first series details
-  const getFirstSeriesDetails = () => {
-    if (!selectedModalities || Object.keys(selectedModalities).length === 0) {
-      return 'No series available in the study.';
-    }
-
-    // Get the first available series from selectedModalities
-    for (const modality of Object.values(selectedModalities)) {
-      if (modality.displaySets && modality.displaySets.length > 0) {
-        return formatSeriesInfo(modality.displaySets[0]);
-      }
-    }
-
-    return 'No series available in the study.';
-  };
-
   // Helper function to format series info
   const formatSeriesInfo = (displaySet) => {
     if (!displaySet) return 'No display set data';
@@ -1242,7 +1178,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 dicomTargetLevel: 'SERIES',
                 dicomUploadMin: 1,
                 dicomUploadMax: 10,
-                supportedDicomModalities: ['XA'], // Allow all modalities
+                supportedDicomModalities: [], // Allow all modalities
                 supportedDicomTags: [],
                 outputMode: 'NONE',
                 supportedAdditionalMetadata: [],
