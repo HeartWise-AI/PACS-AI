@@ -19381,6 +19381,11 @@ snake-case@^3.0.4:
     dot-case "^3.0.4"
     tslib "^2.0.3"
 
+snappyjs@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/snappyjs/-/snappyjs-0.7.0.tgz#6096eac06382700ae7fdefa579dea5e2aa20f51c"
+  integrity sha512-u5iEEXkMe2EInQio6Wv9LWHOQYRDbD2O9hzS27GpT/lwfIQhTCnHCTqedqHIHe9ZcvQo+9au6vngQayipz1NYw==
+
 sockjs@^0.3.21:
   version "0.3.24"
   resolved "https://registry.yarnpkg.com/sockjs/-/sockjs-0.3.24.tgz#c9bc8995f33a111bea0395ec30aa3206bdb5ccce"

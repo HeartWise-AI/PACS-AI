@@ -6,6 +6,7 @@ import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
 import { StoreFileButton } from '@ohif/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
+import snappy from 'snappyjs';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
@@ -35,6 +36,8 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
     useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
   const iframeRef = useRef(null);
+  const [compressed, setCompressed] = useState<Uint8Array | null>(null);
+  const [decompressed, setDecompressed] = useState<Uint8Array | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +69,27 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
       }
     } else {
       setParsedHTML(''); // clear content if no data
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (data?.htmlBase64) {
+      try {
+        const binaryString = atob(data.htmlBase64);
+        const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
+        const compressedValue = snappy.compress(bytes);
+        console.log('Original size:', bytes.byteLength, 'bytes');
+        console.log('Compressed size:', compressedValue.byteLength, 'bytes');
+        const improvement = 100 - (compressedValue.byteLength / bytes.byteLength) * 100;
+        console.log(`Compression improvement: ${improvement.toFixed(2)}%`);
+        setCompressed(compressedValue);
+
+        const decompressedValue = snappy.uncompress(compressedValue);
+        setDecompressed(decompressedValue);
+        console.log('Decompressed size:', decompressedValue.byteLength, 'bytes');
+      } catch (error) {
+        console.error('Error during compression/decompression:', error);
+      }
     }
   }, [data]);
 

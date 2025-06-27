@@ -77,7 +77,8 @@
     "execa": "^8.0.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
-    "react-d3-speedometer": "^2.2.1"
+    "react-d3-speedometer": "^2.2.1",
+    "snappyjs": "^0.7.0"
   },
   "optionalDependencies": {
     "@percy/cypress": "^3.1.1",
