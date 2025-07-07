@@ -2,7 +2,7 @@
 
 // Request DTOs
 export interface CreateThreadRequest {
-  // Empty object as per backend implementation
+  metadata?: Record<string, any>;
 }
 
 export interface GetThreadRequest {
@@ -15,7 +15,22 @@ export interface CreateMessageRequest {
   metadata?: Record<string, any>;
 }
 
+// StudyData structure matching Python API
+export interface StudyData {
+  studyInstanceUID: string;
+  additionalMetadata?: Record<string, any>;
+  seriesInstanceUIDs?: string[];
+  modality?: string;
+  previewImageBase64?: string;
+}
+
 export interface UploadDicomPayloadRequest {
+  threadId: string;
+  payload: StudyData[];
+}
+
+// Convenience interface for backwards compatibility
+export interface UploadDicomPayloadRequestFlat {
   threadId: string;
   studyInstanceUID: string;
   seriesInstanceUIDs: string[];
@@ -23,41 +38,68 @@ export interface UploadDicomPayloadRequest {
   containerID?: string;
 }
 
-// Response DTOs
-export interface ThreadResponse {
+// Response DTOs matching Go API responses
+export interface CreateThreadResponse {
   thread_id: string;
-  created_at?: string;
-  metadata?: Record<string, any>;
+}
+
+export interface ToolResultResponse {
+  tool_name: string;
+  result: any;
 }
 
 export interface MessageResponse {
-  // Fields from the root of the response
+  // Main response fields from Go API
   thread_id: string;
-  message_id?: string;
-  content?: string;     // The user message content
-  response?: string;    // The assistant's response text
-  response_id?: string;
-  status?: string;
+  message?: {
+    role: string;
+    content: string;
+    tool_results?: ToolResultResponse[];
+    createdAt?: string;
+  };
+  status: string;
   error?: string;
+
+  // Legacy fields for backward compatibility
+  message_id?: string;
+  content?: string;
+  response?: string;
+  response_id?: string;
   metadata?: Record<string, any>;
   created_at?: string;
   completed_at?: string;
+}
 
-  // Nested message object
-  message?: {
-    role?: string;
-    content?: string;
-    createdAt?: string;
-    tool_results?: Array<{
-      tool_name: string;
-      result: any;
-    }>;
-  };
+export interface ThreadMessage {
+  id: string;
+  content: string;
+  role: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface GetThreadResponse {
+  id: string;
+  thread_id: string;
+  messages: ThreadMessage[];
+  metadata?: Record<string, any>;
+  has_dicom_payload: boolean;
+  status?: string;
+  error?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DicomPayloadResponse {
   thread_id: string;
-  status?: string;
-  message?: string;
-  success?: boolean;
+  status: string;
+  message: string;
+  success: boolean;
+}
+
+// For backward compatibility
+export interface ThreadResponse {
+  thread_id: string;
+  created_at?: string;
+  metadata?: Record<string, any>;
 }

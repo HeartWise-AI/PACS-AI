@@ -31,7 +31,7 @@ interface SelectSeriesModalProps {
   loading: boolean;
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
-  initialSeriesSelection?: InitialSeriesSelection; // Add optional initialSeriesSelection prop
+  initialSeriesSelection?: InitialSeriesSelection;
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
@@ -49,8 +49,20 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
   const [applyToStudy, setApplyToStudy] = useState(false);
   const { selectedModalities } = useGlobalStateData();
-  const showAlert = useContext(AlertContext);
+  const alertContext = useContext(AlertContext);
   const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
+
+  // Safe alert function that handles both function and object contexts
+  const showAlert = useCallback((message: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') => {
+    if (typeof alertContext === 'function') {
+      alertContext(message, type);
+    } else if (alertContext && typeof (alertContext as any).show === 'function') {
+      (alertContext as any).show(message, type);
+    } else {
+      // Fallback to console if alert context is not available
+      console.warn('Alert context not available:', message);
+    }
+  }, [alertContext]);
 
   useEffect(() => {
     setMounted(true);
@@ -481,9 +493,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                   }
                                   label=""
                                   onFocus={() => {}}
+                                  onKeyDown={() => {}}
                                   autoFocus={false}
                                   onKeyPress={() => {}}
                                   disabled={false}
+                                  readOnly={false}
+                                  labelChildren={null}
                                 />
                               )}
                             </div>
@@ -558,7 +573,7 @@ SelectSeriesModal.propTypes = {
   initialSeriesSelection: PropTypes.shape({
     selectedSeries: PropTypes.arrayOf(PropTypes.string),
     studyInstanceUID: PropTypes.string,
-  }),
+  }) as PropTypes.Validator<InitialSeriesSelection>,
 };
 
 export default SelectSeriesModal;

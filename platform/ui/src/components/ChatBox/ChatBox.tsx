@@ -288,6 +288,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     try {
       setThreadCreationPending(true);
       setIsLoading(true);
+      setErrorDetails(''); // Clear any previous errors
       console.log('Creating thread...');
 
       const response = await orchestratorRepository.CreateThread();
@@ -298,21 +299,43 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         if (threadId) {
           console.log('Thread created with ID:', threadId);
           setThreadId(threadId);
+          setErrorDetails(''); // Clear any previous errors on success
         } else {
           console.error('Thread ID not found in response:', response);
           setErrorDetails('Thread ID not found in server response');
         }
       } else {
         console.error('Invalid response format:', response);
-        setErrorDetails('Invalid response format from server');
+        const errorMsg = response.message || 'Invalid response format from server';
+        setErrorDetails(errorMsg);
       }
     } catch (error) {
       console.error('Error creating thread:', error);
-      setErrorDetails(`Error creating thread: ${error.message || 'Unknown error'}`);
-      // Adding a retry after a short delay
-      setTimeout(() => {
+
+      // Extract error message from different possible sources
+      let errorMessage = 'Unknown error occurred while creating thread';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.statusText) {
+        errorMessage = `HTTP Error: ${error.response.statusText}`;
+      }
+
+      setErrorDetails(errorMessage);
+
+      // Adding a retry after a short delay for network errors
+      if (error.response?.status >= 500 || error.code === 'NETWORK_ERROR') {
+        console.log('Network or server error detected, will retry in 3 seconds...');
+        setTimeout(() => {
+          setThreadCreationPending(false);
+          setErrorDetails(''); // Clear error before retry
+        }, 3000);
+      } else {
         setThreadCreationPending(false);
-      }, 3000);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -331,21 +354,25 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       });
 
       if (response.success) {
-        // The response structure can have the assistant's response in either:
-        // - response.data.message.content
-        // - response.data.response
-        const responseText = response.data.message?.content || response.data.response || '';
+        // Handle the new API response structure
+        const responseData = response.data;
+
+        // Get the assistant's response content from the nested message object or legacy fields
+        const responseText = responseData.message?.content || responseData.response || '';
 
         return {
-          message_id: response.data.message_id,
-          response_id: response.data.response_id,
+          message_id: responseData.message_id,
+          response_id: responseData.response_id,
           content: responseText,
-          role: response.data.message?.role || 'assistant',
-          thread_id: response.data.thread_id,
-          created_at: response.data.created_at,
-          completed_at: response.data.completed_at,
-          user_content: response.data.content, // Original user message
-          metadata: response.data.metadata
+          role: responseData.message?.role || 'assistant',
+          thread_id: responseData.thread_id,
+          created_at: responseData.created_at,
+          completed_at: responseData.completed_at,
+          user_content: responseData.content, // Original user message
+          metadata: responseData.metadata,
+          status: responseData.status,
+          error: responseData.error,
+          tool_results: responseData.message?.tool_results || []
         };
       } else {
         throw new Error(response.message || 'Failed to send message');
@@ -361,26 +388,97 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // Function to upload DICOM payload
   const uploadDicomPayload = async (threadId: string, studyInstanceUID: string, seriesInstanceUIDs: string[]) => {
     try {
+      // Extract modality and preview image from the selected series data
+      let modality = '';
+      let previewImageBase64 = '';
+      const modalities = new Set<string>();
+
+      // Find all matching series to get modality information and the best preview image
+      for (const modalityData of Object.values(selectedModalities)) {
+        if (modalityData.displaySets) {
+          const matchingSeries = modalityData.displaySets.filter(
+            series => seriesInstanceUIDs.includes(series.SeriesInstanceUID)
+          );
+
+          matchingSeries.forEach(series => {
+            // Collect modalities
+            const seriesModality = series.Modality || series.modality || modalityData.modality || '';
+            if (seriesModality) {
+              modalities.add(seriesModality);
+            }
+
+            // Get preview image from the first series that has one (prioritize thumbnailSrc)
+            if (!previewImageBase64) {
+              const imageSource = series.thumbnailSrc || series.imageSrc;
+              if (imageSource && imageSource.startsWith('data:image/')) {
+                // Extract base64 data from data URL
+                const base64Match = imageSource.match(/^data:image\/[^;]+;base64,(.+)$/);
+                if (base64Match) {
+                  previewImageBase64 = base64Match[1];
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // Set modality: if multiple modalities, join them; otherwise use the single modality
+      modality = Array.from(modalities).join(', ') || '';
+
+      console.log('Uploading DICOM payload:', {
+        studyInstanceUID,
+        seriesInstanceUIDs,
+        modality,
+        hasPreviewImage: !!previewImageBase64
+      });
+
       const response = await orchestratorRepository.UploadDicomPayload({
         threadId,
         studyInstanceUID,
         seriesInstanceUIDs,
-        additionalMetadata: {}
+        additionalMetadata: {
+          modality,
+          previewImageBase64: previewImageBase64 || undefined,
+          seriesCount: seriesInstanceUIDs.length,
+          timestamp: new Date().toISOString()
+        }
       });
 
-      if (response.success) {
-        return {
-          thread_id: response.data.thread_id,
-          status: response.data.status,
-          message: response.data.message,
-          success: response.data.success
-        };
+      if (response.success && response.data) {
+        const responseData = response.data;
+
+        // Check if the upload was successful
+        if (responseData.status === 'success' || responseData.success) {
+          return {
+            thread_id: responseData.thread_id,
+            status: responseData.status,
+            message: responseData.message,
+            success: responseData.success
+          };
+        } else {
+          // Handle error response from the server
+          const errorMsg = responseData.message || 'DICOM payload upload failed';
+          throw new Error(errorMsg);
+        }
       } else {
-        throw new Error(response.message || 'Failed to upload DICOM payload');
+        // Handle API response error
+        const errorMsg = response.message || 'Failed to upload DICOM payload';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error uploading DICOM payload:', error);
-      throw error;
+
+      // Extract error message from different possible sources
+      let errorMessage = 'Failed to upload DICOM payload';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+
+      throw new Error(errorMessage);
     }
   };
 
@@ -616,8 +714,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       // Remove thinking message and add the assistant's response
       if (responseData && responseData.content) {
         const assistantMessage: Message = {
-          id: responseData.response_id || (Date.now() + 2).toString(), // Use response_id if available
-          text: responseData.content.trim(), // Trim the content to remove leading/trailing whitespace
+          id: responseData.response_id || (Date.now() + 2).toString(),
+          text: responseData.content.trim(),
           sender: 'assistant',
           timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
         };
@@ -631,15 +729,33 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         onMessagesChange(updatedMessages);
       } else {
         console.warn('No content in response data:', responseData);
-        throw new Error('No response content received');
+
+        // Check if there's an error in the response
+        if (responseData && responseData.error) {
+          throw new Error(responseData.error);
+        } else if (responseData && responseData.status === 'error') {
+          throw new Error('Request failed with error status');
+        } else {
+          throw new Error('No response content received');
+        }
       }
     } catch (error) {
       console.error('Error handling message submission:', error);
 
+      // Extract error message from different possible sources
+      let errorMessage = 'Unknown error';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+
       // Add error message, replacing the thinking message
-      const errorMessage: Message = {
+      const errorMessageObj: Message = {
         id: (Date.now() + 2).toString(),
-        text: `Error: ${error.message || 'Unknown error'}. Please try again.`.trim(),
+        text: `Error: ${errorMessage}. Please try again.`,
         sender: 'assistant',
         timestamp: new Date(),
       };
@@ -648,7 +764,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       const updatedMessages = messages
         .concat(userMessage)
         .filter(msg => msg.id !== thinkingId)
-        .concat(errorMessage);
+        .concat(errorMessageObj);
 
       onMessagesChange(updatedMessages);
     } finally {
@@ -1071,15 +1187,26 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   {t('Click the "+" button to select series, or start a conversation to get assistance with your medical images.')}
                 </p>
                 {errorDetails && (
-                  <div className="mt-4 text-red-400">
-                    <p>{t('Error initializing chat:')}</p>
-                    <p className="text-xs mt-1">{errorDetails}</p>
-                    <button
-                      onClick={handleRetryThreadCreation}
-                      className="mt-2 px-3 py-1 bg-[rgba(100,180,100,0.7)] rounded-md text-white hover:bg-[rgba(100,180,100,0.9)]"
-                    >
-                      {t('Retry')}
-                    </button>
+                  <div className="mt-4 p-3 bg-red-900 bg-opacity-30 border border-red-500 border-opacity-30 rounded-lg text-red-400 max-w-full">
+                    <p className="font-medium">{t('Error initializing chat:')}</p>
+                    <p className="text-sm mt-1 break-words">{errorDetails}</p>
+                    <div className="mt-3 space-y-2">
+                      <button
+                        onClick={handleRetryThreadCreation}
+                        className="px-3 py-1 bg-[rgba(100,180,100,0.7)] rounded-md text-white hover:bg-[rgba(100,180,100,0.9)] transition-colors"
+                      >
+                        {t('Retry')}
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t('If the error persists, please check your network connection or contact support.')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {isLoading && !errorDetails && (
+                  <div className="mt-4 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <span className="ml-2 text-sm">{t('Initializing chat...')}</span>
                   </div>
                 )}
               </div>

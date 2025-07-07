@@ -4,12 +4,14 @@ import Api from '../pacsAPIAxios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   CreateThreadRequest,
-  ThreadResponse,
+  CreateThreadResponse,
   GetThreadRequest,
+  GetThreadResponse,
   CreateMessageRequest,
   MessageResponse,
-  UploadDicomPayloadRequest,
+  UploadDicomPayloadRequestFlat,
   DicomPayloadResponse,
+  StudyData,
 } from './orchestratorDTO';
 
 const orchestratorRepository = {
@@ -18,12 +20,12 @@ const orchestratorRepository = {
    *
    * @param   {CreateThreadRequest}  request
    *
-   * @return  {Promise<APIResponse<ThreadResponse>>}
+   * @return  {Promise<APIResponse<CreateThreadResponse>>}
    */
-  async CreateThread(request: CreateThreadRequest = {}): Promise<APIResponse<ThreadResponse>> {
+  async CreateThread(request: CreateThreadRequest = {}): Promise<APIResponse<CreateThreadResponse>> {
     return Api()
       .post('/v1/orchestrator/threads', request)
-      .then((response: AxiosResponse<APIResponse<ThreadResponse>>) => {
+      .then((response: AxiosResponse<APIResponse<CreateThreadResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -38,12 +40,12 @@ const orchestratorRepository = {
    *
    * @param   {GetThreadRequest}  request
    *
-   * @return  {Promise<APIResponse<ThreadResponse>>}
+   * @return  {Promise<APIResponse<GetThreadResponse>>}
    */
-  async GetThread(request: GetThreadRequest): Promise<APIResponse<ThreadResponse>> {
+  async GetThread(request: GetThreadRequest): Promise<APIResponse<GetThreadResponse>> {
     return Api()
       .get(`/v1/orchestrator/threads/${request.threadId}`)
-      .then((response: AxiosResponse<APIResponse<ThreadResponse>>) => {
+      .then((response: AxiosResponse<APIResponse<GetThreadResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -79,20 +81,37 @@ const orchestratorRepository = {
   /**
    * Upload DICOM payload to a thread
    *
-   * @param   {UploadDicomPayloadRequest}  request
+   * @param   {UploadDicomPayloadRequestFlat}  request
    *
    * @return  {Promise<APIResponse<DicomPayloadResponse>>}
    */
   async UploadDicomPayload(
-    request: UploadDicomPayloadRequest
+    request: UploadDicomPayloadRequestFlat
   ): Promise<APIResponse<DicomPayloadResponse>> {
+    // Extract modality and previewImageBase64 from additionalMetadata if provided
+    const modality = request.additionalMetadata?.modality || null;
+    const previewImageBase64 = request.additionalMetadata?.previewImageBase64 || null;
+
+    // Create a clean additionalMetadata object without the extracted fields
+    const cleanAdditionalMetadata = { ...request.additionalMetadata };
+    delete cleanAdditionalMetadata?.modality;
+    delete cleanAdditionalMetadata?.previewImageBase64;
+
+    // Transform the flat request into the payload structure expected by the Python API
+    const studyData: StudyData = {
+      studyInstanceUID: request.studyInstanceUID,
+      seriesInstanceUIDs: request.seriesInstanceUIDs,
+      additionalMetadata: cleanAdditionalMetadata,
+      modality: modality,
+      previewImageBase64: previewImageBase64,
+    };
+
+    const payload = {
+      payload: [studyData],
+    };
+
     return Api()
-      .post(`/v1/orchestrator/threads/${request.threadId}/dicom`, {
-        studyInstanceUID: request.studyInstanceUID,
-        seriesInstanceUIDs: request.seriesInstanceUIDs,
-        additionalMetadata: request.additionalMetadata,
-        containerID: request.containerID,
-      })
+      .post(`/v1/orchestrator/threads/${request.threadId}/dicom`, payload)
       .then((response: AxiosResponse<APIResponse<DicomPayloadResponse>>) => {
         const { data } = response;
         return data;
