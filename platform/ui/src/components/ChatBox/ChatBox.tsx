@@ -784,11 +784,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     // Use the callback to clear messages
     onClearChat();
-
-    // Create a new thread after a small delay to ensure states are updated
-    setTimeout(() => {
-      createThread();
-    }, 100);
   };
 
   // Add additional button to retry thread creation if needed
