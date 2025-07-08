@@ -10,6 +10,7 @@ import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
+import ChatButton from '@ohif/ui/src/components/ChatButton/ChatButton';
 import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
@@ -144,6 +145,12 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
           inferenceAvailableModels={inferenceAvailableModels}
           loading={fetchingAvailableModels}
         />
+        {/* Chat button */}
+        <div className="ml-2">
+          <ChatButton
+            servicesManager={servicesManager}
+          />
+        </div>
       </div>
     </Header>
   );

@@ -12,6 +12,12 @@ import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
 import { AlertContext } from '../../AlertProvider';
 import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
 
+// Add interface for initialSeriesSelection
+interface InitialSeriesSelection {
+  selectedSeries: string[];
+  studyInstanceUID: string;
+}
+
 interface SelectSeriesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +31,7 @@ interface SelectSeriesModalProps {
   loading: boolean;
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
+  initialSeriesSelection?: InitialSeriesSelection;
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
@@ -34,6 +41,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   loading = false,
   title = '',
   selectedInferenceModel,
+  initialSeriesSelection,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
@@ -41,13 +49,33 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
   const [applyToStudy, setApplyToStudy] = useState(false);
   const { selectedModalities } = useGlobalStateData();
-  const showAlert = useContext(AlertContext);
+  const alertContext = useContext(AlertContext);
   const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
+
+  // Safe alert function that handles both function and object contexts
+  const showAlert = useCallback((message: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') => {
+    if (typeof alertContext === 'function') {
+      alertContext(message, type);
+    } else if (alertContext && typeof (alertContext as any).show === 'function') {
+      (alertContext as any).show(message, type);
+    } else {
+      // Fallback to console if alert context is not available
+      console.warn('Alert context not available:', message);
+    }
+  }, [alertContext]);
 
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
+
+  // Initialize with the initial selection, if provided
+  useEffect(() => {
+    if (initialSeriesSelection) {
+      setSelectedSeries(initialSeriesSelection.selectedSeries || []);
+      setStudyInstanceUID(initialSeriesSelection.studyInstanceUID || '');
+    }
+  }, [initialSeriesSelection]);
 
   useEffect(() => {
     // set default values when component mounts
@@ -167,29 +195,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     return true;
   };
 
-  // flatten and sort displaySets by seriesNumber in ascending order
-  const allDisplaySets = Object.entries(selectedModalities)
-    .filter(([_, value]) => {
-      const modality = value.modality;
-      return selectedInferenceModel.supportedDicomModalities?.some(
-        supportedModality =>
-          modality.includes(supportedModality) || supportedModality.includes(modality)
-      );
-    })
-    .flatMap(([_, value]) =>
-      value.displaySets.filter(displaySet =>
-        selectedInferenceModel.supportedDicomModalities?.some(
-          supportedModality =>
-            displaySet.modality &&
-            (displaySet.modality.includes(supportedModality) ||
-              supportedModality.includes(displaySet.modality))
-        )
-      )
-    )
-    .sort((a, b) => {
-      return a.seriesNumber - b.seriesNumber;
-    });
-
   const modalContent = (
     <div
       id="modal"
@@ -257,11 +262,15 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               // select all series
                               setSelectedSeries(
                                 Object.entries(selectedModalities)
-                                  .filter(([_, value]) =>
-                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                  .filter(([_, value]) => {
+                                    // If supportedDicomModalities is empty or undefined, allow all modalities
+                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                      return true;
+                                    }
+                                    return selectedInferenceModel.supportedDicomModalities?.includes(
                                       value.modality
-                                    )
-                                  )
+                                    );
+                                  })
                                   .flatMap(([_, value]) =>
                                     value.displaySets.map(
                                       displaySet => displaySet.SeriesInstanceUID
@@ -270,11 +279,15 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               );
                               setStudyInstanceUID(
                                 Object.entries(selectedModalities)
-                                  .filter(([_, value]) =>
-                                    selectedInferenceModel.supportedDicomModalities?.includes(
+                                  .filter(([_, value]) => {
+                                    // If supportedDicomModalities is empty or undefined, allow all modalities
+                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                      return true;
+                                    }
+                                    return selectedInferenceModel.supportedDicomModalities?.includes(
                                       value.modality
-                                    )
-                                  )
+                                    );
+                                  })
                                   .flatMap(([_, value]) =>
                                     value.displaySets.map(displaySet => displaySet.StudyInstanceUID)
                                   )[0] || ''
@@ -296,74 +309,117 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {allDisplaySets.length === 0 ? (
+                        {Object.entries(selectedModalities)
+                          .filter(([_, value]) => {
+                            const modality = value.modality;
+                            // If supportedDicomModalities is empty or undefined, allow all modalities
+                            if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                              return true;
+                            }
+                            return selectedInferenceModel.supportedDicomModalities?.some(
+                              supportedModality =>
+                                modality.includes(supportedModality) ||
+                                supportedModality.includes(modality)
+                            );
+                          })
+                          .every(
+                            ([_, value]) => !value.displaySets || value.displaySets.length === 0
+                          ) ? (
                           <div className="flex h-[200px] items-center justify-center">
                             <p className="text-white opacity-70">No data found</p>
                           </div>
                         ) : (
                           <>
-                            {allDisplaySets.map((displaySet, index) => (
-                              <div
-                                key={index + '-' + displaySet.SeriesInstanceUID}
-                                className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                                onClick={() => {
-                                  toggleSeriesSelection(displaySet.SeriesInstanceUID);
-                                  setStudyInstanceUID(displaySet.StudyInstanceUID);
-                                }}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
-                                    {displaySet.imageSrc ? (
-                                      <img
-                                        src={displaySet.imageSrc}
-                                        alt="series"
-                                        className="h-full w-full rounded-lg object-cover"
-                                      />
-                                    ) : (
-                                      <p className="mt-3 text-center text-xs text-white opacity-70">
-                                        No image available
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="text-[14px]">
-                                    <h1 className="inline text-[#C8F469]">Series: </h1>
-                                    <h2 className="mr-2 inline text-white">
-                                      {displaySet.seriesNumber}
-                                    </h2>
-                                    <img
-                                      src={copyWhiteIcon}
-                                      alt="copy"
-                                      className="ml-1 inline h-[16px] w-[16px]"
-                                    />
-                                    <h3 className="inline text-white">
-                                      {' '}
-                                      {displaySet.numInstances}
-                                    </h3>
-                                    <h4 className="block text-white opacity-70">
-                                      {displaySet.description}
-                                    </h4>
-                                    <h4 className="mt-1 block text-[12px] text-white opacity-70">
-                                      {displaySet.SeriesInstanceUID}
-                                    </h4>
-                                  </div>
-                                </div>
-                                <div>
-                                  <img
-                                    src={
-                                      selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                        ? checkIcon
-                                        : uncheckIcon
+                            {Object.entries(selectedModalities)
+                              .filter(([_, value]) => {
+                                const modality = value.modality;
+                                // If supportedDicomModalities is empty or undefined, allow all modalities
+                                if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                  return true;
+                                }
+                                return selectedInferenceModel.supportedDicomModalities?.some(
+                                  supportedModality =>
+                                    modality.includes(supportedModality) ||
+                                    supportedModality.includes(modality)
+                                );
+                              })
+                              .flatMap(([_, value]) =>
+                                value.displaySets
+                                  .filter(displaySet => {
+                                    // If supportedDicomModalities is empty or undefined, allow all modalities
+                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                      return true;
                                     }
-                                    alt={
-                                      selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                        ? 'check'
-                                        : 'uncheck'
-                                    }
-                                    className="h-[18px] min-w-[18px]"
-                                  />
-                                </div>
-                              </div>
-                            ))}
+                                    return selectedInferenceModel.supportedDicomModalities?.some(
+                                      supportedModality =>
+                                        displaySet.modality &&
+                                        (displaySet.modality.includes(supportedModality) ||
+                                          supportedModality.includes(displaySet.modality))
+                                    );
+                                  })
+                                  .map((displaySet, index) => (
+                                    <div
+                                      key={index + '-' + displaySet.SeriesInstanceUID}
+                                      className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                                      onClick={() => {
+                                        toggleSeriesSelection(displaySet.SeriesInstanceUID);
+                                        setStudyInstanceUID(displaySet.StudyInstanceUID);
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
+                                          {displaySet.imageSrc ? (
+                                            <img
+                                              src={displaySet.imageSrc}
+                                              alt="series"
+                                              className="h-full w-full rounded-lg object-cover"
+                                            />
+                                          ) : (
+                                            <p className="mt-3 text-center text-xs text-white opacity-70">
+                                              No image available
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="text-[14px]">
+                                          <h1 className="inline text-[#C8F469]">Series: </h1>
+                                          <h2 className="mr-2 inline text-white">
+                                            {displaySet.seriesNumber}
+                                          </h2>
+                                          <img
+                                            src={copyWhiteIcon}
+                                            alt="copy"
+                                            className="ml-1 inline h-[16px] w-[16px]"
+                                          />
+                                          <h3 className="inline text-white">
+                                            {' '}
+                                            {displaySet.numInstances}
+                                          </h3>
+                                          <h4 className="block text-white opacity-70">
+                                            {displaySet.description}
+                                          </h4>
+                                          <h4 className="mt-1 block text-[12px] text-white opacity-70">
+                                            {displaySet.SeriesInstanceUID}
+                                          </h4>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <img
+                                          src={
+                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                              ? checkIcon
+                                              : uncheckIcon
+                                          }
+                                          alt={
+                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                              ? 'check'
+                                              : 'uncheck'
+                                          }
+                                          className="h-[18px] min-w-[18px]"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))
+                              )}
                           </>
                         )}
                       </div>
@@ -437,9 +493,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                   }
                                   label=""
                                   onFocus={() => {}}
+                                  onKeyDown={() => {}}
                                   autoFocus={false}
                                   onKeyPress={() => {}}
                                   disabled={false}
+                                  readOnly={false}
+                                  labelChildren={null}
                                 />
                               )}
                             </div>
@@ -511,6 +570,10 @@ SelectSeriesModal.propTypes = {
   title: PropTypes.string,
   selectedInferenceModel:
     PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
+  initialSeriesSelection: PropTypes.shape({
+    selectedSeries: PropTypes.arrayOf(PropTypes.string),
+    studyInstanceUID: PropTypes.string,
+  }) as PropTypes.Validator<InitialSeriesSelection>,
 };
 
 export default SelectSeriesModal;
