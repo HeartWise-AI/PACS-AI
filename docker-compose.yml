@@ -8,5 +8,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    expose:
-      - '80'
+    ports:
+      - "5012:80"
