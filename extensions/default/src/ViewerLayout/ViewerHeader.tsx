@@ -147,9 +147,7 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
         />
         {/* Chat button */}
         <div className="ml-2">
-          <ChatButton
-            servicesManager={servicesManager}
-          />
+          <ChatButton servicesManager={servicesManager} />
         </div>
       </div>
     </Header>

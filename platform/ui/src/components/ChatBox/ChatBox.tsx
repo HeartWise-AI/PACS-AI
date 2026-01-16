@@ -58,7 +58,7 @@ function parseMarkdown(text) {
 
   // First process ordered lists (important to do this before unordered)
   let orderedListItems = [];
-  formatted = formatted.replace(/^(\d+)\. (.*?)$/gm, function(match, number, content) {
+  formatted = formatted.replace(/^(\d+)\. (.*?)$/gm, function (match, number, content) {
     orderedListItems.push(content.trim());
     return '<!-ORDERED-LIST-ITEM-!>';
   });
@@ -74,7 +74,7 @@ function parseMarkdown(text) {
 
   // Handle unordered list items
   let unorderedListMatch = false;
-  formatted = formatted.replace(/^(- |\* |• )(.*?)$/gm, function(match, bullet, content) {
+  formatted = formatted.replace(/^(- |\* |• )(.*?)$/gm, function (match, bullet, content) {
     unorderedListMatch = true;
     return `<li>${content.trim()}</li>`;
   });
@@ -180,13 +180,19 @@ function parseMarkdown(text) {
   formatted = lines.join('\n');
 
   // Links
-  formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  formatted = formatted.replace(
+    /\[(.*?)\]\((.*?)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
 
   // Code blocks with ```
   formatted = formatted.replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>');
 
   // Code blocks with $1 syntax (used in the example)
-  formatted = formatted.replace(/\$1([\w]*)\n([\s\S]*?)\n\$1/g, '<pre><code class="language-$1">$2</code></pre>');
+  formatted = formatted.replace(
+    /\$1([\w]*)\n([\s\S]*?)\n\$1/g,
+    '<pre><code class="language-$1">$2</code></pre>'
+  );
 
   // Inline code with `
   formatted = formatted.replace(/`([^`]*?)`/g, '<code>$1</code>');
@@ -220,7 +226,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   onClose,
   messages,
   onMessagesChange,
-  onClearChat
+  onClearChat,
 }) => {
   const { t } = useTranslation();
   const { selectedModalities = {} } = useGlobalStateData();
@@ -255,15 +261,25 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const seriesPerPage = 3; // Number of series thumbnails to show per page
 
   // Helper function to format series info
-  const formatSeriesInfo = (displaySet) => {
+  const formatSeriesInfo = displaySet => {
     if (!displaySet) return 'No display set data';
 
-    const studyInstanceUID = displaySet.StudyInstanceUID || displaySet.studyInstanceUID || 'Unknown';
-    const seriesInstanceUID = displaySet.SeriesInstanceUID || displaySet.seriesInstanceUID || 'Unknown';
-    const seriesDescription = displaySet.SeriesDescription || displaySet.seriesDescription || displaySet.description || 'No description';
+    const studyInstanceUID =
+      displaySet.StudyInstanceUID || displaySet.studyInstanceUID || 'Unknown';
+    const seriesInstanceUID =
+      displaySet.SeriesInstanceUID || displaySet.seriesInstanceUID || 'Unknown';
+    const seriesDescription =
+      displaySet.SeriesDescription ||
+      displaySet.seriesDescription ||
+      displaySet.description ||
+      'No description';
     const seriesNumber = displaySet.SeriesNumber || displaySet.seriesNumber || 'Unknown';
     const modality = displaySet.Modality || displaySet.modality || 'Unknown';
-    const instanceCount = displaySet.numImageFrames || displaySet.numInstances || displaySet.images?.length || 'Unknown';
+    const instanceCount =
+      displaySet.numImageFrames ||
+      displaySet.numInstances ||
+      displaySet.images?.length ||
+      'Unknown';
 
     // Additional data if available
     const studyDate = displaySet.StudyDate || displaySet.studyDate || 'Unknown';
@@ -277,7 +293,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       `Modality: ${modality}`,
       `Instance Count: ${instanceCount}`,
       `Study Date: ${studyDate}`,
-      `Accession: ${accessionNumber}`
+      `Accession: ${accessionNumber}`,
     ].join('\n');
   };
 
@@ -349,8 +365,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         threadId,
         message,
         metadata: {
-          selectedSeries: selectedSeries
-        }
+          selectedSeries: selectedSeries,
+        },
       });
 
       if (response.success) {
@@ -372,7 +388,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           metadata: responseData.metadata,
           status: responseData.status,
           error: responseData.error,
-          tool_results: responseData.message?.tool_results || []
+          tool_results: responseData.message?.tool_results || [],
         };
       } else {
         throw new Error(response.message || 'Failed to send message');
@@ -386,7 +402,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   };
 
   // Function to upload DICOM payload
-  const uploadDicomPayload = async (threadId: string, studyInstanceUID: string, seriesInstanceUIDs: string[]) => {
+  const uploadDicomPayload = async (
+    threadId: string,
+    studyInstanceUID: string,
+    seriesInstanceUIDs: string[]
+  ) => {
     try {
       // Extract modality and preview image from the selected series data
       let modality = '';
@@ -396,13 +416,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       // Find all matching series to get modality information and the best preview image
       for (const modalityData of Object.values(selectedModalities)) {
         if (modalityData.displaySets) {
-          const matchingSeries = modalityData.displaySets.filter(
-            series => seriesInstanceUIDs.includes(series.SeriesInstanceUID)
+          const matchingSeries = modalityData.displaySets.filter(series =>
+            seriesInstanceUIDs.includes(series.SeriesInstanceUID)
           );
 
           matchingSeries.forEach(series => {
             // Collect modalities
-            const seriesModality = series.Modality || series.modality || modalityData.modality || '';
+            const seriesModality =
+              series.Modality || series.modality || modalityData.modality || '';
             if (seriesModality) {
               modalities.add(seriesModality);
             }
@@ -429,7 +450,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         studyInstanceUID,
         seriesInstanceUIDs,
         modality,
-        hasPreviewImage: !!previewImageBase64
+        hasPreviewImage: !!previewImageBase64,
       });
 
       const response = await orchestratorRepository.UploadDicomPayload({
@@ -440,8 +461,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           modality,
           previewImageBase64: previewImageBase64 || undefined,
           seriesCount: seriesInstanceUIDs.length,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
 
       if (response.success && response.data) {
@@ -453,7 +474,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             thread_id: responseData.thread_id,
             status: responseData.status,
             message: responseData.message,
-            success: responseData.success
+            success: responseData.success,
           };
         } else {
           // Handle error response from the server
@@ -500,7 +521,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   }, [threadId]);
 
   // Function to handle selecting series - modified to replace selection instead of just adding
-  const handleSeriesSelected = async (seriesInstanceUIDs) => {
+  const handleSeriesSelected = async seriesInstanceUIDs => {
     // If no series are selected, just close the modal without any changes
     if (seriesInstanceUIDs.length === 0) {
       setIsSeriesModalOpen(false);
@@ -525,13 +546,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     // Iterate through all modalities to find the selected series
     for (const modality of Object.values(selectedModalities)) {
       if (modality.displaySets) {
-        const matchingSeries = modality.displaySets.filter(
-          series => seriesInstanceUIDs.includes(series.SeriesInstanceUID)
+        const matchingSeries = modality.displaySets.filter(series =>
+          seriesInstanceUIDs.includes(series.SeriesInstanceUID)
         );
 
         if (matchingSeries.length > 0 && !studyInstanceUID) {
           // Get studyInstanceUID from the first matching series
-          studyInstanceUID = matchingSeries[0].StudyInstanceUID || matchingSeries[0].studyInstanceUID;
+          studyInstanceUID =
+            matchingSeries[0].StudyInstanceUID || matchingSeries[0].studyInstanceUID;
           setCurrentStudyInstanceUID(studyInstanceUID);
         }
 
@@ -544,9 +566,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             SeriesInstanceUID: series.SeriesInstanceUID,
             info: formatSeriesInfo(series),
             imageSrc: thumbnailImageSrc,
-            seriesDescription: series.SeriesDescription || series.seriesDescription || series.description || 'No description',
+            seriesDescription:
+              series.SeriesDescription ||
+              series.seriesDescription ||
+              series.description ||
+              'No description',
             seriesNumber: String(series.SeriesNumber || series.seriesNumber || 'Unknown'),
-            modality: series.Modality || series.modality || 'Unknown'
+            modality: series.Modality || series.modality || 'Unknown',
           });
         });
       }
@@ -562,9 +588,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     setCarouselPage(0);
 
     // Update the current series info display with the selected series
-    const allSeriesInfo = newSeriesInfo
-      .map(seriesInfo => seriesInfo.info)
-      .join('\n\n');
+    const allSeriesInfo = newSeriesInfo.map(seriesInfo => seriesInfo.info).join('\n\n');
 
     setCurrentSeriesInfo(allSeriesInfo);
 
@@ -598,17 +622,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   };
 
   // Function to remove a series from selection
-  const removeSeries = (seriesInstanceUID) => {
+  const removeSeries = seriesInstanceUID => {
     const updatedSelection = selectedSeries.filter(uid => uid !== seriesInstanceUID);
-    const updatedDetails = selectedSeriesDetails.filter(series => series.SeriesInstanceUID !== seriesInstanceUID);
+    const updatedDetails = selectedSeriesDetails.filter(
+      series => series.SeriesInstanceUID !== seriesInstanceUID
+    );
 
     setSelectedSeries(updatedSelection);
     setSelectedSeriesDetails(updatedDetails);
 
     // Update the current series info display
-    const allSeriesInfo = updatedDetails
-      .map(seriesInfo => seriesInfo.info)
-      .join('\n\n');
+    const allSeriesInfo = updatedDetails.map(seriesInfo => seriesInfo.info).join('\n\n');
 
     setCurrentSeriesInfo(allSeriesInfo);
 
@@ -620,13 +644,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     // If we have a thread ID and study instance UID, upload the updated DICOM payload
     if (threadId && currentStudyInstanceUID) {
-      uploadDicomPayload(threadId, currentStudyInstanceUID, updatedSelection)
-        .catch(error => console.error('Failed to update DICOM payload:', error));
+      uploadDicomPayload(threadId, currentStudyInstanceUID, updatedSelection).catch(error =>
+        console.error('Failed to update DICOM payload:', error)
+      );
     }
   };
 
   // Dummy function for the SelectSeriesModal (since we don't actually apply AI models here)
-  const applyDummyPredictInferenceModel = (containerId, seriesInstanceUIDs, studyInstanceUID, additionalMetadata, outputMode) => {
+  const applyDummyPredictInferenceModel = (
+    containerId,
+    seriesInstanceUIDs,
+    studyInstanceUID,
+    additionalMetadata,
+    outputMode
+  ) => {
     handleSeriesSelected(seriesInstanceUIDs);
   };
 
@@ -636,21 +667,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   }, [messages]);
 
   // Add drag event handlers
-  const handleMouseDown = (e) => {
+  const handleMouseDown = e => {
     if (e.target.closest('.draggable-header')) {
       setIsDragging(true);
       setDragStartPosition({
         x: e.clientX - position.x,
-        y: e.clientY - position.y
+        y: e.clientY - position.y,
       });
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = e => {
     if (isDragging) {
       setPosition({
         x: e.clientX - dragStartPosition.x,
-        y: e.clientY - dragStartPosition.y
+        y: e.clientY - dragStartPosition.y,
       });
     }
   };
@@ -796,7 +827,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // Create an initial series selection object for the modal
   const initialSeriesSelection: InitialSeriesSelection = {
     selectedSeries: selectedSeries,
-    studyInstanceUID: currentStudyInstanceUID
+    studyInstanceUID: currentStudyInstanceUID,
   };
 
   // CSS for the thinking animation (the dots)
@@ -807,8 +838,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   return (
     <div
-      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white transition-all duration-300 ease-in-out shadow-xl ${
-        isOpen ? 'h-[650px] w-[400px] opacity-100' : 'h-0 w-0 opacity-0 pointer-events-none'
+      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white shadow-xl transition-all duration-300 ease-in-out ${
+        isOpen ? 'h-[650px] w-[400px] opacity-100' : 'pointer-events-none h-0 w-0 opacity-0'
       }`}
       ref={chatboxRef}
       style={{
@@ -818,7 +849,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         bottom: '24px',
         right: '32px',
         transform: isOpen ? `translate(${position.x}px, ${position.y}px)` : 'none',
-        cursor: isDragging ? 'grabbing' : 'auto'
+        cursor: isDragging ? 'grabbing' : 'auto',
       }}
       onMouseDown={handleMouseDown}
     >
@@ -1055,20 +1086,30 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             `}
           </style>
           <div
-            className="draggable-header flex justify-between items-center px-4 py-3 border-b border-white border-opacity-10 rounded-t-lg bg-gradient-to-r from-[rgba(100,200,100,0.8)] to-[rgba(200,244,105,0.8)]"
+            className="draggable-header flex items-center justify-between rounded-t-lg border-b border-white border-opacity-10 bg-gradient-to-r from-[rgba(100,200,100,0.8)] to-[rgba(200,244,105,0.8)] px-4 py-3"
             style={{ cursor: 'grab' }}
           >
-            <h2 className="text-white text-lg font-bold">{t('Chat')}</h2>
+            <h2 className="text-lg font-bold text-white">{t('Chat')}</h2>
             <div className="flex space-x-2">
               {/* Add Series button */}
               <button
                 onClick={() => setIsSeriesModalOpen(true)}
-                className="text-white hover:text-gray-300 focus:outline-none flex items-center"
+                className="flex items-center text-white hover:text-gray-300 focus:outline-none"
                 aria-label="Add Series"
                 title={t('Add Series')}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
                 </svg>
               </button>
               {/* Clear chat button */}
@@ -1078,8 +1119,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 aria-label="Clear chat"
                 title={t('Clear chat history')}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
               {/* Close button */}
@@ -1089,8 +1140,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 aria-label="Close chat"
                 title={t('Close chat')}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -1109,15 +1170,28 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   disabled={carouselPage === 0}
                   aria-label="Previous series"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
 
                 <div className="series-thumbnails">
                   {getCurrentPageItems().length > 0 ? (
-                    getCurrentPageItems().map((series) => (
-                      <div key={series.SeriesInstanceUID} className="series-thumbnail">
+                    getCurrentPageItems().map(series => (
+                      <div
+                        key={series.SeriesInstanceUID}
+                        className="series-thumbnail"
+                      >
                         <div className="series-thumbnail-badge">
                           {series.modality} {series.seriesNumber}
                         </div>
@@ -1126,8 +1200,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                           onClick={() => removeSeries(series.SeriesInstanceUID)}
                           aria-label="Remove series"
                         >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                         {series.imageSrc ? (
@@ -1139,19 +1223,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         ) : (
                           <div className="flex h-[80px] w-full items-center justify-center bg-black bg-opacity-30">
                             <div className="flex flex-col items-center justify-center">
-                              <span className="text-sm font-bold text-[#C8F469]">{series.modality}</span>
-                              <span className="mt-1 text-xs text-white opacity-70">Series {series.seriesNumber}</span>
+                              <span className="text-sm font-bold text-[#C8F469]">
+                                {series.modality}
+                              </span>
+                              <span className="mt-1 text-xs text-white opacity-70">
+                                Series {series.seriesNumber}
+                              </span>
                             </div>
                           </div>
                         )}
-                        <div className="series-thumbnail-info">
-                          {series.seriesDescription}
-                        </div>
+                        <div className="series-thumbnail-info">{series.seriesDescription}</div>
                       </div>
                     ))
                   ) : (
                     <div className="series-placeholder">
-                      {t('No series selected. Click the "+" button to add series to the conversation.')}
+                      {t(
+                        'No series selected. Click the "+" button to add series to the conversation.'
+                      )}
                     </div>
                   )}
                 </div>
@@ -1159,11 +1247,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 <button
                   className="series-carousel-button"
                   onClick={goToNextPage}
-                  disabled={carouselPage >= Math.ceil(selectedSeriesDetails.length / seriesPerPage) - 1 || selectedSeriesDetails.length <= seriesPerPage}
+                  disabled={
+                    carouselPage >= Math.ceil(selectedSeriesDetails.length / seriesPerPage) - 1 ||
+                    selectedSeriesDetails.length <= seriesPerPage
+                  }
                   aria-label="Next series"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1171,36 +1272,50 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           )}
 
           {/* Chat messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                <svg className="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              <div className="flex h-full flex-col items-center justify-center text-center text-gray-400">
+                <svg
+                  className="mb-4 h-12 w-12"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                  />
                 </svg>
                 <p>{t('No messages yet')}</p>
-                <p className="text-sm mt-2">
-                  {t('Click the "+" button to select series, or start a conversation to get assistance with your medical images.')}
+                <p className="mt-2 text-sm">
+                  {t(
+                    'Click the "+" button to select series, or start a conversation to get assistance with your medical images.'
+                  )}
                 </p>
                 {errorDetails && (
-                  <div className="mt-4 p-3 bg-red-900 bg-opacity-30 border border-red-500 border-opacity-30 rounded-lg text-red-400 max-w-full">
+                  <div className="mt-4 max-w-full rounded-lg border border-red-500 border-opacity-30 bg-red-900 bg-opacity-30 p-3 text-red-400">
                     <p className="font-medium">{t('Error initializing chat:')}</p>
-                    <p className="text-sm mt-1 break-words">{errorDetails}</p>
+                    <p className="mt-1 break-words text-sm">{errorDetails}</p>
                     <div className="mt-3 space-y-2">
                       <button
                         onClick={handleRetryThreadCreation}
-                        className="px-3 py-1 bg-[rgba(100,180,100,0.7)] rounded-md text-white hover:bg-[rgba(100,180,100,0.9)] transition-colors"
+                        className="rounded-md bg-[rgba(100,180,100,0.7)] px-3 py-1 text-white transition-colors hover:bg-[rgba(100,180,100,0.9)]"
                       >
                         {t('Retry')}
                       </button>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {t('If the error persists, please check your network connection or contact support.')}
+                      <p className="mt-1 text-xs text-gray-500">
+                        {t(
+                          'If the error persists, please check your network connection or contact support.'
+                        )}
                       </p>
                     </div>
                   </div>
                 )}
                 {isLoading && !errorDetails && (
                   <div className="mt-4 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-white"></div>
                     <span className="ml-2 text-sm">{t('Initializing chat...')}</span>
                   </div>
                 )}
@@ -1218,23 +1333,43 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         : 'bg-[#333633] text-white'
                     }`}
                   >
-                    <div className="text-sm whitespace-pre-wrap">
+                    <div className="whitespace-pre-wrap text-sm">
                       {message.isThinking ? (
                         <div>
                           Thinking
-                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
-                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
-                          <span className="thinking-dot ml-1" style={thinkingDotsStyle}>.</span>
+                          <span
+                            className="thinking-dot ml-1"
+                            style={thinkingDotsStyle}
+                          >
+                            .
+                          </span>
+                          <span
+                            className="thinking-dot ml-1"
+                            style={thinkingDotsStyle}
+                          >
+                            .
+                          </span>
+                          <span
+                            className="thinking-dot ml-1"
+                            style={thinkingDotsStyle}
+                          >
+                            .
+                          </span>
                         </div>
                       ) : (
                         <div
                           className="markdown-content"
-                          dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text?.trim() || '') }}
+                          dangerouslySetInnerHTML={{
+                            __html: parseMarkdown(message.text?.trim() || ''),
+                          }}
                         />
                       )}
                     </div>
-                    <div className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="mt-1 text-xs opacity-70">
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1244,7 +1379,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </div>
 
           {/* Input area */}
-          <form onSubmit={handleSubmit} className="p-3 border-t border-white border-opacity-10 rounded-b-lg">
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-b-lg border-t border-white border-opacity-10 p-3"
+          >
             <div className="relative">
               <input
                 type="text"
@@ -1260,19 +1398,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         : t('Error initializing chat. Please retry.')
                       : t('Type your message...')
                 }
-                className="w-full rounded-full bg-[#333633] text-white py-2 px-4 pr-10 focus:outline-none text-sm"
+                className="w-full rounded-full bg-[#333633] py-2 px-4 pr-10 text-sm text-white focus:outline-none"
                 autoFocus={isOpen && threadId !== null}
               />
               <button
                 type="submit"
                 disabled={inputValue.trim() === '' || isProcessing || !threadId}
-                className={`absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-1 ${
+                className={`absolute right-2 top-1/2 -translate-y-1/2 transform rounded-full p-1 ${
                   inputValue.trim() === '' || isProcessing || !threadId
-                    ? 'opacity-50 cursor-not-allowed'
+                    ? 'cursor-not-allowed opacity-50'
                     : 'opacity-100 hover:bg-[#444844]'
                 }`}
               >
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-5 w-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1313,9 +1456,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                     Other_information: {},
                     Other_results: {},
                     Uses_and_directions: {},
-                    Warnings_and_limitations: {}
-                  }
-                }
+                    Warnings_and_limitations: {},
+                  },
+                },
               }}
               initialSeriesSelection={initialSeriesSelection}
             />

@@ -15,9 +15,7 @@ interface ChatButtonProps {
   servicesManager: any;
 }
 
-const ChatButton: React.FC<ChatButtonProps> = ({
-  servicesManager,
-}) => {
+const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
   const { t } = useTranslation();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [viewportChangeCounter, setViewportChangeCounter] = useState(0);
@@ -113,12 +111,17 @@ const ChatButton: React.FC<ChatButtonProps> = ({
     <>
       <button
         ref={buttonRef}
-        className="relative overflow-hidden rounded-lg p-1 bg-gradient-to-r from-[rgba(40,120,255,1)] to-[rgba(0,210,255,1)] flex items-center gap-1"
+        className="relative flex items-center gap-1 overflow-hidden rounded-lg bg-gradient-to-r from-[rgba(40,120,255,1)] to-[rgba(0,210,255,1)] p-1"
         type="button"
         onClick={toggleChat}
         title={t('Toggle Chat (Ctrl+/)')}
       >
-        <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="h-6 w-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -53,16 +53,19 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
 
   // Safe alert function that handles both function and object contexts
-  const showAlert = useCallback((message: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') => {
-    if (typeof alertContext === 'function') {
-      alertContext(message, type);
-    } else if (alertContext && typeof (alertContext as any).show === 'function') {
-      (alertContext as any).show(message, type);
-    } else {
-      // Fallback to console if alert context is not available
-      console.warn('Alert context not available:', message);
-    }
-  }, [alertContext]);
+  const showAlert = useCallback(
+    (message: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') => {
+      if (typeof alertContext === 'function') {
+        alertContext(message, type);
+      } else if (alertContext && typeof (alertContext as any).show === 'function') {
+        (alertContext as any).show(message, type);
+      } else {
+        // Fallback to console if alert context is not available
+        console.warn('Alert context not available:', message);
+      }
+    },
+    [alertContext]
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -264,7 +267,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                 Object.entries(selectedModalities)
                                   .filter(([_, value]) => {
                                     // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                    if (
+                                      !selectedInferenceModel.supportedDicomModalities ||
+                                      selectedInferenceModel.supportedDicomModalities.length === 0
+                                    ) {
                                       return true;
                                     }
                                     return selectedInferenceModel.supportedDicomModalities?.includes(
@@ -281,7 +287,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                 Object.entries(selectedModalities)
                                   .filter(([_, value]) => {
                                     // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                    if (
+                                      !selectedInferenceModel.supportedDicomModalities ||
+                                      selectedInferenceModel.supportedDicomModalities.length === 0
+                                    ) {
                                       return true;
                                     }
                                     return selectedInferenceModel.supportedDicomModalities?.includes(
@@ -313,7 +322,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                           .filter(([_, value]) => {
                             const modality = value.modality;
                             // If supportedDicomModalities is empty or undefined, allow all modalities
-                            if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                            if (
+                              !selectedInferenceModel.supportedDicomModalities ||
+                              selectedInferenceModel.supportedDicomModalities.length === 0
+                            ) {
                               return true;
                             }
                             return selectedInferenceModel.supportedDicomModalities?.some(
@@ -334,7 +346,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               .filter(([_, value]) => {
                                 const modality = value.modality;
                                 // If supportedDicomModalities is empty or undefined, allow all modalities
-                                if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                if (
+                                  !selectedInferenceModel.supportedDicomModalities ||
+                                  selectedInferenceModel.supportedDicomModalities.length === 0
+                                ) {
                                   return true;
                                 }
                                 return selectedInferenceModel.supportedDicomModalities?.some(
@@ -347,7 +362,10 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                                 value.displaySets
                                   .filter(displaySet => {
                                     // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (!selectedInferenceModel.supportedDicomModalities || selectedInferenceModel.supportedDicomModalities.length === 0) {
+                                    if (
+                                      !selectedInferenceModel.supportedDicomModalities ||
+                                      selectedInferenceModel.supportedDicomModalities.length === 0
+                                    ) {
                                       return true;
                                     }
                                     return selectedInferenceModel.supportedDicomModalities?.some(
