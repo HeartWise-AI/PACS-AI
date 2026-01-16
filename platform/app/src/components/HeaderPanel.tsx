@@ -22,7 +22,7 @@ const HeaderPanel = ({ title }) => {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
       } catch (error) {
-        logoutUser(navigate, tenantId, false);
+        logoutUser(navigate, tenantId);
       }
     };
 

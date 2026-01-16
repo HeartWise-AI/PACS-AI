@@ -22,7 +22,9 @@ const orchestratorRepository = {
    *
    * @return  {Promise<APIResponse<CreateThreadResponse>>}
    */
-  async CreateThread(request: CreateThreadRequest = {}): Promise<APIResponse<CreateThreadResponse>> {
+  async CreateThread(
+    request: CreateThreadRequest = {}
+  ): Promise<APIResponse<CreateThreadResponse>> {
     return Api()
       .post('/v1/orchestrator/threads', request)
       .then((response: AxiosResponse<APIResponse<CreateThreadResponse>>) => {
