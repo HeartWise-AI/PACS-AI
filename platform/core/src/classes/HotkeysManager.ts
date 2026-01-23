@@ -24,8 +24,14 @@ export class HotkeysManager {
     HOTKEY_PRESSED: 'event::hotkeysManager:hotkeyPressed',
   };
   public EVENTS: Record<string, string>;
-  public listeners: Record<string, Array<{ id: string; callback: (data: unknown) => void }> | undefined> = {};
-  public subscribe: (eventName: string, callback: (data: unknown) => void) => { unsubscribe: () => void };
+  public listeners: Record<
+    string,
+    Array<{ id: string; callback: (data: unknown) => void }> | undefined
+  > = {};
+  public subscribe: (
+    eventName: string,
+    callback: (data: unknown) => void
+  ) => { unsubscribe: () => void };
   public _broadcastEvent: (eventName: string, callbackProps: unknown) => void;
   public _unsubscribe: (eventName: string, listenerId: string) => void;
   public _isValidEvent: (eventName: string) => boolean;

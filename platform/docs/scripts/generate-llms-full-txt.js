@@ -22,7 +22,7 @@ async function getDirectorySections() {
   // Find all subdirectories that contain markdown files
   const markdownFiles = await glob(`${llmDir}/**/*.md`);
 
-  markdownFiles.forEach((filePath) => {
+  markdownFiles.forEach(filePath => {
     // Get the relative directory from the llm dir
     const relativePath = path.relative(llmDir, filePath);
     const dirPath = path.dirname(relativePath);
@@ -46,7 +46,7 @@ async function getSubdirectories(section) {
   // Find all markdown files in this section
   const markdownFiles = await glob(`${sectionPath}/**/*.md`);
 
-  markdownFiles.forEach((filePath) => {
+  markdownFiles.forEach(filePath => {
     // Get the relative directory from the section path
     const relativePath = path.relative(sectionPath, filePath);
     const dirPath = path.dirname(relativePath);
@@ -243,9 +243,11 @@ async function generateLlmsFullTxt() {
   // Add title and introduction
   content += '# OHIF Documentation\n\n';
 
-  content += '> OHIF (Open Health Imaging Foundation) Viewer is an open-source, web-based, zero-footprint DICOM viewer platform designed for medical imaging. It provides a highly configurable and extensible framework for building diagnostic quality medical imaging applications. OHIF Viewer supports various imaging formats (primarily DICOM), offers advanced visualization tools, customizable workflows, and integration capabilities with different data sources.\n\n';
+  content +=
+    '> OHIF (Open Health Imaging Foundation) Viewer is an open-source, web-based, zero-footprint DICOM viewer platform designed for medical imaging. It provides a highly configurable and extensible framework for building diagnostic quality medical imaging applications. OHIF Viewer supports various imaging formats (primarily DICOM), offers advanced visualization tools, customizable workflows, and integration capabilities with different data sources.\n\n';
 
-  content += 'This file contains the complete documentation for OHIF Viewer, concatenated for easy reference and searching. Each section is clearly marked with its source URL.\n\n';
+  content +=
+    'This file contains the complete documentation for OHIF Viewer, concatenated for easy reference and searching. Each section is clearly marked with its source URL.\n\n';
 
   // Process root files first (if any)
   const rootFiles = await glob(`${llmDir}/*.md`);

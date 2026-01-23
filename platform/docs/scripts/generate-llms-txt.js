@@ -22,7 +22,7 @@ async function getDirectorySections() {
   // Find all subdirectories that contain markdown files
   const markdownFiles = await glob(`${llmDir}/**/*.md`);
 
-  markdownFiles.forEach((filePath) => {
+  markdownFiles.forEach(filePath => {
     // Get the relative directory from the llm dir
     const relativePath = path.relative(llmDir, filePath);
     const dirPath = path.dirname(relativePath);

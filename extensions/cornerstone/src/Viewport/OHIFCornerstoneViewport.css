@@ -21,7 +21,7 @@
   /* Prevents the entire page from getting larger
      when the magnify tool is near the sides/corners of the page */
   overflow: hidden;
-  
+
   /* Prevent text selection on the viewport element */
   user-select: none;
   -webkit-user-select: none;

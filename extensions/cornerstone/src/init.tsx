@@ -195,7 +195,6 @@ export default async function init({
     commandsManager.runCommand('jumpToMeasurementViewport', { measurement, annotationUID, evt });
   });
 
-
   // When a custom image load is performed, update the relevant viewports
   hangingProtocolService.subscribe(
     hangingProtocolService.EVENTS.CUSTOM_IMAGE_LOAD_PERFORMED,
