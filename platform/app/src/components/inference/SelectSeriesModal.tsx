@@ -6,7 +6,7 @@ import uncheckIcon from './../../assets/pacs/icons/check-inactive.png';
 import checkIcon from './../../assets/pacs/icons/check-active.png';
 import informationIcon from './../../assets/pacs/icons/information-circle.png';
 import copyWhiteIcon from './../../assets/pacs/icons/copy-white.png';
-import { Input } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import { useGlobalStateData } from '../../GlobalStateProvider';
 import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
 import { AlertContext } from '../../AlertProvider';

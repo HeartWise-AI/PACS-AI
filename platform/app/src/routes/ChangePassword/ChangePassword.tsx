@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Input, Typography } from '@ohif/ui';
+import { Button, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../AlertProvider';

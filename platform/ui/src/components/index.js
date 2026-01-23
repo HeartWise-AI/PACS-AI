@@ -7,6 +7,7 @@ import SidebarAdmin from './SidebarAdmin';
 import StoreFileButton from './StoreFileButton';
 import EmptyStudies from './EmptyStudies';
 import Icon from './Icon';
+import Input from './Input';
 import InputDateRange from './InputDateRange';
 import InputGroup from './InputGroup';
 import InputLabelWrapper from './InputLabelWrapper';
@@ -40,6 +41,7 @@ export {
   ContextMenu,
   EmptyStudies,
   Icon,
+  Input,
   InputDateRange,
   InputGroup,
   InputLabelWrapper,

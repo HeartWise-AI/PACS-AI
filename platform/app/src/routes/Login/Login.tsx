@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Button, Input, Logo, Typography } from '@ohif/ui';
+import { Button, Logo, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';

@@ -77,7 +77,11 @@
     "format": "prettier --write . && eslint --fix ."
   },
   "dependencies": {
-    "execa": "8.0.1"
+    "dicom-data-dictionary": "^0.3.1",
+    "execa": "8.0.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "react-d3-speedometer": "^2.2.1"
   },
   "optionalDependencies": {
     "@percy/cypress": "3.1.6",

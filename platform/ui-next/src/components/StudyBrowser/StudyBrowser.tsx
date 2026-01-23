@@ -92,6 +92,7 @@ const StudyBrowser = ({
               <AIModelButton
                 isShowBG={true}
                 isShowText={true}
+                servicesManager={servicesManager}
                 positionRight={-110}
                 inferenceAvailableModels={inferenceAvailableModels}
                 loading={fetchingAvailableModels}
