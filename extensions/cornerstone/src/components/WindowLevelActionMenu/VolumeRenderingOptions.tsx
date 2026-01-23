@@ -1,30 +1,21 @@
 import React, { ReactElement, useState } from 'react';
 import { AllInOneMenu } from '@ohif/ui-next';
-import { VolumeRenderingOptionsProps } from '../../types/ViewportPresets';
 import { VolumeRenderingQuality } from './VolumeRenderingQuality';
 import { VolumeShift } from './VolumeShift';
 import { VolumeLighting } from './VolumeLighting';
 import { VolumeShade } from './VolumeShade';
-export function VolumeRenderingOptions({
-  viewportId,
-  commandsManager,
-  volumeRenderingQualityRange,
-  servicesManager,
-}: VolumeRenderingOptionsProps): ReactElement {
+import { useViewportRendering } from '../../hooks/useViewportRendering';
+
+export function VolumeRenderingOptions({ viewportId }: { viewportId?: string } = {}): ReactElement {
+  const { volumeRenderingQualityRange } = useViewportRendering(viewportId);
   const [hasShade, setShade] = useState(false);
   return (
     <AllInOneMenu.ItemPanel>
       <VolumeRenderingQuality
         viewportId={viewportId}
-        commandsManager={commandsManager}
-        servicesManager={servicesManager}
         volumeRenderingQualityRange={volumeRenderingQualityRange}
       />
-      <VolumeShift
-        viewportId={viewportId}
-        commandsManager={commandsManager}
-        servicesManager={servicesManager}
-      />
+      <VolumeShift viewportId={viewportId} />
       <div className="mt-2 flex h-8 !h-[20px] w-full flex-shrink-0 items-center justify-start px-2 text-base">
         <div className="text-muted-foreground text-sm">Lighting</div>
       </div>
@@ -32,16 +23,12 @@ export function VolumeRenderingOptions({
       {/* NOTE: This is a PACS changes */}
       <div className="flex h-8 w-full flex-shrink-0 items-center px-2 text-base hover:rounded hover:bg-[#151815]">
         <VolumeShade
-          commandsManager={commandsManager}
-          servicesManager={servicesManager}
           viewportId={viewportId}
           onClickShade={setShade}
         />
       </div>
       <VolumeLighting
         viewportId={viewportId}
-        commandsManager={commandsManager}
-        servicesManager={servicesManager}
         hasShade={hasShade}
       />
     </AllInOneMenu.ItemPanel>

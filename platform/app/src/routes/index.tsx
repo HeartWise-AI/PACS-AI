@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@ohif/ui-next';
 
 // Route Components
@@ -20,7 +20,9 @@ import AIModels from './AIModels';
 import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
-import { routerBase, routerBasename } from '../utils/publicUrl';
+import { routerBasename } from '../utils/publicUrl';
+import { useAppConfig } from '@state';
+import { history } from '../utils/history';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -39,6 +41,9 @@ NotFoundServer.propTypes = {
 };
 
 const NotFoundStudy = () => {
+  const [appConfig] = useAppConfig();
+  const { showStudyList } = appConfig;
+
   return (
     <div className="absolute flex h-full w-full items-center justify-center text-white">
       <div>
@@ -52,6 +57,18 @@ const NotFoundStudy = () => {
           </Link>{' '}
           to select a different study to view.
         </h4>
+        {showStudyList && (
+          <p className="mt-2">
+            Return to the{' '}
+            <Link
+              className="text-primary-light"
+              to="/"
+            >
+              study list
+            </Link>{' '}
+            to select a different study to view.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -202,9 +219,17 @@ const createRoutes = ({
   ];
 
   function RouteWithErrorBoundary({ route, ...rest }) {
+    const [appConfig] = useAppConfig();
+    const { showErrorDetails } = appConfig;
+
+    history.navigate = useNavigate();
+
     // eslint-disable-next-line react/jsx-props-no-spreading
     return (
-      <ErrorBoundary context={`Route ${route.path}`}>
+      <ErrorBoundary
+        context={`Route ${route.path}`}
+        showErrorDetails={showErrorDetails}
+      >
         <route.children
           {...rest}
           {...route.props}
