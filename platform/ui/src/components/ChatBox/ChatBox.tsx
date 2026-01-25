@@ -1442,7 +1442,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 version: '1.0',
                 dicomTargetLevel: 'SERIES',
                 dicomUploadMin: 1,
-                dicomUploadMax: 10,
+                dicomUploadMax: 99,
                 supportedDicomModalities: [], // Allow all modalities
                 supportedDicomTags: [],
                 outputMode: 'NONE',
