@@ -144,7 +144,7 @@ const ChangePasswordPage = () => {
               variant="body"
               className="text-center font-light text-white text-opacity-70"
             >
-              {t('© 2025 PACS AI. All rights reserved.')}
+              {t('© 2026 PACS AI. All rights reserved.')}
             </Typography>
           </div>
         </div>

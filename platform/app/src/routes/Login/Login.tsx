@@ -258,7 +258,7 @@ const LoginPage = () => {
                 variant="body"
                 className="mt-4 text-center font-light text-white text-opacity-70"
               >
-                {t('© 2025 PACS AI. All rights reserved.')}
+                {t('© 2026 PACS AI. All rights reserved.')}
               </Typography>
             </div>
           </div>
@@ -321,7 +321,7 @@ const LoginPage = () => {
                 variant="body"
                 className="mt-4 text-center font-light text-white text-opacity-70"
               >
-                {t('© 2025 PACS AI. All rights reserved.')}
+                {t('© 2026 PACS AI. All rights reserved.')}
               </Typography>
             </div>
           </div>
