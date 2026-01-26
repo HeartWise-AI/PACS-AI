@@ -480,15 +480,15 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                           {selectedInferenceModel.supportedAdditionalMetadata.map(metadata => (
                             <div
                               key={metadata.id}
-                              className="mt-4 flex gap-2"
+                              className="mt-4 grid grid-cols-2 gap-2"
                             >
-                              <div className="flex h-[43px] w-[50%] items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
+                              <div className="flex h-[43px] w-full items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
                                 {metadata.name}{' '}
                                 {metadata.required && <span className="ml-1 text-red-500">*</span>}
                               </div>
                               {metadata.type === 'boolean' ? (
                                 <select
-                                  className="h-[43px] w-[48%] rounded-lg bg-[#323631] px-4 text-white"
+                                  className="h-[43px] w-full rounded-lg bg-[#323631] px-4 text-white"
                                   required={metadata.required}
                                   id={metadata.id}
                                   value={additionalDetails[metadata.id] || 'true'}
