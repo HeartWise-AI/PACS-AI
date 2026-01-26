@@ -117,13 +117,18 @@ const LoginPage = () => {
 
   // Get current user info
   const getCurrentUser = () => {
-    userRepository.GetCurrentUser().then(response => {
-      if (response.success) {
-        navigate(`/`);
-      } else {
-        localStorage.removeItem('sessionToken');
-      }
-    });
+    userRepository
+      .GetCurrentUser()
+      .then(response => {
+        if (response.success) {
+          navigate(`/`);
+        } else {
+          localStorage.removeItem('sessionToken');
+        }
+      })
+      .catch(error => {
+        console.warn('GetCurrentUser failed on login page', error);
+      });
   };
 
   // User reset password
