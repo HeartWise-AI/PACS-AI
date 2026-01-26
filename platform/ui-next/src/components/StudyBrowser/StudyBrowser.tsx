@@ -87,8 +87,8 @@ const StudyBrowser = ({
 
         return (
           <React.Fragment key={studyInstanceUid}>
-            <div className="flex w-full gap-3 p-3">
-              {/* TODO: Added AI Models button and Refresh button */}
+            {/* <div className="flex w-full gap-3 p-3">
+
               <AIModelButton
                 isShowBG={true}
                 isShowText={true}
@@ -97,7 +97,7 @@ const StudyBrowser = ({
                 inferenceAvailableModels={inferenceAvailableModels}
                 loading={fetchingAvailableModels}
               />
-              <button className="flex w-full items-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
+              <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
                 <img
                   src={refreshIcon}
                   className="h-5 w-5"
@@ -105,7 +105,7 @@ const StudyBrowser = ({
                 />
                 <span className="text-sm !text-white text-transparent">{t('Refresh')}</span>
               </button>
-            </div>
+            </div> */}
             <StudyItem
               date={date}
               description={description}
