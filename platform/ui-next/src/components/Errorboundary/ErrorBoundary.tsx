@@ -123,6 +123,7 @@ interface DefaultFallbackProps extends FallbackProps {
   context: string;
   resetErrorBoundary: () => void;
   showErrorDetails?: ShowErrorDetails;
+  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 interface ErrorBoundaryProps {
@@ -134,6 +135,7 @@ interface ErrorBoundaryProps {
   fallbackRoute?: string | null;
   isPage?: boolean;
   showErrorDetails?: ShowErrorDetails;
+  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 const DefaultFallback = ({
@@ -141,6 +143,7 @@ const DefaultFallback = ({
   context,
   resetErrorBoundary = () => {},
   showErrorDetails,
+  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: DefaultFallbackProps) => {
   const isShowDetailsButtonVisible =
     showErrorDetails == null ||
@@ -170,6 +173,11 @@ const DefaultFallback = ({
   };
 
   useEffect(() => {
+    // NOTE: This is a PACS changes (hide the red toast notification)
+    if (!showNotification) {
+      return;
+    }
+
     // Use a stable ID based on error message to support deduplication
     const errorId = `error-${errorTitle || error.message}`;
 
@@ -187,7 +195,7 @@ const DefaultFallback = ({
           }
         : undefined,
     });
-  }, [error, errorTitle, subtitle, t, title, show]);
+  }, [error, errorTitle, subtitle, t, title, show, showNotification]); // NOTE: This is a PACS changes (hide the red toast notification)
 
   return (
     <Dialog
@@ -263,6 +271,7 @@ const ErrorBoundary = ({
   fallbackComponent: FallbackComponent = DefaultFallback,
   children,
   showErrorDetails,
+  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: ErrorBoundaryProps) => {
   const [error, setError] = useState<ErrorBoundaryError | null>(null);
 
@@ -318,6 +327,7 @@ const ErrorBoundary = ({
           {...props}
           context={context}
           showErrorDetails={showErrorDetails}
+          showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
         />
       )}
       onReset={onResetHandler}
@@ -331,6 +341,7 @@ const ErrorBoundary = ({
             context={context}
             resetErrorBoundary={() => setError(null)}
             showErrorDetails={showErrorDetails}
+            showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
           />
         )}
       </>

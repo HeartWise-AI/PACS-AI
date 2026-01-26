@@ -229,6 +229,7 @@ const createRoutes = ({
       <ErrorBoundary
         context={`Route ${route.path}`}
         showErrorDetails={showErrorDetails}
+        showNotification={false} // NOTE: This is a PACS changes (hide the red toast notification)
       >
         <route.children
           {...rest}
