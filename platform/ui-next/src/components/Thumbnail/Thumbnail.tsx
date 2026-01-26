@@ -77,7 +77,8 @@ const Thumbnail = ({
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              // NOTE: This is a PACS changes
+              <div className="bg-primary/20 h-[114px] w-[128px] rounded"></div>
             )}
 
             {/* bottom left */}
