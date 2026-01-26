@@ -302,7 +302,7 @@ const KibanaLogsPage = () => {
                 onChange={handleQueryFieldChange}
               />
             </div>
-            <div className="relative w-[25%]">
+            <div className="pacs-date-range relative w-[25%] min-w-[220px]">
               <DateRangePicker
                 startDate={startDate}
                 startDateId="FilterStartDate"

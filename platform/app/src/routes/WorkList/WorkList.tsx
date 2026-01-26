@@ -747,7 +747,7 @@ function WorkList() {
                 type="text"
                 onChange={e => handleInputChange('patientId', e.target.value)}
               />
-              <div className="relative w-[250px]">
+              <div className="pacs-date-range relative w-full min-w-[240px] max-w-[360px] flex-1 sm:w-[260px] sm:flex-none md:w-[320px]">
                 <DateRangePicker
                   startDate={startDate}
                   startDateId="FilterStartDate"
