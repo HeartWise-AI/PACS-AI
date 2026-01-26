@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import ChatBox from '../ChatBox';
@@ -71,8 +72,12 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
 
     // Clean up subscriptions
     return () => {
-      if (unsubscribeViewport) unsubscribeViewport();
-      if (unsubscribeDisplaySet) unsubscribeDisplaySet();
+      if (unsubscribeViewport) {
+        unsubscribeViewport();
+      }
+      if (unsubscribeDisplaySet) {
+        unsubscribeDisplaySet();
+      }
     };
   }, [servicesManager]);
 
@@ -131,15 +136,18 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
         </svg>
       </button>
 
-      <ChatBox
-        key={`chat-box-${viewportChangeCounter}`}
-        isOpen={isChatOpen}
-        onClose={toggleChat}
-        servicesManager={servicesManager}
-        messages={messages}
-        onMessagesChange={handleAddMessage}
-        onClearChat={handleClearChat}
-      />
+      {createPortal(
+        <ChatBox
+          key={`chat-box-${viewportChangeCounter}`}
+          isOpen={isChatOpen}
+          onClose={toggleChat}
+          servicesManager={servicesManager}
+          messages={messages}
+          onMessagesChange={handleAddMessage}
+          onClearChat={handleClearChat}
+        />,
+        document.body
+      )}
     </>
   );
 };

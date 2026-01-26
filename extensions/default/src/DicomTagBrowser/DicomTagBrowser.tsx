@@ -157,7 +157,7 @@ const DicomTagBrowser = ({
           </div>
           {shouldShowInstanceList && (
             <div className="mx-auto mt-0.5 flex w-1/4 flex-col">
-              <span className="text-muted-foreground flex h-6 items-center text-xs">
+              <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
                 Instance Number ({instanceNumber} of {activeDisplaySet?.images?.length})
               </span>
               <Slider
@@ -184,7 +184,7 @@ const DicomTagBrowser = ({
                 placeholder="Search metadata"
                 className="pl-9 pr-9"
               />
-              <InputFilter.ClearButton />
+              <InputFilter.ClearButton className="text-primary mr-0.5 p-0.5" />
             </InputFilter>
           </div>
         </div>

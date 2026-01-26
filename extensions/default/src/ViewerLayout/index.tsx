@@ -38,6 +38,10 @@ function ViewerLayout({
   rightPanelClosed = false,
   leftPanelResizable = false,
   rightPanelResizable = false,
+  leftPanelInitialExpandedWidth,
+  rightPanelInitialExpandedWidth,
+  leftPanelMinimumExpandedWidth,
+  rightPanelMinimumExpandedWidth,
 }: withAppTypes): React.FunctionComponent {
   const [appConfig] = useAppConfig();
   const { t } = useTranslation();
@@ -79,7 +83,11 @@ function ViewerLayout({
     rightPanelClosed,
     setRightPanelClosed,
     hasLeftPanels,
-    hasRightPanels
+    hasRightPanels,
+    leftPanelInitialExpandedWidth,
+    rightPanelInitialExpandedWidth,
+    leftPanelMinimumExpandedWidth,
+    rightPanelMinimumExpandedWidth
   );
 
   const handleMouseEnter = () => {

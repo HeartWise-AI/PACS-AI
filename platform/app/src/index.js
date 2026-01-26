@@ -2,6 +2,8 @@
  * Entry point for development and production PWA builds.
  */
 import 'regenerator-runtime/runtime';
+import 'react-dates/initialize';
+import 'react-dates/lib/css/_datepicker.css';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import React from 'react';

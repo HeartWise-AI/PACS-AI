@@ -10,5 +10,8 @@
   "loadingPreview": "جاري تحميل معاينة الصورة...",
   "minHeightError": "الارتفاع الصالح الأدنى هو 100 بكسل.",
   "minWidthError": "العرض الصالح الأدنى هو 100 بكسل.",
-  "showAnnotations": "إظهار التعليقات"
+  "showAnnotations": "إظهار التعليقات",
+  "Export Options": "خيارات التصدير",
+  "Transparent Background": "خلفية شفافة",
+  "Image Quality": "جودة الصورة"
 }

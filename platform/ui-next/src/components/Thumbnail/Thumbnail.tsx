@@ -68,16 +68,17 @@ const Thumbnail = ({
         )}
       >
         <div className="h-[114px] w-[128px]">
-          <div className="relative">
+          <div className="relative bg-black">
             {imageSrc ? (
               <img
                 src={imageSrc}
                 alt={imageAltText}
-                className="h-[114px] w-[128px] rounded"
+                className="h-[114px] w-[128px] rounded object-contain"
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              // NOTE: This is a PACS changes
+              <div className="bg-primary/20 h-[114px] w-[128px] rounded"></div>
             )}
 
             {/* bottom left */}

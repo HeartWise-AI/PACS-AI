@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
@@ -24,6 +25,14 @@ const StudyItem = ({
   StudyMenuItems,
   StudyInstanceUID,
 }: withAppTypes) => {
+  const { setModalitiesInStudy } = useGlobalStateData();
+
+  useEffect(() => {
+    if (modalities) {
+      setModalitiesInStudy(modalities);
+    }
+  }, [modalities, setModalitiesInStudy]);
+
   return (
     <Accordion
       type="single"

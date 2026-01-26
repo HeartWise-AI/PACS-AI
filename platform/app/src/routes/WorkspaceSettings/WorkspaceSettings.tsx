@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useRef, useState, useCallback } from 'rea
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button, ButtonGradient, Input, Typography } from '@ohif/ui';
+import { ButtonGradient, Input } from '@ohif/ui-next';
+import { Button, Typography } from '@ohif/ui';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import { AlertContext } from '../../AlertProvider';

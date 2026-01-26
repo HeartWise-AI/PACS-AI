@@ -54,6 +54,9 @@ export const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({ childr
     PatientID: '',
     PatientName: '',
   });
+  const [displaySets, setDisplaySets] = useState<any>(null);
+  const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
+
   const value = {
     selectedModalities,
     servicesManager,
@@ -61,6 +64,8 @@ export const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({ childr
     setServicesManager,
     patientInfo,
     setPatientInfo,
+    setDisplaySets,
+    setModalitiesInStudy,
   };
 
   return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;

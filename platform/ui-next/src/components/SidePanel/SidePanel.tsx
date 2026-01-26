@@ -436,7 +436,8 @@ const SidePanel = ({
     return (
       <div
         className={classnames(
-          'text-primary flex grow cursor-pointer select-none justify-center self-center text-[13px]'
+          // NOTE: This is a PACS changes
+          'text-primary-active flex grow cursor-pointer select-none justify-center self-center text-[13px]'
         )}
         data-cy={`${tabs[0].name}-btn`}
         onClick={() => updatePanelOpen(!panelOpen)}
@@ -455,7 +456,7 @@ const SidePanel = ({
         </div>
         <Separator
           orientation="horizontal"
-          className="bg-black"
+          className="bg-white/10" // NOTE: This is a PACS changes
           thickness="2px"
         />
       </>

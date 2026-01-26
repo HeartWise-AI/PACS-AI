@@ -1,14 +1,22 @@
 {
-  "Browser": "المتصفح",
   "Build Number": "رقم البنية",
   "Latest Master Commits": "أحدث الالتزامات الرئيسية",
-  "More details": "المزيد من التفاصيل",
-  "Name": "الاسم",
   "OHIF Viewer - About": "حول OHIF Viewer",
+  "About OHIF Viewer": "حول عارض OHIF",
+  "Browser": "المتصفح",
+  "Build number": "رقم الإصدار",
+  "Commit hash": "بصمة الـ Commit",
+  "Data citation": "اقتباس البيانات",
+  "Important links": "روابط مهمة",
+  "Last master commits": "آخر تحديثات Master",
+  "More details": "تفاصيل أكثر",
+  "Name": "الاسم",
   "OS": "نظام التشغيل",
   "Report an issue": "الإبلاغ عن مشكلة",
   "Repository URL": "رابط المستودع",
   "Value": "القيمة",
   "Version Information": "معلومات الإصدار",
-  "Visit the forum": "زيارة المنتدى"
+  "Visit the forum": "زيارة المنتدى",
+  "Version information": "معلومات الإصدار",
+  "Version number": "رقم الإصدار"
 }
