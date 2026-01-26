@@ -8,11 +8,13 @@ export default {
       id: 'tagBrowser',
       label: 'Tag Browser',
       iconName: 'DicomTagBrowser',
-      onClick: ({ commandsManager, displaySetInstanceUID }: withAppTypes) => {
-        commandsManager.runCommand('openDICOMTagViewer', {
-          displaySetInstanceUID,
-        });
-      },
+      commands: 'openDICOMTagViewer',
+    },
+    {
+      id: 'addAsLayer',
+      label: 'Add as Layer',
+      iconName: 'ViewportViews',
+      commands: 'addDisplaySetAsLayer',
     },
   ],
   'studyBrowser.sortFunctions': [

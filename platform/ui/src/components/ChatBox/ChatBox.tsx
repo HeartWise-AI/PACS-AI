@@ -846,6 +846,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         maxHeight: 'calc(100vh - 100px)',
+        top: 'auto',
+        left: 'auto',
         bottom: '24px',
         right: '32px',
         transform: isOpen ? `translate(${position.x}px, ${position.y}px)` : 'none',

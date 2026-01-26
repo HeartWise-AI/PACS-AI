@@ -29,6 +29,7 @@ import { updateLabelmapSegmentationImageReferences } from '@cornerstonejs/tools/
 import { triggerSegmentationRepresentationModified } from '@cornerstonejs/tools/segmentation/triggerSegmentationEvents';
 import { convertStackToVolumeLabelmap } from '@cornerstonejs/tools/segmentation/helpers/convertStackToVolumeLabelmap';
 import { getLabelmapImageIds } from '@cornerstonejs/tools/segmentation';
+import { VOLUME_LOADER_SCHEME } from '../../constants';
 
 const LABELMAP = csToolsEnums.SegmentationRepresentations.Labelmap;
 const CONTOUR = csToolsEnums.SegmentationRepresentations.Contour;
@@ -79,8 +80,6 @@ const EVENTS = {
 };
 
 const VALUE_TYPES = {};
-
-const VOLUME_LOADER_SCHEME = 'cornerstoneStreamingImageVolume';
 
 class SegmentationService extends PubSubService {
   static REGISTRATION = {
@@ -256,7 +255,7 @@ class SegmentationService extends PubSubService {
       this._onSegmentationAddedFromSource
     );
 
-    this.listeners = {};
+    this.reset();
   };
 
   public async addSegmentationRepresentation(
@@ -292,7 +291,7 @@ class SegmentationService extends PubSubService {
       const { isVolumeViewport, isVolumeSegmentation } = this.determineViewportAndSegmentationType(
         csViewport,
         segmentation
-      );
+      ) || { isVolumeViewport: false, isVolumeSegmentation: false };
 
       ({ representationTypeToUse, isConverted } = await this.handleViewportConversion(
         isVolumeViewport,
@@ -615,7 +614,7 @@ class SegmentationService extends PubSubService {
 
     // Process each segment similarly to the SEG function
     for (const rtStructData of allRTStructData) {
-      const { data, id, color, segmentIndex, geometryId } = rtStructData;
+      const { data, id, color, segmentIndex, geometryId, group } = rtStructData;
 
       // Add the color to the colorLUT array
       colorLUT.push(color);
@@ -646,6 +645,7 @@ class SegmentationService extends PubSubService {
           cachedStats: segmentsCachedStats,
           locked: false,
           active: false,
+          group,
         };
 
         // Broadcast segment loading progress
@@ -677,7 +677,6 @@ class SegmentationService extends PubSubService {
 
     // Mark the RT display set as loaded
     rtDisplaySet.isLoaded = true;
-
     // Add or update the segmentation in the state
     this.addOrUpdateSegmentation(segmentation);
 
@@ -1755,7 +1754,10 @@ class SegmentationService extends PubSubService {
     return `${volumeLoaderSchema}:${displaySet.displaySetInstanceUID}`;
   }
 
-  private _getSegmentCenter(segmentationId, segmentIndex) {
+  private _getSegmentCenter(
+    segmentationId: string,
+    segmentIndex: number
+  ): { image?: csTypes.Point3; world: csTypes.Point3 } | undefined {
     const segmentation = this.getSegmentation(segmentationId);
 
     if (!segmentation) {
@@ -1766,19 +1768,17 @@ class SegmentationService extends PubSubService {
 
     const { cachedStats } = segments[segmentIndex];
 
-    if (!cachedStats) {
-      return;
+    if (cachedStats?.center) {
+      const { center } = cachedStats;
+
+      return center as { image: csTypes.Point3; world: csTypes.Point3 };
     }
 
-    const { center } = cachedStats;
-
-    if (!center) {
+    if (cachedStats?.namedStats?.center) {
       return {
         world: cachedStats.namedStats.center.value,
       };
     }
-
-    return center;
   }
 
   private _setSegmentLockedStatus(segmentationId: string, segmentIndex: number, isLocked: boolean) {

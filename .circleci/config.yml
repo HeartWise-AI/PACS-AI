@@ -1,0 +1,517 @@
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@1.0.5
+  cypress: cypress-io/cypress@3.4.2
+
+defaults: &defaults
+  docker:
+    - image: cimg/node:20.18.1
+      environment:
+        TERM: xterm
+        QUICK_BUILD: true
+  working_directory: ~/repo
+
+commands:
+  install_bun:
+    steps:
+      - run:
+          name: Install Bun
+          command: |
+            curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.23"
+            echo 'export BUN_INSTALL="$HOME/.bun"' >> $BASH_ENV
+            echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
+
+jobs:
+  UNIT_TESTS:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - install_bun
+      - run: node --version
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: bun install --no-save
+      # RUN TESTS
+      - run:
+          name: 'JavaScript Test Suite'
+          command: bun run test:unit:ci
+      # platform/app
+      - run:
+          name: 'VIEWER: Combine report output'
+          command: |
+            viewerCov="/home/circleci/repo/platform/app/coverage"
+            touch "${viewerCov}/reports"
+            cat "${viewerCov}/clover.xml" >> "${viewerCov}/reports"
+            echo "\<<\<<\<< EOF" >> "${viewerCov}/reports"
+            cat "${viewerCov}/lcov.info" >>"${viewerCov}/reports"
+            echo "\<<\<<\<< EOF" >> "${viewerCov}/reports"
+      - codecov/upload:
+          file: '/home/circleci/repo/platform/app/coverage/reports'
+          flags: 'viewer'
+      # PLATFORM/CORE
+      - run:
+          name: 'CORE: Combine report output'
+          command: |
+            coreCov="/home/circleci/repo/platform/core/coverage"
+            touch "${coreCov}/reports"
+            cat "${coreCov}/clover.xml" >> "${coreCov}/reports"
+            echo "\<<\<<\<< EOF" >> "${coreCov}/reports"
+            cat "${coreCov}/lcov.info" >> "${coreCov}/reports"
+            echo "\<<\<<\<< EOF" >> "${coreCov}/reports"
+      - codecov/upload:
+          file: '/home/circleci/repo/platform/core/coverage/reports'
+          flags: 'core'
+
+  BUILD:
+    <<: *defaults
+    resource_class: large
+    steps:
+      # Checkout code and ALL Git Tags
+      - checkout
+      - install_bun
+      - run:
+          name: Install Dependencies
+          command: bun install --no-save
+      # Build & Test
+      - run:
+          name: 'Perform the versioning before build'
+          command: bun ./version.mjs
+      - run:
+          name: 'Build the OHIF Viewer'
+          command: bun run build
+          no_output_timeout: 45m
+      - run:
+          name: 'Upload SourceMaps, Send Deploy Notification'
+          command: |
+            # export FILE_1=$(find ./build/static/js -type f -name "2.*.js" -exec basename {} \;)
+            # export FILE_MAIN=$(find ./build/static/js -type f -name "main.*.js" -exec basename {} \;)
+            # export FILE_RUNTIME_MAIN=$(find ./build/static/js -type f -name "runtime~main.*.js" -exec basename {} \;)
+            # curl https://api.rollbar.com/api/1/sourcemap -F source_map=@build/static/js/$FILE_1.map -F access_token=$ROLLBAR_TOKEN -F version=$CIRCLE_SHA1 -F minified_url=https://$GOOGLE_STORAGE_BUCKET/static/js/$FILE_1
+            # curl https://api.rollbar.com/api/1/sourcemap -F source_map=@build/static/js/$FILE_MAIN.map -F access_token=$ROLLBAR_TOKEN -F version=$CIRCLE_SHA1 -F minified_url=https://$GOOGLE_STORAGE_BUCKET/static/js/$FILE_MAIN
+            # curl https://api.rollbar.com/api/1/sourcemap -F source_map=@build/static/js/$FILE_RUNTIME_MAIN.map -F access_token=$ROLLBAR_TOKEN -F version=$CIRCLE_SHA1 -F minified_url=https://$GOOGLE_STORAGE_BUCKET/static/js/$FILE_RUNTIME_MAIN
+            curl --request POST https://api.rollbar.com/api/1/deploy/ -F access_token=$ROLLBAR_TOKEN -F environment=$GOOGLE_STORAGE_BUCKET -F revision=$CIRCLE_SHA1 -F local_username=CircleCI
+      # Persist :+1:
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - platform/app/dist
+            - Dockerfile
+            - version.txt
+            - commit.txt
+            - version.json
+
+  BUILD_PACKAGES_QUICK:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - install_bun
+      # Checkout code and ALL Git Tags
+      - checkout
+      - attach_workspace:
+          at: ~/repo
+      # SECURITY AUDIT
+      - run:
+          name: 'Security Audit - High Risk Vulnerabilities'
+          command: |
+            echo "🔍 Running bun audit for security vulnerabilities..."
+            echo "Checking for HIGH-RISK vulnerabilities..."
+
+            if bun audit --audit-level high; then
+              echo "✅ No high-risk vulnerabilities found"
+              echo "🎉 Security audit passed!"
+            else
+              echo ""
+              echo "❌ HIGH-RISK VULNERABILITIES DETECTED!"
+              echo "======================================"
+              echo ""
+              echo "🔧 To fix these issues:"
+              echo "  1. Run: bun audit"
+              echo "  2. Review the vulnerability details"
+              echo "  3. Update affected packages to secure versions"
+              echo "  4. Test your changes"
+              echo "  5. Re-run: bun audit --audit-level high"
+              echo ""
+              echo "📋 Full audit report:"
+              bun audit --audit-level low || true
+              echo ""
+              echo "❌ This build cannot proceed until high-risk vulnerabilities are resolved."
+              exit 1
+            fi
+      - run:
+          name: Install Dependencies
+          command: bun install --frozen-lockfile
+      - run:
+          name: Avoid hosts unknown for github
+          command: |
+            rm -rf ~/.ssh
+            mkdir ~/.ssh/
+            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            git config --global user.email "danny.ri.brown+ohif-bot@gmail.com"
+            git config --global user.name "ohif-bot"
+      - run:
+          name: Authenticate with NPM registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+      - run:
+          name: build half of the packages (to avoid out of memory in circleci)
+          command: |
+            bun run build:package-all
+      - run:
+          name: build the other half of the packages
+          command: |
+            bun run build:package-all-1
+
+  NPM_PUBLISH:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - install_bun
+      # Checkout code and ALL Git Tags
+      - checkout
+      - attach_workspace:
+          at: ~/repo
+      - run:
+          name: Install Dependencies
+          command: bun install --no-save
+      - run:
+          name: Avoid hosts unknown for github
+          command: |
+            rm -rf ~/.ssh
+            mkdir ~/.ssh/
+            echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+            git config --global user.email "danny.ri.brown+ohif-bot@gmail.com"
+            git config --global user.name "ohif-bot"
+      - run:
+          name: Authenticate with NPM registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+      - run:
+          name: build half of the packages (to avoid out of memory in circleci)
+          command: |
+            bun run build:package-all
+      - run:
+          name: build the other half of the packages
+          command: |
+            bun run build:package-all-1
+      - run:
+          name: increase min time out
+          command: |
+            npm config set fetch-retry-mintimeout 20000
+      - run:
+          name: increase max time out
+          command: |
+            npm config set fetch-retry-maxtimeout 120000
+      - run:
+          name: publish package versions
+          command: |
+            bun ./publish-version.mjs
+      - run:
+          name: Again set the NPM registry (was deleted in the version script)
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
+      - run:
+          name: publish package dist
+          command: |
+            bun ./publish-package.mjs
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  DOCKER_RELEASE_PUBLISH:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build Docker image for amd64
+          command: |
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              exit 0
+            else
+              # Remove npm config
+              rm -f ./.npmrc
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              # Build our amd64 image, auth, and push
+              docker build --platform linux/amd64 --tag ohif/app:$IMAGE_VERSION_FULL-amd64 --tag ohif/app:latest-amd64 .
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              docker push ohif/app:$IMAGE_VERSION_FULL-amd64
+              docker push ohif/app:latest-amd64
+            fi
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  DOCKER_RELEASE_PUBLISH_ARM:
+    <<: *defaults
+    resource_class: arm.large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build Docker image for arm64 (Release)
+          command: |
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              exit 0
+            else
+              # Remove npm config
+              rm -f ./.npmrc
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              # Build our arm64 image, auth, and push
+              docker build --platform linux/arm64 --tag ohif/app:$IMAGE_VERSION_FULL-arm64 --tag ohif/app:latest-arm64 .
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              docker push ohif/app:$IMAGE_VERSION_FULL-arm64
+              docker push ohif/app:latest-arm64
+            fi
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  DOCKER_BETA_PUBLISH:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build Docker image for amd64 (Beta)
+          command: |
+            echo $(ls -l)
+
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              echo "don't have version txt"
+              exit 0
+            else
+              echo "Building and pushing Docker image from the master branch (beta releases)"
+              rm -f ./.npmrc
+
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              # Build our amd64 image, auth, and push
+              docker build --platform linux/amd64 --tag ohif/app:$IMAGE_VERSION_FULL-amd64 --tag ohif/app:latest-beta-amd64 .
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              docker push ohif/app:$IMAGE_VERSION_FULL-amd64
+              docker push ohif/app:latest-beta-amd64
+            fi
+
+  DOCKER_BETA_PUBLISH_ARM:
+    <<: *defaults
+    resource_class: arm.large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build Docker image for arm64 (Beta)
+          command: |
+            echo $(ls -l)
+
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              echo "don't have version txt"
+              exit 0
+            else
+              echo "Building and pushing ARM64 Docker image from the master branch (beta releases)"
+              rm -f ./.npmrc
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              # Build our arm64 image, auth, and push
+              docker build --platform linux/arm64 --tag ohif/app:$IMAGE_VERSION_FULL-arm64 --tag ohif/app:latest-beta-arm64 .
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+              docker push ohif/app:$IMAGE_VERSION_FULL-arm64
+              docker push ohif/app:latest-beta-arm64
+            fi
+
+  CYPRESS:
+    <<: *defaults
+    resource_class: large
+    parallelism: 8
+    steps:
+      - run:
+          name: Install System Dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y xvfb libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6
+      - run:
+          name: Start Xvfb
+          command: Xvfb :99 -screen 0 1920x1080x24 &
+          background: true
+      - run:
+          name: Export Display Variable
+          command: export DISPLAY=:99
+      - cypress/install:
+          install-command: yarn install --no-save
+      - cypress/run-tests:
+          cypress-command: |
+            npx wait-on@latest http://localhost:3000 && cd platform/app && npx cypress run --record --parallel
+          start-command: yarn run test:data && yarn run test:e2e:serve
+
+  DOCKER_MULTIARCH_MANIFEST:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Create and push multi-architecture manifest (Release)
+          command: |
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              exit 0
+            else
+              echo "Building and pushing multi-architecture manifest from the master branch (release releases)"
+              rm -f ./.npmrc
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+
+              # Create and push manifest for specific version
+              docker manifest create ohif/app:$IMAGE_VERSION_FULL \
+                --amend ohif/app:$IMAGE_VERSION_FULL-amd64 \
+                --amend ohif/app:$IMAGE_VERSION_FULL-arm64
+              docker manifest push ohif/app:$IMAGE_VERSION_FULL
+
+              # Create and push manifest for "latest" tag
+              docker manifest create ohif/app:latest \
+                --amend ohif/app:latest-amd64 \
+                --amend ohif/app:latest-arm64
+              docker manifest push ohif/app:latest
+            fi
+
+  DOCKER_BETA_MULTIARCH_MANIFEST:
+    <<: *defaults
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Create and push multi-architecture manifest (Beta)
+          command: |
+            echo $(ls -l)
+
+            # This file will exist if a new version was published by
+            # our command in the previous job.
+            if [[ ! -e version.txt ]]; then
+              exit 0
+            else
+              echo "Building and pushing multi-architecture manifest from the master branch (beta releases)"
+              rm -f ./.npmrc
+              # Set our version number using vars
+              export IMAGE_VERSION=$(cat version.txt)
+              export IMAGE_VERSION_FULL=v$IMAGE_VERSION
+              echo $IMAGE_VERSION
+              echo $IMAGE_VERSION_FULL
+              echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+
+              # Create and push manifest for specific beta version
+              docker manifest create ohif/app:$IMAGE_VERSION_FULL \
+                --amend ohif/app:$IMAGE_VERSION_FULL-amd64 \
+                --amend ohif/app:$IMAGE_VERSION_FULL-arm64
+              docker manifest push ohif/app:$IMAGE_VERSION_FULL
+
+              # Create and push manifest for "latest-beta" tag
+              docker manifest create ohif/app:latest-beta \
+                --amend ohif/app:latest-beta-amd64 \
+                --amend ohif/app:latest-beta-arm64
+              docker manifest push ohif/app:latest-beta
+            fi
+
+workflows:
+  PR_CHECKS:
+    jobs:
+      - BUILD_PACKAGES_QUICK:
+          filters:
+            branches:
+              ignore: master
+      - UNIT_TESTS
+      - CYPRESS:
+          name: 'Cypress Tests'
+          context: cypress
+
+  # viewer-dev.ohif.org
+  DEPLOY_MASTER:
+    jobs:
+      - BUILD:
+          filters:
+            branches:
+              only: master
+      # - HOLD_FOR_APPROVAL:
+      #     type: approval
+      #     requires:
+      #       - BUILD
+      - NPM_PUBLISH:
+          requires:
+            # - HOLD_FOR_APPROVAL
+            - BUILD
+      - DOCKER_BETA_PUBLISH:
+          requires:
+            - NPM_PUBLISH
+      - DOCKER_BETA_PUBLISH_ARM:
+          requires:
+            - DOCKER_BETA_PUBLISH
+      - DOCKER_BETA_MULTIARCH_MANIFEST:
+          requires:
+            - DOCKER_BETA_PUBLISH_ARM
+
+  # viewer.ohif.org
+  DEPLOY_RELEASE:
+    jobs:
+      - BUILD:
+          filters:
+            branches:
+              only: /^release\/.*/
+      - HOLD_FOR_APPROVAL:
+          type: approval
+          requires:
+            - BUILD
+      - NPM_PUBLISH:
+          requires:
+            - HOLD_FOR_APPROVAL
+      - DOCKER_RELEASE_PUBLISH:
+          requires:
+            - NPM_PUBLISH
+      - DOCKER_RELEASE_PUBLISH_ARM:
+          requires:
+            - DOCKER_RELEASE_PUBLISH
+      - DOCKER_MULTIARCH_MANIFEST:
+          requires:
+            - DOCKER_RELEASE_PUBLISH_ARM

@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Button, Input, Logo, Typography } from '@ohif/ui';
+import { Button, Logo, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
@@ -116,13 +117,18 @@ const LoginPage = () => {
 
   // Get current user info
   const getCurrentUser = () => {
-    userRepository.GetCurrentUser().then(response => {
-      if (response.success) {
-        navigate(`/`);
-      } else {
-        localStorage.removeItem('sessionToken');
-      }
-    });
+    userRepository
+      .GetCurrentUser()
+      .then(response => {
+        if (response.success) {
+          navigate(`/`);
+        } else {
+          localStorage.removeItem('sessionToken');
+        }
+      })
+      .catch(error => {
+        console.warn('GetCurrentUser failed on login page', error);
+      });
   };
 
   // User reset password
@@ -252,7 +258,7 @@ const LoginPage = () => {
                 variant="body"
                 className="mt-4 text-center font-light text-white text-opacity-70"
               >
-                {t('© 2025 PACS AI. All rights reserved.')}
+                {t('© 2026 PACS AI. All rights reserved.')}
               </Typography>
             </div>
           </div>
@@ -315,7 +321,7 @@ const LoginPage = () => {
                 variant="body"
                 className="mt-4 text-center font-light text-white text-opacity-70"
               >
-                {t('© 2025 PACS AI. All rights reserved.')}
+                {t('© 2026 PACS AI. All rights reserved.')}
               </Typography>
             </div>
           </div>

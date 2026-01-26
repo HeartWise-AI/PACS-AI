@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
 import { useNavigate } from 'react-router';
 import moment from 'moment';
-import { Button, Input } from '@ohif/ui';
+import { Button } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import Table from '../../components/Table';
@@ -301,7 +302,7 @@ const KibanaLogsPage = () => {
                 onChange={handleQueryFieldChange}
               />
             </div>
-            <div className="relative w-[25%]">
+            <div className="pacs-date-range relative w-[25%] min-w-[220px]">
               <DateRangePicker
                 startDate={startDate}
                 startDateId="FilterStartDate"

@@ -13,6 +13,7 @@ import {
   HotkeysManager,
   ServiceProvidersManager,
   SystemContextProvider,
+  ViewportRefsProvider,
 } from '@ohif/core';
 import {
   ThemeWrapper as ThemeWrapperNext,
@@ -39,6 +40,8 @@ import { AlertProvider } from './AlertProvider';
 // NOTE: This is a PACS changes
 import { GlobalStateProvider } from './GlobalStateProvider';
 
+import './App.css';
+
 // NOTE: This is a PACS changes
 export const FrontendVersionContext = createContext('');
 
@@ -49,7 +52,7 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 // NOTE: This is a PACS changes
-const frontendVersion = 'v0.53.3-beta';
+const frontendVersion = 'v0.54.0-beta';
 const queryClient = new QueryClient();
 
 // NOTE: This is a PACS changes
@@ -134,6 +137,7 @@ function App({
     [I18nextProvider, { i18n }],
     [ThemeWrapperNext],
     [SystemContextProvider, { commandsManager, extensionManager, hotkeysManager, servicesManager }],
+    [ViewportRefsProvider],
     [ViewportGridProvider, { service: viewportGridService }],
     [ViewportDialogProvider, { service: uiViewportDialogService }],
     [CineProvider, { service: cineService }],

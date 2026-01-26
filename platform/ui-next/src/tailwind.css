@@ -8,21 +8,23 @@
 
 @layer base {
   :root {
-    --highlight: 191 74% 63%;
+    --highlight: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
     --neutral: 213 22% 59%;
-    --background: 236 62% 5%;
-    --foreground: 0 0% 98%;
-    --card: 234 64% 10%;
-    --card-foreground: 0 0% 98%;
+    --neutral-light: 214 69% 81%;
+    --neutral-dark: 214 16% 21%;
+    --background: 219 90% 15%; /* NOTE: This is a PACS changes */
+    --foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
+    --card: 234 32% 10%; /* NOTE: This is a PACS changes */
+    --card-foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
     --popover: 219 90% 15%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 214 98% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 214 66% 48%;
-    --secondary-foreground: 200 50% 84%;
-    --muted: 234 64% 10%;
+    --popover-foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
+    --primary: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
+    --primary-foreground: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
+    --secondary: 255 66% 25%; /* NOTE: This is a PACS changes */
+    --secondary-foreground: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
+    --muted: 234 32% 10%; /* NOTE: This is a PACS changes */
     --muted-foreground: 200 46% 65%;
-    --accent: 217 79% 24%;
+    --accent: 214 98% 60%; /* NOTE: This is a PACS changes */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -53,19 +55,19 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 234 64% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 214 98% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
+    --background: 219 90% 15%; /* NOTE: This is a PACS changes */
+    --foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
+    --card: 234 32% 10%; /* NOTE: This is a PACS changes */
+    --card-foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
+    --popover: 219 90% 15%; /* NOTE: This is a PACS changes */
+    --popover-foreground: 0 0% 100%; /* NOTE: This is a PACS changes */
+    --primary: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
+    --primary-foreground: 240 10% 4%; /* NOTE: This is a PACS changes */
+    --secondary: 255 66% 25%; /* NOTE: This is a PACS changes */
+    --secondary-foreground: 79 86% 68%; /* ui primary #c8f469 */ /* NOTE: This is a PACS changes */
+    --muted: 234 32% 10%; /* NOTE: This is a PACS changes */
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 214 98% 60%; /* NOTE: This is a PACS changes */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;

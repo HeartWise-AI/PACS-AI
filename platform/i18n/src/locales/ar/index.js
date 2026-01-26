@@ -4,20 +4,29 @@ import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
-import Header from './Header.json';
 import HeaderPanel from './HeaderPanel.json';
-import MeasurementTable from './MeasurementTable.json';
 import Members from './Members.json';
-import Messages from './Messages.json';
 import Onboarding from './Onboarding.json';
 import Settings from './Settings.json';
 import Sidebar from './Sidebar.json';
+import StoreFileButton from './StoreFileButton.json';
+import ErrorBoundary from './ErrorBoundary.json';
+import Header from './Header.json';
+import HotkeysValidators from './HotkeysValidators.json';
+import MeasurementTable from './MeasurementTable.json';
+import Modes from './Modes.json';
+import SegmentationTable from './SegmentationTable.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
+import StudyItem from './StudyItem.json';
 import StudyList from './StudyList.json';
-import StoreFileButton from './StoreFileButton.json';
+import TooltipClipboard from './TooltipClipboard.json';
+import ThumbnailTracked from './ThumbnailTracked.json';
+import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
+import Messages from './Messages.json';
+import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 
 export default {
   ar: {
@@ -27,19 +36,28 @@ export default {
     Common,
     DataSourceConfiguration,
     DatePicker,
-    Header,
     HeaderPanel,
-    MeasurementTable,
     Members,
-    Messages,
     Onboarding,
     Settings,
     Sidebar,
+    StoreFileButton,
+    ErrorBoundary,
+    Header,
+    HotkeysValidators,
+    MeasurementTable,
+    Modes,
+    SegmentationTable,
     SidePanel,
     StudyBrowser,
+    StudyItem,
     StudyList,
-    StoreFileButton,
+    TooltipClipboard,
+    ThumbnailTracked,
+    TrackedCornerstoneViewport,
     UserPreferencesModal,
     ViewportDownloadForm,
+    Messages,
+    WindowLevelActionMenu,
   },
 };

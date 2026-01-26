@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Button, Input, Typography } from '@ohif/ui';
+import { Button, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 
@@ -52,7 +53,7 @@ const ResetPasswordPage = () => {
           </div>
           <div>
             <h1 className="text-center text-base text-white text-opacity-70">
-              {t('© 2025 PACS AI. All rights reserved.')}
+              {t('© 2026 PACS AI. All rights reserved.')}
             </h1>
           </div>
         </div>

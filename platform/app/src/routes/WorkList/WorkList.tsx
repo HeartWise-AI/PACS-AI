@@ -6,7 +6,8 @@ import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
 import { sortBy } from 'lodash';
-import { Button, Input } from '@ohif/ui';
+import { Button } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
 import HeaderPanel from '../../components/HeaderPanel';
@@ -746,7 +747,7 @@ function WorkList() {
                 type="text"
                 onChange={e => handleInputChange('patientId', e.target.value)}
               />
-              <div className="relative w-[250px]">
+              <div className="pacs-date-range relative w-full min-w-[240px] max-w-[360px] flex-1 sm:w-[260px] sm:flex-none md:w-[320px]">
                 <DateRangePicker
                   startDate={startDate}
                   startDateId="FilterStartDate"
