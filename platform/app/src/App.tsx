@@ -40,10 +40,10 @@ import { AlertProvider } from './AlertProvider';
 // NOTE: This is a PACS changes
 import { GlobalStateProvider } from './GlobalStateProvider';
 
+import './App.css';
+
 // NOTE: This is a PACS changes
 export const FrontendVersionContext = createContext('');
-
-import './App.css';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -52,7 +52,7 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 // NOTE: This is a PACS changes
-const frontendVersion = 'v0.53.3-beta';
+const frontendVersion = 'v0.54.0-beta';
 const queryClient = new QueryClient();
 
 // NOTE: This is a PACS changes
