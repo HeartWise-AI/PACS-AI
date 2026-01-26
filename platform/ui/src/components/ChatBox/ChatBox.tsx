@@ -521,7 +521,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   }, [threadId]);
 
   // Function to handle selecting series - modified to replace selection instead of just adding
-  const handleSeriesSelected = async seriesInstanceUIDs => {
+  const handleSeriesSelected = async (seriesInstanceUIDs, passedStudyInstanceUID?: string) => {
     // If no series are selected, just close the modal without any changes
     if (seriesInstanceUIDs.length === 0) {
       setIsSeriesModalOpen(false);
@@ -541,7 +541,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     // Get information for the selected series
     const newSeriesInfo = [];
-    let studyInstanceUID = currentStudyInstanceUID;
+    // Use the passed studyInstanceUID if provided, otherwise fall back to current
+    let studyInstanceUID = passedStudyInstanceUID || currentStudyInstanceUID;
 
     // Iterate through all modalities to find the selected series
     for (const modality of Object.values(selectedModalities)) {
@@ -551,10 +552,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         );
 
         if (matchingSeries.length > 0 && !studyInstanceUID) {
-          // Get studyInstanceUID from the first matching series
+          // Get studyInstanceUID from the first matching series if not already provided
           studyInstanceUID =
             matchingSeries[0].StudyInstanceUID || matchingSeries[0].studyInstanceUID;
-          setCurrentStudyInstanceUID(studyInstanceUID);
         }
 
         matchingSeries.forEach(series => {
@@ -580,6 +580,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     // Update the selected series state with the new selection
     setSelectedSeries(seriesInstanceUIDs);
+
+    // Update the study instance UID state if we have a valid value
+    if (studyInstanceUID && studyInstanceUID !== currentStudyInstanceUID) {
+      setCurrentStudyInstanceUID(studyInstanceUID);
+    }
 
     // Update the series details with the new selection's info
     setSelectedSeriesDetails(newSeriesInfo);
@@ -658,7 +663,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     additionalMetadata,
     outputMode
   ) => {
-    handleSeriesSelected(seriesInstanceUIDs);
+    handleSeriesSelected(seriesInstanceUIDs, studyInstanceUID);
   };
 
   // Scroll to bottom of messages whenever a new message is added
