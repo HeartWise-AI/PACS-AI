@@ -9,6 +9,7 @@ export type { Message, SeriesInfo, ChatBoxProps, InitialSeriesSelection } from '
 export { useChatBox } from './hooks/useChatBox';
 export { useSeriesSelection } from './hooks/useSeriesSelection';
 export { useDraggable } from './hooks/useDraggable';
+export { useResizable } from './hooks/useResizable';
 
 // Components (for custom compositions)
 export { ChatHeader } from './components/ChatHeader';
