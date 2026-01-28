@@ -8,6 +8,7 @@ import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
 import { useChatBox } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
+import { useResizable } from './hooks/useResizable';
 
 // Components
 import { ChatHeader } from './components/ChatHeader';
@@ -37,6 +38,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const chat = useChatBox(isOpen, messages.length);
   const series = useSeriesSelection();
   const drag = useDraggable(isOpen);
+  const resize = useResizable(isOpen, {
+    minWidth: 320,
+    minHeight: 400,
+    maxWidth: 800,
+    maxHeight: 900,
+    defaultWidth: 400,
+    defaultHeight: 650,
+  });
 
   // Handle feedback for assistant messages
   const handleFeedback = useCallback(
@@ -238,8 +247,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   return (
     <div
-      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white shadow-xl transition-all duration-300 ease-in-out ${
-        isOpen ? 'h-[650px] w-[400px] opacity-100' : 'pointer-events-none h-0 w-0 opacity-0'
+      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white shadow-xl transition-opacity duration-300 ease-in-out ${
+        isOpen ? 'opacity-100' : 'pointer-events-none h-0 w-0 opacity-0'
       }`}
       ref={chatboxRef}
       style={{
@@ -250,14 +259,27 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         left: 'auto',
         bottom: '24px',
         right: '32px',
+        width: isOpen ? `${resize.size.width}px` : 0,
+        height: isOpen ? `${resize.size.height}px` : 0,
         transform: isOpen ? `translate(${drag.position.x}px, ${drag.position.y}px)` : 'none',
-        cursor: drag.isDragging ? 'grabbing' : 'auto',
+        cursor: drag.isDragging ? 'grabbing' : resize.isResizing ? 'nwse-resize' : 'auto',
       }}
       onMouseDown={drag.handleMouseDown}
     >
       {isOpen && (
         <>
           <style>{chatBoxStyles}</style>
+
+          {/* Resize handle - top-left corner */}
+          <div
+            className="absolute left-0 top-0 h-4 w-4 cursor-nwse-resize"
+            onMouseDown={resize.handleResizeMouseDown}
+            style={{
+              background: 'linear-gradient(135deg, rgba(200, 244, 105, 0.6) 0%, transparent 50%)',
+              borderTopLeftRadius: '8px',
+            }}
+            title="Drag to resize"
+          />
 
           <ChatHeader
             onAddSeries={() => series.setIsSeriesModalOpen(true)}
