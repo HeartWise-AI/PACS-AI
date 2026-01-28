@@ -15,7 +15,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
       className="draggable-header flex items-center justify-between rounded-t-lg border-b border-white border-opacity-10 bg-gradient-to-r from-[rgba(100,200,100,0.8)] to-[rgba(200,244,105,0.8)] px-4 py-3"
       style={{ cursor: 'grab' }}
     >
-      <h2 className="text-lg font-bold text-white">{t('Chat')}</h2>
+      <h2 className="pl-6 text-lg font-bold text-white">{t('Chat')}</h2>
       <div className="flex space-x-2">
         {/* Add Series button */}
         <button
