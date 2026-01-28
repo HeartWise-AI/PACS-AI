@@ -169,6 +169,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const handleClearChat = useCallback(async () => {
     series.resetSelection();
     chat.resetThread();
+    setMessageFeedback({}); // Clear feedback state
     onClearChat();
   }, [series, chat, onClearChat]);
 
