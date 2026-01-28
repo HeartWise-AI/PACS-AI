@@ -272,14 +272,26 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
           {/* Resize handle - top-left corner */}
           <div
-            className="absolute left-0 top-0 h-4 w-4 cursor-nwse-resize"
+            className="resize-handle group absolute left-0 top-0 z-10 h-8 w-8 cursor-nwse-resize"
             onMouseDown={resize.handleResizeMouseDown}
-            style={{
-              background: 'linear-gradient(135deg, rgba(200, 244, 105, 0.6) 0%, transparent 50%)',
-              borderTopLeftRadius: '8px',
-            }}
             title="Drag to resize"
-          />
+          >
+            {/* Visual indicator - diagonal lines */}
+            <div
+              className="absolute left-1.5 top-1.5 transition-all duration-200 group-hover:scale-110"
+              style={{
+                width: '14px',
+                height: '14px',
+                opacity: 0.6,
+              }}
+            >
+              <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 13L13 1" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+                <path d="M5 13L13 5" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+                <path d="M9 13L13 9" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
 
           <ChatHeader
             onAddSeries={() => series.setIsSeriesModalOpen(true)}
