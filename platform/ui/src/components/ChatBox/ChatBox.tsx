@@ -48,37 +48,43 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   });
 
   // Handle feedback for assistant messages
-  const handleFeedback = useCallback(
-    async (messageId: string, type: 'up' | 'down') => {
-      const currentFeedback = messageFeedback[messageId];
-      const newFeedback = currentFeedback === type ? null : type;
+  // const handleFeedback = useCallback(
+  //   async (messageId: string, type: 'up' | 'down') => {
+  //     const currentFeedback = messageFeedback[messageId];
+  //     const newFeedback = currentFeedback === type ? null : type;
 
-      // Optimistically update UI
-      setMessageFeedback(prev => ({
-        ...prev,
-        [messageId]: newFeedback,
-      }));
+  //     // Optimistically update UI
+  //     setMessageFeedback(prev => ({
+  //       ...prev,
+  //       [messageId]: newFeedback,
+  //     }));
 
-      // Only send to API if we have a threadId and feedback is being set (not cleared)
-      if (chat.threadId && newFeedback) {
-        try {
-          await orchestratorRepository.SubmitFeedback({
-            threadId: chat.threadId,
-            messageId,
-            feedback: newFeedback,
-          });
-        } catch (error) {
-          console.error('Failed to submit feedback:', error);
-          // Revert on error
-          setMessageFeedback(prev => ({
-            ...prev,
-            [messageId]: currentFeedback,
-          }));
-        }
-      }
-    },
-    [chat.threadId, messageFeedback]
-  );
+  //     // Only send to API if we have a threadId and feedback is being set (not cleared)
+  //     if (chat.threadId && newFeedback) {
+  //       try {
+  //         await orchestratorRepository.SubmitFeedback({
+  //           threadId: chat.threadId,
+  //           messageId,
+  //           feedback: newFeedback,
+  //         });
+  //       } catch (error) {
+  //         console.error('Failed to submit feedback:', error);
+  //         // Revert on error
+  //         setMessageFeedback(prev => ({
+  //           ...prev,
+  //           [messageId]: currentFeedback,
+  //         }));
+  //       }
+  //     }
+  //   },
+  //   [chat.threadId, messageFeedback]
+  // );
+  const handleFeedback = useCallback((messageId: string, type: 'up' | 'down') => {
+    setMessageFeedback(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === type ? null : type,
+    }));
+  }, []);
 
   // Handle message submission
   const handleSubmit = useCallback(
