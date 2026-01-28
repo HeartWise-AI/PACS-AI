@@ -103,3 +103,15 @@ export interface ThreadResponse {
   created_at?: string;
   metadata?: Record<string, any>;
 }
+
+// Feedback DTOs
+export interface SubmitFeedbackRequest {
+  threadId: string;
+  messageId: string;
+  feedback: 'up' | 'down';
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  message?: string;
+}
