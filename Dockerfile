@@ -20,25 +20,6 @@
 #
 
 
-# syntax=docker/dockerfile:1.7-labs
-# This dockerfile is used to publish the `ohif/app` image on dockerhub.
-#
-# It's a good example of how to build our static application and package it
-# with a web server capable of hosting it as static content.
-#
-# docker build
-# --------------
-# If you would like to use this dockerfile to build and tag an image, make sure
-# you set the context to the project's root directory:
-# https://docs.docker.com/engine/reference/commandline/build/
-#
-#
-# SUMMARY
-# --------------
-# This dockerfile is used as an input for a second stage to make things run faster.
-#
-
-
 # Stage 1: Build the application
 # docker build -t ohif/viewer:latest .
 # Copy Files
