@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
+import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
 
 // Hooks
 import { useChatBox } from './hooks/useChatBox';
@@ -38,12 +39,37 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const drag = useDraggable(isOpen);
 
   // Handle feedback for assistant messages
-  const handleFeedback = useCallback((messageId: string, type: 'up' | 'down') => {
-    setMessageFeedback(prev => ({
-      ...prev,
-      [messageId]: prev[messageId] === type ? null : type,
-    }));
-  }, []);
+  const handleFeedback = useCallback(
+    async (messageId: string, type: 'up' | 'down') => {
+      const currentFeedback = messageFeedback[messageId];
+      const newFeedback = currentFeedback === type ? null : type;
+
+      // Optimistically update UI
+      setMessageFeedback(prev => ({
+        ...prev,
+        [messageId]: newFeedback,
+      }));
+
+      // Only send to API if we have a threadId and feedback is being set (not cleared)
+      if (chat.threadId && newFeedback) {
+        try {
+          await orchestratorRepository.SubmitFeedback({
+            threadId: chat.threadId,
+            messageId,
+            feedback: newFeedback,
+          });
+        } catch (error) {
+          console.error('Failed to submit feedback:', error);
+          // Revert on error
+          setMessageFeedback(prev => ({
+            ...prev,
+            [messageId]: currentFeedback,
+          }));
+        }
+      }
+    },
+    [chat.threadId, messageFeedback]
+  );
 
   // Handle message submission
   const handleSubmit = useCallback(
