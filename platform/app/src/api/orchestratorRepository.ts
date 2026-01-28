@@ -12,6 +12,8 @@ import {
   UploadDicomPayloadRequestFlat,
   DicomPayloadResponse,
   StudyData,
+  SubmitFeedbackRequest,
+  FeedbackResponse,
 } from './orchestratorDTO';
 
 const orchestratorRepository = {
@@ -115,6 +117,30 @@ const orchestratorRepository = {
     return Api()
       .post(`/v1/orchestrator/threads/${request.threadId}/dicom`, payload)
       .then((response: AxiosResponse<APIResponse<DicomPayloadResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * Submit feedback for a message (thumbs up/down)
+   *
+   * @param   {SubmitFeedbackRequest}  request
+   *
+   * @return  {Promise<APIResponse<FeedbackResponse>>}
+   */
+  async SubmitFeedback(
+    request: SubmitFeedbackRequest
+  ): Promise<APIResponse<FeedbackResponse>> {
+    return Api()
+      .post(`/v1/orchestrator/threads/${request.threadId}/messages/${request.messageId}/feedback`, {
+        feedback: request.feedback,
+      })
+      .then((response: AxiosResponse<APIResponse<FeedbackResponse>>) => {
         const { data } = response;
         return data;
       })
