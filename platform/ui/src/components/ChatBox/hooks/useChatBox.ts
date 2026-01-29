@@ -25,7 +25,11 @@ interface UseChatBoxReturn {
   thinkingMessageId: string | null;
   threadCreationPending: boolean;
   createThread: () => Promise<void>;
-  sendMessage: (threadId: string, message: string, selectedSeries: string[]) => Promise<SendMessageResponse>;
+  sendMessage: (
+    threadId: string,
+    message: string,
+    selectedSeries: string[]
+  ) => Promise<SendMessageResponse>;
   uploadDicomPayload: (
     threadId: string,
     studyInstanceUID: string,

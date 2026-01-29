@@ -12,7 +12,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading, errorDetails,
 
   return (
     <div className="flex h-full flex-col items-center justify-center text-center text-gray-400">
-      <svg className="mb-4 h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        className="mb-4 h-12 w-12"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -38,9 +43,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ isLoading, errorDetails,
               {t('Retry')}
             </button>
             <p className="mt-1 text-xs text-gray-500">
-              {t(
-                'If the error persists, please check your network connection or contact support.'
-              )}
+              {t('If the error persists, please check your network connection or contact support.')}
             </p>
           </div>
         </div>

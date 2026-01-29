@@ -46,7 +46,10 @@ export const InputArea: React.FC<InputAreaProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-b-lg border-t border-white border-opacity-10 p-3">
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-b-lg border-t border-white border-opacity-10 p-3"
+    >
       <div className="relative">
         <input
           type="text"
@@ -66,7 +69,12 @@ export const InputArea: React.FC<InputAreaProps> = ({
               : 'opacity-100 hover:bg-[#444844]'
           }`}
         >
-          <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-5 w-5 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

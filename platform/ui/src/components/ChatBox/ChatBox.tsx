@@ -174,10 +174,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   // Handle series selection from modal
   const handleSeriesSelected = useCallback(
-    async (
-      seriesInstanceUIDs: string[],
-      studyInstanceUID?: string
-    ) => {
+    async (seriesInstanceUIDs: string[], studyInstanceUID?: string) => {
       await series.handleSeriesSelected(
         seriesInstanceUIDs,
         studyInstanceUID,

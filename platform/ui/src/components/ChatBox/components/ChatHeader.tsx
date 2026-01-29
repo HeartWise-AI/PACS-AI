@@ -24,7 +24,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
           aria-label="Add Series"
           title={t('Add Series')}
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -40,7 +45,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
           aria-label="Clear chat"
           title={t('Clear chat history')}
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -56,7 +66,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
           aria-label="Close chat"
           title={t('Close chat')}
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

@@ -44,7 +44,12 @@ export const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
           disabled={carouselPage === 0}
           aria-label="Previous series"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -57,7 +62,10 @@ export const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
         <div className="series-thumbnails">
           {currentItems.length > 0 ? (
             currentItems.map(series => (
-              <div key={series.SeriesInstanceUID} className="series-thumbnail">
+              <div
+                key={series.SeriesInstanceUID}
+                className="series-thumbnail"
+              >
                 <div className="series-thumbnail-badge">
                   {series.modality} {series.seriesNumber}
                 </div>
@@ -66,7 +74,12 @@ export const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
                   onClick={() => onRemoveSeries(series.SeriesInstanceUID)}
                   aria-label="Remove series"
                 >
-                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -96,9 +109,7 @@ export const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
             ))
           ) : (
             <div className="series-placeholder">
-              {t(
-                'No series selected. Click the "+" button to add series to the conversation.'
-              )}
+              {t('No series selected. Click the "+" button to add series to the conversation.')}
             </div>
           )}
         </div>
@@ -109,7 +120,12 @@ export const SeriesCarousel: React.FC<SeriesCarouselProps> = ({
           disabled={carouselPage >= maxPage || selectedSeriesDetails.length <= seriesPerPage}
           aria-label="Next series"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"

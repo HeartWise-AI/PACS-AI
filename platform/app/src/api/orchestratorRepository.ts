@@ -133,9 +133,7 @@ const orchestratorRepository = {
    *
    * @return  {Promise<APIResponse<FeedbackResponse>>}
    */
-  async SubmitFeedback(
-    request: SubmitFeedbackRequest
-  ): Promise<APIResponse<FeedbackResponse>> {
+  async SubmitFeedback(request: SubmitFeedbackRequest): Promise<APIResponse<FeedbackResponse>> {
     return Api()
       .post(`/v1/orchestrator/threads/${request.threadId}/messages/${request.messageId}/feedback`, {
         feedback: request.feedback,
