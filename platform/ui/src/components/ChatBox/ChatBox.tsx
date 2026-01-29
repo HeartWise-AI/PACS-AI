@@ -8,6 +8,7 @@ import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
 import { useChatBox } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
+import { useResizable } from './hooks/useResizable';
 
 // Components
 import { ChatHeader } from './components/ChatHeader';
@@ -37,39 +38,53 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const chat = useChatBox(isOpen, messages.length);
   const series = useSeriesSelection();
   const drag = useDraggable(isOpen);
+  const resize = useResizable(isOpen, {
+    minWidth: 320,
+    minHeight: 400,
+    maxWidth: 800,
+    maxHeight: 900,
+    defaultWidth: 400,
+    defaultHeight: 650,
+  });
 
   // Handle feedback for assistant messages
-  const handleFeedback = useCallback(
-    async (messageId: string, type: 'up' | 'down') => {
-      const currentFeedback = messageFeedback[messageId];
-      const newFeedback = currentFeedback === type ? null : type;
+  // const handleFeedback = useCallback(
+  //   async (messageId: string, type: 'up' | 'down') => {
+  //     const currentFeedback = messageFeedback[messageId];
+  //     const newFeedback = currentFeedback === type ? null : type;
 
-      // Optimistically update UI
-      setMessageFeedback(prev => ({
-        ...prev,
-        [messageId]: newFeedback,
-      }));
+  //     // Optimistically update UI
+  //     setMessageFeedback(prev => ({
+  //       ...prev,
+  //       [messageId]: newFeedback,
+  //     }));
 
-      // Only send to API if we have a threadId and feedback is being set (not cleared)
-      if (chat.threadId && newFeedback) {
-        try {
-          await orchestratorRepository.SubmitFeedback({
-            threadId: chat.threadId,
-            messageId,
-            feedback: newFeedback,
-          });
-        } catch (error) {
-          console.error('Failed to submit feedback:', error);
-          // Revert on error
-          setMessageFeedback(prev => ({
-            ...prev,
-            [messageId]: currentFeedback,
-          }));
-        }
-      }
-    },
-    [chat.threadId, messageFeedback]
-  );
+  //     // Only send to API if we have a threadId and feedback is being set (not cleared)
+  //     if (chat.threadId && newFeedback) {
+  //       try {
+  //         await orchestratorRepository.SubmitFeedback({
+  //           threadId: chat.threadId,
+  //           messageId,
+  //           feedback: newFeedback,
+  //         });
+  //       } catch (error) {
+  //         console.error('Failed to submit feedback:', error);
+  //         // Revert on error
+  //         setMessageFeedback(prev => ({
+  //           ...prev,
+  //           [messageId]: currentFeedback,
+  //         }));
+  //       }
+  //     }
+  //   },
+  //   [chat.threadId, messageFeedback]
+  // );
+  const handleFeedback = useCallback((messageId: string, type: 'up' | 'down') => {
+    setMessageFeedback(prev => ({
+      ...prev,
+      [messageId]: prev[messageId] === type ? null : type,
+    }));
+  }, []);
 
   // Handle message submission
   const handleSubmit = useCallback(
@@ -169,6 +184,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const handleClearChat = useCallback(async () => {
     series.resetSelection();
     chat.resetThread();
+    setMessageFeedback({}); // Clear feedback state
     onClearChat();
   }, [series, chat, onClearChat]);
 
@@ -237,8 +253,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   return (
     <div
-      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white shadow-xl transition-all duration-300 ease-in-out ${
-        isOpen ? 'h-[650px] w-[400px] opacity-100' : 'pointer-events-none h-0 w-0 opacity-0'
+      className={`fixed z-50 flex flex-col rounded-lg bg-[#1E211F] text-white shadow-xl transition-opacity duration-300 ease-in-out ${
+        isOpen ? 'opacity-100' : 'pointer-events-none h-0 w-0 opacity-0'
       }`}
       ref={chatboxRef}
       style={{
@@ -249,14 +265,39 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         left: 'auto',
         bottom: '24px',
         right: '32px',
+        width: isOpen ? `${resize.size.width}px` : 0,
+        height: isOpen ? `${resize.size.height}px` : 0,
         transform: isOpen ? `translate(${drag.position.x}px, ${drag.position.y}px)` : 'none',
-        cursor: drag.isDragging ? 'grabbing' : 'auto',
+        cursor: drag.isDragging ? 'grabbing' : resize.isResizing ? 'nwse-resize' : 'auto',
       }}
       onMouseDown={drag.handleMouseDown}
     >
       {isOpen && (
         <>
           <style>{chatBoxStyles}</style>
+
+          {/* Resize handle - top-left corner */}
+          <div
+            className="resize-handle group absolute left-0 top-0 z-10 h-8 w-8 cursor-nwse-resize"
+            onMouseDown={resize.handleResizeMouseDown}
+            title="Drag to resize"
+          >
+            {/* Visual indicator - diagonal lines */}
+            <div
+              className="absolute left-1.5 top-1.5 transition-all duration-200 group-hover:scale-110"
+              style={{
+                width: '14px',
+                height: '14px',
+                opacity: 0.6,
+              }}
+            >
+              <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 13L13 1" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+                <path d="M5 13L13 5" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+                <path d="M9 13L13 9" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
 
           <ChatHeader
             onAddSeries={() => series.setIsSeriesModalOpen(true)}

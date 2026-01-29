@@ -20,6 +20,18 @@ export const chatBoxStyles = `
     animation-delay: 0.4s;
   }
 
+  /* Resize handle styles */
+  .resize-handle {
+    cursor: nwse-resize !important;
+  }
+  .resize-handle:hover svg path {
+    stroke: #C8F469;
+    stroke-width: 2;
+  }
+  .resize-handle:hover > div {
+    opacity: 1 !important;
+  }
+
   /* Series carousel styling */
   .series-carousel {
     background-color: rgba(0, 0, 0, 0.2);
