@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelPDFResponse } from '../../api/inferenceDTO';
+import AddModelFeedback from './AddModelFeedback';
 
 interface PDFOutputModeModalProps {
   isOpen: boolean;
@@ -59,7 +60,9 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
     }
   }, [onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   const modalContent = (
     <div
@@ -96,7 +99,10 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
           </button>
           {/* content */}
           <div className="h-full w-full">
-            <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+            <div className="mb-4 flex items-center justify-between pr-10">
+              <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+              <AddModelFeedback title={title} />
+            </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {/* Display PDF content in an iframe */}
               {loading ? (

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelJSONResponse } from '../../api/inferenceDTO';
 import ReactSpeedometer from 'react-d3-speedometer';
+import AddModelFeedback from './AddModelFeedback';
 
 interface JSONOutputModeModalProps {
   isOpen: boolean;
@@ -65,7 +66,9 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
 
   const getInferenceDiagnosisColor = (diagnosis: string) => {
     const diagnosisDetails = InferenceDetails[diagnosis.toLowerCase()];
-    if (!diagnosisDetails) return 'text-[#6ED47C] bg-[#6ED47C]'; // default color
+    if (!diagnosisDetails) {
+      return 'text-[#6ED47C] bg-[#6ED47C]';
+    } // default color
 
     switch (diagnosisDetails.color) {
       case 'success':
@@ -79,7 +82,9 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
     }
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   const modalContent = (
     <div
@@ -188,6 +193,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                       )
                   )}
                 </div>
+                <AddModelFeedback title={title} />
               </div>
             )}
           </div>

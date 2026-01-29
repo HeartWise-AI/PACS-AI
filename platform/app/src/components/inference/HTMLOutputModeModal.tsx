@@ -6,6 +6,7 @@ import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
 import { StoreFileButton } from '@ohif/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
+import AddModelFeedback from './AddModelFeedback';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
@@ -117,16 +118,19 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
           <div className="h-full w-full">
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
-              {linkedDICOMModalityWithEnabledCStore && (
-                <StoreFileButton
-                  iframeRef={iframeRef}
-                  encodedData={data.htmlBase64}
-                  modelName={modelName}
-                  modelVersion={modelVersion}
-                  modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
-                  seriesInstanceUIDs={seriesInstanceUIDs}
-                />
-              )}
+              <div className="flex items-center gap-4">
+                <AddModelFeedback title={title} />
+                {linkedDICOMModalityWithEnabledCStore && (
+                  <StoreFileButton
+                    iframeRef={iframeRef}
+                    encodedData={data.htmlBase64}
+                    modelName={modelName}
+                    modelVersion={modelVersion}
+                    modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
+                    seriesInstanceUIDs={seriesInstanceUIDs}
+                  />
+                )}
+              </div>
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (

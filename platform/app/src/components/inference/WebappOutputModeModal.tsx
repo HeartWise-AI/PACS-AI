@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import { PredictInferenceModelWebappResponse } from '../../api/inferenceDTO';
+import AddModelFeedback from './AddModelFeedback';
 
 interface WebappOutputModeModalProps {
   isOpen: boolean;
@@ -90,7 +91,10 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
           </button>
           {/* content */}
           <div className="h-full w-full">
-            <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+            <div className="mb-4 flex items-center justify-between pr-10">
+              <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+              <AddModelFeedback title={title} />
+            </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto text-white">
               {loading ? (
                 <div className="flex h-[calc(100vh-200px)] items-center justify-center">
