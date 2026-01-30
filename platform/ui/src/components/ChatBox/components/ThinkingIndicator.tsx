@@ -9,13 +9,22 @@ export const ThinkingIndicator: React.FC = () => {
   return (
     <div>
       Thinking
-      <span className="thinking-dot ml-1" style={thinkingDotsStyle}>
+      <span
+        className="thinking-dot ml-1"
+        style={thinkingDotsStyle}
+      >
         .
       </span>
-      <span className="thinking-dot ml-1" style={thinkingDotsStyle}>
+      <span
+        className="thinking-dot ml-1"
+        style={thinkingDotsStyle}
+      >
         .
       </span>
-      <span className="thinking-dot ml-1" style={thinkingDotsStyle}>
+      <span
+        className="thinking-dot ml-1"
+        style={thinkingDotsStyle}
+      >
         .
       </span>
     </div>

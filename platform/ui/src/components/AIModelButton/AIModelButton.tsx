@@ -243,7 +243,7 @@ const AIModelButton = ({
       >
         <img
           src={aiModelsIcon}
-          className="h-6 w-6"
+          className="min-w-6 h-6"
           alt="AI Models icon"
         />
         {isShowText && (
@@ -322,6 +322,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelJSONResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openWebappOutputModeModal && (
@@ -334,6 +335,7 @@ const AIModelButton = ({
           containerName={containerName}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openHTMLOutputModeModal && (
@@ -349,6 +351,7 @@ const AIModelButton = ({
           seriesInstanceUIDs={sortedSeriesInstanceUIDs}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openPDFOutputModeModal && (
@@ -360,6 +363,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelPDFResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openSelectSeriesModal && (

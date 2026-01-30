@@ -2,10 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
-import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelHTMLResponse,
+} from '../../api/inferenceDTO';
 import { StoreFileButton } from '@ohif/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
+import AddModelFeedback from './AddModelFeedback';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
@@ -17,6 +21,7 @@ interface HTMLOutputModeModalProps {
   outputMode: string;
   loading: boolean;
   title: string;
+  selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
 const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
@@ -29,6 +34,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   seriesInstanceUIDs = '',
   loading = false,
   title = '',
+  selectedInferenceModel = null,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [parsedHTML, setParsedHTML] = useState<string>('');
@@ -115,18 +121,26 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
 
           {/* content */}
           <div className="h-full w-full">
-            <div className="mb-4 flex items-center justify-between pr-10">
+            <div className="mb-4 flex flex-col items-center justify-between pr-3 sm:flex-row sm:pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
-              {linkedDICOMModalityWithEnabledCStore && (
-                <StoreFileButton
-                  iframeRef={iframeRef}
-                  encodedData={data.htmlBase64}
-                  modelName={modelName}
-                  modelVersion={modelVersion}
-                  modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
-                  seriesInstanceUIDs={seriesInstanceUIDs}
-                />
-              )}
+              <div className="flex flex-col items-center gap-4 xl:flex-row">
+                {selectedInferenceModel?.modelId?.trim() && (
+                  <AddModelFeedback
+                    title={title}
+                    selectedInferenceModel={selectedInferenceModel}
+                  />
+                )}
+                {linkedDICOMModalityWithEnabledCStore && (
+                  <StoreFileButton
+                    iframeRef={iframeRef}
+                    encodedData={data.htmlBase64}
+                    modelName={modelName}
+                    modelVersion={modelVersion}
+                    modalityId={linkedDICOMModalityWithEnabledCStore.modalityId}
+                    seriesInstanceUIDs={seriesInstanceUIDs}
+                  />
+                )}
+              </div>
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {loading ? (
