@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
-import { PredictInferenceModelHTMLResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelHTMLResponse,
+} from '../../api/inferenceDTO';
 import { StoreFileButton } from '@ohif/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
@@ -18,6 +21,7 @@ interface HTMLOutputModeModalProps {
   outputMode: string;
   loading: boolean;
   title: string;
+  selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
 const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
@@ -30,6 +34,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   seriesInstanceUIDs = '',
   loading = false,
   title = '',
+  selectedInferenceModel = null,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [parsedHTML, setParsedHTML] = useState<string>('');
@@ -119,7 +124,12 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
               <div className="flex items-center gap-4">
-                <AddModelFeedback title={title} />
+                {selectedInferenceModel?.modelId?.trim() && (
+                  <AddModelFeedback
+                    title={title}
+                    selectedInferenceModel={selectedInferenceModel}
+                  />
+                )}
                 {linkedDICOMModalityWithEnabledCStore && (
                   <StoreFileButton
                     iframeRef={iframeRef}

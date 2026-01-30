@@ -322,6 +322,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelJSONResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openWebappOutputModeModal && (
@@ -334,6 +335,7 @@ const AIModelButton = ({
           containerName={containerName}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openHTMLOutputModeModal && (
@@ -349,6 +351,7 @@ const AIModelButton = ({
           seriesInstanceUIDs={sortedSeriesInstanceUIDs}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openPDFOutputModeModal && (
@@ -360,6 +363,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelPDFResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openSelectSeriesModal && (

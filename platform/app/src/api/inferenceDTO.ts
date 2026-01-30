@@ -56,6 +56,27 @@ export interface GetInferenceModelFactsResponse {
 }
 
 export interface GetInferenceAvailableModelsResponse {
+  modelId: string;
+  approveFeedbackQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
+  rejectFeedbackQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
   containerId: string;
   containerName: string;
   modelName: string;
@@ -70,6 +91,29 @@ export interface GetInferenceAvailableModelsResponse {
   modelFacts: {
     en: ModelDetails;
   };
+}
+
+export interface GetModelFeedbackByModelIDRequest {
+  modelId: string;
+}
+
+export interface GetModelFeedbackByModelIDResponse {
+  feedbackType: string;
+  id: string;
+  inferenceModelId: string;
+  modelFeedbackAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds: string[];
+          questionnaireAnswers: string[];
+        },
+      ]
+    | null;
+  modelId: string;
+  tenantId: string;
+  userId: string;
 }
 
 export interface ModelDetails {
@@ -138,6 +182,10 @@ export interface PredictInferenceModelWebappResponse {
   webappDataBase64: string;
 }
 
+export interface RemoveModelFeedbackRequest {
+  modelId: string;
+}
+
 export interface StartInferenceModelContainerRequest {
   containerID: string;
 }
@@ -149,4 +197,21 @@ export interface StopInferenceModelContainerRequest {
 export interface UpdateInferenceModelRequest {
   disallowedDICOMTags: string[];
   outputMode: string;
+}
+
+export interface UpdateModelFeedbackRequest {
+  id: string | null;
+  inferenceModelId: string;
+  modelId: string;
+  feedbackType: string;
+  modelFeedbackAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds: string[];
+          questionnaireAnswers: string[];
+        },
+      ]
+    | null;
 }

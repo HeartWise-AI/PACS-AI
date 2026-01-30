@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
-import { PredictInferenceModelWebappResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelWebappResponse,
+} from '../../api/inferenceDTO';
 import AddModelFeedback from './AddModelFeedback';
 
 interface WebappOutputModeModalProps {
@@ -12,6 +15,7 @@ interface WebappOutputModeModalProps {
   loading: boolean;
   title: string;
   containerName: string;
+  selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
 // Handle iframe load and send message
@@ -38,6 +42,7 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
   loading = false,
   title = '',
   containerName,
+  selectedInferenceModel = null,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -93,7 +98,12 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
           <div className="h-full w-full">
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
-              <AddModelFeedback title={title} />
+              {selectedInferenceModel?.modelId?.trim() && (
+                <AddModelFeedback
+                  title={title}
+                  selectedInferenceModel={selectedInferenceModel}
+                />
+              )}
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto text-white">
               {loading ? (

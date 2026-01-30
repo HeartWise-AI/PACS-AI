@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
-import { PredictInferenceModelPDFResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelPDFResponse,
+} from '../../api/inferenceDTO';
 import AddModelFeedback from './AddModelFeedback';
 
 interface PDFOutputModeModalProps {
@@ -11,6 +14,7 @@ interface PDFOutputModeModalProps {
   data: PredictInferenceModelPDFResponse;
   loading: boolean;
   title: string;
+  selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
 const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
@@ -19,6 +23,7 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
   data = { pdfBase64: '' },
   loading = false,
   title = '',
+  selectedInferenceModel = null,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string>('');
@@ -101,7 +106,12 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
           <div className="h-full w-full">
             <div className="mb-4 flex items-center justify-between pr-10">
               <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
-              <AddModelFeedback title={title} />
+              {selectedInferenceModel?.modelId?.trim() && (
+                <AddModelFeedback
+                  title={title}
+                  selectedInferenceModel={selectedInferenceModel}
+                />
+              )}
             </div>
             <div className="h-[calc(100vh-300px)] space-y-4 overflow-y-auto">
               {/* Display PDF content in an iframe */}
