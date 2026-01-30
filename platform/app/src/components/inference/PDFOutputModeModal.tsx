@@ -104,7 +104,7 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
           </button>
           {/* content */}
           <div className="h-full w-full">
-            <div className="mb-4 flex items-center justify-between pr-10">
+            <div className="mb-4 flex flex-col items-center justify-between pr-3 sm:flex-row sm:pr-10">
               <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
               {selectedInferenceModel?.modelId?.trim() && (
                 <AddModelFeedback

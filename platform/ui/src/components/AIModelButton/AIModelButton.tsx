@@ -243,7 +243,7 @@ const AIModelButton = ({
       >
         <img
           src={aiModelsIcon}
-          className="h-6 w-6"
+          className="min-w-6 h-6"
           alt="AI Models icon"
         />
         {isShowText && (

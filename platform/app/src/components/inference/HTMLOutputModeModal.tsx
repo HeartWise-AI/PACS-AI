@@ -121,9 +121,9 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
 
           {/* content */}
           <div className="h-full w-full">
-            <div className="mb-4 flex items-center justify-between pr-10">
+            <div className="mb-4 flex flex-col items-center justify-between pr-3 sm:flex-row sm:pr-10">
               <h1 className="text-[18px] font-bold text-white">{title}</h1>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-4 xl:flex-row">
                 {selectedInferenceModel?.modelId?.trim() && (
                   <AddModelFeedback
                     title={title}
