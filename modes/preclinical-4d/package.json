@@ -41,7 +41,7 @@
     "@ohif/extension-tmtv": "3.11.1"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2"
+    "@babel/runtime": "7.28.3"
   },
   "devDependencies": {
     "webpack": "5.95.0",
