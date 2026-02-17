@@ -80,6 +80,35 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     }
   }, [initialSeriesSelection]);
 
+  // Keep applyToStudy in sync if initial selection already includes all selectable series
+  useEffect(() => {
+    if (initialSeriesSelection) {
+      const selectable = Array.from(
+        new Set(
+          Object.entries(selectedModalities)
+            .filter(([_, value]) => {
+              const modality = value?.modality || '';
+              if (
+                !selectedInferenceModel?.supportedDicomModalities ||
+                selectedInferenceModel.supportedDicomModalities.length === 0
+              ) {
+                return true;
+              }
+              return selectedInferenceModel.supportedDicomModalities.some(
+                s => modality.includes(s) || s.includes(modality)
+              );
+            })
+            .flatMap(([_, value]) => (value.displaySets || []).map(ds => ds.SeriesInstanceUID))
+        )
+      );
+
+      const sel = initialSeriesSelection.selectedSeries || [];
+      const selSet = new Set(sel);
+      const allSelected = selectable.length > 0 && selectable.every(uid => selSet.has(uid));
+      setApplyToStudy(allSelected);
+    }
+  }, [initialSeriesSelection, selectedModalities, selectedInferenceModel]);
+
   useEffect(() => {
     // set default values when component mounts
     if (selectedInferenceModel?.supportedAdditionalMetadata) {
@@ -110,14 +139,46 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     }
   }, [onClose]);
 
-  // toggle series selection
+  // Helper: whether a modality string is supported by the model (two-way substring)
+  const isSupportedModality = (modality?: string) => {
+    if (
+      !selectedInferenceModel?.supportedDicomModalities ||
+      selectedInferenceModel.supportedDicomModalities.length === 0
+    ) {
+      return true;
+    }
+    return selectedInferenceModel.supportedDicomModalities.some(
+      s => modality && (modality.includes(s) || s.includes(modality))
+    );
+  };
+
+  const getSelectableDisplaySets = () =>
+    Object.entries(selectedModalities)
+      .filter(([_, value]) => isSupportedModality(value?.modality))
+      .flatMap(([_, value]) =>
+        (value.displaySets || []).filter(ds => isSupportedModality(ds.modality))
+      );
+
+  const getSelectableSeriesUIDs = () =>
+    Array.from(new Set(getSelectableDisplaySets().map(ds => ds.SeriesInstanceUID)));
+
+  // toggle series selection and sync applyToStudy
   const toggleSeriesSelection = (SeriesInstanceUID: string) => {
     setSelectedSeries(prev => {
-      if (prev.includes(SeriesInstanceUID)) {
-        return prev.filter(id => id !== SeriesInstanceUID);
+      const nextSet = new Set(prev);
+      if (nextSet.has(SeriesInstanceUID)) {
+        nextSet.delete(SeriesInstanceUID);
       } else {
-        return [...prev, SeriesInstanceUID];
+        nextSet.add(SeriesInstanceUID);
       }
+
+      const next = Array.from(nextSet);
+
+      const selectable = getSelectableSeriesUIDs();
+      const allSelected = selectable.length > 0 && selectable.every(uid => nextSet.has(uid));
+      setApplyToStudy(allSelected);
+
+      return next;
     });
   };
 
@@ -260,50 +321,18 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                         <div
                           className="flex cursor-pointer items-center gap-2"
                           onClick={() => {
-                            setApplyToStudy(!applyToStudy);
                             if (!applyToStudy) {
-                              // select all series
-                              setSelectedSeries(
-                                Object.entries(selectedModalities)
-                                  .filter(([_, value]) => {
-                                    // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (
-                                      !selectedInferenceModel.supportedDicomModalities ||
-                                      selectedInferenceModel.supportedDicomModalities.length === 0
-                                    ) {
-                                      return true;
-                                    }
-                                    return selectedInferenceModel.supportedDicomModalities?.includes(
-                                      value.modality
-                                    );
-                                  })
-                                  .flatMap(([_, value]) =>
-                                    value.displaySets.map(
-                                      displaySet => displaySet.SeriesInstanceUID
-                                    )
-                                  )
-                              );
+                              const selectable = getSelectableSeriesUIDs();
+                              setSelectedSeries(selectable);
                               setStudyInstanceUID(
-                                Object.entries(selectedModalities)
-                                  .filter(([_, value]) => {
-                                    // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (
-                                      !selectedInferenceModel.supportedDicomModalities ||
-                                      selectedInferenceModel.supportedDicomModalities.length === 0
-                                    ) {
-                                      return true;
-                                    }
-                                    return selectedInferenceModel.supportedDicomModalities?.includes(
-                                      value.modality
-                                    );
-                                  })
-                                  .flatMap(([_, value]) =>
-                                    value.displaySets.map(displaySet => displaySet.StudyInstanceUID)
-                                  )[0] || ''
+                                getSelectableDisplaySets()[0]?.StudyInstanceUID || ''
                               );
+                              setApplyToStudy(selectable.length > 0);
                             } else {
                               // deselect all series
                               setSelectedSeries([]);
+                              setStudyInstanceUID('');
+                              setApplyToStudy(false);
                             }
                           }}
                         >
