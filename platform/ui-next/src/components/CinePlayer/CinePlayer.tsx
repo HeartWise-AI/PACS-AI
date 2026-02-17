@@ -71,7 +71,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
 
   return (
     <div
-      className={`pointer-events-none absolute top-10 left-1/2 z-50 -translate-x-1/2 ${className}`}
+      className={`pointer-events-auto absolute top-10 left-1/2 z-50 -translate-x-1/2 ${className}`}
     >
       {/* NOTE: This is a PACS changes */}
       <div
