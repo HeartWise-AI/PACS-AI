@@ -158,6 +158,19 @@ function PanelStudyBrowser({
     StudyInstanceUIDs.forEach(sid => fetchStudiesForPatient(sid));
   }, [StudyInstanceUIDs, dataSource, getStudiesForPatientByMRN, navigate]);
 
+  // NOTE: This is a PACS changes
+  // Automatically request display set creation for all studies as soon as studyDisplayList is loaded
+  useEffect(() => {
+    if (studyDisplayList && studyDisplayList.length > 0) {
+      studyDisplayList.forEach(study => {
+        if (study.studyInstanceUid) {
+          requestDisplaySetCreationForStudy(displaySetService, study.studyInstanceUid, true);
+        }
+      });
+    }
+    // only run when studyDisplayList changes
+  }, [studyDisplayList]);
+
   // ~~ Initial Thumbnails
   useEffect(() => {
     if (!hasLoadedViewports) {
@@ -352,7 +365,6 @@ function PanelStudyBrowser({
       : [...expandedStudyInstanceUIDs, StudyInstanceUID];
 
     setExpandedStudyInstanceUIDs(updatedExpandedStudyInstanceUIDs);
-
     if (!shouldCollapseStudy) {
       const madeInClient = true;
       requestDisplaySetCreationForStudy(displaySetService, StudyInstanceUID, madeInClient);
