@@ -730,12 +730,12 @@ function WorkList() {
           {/* HeaderPanel component */}
           <HeaderPanel title="Studies" />
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%]">
-            <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5 xl:flex-nowrap">
+            <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5">
               <Input
                 value={studyListFilter.patientName?.replace(/\*/g, '') || ''}
                 placeholder={t('Patient name')}
                 id="PatientName"
-                className="min-w-[150px]"
+                className="w-full min-w-[140px] flex-1"
                 type="text"
                 onChange={e => handleInputChange('patientName', e.target.value)}
               />
@@ -743,11 +743,11 @@ function WorkList() {
                 value={studyListFilter.patientId?.replace(/\*/g, '') || ''}
                 placeholder={t('MRN')}
                 id="MRN"
-                className="min-w-[150px]"
+                className="w-full min-w-[140px] flex-1"
                 type="text"
                 onChange={e => handleInputChange('patientId', e.target.value)}
               />
-              <div className="pacs-date-range relative w-full min-w-[240px] max-w-[360px] flex-1 sm:w-[260px] sm:flex-none md:w-[320px]">
+              <div className="pacs-date-range relative w-full flex-1 sm:flex-none md:w-[300px]">
                 <DateRangePicker
                   startDate={startDate}
                   startDateId="FilterStartDate"
@@ -776,7 +776,7 @@ function WorkList() {
                 value={studyListFilter.studyDescription?.replace(/\*/g, '') || ''}
                 placeholder={t('Description')}
                 id="Description"
-                className="min-w-[120px]"
+                className="w-full min-w-[140px] flex-1"
                 type="text"
                 onChange={e => handleInputChange('studyDescription', e.target.value.toUpperCase())}
               />
@@ -787,20 +787,20 @@ function WorkList() {
                 options={filtersMeta[4].inputProps.options}
                 onChange={handleModalitiesChange}
                 styles={selectCustomStyles}
-                className="min-w-[180px] bg-transparent"
+                className="w-full bg-transparent md:w-[180px]"
                 classNamePrefix="select"
               />
               <Input
                 value={studyListFilter.accessionNumber?.replace(/\*/g, '') || ''}
                 id="Accession"
                 placeholder={t('Accession #')}
-                className="min-w-[150px]"
+                className="w-full min-w-[140px] flex-1"
                 type="text"
                 onChange={e => handleInputChange('accessionNumber', e.target.value)}
               />
               <Button
                 disabled={isStudyListDataLoading}
-                className="h-[51px] w-[110px] rounded-lg !px-5"
+                className="h-[51px] w-full rounded-lg !px-5 md:w-[100px]"
                 onClick={() => {
                   setIsSearching(true);
                   searchStudyList();
