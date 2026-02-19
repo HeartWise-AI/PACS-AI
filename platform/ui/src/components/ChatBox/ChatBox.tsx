@@ -288,10 +288,29 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 opacity: 0.6,
               }}
             >
-              <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 13L13 1" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
-                <path d="M5 13L13 5" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
-                <path d="M9 13L13 9" stroke="#C8F469" strokeWidth="2" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 14 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 13L13 1"
+                  stroke="#C8F469"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M5 13L13 5"
+                  stroke="#C8F469"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M9 13L13 9"
+                  stroke="#C8F469"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
           </div>
