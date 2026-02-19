@@ -365,7 +365,6 @@ function PanelStudyBrowser({
       : [...expandedStudyInstanceUIDs, StudyInstanceUID];
 
     setExpandedStudyInstanceUIDs(updatedExpandedStudyInstanceUIDs);
-    console.log('===handle accordion click');
     if (!shouldCollapseStudy) {
       const madeInClient = true;
       requestDisplaySetCreationForStudy(displaySetService, StudyInstanceUID, madeInClient);
