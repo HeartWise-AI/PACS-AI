@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import userRepository from '../api/userRepository';
 import { useShepherd } from 'react-shepherd';
 import type { StepOptions, TourOptions } from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
@@ -101,6 +103,23 @@ const persistProgress = (steps: TutorialStepState[]) => {
  * integrates with Shepherd.js to run contextual tours for each step.
  */
 const TutorialProgressOverlay: React.FC = () => {
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  const location = useLocation();
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      setUserLoading(true);
+      try {
+        const response = await userRepository.GetCurrentUser();
+        setUser(response.data);
+      } catch (error) {
+        setUser(null);
+      }
+      setUserLoading(false);
+    };
+    fetchCurrentUser();
+  }, [location.pathname]);
   const Shepherd = useShepherd();
 
   const [expanded, setExpanded] = useState<boolean>(false);
@@ -214,6 +233,10 @@ const TutorialProgressOverlay: React.FC = () => {
     startTourForStep(stepId);
   };
 
+  // Only show tutorial if user is logged in or user response exists
+  if (userLoading || !user || (!user.id && !user.email)) {
+    return null;
+  }
   if (!steps.length) {
     return null;
   }
@@ -233,8 +256,8 @@ const TutorialProgressOverlay: React.FC = () => {
               />
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold">Keep going</h2>
-                  <p className="mt-1 text-sm text-white/70">
+                  <h2 className="text-xl font-semibold">Keep going, {user.name}!</h2>
+                  <p className="mt-1 pr-5 text-sm text-white/70">
                     Follow these steps to get started with PACS AI.
                   </p>
                 </div>
