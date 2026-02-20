@@ -303,6 +303,8 @@ const TutorialProgressOverlay: React.FC = () => {
               {steps.map((step, index) => {
                 const isCompleted = step.completed;
                 const isCurrent = step.current || (!step.completed && index === 0);
+                // only allow clicking if all previous steps are completed
+                const isClickable = steps.slice(0, index).every(s => s.completed);
 
                 return (
                   <button
@@ -310,10 +312,23 @@ const TutorialProgressOverlay: React.FC = () => {
                     type="button"
                     className={`group flex w-full rounded-xl px-3 text-left transition-colors ${
                       isCompleted ? '' : isCurrent ? 'bg-white/10' : 'bg-transparent'
-                    }`}
-                    onClick={() => handleStepClick(step.id)}
+                    } ${index === 0 ? 'pt-3' : ''} ${index === steps.length - 1 ? 'items-end pb-3' : ''} ${index !== 0 && index !== steps.length - 1 ? 'items-center' : ''} ${!isClickable ? 'cursor-not-allowed opacity-60' : ''}`}
+                    onClick={() => isClickable && handleStepClick(step.id)}
+                    disabled={!isClickable}
                   >
                     <div className="relative mr-3 flex flex-col items-center">
+                      {/* Top line: hidden if current step, but space retained */}
+                      {index !== 0 && (
+                        <div
+                          className={`h-3 w-[4px] ${
+                            isCurrent
+                              ? 'invisible'
+                              : steps[index].completed && steps[index - 1].completed
+                                ? 'bg-[#C8F469]'
+                                : 'bg-white/30'
+                          }`}
+                        />
+                      )}
                       {isCurrent ? (
                         <div
                           className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-transparent`}
@@ -333,18 +348,23 @@ const TutorialProgressOverlay: React.FC = () => {
                           )}
                         </div>
                       )}
+                      {/* Bottom line: hidden if current step, but space retained */}
                       {index < steps.length - 1 && (
                         <div
-                          className={`h-6 w-[4px] ${
-                            steps[index].completed && steps[index + 1].completed
-                              ? 'bg-[#C8F469]'
-                              : 'bg-white/30'
+                          className={`h-3 w-[4px] ${
+                            isCurrent
+                              ? 'invisible'
+                              : steps[index].completed && steps[index + 1].completed
+                                ? 'bg-[#C8F469]'
+                                : 'bg-white/30'
                           }`}
                         />
                       )}
                     </div>
 
-                    <div className="flex-1 pt-1">
+                    <div
+                      className={`flex-1 ${index === 0 ? 'pt-1' : ''} ${index === steps.length - 1 ? 'pb-1' : ''}`}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{step.title}</span>
                       </div>
@@ -353,7 +373,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     <img
                       src={chevronRightIcon}
                       alt={'Chevron right icon'}
-                      className="mt-1 h-4 w-5"
+                      className={`h-4 w-5 ${index === 0 ? 'mt-1' : ''} ${index === steps.length - 1 ? 'mb-1' : ''}`}
                     />
                   </button>
                 );
