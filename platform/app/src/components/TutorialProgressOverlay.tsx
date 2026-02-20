@@ -184,6 +184,14 @@ const TutorialProgressOverlay: React.FC = () => {
     let stepDefinitions: StepOptions[];
 
     if (stepId === 'view-models') {
+      let ctaClicked = false;
+      const handleCtaClick = () => {
+        if (!ctaClicked) {
+          ctaClicked = true;
+          markStepCompleted('view-models');
+          tour.complete();
+        }
+      };
       stepDefinitions = [
         {
           id: 'view-models-nav',
@@ -195,10 +203,29 @@ const TutorialProgressOverlay: React.FC = () => {
           },
           buttons: [
             {
-              text: 'Got it',
-              action: () => tour.complete(),
+              text: 'Go to Models',
+              action: () => {
+                tour.complete();
+                markStepCompleted('view-models');
+              },
             },
           ],
+          when: {
+            show: () => {
+              // Attach click listener to the CTA
+              const cta = document.querySelector('[data-tour-id="nav-ai-models"]');
+              if (cta) {
+                cta.addEventListener('click', handleCtaClick, { once: true });
+              }
+            },
+            hide: () => {
+              // Remove click listener
+              const cta = document.querySelector('[data-tour-id="nav-ai-models"]');
+              if (cta) {
+                cta.removeEventListener('click', handleCtaClick);
+              }
+            },
+          },
         },
       ];
     } else {
