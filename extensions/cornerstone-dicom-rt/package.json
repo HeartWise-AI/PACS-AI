@@ -45,7 +45,7 @@
     "react-router-dom": "6.30.1"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2",
+    "@babel/runtime": "7.28.3",
     "react-color": "2.19.3"
   }
 }

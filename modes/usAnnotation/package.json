@@ -33,7 +33,7 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2",
+    "@babel/runtime": "7.28.6",
     "@cornerstonejs/core": "4.5.13",
     "@cornerstonejs/tools": "4.5.13",
     "@ohif/core": "3.11.1",
@@ -63,7 +63,7 @@
     "dotenv": "8.6.0",
     "eslint": "8.57.1",
     "eslint-loader": "2.2.1",
-    "webpack": "5.95.0",
+    "webpack": "5.104.1",
     "webpack-cli": "5.1.4",
     "webpack-merge": "5.10.0"
   }
