@@ -885,13 +885,13 @@ const TutorialProgressOverlay: React.FC = () => {
               </div>
               <div className="mt-3 flex gap-2 text-xs">
                 {/* TODO: For testing purposes (Reset button) */}
-                <button
+                {/* <button
                   type="button"
                   className="rounded-md bg-white/10 px-3 py-1 font-medium text-white hover:bg-white/20"
                   onClick={resetTutorial}
                 >
                   Reset
-                </button>
+                </button> */}
                 {progress < 100 && (
                   <button
                     type="button"
@@ -1263,7 +1263,7 @@ const TutorialProgressOverlay: React.FC = () => {
         );
       })}
 
-      {/* ── Model questionnaire modal ──────────────────────────────────────── */}
+      {/* Model questionnaire modal */}
       {modelQuestionnaireQueue.length > 0 &&
         (() => {
           const mqModel = modelQuestionnaireQueue[modelQuestionnaireQueueIndex];
@@ -1308,7 +1308,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     id="model-questionnaire-title"
                     className="mb-1 text-[20px] font-semibold text-white"
                   >
-                    {mqModel.modelName} — Model Questionnaire{mqProgressLabel}
+                    Model Questionnaire ({mqModel.modelName})
                   </h2>
                   <form
                     onSubmit={handleModelQuestionnaireSubmit}
@@ -1521,11 +1521,6 @@ const TutorialProgressOverlay: React.FC = () => {
                 &#8203;
               </span>
               <div className="relative inline-block w-[420px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
-                <h2
-                  id="skip-modal-title"
-                  className="mb-2 text-base font-semibold text-white"
-                ></h2>
-                <p className="mb-4 text-sm text-white/80"></p>
                 <Typography
                   variant="h6"
                   className="font-light text-white"
@@ -1538,7 +1533,7 @@ const TutorialProgressOverlay: React.FC = () => {
                 >
                   Do you want to skip the entire tutorial?
                 </Typography>
-                <div className="flex justify-end gap-2">
+                <div className="mt-5 flex justify-end gap-2">
                   <button
                     type="button"
                     className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
@@ -1551,7 +1546,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
                     onClick={confirmSkip}
                   >
-                    Yes, skip
+                    Skip
                   </button>
                 </div>
               </div>
