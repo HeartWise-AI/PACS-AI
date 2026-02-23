@@ -225,6 +225,10 @@ const TutorialProgressOverlay: React.FC = () => {
           completed: idx <= completedStepNum,
           current: idx === completedStepNum + 1,
         }));
+        // if every step is already completed on load, hide the overlay on refresh.
+        if (normalized.every(s => s.completed)) {
+          setLoadedAsCompleted(true);
+        }
         setSteps(normalized);
       } catch {
         setSteps(DEFAULT_STEPS);
@@ -238,6 +242,7 @@ const TutorialProgressOverlay: React.FC = () => {
 
   const [expanded, setExpanded] = useState<boolean>(false);
   const [steps, setSteps] = useState<TutorialStepState[]>(DEFAULT_STEPS);
+  const [loadedAsCompleted, setLoadedAsCompleted] = useState<boolean>(false);
   const [activeSurvey, setActiveSurvey] = useState<null | 'pre' | 'post'>(null);
   // use string for TEXT/RADIO, string[] for CHECKBOX
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
@@ -583,6 +588,18 @@ const TutorialProgressOverlay: React.FC = () => {
     }
   };
 
+  // Listen for a reset event dispatched by the Settings page so the overlay
+  // reappears expanded even when it was hidden due to load-time 100% progress.
+  useEffect(() => {
+    const handleTutorialReset = () => {
+      setSteps(DEFAULT_STEPS);
+      setLoadedAsCompleted(false);
+      setExpanded(true);
+    };
+    window.addEventListener('tutorial-reset', handleTutorialReset);
+    return () => window.removeEventListener('tutorial-reset', handleTutorialReset);
+  }, []);
+
   const handleSkipClick = useCallback((e?: React.MouseEvent) => {
     if (e && typeof e.stopPropagation === 'function') {
       e.stopPropagation();
@@ -806,6 +823,10 @@ const TutorialProgressOverlay: React.FC = () => {
     return null;
   }
   if (!steps.length) {
+    return null;
+  }
+  // Hide after a page refresh when the stored progress was already 100%
+  if (loadedAsCompleted && progress === 100) {
     return null;
   }
 

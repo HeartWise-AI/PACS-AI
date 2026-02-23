@@ -202,6 +202,8 @@ const SettingsPage = () => {
       await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
       showAlert(t('Tutorial has been reset successfully'), 'success');
       setIsOpenResetTutorialModal(false);
+      // notify TutorialProgressOverlay to reappear expanded regardless of current progress.
+      window.dispatchEvent(new CustomEvent('tutorial-reset'));
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
