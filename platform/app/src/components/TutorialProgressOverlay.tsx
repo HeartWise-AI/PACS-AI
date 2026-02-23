@@ -1,15 +1,34 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import userRepository from '../api/userRepository';
+import { useTranslation } from 'react-i18next';
 import { useShepherd } from 'react-shepherd';
-import type { StepOptions, TourOptions } from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
+import type { StepOptions, TourOptions } from 'shepherd.js';
+import userRepository from '../api/userRepository';
+import tenantRepository from '../api/tenantRepository';
+import { GetTenantInfoResponse } from '../api/tenantDTO';
+import { UserResponse } from '../api/userDTO';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 import chevronUpIcon from './../assets/pacs/icons/chevron-up.png';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import arrowShrink from './../assets/pacs/icons/arrow-shrink.png';
 import checkTick from './../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from './../assets/pacs/bg/tutorial-progress-header-bg.png';
+
+type QuestionnaireAnswerOption = {
+  id: string;
+  answer: string;
+};
+
+type Questionnaire = {
+  id: string;
+  type: 'TEXT' | 'RADIO' | 'CHECKBOX';
+  questionEn?: string;
+  questionFr?: string;
+  answerOptionsEn?: QuestionnaireAnswerOption[];
+  answerOptionsFr?: QuestionnaireAnswerOption[];
+};
 
 /**
  * Represents a high-level tutorial step shown in the progress overlay card.
@@ -21,12 +40,6 @@ interface TutorialStepState {
   route?: string;
   completed: boolean;
   current: boolean;
-}
-
-const STORAGE_KEY = 'pacsai.tutorialProgress';
-
-interface StoredProgress {
-  steps: Array<Pick<TutorialStepState, 'id' | 'completed'>>;
 }
 
 const DEFAULT_STEPS: TutorialStepState[] = [
@@ -62,40 +75,6 @@ const DEFAULT_STEPS: TutorialStepState[] = [
   },
 ];
 
-const loadStoredProgress = (): TutorialStepState[] => {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return DEFAULT_STEPS;
-    }
-
-    const parsed: StoredProgress = JSON.parse(raw);
-    if (!parsed?.steps?.length) {
-      return DEFAULT_STEPS;
-    }
-
-    // Merge stored completion flags back into the default steps definition.
-    return DEFAULT_STEPS.map(step => {
-      const stored = parsed.steps.find(s => s.id === step.id);
-      return stored ? { ...step, completed: stored.completed } : step;
-    });
-  } catch {
-    return DEFAULT_STEPS;
-  }
-};
-
-const persistProgress = (steps: TutorialStepState[]) => {
-  const toStore: StoredProgress = {
-    steps: steps.map(step => ({ id: step.id, completed: step.completed })),
-  };
-
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-  } catch {
-    // Best-effort only; ignore storage errors.
-  }
-};
-
 /**
  * Global tutorial progress overlay.
  *
@@ -103,8 +82,20 @@ const persistProgress = (steps: TutorialStepState[]) => {
  * integrates with Shepherd.js to run contextual tours for each step.
  */
 const TutorialProgressOverlay: React.FC = () => {
-  const [user, setUser] = useState(null);
+  const { t, i18n } = useTranslation('AIModelButton');
   const [userLoading, setUserLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  // Utility to get last completed step index
+  const getLastCompletedStepIndex = (steps: TutorialStepState[]) => {
+    let lastCompleted = -1;
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i].completed) {
+        lastCompleted = i;
+      }
+    }
+    return lastCompleted;
+  };
 
   const location = useLocation();
   useEffect(() => {
@@ -112,51 +103,276 @@ const TutorialProgressOverlay: React.FC = () => {
       setUserLoading(true);
       try {
         const response = await userRepository.GetCurrentUser();
-        setUser(response.data);
+        setCurrentUser(response.data);
       } catch (error) {
-        setUser(null);
+        setCurrentUser({});
       }
       setUserLoading(false);
     };
+
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await tenantRepository.GetTenantInfo();
+        setTenantInfo(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchTenantInfo();
     fetchCurrentUser();
   }, [location.pathname]);
+
+  // Heuristic to detect whether the user is currently in a viewer/study context.
+  const isInViewer = useMemo(() => {
+    const path = (location && location.pathname) || '';
+    return (
+      /\/viewer(\/|$)/.test(path) || /\/study(\/|$)/.test(path) || /\/display(\/|$)/.test(path)
+    );
+  }, [location.pathname]);
+
+  // Load progress from API on mount
+  useEffect(() => {
+    const loadProgressFromAPI = async () => {
+      try {
+        const metaResp = await userRepository.GetUserMetadata();
+        // support multiple possible response shapes from GetUserMetadata
+        const respData = (metaResp && (metaResp.data ?? metaResp)) || {};
+        const rawProgress =
+          respData.tutorialProgressStep ??
+          respData.metadata?.tutorialProgressStep ??
+          respData.data?.tutorialProgressStep ??
+          undefined;
+        let completedStepNum = -1; // 0-based index of last completed step
+        if (rawProgress !== undefined && rawProgress !== null && rawProgress !== '') {
+          const parsed = parseInt(String(rawProgress), 10);
+          if (!isNaN(parsed)) {
+            // stored value is 1-based (1 => first step completed), -1 means reset/no progress
+            if (parsed === -1) {
+              completedStepNum = -1;
+            } else {
+              completedStepNum = parsed - 1;
+            }
+          }
+        }
+        const normalized = DEFAULT_STEPS.map((step, idx) => ({
+          ...step,
+          completed: idx <= completedStepNum,
+          current: idx === completedStepNum + 1,
+        }));
+        setSteps(normalized);
+      } catch {
+        setSteps(DEFAULT_STEPS);
+      }
+    };
+    loadProgressFromAPI();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const Shepherd = useShepherd();
 
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [steps, setSteps] = useState<TutorialStepState[]>(() => loadStoredProgress());
-  const [isPreSurveyOpen, setIsPreSurveyOpen] = useState<boolean>(false);
-  const [preSurveySymptoms, setPreSurveySymptoms] = useState<string[]>([]);
-  const [preSurveyCondition, setPreSurveyCondition] = useState<string>('');
+  const [steps, setSteps] = useState<TutorialStepState[]>(DEFAULT_STEPS);
+  const [activeSurvey, setActiveSurvey] = useState<null | 'pre' | 'post'>(null);
+  // use string for TEXT/RADIO, string[] for CHECKBOX
+  const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
+  const [isSurveySubmitting, setIsSurveySubmitting] = useState(false);
+  const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const [viewerModalOpen, setViewerModalOpen] = useState(false);
+  const [viewerModalStepId, setViewerModalStepId] = useState<string | null>(null);
 
-  const handleClosePreSurvey = useCallback(() => {
-    setIsPreSurveyOpen(false);
+  const markStepCompleted = useCallback(
+    async (id: string) => {
+      // build updated steps synchronously from current `steps` state
+      const updated = steps.map(step => (step.id === id ? { ...step, completed: true } : step));
+      const nextIndex = updated.findIndex(step => !step.completed);
+      const normalized = updated.map((step, index) => ({ ...step, current: index === nextIndex }));
+
+      // apply update
+      setSteps(normalized);
+
+      // compute completed index from the updated array and persist
+      let completedIdx = normalized.findIndex(s => s.id === id);
+      if (completedIdx < 0) {
+        completedIdx = getLastCompletedStepIndex(normalized);
+      }
+
+      try {
+        // persist as 1-based value: store (completedIdx + 1). Use -1 to indicate reset/no progress.
+        await userRepository.UpdateUserMetadata({
+          metadata: { tutorialProgressStep: String(completedIdx >= 0 ? completedIdx + 1 : -1) },
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [steps]
+  );
+
+  const handleSurveyClose = useCallback(() => {
+    setActiveSurvey(null);
+    setSurveyAnswers({});
   }, []);
 
-  useEffect(() => {
-    persistProgress(steps);
-  }, [steps]);
+  const handleSurveySubmit = useCallback(
+    (stepId: string, questions: Questionnaire[]) => async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSurveySubmitting(true);
+
+      const questionnaireType = stepId === 'pre-survey' ? 'PRE_SURVEY' : 'POST_SURVEY';
+
+      try {
+        const onboardingQuestionnaireAnswers = questions.reduce(
+          (
+            acc: {
+              questionnaireId: string;
+              questionnaireQuestion: string;
+              questionnaireAnswerIds?: string[];
+              questionnaireAnswers?: string[];
+            }[],
+            q
+          ) => {
+            // prefer English text for payload
+            const questionTextEn = q.questionEn || '';
+            if (!questionTextEn || !questionTextEn.trim()) {
+              return acc;
+            }
+
+            let questionnaireAnswerIds: string[] = [];
+            let questionnaireAnswers: string[] = [];
+
+            const rawAns = surveyAnswers[q.id];
+
+            if (q.type === 'TEXT') {
+              const value = typeof rawAns === 'string' ? rawAns.trim() : '';
+              if (value) {
+                questionnaireAnswerIds = ['text'];
+                questionnaireAnswers = [value];
+              }
+            } else if (q.type === 'RADIO') {
+              const selected = typeof rawAns === 'string' ? rawAns : '';
+              if (selected) {
+                questionnaireAnswerIds = [selected];
+                const option = (q.answerOptionsEn || []).find(o => o.id === selected);
+                questionnaireAnswers = [option ? option.answer : selected];
+              }
+            } else if (q.type === 'CHECKBOX') {
+              const selectedArr = Array.isArray(rawAns) ? rawAns : [];
+              if (selectedArr.length) {
+                questionnaireAnswerIds = selectedArr as string[];
+                const options = q.answerOptionsEn || [];
+                questionnaireAnswers = selectedArr
+                  .map(id => options.find(o => o.id === id)?.answer)
+                  .filter((v): v is string => Boolean(v));
+              }
+            }
+
+            // if there are no selected answer ids and no textual answers,
+            // skip adding this question entirely (do not submit empty question entries).
+            if (questionnaireAnswerIds.length === 0 && questionnaireAnswers.length === 0) {
+              return acc;
+            }
+
+            const questionObj: {
+              questionnaireId: string;
+              questionnaireQuestion: string;
+              questionnaireAnswerIds?: string[];
+              questionnaireAnswers?: string[];
+            } = {
+              questionnaireId: q.id,
+              questionnaireQuestion: questionTextEn,
+            };
+
+            if (questionnaireAnswerIds.length) {
+              questionObj.questionnaireAnswerIds = questionnaireAnswerIds;
+            }
+            if (questionnaireAnswers.length) {
+              questionObj.questionnaireAnswers = questionnaireAnswers;
+            }
+
+            acc.push(questionObj);
+
+            return acc;
+          },
+          []
+        );
+
+        // if there are no answers to submit, send `onboardingQuestionnaireAnswers: null`
+        // to indicate the questionnaire was submitted with no answers.
+        const payloadAnswers =
+          onboardingQuestionnaireAnswers.length > 0 ? onboardingQuestionnaireAnswers : null;
+
+        await tenantRepository.AddOnboardingQuestionnaireAnswers({
+          questionnaireType,
+          onboardingQuestionnaireAnswers: payloadAnswers,
+        } as any);
+      } catch (err) {
+        // swallow errors for now but log for debugging
+        // eslint-disable-next-line no-console
+        console.error('Failed to submit onboarding questionnaire answers', err);
+      } finally {
+        setIsSurveySubmitting(false);
+      }
+
+      setActiveSurvey(null);
+      setSurveyAnswers({});
+      markStepCompleted(stepId);
+    },
+    [markStepCompleted, surveyAnswers]
+  );
+
+  const handleSurveySkip = useCallback(
+    (stepId: string) => () => {
+      setActiveSurvey(null);
+      setSurveyAnswers({});
+      markStepCompleted(stepId);
+    },
+    [markStepCompleted]
+  );
 
   const completedCount = useMemo(() => steps.filter(step => step.completed).length, [steps]);
 
   const totalCount = steps.length || 1;
   const progress = Math.round((completedCount / totalCount) * 100);
 
-  const markStepCompleted = (id: string) => {
-    setSteps(prev => {
-      const updated = prev.map(step => (step.id === id ? { ...step, completed: true } : step));
-
-      // Move "current" flag to the next incomplete step, if any.
-      const nextIndex = updated.findIndex(step => !step.completed);
-      return updated.map((step, index) => ({
-        ...step,
-        current: index === nextIndex,
-      }));
-    });
-  };
-
-  const resetTutorial = () => {
+  const resetTutorial = async () => {
     setSteps(DEFAULT_STEPS);
+    try {
+      await userRepository.ResetTutorial();
+      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: '0' } });
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  const handleSkipClick = useCallback((e?: React.MouseEvent) => {
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    console.debug('handleSkipClick: opening skip modal');
+    setSkipModalOpen(true);
+  }, []);
+
+  const cancelSkip = useCallback(() => {
+    setSkipModalOpen(false);
+  }, []);
+
+  const confirmSkip = useCallback(async () => {
+    // persist as the total number of steps (1-based semantics)
+    try {
+      await userRepository.UpdateUserMetadata({
+        metadata: { tutorialProgressStep: String(steps.length) },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    // update UI: mark all steps completed and clear current flags
+    const allCompleted = DEFAULT_STEPS.map(s => ({ ...s, completed: true, current: false }));
+    setSteps(allCompleted);
+    setExpanded(false);
+    setSkipModalOpen(false);
+  }, [steps.length]);
 
   const startTourForStep = (stepId: string) => {
     if (!Shepherd) {
@@ -188,7 +404,7 @@ const TutorialProgressOverlay: React.FC = () => {
       const handleCtaClick = () => {
         if (!ctaClicked) {
           ctaClicked = true;
-          markStepCompleted('view-models');
+          // complete the tour
           tour.complete();
         }
       };
@@ -203,24 +419,64 @@ const TutorialProgressOverlay: React.FC = () => {
           },
           buttons: [
             {
-              text: 'Go to Models',
+              text: 'Skip',
               action: () => {
+                // complete the tour
                 tour.complete();
-                markStepCompleted('view-models');
               },
             },
           ],
           when: {
             show: () => {
-              // Attach click listener to the CTA
               const cta = document.querySelector('[data-tour-id="nav-ai-models"]');
               if (cta) {
                 cta.addEventListener('click', handleCtaClick, { once: true });
               }
             },
             hide: () => {
-              // Remove click listener
               const cta = document.querySelector('[data-tour-id="nav-ai-models"]');
+              if (cta) {
+                cta.removeEventListener('click', handleCtaClick);
+              }
+            },
+          },
+        },
+      ];
+    } else if (stepId === 'run-inference') {
+      let ctaClicked = false;
+      const handleCtaClick = () => {
+        if (!ctaClicked) {
+          ctaClicked = true;
+          tour.complete();
+        }
+      };
+      stepDefinitions = [
+        {
+          id: 'run-inference-nav',
+          title: 'Run Inference',
+          text: 'Open the AI Models menu to apply a model to the current study.',
+          attachTo: {
+            element: '[data-tour-id="ai-model-button"]',
+            on: 'bottom',
+          },
+          buttons: [
+            {
+              text: 'Skip',
+              classes: 'bg-[#C8F469] !text-black px-3 py-1 rounded-md',
+              action: () => {
+                tour.complete();
+              },
+            },
+          ],
+          when: {
+            show: () => {
+              const cta = document.querySelector('[data-tour-id="ai-model-button"]');
+              if (cta) {
+                cta.addEventListener('click', handleCtaClick, { once: true });
+              }
+            },
+            hide: () => {
+              const cta = document.querySelector('[data-tour-id="ai-model-button"]');
               if (cta) {
                 cta.removeEventListener('click', handleCtaClick);
               }
@@ -253,15 +509,44 @@ const TutorialProgressOverlay: React.FC = () => {
 
   const handleStepClick = (stepId: string) => {
     if (stepId === 'pre-survey') {
-      setIsPreSurveyOpen(true);
+      setActiveSurvey('pre');
+      return;
+    }
+    if (stepId === 'post-survey') {
+      setActiveSurvey('post');
+      return;
+    }
+    // for these two steps the user must be on a viewer page or have a study selected.
+    // only show the modal when we are NOT already in a viewer context.
+    if ((stepId === 'run-inference' || stepId === 'model-questionnaire') && !isInViewer) {
+      setViewerModalStepId(stepId);
+      setViewerModalOpen(true);
       return;
     }
 
     startTourForStep(stepId);
   };
 
-  // Only show tutorial if user is logged in or user response exists
-  if (userLoading || !user || (!user.id && !user.email)) {
+  const closeViewerModal = useCallback(() => {
+    setViewerModalOpen(false);
+    setViewerModalStepId(null);
+  }, []);
+
+  const skipViewerStep = useCallback(async () => {
+    const id = viewerModalStepId;
+    closeViewerModal();
+    if (!id) {
+      return;
+    }
+    try {
+      await markStepCompleted(id);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [viewerModalStepId, closeViewerModal, markStepCompleted]);
+
+  // only show tutorial if user is logged in or user response exists
+  if (userLoading || !currentUser || (!currentUser.id && !currentUser.email)) {
     return null;
   }
   if (!steps.length) {
@@ -270,6 +555,8 @@ const TutorialProgressOverlay: React.FC = () => {
 
   return (
     <>
+      {/* Ensure Shepherd buttons use black text regardless of external styles */}
+      <style>{`.shepherd-theme-pacsai .shepherd-button { color: #000 !important; }`}</style>
       {/* Tutorial progress toggle and card */}
       <div className="tutorial-overlay-container pointer-events-none fixed bottom-20 right-5 z-[999] flex flex-col items-end">
         {expanded && (
@@ -283,7 +570,7 @@ const TutorialProgressOverlay: React.FC = () => {
               />
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold">Keep going, {user.name}!</h2>
+                  <h2 className="text-xl font-semibold">Keep going, {currentUser.name}!</h2>
                   <p className="mt-1 pr-5 text-sm text-white/70">
                     Follow these steps to get started with PACS AI.
                   </p>
@@ -331,6 +618,7 @@ const TutorialProgressOverlay: React.FC = () => {
                 <button
                   type="button"
                   className="flex items-center gap-1 rounded-md bg-white/10 px-3 py-2 text-white"
+                  onClick={e => handleSkipClick(e)}
                 >
                   <span>Skip Tutorial</span>
                 </button>
@@ -353,14 +641,15 @@ const TutorialProgressOverlay: React.FC = () => {
               {steps.map((step, index) => {
                 const isCompleted = step.completed;
                 const isCurrent = step.current || (!step.completed && index === 0);
-                // only allow clicking if all previous steps are completed
-                const isClickable = steps.slice(0, index).every(s => s.completed);
+                // only allow clicking if this step is NOT already completed and
+                // all previous steps are completed
+                const isClickable = !isCompleted && steps.slice(0, index).every(s => s.completed);
 
                 return (
                   <button
                     key={step.id}
                     type="button"
-                    className={`group flex w-full rounded-xl px-3 text-left transition-colors ${
+                    className={`group flex w-full rounded-xl px-3 text-left transition-colors disabled:opacity-100 ${
                       isCompleted ? '' : isCurrent ? 'bg-white/10' : 'bg-transparent'
                     } ${index === 0 ? 'pt-3' : ''} ${index === steps.length - 1 ? 'items-end pb-3' : ''} ${index !== 0 && index !== steps.length - 1 ? 'items-center' : ''} ${!isClickable ? 'cursor-not-allowed opacity-60' : ''}`}
                     onClick={() => isClickable && handleStepClick(step.id)}
@@ -474,151 +763,301 @@ const TutorialProgressOverlay: React.FC = () => {
         </button>
       </div>
 
-      {/* Pre-survey questionnaire modal (inline implementation similar to ModelFactsModal) */}
-      {isPreSurveyOpen && (
-        <div
-          id="modal"
-          className="fixed inset-0 z-[99999] overflow-y-auto"
-          aria-labelledby="pre-survey-title"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
-              aria-hidden="true"
-            ></div>
-            <span
-              className="hidden sm:inline-block sm:h-screen sm:align-middle"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
-
-            <div className="relative inline-block w-[520px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
-              {/* close button */}
-              <button
-                onClick={handleClosePreSurvey}
-                className="absolute top-4 right-4 z-[999999999]"
+      {/* Dynamic survey modal for PRE_SURVEY and POST_SURVEY using tenantInfo.onboardingQuestionnaires */}
+      {(['pre', 'post'] as const).map(type => {
+        const isOpen = activeSurvey === type;
+        const questions: Questionnaire[] =
+          type === 'pre'
+            ? (tenantInfo?.onboardingQuestionnaires?.PRE_SURVEY as Questionnaire[]) || []
+            : (tenantInfo?.onboardingQuestionnaires?.POST_SURVEY as Questionnaire[]) || [];
+        if (!isOpen || !questions.length) {
+          return null;
+        }
+        return ReactDOM.createPortal(
+          <div
+            id="modal"
+            className="fixed inset-0 z-[99999] overflow-y-auto"
+            aria-labelledby="survey-title"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              <div
+                className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+                aria-hidden="true"
+              ></div>
+              <span
+                className="hidden sm:inline-block sm:h-screen sm:align-middle"
+                aria-hidden="true"
               >
-                <img
-                  src={closeIcon}
-                  alt="Close icon"
-                />
-              </button>
-
-              {/* content */}
-              <h2
-                id="pre-survey-title"
-                className="mb-1 text-base font-semibold text-white"
-              >
-                Pre-Survey Questionnaire
-              </h2>
-              <p className="mb-6 text-xs text-white/60">
-                Please complete this short questionnaire to continue.
-              </p>
-
-              <div className="space-y-6 text-xs text-white">
-                <div>
-                  <p className="mb-2 font-medium">
-                    1. Are you currently experiencing any of the following symptoms?
-                  </p>
-                  <div className="space-y-1">
-                    {[
-                      'Chest pain or discomfort',
-                      'Shortness of breath',
-                      'Dizziness or lightheadedness',
-                    ].map(option => {
-                      const id = `symptom-${option}`;
-                      const checked = preSurveySymptoms.includes(option);
-                      return (
-                        <label
-                          key={option}
-                          htmlFor={id}
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <input
-                            id={id}
-                            type="checkbox"
-                            className="h-3 w-3 rounded border border-white/40 bg-transparent text-[#C8F469]"
-                            checked={checked}
-                            onChange={e => {
-                              setPreSurveySymptoms(prev => {
-                                if (e.target.checked) {
-                                  return prev.includes(option) ? prev : [...prev, option];
-                                }
-                                return prev.filter(item => item !== option);
-                              });
-                            }}
-                          />
-                          <span>{option}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 font-medium">
-                    2. Do you have any medical conditions or factors we should be aware of before
-                    the health procedure?
-                  </p>
-                  <div className="space-y-1">
-                    {['History of heart disease', 'High blood pressure', 'Diabetes'].map(option => {
-                      const id = `condition-${option}`;
-                      return (
-                        <label
-                          key={option}
-                          htmlFor={id}
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <input
-                            id={id}
-                            type="radio"
-                            name="pre-survey-condition"
-                            className="h-3 w-3 rounded-full border border-white/40 bg-transparent text-[#C8F469]"
-                            checked={preSurveyCondition === option}
-                            onChange={() => setPreSurveyCondition(option)}
-                          />
-                          <span>{option}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-2 text-xs">
+                &#8203;
+              </span>
+              <div className="relative inline-block w-[520px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
                 <button
-                  type="button"
-                  className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
-                  onClick={() => {
-                    setIsPreSurveyOpen(false);
-                    setPreSurveySymptoms([]);
-                    setPreSurveyCondition('');
-                    markStepCompleted('pre-survey');
-                  }}
+                  onClick={handleSurveyClose}
+                  className="absolute top-4 right-4 z-[999999999]"
                 >
-                  Skip for now
+                  <img
+                    src={closeIcon}
+                    alt="Close icon"
+                  />
                 </button>
-                <button
-                  type="button"
-                  className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
-                  onClick={() => {
-                    setIsPreSurveyOpen(false);
-                    // Placeholder: capture answers locally; wire to API as needed
-                    setPreSurveySymptoms([]);
-                    setPreSurveyCondition('');
-                    markStepCompleted('pre-survey');
-                  }}
+                <h2
+                  id="survey-title"
+                  className="mb-1 text-[20px] font-semibold text-white"
                 >
-                  Submit
-                </button>
+                  {type === 'pre' ? 'Pre-Survey Questionnaire' : 'Post-Survey Questionnaire'}
+                </h2>
+                <form
+                  onSubmit={handleSurveySubmit(
+                    type === 'pre' ? 'pre-survey' : 'post-survey',
+                    questions
+                  )}
+                  className="space-y-6 text-xs text-white"
+                >
+                  {questions.map((q: Questionnaire) => {
+                    const isFrench = i18n.language?.toLowerCase().startsWith('fr');
+                    const questionText = isFrench
+                      ? q.questionFr || q.questionEn
+                      : q.questionEn || q.questionFr;
+                    if (!questionText) {
+                      return null;
+                    }
+                    if (q.type === 'TEXT') {
+                      return (
+                        <div
+                          key={q.id}
+                          className="mt-6 space-y-2"
+                        >
+                          <p className="text-sm font-medium text-white">{questionText}</p>
+                          <textarea
+                            rows={4}
+                            className="w-full rounded-md border border-[#2A2E2A] bg-[#111311] p-2 text-sm text-white outline-none focus:border-emerald-500"
+                            value={
+                              typeof surveyAnswers[q.id] === 'string' ? surveyAnswers[q.id] : ''
+                            }
+                            onChange={e =>
+                              setSurveyAnswers(a => ({ ...a, [q.id]: e.target.value }))
+                            }
+                            placeholder={t('Enter your answer here')}
+                          />
+                        </div>
+                      );
+                    }
+                    const options: QuestionnaireAnswerOption[] = isFrench
+                      ? q.answerOptionsFr || []
+                      : q.answerOptionsEn || [];
+                    if (q.type === 'RADIO') {
+                      return (
+                        <div
+                          key={q.id}
+                          className="mt-6 space-y-2"
+                        >
+                          <p className="text-sm font-medium text-white">{questionText}</p>
+                          <div className="space-y-1">
+                            {options.map((opt, idx) => {
+                              const isString = typeof opt === 'string';
+                              const value = isString ? String(opt) : opt.id || String(idx);
+                              const label = isString
+                                ? String(opt)
+                                : opt.answer || opt.id || String(idx);
+                              return (
+                                <label
+                                  key={value || idx}
+                                  className="flex items-center gap-2"
+                                >
+                                  <input
+                                    type="radio"
+                                    name={q.id}
+                                    value={value}
+                                    checked={surveyAnswers[q.id] === value}
+                                    onChange={() =>
+                                      setSurveyAnswers(a => ({ ...a, [q.id]: value }))
+                                    }
+                                  />
+                                  {label}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (q.type === 'CHECKBOX') {
+                      const checkedArr = Array.isArray(surveyAnswers[q.id])
+                        ? (surveyAnswers[q.id] as string[])
+                        : [];
+                      return (
+                        <div
+                          key={q.id}
+                          className="mt-6 space-y-2"
+                        >
+                          <p className="text-sm font-medium text-white">{questionText}</p>
+                          <div className="space-y-2">
+                            {options.map((opt, idx) => {
+                              const isString = typeof opt === 'string';
+                              const value = isString ? String(opt) : opt.id || String(idx);
+                              const label = isString
+                                ? String(opt)
+                                : opt.answer || opt.id || String(idx);
+                              return (
+                                <label
+                                  key={value || idx}
+                                  className="flex items-center gap-2"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    value={value}
+                                    checked={checkedArr.includes(value)}
+                                    onChange={() => {
+                                      setSurveyAnswers(a => {
+                                        const prevArr = Array.isArray(a[q.id])
+                                          ? (a[q.id] as string[])
+                                          : [];
+                                        const updated = prevArr.includes(value)
+                                          ? prevArr.filter((v: string) => v !== value)
+                                          : [...prevArr, value];
+                                        return { ...a, [q.id]: updated };
+                                      });
+                                    }}
+                                  />
+                                  {label}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                  <div className="mt-6 flex justify-end gap-2 text-xs">
+                    <button
+                      type="button"
+                      className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                      onClick={handleSurveySkip(type === 'pre' ? 'pre-survey' : 'post-survey')}
+                    >
+                      Skip
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                      disabled={isSurveySubmitting}
+                      aria-busy={isSurveySubmitting}
+                    >
+                      {isSurveySubmitting ? '...' : 'Submit'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        );
+      })}
+      {skipModalOpen &&
+        ReactDOM.createPortal(
+          <div
+            id="skip-modal"
+            className="fixed inset-0 z-[100000] overflow-y-auto"
+            aria-labelledby="skip-modal-title"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              <div
+                className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+                aria-hidden="true"
+              ></div>
+              <span
+                className="hidden sm:inline-block sm:h-screen sm:align-middle"
+                aria-hidden="true"
+              >
+                &#8203;
+              </span>
+              <div className="relative inline-block w-[420px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
+                <h2
+                  id="skip-modal-title"
+                  className="mb-2 text-base font-semibold text-white"
+                >
+                  Skip Tutorial
+                </h2>
+                <p className="mb-4 text-sm text-white/80">
+                  Do you want to skip the entire tutorial?
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    onClick={cancelSkip}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                    onClick={confirmSkip}
+                  >
+                    Yes, skip
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      {viewerModalOpen &&
+        ReactDOM.createPortal(
+          <div
+            id="viewer-required-modal"
+            className="fixed inset-0 z-[100001] overflow-y-auto"
+            aria-labelledby="viewer-required-modal-title"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+              <div
+                className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+                aria-hidden="true"
+              ></div>
+              <span
+                className="hidden sm:inline-block sm:h-screen sm:align-middle"
+                aria-hidden="true"
+              >
+                &#8203;
+              </span>
+              <div className="relative inline-block w-[420px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
+                <h2
+                  id="viewer-required-modal-title"
+                  className="mb-2 text-base font-semibold text-white"
+                >
+                  Viewer Required
+                </h2>
+                <p className="mb-4 text-sm text-white/80">
+                  You need to be on a viewer page or have a study selected to continue with this
+                  action.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    onClick={skipViewerStep}
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                    onClick={closeViewerModal}
+                  >
+                    Ok
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };

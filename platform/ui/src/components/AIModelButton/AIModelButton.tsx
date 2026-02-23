@@ -234,6 +234,7 @@ const AIModelButton = ({
   return (
     <div className="relative flex w-full">
       <button
+        data-tour-id="ai-model-button"
         className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
         } ${loading ? 'opacity-50' : ''}`}
