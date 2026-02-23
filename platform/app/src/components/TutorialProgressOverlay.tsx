@@ -870,13 +870,15 @@ const TutorialProgressOverlay: React.FC = () => {
                 >
                   Reset
                 </button>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 rounded-md bg-white/10 px-3 py-2 text-white"
-                  onClick={e => handleSkipClick(e)}
-                >
-                  <span>Skip Tutorial</span>
-                </button>
+                {progress < 100 && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 rounded-md bg-white/10 px-3 py-2 text-white"
+                    onClick={e => handleSkipClick(e)}
+                  >
+                    <span>Skip Tutorial</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="flex items-center gap-1 rounded-md bg-white/10 px-3 py-2 text-white"
