@@ -15,6 +15,7 @@ import {
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
   GetOnboardingModelQuestionnaireAnswersRequest,
+  GetOnboardingModelQuestionnaireAnswersResponse,
   PredictInferenceModelRequest,
   RemoveModelFeedbackRequest,
   StartInferenceModelContainerRequest,
@@ -181,17 +182,23 @@ const inferenceRepository = {
   /**
    * Get onboarding model questionnaire answers
    *
-   * @return  {object}
+   * @return  {Promise<APIResponse><GetOnboardingModelQuestionnaireAnswersResponse[]>}
    */
   async GetOnboardingModelQuestionnaireAnswers(
     request: GetOnboardingModelQuestionnaireAnswersRequest
-  ): Promise<APIResponse<object>> {
+  ): Promise<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>> {
     return Api()
-      .get(`/v1/inference/onboarding-model-questionnaire-answers`)
-      .then((response: AxiosResponse<APIResponse<object>>) => {
-        const { data } = response;
-        return data;
+      .get(`/v1/inference/onboarding-model-questionnaire-answers`, {
+        params: { modelId: request.modelId },
       })
+      .then(
+        (
+          response: AxiosResponse<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>>
+        ) => {
+          const { data } = response;
+          return data;
+        }
+      )
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

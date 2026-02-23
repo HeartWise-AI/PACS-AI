@@ -26,7 +26,7 @@ export interface GetDoctorSpecialtiesResponse {
 
 export interface GetUserMetadataResponse {
   userId: string;
-  metadata: { [key: string]: string };
+  metadata: { [key: string]: string | number };
   createdAt: number;
   updatedAt: number;
 }
@@ -65,7 +65,7 @@ export interface UpdateTenantUserRequest {
 }
 
 export interface UpdateUserMetadataRequest {
-  metadata: { [key: string]: string };
+  metadata: { [key: string]: string | number | null };
 }
 
 export enum UserRole {

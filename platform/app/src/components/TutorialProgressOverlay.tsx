@@ -7,9 +7,18 @@ import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
 import userRepository from '../api/userRepository';
 import tenantRepository from '../api/tenantRepository';
-import { GetTenantInfoResponse } from '../api/tenantDTO';
+import { AddOnboardingQuestionnaireAnswersRequest, GetTenantInfoResponse } from '../api/tenantDTO';
 import { UserResponse } from '../api/userDTO';
+import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
+import {
+  AddOnboardingModelQuestionnaireAnswersRequest,
+  GetInferenceAvailableModelsResponse,
+} from '@ohif/app/src/api/inferenceDTO';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
+import checkActive from './../assets/pacs/icons/check-active.png';
+import checkInactive from './../assets/pacs/icons/check-inactive.png';
+import radioSelected from './../assets/pacs/icons/radio-selected.png';
+import radioUnselect from './../assets/pacs/icons/radio-unselect.png';
 import chevronUpIcon from './../assets/pacs/icons/chevron-up.png';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import arrowShrink from './../assets/pacs/icons/arrow-shrink.png';
@@ -26,8 +35,8 @@ type Questionnaire = {
   type: 'TEXT' | 'RADIO' | 'CHECKBOX';
   questionEn?: string;
   questionFr?: string;
-  answerOptionsEn?: QuestionnaireAnswerOption[];
-  answerOptionsFr?: QuestionnaireAnswerOption[];
+  answerOptionsEn?: (QuestionnaireAnswerOption | string)[];
+  answerOptionsFr?: (QuestionnaireAnswerOption | string)[];
 };
 
 /**
@@ -86,6 +95,9 @@ const TutorialProgressOverlay: React.FC = () => {
   const [userLoading, setUserLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
+    GetInferenceAvailableModelsResponse[]
+  >([]);
   // Utility to get last completed step index
   const getLastCompletedStepIndex = (steps: TutorialStepState[]) => {
     let lastCompleted = -1;
@@ -130,6 +142,58 @@ const TutorialProgressOverlay: React.FC = () => {
       /\/viewer(\/|$)/.test(path) || /\/study(\/|$)/.test(path) || /\/display(\/|$)/.test(path)
     );
   }, [location.pathname]);
+
+  // Fetch available models and check which ones have already been answered.
+  // Only runs when the user is in a viewer context — fetching outside the viewer
+  useEffect(() => {
+    if (!isInViewer) {
+      return;
+    }
+
+    const fetchModelsData = async () => {
+      try {
+        const response = await inferenceRepository.GetInferenceAvailableModels();
+        const models = response.data || [];
+        setInferenceAvailableModels(models);
+
+        // Deduplicate by modelId and keep only models that actually have questionnaires.
+        const seen = new Set<string>();
+        const uniqueModelsWithQuestionnaires = models.filter(m => {
+          if (!m.modelId || seen.has(m.modelId)) {
+            return false;
+          }
+          seen.add(m.modelId);
+          return (
+            Array.isArray(m.onboardingModelQuestionnaires) &&
+            m.onboardingModelQuestionnaires.length > 0
+          );
+        });
+
+        // For each unique model, fetch its answered questionnaires in parallel.
+        const results = await Promise.allSettled(
+          uniqueModelsWithQuestionnaires.map(m =>
+            inferenceRepository.GetOnboardingModelQuestionnaireAnswers({ modelId: m.modelId })
+          )
+        );
+
+        // A model is considered answered if the API returned at least one answer record.
+        const answered = new Set<string>();
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
+            const data = Array.isArray(result.value?.data) ? result.value.data : [];
+            if (data.length > 0) {
+              answered.add(uniqueModelsWithQuestionnaires[idx].modelId);
+            }
+          }
+        });
+        setAnsweredModelIds(answered);
+      } catch (error) {
+        console.error('Error fetching models data:', error);
+      }
+    };
+
+    fetchModelsData();
+  }, [isInViewer]);
 
   // Load progress from API on mount
   useEffect(() => {
@@ -180,6 +244,35 @@ const TutorialProgressOverlay: React.FC = () => {
   const [skipModalOpen, setSkipModalOpen] = useState(false);
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerModalStepId, setViewerModalStepId] = useState<string | null>(null);
+  // Model questionnaire state
+  const [answeredModelIds, setAnsweredModelIds] = useState<Set<string>>(new Set());
+  const [modelQuestionnaireQueue, setModelQuestionnaireQueue] = useState<
+    GetInferenceAvailableModelsResponse[]
+  >([]);
+  const [modelQuestionnaireQueueIndex, setModelQuestionnaireQueueIndex] = useState<number>(0);
+  const [modelQuestionnaireAnswers, setModelQuestionnaireAnswers] = useState<
+    Record<string, string | string[]>
+  >({});
+  const [isModelQuestionnaireSubmitting, setIsModelQuestionnaireSubmitting] = useState(false);
+
+  // Deduplicated models (by modelId) that have onboardingModelQuestionnaires and haven't been
+  // answered yet by the current user. Models without questionnaires (old versions) are excluded.
+  const pendingModelQuestionnaires = useMemo(() => {
+    const seen = new Set<string>();
+    const deduped = (inferenceAvailableModels || []).filter(m => {
+      if (!m.modelId || seen.has(m.modelId)) {
+        return false;
+      }
+      seen.add(m.modelId);
+      return true;
+    });
+    return deduped.filter(
+      m =>
+        Array.isArray(m.onboardingModelQuestionnaires) &&
+        m.onboardingModelQuestionnaires.length > 0 &&
+        !answeredModelIds.has(m.modelId)
+    );
+  }, [inferenceAvailableModels, answeredModelIds]);
 
   const markStepCompleted = useCallback(
     async (id: string) => {
@@ -200,7 +293,7 @@ const TutorialProgressOverlay: React.FC = () => {
       try {
         // persist as 1-based value: store (completedIdx + 1). Use -1 to indicate reset/no progress.
         await userRepository.UpdateUserMetadata({
-          metadata: { tutorialProgressStep: String(completedIdx >= 0 ? completedIdx + 1 : -1) },
+          metadata: { tutorialProgressStep: completedIdx >= 0 ? completedIdx + 1 : -1 },
         });
       } catch (error) {
         console.error(error);
@@ -304,8 +397,9 @@ const TutorialProgressOverlay: React.FC = () => {
 
         await tenantRepository.AddOnboardingQuestionnaireAnswers({
           questionnaireType,
-          onboardingQuestionnaireAnswers: payloadAnswers,
-        } as any);
+          onboardingQuestionnaireAnswers:
+            payloadAnswers as AddOnboardingQuestionnaireAnswersRequest['onboardingQuestionnaireAnswers'],
+        });
       } catch (err) {
         // swallow errors for now but log for debugging
         // eslint-disable-next-line no-console
@@ -330,6 +424,149 @@ const TutorialProgressOverlay: React.FC = () => {
     [markStepCompleted]
   );
 
+  /** Close the model questionnaire modal without completing the step. */
+  const handleModelQuestionnaireClose = useCallback(() => {
+    setModelQuestionnaireQueue([]);
+    setModelQuestionnaireQueueIndex(0);
+    setModelQuestionnaireAnswers({});
+  }, []);
+
+  /**
+   * Skip the current model's questionnaire and advance to the next one in the
+   * queue, or complete the step when the queue is exhausted.
+   */
+  const handleModelQuestionnaireSkip = useCallback(() => {
+    const nextIdx = modelQuestionnaireQueueIndex + 1;
+    if (nextIdx < modelQuestionnaireQueue.length) {
+      setModelQuestionnaireQueueIndex(nextIdx);
+      setModelQuestionnaireAnswers({});
+    } else {
+      setModelQuestionnaireQueue([]);
+      setModelQuestionnaireQueueIndex(0);
+      setModelQuestionnaireAnswers({});
+      markStepCompleted('model-questionnaire');
+    }
+  }, [modelQuestionnaireQueueIndex, modelQuestionnaireQueue, markStepCompleted]);
+
+  /**
+   * Submit answers for the current model in the queue, then advance or complete.
+   * The queue is captured at the time the modal was opened so it is stable even
+   * as `answeredModelIds` changes during the session.
+   */
+  const handleModelQuestionnaireSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const currentModel = modelQuestionnaireQueue[modelQuestionnaireQueueIndex];
+      if (!currentModel) {
+        return;
+      }
+
+      setIsModelQuestionnaireSubmitting(true);
+      const questions = (currentModel.onboardingModelQuestionnaires || []) as Questionnaire[];
+
+      try {
+        const onboardingModelQuestionnaireAnswers = questions.reduce(
+          (
+            acc: {
+              questionnaireId: string;
+              questionnaireQuestion: string;
+              questionnaireAnswerIds?: string[];
+              questionnaireAnswers?: string[];
+            }[],
+            q
+          ) => {
+            const questionTextEn = q.questionEn || '';
+            if (!questionTextEn.trim()) {
+              return acc;
+            }
+
+            let questionnaireAnswerIds: string[] = [];
+            let questionnaireAnswers: string[] = [];
+            const rawAns = modelQuestionnaireAnswers[q.id];
+
+            if (q.type === 'TEXT') {
+              const value = typeof rawAns === 'string' ? rawAns.trim() : '';
+              if (value) {
+                questionnaireAnswerIds = ['text'];
+                questionnaireAnswers = [value];
+              }
+            } else if (q.type === 'RADIO') {
+              const selected = typeof rawAns === 'string' ? rawAns : '';
+              if (selected) {
+                questionnaireAnswerIds = [selected];
+                const option = (q.answerOptionsEn || []).find(o => o.id === selected);
+                questionnaireAnswers = [option ? option.answer : selected];
+              }
+            } else if (q.type === 'CHECKBOX') {
+              const selectedArr = Array.isArray(rawAns) ? rawAns : [];
+              if (selectedArr.length) {
+                questionnaireAnswerIds = selectedArr as string[];
+                const options = q.answerOptionsEn || [];
+                questionnaireAnswers = selectedArr
+                  .map(id => options.find(o => o.id === id)?.answer)
+                  .filter((v): v is string => Boolean(v));
+              }
+            }
+
+            if (questionnaireAnswerIds.length === 0 && questionnaireAnswers.length === 0) {
+              return acc;
+            }
+
+            const questionObj: {
+              questionnaireId: string;
+              questionnaireQuestion: string;
+              questionnaireAnswerIds?: string[];
+              questionnaireAnswers?: string[];
+            } = { questionnaireId: q.id, questionnaireQuestion: questionTextEn };
+            if (questionnaireAnswerIds.length) {
+              questionObj.questionnaireAnswerIds = questionnaireAnswerIds;
+            }
+            if (questionnaireAnswers.length) {
+              questionObj.questionnaireAnswers = questionnaireAnswers;
+            }
+
+            acc.push(questionObj);
+            return acc;
+          },
+          []
+        );
+
+        await inferenceRepository.AddOnboardingModelQuestionnaireAnswers({
+          modelId: currentModel.modelId,
+          onboardingModelQuestionnaireAnswers:
+            onboardingModelQuestionnaireAnswers.length > 0
+              ? (onboardingModelQuestionnaireAnswers as AddOnboardingModelQuestionnaireAnswersRequest['onboardingModelQuestionnaireAnswers'])
+              : null,
+        });
+
+        // Record locally so pendingModelQuestionnaires reflects the change immediately.
+        setAnsweredModelIds(prev => new Set([...prev, currentModel.modelId]));
+      } catch (err) {
+        console.error('Failed to submit model questionnaire answers', err);
+      } finally {
+        setIsModelQuestionnaireSubmitting(false);
+      }
+
+      // Advance to next model in queue (pre-captured list — stable across renders).
+      const nextIdx = modelQuestionnaireQueueIndex + 1;
+      if (nextIdx < modelQuestionnaireQueue.length) {
+        setModelQuestionnaireQueueIndex(nextIdx);
+        setModelQuestionnaireAnswers({});
+      } else {
+        setModelQuestionnaireQueue([]);
+        setModelQuestionnaireQueueIndex(0);
+        setModelQuestionnaireAnswers({});
+        markStepCompleted('model-questionnaire');
+      }
+    },
+    [
+      modelQuestionnaireQueue,
+      modelQuestionnaireQueueIndex,
+      modelQuestionnaireAnswers,
+      markStepCompleted,
+    ]
+  );
+
   const completedCount = useMemo(() => steps.filter(step => step.completed).length, [steps]);
 
   const totalCount = steps.length || 1;
@@ -339,7 +576,7 @@ const TutorialProgressOverlay: React.FC = () => {
     setSteps(DEFAULT_STEPS);
     try {
       await userRepository.ResetTutorial();
-      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: '0' } });
+      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
     } catch (error) {
       console.error(error);
     }
@@ -361,7 +598,7 @@ const TutorialProgressOverlay: React.FC = () => {
     // persist as the total number of steps (1-based semantics)
     try {
       await userRepository.UpdateUserMetadata({
-        metadata: { tutorialProgressStep: String(steps.length) },
+        metadata: { tutorialProgressStep: steps.length },
       });
     } catch (error) {
       console.error(error);
@@ -516,9 +753,27 @@ const TutorialProgressOverlay: React.FC = () => {
       setActiveSurvey('post');
       return;
     }
-    // for these two steps the user must be on a viewer page or have a study selected.
+    if (stepId === 'model-questionnaire') {
+      // must be in a viewer context to access model questionnaires
+      if (!isInViewer) {
+        setViewerModalStepId(stepId);
+        setViewerModalOpen(true);
+        return;
+      }
+      if (pendingModelQuestionnaires.length === 0) {
+        // All models already answered (or none have questionnaires) — mark complete immediately.
+        markStepCompleted('model-questionnaire');
+        return;
+      }
+      // Snapshot the pending list into a stable queue for this modal session.
+      setModelQuestionnaireQueue([...pendingModelQuestionnaires]);
+      setModelQuestionnaireQueueIndex(0);
+      setModelQuestionnaireAnswers({});
+      return;
+    }
+    // for run-inference the user must be on a viewer page or have a study selected.
     // only show the modal when we are NOT already in a viewer context.
-    if ((stepId === 'run-inference' || stepId === 'model-questionnaire') && !isInViewer) {
+    if (stepId === 'run-inference' && !isInViewer) {
       setViewerModalStepId(stepId);
       setViewerModalOpen(true);
       return;
@@ -844,9 +1099,36 @@ const TutorialProgressOverlay: React.FC = () => {
                         </div>
                       );
                     }
-                    const options: QuestionnaireAnswerOption[] = isFrench
-                      ? q.answerOptionsFr || []
-                      : q.answerOptionsEn || [];
+                    // always iterate over English options so IDs stored in state
+                    const enOptions = (q.answerOptionsEn || []) as (
+                      | QuestionnaireAnswerOption
+                      | string
+                    )[];
+                    const frOptions = (q.answerOptionsFr || []) as (
+                      | QuestionnaireAnswerOption
+                      | string
+                    )[];
+                    // returns the localised display label for an option at a given index.
+                    const getOptionLabel = (
+                      opt: QuestionnaireAnswerOption | string,
+                      idx: number
+                    ): string => {
+                      const isStr = typeof opt === 'string';
+                      const enLabel = isStr ? opt : opt.answer || opt.id || String(idx);
+                      if (!isFrench) {
+                        return enLabel;
+                      }
+                      if (isStr) {
+                        // plain string array — use same index in French array
+                        const frEntry = frOptions[idx];
+                        return (typeof frEntry === 'string' ? frEntry : undefined) ?? enLabel;
+                      }
+                      // object array — look up by id
+                      const frObj = frOptions.find(
+                        f => typeof f !== 'string' && f.id === (opt as QuestionnaireAnswerOption).id
+                      ) as QuestionnaireAnswerOption | undefined;
+                      return frObj?.answer ?? enLabel;
+                    };
                     if (q.type === 'RADIO') {
                       return (
                         <div
@@ -854,29 +1136,28 @@ const TutorialProgressOverlay: React.FC = () => {
                           className="mt-6 space-y-2"
                         >
                           <p className="text-sm font-medium text-white">{questionText}</p>
-                          <div className="space-y-1">
-                            {options.map((opt, idx) => {
-                              const isString = typeof opt === 'string';
-                              const value = isString ? String(opt) : opt.id || String(idx);
-                              const label = isString
-                                ? String(opt)
-                                : opt.answer || opt.id || String(idx);
+                          <div className="space-y-2">
+                            {enOptions.map((opt, idx) => {
+                              const isStr = typeof opt === 'string';
+                              const value = isStr ? opt : opt.id || String(idx);
+                              const label = getOptionLabel(opt, idx);
+                              const isSelected = surveyAnswers[q.id] === value;
                               return (
-                                <label
+                                <button
                                   key={value || idx}
-                                  className="flex items-center gap-2"
+                                  type="button"
+                                  onClick={() => setSurveyAnswers(a => ({ ...a, [q.id]: value }))}
+                                  className="flex w-full items-center gap-2 text-left text-sm text-white"
                                 >
-                                  <input
-                                    type="radio"
-                                    name={q.id}
-                                    value={value}
-                                    checked={surveyAnswers[q.id] === value}
-                                    onChange={() =>
-                                      setSurveyAnswers(a => ({ ...a, [q.id]: value }))
-                                    }
+                                  <img
+                                    src={isSelected ? radioSelected : radioUnselect}
+                                    alt={isSelected ? 'selected' : 'unselected'}
+                                    className="h-[20px] min-w-[20px]"
                                   />
-                                  {label}
-                                </label>
+                                  <span className={isSelected ? 'text-emerald-400' : ''}>
+                                    {label}
+                                  </span>
+                                </button>
                               );
                             })}
                           </div>
@@ -894,35 +1175,37 @@ const TutorialProgressOverlay: React.FC = () => {
                         >
                           <p className="text-sm font-medium text-white">{questionText}</p>
                           <div className="space-y-2">
-                            {options.map((opt, idx) => {
-                              const isString = typeof opt === 'string';
-                              const value = isString ? String(opt) : opt.id || String(idx);
-                              const label = isString
-                                ? String(opt)
-                                : opt.answer || opt.id || String(idx);
+                            {enOptions.map((opt, idx) => {
+                              const isStr = typeof opt === 'string';
+                              const value = isStr ? opt : opt.id || String(idx);
+                              const label = getOptionLabel(opt, idx);
+                              const isChecked = checkedArr.includes(value);
                               return (
-                                <label
+                                <button
                                   key={value || idx}
-                                  className="flex items-center gap-2"
+                                  type="button"
+                                  onClick={() => {
+                                    setSurveyAnswers(a => {
+                                      const prevArr = Array.isArray(a[q.id])
+                                        ? (a[q.id] as string[])
+                                        : [];
+                                      const updated = prevArr.includes(value)
+                                        ? prevArr.filter((v: string) => v !== value)
+                                        : [...prevArr, value];
+                                      return { ...a, [q.id]: updated };
+                                    });
+                                  }}
+                                  className="flex w-full items-center gap-2 text-left text-sm text-white"
                                 >
-                                  <input
-                                    type="checkbox"
-                                    value={value}
-                                    checked={checkedArr.includes(value)}
-                                    onChange={() => {
-                                      setSurveyAnswers(a => {
-                                        const prevArr = Array.isArray(a[q.id])
-                                          ? (a[q.id] as string[])
-                                          : [];
-                                        const updated = prevArr.includes(value)
-                                          ? prevArr.filter((v: string) => v !== value)
-                                          : [...prevArr, value];
-                                        return { ...a, [q.id]: updated };
-                                      });
-                                    }}
+                                  <img
+                                    src={isChecked ? checkActive : checkInactive}
+                                    alt={isChecked ? 'check' : 'uncheck'}
+                                    className="h-[18px] min-w-[18px]"
                                   />
-                                  {label}
-                                </label>
+                                  <span className={isChecked ? 'text-emerald-400' : ''}>
+                                    {label}
+                                  </span>
+                                </button>
                               );
                             })}
                           </div>
@@ -955,6 +1238,244 @@ const TutorialProgressOverlay: React.FC = () => {
           document.body
         );
       })}
+
+      {/* ── Model questionnaire modal ──────────────────────────────────────── */}
+      {modelQuestionnaireQueue.length > 0 &&
+        (() => {
+          const mqModel = modelQuestionnaireQueue[modelQuestionnaireQueueIndex];
+          if (!mqModel) {
+            return null;
+          }
+          const mqQuestions = (mqModel.onboardingModelQuestionnaires || []) as Questionnaire[];
+          const mqIsFrench = i18n.language?.toLowerCase().startsWith('fr');
+          const mqTotal = modelQuestionnaireQueue.length;
+          const mqProgressLabel =
+            mqTotal > 1 ? ` (${modelQuestionnaireQueueIndex + 1} of ${mqTotal})` : '';
+          return ReactDOM.createPortal(
+            <div
+              id="model-questionnaire-modal"
+              className="fixed inset-0 z-[99999] overflow-y-auto"
+              aria-labelledby="model-questionnaire-title"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div
+                  className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+                  aria-hidden="true"
+                ></div>
+                <span
+                  className="hidden sm:inline-block sm:h-screen sm:align-middle"
+                  aria-hidden="true"
+                >
+                  &#8203;
+                </span>
+                <div className="relative inline-block w-[520px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
+                  <button
+                    onClick={handleModelQuestionnaireClose}
+                    className="absolute top-4 right-4 z-[999999999]"
+                  >
+                    <img
+                      src={closeIcon}
+                      alt="Close icon"
+                    />
+                  </button>
+                  <h2
+                    id="model-questionnaire-title"
+                    className="mb-1 text-[20px] font-semibold text-white"
+                  >
+                    {mqModel.modelName} — Model Questionnaire{mqProgressLabel}
+                  </h2>
+                  <form
+                    onSubmit={handleModelQuestionnaireSubmit}
+                    className="space-y-6 text-xs text-white"
+                  >
+                    {mqQuestions.map((q: Questionnaire) => {
+                      const questionText = mqIsFrench
+                        ? q.questionFr || q.questionEn
+                        : q.questionEn || q.questionFr;
+                      if (!questionText) {
+                        return null;
+                      }
+
+                      if (q.type === 'TEXT') {
+                        return (
+                          <div
+                            key={q.id}
+                            className="mt-6 space-y-2"
+                          >
+                            <p className="text-sm font-medium text-white">{questionText}</p>
+                            <textarea
+                              rows={4}
+                              className="w-full rounded-md border border-[#2A2E2A] bg-[#111311] p-2 text-sm text-white outline-none focus:border-emerald-500"
+                              value={
+                                typeof modelQuestionnaireAnswers[q.id] === 'string'
+                                  ? (modelQuestionnaireAnswers[q.id] as string)
+                                  : ''
+                              }
+                              onChange={e =>
+                                setModelQuestionnaireAnswers(a => ({
+                                  ...a,
+                                  [q.id]: e.target.value,
+                                }))
+                              }
+                              placeholder={t('Enter your answer here')}
+                            />
+                          </div>
+                        );
+                      }
+
+                      // always iterate over English options so IDs stored in state
+                      const mqEnOptions = (q.answerOptionsEn || []) as (
+                        | QuestionnaireAnswerOption
+                        | string
+                      )[];
+                      const mqFrOptions = (q.answerOptionsFr || []) as (
+                        | QuestionnaireAnswerOption
+                        | string
+                      )[];
+                      // returns the localised display label for an option at a given index.
+                      const getMqOptionLabel = (
+                        opt: QuestionnaireAnswerOption | string,
+                        idx: number
+                      ): string => {
+                        const isStr = typeof opt === 'string';
+                        const enLabel = isStr ? opt : opt.answer || opt.id || String(idx);
+                        if (!mqIsFrench) {
+                          return enLabel;
+                        }
+                        if (isStr) {
+                          const frEntry = mqFrOptions[idx];
+                          return (typeof frEntry === 'string' ? frEntry : undefined) ?? enLabel;
+                        }
+                        const frObj = mqFrOptions.find(
+                          f =>
+                            typeof f !== 'string' && f.id === (opt as QuestionnaireAnswerOption).id
+                        ) as QuestionnaireAnswerOption | undefined;
+                        return frObj?.answer ?? enLabel;
+                      };
+
+                      if (q.type === 'RADIO') {
+                        return (
+                          <div
+                            key={q.id}
+                            className="mt-6 space-y-2"
+                          >
+                            <p className="text-sm font-medium text-white">{questionText}</p>
+                            <div className="space-y-2">
+                              {mqEnOptions.map((opt, idx) => {
+                                const isStr = typeof opt === 'string';
+                                const value = isStr ? opt : opt.id || String(idx);
+                                const label = getMqOptionLabel(opt, idx);
+                                const isSelected = modelQuestionnaireAnswers[q.id] === value;
+                                return (
+                                  <button
+                                    key={value || idx}
+                                    type="button"
+                                    onClick={() =>
+                                      setModelQuestionnaireAnswers(a => ({
+                                        ...a,
+                                        [q.id]: value,
+                                      }))
+                                    }
+                                    className="flex w-full items-center gap-2 text-left text-sm text-white"
+                                  >
+                                    <img
+                                      src={isSelected ? radioSelected : radioUnselect}
+                                      alt={isSelected ? 'selected' : 'unselected'}
+                                      className="h-[20px] min-w-[20px]"
+                                    />
+                                    <span className={isSelected ? 'text-emerald-400' : ''}>
+                                      {label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (q.type === 'CHECKBOX') {
+                        const checkedArr = Array.isArray(modelQuestionnaireAnswers[q.id])
+                          ? (modelQuestionnaireAnswers[q.id] as string[])
+                          : [];
+                        return (
+                          <div
+                            key={q.id}
+                            className="mt-6 space-y-2"
+                          >
+                            <p className="text-sm font-medium text-white">{questionText}</p>
+                            <div className="space-y-2">
+                              {mqEnOptions.map((opt, idx) => {
+                                const isStr = typeof opt === 'string';
+                                const value = isStr ? opt : opt.id || String(idx);
+                                const label = getMqOptionLabel(opt, idx);
+                                const isChecked = checkedArr.includes(value);
+                                return (
+                                  <button
+                                    key={value || idx}
+                                    type="button"
+                                    onClick={() => {
+                                      setModelQuestionnaireAnswers(a => {
+                                        const prev = Array.isArray(a[q.id])
+                                          ? (a[q.id] as string[])
+                                          : [];
+                                        const next = prev.includes(value)
+                                          ? prev.filter((v: string) => v !== value)
+                                          : [...prev, value];
+                                        return { ...a, [q.id]: next };
+                                      });
+                                    }}
+                                    className="flex w-full items-center gap-2 text-left text-sm text-white"
+                                  >
+                                    <img
+                                      src={isChecked ? checkActive : checkInactive}
+                                      alt={isChecked ? 'check' : 'uncheck'}
+                                      className="h-[18px] min-w-[18px]"
+                                    />
+                                    <span className={isChecked ? 'text-emerald-400' : ''}>
+                                      {label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    <div className="mt-6 flex justify-end gap-2 text-xs">
+                      <button
+                        type="button"
+                        className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                        onClick={handleModelQuestionnaireSkip}
+                      >
+                        Skip
+                      </button>
+                      <button
+                        type="submit"
+                        className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                        disabled={isModelQuestionnaireSubmitting}
+                        aria-busy={isModelQuestionnaireSubmitting}
+                      >
+                        {isModelQuestionnaireSubmitting
+                          ? '...'
+                          : mqTotal > 1 && modelQuestionnaireQueueIndex < mqTotal - 1
+                            ? 'Next'
+                            : 'Submit'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>,
+            document.body
+          );
+        })()}
+
       {skipModalOpen &&
         ReactDOM.createPortal(
           <div

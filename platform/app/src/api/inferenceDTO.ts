@@ -144,6 +144,19 @@ export interface GetOnboardingModelQuestionnaireAnswersRequest {
   modelId: string;
 }
 
+export interface GetOnboardingModelQuestionnaireAnswersResponse {
+  id: string;
+  tenantId: string;
+  userId: string;
+  modelId: string;
+  questionnaireId: string;
+  questionnaireQuestion: string;
+  questionnaireAnswerIds?: string[];
+  questionnaireAnswers?: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ModelDetails {
   Changelogs: { [key: string]: string } | string;
   Summary: { [key: string]: string };

@@ -1,13 +1,15 @@
 export interface AddOnboardingQuestionnaireAnswersRequest {
   questionnaireType: string;
-  onboardingQuestionnaireAnswers: [
-    {
-      questionnaireId: string;
-      questionnaireQuestion: string;
-      questionnaireAnswerIds?: string[];
-      questionnaireAnswers?: string[];
-    },
-  ];
+  onboardingQuestionnaireAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds?: string[];
+          questionnaireAnswers?: string[];
+        },
+      ]
+    | null;
 }
 export interface GetPublicTenantByIDResponse {
   readonly id: string;
