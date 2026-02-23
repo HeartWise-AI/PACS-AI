@@ -24,6 +24,7 @@ import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import arrowShrink from './../assets/pacs/icons/arrow-shrink.png';
 import checkTick from './../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from './../assets/pacs/bg/tutorial-progress-header-bg.png';
+import { Typography } from '@ohif/ui';
 
 type QuestionnaireAnswerOption = {
   id: string;
@@ -1502,12 +1503,20 @@ const TutorialProgressOverlay: React.FC = () => {
                 <h2
                   id="skip-modal-title"
                   className="mb-2 text-base font-semibold text-white"
+                ></h2>
+                <p className="mb-4 text-sm text-white/80"></p>
+                <Typography
+                  variant="h6"
+                  className="font-light text-white"
                 >
                   Skip Tutorial
-                </h2>
-                <p className="mb-4 text-sm text-white/80">
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="mt-2 font-light text-white text-opacity-70"
+                >
                   Do you want to skip the entire tutorial?
-                </p>
+                </Typography>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
