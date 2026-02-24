@@ -92,7 +92,7 @@ const DEFAULT_STEPS: TutorialStepState[] = [
  * integrates with Shepherd.js to run contextual tours for each step.
  */
 const TutorialProgressOverlay: React.FC = () => {
-  const { t, i18n } = useTranslation('AIModelButton');
+  const { t, i18n } = useTranslation('TutorialProgressOverlay');
   const [userLoading, setUserLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
@@ -666,15 +666,17 @@ const TutorialProgressOverlay: React.FC = () => {
       stepDefinitions = [
         {
           id: 'view-models-nav',
-          title: 'AI Models',
-          text: 'Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.',
+          title: t('AI Models'),
+          text: t(
+            'Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.'
+          ),
           attachTo: {
             element: '[data-tour-id="nav-ai-models"]',
             on: 'right',
           },
           buttons: [
             {
-              text: 'Skip',
+              text: t('Skip'),
               action: () => {
                 // complete the tour
                 tour.complete();
@@ -708,15 +710,15 @@ const TutorialProgressOverlay: React.FC = () => {
       stepDefinitions = [
         {
           id: 'run-inference-nav',
-          title: 'Run Inference',
-          text: 'Open the AI Models menu to apply a model to the current study.',
+          title: t('Run Inference'),
+          text: t('Open the AI Models menu to apply a model to the current study.'),
           attachTo: {
             element: '[data-tour-id="ai-model-button"]',
             on: 'bottom',
           },
           buttons: [
             {
-              text: 'Skip',
+              text: t('Skip'),
               classes: 'bg-[#C8F469] !text-black px-3 py-1 rounded-md',
               action: () => {
                 tour.complete();
@@ -743,10 +745,10 @@ const TutorialProgressOverlay: React.FC = () => {
       stepDefinitions = [
         {
           id: `${stepId}-intro`,
-          title: step.title,
+          title: t(step.title),
           buttons: [
             {
-              text: 'Close',
+              text: t('Close'),
               action: () => tour.complete(),
             },
           ],
@@ -847,9 +849,11 @@ const TutorialProgressOverlay: React.FC = () => {
               />
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold">Keep going, {currentUser.name}!</h2>
+                  <h2 className="text-xl font-semibold">
+                    {t('Keep going, {{name}}!', { name: currentUser.name })}
+                  </h2>
                   <p className="mt-1 pr-5 text-sm text-white/70">
-                    Follow these steps to get started with PACS AI.
+                    {t('Follow these steps to get started with PACS AI.')}
                   </p>
                 </div>
                 <div className="relative flex h-[60px] w-[60px] items-center justify-center">
@@ -898,7 +902,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     className="flex items-center gap-1 rounded-md bg-white/10 px-3 py-2 text-white"
                     onClick={e => handleSkipClick(e)}
                   >
-                    <span>Skip Tutorial</span>
+                    <span>{t('Skip Tutorial')}</span>
                   </button>
                 )}
                 <button
@@ -911,7 +915,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     alt="Arrow shrink icon"
                     className="h-4 w-4"
                   />
-                  <span>Minimize</span>
+                  <span>{t('Minimize')}</span>
                 </button>
               </div>
             </div>
@@ -984,7 +988,7 @@ const TutorialProgressOverlay: React.FC = () => {
                       className={`flex-1 ${index === 0 ? 'pt-1' : ''} ${index === steps.length - 1 ? 'pb-1' : ''}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{step.title}</span>
+                        <span className="text-sm font-medium">{t(step.title)}</span>
                       </div>
                     </div>
 
@@ -1033,7 +1037,9 @@ const TutorialProgressOverlay: React.FC = () => {
               />
             </svg>
           </div>
-          <span className="mr-4 font-medium">Tutorials {progress}%</span>
+          <span className="mr-4 font-medium">
+            {t('Tutorials')} {progress}%
+          </span>
           <img
             src={chevronUpIcon}
             alt={'Chevron up icon'}
@@ -1085,7 +1091,7 @@ const TutorialProgressOverlay: React.FC = () => {
                   id="survey-title"
                   className="mb-1 text-[20px] font-semibold text-white"
                 >
-                  {type === 'pre' ? 'Pre-Survey Questionnaire' : 'Post-Survey Questionnaire'}
+                  {type === 'pre' ? t('Pre-Survey Questionnaire') : t('Post-Survey Questionnaire')}
                 </h2>
                 <form
                   onSubmit={handleSurveySubmit(
@@ -1244,7 +1250,7 @@ const TutorialProgressOverlay: React.FC = () => {
                       className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
                       onClick={handleSurveySkip(type === 'pre' ? 'pre-survey' : 'post-survey')}
                     >
-                      Skip
+                      {t('Skip')}
                     </button>
                     <button
                       type="submit"
@@ -1252,7 +1258,7 @@ const TutorialProgressOverlay: React.FC = () => {
                       disabled={isSurveySubmitting}
                       aria-busy={isSurveySubmitting}
                     >
-                      {isSurveySubmitting ? '...' : 'Submit'}
+                      {isSurveySubmitting ? '...' : t('Submit')}
                     </button>
                   </div>
                 </form>
@@ -1273,8 +1279,9 @@ const TutorialProgressOverlay: React.FC = () => {
           const mqQuestions = (mqModel.onboardingModelQuestionnaires || []) as Questionnaire[];
           const mqIsFrench = i18n.language?.toLowerCase().startsWith('fr');
           const mqTotal = modelQuestionnaireQueue.length;
-          const mqProgressLabel =
-            mqTotal > 1 ? ` (${modelQuestionnaireQueueIndex + 1} of ${mqTotal})` : '';
+          // TODO: for testing purposes
+          // const mqProgressLabel =
+          //   mqTotal > 1 ? ` (${modelQuestionnaireQueueIndex + 1} of ${mqTotal})` : '';
           return ReactDOM.createPortal(
             <div
               id="model-questionnaire-modal"
@@ -1308,7 +1315,7 @@ const TutorialProgressOverlay: React.FC = () => {
                     id="model-questionnaire-title"
                     className="mb-1 text-[20px] font-semibold text-white"
                   >
-                    Model Questionnaire ({mqModel.modelName})
+                    {t('Model Questionnaire')} ({mqModel.modelName})
                   </h2>
                   <form
                     onSubmit={handleModelQuestionnaireSubmit}
@@ -1477,7 +1484,7 @@ const TutorialProgressOverlay: React.FC = () => {
                         className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
                         onClick={handleModelQuestionnaireSkip}
                       >
-                        Skip
+                        {t('Skip')}
                       </button>
                       <button
                         type="submit"
@@ -1488,8 +1495,8 @@ const TutorialProgressOverlay: React.FC = () => {
                         {isModelQuestionnaireSubmitting
                           ? '...'
                           : mqTotal > 1 && modelQuestionnaireQueueIndex < mqTotal - 1
-                            ? 'Next'
-                            : 'Submit'}
+                            ? t('Next')
+                            : t('Submit')}
                       </button>
                     </div>
                   </form>
@@ -1525,13 +1532,13 @@ const TutorialProgressOverlay: React.FC = () => {
                   variant="h6"
                   className="font-light text-white"
                 >
-                  Skip Tutorial
+                  {t('Skip Tutorial')}
                 </Typography>
                 <Typography
                   variant="body"
                   className="mt-2 font-light text-white text-opacity-70"
                 >
-                  Do you want to skip the entire tutorial?
+                  {t('Do you want to skip the entire tutorial?')}
                 </Typography>
                 <div className="mt-5 flex justify-end gap-2">
                   <button
@@ -1539,14 +1546,14 @@ const TutorialProgressOverlay: React.FC = () => {
                     className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
                     onClick={cancelSkip}
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                   <button
                     type="button"
                     className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
                     onClick={confirmSkip}
                   >
-                    Skip
+                    {t('Skip')}
                   </button>
                 </div>
               </div>
@@ -1579,11 +1586,12 @@ const TutorialProgressOverlay: React.FC = () => {
                   id="viewer-required-modal-title"
                   className="mb-2 text-base font-semibold text-white"
                 >
-                  Viewer Required
+                  {t('Viewer Required')}
                 </h2>
                 <p className="mb-4 text-sm text-white/80">
-                  You need to be on a viewer page or have a study selected to continue with this
-                  action.
+                  {t(
+                    'You need to be on a viewer page or have a study selected to continue with this action.'
+                  )}
                 </p>
                 <div className="flex justify-end gap-2">
                   <button
@@ -1591,14 +1599,14 @@ const TutorialProgressOverlay: React.FC = () => {
                     className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
                     onClick={skipViewerStep}
                   >
-                    Skip
+                    {t('Skip')}
                   </button>
                   <button
                     type="button"
                     className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
                     onClick={closeViewerModal}
                   >
-                    Ok
+                    {t('Ok')}
                   </button>
                 </div>
               </div>

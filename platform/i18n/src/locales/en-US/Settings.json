@@ -12,5 +12,14 @@
   "Preferences": "Preferences",
   "Privacy Policy": "Privacy Policy",
   "Security": "Security",
-  "Terms and Conditions": "Terms and Conditions"
+  "Terms and Conditions": "Terms and Conditions",
+  "Tutorial": "Tutorial",
+  "Reset Tutorial": "Reset Tutorial",
+  "Clear your current progress and begin the tutorial again": "Clear your current progress and begin the tutorial again",
+  "Are you sure you want to reset the tutorial? Your current progress will be cleared.": "Are you sure you want to reset the tutorial? Your current progress will be cleared.",
+  "Cancel": "Cancel",
+  "Reset": "Reset",
+  "Tutorial has been reset successfully": "Tutorial has been reset successfully",
+  "Failed to reset tutorial": "Failed to reset tutorial",
+  "Please provide your current and new password to continue.": "Please provide your current and new password to continue."
 }

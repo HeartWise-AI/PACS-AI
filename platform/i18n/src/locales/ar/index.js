@@ -26,6 +26,7 @@ import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
+import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 
 export default {
@@ -58,6 +59,7 @@ export default {
     UserPreferencesModal,
     ViewportDownloadForm,
     Messages,
+    TutorialProgressOverlay,
     WindowLevelActionMenu,
   },
 };
