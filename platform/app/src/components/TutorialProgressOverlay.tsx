@@ -949,7 +949,7 @@ const TutorialProgressOverlay: React.FC = () => {
                       )}
                       {isCurrent ? (
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 border-white/30 bg-transparent`}
+                          className={`flex h-6 w-6 animate-spin items-center justify-center rounded-full border-2 border-white/20 border-t-[#C8F469] bg-transparent`}
                         ></div>
                       ) : (
                         <div
