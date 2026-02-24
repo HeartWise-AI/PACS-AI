@@ -927,7 +927,7 @@ const TutorialProgressOverlay: React.FC = () => {
   return (
     <>
       {/* Ensure Shepherd buttons use black text regardless of external styles */}
-      <style>{`.shepherd-theme-pacsai .shepherd-button { color: #000 !important; }`}</style>
+      <style>{`.shepherd-theme-pacsai .shepherd-button { color: #000 !important; } @keyframes progress-fill { 0% { stroke-dashoffset: 56.55; } 100% { stroke-dashoffset: 0; } }`}</style>
       {/* Tutorial progress toggle and card */}
       <div className="tutorial-overlay-container pointer-events-none fixed bottom-20 right-5 z-[999] flex flex-col items-end">
         {expanded && (
@@ -1044,9 +1044,32 @@ const TutorialProgressOverlay: React.FC = () => {
                         />
                       )}
                       {isCurrent ? (
-                        <div
-                          className={`flex h-6 w-6 animate-spin items-center justify-center rounded-full border-2 border-white/20 border-t-[#C8F469] bg-transparent`}
-                        ></div>
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          className="-rotate-90"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="rgba(255,255,255,0.2)"
+                            strokeWidth="2"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="#C8F469"
+                            strokeWidth="2"
+                            fill="transparent"
+                            strokeDasharray="56.55"
+                            strokeLinecap="round"
+                            style={{ animation: 'progress-fill 4s ease-in-out infinite' }}
+                          />
+                        </svg>
                       ) : (
                         <div
                           className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
