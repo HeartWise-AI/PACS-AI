@@ -22,5 +22,6 @@
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.",
   "Run Inference": "Run Inference",
   "Open the AI Models menu to apply a model to the current study.": "Open the AI Models menu to apply a model to the current study.",
-  "Close": "Close"
+  "Close": "Close",
+  "Please answer all questions before submitting.": "Please answer all questions before submitting."
 }

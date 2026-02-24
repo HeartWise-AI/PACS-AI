@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +26,7 @@ import arrowShrink from './../assets/pacs/icons/arrow-shrink.png';
 import checkTick from './../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from './../assets/pacs/bg/tutorial-progress-header-bg.png';
 import { Typography } from '@ohif/ui';
+import { AlertContext } from '../AlertProvider';
 
 type QuestionnaireAnswerOption = {
   id: string;
@@ -94,6 +95,7 @@ const DEFAULT_STEPS: TutorialStepState[] = [
  */
 const TutorialProgressOverlay: React.FC = () => {
   const { t, i18n } = useTranslation('TutorialProgressOverlay');
+  const showAlert = useContext(AlertContext);
   const [userLoading, setUserLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
@@ -318,6 +320,29 @@ const TutorialProgressOverlay: React.FC = () => {
   const handleSurveySubmit = useCallback(
     (stepId: string, questions: Questionnaire[]) => async (e: React.FormEvent) => {
       e.preventDefault();
+
+      // validate all questions have an answer
+      const unanswered = questions.filter(q => {
+        if (!q.questionEn?.trim()) {
+          return false;
+        }
+        const ans = surveyAnswers[q.id];
+        if (q.type === 'TEXT') {
+          return !ans || !(ans as string).trim();
+        }
+        if (q.type === 'RADIO') {
+          return !ans;
+        }
+        if (q.type === 'CHECKBOX') {
+          return !Array.isArray(ans) || ans.length === 0;
+        }
+        return false;
+      });
+      if (unanswered.length > 0) {
+        showAlert(t('Please answer all questions before submitting.'), 'error');
+        return;
+      }
+
       setIsSurveySubmitting(true);
 
       const questionnaireType = stepId === 'pre-survey' ? 'PRE_SURVEY' : 'POST_SURVEY';
@@ -420,7 +445,7 @@ const TutorialProgressOverlay: React.FC = () => {
       setSurveyAnswers({});
       markStepCompleted(stepId);
     },
-    [markStepCompleted, surveyAnswers]
+    [markStepCompleted, surveyAnswers, t]
   );
 
   const handleSurveySkip = useCallback(
@@ -469,8 +494,31 @@ const TutorialProgressOverlay: React.FC = () => {
         return;
       }
 
-      setIsModelQuestionnaireSubmitting(true);
       const questions = (currentModel.onboardingModelQuestionnaires || []) as Questionnaire[];
+
+      // validate all questions have an answer
+      const unanswered = questions.filter(q => {
+        if (!q.questionEn?.trim()) {
+          return false;
+        }
+        const ans = modelQuestionnaireAnswers[q.id];
+        if (q.type === 'TEXT') {
+          return !ans || !(ans as string).trim();
+        }
+        if (q.type === 'RADIO') {
+          return !ans;
+        }
+        if (q.type === 'CHECKBOX') {
+          return !Array.isArray(ans) || ans.length === 0;
+        }
+        return false;
+      });
+      if (unanswered.length > 0) {
+        showAlert(t('Please answer all questions before submitting.'), 'error');
+        return;
+      }
+
+      setIsModelQuestionnaireSubmitting(true);
 
       try {
         const onboardingModelQuestionnaireAnswers = questions.reduce(
@@ -572,6 +620,7 @@ const TutorialProgressOverlay: React.FC = () => {
       modelQuestionnaireQueueIndex,
       modelQuestionnaireAnswers,
       markStepCompleted,
+      t,
     ]
   );
 

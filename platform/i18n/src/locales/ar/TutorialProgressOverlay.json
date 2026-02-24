@@ -22,5 +22,6 @@
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "استخدم عنصر التنقل هذا لاستكشاف نماذج الذكاء الاصطناعي المتاحة. انقر عليه في أي وقت لعرض النماذج المدعومة في PACS AI.",
   "Run Inference": "تشغيل الاستنتاج",
   "Open the AI Models menu to apply a model to the current study.": "افتح قائمة نماذج الذكاء الاصطناعي لتطبيق نموذج على الدراسة الحالية.",
-  "Close": "إغلاق"
+  "Close": "إغلاق",
+  "Please answer all questions before submitting.": "يرجى الإجابة على جميع الأسئلة قبل الإرسال."
 }

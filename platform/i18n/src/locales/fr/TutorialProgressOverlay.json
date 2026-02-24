@@ -22,5 +22,6 @@
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "Utilisez cet élément de navigation pour explorer les modèles IA disponibles. Cliquez dessus à tout moment pour voir les modèles pris en charge par PACS AI.",
   "Run Inference": "Lancer l'inférence",
   "Open the AI Models menu to apply a model to the current study.": "Ouvrez le menu Modèles IA pour appliquer un modèle à l'étude en cours.",
-  "Close": "Fermer"
+  "Close": "Fermer",
+  "Please answer all questions before submitting.": "Veuillez répondre à toutes les questions avant de soumettre."
 }
