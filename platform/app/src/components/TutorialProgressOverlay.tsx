@@ -1130,33 +1130,15 @@ const TutorialProgressOverlay: React.FC = () => {
                       );
                     }
                     // always iterate over English options so IDs stored in state
-                    const enOptions = (q.answerOptionsEn || []) as (
-                      | QuestionnaireAnswerOption
-                      | string
-                    )[];
-                    const frOptions = (q.answerOptionsFr || []) as (
-                      | QuestionnaireAnswerOption
-                      | string
-                    )[];
-                    // returns the localised display label for an option at a given index.
-                    const getOptionLabel = (
-                      opt: QuestionnaireAnswerOption | string,
-                      idx: number
-                    ): string => {
-                      const isStr = typeof opt === 'string';
-                      const enLabel = isStr ? opt : opt.answer || opt.id || String(idx);
+                    const enOptions = (q.answerOptionsEn || []) as QuestionnaireAnswerOption[];
+                    const frOptions = (q.answerOptionsFr || []) as QuestionnaireAnswerOption[];
+                    // returns the localised display label for an option.
+                    const getOptionLabel = (opt: QuestionnaireAnswerOption): string => {
+                      const enLabel = opt.answer || opt.id;
                       if (!isFrench) {
                         return enLabel;
                       }
-                      if (isStr) {
-                        // plain string array — use same index in French array
-                        const frEntry = frOptions[idx];
-                        return (typeof frEntry === 'string' ? frEntry : undefined) ?? enLabel;
-                      }
-                      // object array — look up by id
-                      const frObj = frOptions.find(
-                        f => typeof f !== 'string' && f.id === (opt as QuestionnaireAnswerOption).id
-                      ) as QuestionnaireAnswerOption | undefined;
+                      const frObj = frOptions.find(f => f.id === opt.id);
                       return frObj?.answer ?? enLabel;
                     };
                     if (q.type === 'RADIO') {
@@ -1167,14 +1149,13 @@ const TutorialProgressOverlay: React.FC = () => {
                         >
                           <p className="text-sm font-medium text-white">{questionText}</p>
                           <div className="space-y-2">
-                            {enOptions.map((opt, idx) => {
-                              const isStr = typeof opt === 'string';
-                              const value = isStr ? opt : opt.id || String(idx);
-                              const label = getOptionLabel(opt, idx);
+                            {enOptions.map(opt => {
+                              const value = opt.id;
+                              const label = getOptionLabel(opt);
                               const isSelected = surveyAnswers[q.id] === value;
                               return (
                                 <button
-                                  key={value || idx}
+                                  key={value}
                                   type="button"
                                   onClick={() => setSurveyAnswers(a => ({ ...a, [q.id]: value }))}
                                   className="flex w-full items-center gap-2 text-left text-sm text-white"
@@ -1205,14 +1186,13 @@ const TutorialProgressOverlay: React.FC = () => {
                         >
                           <p className="text-sm font-medium text-white">{questionText}</p>
                           <div className="space-y-2">
-                            {enOptions.map((opt, idx) => {
-                              const isStr = typeof opt === 'string';
-                              const value = isStr ? opt : opt.id || String(idx);
-                              const label = getOptionLabel(opt, idx);
+                            {enOptions.map(opt => {
+                              const value = opt.id;
+                              const label = getOptionLabel(opt);
                               const isChecked = checkedArr.includes(value);
                               return (
                                 <button
-                                  key={value || idx}
+                                  key={value}
                                   type="button"
                                   onClick={() => {
                                     setSurveyAnswers(a => {
@@ -1357,32 +1337,15 @@ const TutorialProgressOverlay: React.FC = () => {
                       }
 
                       // always iterate over English options so IDs stored in state
-                      const mqEnOptions = (q.answerOptionsEn || []) as (
-                        | QuestionnaireAnswerOption
-                        | string
-                      )[];
-                      const mqFrOptions = (q.answerOptionsFr || []) as (
-                        | QuestionnaireAnswerOption
-                        | string
-                      )[];
-                      // returns the localised display label for an option at a given index.
-                      const getMqOptionLabel = (
-                        opt: QuestionnaireAnswerOption | string,
-                        idx: number
-                      ): string => {
-                        const isStr = typeof opt === 'string';
-                        const enLabel = isStr ? opt : opt.answer || opt.id || String(idx);
+                      const mqEnOptions = (q.answerOptionsEn || []) as QuestionnaireAnswerOption[];
+                      const mqFrOptions = (q.answerOptionsFr || []) as QuestionnaireAnswerOption[];
+                      // returns the localised display label for an option.
+                      const getMqOptionLabel = (opt: QuestionnaireAnswerOption): string => {
+                        const enLabel = opt.answer || opt.id;
                         if (!mqIsFrench) {
                           return enLabel;
                         }
-                        if (isStr) {
-                          const frEntry = mqFrOptions[idx];
-                          return (typeof frEntry === 'string' ? frEntry : undefined) ?? enLabel;
-                        }
-                        const frObj = mqFrOptions.find(
-                          f =>
-                            typeof f !== 'string' && f.id === (opt as QuestionnaireAnswerOption).id
-                        ) as QuestionnaireAnswerOption | undefined;
+                        const frObj = mqFrOptions.find(f => f.id === opt.id);
                         return frObj?.answer ?? enLabel;
                       };
 
@@ -1394,14 +1357,13 @@ const TutorialProgressOverlay: React.FC = () => {
                           >
                             <p className="text-sm font-medium text-white">{questionText}</p>
                             <div className="space-y-2">
-                              {mqEnOptions.map((opt, idx) => {
-                                const isStr = typeof opt === 'string';
-                                const value = isStr ? opt : opt.id || String(idx);
-                                const label = getMqOptionLabel(opt, idx);
+                              {mqEnOptions.map(opt => {
+                                const value = opt.id;
+                                const label = getMqOptionLabel(opt);
                                 const isSelected = modelQuestionnaireAnswers[q.id] === value;
                                 return (
                                   <button
-                                    key={value || idx}
+                                    key={value}
                                     type="button"
                                     onClick={() =>
                                       setModelQuestionnaireAnswers(a => ({
@@ -1438,14 +1400,13 @@ const TutorialProgressOverlay: React.FC = () => {
                           >
                             <p className="text-sm font-medium text-white">{questionText}</p>
                             <div className="space-y-2">
-                              {mqEnOptions.map((opt, idx) => {
-                                const isStr = typeof opt === 'string';
-                                const value = isStr ? opt : opt.id || String(idx);
-                                const label = getMqOptionLabel(opt, idx);
+                              {mqEnOptions.map(opt => {
+                                const value = opt.id;
+                                const label = getMqOptionLabel(opt);
                                 const isChecked = checkedArr.includes(value);
                                 return (
                                   <button
-                                    key={value || idx}
+                                    key={value}
                                     type="button"
                                     onClick={() => {
                                       setModelQuestionnaireAnswers(a => {
