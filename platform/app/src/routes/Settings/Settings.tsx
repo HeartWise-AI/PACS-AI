@@ -492,7 +492,7 @@ const SettingsPage = () => {
                   </button>
                   <Button
                     disabled={isResettingTutorial}
-                    className="h-[41px] rounded-lg px-4"
+                    className="h-[41px] min-w-[80px] rounded-lg px-4"
                     onClick={resetTutorial}
                   >
                     {isResettingTutorial ? '...' : t('Reset')}

@@ -1229,17 +1229,17 @@ const TutorialProgressOverlay: React.FC = () => {
                     }
                     return null;
                   })}
-                  <div className="mt-6 flex justify-end gap-2 text-xs">
+                  <div className="mt-6 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                      className="h-[41px] rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
                       onClick={handleSurveySkip(type === 'pre' ? 'pre-survey' : 'post-survey')}
                     >
                       {t('Skip')}
                     </button>
                     <button
                       type="submit"
-                      className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                      className="h-[41px] min-w-[90px] rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-[14px] font-medium text-black"
                       disabled={isSurveySubmitting}
                       aria-busy={isSurveySubmitting}
                     >
@@ -1444,17 +1444,17 @@ const TutorialProgressOverlay: React.FC = () => {
                       return null;
                     })}
 
-                    <div className="mt-6 flex justify-end gap-2 text-xs">
+                    <div className="mt-6 flex justify-end gap-2">
                       <button
                         type="button"
-                        className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                        className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
                         onClick={handleModelQuestionnaireSkip}
                       >
                         {t('Skip')}
                       </button>
                       <button
                         type="submit"
-                        className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                        className="h-[41px] min-w-[90px] rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-[14px] font-medium text-black"
                         disabled={isModelQuestionnaireSubmitting}
                         aria-busy={isModelQuestionnaireSubmitting}
                       >
@@ -1509,7 +1509,7 @@ const TutorialProgressOverlay: React.FC = () => {
                 <div className="mt-5 flex justify-end gap-2">
                   <button
                     type="button"
-                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10 disabled:opacity-50"
+                    className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10 disabled:opacity-50"
                     onClick={cancelSkip}
                     disabled={isSkipping}
                   >
@@ -1517,7 +1517,7 @@ const TutorialProgressOverlay: React.FC = () => {
                   </button>
                   <Button
                     disabled={isSkipping}
-                    className="h-[41px] rounded-lg px-4"
+                    className="h-[41px] min-w-[90px] rounded-lg px-4 text-[14px]"
                     onClick={confirmSkip}
                   >
                     {isSkipping ? '...' : t('Skip')}
@@ -1563,14 +1563,14 @@ const TutorialProgressOverlay: React.FC = () => {
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
-                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
                     onClick={skipViewerStep}
                   >
                     {t('Skip')}
                   </button>
                   <button
                     type="button"
-                    className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                    className="h-[41px] rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-[14px] font-medium text-black"
                     onClick={closeViewerModal}
                   >
                     {t('Ok')}
