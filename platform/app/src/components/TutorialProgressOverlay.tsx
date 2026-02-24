@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useShepherd } from 'react-shepherd';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
+import { Button } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 import tenantRepository from '../api/tenantRepository';
 import { AddOnboardingQuestionnaireAnswersRequest, GetTenantInfoResponse } from '../api/tenantDTO';
@@ -248,6 +249,7 @@ const TutorialProgressOverlay: React.FC = () => {
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
   const [isSurveySubmitting, setIsSurveySubmitting] = useState(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
   const [viewerModalOpen, setViewerModalOpen] = useState(false);
   const [viewerModalStepId, setViewerModalStepId] = useState<string | null>(null);
   // Model questionnaire state
@@ -613,6 +615,7 @@ const TutorialProgressOverlay: React.FC = () => {
   }, []);
 
   const confirmSkip = useCallback(async () => {
+    setIsSkipping(true);
     // persist as the total number of steps (1-based semantics)
     try {
       await userRepository.UpdateUserMetadata({
@@ -620,6 +623,8 @@ const TutorialProgressOverlay: React.FC = () => {
       });
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsSkipping(false);
     }
 
     // update UI: mark all steps completed and clear current flags
@@ -1504,18 +1509,19 @@ const TutorialProgressOverlay: React.FC = () => {
                 <div className="mt-5 flex justify-end gap-2">
                   <button
                     type="button"
-                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10 disabled:opacity-50"
                     onClick={cancelSkip}
+                    disabled={isSkipping}
                   >
                     {t('Cancel')}
                   </button>
-                  <button
-                    type="button"
-                    className="rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-sm font-medium text-black"
+                  <Button
+                    disabled={isSkipping}
+                    className="h-[41px] rounded-lg px-4"
                     onClick={confirmSkip}
                   >
-                    {t('Skip')}
-                  </button>
+                    {isSkipping ? '...' : t('Skip')}
+                  </Button>
                 </div>
               </div>
             </div>
