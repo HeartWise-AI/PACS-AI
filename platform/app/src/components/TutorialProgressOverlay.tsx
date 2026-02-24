@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useState, useCallback, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useShepherd } from 'react-shepherd';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
 import { Button } from '@ohif/ui';
-import userRepository from '../api/userRepository';
-import tenantRepository from '../api/tenantRepository';
+import userRepository from '@ohif/app/src/api/userRepository';
+import tenantRepository from '@ohif/app/src/api/tenantRepository';
+import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { AddOnboardingQuestionnaireAnswersRequest, GetTenantInfoResponse } from '../api/tenantDTO';
 import { UserResponse } from '../api/userDTO';
-import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import {
   AddOnboardingModelQuestionnaireAnswersRequest,
   GetInferenceAvailableModelsResponse,
@@ -27,6 +28,8 @@ import checkTick from './../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from './../assets/pacs/bg/tutorial-progress-header-bg.png';
 import { Typography } from '@ohif/ui';
 import { AlertContext } from '../AlertProvider';
+import { Error } from '../api/dto';
+import { logoutUser } from '../service/userService';
 
 type QuestionnaireAnswerOption = {
   id: string;
@@ -95,10 +98,12 @@ const DEFAULT_STEPS: TutorialStepState[] = [
  */
 const TutorialProgressOverlay: React.FC = () => {
   const { t, i18n } = useTranslation('TutorialProgressOverlay');
+  const navigate = useNavigate();
   const showAlert = useContext(AlertContext);
   const [userLoading, setUserLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const tenantId = localStorage.getItem('tenantId') || '';
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
     GetInferenceAvailableModelsResponse[]
   >([]);
@@ -306,6 +311,14 @@ const TutorialProgressOverlay: React.FC = () => {
           metadata: { tutorialProgressStep: completedIdx >= 0 ? completedIdx + 1 : -1 },
         });
       } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+
+          showAlert(error.message, 'error');
+        }
+
         console.error(error);
       }
     },
@@ -433,10 +446,15 @@ const TutorialProgressOverlay: React.FC = () => {
           onboardingQuestionnaireAnswers:
             payloadAnswers as AddOnboardingQuestionnaireAnswersRequest['onboardingQuestionnaireAnswers'],
         });
-      } catch (err) {
-        // swallow errors for now but log for debugging
-        // eslint-disable-next-line no-console
-        console.error('Failed to submit onboarding questionnaire answers', err);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+
+          showAlert(error.message, 'error');
+        }
+        console.error('Failed to submit onboarding questionnaire answers', error);
       } finally {
         setIsSurveySubmitting(false);
       }
@@ -597,8 +615,15 @@ const TutorialProgressOverlay: React.FC = () => {
 
         // Record locally so pendingModelQuestionnaires reflects the change immediately.
         setAnsweredModelIds(prev => new Set([...prev, currentModel.modelId]));
-      } catch (err) {
-        console.error('Failed to submit model questionnaire answers', err);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
+        console.error('Failed to submit model questionnaire answers', error);
       } finally {
         setIsModelQuestionnaireSubmitting(false);
       }
@@ -635,6 +660,12 @@ const TutorialProgressOverlay: React.FC = () => {
       await userRepository.ResetTutorial();
       await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+        showAlert(error.message, 'error');
+      }
       console.error(error);
     }
   };
@@ -671,6 +702,13 @@ const TutorialProgressOverlay: React.FC = () => {
         metadata: { tutorialProgressStep: steps.length },
       });
     } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+
+        showAlert(error.message, 'error');
+      }
       console.error(error);
     } finally {
       setIsSkipping(false);
