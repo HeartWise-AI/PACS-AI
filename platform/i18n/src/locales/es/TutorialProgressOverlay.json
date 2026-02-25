@@ -1,6 +1,8 @@
 {
   "Keep going, {{name}}!": "¡Sigue adelante, {{name}}!",
   "Follow these steps to get started with PACS AI.": "Sigue estos pasos para comenzar con PACS AI.",
+  "You're all set, {{name}}!": "¡Todo listo, {{name}}!",
+  "You've completed all the tutorial steps and are ready to use PACS AI.": "Has completado todos los pasos del tutorial y estás listo para usar PACS AI.",
   "Skip Tutorial": "Omitir tutorial",
   "Minimize": "Minimizar",
   "Tutorials": "Tutoriales",
@@ -9,6 +11,7 @@
   "View Available Models": "Ver modelos disponibles",
   "Run Inference to Model": "Ejecutar inferencia en el modelo",
   "Model Questionnaire": "Cuestionario del modelo",
+  "Model Questionnaires": "Cuestionarios del modelo",
   "Enter your answer here": "Ingresa tu respuesta aquí",
   "Skip": "Omitir",
   "Submit": "Enviar",

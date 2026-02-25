@@ -78,7 +78,7 @@ const defaultSteps: TutorialStepState[] = [
   },
   {
     id: 'model-questionnaire',
-    title: 'Model Questionnaire',
+    title: 'Model Questionnaires',
     completed: false,
     current: false,
   },
@@ -964,12 +964,25 @@ const TutorialProgressOverlay: React.FC = () => {
               />
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold">
-                    {t('Keep going, {{name}}!', { name: currentUser.name })}
-                  </h2>
-                  <p className="mt-1 pr-5 text-sm text-white/70">
-                    {t('Follow these steps to get started with PACS AI.')}
-                  </p>
+                  {progress === 100 ? (
+                    <>
+                      <h2 className="text-xl font-semibold">
+                        {t("You're all set, {{name}}!", { name: currentUser.name })}
+                      </h2>
+                      <p className="mt-1 pr-5 text-sm text-white/70">
+                        {t("You've completed all the tutorial steps and are ready to use PACS AI.")}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-xl font-semibold">
+                        {t('Keep going, {{name}}!', { name: currentUser.name })}
+                      </h2>
+                      <p className="mt-1 pr-5 text-sm text-white/70">
+                        {t('Follow these steps to get started with PACS AI.')}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="relative flex h-[60px] w-[60px] items-center justify-center">
                   <svg
