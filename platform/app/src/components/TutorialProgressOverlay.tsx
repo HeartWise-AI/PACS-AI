@@ -1409,8 +1409,8 @@ const TutorialProgressOverlay: React.FC = () => {
           }
           const mqQuestions = (mqModel.onboardingModelQuestionnaires || []) as Questionnaire[];
           const mqIsFrench = i18n.language?.toLowerCase().startsWith('fr');
-          const mqTotal = modelQuestionnaireQueue.length;
           // TODO: for testing purposes
+          // const mqTotal = modelQuestionnaireQueue.length;
           // const mqProgressLabel =
           //   mqTotal > 1 ? ` (${modelQuestionnaireQueueIndex + 1} of ${mqTotal})` : '';
           return ReactDOM.createPortal(
@@ -1604,11 +1604,7 @@ const TutorialProgressOverlay: React.FC = () => {
                         disabled={isModelQuestionnaireSubmitting}
                         aria-busy={isModelQuestionnaireSubmitting}
                       >
-                        {isModelQuestionnaireSubmitting
-                          ? '...'
-                          : mqTotal > 1 && modelQuestionnaireQueueIndex < mqTotal - 1
-                            ? t('Next')
-                            : t('Submit')}
+                        {isModelQuestionnaireSubmitting ? '...' : t('Submit')}
                       </button>
                     </div>
                   </form>
