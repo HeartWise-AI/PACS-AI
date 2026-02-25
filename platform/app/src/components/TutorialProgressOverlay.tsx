@@ -57,7 +57,7 @@ interface TutorialStepState {
   current: boolean;
 }
 
-const DEFAULT_STEPS: TutorialStepState[] = [
+const defaultSteps: TutorialStepState[] = [
   {
     id: 'pre-survey',
     title: 'Pre-Survey Questionnaire',
@@ -206,6 +206,10 @@ const TutorialProgressOverlay: React.FC = () => {
 
   // Load progress from API on mount
   useEffect(() => {
+    if (!currentUser || (!currentUser.id && !currentUser.email)) {
+      return;
+    }
+
     const loadProgressFromAPI = async () => {
       try {
         const metaResp = await userRepository.GetUserMetadata();
@@ -228,7 +232,7 @@ const TutorialProgressOverlay: React.FC = () => {
             }
           }
         }
-        const normalized = DEFAULT_STEPS.map((step, idx) => ({
+        const normalized = defaultSteps.map((step, idx) => ({
           ...step,
           completed: idx <= completedStepNum,
           current: idx === completedStepNum + 1,
@@ -238,19 +242,36 @@ const TutorialProgressOverlay: React.FC = () => {
           setLoadedAsCompleted(true);
         }
         setSteps(normalized);
-      } catch {
-        setSteps(DEFAULT_STEPS);
+        // If progress is 0% after loading metadata, expand the overlay
+        // so the user sees the tutorial entry point on first-login/refresh.
+        const completedCountAfterLoad = normalized.filter(s => s.completed).length;
+        const progressPercentAfterLoad = Math.round(
+          (completedCountAfterLoad / (normalized.length || 1)) * 100
+        );
+        if (progressPercentAfterLoad === 0) {
+          setExpanded(true);
+        }
+      } catch (err) {
+        // preserve existing behavior on error but avoid triggering during
+        // unauthenticated states by only running this effect once a user exists.
+        setSteps(defaultSteps);
+        console.error('Failed to load tutorial progress:', err);
+      } finally {
+        // mark that we've attempted to load progress so the overlay won't
+        // remain hidden forever if the metadata call fails.
+        setProgressLoaded(true);
       }
     };
+
     loadProgressFromAPI();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentUser?.id, currentUser?.email]);
 
   const Shepherd = useShepherd();
 
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [steps, setSteps] = useState<TutorialStepState[]>(DEFAULT_STEPS);
+  const [steps, setSteps] = useState<TutorialStepState[]>(defaultSteps);
   const [loadedAsCompleted, setLoadedAsCompleted] = useState<boolean>(false);
+  const [progressLoaded, setProgressLoaded] = useState<boolean>(false);
   const [activeSurvey, setActiveSurvey] = useState<null | 'pre' | 'post'>(null);
   // use string for TEXT/RADIO, string[] for CHECKBOX
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string | string[]>>({});
@@ -655,7 +676,7 @@ const TutorialProgressOverlay: React.FC = () => {
   const progress = Math.round((completedCount / totalCount) * 100);
 
   const resetTutorial = async () => {
-    setSteps(DEFAULT_STEPS);
+    setSteps(defaultSteps);
     try {
       await userRepository.ResetTutorial();
       await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
@@ -674,9 +695,11 @@ const TutorialProgressOverlay: React.FC = () => {
   // reappears expanded even when it was hidden due to load-time 100% progress.
   useEffect(() => {
     const handleTutorialReset = () => {
-      setSteps(DEFAULT_STEPS);
+      setSteps(defaultSteps);
       setLoadedAsCompleted(false);
       setExpanded(true);
+      // ensure overlay is allowed to render after a manual reset.
+      setProgressLoaded(true);
     };
     window.addEventListener('tutorial-reset', handleTutorialReset);
     return () => window.removeEventListener('tutorial-reset', handleTutorialReset);
@@ -715,7 +738,7 @@ const TutorialProgressOverlay: React.FC = () => {
     }
 
     // update UI: mark all steps completed and clear current flags
-    const allCompleted = DEFAULT_STEPS.map(s => ({ ...s, completed: true, current: false }));
+    const allCompleted = defaultSteps.map(s => ({ ...s, completed: true, current: false }));
     setSteps(allCompleted);
     setExpanded(false);
     setSkipModalOpen(false);
@@ -913,7 +936,7 @@ const TutorialProgressOverlay: React.FC = () => {
   }, [viewerModalStepId, closeViewerModal, markStepCompleted]);
 
   // only show tutorial if user is logged in or user response exists
-  if (userLoading || !currentUser || (!currentUser.id && !currentUser.email)) {
+  if (userLoading || !currentUser || (!currentUser.id && !currentUser.email) || !progressLoaded) {
     return null;
   }
   if (!steps.length) {
