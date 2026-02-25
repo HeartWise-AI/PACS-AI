@@ -160,6 +160,7 @@ const TutorialProgressOverlay: React.FC = () => {
     }
 
     const fetchModelsData = async () => {
+      setModelsLoading(true);
       try {
         const response = await inferenceRepository.GetInferenceAvailableModels();
         const models = response.data || [];
@@ -198,6 +199,8 @@ const TutorialProgressOverlay: React.FC = () => {
         setAnsweredModelIds(answered);
       } catch (error) {
         console.error('Error fetching models data:', error);
+      } finally {
+        setModelsLoading(false);
       }
     };
 
@@ -290,6 +293,7 @@ const TutorialProgressOverlay: React.FC = () => {
     Record<string, string | string[]>
   >({});
   const [isModelQuestionnaireSubmitting, setIsModelQuestionnaireSubmitting] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState<boolean>(false);
 
   // Deduplicated models (by modelId) that have onboardingModelQuestionnaires and haven't been
   // answered yet by the current user. Models without questionnaires (old versions) are excluded.
@@ -889,6 +893,12 @@ const TutorialProgressOverlay: React.FC = () => {
       return;
     }
     if (stepId === 'model-questionnaire') {
+      // If models are still loading, do nothing to avoid treating an empty
+      // `pendingModelQuestionnaires` as 'no questionnaires' prematurely.
+      if (modelsLoading) {
+        return;
+      }
+
       if (pendingModelQuestionnaires.length === 0) {
         // all models already answered (or none have questionnaires) — mark complete immediately.
         markStepCompleted('model-questionnaire');
