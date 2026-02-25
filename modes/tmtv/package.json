@@ -43,11 +43,11 @@
     "@ohif/extension-measurement-tracking": "3.11.1"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2",
+    "@babel/runtime": "7.28.6",
     "i18next": "17.3.1"
   },
   "devDependencies": {
-    "webpack": "5.95.0",
+    "webpack": "5.104.1",
     "webpack-merge": "5.10.0"
   }
 }

@@ -44,7 +44,7 @@
     "dicom-parser": "1.8.21"
   },
   "dependencies": {
-    "@babel/runtime": "7.28.2",
+    "@babel/runtime": "7.28.3",
     "dcmjs": "0.43.1",
     "dicomweb-client": "0.10.4",
     "gl-matrix": "3.4.3",
