@@ -252,26 +252,7 @@ const SettingsPage = () => {
             </div>
           )}
         </div>
-        <div className="pt-7">
-          <h1 className="text-lg font-normal text-white">{t('Tutorial')}</h1>
 
-          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
-            <div>
-              <h2 className="text-base font-light text-white">{t('Reset Tutorial')}</h2>
-              <h2 className="text-sm text-white text-opacity-70">
-                {t('Clear your current progress and begin the tutorial again')}
-              </h2>
-            </div>
-            <button
-              className="text-primary focus:ring-0"
-              onClick={() => setIsOpenResetTutorialModal(true)}
-            >
-              <span className="relative z-10 bg-gradient-to-r from-[rgba(200,244,105,1)] to-[rgba(25,154,95,1)] bg-clip-text text-lg font-bold text-transparent">
-                {t('Reset Tutorial')}
-              </span>
-            </button>
-          </div>
-        </div>
         <div className="pt-7">
           <h1 className="text-lg font-normal text-white">{t('Security')}</h1>
 
@@ -292,11 +273,10 @@ const SettingsPage = () => {
             </button>
           </div>
         </div>
-
         <div className="pt-5">
           <h1 className="text-lg font-normal text-white">{t('Preferences')}</h1>
 
-          <div className="mt-2 flex items-center justify-between pb-5">
+          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
             <div>
               <h2 className="text-base font-light text-white">{t('Language')}</h2>
               <h2 className="text-sm text-white text-opacity-70">
@@ -334,6 +314,26 @@ const SettingsPage = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
+        <div className="pt-5">
+          <h1 className="text-lg font-normal text-white">{t('Tutorial')}</h1>
+
+          <div className="mt-2 flex items-center justify-between pb-5">
+            <div>
+              <h2 className="text-base font-light text-white">{t('Reset Tutorial')}</h2>
+              <h2 className="text-sm text-white text-opacity-70">
+                {t('Clear your current progress and begin the tutorial again')}
+              </h2>
+            </div>
+            <button
+              className="text-primary focus:ring-0"
+              onClick={() => setIsOpenResetTutorialModal(true)}
+            >
+              <span className="relative z-10 bg-gradient-to-r from-[rgba(200,244,105,1)] to-[rgba(25,154,95,1)] bg-clip-text text-lg font-bold text-transparent">
+                {t('Reset Tutorial')}
+              </span>
+            </button>
           </div>
         </div>
       </div>
