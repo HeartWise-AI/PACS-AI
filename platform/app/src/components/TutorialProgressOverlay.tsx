@@ -153,9 +153,9 @@ const TutorialProgressOverlay: React.FC = () => {
   }, [location.pathname]);
 
   // Fetch available models and check which ones have already been answered.
-  // Only runs when the user is in a viewer context — fetching outside the viewer
+  // Runs when a logged-in user exists.
   useEffect(() => {
-    if (!isInViewer) {
+    if (!currentUser || (!currentUser.id && !currentUser.email)) {
       return;
     }
 
@@ -202,7 +202,7 @@ const TutorialProgressOverlay: React.FC = () => {
     };
 
     fetchModelsData();
-  }, [isInViewer]);
+  }, [currentUser?.id]);
 
   // Load progress from API on mount
   useEffect(() => {
@@ -889,18 +889,12 @@ const TutorialProgressOverlay: React.FC = () => {
       return;
     }
     if (stepId === 'model-questionnaire') {
-      // must be in a viewer context to access model questionnaires
-      if (!isInViewer) {
-        setViewerModalStepId(stepId);
-        setViewerModalOpen(true);
-        return;
-      }
       if (pendingModelQuestionnaires.length === 0) {
-        // All models already answered (or none have questionnaires) — mark complete immediately.
+        // all models already answered (or none have questionnaires) — mark complete immediately.
         markStepCompleted('model-questionnaire');
         return;
       }
-      // Snapshot the pending list into a stable queue for this modal session.
+      // snapshot the pending list into a stable queue for this modal session.
       setModelQuestionnaireQueue([...pendingModelQuestionnaires]);
       setModelQuestionnaireQueueIndex(0);
       setModelQuestionnaireAnswers({});
