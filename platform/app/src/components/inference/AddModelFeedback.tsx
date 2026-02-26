@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useContext } from 'react';
+import { useNavigate } from 'react-router';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
@@ -14,6 +15,9 @@ import { Button } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import inferenceRepository from '../../api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
+import { logoutUser } from '../../service/userService';
+import { Error } from '../../api/dto';
+import { AlertContext } from '../../AlertProvider';
 
 interface AddModelFeedbackProps {
   title: string;
@@ -25,6 +29,9 @@ type FeedbackType = 'APPROVE' | 'REJECT' | null;
 
 const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInferenceModel }) => {
   const { t, i18n } = useTranslation('AIModelButton');
+  const navigate = useNavigate();
+  const tenantId = localStorage.getItem('tenantId') || '';
+  const showAlert = useContext(AlertContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,6 +119,13 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
 
         await refreshExistingFeedback();
       } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
         console.error('Error updating model feedback without questions:', error);
       } finally {
         setIsSubmitting(false);
@@ -154,6 +168,13 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
         await refreshExistingFeedback();
       } catch (error) {
         console.error('Error removing model feedback (APPROVE):', error);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
         setCurrentFeedbackType(null);
         setExistingFeedbackId('');
       } finally {
@@ -317,6 +338,13 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
         await refreshExistingFeedback();
       } catch (error) {
         console.error('Error updating model feedback:', error);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
       } finally {
         setIsSubmitting(false);
       }
@@ -360,6 +388,13 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
         await refreshExistingFeedback();
       } catch (error) {
         console.error('Error removing model feedback (REJECT):', error);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
         setCurrentFeedbackType(null);
         setExistingFeedbackId('');
       } finally {
