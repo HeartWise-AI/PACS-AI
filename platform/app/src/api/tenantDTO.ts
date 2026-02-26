@@ -41,7 +41,7 @@ export interface GetTenantInfoResponse {
         type: string;
       },
     ];
-  };
+  } | null;
   readonly address: string;
   readonly createdAt: number;
   readonly updatedAt: number;

@@ -207,6 +207,33 @@ const TutorialProgressOverlay: React.FC = () => {
     fetchModelsData();
   }, [currentUser?.id]);
 
+  // Determine tenant-available tutorial steps.
+  // Excludes pre/post surveys when tenant has no onboarding questionnaires.
+  const availableDefaultSteps = useMemo(() => {
+    const hasPre = Boolean(
+      tenantInfo &&
+        tenantInfo.onboardingQuestionnaires &&
+        Array.isArray(tenantInfo.onboardingQuestionnaires.PRE_SURVEY) &&
+        tenantInfo.onboardingQuestionnaires.PRE_SURVEY.length > 0
+    );
+    const hasPost = Boolean(
+      tenantInfo &&
+        tenantInfo.onboardingQuestionnaires &&
+        Array.isArray(tenantInfo.onboardingQuestionnaires.POST_SURVEY) &&
+        tenantInfo.onboardingQuestionnaires.POST_SURVEY.length > 0
+    );
+
+    return defaultSteps.filter(s => {
+      if (s.id === 'pre-survey' && !hasPre) {
+        return false;
+      }
+      if (s.id === 'post-survey' && !hasPost) {
+        return false;
+      }
+      return true;
+    });
+  }, [tenantInfo]);
+
   // Load progress from API on mount
   useEffect(() => {
     if (!currentUser || (!currentUser.id && !currentUser.email)) {
@@ -235,7 +262,7 @@ const TutorialProgressOverlay: React.FC = () => {
             }
           }
         }
-        const normalized = defaultSteps.map((step, idx) => ({
+        const normalized = availableDefaultSteps.map((step, idx) => ({
           ...step,
           completed: idx <= completedStepNum,
           current: idx === completedStepNum + 1,
@@ -257,7 +284,7 @@ const TutorialProgressOverlay: React.FC = () => {
       } catch (err) {
         // preserve existing behavior on error but avoid triggering during
         // unauthenticated states by only running this effect once a user exists.
-        setSteps(defaultSteps);
+        setSteps(availableDefaultSteps);
         console.error('Failed to load tutorial progress:', err);
       } finally {
         // mark that we've attempted to load progress so the overlay won't
@@ -272,7 +299,7 @@ const TutorialProgressOverlay: React.FC = () => {
   const Shepherd = useShepherd();
 
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [steps, setSteps] = useState<TutorialStepState[]>(defaultSteps);
+  const [steps, setSteps] = useState<TutorialStepState[]>(availableDefaultSteps);
   const [loadedAsCompleted, setLoadedAsCompleted] = useState<boolean>(false);
   const [progressLoaded, setProgressLoaded] = useState<boolean>(false);
   const [activeSurvey, setActiveSurvey] = useState<null | 'pre' | 'post'>(null);
@@ -294,6 +321,26 @@ const TutorialProgressOverlay: React.FC = () => {
   >({});
   const [isModelQuestionnaireSubmitting, setIsModelQuestionnaireSubmitting] = useState(false);
   const [modelsLoading, setModelsLoading] = useState<boolean>(false);
+
+  // Keep `steps` synced with `availableDefaultSteps` so tenant
+  // configuration changes don't clobber per-step completed/current flags.
+  useEffect(() => {
+    setSteps(prev => {
+      const prevIds = prev.map(s => s.id).join(',');
+      const availIds = availableDefaultSteps.map(s => s.id).join(',');
+      if (prevIds === availIds) {
+        return prev;
+      }
+
+      return availableDefaultSteps.map(step => {
+        const existing = prev.find(p => p.id === step.id);
+        if (existing) {
+          return existing;
+        }
+        return { ...step, completed: false, current: false };
+      });
+    });
+  }, [availableDefaultSteps]);
 
   // Deduplicated models (by modelId) that have onboardingModelQuestionnaires and haven't been
   // answered yet by the current user. Models without questionnaires (old versions) are excluded.
@@ -680,7 +727,7 @@ const TutorialProgressOverlay: React.FC = () => {
   const progress = Math.round((completedCount / totalCount) * 100);
 
   const resetTutorial = async () => {
-    setSteps(defaultSteps);
+    setSteps(availableDefaultSteps);
     try {
       await userRepository.ResetTutorial();
       await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
@@ -699,7 +746,7 @@ const TutorialProgressOverlay: React.FC = () => {
   // reappears expanded even when it was hidden due to load-time 100% progress.
   useEffect(() => {
     const handleTutorialReset = () => {
-      setSteps(defaultSteps);
+      setSteps(availableDefaultSteps);
       setLoadedAsCompleted(false);
       setExpanded(true);
       // ensure overlay is allowed to render after a manual reset.
@@ -742,7 +789,11 @@ const TutorialProgressOverlay: React.FC = () => {
     }
 
     // update UI: mark all steps completed and clear current flags
-    const allCompleted = defaultSteps.map(s => ({ ...s, completed: true, current: false }));
+    const allCompleted = availableDefaultSteps.map(s => ({
+      ...s,
+      completed: true,
+      current: false,
+    }));
     setSteps(allCompleted);
     setExpanded(false);
     setSkipModalOpen(false);
