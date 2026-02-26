@@ -225,6 +225,7 @@ const Sidebar = () => {
               }}
             >
               <a
+                data-tour-id="nav-ai-models"
                 onClick={() => navigate(`/ai-models`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   !sidebarExpanded ? 'py-2 px-3' : 'p-2'

@@ -5,6 +5,20 @@ export interface AddInferenceModelRequest {
   outputMode: string;
 }
 
+export interface AddOnboardingModelQuestionnaireAnswersRequest {
+  modelId: string;
+  onboardingModelQuestionnaireAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds?: string[];
+          questionnaireAnswers?: string[];
+        },
+      ]
+    | null;
+}
+
 export interface DeleteInferenceModelRequest {
   id: string;
 }
@@ -77,6 +91,16 @@ export interface GetInferenceAvailableModelsResponse {
       type: string;
     },
   ];
+  onboardingModelQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
   containerId: string;
   containerName: string;
   modelName: string;
@@ -114,6 +138,23 @@ export interface GetModelFeedbackByModelIDResponse {
   modelId: string;
   tenantId: string;
   userId: string;
+}
+
+export interface GetOnboardingModelQuestionnaireAnswersRequest {
+  modelId: string;
+}
+
+export interface GetOnboardingModelQuestionnaireAnswersResponse {
+  id: string;
+  tenantId: string;
+  userId: string;
+  modelId: string;
+  questionnaireId: string;
+  questionnaireQuestion: string;
+  questionnaireAnswerIds?: string[];
+  questionnaireAnswers?: string[];
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ModelDetails {

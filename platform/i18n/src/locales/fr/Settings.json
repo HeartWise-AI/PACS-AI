@@ -12,5 +12,14 @@
   "Preferences": "Préférences",
   "Privacy Policy": "Politique de confidentialité",
   "Security": "Sécurité",
-  "Terms and Conditions": "Termes et conditions"
+  "Terms and Conditions": "Termes et conditions",
+  "Tutorial": "Tutoriel",
+  "Reset Tutorial": "Réinitialiser le tutoriel",
+  "Clear your current progress and begin the tutorial again": "Effacez votre progression actuelle et recommencez le tutoriel",
+  "Are you sure you want to reset the tutorial? Your current progress will be cleared.": "Êtes-vous sûr de vouloir réinitialiser le tutoriel ? Votre progression actuelle sera effacée.",
+  "Cancel": "Annuler",
+  "Reset": "Réinitialiser",
+  "Tutorial has been reset successfully": "Le tutoriel a été réinitialisé avec succès",
+  "Failed to reset tutorial": "Échec de la réinitialisation du tutoriel",
+  "Please provide your current and new password to continue.": "Veuillez fournir votre mot de passe actuel et nouveau pour continuer."
 }

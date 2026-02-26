@@ -4,6 +4,7 @@ import Api from '../pacsAPIAxios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   AddInferenceModelRequest,
+  AddOnboardingModelQuestionnaireAnswersRequest,
   DeleteInferenceModelRequest,
   GetInferenceAvailableModelsResponse,
   GetInferenceModelFactsRequest,
@@ -13,6 +14,8 @@ import {
   GetInferenceModelResponse,
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
+  GetOnboardingModelQuestionnaireAnswersRequest,
+  GetOnboardingModelQuestionnaireAnswersResponse,
   PredictInferenceModelRequest,
   RemoveModelFeedbackRequest,
   StartInferenceModelContainerRequest,
@@ -32,6 +35,25 @@ const inferenceRepository = {
   async AddInferenceModel(request: AddInferenceModelRequest): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/inference/model/add`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Add onboarding model questionnaire answers request
+   *
+   * @return  {void}
+   */
+  async AddOnboardingModelQuestionnaireAnswers(
+    request: AddOnboardingModelQuestionnaireAnswersRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/onboarding-model-questionnaire-answers/add`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -152,6 +174,31 @@ const inferenceRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get onboarding model questionnaire answers
+   *
+   * @return  {Promise<APIResponse><GetOnboardingModelQuestionnaireAnswersResponse[]>}
+   */
+  async GetOnboardingModelQuestionnaireAnswers(
+    request: GetOnboardingModelQuestionnaireAnswersRequest
+  ): Promise<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>> {
+    return Api()
+      .get(`/v1/inference/onboarding-model-questionnaire-answers`, {
+        params: { modelId: request.modelId },
+      })
+      .then(
+        (
+          response: AxiosResponse<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>>
+        ) => {
+          const { data } = response;
+          return data;
+        }
+      )
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

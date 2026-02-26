@@ -16,6 +16,7 @@ import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyList from './StudyList.json';
 import StoreFileButton from './StoreFileButton.json';
+import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 
@@ -39,6 +40,7 @@ export default {
     StudyBrowser,
     StudyList,
     StoreFileButton,
+    TutorialProgressOverlay,
     UserPreferencesModal,
     ViewportDownloadForm,
   },
