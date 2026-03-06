@@ -10,7 +10,6 @@ const StudyMetaDataPromises = new Map();
  *
  * @param {Object} dicomWebClient The DICOMWebClient instance to be used for series load
  * @param {string} StudyInstanceUID The UID of the Study to be retrieved
- * @param {boolean} enableStudyLazyLoad Whether the study metadata should be loaded asynchronously.
  * @param {Object} [filters] Object containing filters to be applied on retrieve metadata process
  * @param {string} [filters.seriesInstanceUID] Series instance uid to filter results against
  * @param {function} [sortCriteria] Sort criteria function
@@ -21,7 +20,6 @@ const StudyMetaDataPromises = new Map();
 export function retrieveStudyMetadata(
   dicomWebClient,
   StudyInstanceUID,
-  enableStudyLazyLoad,
   filters,
   sortCriteria,
   sortFunction,
@@ -51,7 +49,6 @@ export function retrieveStudyMetadata(
     promise = retrieveMetadataFiltered(
       dicomWebClient,
       StudyInstanceUID,
-      enableStudyLazyLoad,
       filters,
       sortCriteria,
       sortFunction
@@ -62,7 +59,6 @@ export function retrieveStudyMetadata(
       RetrieveMetadata(
         dicomWebClient,
         StudyInstanceUID,
-        enableStudyLazyLoad,
         filters,
         sortCriteria,
         sortFunction

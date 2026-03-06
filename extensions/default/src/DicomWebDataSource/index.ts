@@ -63,8 +63,6 @@ export type DicomWebConfig = {
   supportsNativeDICOMModel?: boolean;
   /** Whether to enable request tag */
   enableRequestTag?: boolean;
-  /** Whether to enable study lazy loading */
-  enableStudyLazyLoad?: boolean;
   /** Whether to enable bulkDataURI */
   bulkDataURI?: BulkDataURIConfig;
   /** Function that is called after the configuration is initialized */
@@ -347,23 +345,13 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
             throw new Error('Unable to query for SeriesMetadata without StudyInstanceUID');
           }
 
-          if (dicomWebConfig.enableStudyLazyLoad) {
-            return implementation._retrieveSeriesMetadataAsync(
-              StudyInstanceUID,
-              filters,
-              sortCriteria,
-              sortFunction,
-              madeInClient,
-              returnPromises
-            );
-          }
-
-          return implementation._retrieveSeriesMetadataSync(
+          return implementation._retrieveSeriesMetadataAsync(
             StudyInstanceUID,
             filters,
             sortCriteria,
             sortFunction,
-            madeInClient
+            madeInClient,
+            returnPromises
           );
         },
       },
@@ -410,79 +398,6 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
       },
     },
 
-    _retrieveSeriesMetadataSync: async (
-      StudyInstanceUID,
-      filters,
-      sortCriteria,
-      sortFunction,
-      madeInClient
-    ) => {
-      const enableStudyLazyLoad = false;
-      wadoDicomWebClient.headers = generateWadoHeader();
-      // data is all SOPInstanceUIDs
-      const data = await retrieveStudyMetadata(
-        wadoDicomWebClient,
-        StudyInstanceUID,
-        enableStudyLazyLoad,
-        filters,
-        sortCriteria,
-        sortFunction,
-        dicomWebConfig
-      );
-
-      // first naturalize the data
-      const naturalizedInstancesMetadata = data.map(naturalizeDataset);
-
-      const seriesSummaryMetadata = {};
-      const instancesPerSeries = {};
-
-      naturalizedInstancesMetadata.forEach(instance => {
-        if (!seriesSummaryMetadata[instance.SeriesInstanceUID]) {
-          seriesSummaryMetadata[instance.SeriesInstanceUID] = {
-            StudyInstanceUID: instance.StudyInstanceUID,
-            StudyDescription: instance.StudyDescription,
-            SeriesInstanceUID: instance.SeriesInstanceUID,
-            SeriesDescription: instance.SeriesDescription,
-            SeriesNumber: instance.SeriesNumber,
-            SeriesTime: instance.SeriesTime,
-            SOPClassUID: instance.SOPClassUID,
-            ProtocolName: instance.ProtocolName,
-            Modality: instance.Modality,
-          };
-        }
-
-        if (!instancesPerSeries[instance.SeriesInstanceUID]) {
-          instancesPerSeries[instance.SeriesInstanceUID] = [];
-        }
-
-        const imageId = implementation.getImageIdsForInstance({
-          instance,
-        });
-
-        instance.imageId = imageId;
-        instance.wadoRoot = dicomWebConfig.wadoRoot;
-        instance.wadoUri = dicomWebConfig.wadoUri;
-
-        metadataProvider.addImageIdToUIDs(imageId, {
-          StudyInstanceUID,
-          SeriesInstanceUID: instance.SeriesInstanceUID,
-          SOPInstanceUID: instance.SOPInstanceUID,
-        });
-
-        instancesPerSeries[instance.SeriesInstanceUID].push(instance);
-      });
-
-      // grab all the series metadata
-      const seriesMetadata = Object.values(seriesSummaryMetadata);
-      DicomMetadataStore.addSeriesMetadata(seriesMetadata, madeInClient);
-
-      Object.keys(instancesPerSeries).forEach(seriesInstanceUID =>
-        DicomMetadataStore.addInstances(instancesPerSeries[seriesInstanceUID], madeInClient)
-      );
-
-      return seriesSummaryMetadata;
-    },
-
     _retrieveSeriesMetadataAsync: async (
       StudyInstanceUID,
       filters,
@@ -491,14 +406,12 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
       madeInClient = false,
       returnPromises = false
     ) => {
-      const enableStudyLazyLoad = true;
       wadoDicomWebClient.headers = generateWadoHeader();
       // Get Series
       const { preLoadData: seriesSummaryMetadata, promises: seriesPromises } =
         await retrieveStudyMetadata(
           wadoDicomWebClient,
           StudyInstanceUID,
-          enableStudyLazyLoad,
           filters,
           sortCriteria,
           sortFunction,
