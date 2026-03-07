@@ -2,7 +2,6 @@ window.config = {
   routerBasename: null,
   showStudyList: true,
   // below flag is for performance reasons, but it might not work for all servers
-  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,

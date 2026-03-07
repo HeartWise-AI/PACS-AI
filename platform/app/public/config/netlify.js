@@ -6,12 +6,9 @@ window.config = {
   modes: [],
   showStudyList: true,
   // below flag is for performance reasons, but it might not work for all servers
-  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
-  experimentalStudyBrowserSort: false,
   strictZSpacingForVolumeViewport: true,
-  groupEnabledModesFirst: true,
   // filterQueryParam: false,
   defaultDataSourceName: 'ohif',
   dataSources: [

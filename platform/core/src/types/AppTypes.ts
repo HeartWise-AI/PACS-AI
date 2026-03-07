@@ -88,7 +88,6 @@ declare global {
       customizationService?: CustomizationServiceType;
       extensions?: string[];
       modes?: string[];
-      experimentalStudyBrowserSort?: boolean;
       defaultDataSourceName?: string;
       hotkeys?: Record<string, Hotkey> | Hotkey[];
       preferSizeOverAccuracy?: boolean;
@@ -98,7 +97,6 @@ declare global {
       useCursors?: boolean;
       maxCacheSize?: number;
       max3DTextureSize?: number;
-      showWarningMessageForCrossOrigin?: boolean;
       showCPUFallbackMessage?: boolean;
       maxNumRequests?: {
         interaction?: number;
@@ -112,7 +110,6 @@ declare global {
         option: 'always' | 'never' | 'configure';
         days?: number;
       };
-      groupEnabledModesFirst?: boolean;
       measurementTrackingMode?: 'standard' | 'simplified' | 'none';
       disableConfirmationPrompts?: boolean;
       showPatientInfo?: 'visible' | 'visibleCollapsed' | 'disabled' | 'visibleReadOnly';

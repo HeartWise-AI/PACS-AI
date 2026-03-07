@@ -6,7 +6,6 @@ window.config = {
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
   showLoadingIndicator: true,
-  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   strictZSpacingForVolumeViewport: true,
   // filterQueryParam: false,
