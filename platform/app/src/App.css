@@ -118,6 +118,7 @@ body {
 .DateRangePicker_picker {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45) !important;
+  z-index: 999999 !important;
 }
 
 .CalendarMonth_caption {
