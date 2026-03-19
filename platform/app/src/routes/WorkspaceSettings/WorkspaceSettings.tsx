@@ -18,7 +18,11 @@ import tenantRepository from '../../api/tenantRepository';
 import orthancRepository from '../../api/orthancRepository';
 import inferenceRepository from '../../api/inferenceRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
-import { GetInferenceModelInfoResponse, GetInferenceModelResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  GetInferenceModelInfoResponse,
+  GetInferenceModelResponse,
+} from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
@@ -44,6 +48,7 @@ interface InferenceIngestionJob {
   modalities: string[];
   intervalMinutes: number;
   scheduleType: string;
+  dicomModality?: string;
 }
 
 const SAMPLE_INGESTION_JOBS: InferenceIngestionJob[] = [
@@ -213,6 +218,10 @@ const WorkspaceSettingsPage = () => {
   const [selectedIngestionJobId, setSelectedIngestionJobId] = useState<string>('');
   const [isOpenRemoveIngestionJobModal, setIsOpenRemoveIngestionJobModal] =
     useState<boolean>(false);
+  const [availableInferenceModels, setAvailableInferenceModels] = useState<
+    GetInferenceAvailableModelsResponse[]
+  >([]);
+  const [newJobDicomModality, setNewJobDicomModality] = useState<string>('');
 
   const dicomHeaders = [
     { text: t('ID'), value: 'id', align: 'left' },
@@ -376,6 +385,15 @@ const WorkspaceSettingsPage = () => {
     setFetchingInferenceModelInfo(false);
   };
 
+  const fetchAvailableInferenceModels = useCallback(async () => {
+    try {
+      const response = await inferenceRepository.GetInferenceAvailableModels();
+      setAvailableInferenceModels(response.data);
+    } catch (error) {
+      console.error('Error fetching available inference models:', error);
+    }
+  }, [inferenceRepository]);
+
   useEffect(() => {
     // initial fetch
     fetchDICOMModalities();
@@ -383,6 +401,7 @@ const WorkspaceSettingsPage = () => {
 
     const fetchInitialData = async () => {
       await fetchInferenceModels();
+      await fetchAvailableInferenceModels();
       setLoadingInferenceModels(false);
     };
     fetchInitialData();
@@ -400,7 +419,7 @@ const WorkspaceSettingsPage = () => {
         clearInterval(interval);
       }
     };
-  }, [fetchDICOMModalities, fetchInferenceModels]);
+  }, [fetchDICOMModalities, fetchInferenceModels, fetchAvailableInferenceModels]);
 
   /**
    * Update modality status
@@ -711,7 +730,7 @@ const WorkspaceSettingsPage = () => {
     if (!newJobModel) {
       return;
     }
-    const selectedModel = inferenceModels.find(m => m.id === newJobModel.value);
+    const selectedModel = availableInferenceModels.find(m => m.containerId === newJobModel.value);
     const schedule =
       newJobScheduleType === 'always'
         ? 'Always'
@@ -719,11 +738,12 @@ const WorkspaceSettingsPage = () => {
           ? `${newJobStartDate.format('MMM D, YYYY HH:mm')} - ${newJobEndDate.format('MMM D, YYYY HH:mm')}`
           : 'Always';
     const jobData = {
-      modelName: selectedModel?.name || newJobModel.label,
-      modelVersion: selectedModel?.dockerImage?.split(':')[1] || '',
+      modelName: selectedModel?.modelName || newJobModel.label,
+      modelVersion: selectedModel?.version || '',
       modalities: newJobModalities.map(m => m.value),
       intervalMinutes: parseInt(newJobInterval) || 0,
       scheduleType: schedule,
+      dicomModality: newJobDicomModality,
     };
     if (isAddIngestionJob) {
       setIngestionJobs(prev => [
@@ -744,6 +764,7 @@ const WorkspaceSettingsPage = () => {
     setNewJobScheduleType('always');
     setNewJobStartDate(null);
     setNewJobEndDate(null);
+    setNewJobDicomModality('');
   };
 
   const ModalityBadges = ({ modalities }: { modalities: string[] }) => {
@@ -1135,20 +1156,21 @@ const WorkspaceSettingsPage = () => {
                     className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"
                     onClick={() => {
                       // Populate form for editing
-                      const matchedModel = inferenceModels.find(m => m.name === row.modelName);
+                      const matchedModel = availableInferenceModels.find(
+                        m => m.modelName === row.modelName && m.version === row.modelVersion
+                      );
                       setNewJobModel(
                         matchedModel
                           ? {
-                              value: matchedModel.id,
-                              label: `${matchedModel.name} - ${
-                                matchedModel.dockerImage?.split(':')[1] || matchedModel.dockerImage
-                              }`,
+                              value: matchedModel.containerId,
+                              label: `${matchedModel.modelName} - ${matchedModel.version}`,
                             }
                           : {
                               value: row.modelName,
                               label: `${row.modelName} - ${row.modelVersion}`,
                             }
                       );
+                      setNewJobDicomModality(row.dicomModality || '');
                       setNewJobModalities(row.modalities.map(m => ({ value: m, label: m })));
                       setNewJobInterval(row.intervalMinutes.toString());
                       if (row.scheduleType === 'Always') {
@@ -2173,7 +2195,9 @@ const WorkspaceSettingsPage = () => {
                   )}
                   <select
                     id="inferenceModelOutputMode"
-                    className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight text-white placeholder:opacity-50 focus:outline-none"
+                    className={`mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-[#2D302D] py-3 px-3 pr-8 text-lg leading-tight placeholder:opacity-50 focus:outline-none ${
+                      selectedInferenceModel.outputMode ? 'text-white' : 'text-white/40'
+                    }`}
                     disabled={isViewInferenceModel}
                     value={selectedInferenceModel.outputMode}
                     onChange={e => {
@@ -2285,6 +2309,7 @@ const WorkspaceSettingsPage = () => {
               setNewJobScheduleType('always');
               setNewJobStartDate(null);
               setNewJobEndDate(null);
+              setNewJobDicomModality('');
             }}
           >
             <div className="relative">
@@ -2306,20 +2331,49 @@ const WorkspaceSettingsPage = () => {
               </Typography>
 
               <div className="mt-4 flex flex-col gap-4">
+                {/* DICOM Modality selector */}
+                <select
+                  className={`block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
+                    newJobDicomModality ? 'text-white' : 'text-white/40'
+                  }`}
+                  value={newJobDicomModality}
+                  onChange={e => setNewJobDicomModality(e.target.value)}
+                >
+                  <option
+                    value=""
+                    disabled
+                    className="text-white text-opacity-40"
+                  >
+                    {t('DICOM Modality')}
+                  </option>
+                  {dicomModalities.map(m => (
+                    <option
+                      key={m.id}
+                      value={m.id}
+                    >
+                      {m.id} - {m.aet}
+                    </option>
+                  ))}
+                </select>
                 {/* Model selector */}
                 <select
-                  className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-sm leading-tight text-white focus:outline-none"
+                  className={`block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
+                    newJobModel?.value ? 'text-white' : 'text-white/40'
+                  }`}
                   value={newJobModel?.value || ''}
                   onChange={e => {
-                    const selected = inferenceModels.find(m => m.id === e.target.value);
+                    const selected = availableInferenceModels.find(
+                      m => m.containerId === e.target.value
+                    );
                     setNewJobModel(
                       selected
                         ? {
-                            value: selected.id,
-                            label: `${selected.name} - ${selected.dockerImage?.split(':')[1] || selected.dockerImage}`,
+                            value: selected.containerId,
+                            label: `${selected.modelName} - ${selected.version}`,
                           }
                         : null
                     );
+                    setNewJobModalities([]);
                   }}
                 >
                   <option
@@ -2329,12 +2383,12 @@ const WorkspaceSettingsPage = () => {
                   >
                     {t('Model')}
                   </option>
-                  {inferenceModels.map(m => (
+                  {availableInferenceModels.map(m => (
                     <option
-                      key={m.id}
-                      value={m.id}
+                      key={m.containerId}
+                      value={m.containerId}
                     >
-                      {m.name} - {m.dockerImage?.split(':')[1] || m.dockerImage}
+                      {m.modelName} - {m.version}
                     </option>
                   ))}
                 </select>
@@ -2342,7 +2396,7 @@ const WorkspaceSettingsPage = () => {
                 {/* Modalities multi-select */}
                 <div>
                   <select
-                    className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-sm leading-tight text-white focus:outline-none"
+                    className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight text-white/40 focus:outline-none"
                     value=""
                     onChange={e => {
                       const val = e.target.value;
@@ -2358,20 +2412,10 @@ const WorkspaceSettingsPage = () => {
                     >
                       {t('Select Modalities')}
                     </option>
-                    {[
-                      'AR',
-                      'ASMT',
-                      'AU',
-                      'BDUS',
-                      'BI',
-                      'BMD',
-                      'CD',
-                      'CF',
-                      'CP',
-                      'CR',
-                      'CS',
-                      'CT',
-                    ].map(m => (
+                    {(
+                      availableInferenceModels.find(m => m.containerId === newJobModel?.value)
+                        ?.supportedDicomModalities ?? []
+                    ).map(m => (
                       <option
                         key={m}
                         value={m}
