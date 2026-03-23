@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Input, Typography } from '@ohif/ui';
+import ReactDOM from 'react-dom';
+import { Button, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
@@ -108,7 +110,59 @@ const MembersPage = () => {
    */
   const ActionButton = ({ row }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const ref = useRef();
+    const ref = useRef<HTMLDivElement>(null);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+
+    useEffect(() => {
+      if (isOpen && ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        // Calculate position for the dropdown menu
+        // Adjust if near the bottom of the viewport
+        const menuHeight = 100; // Approximate height of the menu
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom;
+        setMenuPosition({
+          top,
+          left: rect.right - 120, // 180px is the width of the menu (w-28)
+        });
+      }
+    }, [isOpen]);
+
+    // Dropdown menu content
+    const menu = (
+      <div
+        className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+        style={{ top: menuPosition.top, left: menuPosition.left }}
+      >
+        <ul className="py-2 text-sm text-white">
+          <li>
+            <a
+              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+              onClick={() => {
+                setSelectedUser(row);
+                setIsAddMember(false);
+                setIsOpenAddEditMemberModal(true);
+                setIsOpen(false);
+              }}
+            >
+              {t('Edit')}
+            </a>
+          </li>
+          <li>
+            <a
+              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+              onClick={() => {
+                setIsOpenDeleteMemberModal(true);
+                setSelectedUserToDelete({ id: row.id });
+                setIsOpen(false);
+              }}
+            >
+              {t('Delete')}
+            </a>
+          </li>
+        </ul>
+      </div>
+    );
 
     return (
       <div
@@ -125,40 +179,7 @@ const MembersPage = () => {
             alt="Dots vertical icon"
           />
         </button>
-        {isOpen && (
-          <div
-            className="absolute z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
-            style={{ top: ref.current ? ref.current.offsetHeight : 0, right: 0 }}
-          >
-            <ul className="py-2 text-sm text-white">
-              <li>
-                <a
-                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                  onClick={() => {
-                    setSelectedUser(row);
-                    setIsAddMember(false);
-                    setIsOpenAddEditMemberModal(true);
-                    setIsOpen(false);
-                  }}
-                >
-                  {t('Edit')}
-                </a>
-              </li>
-              <li>
-                <a
-                  className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-                  onClick={() => {
-                    setIsOpenDeleteMemberModal(true);
-                    setSelectedUserToDelete({ id: row.id });
-                    setIsOpen(false);
-                  }}
-                >
-                  {t('Delete')}
-                </a>
-              </li>
-            </ul>
-          </div>
-        )}
+        {isOpen && ReactDOM.createPortal(menu, document.body)}
       </div>
     );
   };

@@ -4,6 +4,7 @@ import Api from '../pacsAPIAxios';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   AddInferenceModelRequest,
+  AddOnboardingModelQuestionnaireAnswersRequest,
   DeleteInferenceModelRequest,
   GetInferenceAvailableModelsResponse,
   GetInferenceModelFactsRequest,
@@ -11,10 +12,16 @@ import {
   GetInferenceModelInfoRequest,
   GetInferenceModelInfoResponse,
   GetInferenceModelResponse,
+  GetModelFeedbackByModelIDRequest,
+  GetModelFeedbackByModelIDResponse,
+  GetOnboardingModelQuestionnaireAnswersRequest,
+  GetOnboardingModelQuestionnaireAnswersResponse,
   PredictInferenceModelRequest,
+  RemoveModelFeedbackRequest,
   StartInferenceModelContainerRequest,
   StopInferenceModelContainerRequest,
   UpdateInferenceModelRequest,
+  UpdateModelFeedbackRequest,
 } from './inferenceDTO';
 
 const inferenceRepository = {
@@ -28,6 +35,25 @@ const inferenceRepository = {
   async AddInferenceModel(request: AddInferenceModelRequest): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/inference/model/add`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Add onboarding model questionnaire answers request
+   *
+   * @return  {void}
+   */
+  async AddOnboardingModelQuestionnaireAnswers(
+    request: AddOnboardingModelQuestionnaireAnswersRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/onboarding-model-questionnaire-answers/add`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -133,6 +159,52 @@ const inferenceRepository = {
       });
   },
   /**
+   * Get model feedback by model ID
+   *
+   * @param   {GetModelFeedbackByModelIDRequest}  request
+   *
+   * @return  {Promise<APIResponse><GetModelFeedbackByModelIDResponse>}
+   */
+  async GetModelFeedbackByModelID(
+    request: GetModelFeedbackByModelIDRequest
+  ): Promise<APIResponse<GetModelFeedbackByModelIDResponse>> {
+    return Api()
+      .get(`/v1/inference/model/${request.modelId}/feedback`)
+      .then((response: AxiosResponse<APIResponse<GetModelFeedbackByModelIDResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get onboarding model questionnaire answers
+   *
+   * @return  {Promise<APIResponse><GetOnboardingModelQuestionnaireAnswersResponse[]>}
+   */
+  async GetOnboardingModelQuestionnaireAnswers(
+    request: GetOnboardingModelQuestionnaireAnswersRequest
+  ): Promise<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>> {
+    return Api()
+      .get(`/v1/inference/onboarding-model-questionnaire-answers`, {
+        params: { modelId: request.modelId },
+      })
+      .then(
+        (
+          response: AxiosResponse<APIResponse<GetOnboardingModelQuestionnaireAnswersResponse[]>>
+        ) => {
+          const { data } = response;
+          return data;
+        }
+      )
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Predict inference model
    *
    * @param   {PredictInferenceModelRequest}  request
@@ -146,6 +218,25 @@ const inferenceRepository = {
     return Api()
       .post(`/v1/inference/model/proxy/container/${containerId}/predict`, request)
       .then((response: AxiosResponse<APIResponse<T>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Remove model feedback
+   *
+   * @param   {RemoveModelFeedbackRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async RemoveModelFeedback(request: RemoveModelFeedbackRequest): Promise<APIResponse<void>> {
+    return Api()
+      .delete(`/v1/inference/model/${request.modelId}/feedback/remove`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
       })
@@ -209,6 +300,25 @@ const inferenceRepository = {
   ): Promise<APIResponse<void>> {
     return Api()
       .put(`/v1/inference/model/${containerID}/update`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update model feedback
+   *
+   * @param   {UpdateModelFeedbackRequest<APIResponse><void>}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async UpdateModelFeedback(request: UpdateModelFeedbackRequest): Promise<APIResponse<void>> {
+    return Api()
+      .put(`/v1/inference/model/feedback/update`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;

@@ -1,3 +1,16 @@
+export interface AddOnboardingQuestionnaireAnswersRequest {
+  questionnaireType: string;
+  onboardingQuestionnaireAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds?: string[];
+          questionnaireAnswers?: string[];
+        },
+      ]
+    | null;
+}
 export interface GetPublicTenantByIDResponse {
   readonly id: string;
   readonly name: string;
@@ -7,6 +20,28 @@ export interface GetPublicTenantByIDResponse {
 export interface GetTenantInfoResponse {
   readonly id: string;
   readonly name: string;
+  readonly onboardingQuestionnaires: {
+    POST_SURVEY: [
+      {
+        answerOptionsEn: [{ answer: string; id: string }] | null;
+        answerOptionsFr: [{ answer: string; id: string }] | null;
+        id: string;
+        questionEn: string;
+        questionFr: string;
+        type: string;
+      },
+    ];
+    PRE_SURVEY: [
+      {
+        answerOptionsEn: [{ answer: string; id: string }] | null;
+        answerOptionsFr: [{ answer: string; id: string }] | null;
+        id: string;
+        questionEn: string;
+        questionFr: string;
+        type: string;
+      },
+    ];
+  } | null;
   readonly address: string;
   readonly createdAt: number;
   readonly updatedAt: number;
@@ -14,6 +49,10 @@ export interface GetTenantInfoResponse {
 
 export interface GetPublicTenantByIDRequest {
   tenantId: string;
+}
+
+export interface GetOnboardingQuestionnaireAnswersRequest {
+  questionnaireType: string;
 }
 
 export interface ModelDetails {

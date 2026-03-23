@@ -15,7 +15,6 @@ import {
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
-  PredictInferenceModelOHIFResponse,
 } from '@ohif/app/src/api/inferenceDTO';
 import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
 import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
@@ -54,9 +53,10 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { modalitiesInStudy } = useGlobalStateData();
+  const { selectedModalities } = useGlobalStateData();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
+  const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -93,15 +93,13 @@ const AIModelButton = ({
   const applyPredictInferenceModel = async (
     containerId: string,
     seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
     additionalMetadata: { [key: string]: string | null },
     outputMode: string
   ) => {
     console.log('==outputMode==', outputMode);
     setIsLoading(true);
     setIsOpen(false);
-
-    const searchParams = new URLSearchParams(window.location.search);
-    const studyInstanceUID = searchParams.get('StudyInstanceUIDs');
 
     try {
       const predictionResultResponse = await inferenceRepository.PredictInferenceModel(
@@ -116,6 +114,9 @@ const AIModelButton = ({
       console.log('==predictionResultResponse==', predictionResultResponse);
       const responseData = predictionResultResponse.data;
       setOutputModeData(responseData);
+
+      // stringify series instance uids
+      setSortedSeriesInstanceUIDs(JSON.stringify(seriesInstanceUIDs));
 
       switch (outputMode) {
         case 'JSON':
@@ -233,6 +234,7 @@ const AIModelButton = ({
   return (
     <div className="relative flex w-full">
       <button
+        data-tour-id="ai-model-button"
         className={`flex items-center gap-1 ${baseClasses} ${className} ${textColor} ${
           isShowBG ? backgroundClass : 'bg-transparent'
         } ${loading ? 'opacity-50' : ''}`}
@@ -242,7 +244,7 @@ const AIModelButton = ({
       >
         <img
           src={aiModelsIcon}
-          className="h-6 w-6"
+          className="min-w-6 h-6"
           alt="AI Models icon"
         />
         {isShowText && (
@@ -257,12 +259,20 @@ const AIModelButton = ({
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
-            {inferenceAvailableModels.length > 0 ? (
+            {inferenceAvailableModels.some(model =>
+              model.supportedDicomModalities?.some(modality =>
+                Object.keys(selectedModalities).some(selectedModality =>
+                  selectedModality.includes(modality)
+                )
+              )
+            ) ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
                 {inferenceAvailableModels
                   .filter(model =>
                     model.supportedDicomModalities?.some(modality =>
-                      modalitiesInStudy.includes(modality)
+                      Object.keys(selectedModalities).some(selectedModality =>
+                        selectedModality.includes(modality)
+                      )
                     )
                   )
                   .map((model, index) => (
@@ -298,7 +308,7 @@ const AIModelButton = ({
               </ul>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
-                <p className="opacity-50">No inference models found</p>
+                <p className="opacity-50">{t('No inference models found')}</p>
               </div>
             )}
           </div>,
@@ -313,6 +323,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelJSONResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openWebappOutputModeModal && (
@@ -325,6 +336,7 @@ const AIModelButton = ({
           containerName={containerName}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openHTMLOutputModeModal && (
@@ -334,8 +346,13 @@ const AIModelButton = ({
             setOpenHTMLOutputModeModal(false);
           }}
           data={outputModeData as PredictInferenceModelHTMLResponse}
+          modelName={selectedInferenceModel?.modelName}
+          modelVersion={selectedInferenceModel?.version}
+          outputMode={selectedInferenceModel?.outputMode}
+          seriesInstanceUIDs={sortedSeriesInstanceUIDs}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openPDFOutputModeModal && (
@@ -347,6 +364,7 @@ const AIModelButton = ({
           data={outputModeData as PredictInferenceModelPDFResponse}
           title={outputModeTitle}
           loading={isLoading}
+          selectedInferenceModel={selectedInferenceModel}
         />
       )}
       {openSelectSeriesModal && (

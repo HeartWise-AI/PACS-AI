@@ -72,6 +72,19 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     if (this.staticWado) {
       useOptions.mediaTypes = [{ mediaType: 'application/*' }];
     }
+
+    // NOTE: This is a PACS changes
+    // "transform" in config/local_pacs doesnt work
+    // https://github.com/OHIF/Viewers/issues/4256
+    const apiUrl = process.env.APP_PUBLIC_API_URL;
+    const proxyUrl = apiUrl + '/proxy';
+
+    if (useOptions.BulkDataURI.startsWith('http://orthanc:8042')) {
+      useOptions.BulkDataURI = useOptions.BulkDataURI.replace('http://orthanc:8042', proxyUrl);
+    } else if (useOptions.BulkDataURI.startsWith(apiUrl.replace('/api', ''))) {
+      useOptions.BulkDataURI = useOptions.BulkDataURI.replace(apiUrl.replace('/api', ''), proxyUrl);
+    }
+
     return super
       .retrieveBulkData(useOptions)
       .then(result => (shouldFixMultipart ? fixMultipart(result) : result));
@@ -156,18 +169,40 @@ export default class StaticWadoClient extends api.DICOMwebClient {
    *
    * @param {*} desired
    * @param {*} actual
+   * @param {*} options - fuzzyMatching: if true, then do a sub-string match
    * @returns true if the values match
    */
-  compareValues(desired, actual) {
+  compareValues(desired, actual, options) {
+    const { fuzzyMatching } = options;
+
     if (Array.isArray(desired)) {
-      return desired.find(item => this.compareValues(item, actual));
+      return desired.find(item => this.compareValues(item, actual, options));
     }
     if (Array.isArray(actual)) {
-      return actual.find(actualItem => this.compareValues(desired, actualItem));
+      return actual.find(actualItem => this.compareValues(desired, actualItem, options));
     }
     if (actual?.Alphabetic) {
       actual = actual.Alphabetic;
     }
+
+    if (fuzzyMatching && typeof actual === 'string' && typeof desired === 'string') {
+      const normalizeValue = str => {
+        return str.toLowerCase();
+      };
+
+      const normalizedDesired = normalizeValue(desired);
+      const normalizedActual = normalizeValue(actual);
+
+      const tokenizeAndNormalize = str => str.split(/[\s^]+/).filter(Boolean);
+
+      const desiredTokens = tokenizeAndNormalize(normalizedDesired);
+      const actualTokens = tokenizeAndNormalize(normalizedActual);
+
+      return desiredTokens.every(desiredToken =>
+        actualTokens.some(actualToken => actualToken.startsWith(desiredToken))
+      );
+    }
+
     if (typeof actual == 'string') {
       if (actual.length === 0) {
         return true;
@@ -194,7 +229,7 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     }
     const dash = range.indexOf('-');
     if (dash === -1) {
-      return this.compareValues(range, value);
+      return this.compareValues(range, value, {});
     }
     const start = range.substring(0, dash);
     const end = range.substring(dash + 1);
@@ -211,6 +246,14 @@ export default class StaticWadoClient extends api.DICOMwebClient {
    * @returns
    */
   filterItem(key: string, queryParams, study, sourceFilterMap) {
+    const isName = (key: string) => key.indexOf('name') !== -1;
+
+    const { supportsFuzzyMatching = false } = this.config;
+
+    const options = {
+      fuzzyMatching: isName(key) && supportsFuzzyMatching,
+    };
+
     const altKey = sourceFilterMap[key] || key;
     if (!queryParams) {
       return true;
@@ -227,7 +270,8 @@ export default class StaticWadoClient extends api.DICOMwebClient {
       return this.compareDateRange(testValue, valueElem.Value[0]);
     }
     const value = valueElem.Value;
-    return this.compareValues(testValue, value);
+
+    return this.compareValues(testValue, value, options);
   }
 
   /** Converts the query parameters to lower case query parameters */

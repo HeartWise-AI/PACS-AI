@@ -1,11 +1,11 @@
-import { Page } from '@playwright/test';
+import { Page } from 'playwright-test-coverage';
 
 interface WindowWithMousePosition extends Window {
   mouseX: number;
   mouseY: number;
 }
 
-export const initilizeMousePositionTracker = async (page: Page) => {
+export const initializeMousePositionTracker = async (page: Page) => {
   const window = (await page.evaluateHandle('window')) as any;
   await page.evaluate((window: WindowWithMousePosition) => {
     window.mouseX = 0;

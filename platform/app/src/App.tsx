@@ -12,23 +12,21 @@ import {
   CommandsManager,
   HotkeysManager,
   ServiceProvidersManager,
+  SystemContextProvider,
+  ViewportRefsProvider,
 } from '@ohif/core';
-import {
-  DialogProvider,
-  Modal,
-  ModalProvider,
-  SnackbarProvider,
-  ThemeWrapper,
-  ViewportDialogProvider,
-  ViewportGridProvider,
-  CineProvider,
-  UserAuthenticationProvider,
-  ToolboxProvider,
-} from '@ohif/ui';
 import {
   ThemeWrapper as ThemeWrapperNext,
   NotificationProvider,
+  ViewportGridProvider,
+  DialogProvider,
+  CineProvider,
   TooltipProvider,
+  Modal as ModalNext,
+  ManagedDialog,
+  ModalProvider,
+  ViewportDialogProvider,
+  UserAuthenticationProvider,
 } from '@ohif/ui-next';
 // Viewer Project
 // TODO: Should this influence study list?
@@ -41,6 +39,9 @@ import { ShepherdJourneyProvider } from 'react-shepherd';
 import { AlertProvider } from './AlertProvider';
 // NOTE: This is a PACS changes
 import { GlobalStateProvider } from './GlobalStateProvider';
+// NOTE: This is a PACS changes
+import TutorialProgressOverlay from './components/TutorialProgressOverlay';
+import './App.css';
 
 // NOTE: This is a PACS changes
 export const FrontendVersionContext = createContext('');
@@ -52,7 +53,7 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 // NOTE: This is a PACS changes
-const frontendVersion = 'v0.51.6-beta';
+const frontendVersion = 'v0.56.1-beta';
 const queryClient = new QueryClient();
 
 // NOTE: This is a PACS changes
@@ -74,7 +75,7 @@ function App({
      * Hosted at: https://ohif.org/where-i-host-the/viewer/
      * Value: `/where-i-host-the/viewer/`
      * */
-    routerBaseName: '/',
+    routerBasename: '/',
     /**
      *
      */
@@ -136,16 +137,15 @@ function App({
     [UserAuthenticationProvider, { service: userAuthenticationService }],
     [I18nextProvider, { i18n }],
     [ThemeWrapperNext],
-    [ThemeWrapper],
-    [ToolboxProvider],
+    [SystemContextProvider, { commandsManager, extensionManager, hotkeysManager, servicesManager }],
+    [ViewportRefsProvider],
     [ViewportGridProvider, { service: viewportGridService }],
     [ViewportDialogProvider, { service: uiViewportDialogService }],
     [CineProvider, { service: cineService }],
     [NotificationProvider, { service: uiNotificationService }],
     [TooltipProvider],
-    [SnackbarProvider, { service: uiNotificationService }],
-    [DialogProvider, { service: uiDialogService }],
-    [ModalProvider, { service: uiModalService, modal: Modal }],
+    [DialogProvider, { service: uiDialogService, dialog: ManagedDialog }],
+    [ModalProvider, { service: uiModalService, modal: ModalNext }],
     [ShepherdJourneyProvider],
     // NOTE: This is a PACS changes
     [FrontendVersionProvider, { value: frontendVersion }],
@@ -197,6 +197,8 @@ function App({
             <BrowserRouter basename={routerBasename}>
               {authRoutes}
               {appRoutes}
+              {/* Global tutorial progress overlay using react-shepherd */}
+              <TutorialProgressOverlay />
             </BrowserRouter>
           </CombinedProviders>
         </GlobalStateProvider>

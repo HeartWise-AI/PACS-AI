@@ -12,5 +12,14 @@
   "Preferences": "التفضيلات",
   "Privacy Policy": "سياسة الخصوصية",
   "Security": "الأمان",
-  "Terms and Conditions": "الشروط والأحكام"
+  "Terms and Conditions": "الشروط والأحكام",
+  "Tutorial": "الدرس التعليمي",
+  "Reset Tutorial": "إعادة تعيين الدرس التعليمي",
+  "Clear your current progress and begin the tutorial again": "امسح تقدمك الحالي وابدأ الدرس التعليمي مجددًا",
+  "Are you sure you want to reset the tutorial? Your current progress will be cleared.": "هل أنت متأكد أنك تريد إعادة تعيين الدرس التعليمي؟ سيتم مسح تقدمك الحالي.",
+  "Cancel": "إلغاء",
+  "Reset": "إعادة التعيين",
+  "Tutorial has been reset successfully": "تمت إعادة تعيين الدرس التعليمي بنجاح",
+  "Failed to reset tutorial": "فشل إعادة تعيين الدرس التعليمي",
+  "Please provide your current and new password to continue.": "يرجى تقديم كلمة المرور الحالية والجديدة للمتابعة."
 }

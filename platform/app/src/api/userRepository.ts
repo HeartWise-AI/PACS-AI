@@ -8,9 +8,11 @@ import {
   DeleteTenantUserRequest,
   ForgotPasswordRequest,
   GetDoctorSpecialtiesResponse,
+  GetUserMetadataResponse,
   LoginRequest,
   LoginResponse,
   UpdateTenantUserRequest,
+  UpdateUserMetadataRequest,
   UserResponse,
 } from './userDTO';
 
@@ -43,7 +45,7 @@ const userRepository = {
    */
   async DeleteTenantUser(request: DeleteTenantUserRequest): Promise<APIResponse<void>> {
     return Api()
-      .delete(`/v1/user/remove`, { data: request })
+      .delete(`/v1/user/${request.userId}/remove`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -145,6 +147,41 @@ const userRepository = {
       });
   },
   /**
+   * Get user metadata
+   *
+   * @return  {Promise<APIResponse><GetUserMetadataResponse>}
+   */
+  async GetUserMetadata(): Promise<APIResponse<GetUserMetadataResponse>> {
+    return Api()
+      .get(`/v1/user/metadata`)
+      .then((response: AxiosResponse<APIResponse<GetUserMetadataResponse>>) => {
+        const { data } = response;
+
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Reset tutorial
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async ResetTutorial(): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/user/tutorial/reset`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Update user password
    *
    * @param   {ChangePasswordRequest<APIResponse><>>>}  request
@@ -176,6 +213,26 @@ const userRepository = {
       .put(`/v1/user/update`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update user metadata
+   *
+   * @param   {UpdateUserMetadataRequest<APIResponse><object>}  request
+   *
+   * @return  {Promise<APIResponse><object>}
+   */
+  async UpdateUserMetadata(request: UpdateUserMetadataRequest): Promise<APIResponse<object>> {
+    return Api()
+      .put(`/v1/user/metadata/update`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {

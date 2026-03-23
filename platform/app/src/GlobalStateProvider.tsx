@@ -2,12 +2,19 @@ import React, { createContext, useContext, useState } from 'react';
 import { ServicesManager } from '@ohif/core';
 
 interface GlobalStateContextType {
-  displaySets: any;
-  modalitiesInStudy: string;
+  selectedModalities: { [key: string]: { modality: string; displaySets: any } };
   servicesManager: ServicesManager;
+  patientInfo: {
+    PatientID: string;
+    PatientName: string;
+  };
   setDisplaySets: (displaySets: any) => void;
   setModalitiesInStudy: (modalitiesInStudy: string) => void;
+  setSelectedModalities: (selectedModalities: {
+    [key: string]: { modality: string; displaySets: any };
+  }) => void;
   setServicesManager: (servicesManager: ServicesManager) => void;
+  setPatientInfo: (patientInfo: { PatientID: string; PatientName: string }) => void;
 }
 
 interface GlobalStateProviderProps {
@@ -16,12 +23,17 @@ interface GlobalStateProviderProps {
 
 // create context with initial type definition
 const GlobalStateContext = createContext<GlobalStateContextType>({
-  displaySets: null,
-  modalitiesInStudy: '',
+  selectedModalities: {},
   servicesManager: {} as ServicesManager,
-  setModalitiesInStudy: () => {},
-  setServicesManager: () => {},
+  patientInfo: {
+    PatientID: '',
+    PatientName: '',
+  },
   setDisplaySets: () => {},
+  setModalitiesInStudy: () => {},
+  setSelectedModalities: () => {},
+  setServicesManager: () => {},
+  setPatientInfo: () => {},
 });
 
 // custom hook to use the data context
@@ -34,16 +46,26 @@ export const useGlobalStateData = () => {
 };
 
 export const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({ children }) => {
+  const [selectedModalities, setSelectedModalities] = useState<{
+    [key: string]: { modality: string; displaySets: any };
+  }>({});
+  const [servicesManager, setServicesManager] = useState<ServicesManager>({} as ServicesManager);
+  const [patientInfo, setPatientInfo] = useState<{ PatientID: string; PatientName: string }>({
+    PatientID: '',
+    PatientName: '',
+  });
   const [displaySets, setDisplaySets] = useState<any>(null);
   const [modalitiesInStudy, setModalitiesInStudy] = useState<string>('');
-  const [servicesManager, setServicesManager] = useState<ServicesManager>({} as ServicesManager);
+
   const value = {
-    displaySets,
-    modalitiesInStudy,
+    selectedModalities,
     servicesManager,
+    setSelectedModalities,
+    setServicesManager,
+    patientInfo,
+    setPatientInfo,
     setDisplaySets,
     setModalitiesInStudy,
-    setServicesManager,
   };
 
   return <GlobalStateContext.Provider value={value}>{children}</GlobalStateContext.Provider>;

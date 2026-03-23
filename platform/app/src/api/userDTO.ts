@@ -24,6 +24,13 @@ export interface GetDoctorSpecialtiesResponse {
   readonly name: string;
 }
 
+export interface GetUserMetadataResponse {
+  userId: string;
+  metadata: { [key: string]: string | number };
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface LoginRequest {
   tenantId: string;
   idToken: string;
@@ -55,6 +62,10 @@ export interface UpdateTenantUserRequest {
   name: string;
   licenseNo: string;
   specialty: string;
+}
+
+export interface UpdateUserMetadataRequest {
+  metadata: { [key: string]: string | number | null };
 }
 
 export enum UserRole {

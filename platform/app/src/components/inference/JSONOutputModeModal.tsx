@@ -2,8 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import closeIcon from './../../assets/pacs/icons/close-inactive.png';
-import { PredictInferenceModelJSONResponse } from '../../api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  PredictInferenceModelJSONResponse,
+} from '../../api/inferenceDTO';
 import ReactSpeedometer from 'react-d3-speedometer';
+import AddModelFeedback from './AddModelFeedback';
 
 interface JSONOutputModeModalProps {
   isOpen: boolean;
@@ -11,6 +15,7 @@ interface JSONOutputModeModalProps {
   data: PredictInferenceModelJSONResponse;
   loading: boolean;
   title: string;
+  selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
 const InferenceDetails = {
@@ -49,6 +54,7 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
   },
   loading = false,
   title = '',
+  selectedInferenceModel = null,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -65,7 +71,9 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
 
   const getInferenceDiagnosisColor = (diagnosis: string) => {
     const diagnosisDetails = InferenceDetails[diagnosis.toLowerCase()];
-    if (!diagnosisDetails) return 'text-[#6ED47C] bg-[#6ED47C]'; // default color
+    if (!diagnosisDetails) {
+      return 'text-[#6ED47C] bg-[#6ED47C]';
+    } // default color
 
     switch (diagnosisDetails.color) {
       case 'success':
@@ -79,7 +87,9 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
     }
   };
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !mounted) {
+    return null;
+  }
 
   const modalContent = (
     <div
@@ -188,6 +198,12 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
                       )
                   )}
                 </div>
+                {selectedInferenceModel?.modelId?.trim() && (
+                  <AddModelFeedback
+                    title={title}
+                    selectedInferenceModel={selectedInferenceModel}
+                  />
+                )}
               </div>
             )}
           </div>

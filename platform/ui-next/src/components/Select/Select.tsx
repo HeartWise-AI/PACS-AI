@@ -111,7 +111,8 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      'focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default select-none items-center rounded py-1 pl-2 pr-8 text-base outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      // NOTE: This is a PACS changes
+      'focus:bg-primary relative flex w-full cursor-default select-none items-center rounded py-1 pl-2 pr-8 text-base outline-none focus:text-black data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     {...props}
@@ -121,7 +122,13 @@ const SelectItem = React.forwardRef<
         <CheckIcon className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    {typeof children === 'string' ? (
+      <SelectPrimitive.ItemText>
+        <span className="truncate">{children}</span>
+      </SelectPrimitive.ItemText>
+    ) : (
+      children
+    )}
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

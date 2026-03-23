@@ -12,5 +12,14 @@
   "Preferences": "Einstellungen",
   "Privacy Policy": "Datenschutzbestimmungen",
   "Security": "Sicherheit",
-  "Terms and Conditions": "Nutzungsbedingungen"
+  "Terms and Conditions": "Nutzungsbedingungen",
+  "Tutorial": "Tutorial",
+  "Reset Tutorial": "Tutorial zurücksetzen",
+  "Clear your current progress and begin the tutorial again": "Löschen Sie Ihren aktuellen Fortschritt und beginnen Sie das Tutorial erneut",
+  "Are you sure you want to reset the tutorial? Your current progress will be cleared.": "Sind Sie sicher, dass Sie das Tutorial zurücksetzen möchten? Ihr aktueller Fortschritt wird gelöscht.",
+  "Cancel": "Abbrechen",
+  "Reset": "Zurücksetzen",
+  "Tutorial has been reset successfully": "Das Tutorial wurde erfolgreich zurückgesetzt",
+  "Failed to reset tutorial": "Tutorial konnte nicht zurückgesetzt werden",
+  "Please provide your current and new password to continue.": "Bitte geben Sie Ihr aktuelles und neues Passwort ein, um fortzufahren."
 }

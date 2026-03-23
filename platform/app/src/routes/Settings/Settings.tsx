@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
-import { Button, Input, Typography } from '@ohif/ui';
+import { Button, Typography } from '@ohif/ui';
+import { Input } from '@ohif/ui-next';
 import i18n from '@ohif/i18n';
 import HeaderPanel from '../../components/HeaderPanel';
 import Sidebar from '../../components/Sidebar';
@@ -29,6 +30,8 @@ const SettingsPage = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
+  const [isOpenResetTutorialModal, setIsOpenResetTutorialModal] = useState<boolean>(false);
+  const [isResettingTutorial, setIsResettingTutorial] = useState(false);
   const [imageSrc, setImageSrc] = useState('');
   const showAlert = useContext(AlertContext);
   const tenantId = localStorage.getItem('tenantId') || '';
@@ -192,6 +195,27 @@ const SettingsPage = () => {
     };
   };
 
+  const resetTutorial = async () => {
+    setIsResettingTutorial(true);
+    try {
+      await userRepository.ResetTutorial();
+      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
+      showAlert(t('Tutorial has been reset successfully'), 'success');
+      setIsOpenResetTutorialModal(false);
+      // notify TutorialProgressOverlay to reappear expanded regardless of current progress.
+      window.dispatchEvent(new CustomEvent('tutorial-reset'));
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      showAlert(error.message || t('Failed to reset tutorial'), 'error');
+    } finally {
+      setIsResettingTutorial(false);
+    }
+  };
+
   const GeneralSettings = () => {
     return (
       <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
@@ -228,6 +252,7 @@ const SettingsPage = () => {
             </div>
           )}
         </div>
+
         <div className="pt-7">
           <h1 className="text-lg font-normal text-white">{t('Security')}</h1>
 
@@ -248,11 +273,10 @@ const SettingsPage = () => {
             </button>
           </div>
         </div>
-
         <div className="pt-5">
           <h1 className="text-lg font-normal text-white">{t('Preferences')}</h1>
 
-          <div className="mt-2 flex items-center justify-between pb-5">
+          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
             <div>
               <h2 className="text-base font-light text-white">{t('Language')}</h2>
               <h2 className="text-sm text-white text-opacity-70">
@@ -290,6 +314,26 @@ const SettingsPage = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
+        <div className="pt-5">
+          <h1 className="text-lg font-normal text-white">{t('Tutorial')}</h1>
+
+          <div className="mt-2 flex items-center justify-between pb-5">
+            <div>
+              <h2 className="text-base font-light text-white">{t('Reset Tutorial')}</h2>
+              <h2 className="text-sm text-white text-opacity-70">
+                {t('Clear your current progress and begin the tutorial again')}
+              </h2>
+            </div>
+            <button
+              className="text-primary focus:ring-0"
+              onClick={() => setIsOpenResetTutorialModal(true)}
+            >
+              <span className="relative z-10 bg-gradient-to-r from-[rgba(200,244,105,1)] to-[rgba(25,154,95,1)] bg-clip-text text-lg font-bold text-transparent">
+                {t('Reset Tutorial')}
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -414,6 +458,49 @@ const SettingsPage = () => {
           </div>
           {selectedTab === 'general' && <GeneralSettings />}
           {selectedTab === 'about' && <AboutSettings />}
+          {isOpenResetTutorialModal && (
+            <Modal
+              isOpen={isOpenResetTutorialModal}
+              size="max-w-[420px]"
+              isCloseable={true}
+              onClose={() => {
+                setIsOpenResetTutorialModal(false);
+              }}
+            >
+              <div className="relative">
+                <Typography
+                  variant="h6"
+                  className="font-light text-white"
+                >
+                  {t('Reset Tutorial')}
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="mt-2 font-light text-white text-opacity-70"
+                >
+                  {t(
+                    'Are you sure you want to reset the tutorial? Your current progress will be cleared.'
+                  )}
+                </Typography>
+                <div className="mt-5 flex w-full justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    onClick={() => setIsOpenResetTutorialModal(false)}
+                  >
+                    {t('Cancel')}
+                  </button>
+                  <Button
+                    disabled={isResettingTutorial}
+                    className="h-[41px] min-w-[80px] rounded-lg px-4"
+                    onClick={resetTutorial}
+                  >
+                    {isResettingTutorial ? '...' : t('Reset')}
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+          )}
           {isOpenChangePasswordModal && (
             <Modal
               isOpen={isOpenChangePasswordModal}

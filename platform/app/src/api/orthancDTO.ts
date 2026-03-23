@@ -63,6 +63,8 @@ export interface GetJobInfoRequest {
 export interface GetDICOMModalitiesResponse {
   modalities: {
     [key: string]: {
+      tenantId: string;
+      modalityId: string;
       aet: string;
       allowEcho: boolean;
       allowFind: boolean;
@@ -75,8 +77,28 @@ export interface GetDICOMModalitiesResponse {
       port: number;
       timeout: number;
       useDicomTLS: boolean;
+      targetCFindEnabled: boolean;
+      targetCMoveEnabled: boolean;
+      targetCStoreEnabled: boolean;
     };
   };
+}
+
+export interface GetLnkedDICOMModalityWithEnabledCStoreRequest {
+  modalityId: string;
+}
+
+export interface GetLnkedDICOMModalityWithEnabledCStoreResponse {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly modalityId: string;
+  readonly aet: string;
+  readonly hostHash: string;
+  readonly cFindEnabled: boolean;
+  readonly cMoveEnabled: boolean;
+  readonly cStoreEnabled: boolean;
+  readonly createdAt: number;
+  readonly updatedAt: number;
 }
 
 export interface RetrieveModalityStudyRequest {
@@ -93,6 +115,17 @@ export interface RemoveDICOMModalityRequest {
   modalityId: string;
 }
 
+export interface StoreStudyCustomSeriesRequest {
+  modalityID: string;
+  studyInstanceUID: string;
+  seriesInstanceUIDs: string;
+  patientID: string;
+  patientName: string;
+  modelName: string;
+  modelVersion: string;
+  file: Blob;
+}
+
 export interface TriggerDICOMEchoSCURequest {
   modalityId: string;
 }
@@ -102,6 +135,9 @@ export interface UpdateDICOMModalityRequest {
   aet: string;
   host: string;
   port: number;
+  cFindEnabled: boolean;
+  cMoveEnabled: boolean;
+  cStoreEnabled: boolean;
 }
 
 export enum JobState {
