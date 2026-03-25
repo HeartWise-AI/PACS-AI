@@ -312,6 +312,9 @@ const WorkspaceSettingsPage = () => {
     await Promise.all(modalityPromises);
   };
 
+  /**
+   * Fetch inference models
+   */
   const fetchInferenceModels = useCallback(async () => {
     try {
       const response = await inferenceRepository.GetInferenceModels();
@@ -340,6 +343,11 @@ const WorkspaceSettingsPage = () => {
     }
   }, [inferenceRepository]);
 
+  /**
+   * Fetch inference model info
+   *
+   * @param containerID
+   */
   const fetchInferenceModelsInfo = async (containerID: string) => {
     setFetchingInferenceModelInfo(true);
     try {
@@ -359,6 +367,9 @@ const WorkspaceSettingsPage = () => {
     setFetchingInferenceModelInfo(false);
   };
 
+  /**
+   * Fetch available inference models
+   */
   const fetchAvailableInferenceModels = useCallback(async () => {
     try {
       const response = await inferenceRepository.GetInferenceAvailableModels();
@@ -368,6 +379,9 @@ const WorkspaceSettingsPage = () => {
     }
   }, [inferenceRepository]);
 
+  /**
+   * Fetch ingestion jobs
+   */
   const fetchIngestionJobs = useCallback(async () => {
     try {
       const response = await inferenceRepository.GetInferenceIngestionJobs();
@@ -454,6 +468,9 @@ const WorkspaceSettingsPage = () => {
     setIsRefreshingDICOMModalities(false);
   };
 
+  /**
+   * Add modality
+   */
   const addModality = async () => {
     // check if at least one of the targetCFindEnabled, targetCMoveEnabled, or targetCStoreEnabled is true
     if (
@@ -495,6 +512,9 @@ const WorkspaceSettingsPage = () => {
     setIsAddingModality(false);
   };
 
+  /**
+   * Add inference model
+   */
   const addInferenceModel = async () => {
     setIsAddingInferenceModel(true);
     try {
@@ -541,6 +561,9 @@ const WorkspaceSettingsPage = () => {
     setIsAddingInferenceModel(false);
   };
 
+  /**
+   * Update inference model
+   */
   const updateInferenceModel = async () => {
     setIsUpdatingInferenceModel(true);
     try {
@@ -566,6 +589,11 @@ const WorkspaceSettingsPage = () => {
     setIsUpdatingInferenceModel(false);
   };
 
+  /**
+   * Delete inference model
+   *
+   * @param inferenceModelId
+   */
   const deleteInferenceModel = async (inferenceModelId: string) => {
     setDeletingInferenceModel(true);
     try {
@@ -587,6 +615,9 @@ const WorkspaceSettingsPage = () => {
     setDeletingInferenceModel(false);
   };
 
+  /**
+   * Refresh inference models
+   */
   const refreshInferenceModels = () => {
     setLoadingInferenceModels(true);
     const fetchInitialData = async () => {
@@ -596,6 +627,9 @@ const WorkspaceSettingsPage = () => {
     fetchInitialData();
   };
 
+  /**
+   * Refresh ingestion jobs
+   */
   const refreshIngestionJobs = () => {
     setLoadingIngestionJobs(true);
     const fetchInitialData = async () => {
@@ -605,6 +639,11 @@ const WorkspaceSettingsPage = () => {
     fetchInitialData();
   };
 
+  /**
+   * Start inference model container
+   *
+   * @param containerID
+   */
   const startInferenceModelContainer = async (containerID: string) => {
     setStartingInferenceModelContainer(true);
     try {
@@ -626,6 +665,11 @@ const WorkspaceSettingsPage = () => {
     setStartingInferenceModelContainer(false);
   };
 
+  /**
+   * Stop inference model container
+   *
+   * @param containerID
+   */
   const stopInferenceModelContainer = async (containerID: string) => {
     setStoppingInferenceModelContainer(true);
     try {
@@ -647,6 +691,11 @@ const WorkspaceSettingsPage = () => {
     setStoppingInferenceModelContainer(false);
   };
 
+  /**
+   * Start ingestion job
+   *
+   * @param id
+   */
   const startIngestionJob = async (id: string) => {
     setStartingIngestionJob(true);
     try {
@@ -667,6 +716,11 @@ const WorkspaceSettingsPage = () => {
     setStartingIngestionJob(false);
   };
 
+  /**
+   * Stop ingestion job
+   *
+   * @param id
+   */
   const stopIngestionJob = async (id: string) => {
     setStoppingIngestionJob(true);
     try {
@@ -687,6 +741,9 @@ const WorkspaceSettingsPage = () => {
     setStoppingIngestionJob(false);
   };
 
+  /**
+   * Delete ingestion job
+   */
   const deleteIngestionJob = async () => {
     setIsDeletingIngestionJob(true);
     try {
@@ -791,6 +848,9 @@ const WorkspaceSettingsPage = () => {
     setIsRemovingModality(false);
   };
 
+  /**
+   * Reset ingestion job form
+   */
   const resetIngestionJobForm = () => {
     setNewJobModel(null);
     setNewJobModalities([]);
@@ -804,8 +864,17 @@ const WorkspaceSettingsPage = () => {
     setNewJobEndTime('23:59');
   };
 
+  /**
+   * Build timestamp from date and time
+   *
+   * @param date
+   * @param time
+   * @returns
+   */
   const buildTimestampFromDateAndTime = (date: moment.Moment | null, time: string): number => {
-    if (!date) return 0;
+    if (!date) {
+      return 0;
+    }
     const [hours, minutes] = time.split(':').map(Number);
     return date.clone().startOf('day').hours(hours).minutes(minutes).unix();
   };
@@ -901,6 +970,12 @@ const WorkspaceSettingsPage = () => {
     }
   };
 
+  /**
+   * Modality badges
+   *
+   * @param modalities
+   * @returns
+   */
   const ModalityBadges = ({ modalities }: { modalities: string[] }) => {
     const visible = modalities.slice(0, 3);
     const overflow = modalities.slice(3);
@@ -1099,6 +1174,12 @@ const WorkspaceSettingsPage = () => {
     );
   };
 
+  /**
+   * Get DICOM tags name
+   *
+   * @param tag
+   * @returns
+   */
   const getDICOMTagsName = tag => {
     // create a dictionary instance
     const dictionary = new DataElementDictionary();
@@ -1109,6 +1190,12 @@ const WorkspaceSettingsPage = () => {
     return element ? element.name : 'Unknown Tag';
   };
 
+  /**
+   * Inference model action button
+   *
+   * @param row
+   * @returns
+   */
   const InferenceModelActionButton = ({ row }) => {
     const [isOpen, setIsOpen] = useState(false);
     const buttonRef = useRef(null);
