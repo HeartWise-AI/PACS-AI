@@ -1750,9 +1750,9 @@ const WorkspaceSettingsPage = () => {
                       {t('Refresh')}
                     </span>
                   </button>
-                  <button className="border-primary text-primary h-[35px] rounded-lg border px-3 text-sm">
+                  {/* <button className="border-primary text-primary h-[35px] rounded-lg border px-3 text-sm">
                     {t('Import CSV')}
-                  </button>
+                  </button> */}
                   <Button
                     className="h-[35px] rounded-lg px-6"
                     onClick={() => setIsOpenAddEditIngestionJobModal(true)}
