@@ -20,6 +20,7 @@ import inferenceRepository from '../../api/inferenceRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import {
   GetInferenceAvailableModelsResponse,
+  GetInferenceIngestionJobsResponse,
   GetInferenceModelInfoResponse,
   GetInferenceModelResponse,
 } from '../../api/inferenceDTO';
@@ -40,43 +41,6 @@ interface DICOMModalities {
   targetCMoveEnabled: boolean;
   targetCStoreEnabled: boolean;
 }
-
-interface InferenceIngestionJob {
-  id: string;
-  modelName: string;
-  modelVersion: string;
-  modalities: string[];
-  intervalMinutes: number;
-  scheduleType: string;
-  dicomModality?: string;
-}
-
-const SAMPLE_INGESTION_JOBS: InferenceIngestionJob[] = [
-  {
-    id: 'abc12345',
-    modelName: 'us-model-template-2.3',
-    modelVersion: '1.12.0-beta',
-    modalities: ['AR', 'ASMT', 'AU', 'CT', 'MR', 'US'],
-    intervalMinutes: 30,
-    scheduleType: 'Always',
-  },
-  {
-    id: 'def67890',
-    modelName: 'us-model-template-2.3',
-    modelVersion: '1.12.0-beta',
-    modalities: ['AR', 'ASMT', 'AU'],
-    intervalMinutes: 30,
-    scheduleType: 'Always',
-  },
-  {
-    id: 'ghi11223',
-    modelName: 'ct-model-cardiac-1.0',
-    modelVersion: '2.0.1',
-    modalities: ['CT', 'MR'],
-    intervalMinutes: 60,
-    scheduleType: 'Jan 26, 2026 12:00 - Jan 28, 2026 12:00',
-  },
-];
 
 enum InferenceContainerStatus {
   CREATED = 'created',
@@ -204,8 +168,12 @@ const WorkspaceSettingsPage = () => {
     useState<boolean>(false);
   const [deletingInferenceModel, setDeletingInferenceModel] = useState<boolean>(false);
   const [selectedContainerToStartStop, setSelectedContainerToStartStop] = useState<string>('');
-  const [ingestionJobs, setIngestionJobs] =
-    useState<InferenceIngestionJob[]>(SAMPLE_INGESTION_JOBS);
+  const [startingIngestionJob, setStartingIngestionJob] = useState<boolean>(false);
+  const [stoppingIngestionJob, setStoppingIngestionJob] = useState<boolean>(false);
+  const [selectedIngestionJobToStartStop, setSelectedIngestionJobToStartStop] =
+    useState<string>('');
+  const [ingestionJobs, setIngestionJobs] = useState<GetInferenceIngestionJobsResponse[]>([]);
+  const [loadingIngestionJobs, setLoadingIngestionJobs] = useState(true);
   const [isOpenAddEditIngestionJobModal, setIsOpenAddEditIngestionJobModal] = useState(false);
   const [newJobModel, setNewJobModel] = useState<{ value: string; label: string } | null>(null);
   const [newJobModalities, setNewJobModalities] = useState<{ value: string; label: string }[]>([]);
@@ -222,6 +190,10 @@ const WorkspaceSettingsPage = () => {
     GetInferenceAvailableModelsResponse[]
   >([]);
   const [newJobDicomModality, setNewJobDicomModality] = useState<string>('');
+  const [newJobStartTime, setNewJobStartTime] = useState<string>('00:00');
+  const [newJobEndTime, setNewJobEndTime] = useState<string>('23:59');
+  const [isSavingIngestionJob, setIsSavingIngestionJob] = useState<boolean>(false);
+  const [isDeletingIngestionJob, setIsDeletingIngestionJob] = useState<boolean>(false);
 
   const dicomHeaders = [
     { text: t('ID'), value: 'id', align: 'left' },
@@ -246,9 +218,11 @@ const WorkspaceSettingsPage = () => {
   const inferenceIngestionServiceHeaders = [
     { text: t('Job ID'), value: 'jobId', align: 'left' },
     { text: t('Model'), value: 'model', align: 'left' },
+    { text: t('DICOM Modality'), value: 'dicomModality', align: 'left' },
     { text: t('Modalities'), value: 'modalities', align: 'left' },
     { text: t('Interval'), value: 'interval', align: 'left' },
     { text: t('Schedule'), value: 'schedule', align: 'left' },
+    { text: t('Status'), value: 'status', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
   const outputModeOptions = ['JSON', 'OHIF_ANNOTATIONS', 'HTML', 'WEB_APP', 'PDF'];
@@ -394,21 +368,38 @@ const WorkspaceSettingsPage = () => {
     }
   }, [inferenceRepository]);
 
+  const fetchIngestionJobs = useCallback(async () => {
+    try {
+      const response = await inferenceRepository.GetInferenceIngestionJobs();
+      setIngestionJobs(response.data);
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error('Error fetching inference ingestion jobs:', error);
+    }
+  }, [inferenceRepository]);
+
   useEffect(() => {
     // initial fetch
     fetchDICOMModalities();
     setLoadingInferenceModels(true);
 
     const fetchInitialData = async () => {
-      await fetchInferenceModels();
-      await fetchAvailableInferenceModels();
-      setLoadingInferenceModels(false);
+      // run independently so each loading state clears as soon as its own fetch resolves
+      fetchInferenceModels().then(() => setLoadingInferenceModels(false));
+      fetchIngestionJobs().then(() => setLoadingIngestionJobs(false));
+      fetchAvailableInferenceModels();
     };
     fetchInitialData();
 
     // setup polling interval
     const interval = setInterval(() => {
       fetchInferenceModels();
+      fetchIngestionJobs();
     }, 15000); // poll every 15 seconds
 
     setPollingInterval(interval);
@@ -419,7 +410,12 @@ const WorkspaceSettingsPage = () => {
         clearInterval(interval);
       }
     };
-  }, [fetchDICOMModalities, fetchInferenceModels, fetchAvailableInferenceModels]);
+  }, [
+    fetchDICOMModalities,
+    fetchInferenceModels,
+    fetchAvailableInferenceModels,
+    fetchIngestionJobs,
+  ]);
 
   /**
    * Update modality status
@@ -600,6 +596,15 @@ const WorkspaceSettingsPage = () => {
     fetchInitialData();
   };
 
+  const refreshIngestionJobs = () => {
+    setLoadingIngestionJobs(true);
+    const fetchInitialData = async () => {
+      await fetchIngestionJobs();
+      setLoadingIngestionJobs(false);
+    };
+    fetchInitialData();
+  };
+
   const startInferenceModelContainer = async (containerID: string) => {
     setStartingInferenceModelContainer(true);
     try {
@@ -640,6 +645,69 @@ const WorkspaceSettingsPage = () => {
       showAlert(error.message, 'error');
     }
     setStoppingInferenceModelContainer(false);
+  };
+
+  const startIngestionJob = async (id: string) => {
+    setStartingIngestionJob(true);
+    try {
+      const response = await inferenceRepository.StartInferenceIngestionJob({ id });
+      showAlert(response.message, 'success');
+      setSelectedIngestionJobToStartStop('');
+      fetchIngestionJobs();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error starting ingestion job: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setStartingIngestionJob(false);
+  };
+
+  const stopIngestionJob = async (id: string) => {
+    setStoppingIngestionJob(true);
+    try {
+      const response = await inferenceRepository.StopInferenceIngestionJob({ id });
+      showAlert(response.message, 'success');
+      setSelectedIngestionJobToStartStop('');
+      fetchIngestionJobs();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error stopping ingestion job: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setStoppingIngestionJob(false);
+  };
+
+  const deleteIngestionJob = async () => {
+    setIsDeletingIngestionJob(true);
+    try {
+      const response = await inferenceRepository.DeleteInferenceIngestionJob({
+        id: selectedIngestionJobId,
+      });
+      showAlert(response.message, 'success');
+      setIsOpenRemoveIngestionJobModal(false);
+      setSelectedIngestionJobId('');
+      fetchIngestionJobs();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error deleting ingestion job: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsDeletingIngestionJob(false);
   };
 
   /**
@@ -723,48 +791,114 @@ const WorkspaceSettingsPage = () => {
     setIsRemovingModality(false);
   };
 
-  /**
-   * Handle save ingestion job
-   */
-  const handleSaveIngestionJob = () => {
-    if (!newJobModel) {
-      return;
-    }
-    const selectedModel = availableInferenceModels.find(m => m.containerId === newJobModel.value);
-    const schedule =
-      newJobScheduleType === 'always'
-        ? 'Always'
-        : newJobStartDate && newJobEndDate
-          ? `${newJobStartDate.format('MMM D, YYYY HH:mm')} - ${newJobEndDate.format('MMM D, YYYY HH:mm')}`
-          : 'Always';
-    const jobData = {
-      modelName: selectedModel?.modelName || newJobModel.label,
-      modelVersion: selectedModel?.version || '',
-      modalities: newJobModalities.map(m => m.value),
-      intervalMinutes: parseInt(newJobInterval) || 0,
-      scheduleType: schedule,
-      dicomModality: newJobDicomModality,
-    };
-    if (isAddIngestionJob) {
-      setIngestionJobs(prev => [
-        ...prev,
-        { id: Math.random().toString(36).substring(2, 10), ...jobData },
-      ]);
-    } else {
-      setIngestionJobs(prev =>
-        prev.map(job => (job.id === selectedIngestionJobId ? { ...job, ...jobData } : job))
-      );
-    }
-    setIsOpenAddEditIngestionJobModal(false);
-    setIsAddIngestionJob(true);
-    setSelectedIngestionJobId('');
+  const resetIngestionJobForm = () => {
     setNewJobModel(null);
     setNewJobModalities([]);
     setNewJobInterval('');
     setNewJobScheduleType('always');
     setNewJobStartDate(null);
     setNewJobEndDate(null);
+    setNewJobFocusedInput(null);
     setNewJobDicomModality('');
+    setNewJobStartTime('00:00');
+    setNewJobEndTime('23:59');
+  };
+
+  const buildTimestampFromDateAndTime = (date: moment.Moment | null, time: string): number => {
+    if (!date) {
+      return 0;
+    }
+    const [hours, minutes] = time.split(':').map(Number);
+    return date.clone().hours(hours).minutes(minutes).seconds(0).unix();
+  };
+
+  /**
+   * Handle save ingestion job
+   */
+  const handleSaveIngestionJob = async () => {
+    if (!newJobDicomModality) {
+      showAlert('DICOM Modality is required', 'error');
+      return;
+    }
+    if (!newJobModel) {
+      showAlert('Model is required', 'error');
+      return;
+    }
+    if (newJobModalities.length === 0) {
+      showAlert('At least one modality must be selected', 'error');
+      return;
+    }
+    if (!newJobInterval || parseInt(newJobInterval) <= 0) {
+      showAlert('Interval is required and must be greater than 0', 'error');
+      return;
+    }
+    if (newJobScheduleType === 'dateRange' && (!newJobStartDate || !newJobEndDate)) {
+      showAlert('Both start and end dates are required for a date range schedule', 'error');
+      return;
+    }
+
+    const selectedModel = availableInferenceModels.find(m => m.containerId === newJobModel.value);
+
+    if (isAddIngestionJob && !selectedModel) {
+      showAlert('Selected model not found. Please try again.', 'error');
+      return;
+    }
+
+    const scheduleStartTimestamp =
+      newJobScheduleType === 'dateRange'
+        ? buildTimestampFromDateAndTime(newJobStartDate, newJobStartTime)
+        : 0;
+    const scheduleEndTimestamp =
+      newJobScheduleType === 'dateRange'
+        ? buildTimestampFromDateAndTime(newJobEndDate, newJobEndTime)
+        : 0;
+
+    if (newJobScheduleType === 'dateRange' && scheduleStartTimestamp >= scheduleEndTimestamp) {
+      showAlert('Start date/time must be before end date/time', 'error');
+      return;
+    }
+
+    setIsSavingIngestionJob(true);
+    try {
+      if (isAddIngestionJob) {
+        const response = await inferenceRepository.CreateInferenceIngestionJob({
+          dicomModality: newJobDicomModality,
+          containerId: selectedModel.containerId,
+          modelId: selectedModel.modelId,
+          modelName: selectedModel.modelName,
+          modelVersion: selectedModel.version,
+          modalities: newJobModalities.map(m => m.value),
+          intervalInMinutes: parseInt(newJobInterval),
+          scheduleStartTimestamp,
+          scheduleEndTimestamp,
+        });
+        showAlert(response.message, 'success');
+      } else {
+        const response = await inferenceRepository.UpdateInferenceIngestionJob({
+          id: selectedIngestionJobId,
+          modalities: newJobModalities.map(m => m.value),
+          intervalInMinutes: parseInt(newJobInterval),
+          scheduleStartTimestamp,
+          scheduleEndTimestamp,
+        });
+        showAlert(response.message, 'success');
+      }
+      setIsOpenAddEditIngestionJobModal(false);
+      setIsAddIngestionJob(true);
+      setSelectedIngestionJobId('');
+      resetIngestionJobForm();
+      fetchIngestionJobs();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error saving ingestion job: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsSavingIngestionJob(false);
   };
 
   const ModalityBadges = ({ modalities }: { modalities: string[] }) => {
@@ -1100,7 +1234,7 @@ const WorkspaceSettingsPage = () => {
   /**
    * Inhestion job action
    */
-  const IngestionJobActionButton = ({ row }: { row: InferenceIngestionJob }) => {
+  const IngestionJobActionButton = ({ row }: { row: GetInferenceIngestionJobsResponse }) => {
     const [isOpen, setIsOpen] = useState(false);
     const buttonRef = useRef(null);
     const dropdownRef = useRef(null);
@@ -1157,7 +1291,7 @@ const WorkspaceSettingsPage = () => {
                     onClick={() => {
                       // Populate form for editing
                       const matchedModel = availableInferenceModels.find(
-                        m => m.modelName === row.modelName && m.version === row.modelVersion
+                        m => m.containerId === row.containerId
                       );
                       setNewJobModel(
                         matchedModel
@@ -1172,16 +1306,25 @@ const WorkspaceSettingsPage = () => {
                       );
                       setNewJobDicomModality(row.dicomModality || '');
                       setNewJobModalities(row.modalities.map(m => ({ value: m, label: m })));
-                      setNewJobInterval(row.intervalMinutes.toString());
-                      if (row.scheduleType === 'Always') {
+                      setNewJobInterval(row.intervalInMinutes.toString());
+                      if (!row.scheduleStartTimestamp && !row.scheduleEndTimestamp) {
                         setNewJobScheduleType('always');
                         setNewJobStartDate(null);
                         setNewJobEndDate(null);
+                        setNewJobStartTime('00:00');
+                        setNewJobEndTime('23:59');
                       } else {
                         setNewJobScheduleType('dateRange');
-                        const parts = row.scheduleType.split(' - ');
-                        setNewJobStartDate(parts[0] ? moment(parts[0], 'MMM D, YYYY HH:mm') : null);
-                        setNewJobEndDate(parts[1] ? moment(parts[1], 'MMM D, YYYY HH:mm') : null);
+                        const startMoment = row.scheduleStartTimestamp
+                          ? moment.unix(row.scheduleStartTimestamp)
+                          : null;
+                        const endMoment = row.scheduleEndTimestamp
+                          ? moment.unix(row.scheduleEndTimestamp)
+                          : null;
+                        setNewJobStartDate(startMoment);
+                        setNewJobEndDate(endMoment);
+                        setNewJobStartTime(startMoment ? startMoment.format('HH:mm') : '00:00');
+                        setNewJobEndTime(endMoment ? endMoment.format('HH:mm') : '23:59');
                       }
                       setSelectedIngestionJobId(row.id);
                       setIsAddIngestionJob(false);
@@ -1590,7 +1733,24 @@ const WorkspaceSettingsPage = () => {
               <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                 <h1 className="text-xl text-white">{t('Inference Ingestion Service')}</h1>
                 <div className="flex items-center gap-2">
-                  <button className="border-primary text-primary h-[35px] w-full rounded-lg border text-sm">
+                  <button
+                    type="button"
+                    disabled={loadingIngestionJobs}
+                    className="flex h-[35px] items-center gap-2 rounded-full bg-white bg-opacity-10 px-3"
+                    onClick={() => refreshIngestionJobs()}
+                  >
+                    <img
+                      src={refreshIcon}
+                      alt="Refresh icon"
+                      className={`${loadingIngestionJobs ? 'animate-spin' : ''} h-4 w-4`}
+                    />
+                    <span
+                      className={`text-white ${loadingIngestionJobs ? 'opacity-40' : ''} text-[14px]`}
+                    >
+                      {t('Refresh')}
+                    </span>
+                  </button>
+                  <button className="border-primary text-primary h-[35px] rounded-lg border px-3 text-sm">
                     {t('Import CSV')}
                   </button>
                   <Button
@@ -1604,7 +1764,7 @@ const WorkspaceSettingsPage = () => {
             </div>
             {/* Inference ingestion service table container */}
             <div className="bg-transparent py-5">
-              {loadingInferenceModels ? (
+              {loadingIngestionJobs ? (
                 <div
                   role="status"
                   className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
@@ -1634,14 +1794,15 @@ const WorkspaceSettingsPage = () => {
                     }
                     if (header.value === 'model') {
                       return (
-                        <div className="w-[260px] text-white">
-                          {row.modelName}
-                          <span className="ml-1 text-white text-opacity-50">-</span>
-                          <span className="ml-1 text-white text-opacity-50">
-                            {row.modelVersion}
-                          </span>
+                        <div className="w-[260px] space-x-1 text-white">
+                          <span>{row.modelName}</span>
+                          <span>-</span>
+                          <span>{row.modelVersion}</span>
                         </div>
                       );
+                    }
+                    if (header.value === 'dicomModality') {
+                      return <div className="w-[140px] text-white">{row.dicomModality || '-'}</div>;
                     }
                     if (header.value === 'modalities') {
                       return (
@@ -1652,11 +1813,46 @@ const WorkspaceSettingsPage = () => {
                     }
                     if (header.value === 'interval') {
                       return (
-                        <div className="w-[80px] text-white">{row.intervalMinutes} minutes</div>
+                        <div className="w-[80px] text-white">{row.intervalInMinutes} minutes</div>
                       );
                     }
                     if (header.value === 'schedule') {
-                      return <div className="w-[260px] text-white">{row.scheduleType}</div>;
+                      const hasRange = row.scheduleStartTimestamp || row.scheduleEndTimestamp;
+                      return (
+                        <div className="w-[160px] text-sm text-white">
+                          {hasRange ? (
+                            <div>
+                              <div>
+                                {moment
+                                  .unix(row.scheduleStartTimestamp)
+                                  .format('MMM D, YYYY HH:mm')}{' '}
+                                -{' '}
+                                {moment.unix(row.scheduleEndTimestamp).format('MMM D, YYYY HH:mm')}
+                              </div>
+                            </div>
+                          ) : (
+                            'Always'
+                          )}
+                        </div>
+                      );
+                    }
+                    if (header.value === 'status') {
+                      const statusColor = containerStatusColors[row.status?.toLowerCase()] || {
+                        bg: 'bg-gray-300',
+                        bgOpacity: 'bg-opacity-20',
+                        text: 'text-gray-300',
+                        dot: 'bg-gray-300',
+                      };
+                      return (
+                        <div className="flex min-w-[100px] items-center gap-2">
+                          <div
+                            className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}
+                          >
+                            <span className="capitalize">{row.status?.toLowerCase() || '-'}</span>
+                            <div className={`h-1 w-1 rounded-full ${statusColor.dot}`}></div>
+                          </div>
+                        </div>
+                      );
                     }
                     // action
                     if (header.value === 'action') {
@@ -1665,12 +1861,49 @@ const WorkspaceSettingsPage = () => {
                           className="flex items-center justify-center gap-2"
                           onClick={e => e.stopPropagation()}
                         >
-                          <button>
-                            <img
-                              src={playIcon}
-                              alt="Play icon"
-                            />
-                          </button>
+                          {row.status?.toLowerCase() === InferenceContainerStatus.RUNNING ? (
+                            <button
+                              onClick={() => {
+                                setSelectedIngestionJobToStartStop(row.id);
+                                stopIngestionJob(row.id);
+                              }}
+                            >
+                              {stoppingIngestionJob &&
+                              selectedIngestionJobToStartStop === row.id ? (
+                                <img
+                                  src={refreshIcon}
+                                  alt="Refresh icon"
+                                  className="h-4 w-4 animate-spin"
+                                />
+                              ) : (
+                                <img
+                                  src={stopIcon}
+                                  alt="Stop icon"
+                                />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedIngestionJobToStartStop(row.id);
+                                startIngestionJob(row.id);
+                              }}
+                            >
+                              {startingIngestionJob &&
+                              selectedIngestionJobToStartStop === row.id ? (
+                                <img
+                                  src={refreshIcon}
+                                  alt="Refresh icon"
+                                  className="h-4 w-4 animate-spin"
+                                />
+                              ) : (
+                                <img
+                                  src={playIcon}
+                                  alt="Play icon"
+                                />
+                              )}
+                            </button>
+                          )}
                           <IngestionJobActionButton row={row} />
                         </div>
                       );
@@ -2303,13 +2536,7 @@ const WorkspaceSettingsPage = () => {
               setIsOpenAddEditIngestionJobModal(false);
               setIsAddIngestionJob(true);
               setSelectedIngestionJobId('');
-              setNewJobModel(null);
-              setNewJobModalities([]);
-              setNewJobInterval('');
-              setNewJobScheduleType('always');
-              setNewJobStartDate(null);
-              setNewJobEndDate(null);
-              setNewJobDicomModality('');
+              resetIngestionJobForm();
             }}
           >
             <div className="relative">
@@ -2333,9 +2560,10 @@ const WorkspaceSettingsPage = () => {
               <div className="mt-4 flex flex-col gap-4">
                 {/* DICOM Modality selector */}
                 <select
-                  className={`block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
-                    newJobDicomModality ? 'text-white' : 'text-white/40'
-                  }`}
+                  disabled={!isAddIngestionJob}
+                  className={`block h-[51px] w-full appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
+                    !isAddIngestionJob ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  } ${newJobDicomModality ? 'text-white' : 'text-white/40'}`}
                   value={newJobDicomModality}
                   onChange={e => setNewJobDicomModality(e.target.value)}
                 >
@@ -2357,9 +2585,10 @@ const WorkspaceSettingsPage = () => {
                 </select>
                 {/* Model selector */}
                 <select
-                  className={`block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
-                    newJobModel?.value ? 'text-white' : 'text-white/40'
-                  }`}
+                  disabled={!isAddIngestionJob}
+                  className={`block h-[51px] w-full appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight focus:outline-none ${
+                    !isAddIngestionJob ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                  } ${newJobModel?.value ? 'text-white' : 'text-white/40'}`}
                   value={newJobModel?.value || ''}
                   onChange={e => {
                     const selected = availableInferenceModels.find(
@@ -2396,13 +2625,21 @@ const WorkspaceSettingsPage = () => {
                 {/* Modalities multi-select */}
                 <div>
                   <select
-                    className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight text-white/40 focus:outline-none"
+                    disabled={!isAddIngestionJob}
+                    className={`block h-[51px] w-full appearance-none rounded-lg border-none bg-[#2D302D] px-3 py-3 pr-8 text-base leading-tight text-white/40 focus:outline-none ${
+                      !isAddIngestionJob ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    }`}
                     value=""
                     onChange={e => {
                       const val = e.target.value;
-                      if (val && !newJobModalities.find(m => m.value === val)) {
-                        setNewJobModalities(prev => [...prev, { value: val, label: val }]);
+                      if (!val) {
+                        return;
                       }
+                      setNewJobModalities(prev =>
+                        prev.find(m => m.value === val)
+                          ? prev.filter(m => m.value !== val)
+                          : [...prev, { value: val, label: val }]
+                      );
                     }}
                   >
                     <option
@@ -2419,9 +2656,8 @@ const WorkspaceSettingsPage = () => {
                       <option
                         key={m}
                         value={m}
-                        disabled={!!newJobModalities.find(mod => mod.value === m)}
                       >
-                        {m}
+                        {newJobModalities.find(mod => mod.value === m) ? `✓ ${m}` : m}
                       </option>
                     ))}
                   </select>
@@ -2435,8 +2671,10 @@ const WorkspaceSettingsPage = () => {
                           {mod.label}
                           <button
                             type="button"
-                            className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#c8f469]"
+                            disabled={!isAddIngestionJob}
+                            className={`ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#c8f469] ${!isAddIngestionJob ? 'cursor-not-allowed opacity-40' : ''}`}
                             onClick={() =>
+                              isAddIngestionJob &&
                               setNewJobModalities(prev => prev.filter(m => m.value !== mod.value))
                             }
                           >
@@ -2511,63 +2749,89 @@ const WorkspaceSettingsPage = () => {
 
                   {/* Date pickers — only shown when dateRange is selected */}
                   {newJobScheduleType === 'dateRange' && (
-                    <div className="pacs-date-range mt-4 flex gap-3">
-                      <div className="relative flex-1">
-                        <DateRangePicker
-                          startDate={newJobStartDate}
-                          startDateId="JobRunFrom"
-                          endDate={newJobEndDate}
-                          endDateId="JobRunTo"
-                          onDatesChange={({ startDate, endDate }) => {
-                            setNewJobStartDate(startDate);
-                            setNewJobEndDate(endDate);
-                          }}
-                          focusedInput={newJobFocusedInput}
-                          onFocusChange={focusedInput => setNewJobFocusedInput(focusedInput)}
-                          isOutsideRange={() => false}
-                          minimumNights={0}
-                          appendToBody
-                          openDirection="up"
-                          startDatePlaceholderText="Run From"
-                          endDatePlaceholderText="Run To"
-                          renderMonthElement={({ month, onMonthSelect, onYearSelect }) => {
-                            const years = [];
-                            const currentYear = moment().year();
-                            for (let i = currentYear - 10; i <= currentYear + 10; i++) {
-                              years.push(i);
-                            }
-                            return (
-                              <div className="MonthElementWrapper">
-                                <select
-                                  value={month.month()}
-                                  onChange={e => onMonthSelect(month, e.target.value)}
-                                >
-                                  {moment.months().map((label, index) => (
-                                    <option
-                                      key={index}
-                                      value={index}
-                                    >
-                                      {label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <select
-                                  value={month.year()}
-                                  onChange={e => onYearSelect(month, e.target.value)}
-                                >
-                                  {years.map(year => (
-                                    <option
-                                      key={year}
-                                      value={year}
-                                    >
-                                      {year}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          }}
-                        />
+                    <div className="mt-4 flex flex-col gap-3">
+                      <div className="pacs-date-range flex gap-3">
+                        <div className="relative flex-1">
+                          <DateRangePicker
+                            startDate={newJobStartDate}
+                            startDateId="JobRunFrom"
+                            endDate={newJobEndDate}
+                            endDateId="JobRunTo"
+                            onDatesChange={({ startDate, endDate }) => {
+                              setNewJobStartDate(startDate);
+                              setNewJobEndDate(endDate);
+                            }}
+                            focusedInput={newJobFocusedInput}
+                            onFocusChange={focusedInput => setNewJobFocusedInput(focusedInput)}
+                            isOutsideRange={() => false}
+                            minimumNights={0}
+                            appendToBody
+                            openDirection="up"
+                            startDatePlaceholderText="Run From"
+                            endDatePlaceholderText="Run To"
+                            renderMonthElement={({ month, onMonthSelect, onYearSelect }) => {
+                              const years = [];
+                              const currentYear = moment().year();
+                              for (let i = currentYear - 10; i <= currentYear + 10; i++) {
+                                years.push(i);
+                              }
+                              return (
+                                <div className="MonthElementWrapper">
+                                  <select
+                                    value={month.month()}
+                                    onChange={e => onMonthSelect(month, e.target.value)}
+                                  >
+                                    {moment.months().map((label, index) => (
+                                      <option
+                                        key={index}
+                                        value={index}
+                                      >
+                                        {label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <select
+                                    value={month.year()}
+                                    onChange={e => onYearSelect(month, e.target.value)}
+                                  >
+                                    {years.map(year => (
+                                      <option
+                                        key={year}
+                                        value={year}
+                                      >
+                                        {year}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              );
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs text-white text-opacity-50">
+                            {t('Start Time')}
+                          </span>
+                          <input
+                            type="time"
+                            value={newJobStartTime}
+                            onChange={e => setNewJobStartTime(e.target.value)}
+                            className="h-[51px] w-full cursor-pointer rounded-lg border-none bg-[#2D302D] px-3 text-white accent-[#c8f469] [color-scheme:dark] focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col gap-1">
+                          <span className="text-xs text-white text-opacity-50">
+                            {t('End Time')}
+                          </span>
+                          <input
+                            type="time"
+                            value={newJobEndTime}
+                            onChange={e => setNewJobEndTime(e.target.value)}
+                            className="h-[51px] w-full cursor-pointer rounded-lg border-none bg-[#2D302D] px-3 text-white accent-[#c8f469] [color-scheme:dark] focus:outline-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2577,9 +2841,10 @@ const WorkspaceSettingsPage = () => {
               <div className="mt-6 flex w-full justify-end">
                 <Button
                   className="h-[41px] rounded-lg px-8"
+                  disabled={isSavingIngestionJob}
                   onClick={handleSaveIngestionJob}
                 >
-                  {t(isAddIngestionJob ? 'Start' : 'Save')}
+                  {isSavingIngestionJob ? '...' : t(isAddIngestionJob ? 'Start' : 'Save')}
                 </Button>
               </div>
             </div>
@@ -2591,7 +2856,13 @@ const WorkspaceSettingsPage = () => {
             isOpen={isOpenRemoveIngestionJobModal}
             size="min-w-[400px]"
             isCloseable={true}
-            onClose={() => setIsOpenRemoveIngestionJobModal(false)}
+            onClose={() => {
+              if (isDeletingIngestionJob) {
+                return;
+              }
+              setIsOpenRemoveIngestionJobModal(false);
+              setSelectedIngestionJobId('');
+            }}
           >
             <div className="relative">
               <Typography
@@ -2608,20 +2879,21 @@ const WorkspaceSettingsPage = () => {
               </Typography>
               <div className="mt-4 flex w-full justify-end">
                 <button
-                  className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
-                  onClick={() => setIsOpenRemoveIngestionJobModal(false)}
-                >
-                  {t('Cancel')}
-                </button>
-                <button
-                  className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
+                  disabled={isDeletingIngestionJob}
+                  className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400 disabled:opacity-50"
                   onClick={() => {
-                    setIngestionJobs(prev => prev.filter(job => job.id !== selectedIngestionJobId));
                     setIsOpenRemoveIngestionJobModal(false);
                     setSelectedIngestionJobId('');
                   }}
                 >
-                  {t('Delete')}
+                  {t('Cancel')}
+                </button>
+                <button
+                  disabled={isDeletingIngestionJob}
+                  className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white disabled:opacity-50"
+                  onClick={deleteIngestionJob}
+                >
+                  {isDeletingIngestionJob ? '...' : t('Delete')}
                 </button>
               </div>
             </div>

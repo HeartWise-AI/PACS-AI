@@ -5,8 +5,11 @@ import { APIResponse, ErrorAPIResponse } from './dto';
 import {
   AddInferenceModelRequest,
   AddOnboardingModelQuestionnaireAnswersRequest,
+  CreateInferenceIngestionJobRequest,
+  DeleteInferenceIngestionJobRequest,
   DeleteInferenceModelRequest,
   GetInferenceAvailableModelsResponse,
+  GetInferenceIngestionJobsResponse,
   GetInferenceModelFactsRequest,
   GetInferenceModelFactsResponse,
   GetInferenceModelInfoRequest,
@@ -18,8 +21,11 @@ import {
   GetOnboardingModelQuestionnaireAnswersResponse,
   PredictInferenceModelRequest,
   RemoveModelFeedbackRequest,
+  StartInferenceIngestionJobRequest,
   StartInferenceModelContainerRequest,
+  StopInferenceIngestionJobRequest,
   StopInferenceModelContainerRequest,
+  UpdateInferenceIngestionJobRequest,
   UpdateInferenceModelRequest,
   UpdateModelFeedbackRequest,
 } from './inferenceDTO';
@@ -47,13 +53,36 @@ const inferenceRepository = {
   /**
    * Add onboarding model questionnaire answers request
    *
-   * @return  {void}
+   * @param   {AddOnboardingModelQuestionnaireAnswersRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
    */
   async AddOnboardingModelQuestionnaireAnswers(
     request: AddOnboardingModelQuestionnaireAnswersRequest
   ): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/inference/onboarding-model-questionnaire-answers/add`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Create inference ingestion job
+   *
+   * @param   {CreateInferenceIngestionJobRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async CreateInferenceIngestionJob(
+    request: CreateInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/ingestion/job/create`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -73,6 +102,27 @@ const inferenceRepository = {
   async DeleteInferenceModel(request: DeleteInferenceModelRequest): Promise<APIResponse<void>> {
     return Api()
       .delete(`/v1/inference/model/${request.id}/remove`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Delete inference ingestion job
+   *
+   * @param   {DeleteInferenceIngestionJobRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async DeleteInferenceIngestionJob(
+    request: DeleteInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .delete(`/v1/inference/ingestion/job/${request.id}/remove`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
@@ -205,6 +255,23 @@ const inferenceRepository = {
       });
   },
   /**
+   * Get inference ingestion jobs
+   *
+   * @return  {Promise<APIResponse><GetInferenceIngestionJobsResponse[]>}
+   */
+  async GetInferenceIngestionJobs(): Promise<APIResponse<GetInferenceIngestionJobsResponse[]>> {
+    return Api()
+      .get(`/v1/inference/ingestion/jobs`)
+      .then((response: AxiosResponse<APIResponse<GetInferenceIngestionJobsResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Predict inference model
    *
    * @param   {PredictInferenceModelRequest}  request
@@ -288,6 +355,48 @@ const inferenceRepository = {
       });
   },
   /**
+   * Start inference ingestion job
+   *
+   * @param   {StartInferenceIngestionJobRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async StartInferenceIngestionJob(
+    request: StartInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/ingestion/job/${request.id}/start`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Stop inference ingestion job
+   *
+   * @param   {StopInferenceIngestionJobRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async StopInferenceIngestionJob(
+    request: StopInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/ingestion/job/${request.id}/stop`)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Update inference model
    *
    * @param   {UpdateInferenceModelRequest}  request
@@ -328,5 +437,27 @@ const inferenceRepository = {
         throw response?.data !== undefined ? response.data : object;
       });
   },
+  /**
+   * Update inference ingestion job
+   *
+   * @param   {UpdateInferenceIngestionJobRequest}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async UpdateInferenceIngestionJob(
+    request: UpdateInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .put(`/v1/inference/ingestion/job/${request.id}/update`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
 };
+
 export default inferenceRepository;
