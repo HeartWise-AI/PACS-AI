@@ -805,11 +805,9 @@ const WorkspaceSettingsPage = () => {
   };
 
   const buildTimestampFromDateAndTime = (date: moment.Moment | null, time: string): number => {
-    if (!date) {
-      return 0;
-    }
+    if (!date) return 0;
     const [hours, minutes] = time.split(':').map(Number);
-    return date.clone().hours(hours).minutes(minutes).seconds(0).unix();
+    return date.clone().startOf('day').hours(hours).minutes(minutes).unix();
   };
 
   /**
@@ -828,8 +826,9 @@ const WorkspaceSettingsPage = () => {
       showAlert('At least one modality must be selected', 'error');
       return;
     }
-    if (!newJobInterval || parseInt(newJobInterval) <= 0) {
-      showAlert('Interval is required and must be greater than 0', 'error');
+    const parsedInterval = parseInt(newJobInterval, 10);
+    if (!newJobInterval || isNaN(parsedInterval) || parsedInterval <= 0) {
+      showAlert('Interval is required and must be a number greater than 0', 'error');
       return;
     }
     if (newJobScheduleType === 'dateRange' && (!newJobStartDate || !newJobEndDate)) {
@@ -868,7 +867,7 @@ const WorkspaceSettingsPage = () => {
           modelName: selectedModel.modelName,
           modelVersion: selectedModel.version,
           modalities: newJobModalities.map(m => m.value),
-          intervalInMinutes: parseInt(newJobInterval),
+          intervalInMinutes: parsedInterval,
           scheduleStartTimestamp,
           scheduleEndTimestamp,
         });
@@ -877,7 +876,7 @@ const WorkspaceSettingsPage = () => {
         const response = await inferenceRepository.UpdateInferenceIngestionJob({
           id: selectedIngestionJobId,
           modalities: newJobModalities.map(m => m.value),
-          intervalInMinutes: parseInt(newJobInterval),
+          intervalInMinutes: parsedInterval,
           scheduleStartTimestamp,
           scheduleEndTimestamp,
         });
@@ -897,8 +896,9 @@ const WorkspaceSettingsPage = () => {
       }
       console.error(`Error saving ingestion job: ${error}`);
       showAlert(error.message, 'error');
+    } finally {
+      setIsSavingIngestionJob(false);
     }
-    setIsSavingIngestionJob(false);
   };
 
   const ModalityBadges = ({ modalities }: { modalities: string[] }) => {
