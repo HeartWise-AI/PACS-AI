@@ -88,7 +88,6 @@ declare global {
       customizationService?: CustomizationServiceType;
       extensions?: string[];
       modes?: string[];
-      experimentalStudyBrowserSort?: boolean;
       defaultDataSourceName?: string;
       hotkeys?: Record<string, Hotkey> | Hotkey[];
       preferSizeOverAccuracy?: boolean;
