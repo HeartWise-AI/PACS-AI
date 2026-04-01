@@ -50,6 +50,7 @@ enum InferenceContainerStatus {
   EXITED = 'exited',
   REMOVING = 'removing',
   DEAD = 'dead',
+  STOPPED = 'stopped',
 }
 
 const containerStatusColors = {
@@ -92,6 +93,12 @@ const containerStatusColors = {
   [InferenceContainerStatus.DEAD]: {
     bg: 'bg-red-500',
     bgOpacity: 'bg-opacity-20',
+    text: 'text-red-500',
+    dot: 'bg-red-500',
+  },
+  [InferenceContainerStatus.STOPPED]: {
+    bg: 'bg-red-300',
+    bgOpacity: 'bg-opacity-10',
     text: 'text-red-500',
     dot: 'bg-red-500',
   },
