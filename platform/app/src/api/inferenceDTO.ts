@@ -19,7 +19,23 @@ export interface AddOnboardingModelQuestionnaireAnswersRequest {
     | null;
 }
 
+export interface CreateInferenceIngestionJobRequest {
+  dicomModality: string;
+  containerId: string;
+  modelId: string;
+  modelName: string;
+  modelVersion: string;
+  modalities: string[];
+  intervalInMinutes: number;
+  scheduleStartTimestamp: number;
+  scheduleEndTimestamp: number;
+}
+
 export interface DeleteInferenceModelRequest {
+  id: string;
+}
+
+export interface DeleteInferenceIngestionJobRequest {
   id: string;
 }
 
@@ -157,6 +173,23 @@ export interface GetOnboardingModelQuestionnaireAnswersResponse {
   updatedAt: number;
 }
 
+export interface GetInferenceIngestionJobsResponse {
+  id: string;
+  tenantId: string;
+  containerId: string;
+  dicomModality: string;
+  intervalInMinutes: number;
+  modelId: string;
+  modelName: string;
+  modelVersion: string;
+  modalities: string[];
+  status: string;
+  scheduleEndTimestamp: number;
+  scheduleStartTimestamp: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ModelDetails {
   Changelogs: { [key: string]: string } | string;
   Summary: { [key: string]: string };
@@ -235,6 +268,14 @@ export interface StopInferenceModelContainerRequest {
   containerID: string;
 }
 
+export interface StartInferenceIngestionJobRequest {
+  id: string;
+}
+
+export interface StopInferenceIngestionJobRequest {
+  id: string;
+}
+
 export interface UpdateInferenceModelRequest {
   disallowedDICOMTags: string[];
   outputMode: string;
@@ -255,4 +296,12 @@ export interface UpdateModelFeedbackRequest {
         },
       ]
     | null;
+}
+
+export interface UpdateInferenceIngestionJobRequest {
+  id: string;
+  modalities: string[];
+  intervalInMinutes: number;
+  scheduleStartTimestamp: number;
+  scheduleEndTimestamp: number;
 }
