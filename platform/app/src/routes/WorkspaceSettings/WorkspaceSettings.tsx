@@ -2691,7 +2691,7 @@ const WorkspaceSettingsPage = () => {
                       key={m.id}
                       value={m.id}
                     >
-                      {m.id} - {m.aet}
+                      {m.aet}
                     </option>
                   ))}
                 </select>
