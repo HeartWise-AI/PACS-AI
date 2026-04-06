@@ -53,7 +53,7 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 // NOTE: This is a PACS changes
-const frontendVersion = 'v0.57.0-beta';
+const frontendVersion = 'v0.57.1-beta';
 const queryClient = new QueryClient();
 
 // NOTE: This is a PACS changes

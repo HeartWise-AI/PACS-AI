@@ -104,6 +104,8 @@ const containerStatusColors = {
   },
 };
 
+const minIngestionJobIntervalMinutes = 5;
+
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
@@ -184,7 +186,9 @@ const WorkspaceSettingsPage = () => {
   const [isOpenAddEditIngestionJobModal, setIsOpenAddEditIngestionJobModal] = useState(false);
   const [newJobModel, setNewJobModel] = useState<{ value: string; label: string } | null>(null);
   const [newJobModalities, setNewJobModalities] = useState<{ value: string; label: string }[]>([]);
-  const [newJobInterval, setNewJobInterval] = useState<string>('');
+  const [newJobInterval, setNewJobInterval] = useState<string>(
+    String(minIngestionJobIntervalMinutes)
+  );
   const [newJobScheduleType, setNewJobScheduleType] = useState<'always' | 'dateRange'>('always');
   const [newJobStartDate, setNewJobStartDate] = useState(null);
   const [newJobEndDate, setNewJobEndDate] = useState(null);
@@ -861,7 +865,7 @@ const WorkspaceSettingsPage = () => {
   const resetIngestionJobForm = () => {
     setNewJobModel(null);
     setNewJobModalities([]);
-    setNewJobInterval('');
+    setNewJobInterval(String(minIngestionJobIntervalMinutes));
     setNewJobScheduleType('always');
     setNewJobStartDate(null);
     setNewJobEndDate(null);
@@ -902,9 +906,16 @@ const WorkspaceSettingsPage = () => {
       showAlert('At least one modality must be selected', 'error');
       return;
     }
-    const parsedInterval = parseInt(newJobInterval, 10);
-    if (!newJobInterval || isNaN(parsedInterval) || parsedInterval <= 0) {
-      showAlert('Interval is required and must be a number greater than 0', 'error');
+    const parsedInterval = parseInt(newJobInterval.trim(), 10);
+    if (
+      newJobInterval.trim() === '' ||
+      isNaN(parsedInterval) ||
+      parsedInterval < minIngestionJobIntervalMinutes
+    ) {
+      showAlert(
+        `Interval is required and must be at least ${minIngestionJobIntervalMinutes} minutes`,
+        'error'
+      );
       return;
     }
     if (newJobScheduleType === 'dateRange' && (!newJobStartDate || !newJobEndDate)) {
@@ -1400,7 +1411,14 @@ const WorkspaceSettingsPage = () => {
                       );
                       setNewJobDicomModality(row.dicomModality || '');
                       setNewJobModalities(row.modalities.map(m => ({ value: m, label: m })));
-                      setNewJobInterval(row.intervalInMinutes.toString());
+                      const existingInterval = Number(row.intervalInMinutes);
+                      setNewJobInterval(
+                        String(
+                          !Number.isFinite(existingInterval) || existingInterval <= 0
+                            ? minIngestionJobIntervalMinutes
+                            : existingInterval
+                        )
+                      );
                       if (!row.scheduleStartTimestamp && !row.scheduleEndTimestamp) {
                         setNewJobScheduleType('always');
                         setNewJobStartDate(null);
@@ -2673,7 +2691,7 @@ const WorkspaceSettingsPage = () => {
                       key={m.id}
                       value={m.id}
                     >
-                      {m.id} - {m.aet}
+                      {m.aet}
                     </option>
                   ))}
                 </select>
@@ -2793,9 +2811,10 @@ const WorkspaceSettingsPage = () => {
                 <div className="relative">
                   <Input
                     id="jobInterval"
-                    placeholder="Interval"
+                    placeholder={`Interval (minimum of ${minIngestionJobIntervalMinutes} minutes)`}
                     className="w-full pr-20"
                     type="number"
+                    min={minIngestionJobIntervalMinutes}
                     value={newJobInterval}
                     onChange={e => setNewJobInterval(e.target.value)}
                   />
