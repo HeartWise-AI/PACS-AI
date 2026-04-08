@@ -208,6 +208,10 @@ export interface InferenceAvailableAdditionalMetadata {
   required: boolean;
 }
 
+export interface ImportInferenceIngestionJobsRequest {
+  file: File;
+}
+
 export interface PredictInferenceModelRequest {
   studyInstanceUID: string;
   seriesInstanceUIDs: string[];

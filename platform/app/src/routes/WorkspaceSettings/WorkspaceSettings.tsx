@@ -205,6 +205,8 @@ const WorkspaceSettingsPage = () => {
   const [newJobEndTime, setNewJobEndTime] = useState<string>('23:59');
   const [isSavingIngestionJob, setIsSavingIngestionJob] = useState<boolean>(false);
   const [isDeletingIngestionJob, setIsDeletingIngestionJob] = useState<boolean>(false);
+  const [isImportingIngestionJobs, setIsImportingIngestionJobs] = useState<boolean>(false);
+  const ingestionJobsCsvInputRef = useRef<HTMLInputElement>(null);
 
   const dicomHeaders = [
     { text: t('ID'), value: 'id', align: 'left' },
@@ -776,6 +778,47 @@ const WorkspaceSettingsPage = () => {
       showAlert(error.message, 'error');
     }
     setIsDeletingIngestionJob(false);
+  };
+
+  const isCSVFile = (file: File) => {
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.csv')) {
+      return false;
+    }
+    const type = file.type.toLowerCase();
+    if (!type) {
+      return true;
+    }
+    return type === 'text/csv' || type === 'application/csv' || type === 'text/plain';
+  };
+
+  const handleImportIngestionJobsCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+    if (!isCSVFile(file)) {
+      showAlert('Only CSV files are allowed.', 'error');
+      return;
+    }
+
+    setIsImportingIngestionJobs(true);
+    try {
+      const response = await inferenceRepository.ImportInferenceIngestionJobs({ file });
+      showAlert(response.message, 'success');
+      fetchIngestionJobs();
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error importing ingestion jobs CSV: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsImportingIngestionJobs(false);
   };
 
   /**
@@ -1862,9 +1905,21 @@ const WorkspaceSettingsPage = () => {
                       {t('Refresh')}
                     </span>
                   </button>
-                  {/* <button className="border-primary text-primary h-[35px] rounded-lg border px-3 text-sm">
-                    {t('Import CSV')}
-                  </button> */}
+                  <input
+                    ref={ingestionJobsCsvInputRef}
+                    type="file"
+                    accept=".csv,text/csv,application/csv,text/plain"
+                    className="hidden"
+                    onChange={handleImportIngestionJobsCsv}
+                  />
+                  <button
+                    type="button"
+                    disabled={loadingIngestionJobs || isImportingIngestionJobs}
+                    className="border-primary text-primary h-[35px] rounded-lg border px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => ingestionJobsCsvInputRef.current?.click()}
+                  >
+                    {isImportingIngestionJobs ? '...' : t('Import CSV')}
+                  </button>
                   <Button
                     className="h-[35px] rounded-lg px-6"
                     onClick={() => setIsOpenAddEditIngestionJobModal(true)}
