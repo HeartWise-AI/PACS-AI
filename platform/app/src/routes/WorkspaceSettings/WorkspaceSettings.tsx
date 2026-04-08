@@ -780,6 +780,12 @@ const WorkspaceSettingsPage = () => {
     setIsDeletingIngestionJob(false);
   };
 
+  /**
+   * Check if the file is a CSV file
+   *
+   * @param file
+   * @returns
+   */
   const isCSVFile = (file: File) => {
     const name = file.name.toLowerCase();
     if (!name.endsWith('.csv')) {
@@ -792,6 +798,11 @@ const WorkspaceSettingsPage = () => {
     return type === 'text/csv' || type === 'application/csv' || type === 'text/plain';
   };
 
+  /**
+   * Handle import ingestion jobs CSV
+   *
+   * @param event
+   */
   const handleImportIngestionJobsCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
