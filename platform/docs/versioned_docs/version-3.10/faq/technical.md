@@ -171,26 +171,6 @@ to be still some issues with it. You can read and track bugs below.
 - https://bugs.chromium.org/p/chromium/issues/detail?id=1408247
 :::
 
-### `preferSizeOverAccuracy`
-
-This is another flag that you can set in your [configuration file](../configuration/configurationFiles.md) to force the usage of the `half_float` data type for volume rendering and MPR. The main reason to choose this option over `useNorm16Texture` is its broader support across hardware and browsers. However, it is less accurate than the 16-bit data type and may lead to some rendering artifacts.
-
-```js
-Integers between 0 and 2048 can be exactly represented (and also between −2048 and 0)
-Integers between 2048 and 4096 round to a multiple of 2 (even number)
-Integers between 4096 and 8192 round to a multiple of 4
-Integers between 8192 and 16384 round to a multiple of 8
-Integers between 16384 and 32768 round to a multiple of 16
-Integers between 32768 and 65519 round to a multiple of 32
-```
-
-As you see in the ranges above 2048 there will be inaccuracies in the rendering.
-
-Memory snapshot after enabling `preferSizeOverAccuracy` for the same study as above
-
-![](../assets/img/preferSizeOverAccuracy.png)
-
-
 ## How to dynamically load a measurement
 
 You can dynamically load a measurement by using a combination of `MeasurementService` and `CornerstoneTools` Annotation API. Here, we will demonstrate this with an example of loading a `Rectangle` measurement.
