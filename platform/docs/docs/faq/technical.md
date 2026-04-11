@@ -127,77 +127,6 @@ There are various other optional tags that will add to the viewer experience, bu
 Patient Information, Study Information, Series Information, Instance Information, and Frame Information.
 
 
-## How do I handle large volumes for MPR and Volume Rendering
-
-Currently there are two ways to handle large volumes for MPR and Volume Rendering if that does not
-fit in the memory of the client machine.
-
-### `useNorm16Texture`
-
-WebGL officially supports only 8-bit and 32-bit data types. For most images, 8 bits are not enough, and 32 bits are too much. However, we have to use the 32-bit data type for volume rendering and MPR, which results in suboptimal memory consumption for the application.
-
-Through [EXT_texture_norm16](https://registry.khronos.org/webgl/extensions/EXT_texture_norm16/) , WebGL can support 16 bit data type which is ideal
-for most images. You can look into the [webgl report](https://webglreport.com/?v=2) to check if you have that extension enabled.
-
-![](../assets/img/webgl-report-norm16.png)
-
-
-This is a flag that you can set in your [configuration file](../configuration/configurationFiles.md) to force usage of 16 bit data type for the volume rendering and MPR. This will reduce the memory usage by half.
-
-
-For instance for a large pt/ct study
-
-![](../assets/img/large-pt-ct.jpeg)
-
-Before (without the flag) the app shows 399 MB of memory usage
-
-![](../assets/img/memory-profiling-regular.png)
-
-
-After (with flag, running locally) the app shows 249 MB of memory usage
-
-
-![](../assets/img/webgl-int16.png)
-
-:::note
-Using the 16 bit texture (if supported) will not have any effect in the rendering what so ever, and pixelData
-would be exactly shown as it is. For datasets that cannot be represented with 16 bit data type, the flag will be ignored
-and the 32 bit data type will be used.
-
-
-Read more about these discussions in our PRs
-- https://github.com/Kitware/vtk-js/pull/2058
-:::
-
-
-:::warning
-Although the support for 16 bit data type is available in WebGL, in some settings (e.g., Intel-based Macos) there seems
-to be still some issues with it. You can read and track bugs below.
-
-- https://bugs.chromium.org/p/chromium/issues/detail?id=1246379
-- https://bugs.chromium.org/p/chromium/issues/detail?id=1408247
-:::
-
-### `preferSizeOverAccuracy`
-
-This is another flag that you can set in your [configuration file](../configuration/configurationFiles.md) to force the usage of the `half_float` data type for volume rendering and MPR. The main reason to choose this option over `useNorm16Texture` is its broader support across hardware and browsers. However, it is less accurate than the 16-bit data type and may lead to some rendering artifacts.
-
-```js
-Integers between 0 and 2048 can be exactly represented (and also between −2048 and 0)
-Integers between 2048 and 4096 round to a multiple of 2 (even number)
-Integers between 4096 and 8192 round to a multiple of 4
-Integers between 8192 and 16384 round to a multiple of 8
-Integers between 16384 and 32768 round to a multiple of 16
-Integers between 32768 and 65519 round to a multiple of 32
-```
-
-As you see in the ranges above 2048 there will be inaccuracies in the rendering.
-
-Memory snapshot after enabling `preferSizeOverAccuracy` for the same study as above
-
-![](../assets/img/preferSizeOverAccuracy.png)
-
-
 ## How to dynamically load a measurement
 
 You can dynamically load a measurement by using a combination of `MeasurementService` and `CornerstoneTools` Annotation API. Here, we will demonstrate this with an example of loading a `Rectangle` measurement.
@@ -278,56 +207,8 @@ There is also dedicated example for this in the [cornerstone3D examples](https:/
 :::
 
 
-## How do I sort the series in the study panel by a specific value
-
-You need to enable the experimental StudyBrowserSort component by setting the `experimentalStudyBrowserSort` to true in your config file. This will add a dropdown in the study panel to sort the series by a specific value. This component is experimental
-since we are re-deigning the study panel and it might change in the future, but the functionality will remain the same.
-
-```js
-{
-  experimentalStudyBrowserSort: true,
-}
-```
-The component will appear in the study panel and will allow you to sort the series by a specific value. It comes with 3 default sorting functions, Series Number, Series Image Count, and Series Date.
-
-You can sort the series in the study panel by a specific value by adding a custom sorting function in the customizationModule, you can use the existing customizationModule in `extensions/default/src/getCustomizationModule.tsx` or create your own in your extension.
-
-The value to be used for the entry is `studyBrowser.sortFunctions` and should be under the `default` key.
-
-### Example
-
-```js
-export default function getCustomizationModule({ servicesManager, extensionManager }) {
-  return [
-    {
-      name: 'default',
-      value: [
-
-        {
-          id: 'studyBrowser.sortFunctions',
-          values: [
-            {
-              label: 'Series Number',
-              sortFunction: (a, b) => {
-                return a?.SeriesNumber - b?.SeriesNumber;
-              },
-            },
-            // Add more sort functions as needed
-          ],
-        },
-      ],
-    },
-  ];
-}
-```
-
-### Explanation
-This function will be retrieved by the StudyBrowserSort component and will be used to sort all displaySets, it will reflect in all parts of the app since it works at the displaySetService level, which means the thumbnails in the study panel will also be sorted by the desired value.
-You can define multiple functions and pick which sort to use via the dropdown in the StudyBrowserSort component that appears in the study panel.
-
-
 ## How can i change the sorting of the thumbnail / study panel / study browser
-We are currently redesigning the study panel and the study browser. During this process, you can enable our undesigned component via the `experimentalStudyBrowserSort` flag. This will look like:
+You can add your own sorting functions by utilizing the `customizationService` and adding the `studyBrowser.sortFunctions` key. This will look like:
 
 ![alt text](study-sorting.png)
 
