@@ -6,8 +6,10 @@
   "Create an account": "Create an account",
   "Confirm New Password": "Confirm New Password",
   "Confirm": "Confirm",
+  "Consent registration subtitle": "Please fill in the following details to complete your registration.",
   "Email address": "Email address",
   "Enter your email and password to sign in.": "Enter your email and password to sign in.",
+  "Informed Consent": "Informed Consent",
   "Forgot Password": "Forgot Password",
   "Login": "Login",
   "New here?": "New here?",
@@ -19,6 +21,7 @@
   "Register": "Register",
   "Reset Password": "Reset Password",
   "Select Specialty": "Select Specialty",
+  "Submit Consent": "Submit Consent",
   "To reset your password, please provide your registered email address.": "To reset your password, please provide your registered email address.",
   "User": "User",
   "Welcome to PACS AI": "Welcome to PACS AI"

@@ -1,15 +1,15 @@
 export interface AddOnboardingQuestionnaireAnswersRequest {
   questionnaireType: string;
   onboardingQuestionnaireAnswers:
-    | [
-        {
-          questionnaireId: string;
-          questionnaireQuestion: string;
-          questionnaireAnswerIds?: string[];
-          questionnaireAnswers?: string[];
-        },
-      ]
-    | null;
+  | [
+    {
+      questionnaireId: string;
+      questionnaireQuestion: string;
+      questionnaireAnswerIds?: string[];
+      questionnaireAnswers?: string[];
+    },
+  ]
+  | null;
 }
 export interface GetPublicTenantByIDResponse {
   readonly id: string;
@@ -20,6 +20,7 @@ export interface GetPublicTenantByIDResponse {
 export interface GetTenantInfoResponse {
   readonly id: string;
   readonly name: string;
+  readonly onboardingConsentLink?: string | null;
   readonly onboardingQuestionnaires: {
     POST_SURVEY: [
       {
