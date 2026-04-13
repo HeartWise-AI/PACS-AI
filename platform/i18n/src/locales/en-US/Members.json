@@ -1,6 +1,13 @@
 {
   "Action": "Action",
   "Add Member": "Add Member",
+  "Invite": "Invite",
+  "Enter email then hit send": "Enter email then hit send",
+  "Send": "Send",
+  "Status": "Status",
+  "Invite Sent": "Invite Sent",
+  "Expired": "Expired",
+  "Resend": "Resend",
   "Add a new member.": "Add a new member.",
   "Are you sure you want to delete this user?": "Are you sure you want to delete this user?",
   "Cancel": "Cancel",

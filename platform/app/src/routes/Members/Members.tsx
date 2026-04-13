@@ -16,6 +16,13 @@ import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 
+/** Placeholder rows for invite list UI */
+const mockInviteRows = [
+  { id: '1', displayName: 'Juan Dela Cruz', status: 'sent' as const },
+  { id: '2', displayName: 'abc123@gmail.com', status: 'expired' as const },
+  { id: '3', displayName: 'jane@example.com', status: 'sent' as const },
+];
+
 const MembersPage = () => {
   const { t } = useTranslation('Members');
   const ref = useRef(null);
@@ -29,6 +36,9 @@ const MembersPage = () => {
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
   const [isAddMember, setIsAddMember] = useState(true);
   const [isOpenAddEditMemberModal, setIsOpenAddEditMemberModal] = useState<boolean>(false);
+  const [isOpenInviteModal, setIsOpenInviteModal] = useState<boolean>(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteModalPage, setInviteModalPage] = useState(1);
   const [isOpenDeleteMemberModal, setIsOpenDeleteMemberModal] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState({
     id: '',
@@ -333,15 +343,27 @@ const MembersPage = () => {
               type="text"
               onChange={e => searchItems(e.target.value)}
             />
-            <Button
-              disabled={false}
-              className="min-w-36 h-[51px] rounded-lg !px-0"
-              onClick={() => {
-                setIsOpenAddEditMemberModal(true);
-              }}
-            >
-              {t('Add Member')}
-            </Button>
+            <div className="flex shrink-0 gap-2">
+              <button
+                disabled={false}
+                className="min-w-28 border-primary text-primary h-[51px] rounded-lg border px-3 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setInviteModalPage(1);
+                  setIsOpenInviteModal(true);
+                }}
+              >
+                {t('Invite')}
+              </button>
+              <Button
+                disabled={false}
+                className="min-w-36 h-[51px] rounded-lg !px-0"
+                onClick={() => {
+                  setIsOpenAddEditMemberModal(true);
+                }}
+              >
+                {t('Add Member')}
+              </Button>
+            </div>
           </div>
           {/* table container */}
           <div className="mt-5 mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
@@ -439,6 +461,128 @@ const MembersPage = () => {
               </div>
             )}
           </div>
+          {/* invite modal */}
+          {isOpenInviteModal && (
+            <Modal
+              isOpen={isOpenInviteModal}
+              size="w-full max-w-[640px]"
+              isCloseable={true}
+              onClose={() => {
+                setIsOpenInviteModal(false);
+                setInviteEmail('');
+              }}
+            >
+              <div className="relative">
+                <Typography
+                  variant="h6"
+                  className="font-light text-white"
+                >
+                  {t('Invite')}
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="mt-2 font-light text-white text-opacity-50"
+                >
+                  {t('Enter email then hit send')}
+                </Typography>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    placeholder={t('Email')}
+                    className="h-[51px] w-full flex-1 sm:min-w-0"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="h-[51px] shrink-0 rounded-lg bg-gradient-to-r from-[#d4f87a] to-[#c8f469] px-8 text-base font-medium text-[#151815] transition-opacity hover:opacity-90"
+                  >
+                    {t('Send')}
+                  </button>
+                </div>
+
+                <div className="mt-8 overflow-x-auto border-none">
+                  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-none text-white text-opacity-50">
+                        <th className="px-4 py-3 font-normal">{t('Name')}</th>
+                        <th className="px-4 py-3 font-normal">{t('Status')}</th>
+                        <th className="px-4 py-3 text-center font-normal">{t('Action')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mockInviteRows.map(row => (
+                        <tr
+                          key={row.id}
+                          className="border-none"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-white">{row.displayName}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {row.status === 'sent' ? (
+                              <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#6ED47C]">
+                                {t('Invite Sent')}
+                              </span>
+                            ) : (
+                              <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#FF3D3D]">
+                                {t('Expired')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                              >
+                                {t('Resend')}
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 text-xs font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20"
+                              >
+                                {t('Cancel')}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-6 flex items-center justify-center gap-1">
+                  {[1, 2, 3, 4, 5].map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setInviteModalPage(page)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                        inviteModalPage === page
+                          ? 'bg-[#c8f469] text-[#151815]'
+                          : 'text-white text-opacity-50 hover:text-opacity-80'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80"
+                    aria-label="Next page"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          )}
+
           {/* add and edit member modal */}
           {isOpenAddEditMemberModal && (
             <Modal
