@@ -114,6 +114,8 @@ const WorkspaceSettingsPage = () => {
   const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
   const [inferenceModels, setInferenceModels] = useState<GetInferenceModelResponse[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
+  const [informedConsentEnabled, setInformedConsentEnabled] = useState(false);
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
   const [selectedModality, setSelectedModality] = useState({
@@ -259,6 +261,37 @@ const WorkspaceSettingsPage = () => {
     };
     fetchTenantInfo();
   }, [tenantRepository]);
+
+  useEffect(() => {
+    if (!tenantInfo.id) {
+      return;
+    }
+    setRegistrationEnabled(Boolean(tenantInfo.registrationEnabled));
+    setInformedConsentEnabled(Boolean(tenantInfo.informedConsentEnabled));
+  }, [tenantInfo.id, tenantInfo.registrationEnabled, tenantInfo.informedConsentEnabled]);
+
+  const onboardingToggleButton = (
+    checked: boolean,
+    onToggle: (next: boolean) => void,
+    id: string
+  ) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      id={id}
+      onClick={() => onToggle(!checked)}
+      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6ED47C] ${
+        checked ? 'bg-gradient-to-r from-[#C8F469] to-[#05905E]' : 'bg-white bg-opacity-20'
+      }`}
+    >
+      <span
+        className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-6' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
 
   /**
    * Fetch DICOM modalities
@@ -1608,6 +1641,90 @@ const WorkspaceSettingsPage = () => {
             )}
             {/* divider */}
             <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
+            {/* user onboarding */}
+            <div className="mb-6">
+              <Typography
+                variant="h6"
+                component="h2"
+                className="mb-3 font-semibold text-white"
+              >
+                {t('User Onboarding')}
+              </Typography>
+              <div className="rounded-xl border border-white border-opacity-10 bg-[#1a1c1a] p-5">
+                <div className="flex flex-col border-b border-white border-opacity-10 pb-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-white">{t('Registration')}</div>
+                    <p className="mt-1 text-sm text-white text-opacity-70">
+                      {t('Enable registration for new users')}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex shrink-0 justify-end sm:mt-0">
+                    {onboardingToggleButton(
+                      registrationEnabled,
+                      next => {
+                        setRegistrationEnabled(next);
+                      },
+                      'toggle-registration'
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-white">{t('Informed Consent')}</div>
+                    <p className="mt-1 text-sm text-white text-opacity-70">
+                      {t('Enable informed consent for new users')}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex shrink-0 justify-end sm:mt-0">
+                    {onboardingToggleButton(
+                      informedConsentEnabled,
+                      next => {
+                        setInformedConsentEnabled(next);
+                      },
+                      'toggle-informed-consent'
+                    )}
+                  </div>
+                </div>
+                {informedConsentEnabled && (
+                  <div className="mt-4 flex w-full flex-col gap-2 rounded-lg border border-white/10 bg-[#2a2f2a] px-3 py-2 sm:flex-row sm:items-center sm:gap-3">
+                    <span
+                      className="text-opacity-85 min-w-0 flex-1 truncate text-sm text-white"
+                      title={tenantInfo.onboardingConsentLink || undefined}
+                    >
+                      {tenantInfo.onboardingConsentLink?.trim() || t('No consent URL configured')}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={!tenantInfo.onboardingConsentLink?.trim()}
+                      onClick={() => {
+                        const url = tenantInfo.onboardingConsentLink?.trim();
+                        if (url) {
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }
+                      }}
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#2f4d2f] bg-[#3f523f] px-4 py-2 text-sm font-semibold text-[#a5e06f] transition-colors hover:bg-[#4a5e4a] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {t('DocuSign Preview')}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        aria-hidden
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
             {/* DICOM modality data */}
             <div>
               <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
