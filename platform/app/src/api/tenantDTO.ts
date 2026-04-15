@@ -1,15 +1,15 @@
 export interface AddOnboardingQuestionnaireAnswersRequest {
   questionnaireType: string;
   onboardingQuestionnaireAnswers:
-  | [
-    {
-      questionnaireId: string;
-      questionnaireQuestion: string;
-      questionnaireAnswerIds?: string[];
-      questionnaireAnswers?: string[];
-    },
-  ]
-  | null;
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds?: string[];
+          questionnaireAnswers?: string[];
+        },
+      ]
+    | null;
 }
 export interface GetPublicTenantByIDResponse {
   readonly id: string;
@@ -20,7 +20,9 @@ export interface GetPublicTenantByIDResponse {
 export interface GetTenantInfoResponse {
   readonly id: string;
   readonly name: string;
-  readonly onboardingConsentLink?: string | null;
+  readonly onboardingConsentLink: string;
+  readonly onboardingEnableConsent: boolean;
+  readonly onboardingEnableRegistration: boolean;
   readonly onboardingQuestionnaires: {
     POST_SURVEY: [
       {
@@ -65,4 +67,12 @@ export interface ModelDetails {
   Other_results: { [key: string]: string } | string;
   Uses_and_directions: { [key: string]: string } | string;
   Warnings_and_limitations: { [key: string]: string };
+}
+
+export interface UpdateOnboardingConsentConfigRequest {
+  onboardingEnableConsent: boolean;
+}
+
+export interface UpdateOnboardingRegistrationConfigRequest {
+  onboardingEnableRegistration: boolean;
 }

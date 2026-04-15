@@ -116,6 +116,8 @@ const WorkspaceSettingsPage = () => {
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [informedConsentEnabled, setInformedConsentEnabled] = useState(false);
+  const [isUpdatingOnboardingRegistration, setIsUpdatingOnboardingRegistration] = useState(false);
+  const [isUpdatingOnboardingConsent, setIsUpdatingOnboardingConsent] = useState(false);
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
   const [selectedModality, setSelectedModality] = useState({
@@ -266,22 +268,91 @@ const WorkspaceSettingsPage = () => {
     if (!tenantInfo.id) {
       return;
     }
-    setRegistrationEnabled(Boolean(tenantInfo.registrationEnabled));
-    setInformedConsentEnabled(Boolean(tenantInfo.informedConsentEnabled));
-  }, [tenantInfo.id, tenantInfo.registrationEnabled, tenantInfo.informedConsentEnabled]);
+    setRegistrationEnabled(Boolean(tenantInfo.onboardingEnableRegistration));
+    setInformedConsentEnabled(Boolean(tenantInfo.onboardingEnableConsent));
+  }, [tenantInfo.id, tenantInfo.onboardingEnableRegistration, tenantInfo.onboardingEnableConsent]);
 
+  /**
+   * Handle toggle onboarding registration
+   *
+   * @param next
+   */
+  const handleToggleOnboardingRegistration = async (next: boolean) => {
+    setIsUpdatingOnboardingRegistration(true);
+    try {
+      const response = await tenantRepository.UpdateOnboardingRegistrationConfig({
+        onboardingEnableRegistration: next,
+      });
+      showAlert(response.message, 'success');
+      setRegistrationEnabled(next);
+      setTenantInfo(prev => ({ ...prev, onboardingEnableRegistration: next }));
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error updating onboarding registration config: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsUpdatingOnboardingRegistration(false);
+  };
+
+  /**
+   * Handle toggle onboarding consent
+   *
+   * @param next
+   */
+  const handleToggleOnboardingConsent = async (next: boolean) => {
+    setIsUpdatingOnboardingConsent(true);
+    try {
+      const response = await tenantRepository.UpdateOnboardingConsentConfig({
+        onboardingEnableConsent: next,
+      });
+      showAlert(response.message, 'success');
+      setInformedConsentEnabled(next);
+      setTenantInfo(prev => ({ ...prev, onboardingEnableConsent: next }));
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error updating onboarding consent config: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsUpdatingOnboardingConsent(false);
+  };
+
+  /**
+   * Onboarding toggle button
+   *
+   * @param checked
+   * @param onToggle
+   * @param id
+   * @param disabled
+   */
   const onboardingToggleButton = (
     checked: boolean,
     onToggle: (next: boolean) => void,
-    id: string
+    id: string,
+    disabled = false
   ) => (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-busy={disabled}
       id={id}
-      onClick={() => onToggle(!checked)}
-      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6ED47C] ${
+      disabled={disabled}
+      onClick={() => {
+        if (!disabled) {
+          onToggle(!checked);
+        }
+      }}
+      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6ED47C] disabled:cursor-not-allowed disabled:opacity-50 ${
         checked ? 'bg-gradient-to-r from-[#C8F469] to-[#05905E]' : 'bg-white bg-opacity-20'
       }`}
     >
@@ -1661,10 +1732,9 @@ const WorkspaceSettingsPage = () => {
                   <div className="mt-3 flex shrink-0 justify-end sm:mt-0">
                     {onboardingToggleButton(
                       registrationEnabled,
-                      next => {
-                        setRegistrationEnabled(next);
-                      },
-                      'toggle-registration'
+                      handleToggleOnboardingRegistration,
+                      'toggle-registration',
+                      isUpdatingOnboardingRegistration
                     )}
                   </div>
                 </div>
@@ -1678,10 +1748,9 @@ const WorkspaceSettingsPage = () => {
                   <div className="mt-3 flex shrink-0 justify-end sm:mt-0">
                     {onboardingToggleButton(
                       informedConsentEnabled,
-                      next => {
-                        setInformedConsentEnabled(next);
-                      },
-                      'toggle-informed-consent'
+                      handleToggleOnboardingConsent,
+                      'toggle-informed-consent',
+                      isUpdatingOnboardingConsent
                     )}
                   </div>
                 </div>
