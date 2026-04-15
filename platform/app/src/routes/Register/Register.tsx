@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import userRepository from '../../api/userRepository';
+import tenantRepository from '../../api/tenantRepository';
 import { GetDoctorSpecialtiesResponse, UserRole } from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import { AlertContext } from '../../AlertProvider';
@@ -64,6 +65,41 @@ const RegisterPage = () => {
   useEffect(() => {
     document.title = 'Create an account - PACS AI';
   }, []);
+
+  // if registration is disabled, redirect to login page
+  useEffect(() => {
+    let cancelled = false;
+    const guardRegistrationEnabled = async () => {
+      const params = new URLSearchParams(search);
+      const tenantId =
+        (params.get('t') || '').trim() ||
+        localStorage.getItem('tenantId') ||
+        process.env.APP_PUBLIC_DEFAULT_TENANT ||
+        '';
+      if (!tenantId) {
+        return;
+      }
+      try {
+        const response = await tenantRepository.GetPublicTenantByID({ tenantId: tenantId });
+        if (cancelled) {
+          return;
+        }
+        if (response.data.onboardingEnableRegistration === false) {
+          navigate(
+            { pathname: '/login', search: `?t=${encodeURIComponent(tenantId)}` },
+            { replace: true }
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    guardRegistrationEnabled();
+    return () => {
+      cancelled = true;
+    };
+  }, [search, navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(search);

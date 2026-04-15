@@ -15,6 +15,8 @@ export interface GetPublicTenantByIDResponse {
   readonly id: string;
   readonly name: string;
   readonly address: string;
+  readonly onboardingEnableRegistration?: boolean;
+  readonly onboardingEnableConsent?: boolean;
 }
 
 export interface GetTenantInfoResponse {

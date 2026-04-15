@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router';
 import { Typography } from '@ohif/ui';
 import userRepository from '../api/userRepository';
+import tenantRepository from '../api/tenantRepository';
 import { logoutUser } from '../service/userService';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import chevronDownIcon from './../assets/pacs/icons/chevron-down.png';
@@ -24,7 +25,18 @@ const HeaderPanel = ({ title }) => {
         setCurrentUser(response.data);
         // if user has not signed consent, redirect to consent page
         if (!response.data.isConsentSigned && !location.pathname.includes('/user/consent')) {
-          navigate('/user/consent', { replace: true });
+          let consentRequired = true;
+          try {
+            const tenantResponse = await tenantRepository.GetTenantInfo();
+            if (tenantResponse.data.onboardingEnableConsent === false) {
+              consentRequired = false;
+            }
+          } catch {
+            // if tenant settings cannot be loaded, keep default (redirect) for safety
+          }
+          if (consentRequired) {
+            navigate('/user/consent', { replace: true });
+          }
         }
       } catch (error) {
         logoutUser(navigate, tenantId);
