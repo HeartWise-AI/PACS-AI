@@ -701,7 +701,7 @@ const MembersPage = () => {
                     <thead>
                       <tr className="border-none text-white text-opacity-50">
                         <th className="px-4 py-3 font-normal">{t('Name')}</th>
-                        <th className="px-4 py-3 font-normal">{t('Status')}</th>
+                        <th className="px-4 py-3 text-center font-normal">{t('Status')}</th>
                         <th className="px-4 py-3 text-center font-normal">{t('Action')}</th>
                       </tr>
                     </thead>
@@ -747,7 +747,7 @@ const MembersPage = () => {
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-4 py-1 text-[13px]">
+                              <td className="flex justify-center px-4 py-1 text-[13px]">
                                 {rowStatus === 'expired' ? (
                                   <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 font-medium text-[#FF3D3D]">
                                     {t('Expired')}
@@ -766,7 +766,7 @@ const MembersPage = () => {
                                       resendingTenantInviteId === invite.id ||
                                       removingTenantInviteId === invite.id
                                     }
-                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 min-w-[71px] rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                                     onClick={() => {
                                       void handleResendTenantInvite(invite.id);
                                     }}
@@ -779,7 +779,7 @@ const MembersPage = () => {
                                       removingTenantInviteId === invite.id ||
                                       resendingTenantInviteId === invite.id
                                     }
-                                    className="rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 text-xs font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="min-w-[71px] rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20 disabled:cursor-not-allowed disabled:opacity-40"
                                     onClick={() => {
                                       void handleCancelTenantInvite(invite.id);
                                     }}
