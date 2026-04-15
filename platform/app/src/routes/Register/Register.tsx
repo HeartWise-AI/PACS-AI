@@ -11,9 +11,29 @@ import { logoutUser } from '../../service/userService';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
+import eyeOff from './../../assets/pacs/icons/eye-off.png';
+import eyeOn from './../../assets/pacs/icons/eye-on.png';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
+
+const passwordMinLength = 8;
+
+const getPasswordValidationMessage = (password: string): string | null => {
+  if (password.length < passwordMinLength) {
+    return 'Password must be at least 8 characters';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain one uppercase';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain one lowercase';
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return 'Password must contain one special character';
+  }
+  return null;
+};
 
 const RegisterPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -21,19 +41,38 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const showAlert = useContext(AlertContext) as (message: string, variant: string) => void;
-  const tenantId = new URLSearchParams(search).get('t') || localStorage.getItem('tenantId') || '';
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    const p = new URLSearchParams(search);
+    return (p.get('email') || '').trim().toLowerCase();
+  });
+  const [invitationCode, setInvitationCode] = useState(() => {
+    const p = new URLSearchParams(search);
+    return (p.get('code') || '').trim();
+  });
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [licenseNo, setLicenseNo] = useState('');
   const [specialty, setSpecialty] = useState('');
   const [specialties, setSpecialties] = useState<GetDoctorSpecialtiesResponse[]>([]);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     document.title = 'Create an account - PACS AI';
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    setInvitationCode((params.get('code') || '').trim());
+    const emailParam = params.get('email');
+    if (emailParam?.trim()) {
+      setEmail(emailParam.trim().toLowerCase());
+    }
+  }, [search]);
 
   useEffect(() => {
     const loadSpecialties = async () => {
@@ -49,30 +88,73 @@ const RegisterPage = () => {
     // load specialties once on mount
   }, []);
 
+  /**
+   * Handle back to login
+   *
+   * @returns
+   */
   const handleBackToLogin = () => {
     navigate({ pathname: '/login', search });
   };
 
+  /**
+   * Submit register
+   *
+   * @returns
+   */
   const submitRegister = async () => {
-    if (!email.trim() || !firstName.trim() || !lastName.trim() || !licenseNo.trim() || !specialty) {
+    const params = new URLSearchParams(search);
+    const tenantIdFromInvite = (params.get('t') || '').trim();
+    const codeFromUrl = invitationCode.trim() || (params.get('code') || '').trim();
+
+    if (!tenantIdFromInvite) {
+      showAlert(t('Registration link is missing tenant'), 'error');
+      return;
+    }
+    if (!codeFromUrl) {
+      showAlert(t('Registration link is missing code'), 'error');
+      return;
+    }
+    if (
+      !email.trim() ||
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !licenseNo.trim() ||
+      !specialty ||
+      !password.trim() ||
+      !confirmPassword.trim()
+    ) {
       showAlert(t('Please fill all required fields'), 'error');
       return;
     }
+    const pwdMsg = getPasswordValidationMessage(password);
+    if (pwdMsg) {
+      showAlert(t(pwdMsg), 'error');
+      return;
+    }
+    if (password !== confirmPassword) {
+      showAlert(t('Passwords do not match'), 'error');
+      return;
+    }
+    const tenantid = tenantIdFromInvite || localStorage.getItem('tenantId') || '';
     setIsRegistering(true);
     try {
-      const response = await userRepository.AddTenantUser({
+      const response = await userRepository.RegisterTenantUser({
+        tenantId: tenantIdFromInvite,
         role: UserRole.USER,
         name: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim().toLowerCase(),
+        password,
         licenseNo: licenseNo.trim(),
         specialty,
+        code: codeFromUrl,
       });
       showAlert(response.message, 'success');
       navigate({ pathname: '/login', search });
     } catch (error) {
       if (error?.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
-          logoutUser(navigate, tenantId);
+          logoutUser(navigate, tenantid);
         }, 3000);
       }
       showAlert(error?.message || 'Registration failed', 'error');
@@ -226,12 +308,80 @@ const RegisterPage = () => {
                     />
                   </div>
                 </div>
+
+                <div className="relative mb-4">
+                  <Input
+                    id="register-password"
+                    placeholder={t('Password')}
+                    className="w-full pr-12"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={showPassword ? t('Hide password') : t('Show password')}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
+                    onClick={() => setShowPassword(v => !v)}
+                  >
+                    {showPassword ? (
+                      <img
+                        src={eyeOn}
+                        alt="Eye on"
+                        className="w-5"
+                      />
+                    ) : (
+                      <img
+                        src={eyeOff}
+                        alt="Eye off"
+                        className="w-5"
+                      />
+                    )}
+                  </button>
+                </div>
+
+                <div className="relative mb-4">
+                  <Input
+                    id="register-confirm-password"
+                    placeholder={t('Confirm Password')}
+                    className="w-full pr-12"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? t('Hide password') : t('Show password')}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
+                    onClick={() => setShowConfirmPassword(v => !v)}
+                  >
+                    {showConfirmPassword ? (
+                      <img
+                        src={eyeOn}
+                        alt="Eye on"
+                        className="w-5"
+                      />
+                    ) : (
+                      <img
+                        src={eyeOff}
+                        alt="Eye off"
+                        className="w-5"
+                      />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <Button
                 disabled={isRegistering}
                 className="mt-6 h-[51px] w-full rounded-lg !px-0"
-                onClick={() => {}}
+                onClick={() => {
+                  void submitRegister();
+                }}
               >
                 {isRegistering ? '...' : t('Register')}
               </Button>

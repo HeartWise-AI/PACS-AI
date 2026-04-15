@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import ReactDOM from 'react-dom';
@@ -8,7 +8,7 @@ import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import userRepository from '../../api/userRepository';
-import { UserRole } from '../../api/userDTO';
+import { GetTenantUserEmailInvitesResponse, UserRole } from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
@@ -16,16 +16,10 @@ import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 
-/** Placeholder rows for invite list UI */
-const mockInviteRows = [
-  { id: '1', displayName: 'Juan Dela Cruz', status: 'sent' as const },
-  { id: '2', displayName: 'abc123@gmail.com', status: 'expired' as const },
-  { id: '3', displayName: 'jane@example.com', status: 'sent' as const },
-];
+const userInvitesPerPage = 5;
 
 const MembersPage = () => {
   const { t } = useTranslation('Members');
-  const ref = useRef(null);
   const navigate = useNavigate();
   const [filteredItems, setFilteredItems] = useState([]);
   const [listOfUsers, setListOfUsers] = useState([]);
@@ -38,7 +32,14 @@ const MembersPage = () => {
   const [isOpenAddEditMemberModal, setIsOpenAddEditMemberModal] = useState<boolean>(false);
   const [isOpenInviteModal, setIsOpenInviteModal] = useState<boolean>(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [inviteModalPage, setInviteModalPage] = useState(1);
+  const [tenantEmailInvites, setTenantEmailInvites] = useState<GetTenantUserEmailInvitesResponse[]>(
+    []
+  );
+  const [loadingTenantEmailInvites, setLoadingTenantEmailInvites] = useState(false);
+  const [resendingTenantInviteId, setResendingTenantInviteId] = useState<string | null>(null);
+  const [removingTenantInviteId, setRemovingTenantInviteId] = useState<string | null>(null);
   const [isOpenDeleteMemberModal, setIsOpenDeleteMemberModal] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState({
     id: '',
@@ -328,6 +329,191 @@ const MembersPage = () => {
     }
   };
 
+  /**
+   * Fetch tenant email invites
+   */
+  const fetchTenantEmailInvites = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = Boolean(options?.silent);
+      if (!silent) {
+        setLoadingTenantEmailInvites(true);
+      }
+      try {
+        const response = await userRepository.GetTenantUserEmailInvites();
+        const list = response.data;
+        setTenantEmailInvites(Array.isArray(list) ? list : []);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          showAlert(error.message, 'error');
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        } else {
+          showAlert(error.message, 'error');
+        }
+        setTenantEmailInvites([]);
+      } finally {
+        if (!silent) {
+          setLoadingTenantEmailInvites(false);
+        }
+      }
+    },
+    [navigate, tenantId, showAlert]
+  );
+
+  /**
+   * Sort tenant email invites
+   */
+  const sortedTenantEmailInvites = useMemo(
+    () =>
+      [...tenantEmailInvites]
+        .filter(inv => !(inv.verifiedAt > 0))
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)),
+    [tenantEmailInvites]
+  );
+
+  /**
+   * Calculate total pages for invite modal
+   */
+  const inviteModalTotalPages = Math.max(
+    1,
+    Math.ceil(sortedTenantEmailInvites.length / userInvitesPerPage)
+  );
+
+  /**
+   * Calculate visible page numbers for invite modal
+   */
+  const inviteModalVisiblePageNumbers = useMemo(() => {
+    const total = inviteModalTotalPages;
+    const current = inviteModalPage;
+    const windowSize = 5;
+    if (total <= windowSize) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const start = Math.min(
+      Math.max(1, current - Math.floor(windowSize / 2)),
+      total - windowSize + 1
+    );
+    return Array.from({ length: windowSize }, (_, i) => start + i);
+  }, [inviteModalTotalPages, inviteModalPage]);
+
+  /**
+   * Get paged tenant email invites
+   */
+  const pagedTenantEmailInvites = useMemo(
+    () =>
+      sortedTenantEmailInvites.slice(
+        (inviteModalPage - 1) * userInvitesPerPage,
+        inviteModalPage * userInvitesPerPage
+      ),
+    [sortedTenantEmailInvites, inviteModalPage]
+  );
+
+  useEffect(() => {
+    setInviteModalPage(p => Math.min(Math.max(1, p), inviteModalTotalPages));
+  }, [inviteModalTotalPages]);
+
+  /**
+   * Get invite modal row status
+   *
+   * @param invite
+   * @returns
+   */
+  const getInviteModalRowStatus = (invite: GetTenantUserEmailInvitesResponse) => {
+    const nowSec = Date.now() / 1000;
+    if (invite.expiresAt > 0 && nowSec > invite.expiresAt) {
+      return 'expired' as const;
+    }
+    return 'sent' as const;
+  };
+
+  /**
+   * Handle resend tenant invite
+   *
+   * @param id
+   * @returns
+   */
+  const handleResendTenantInvite = async (id: string) => {
+    setResendingTenantInviteId(id);
+    try {
+      const response = await userRepository.ResendTenantInvitation({ id });
+      showAlert(response.message, 'success');
+      await fetchTenantEmailInvites({ silent: true });
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error resending tenant invite: ${error}`);
+      showAlert(error.message, 'error');
+    } finally {
+      setResendingTenantInviteId(null);
+    }
+  };
+
+  /**
+   * Handle cancel tenant invite
+   *
+   * @param id
+   * @returns
+   */
+  const handleCancelTenantInvite = async (id: string) => {
+    setRemovingTenantInviteId(id);
+    try {
+      const response = await userRepository.RemoveTenantUserEmailInvite({ id });
+      showAlert(response.message, 'success');
+      await fetchTenantEmailInvites({ silent: true });
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error removing tenant invite: ${error}`);
+      showAlert(error.message, 'error');
+    } finally {
+      setRemovingTenantInviteId(null);
+    }
+  };
+
+  /**
+   * Handle send invite
+   *
+   * @returns
+   */
+  const handleSendInvite = async () => {
+    const emailTrim = inviteEmail.trim().toLowerCase();
+    if (!emailTrim) {
+      showAlert(t('Invite email is required'), 'error');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+      showAlert(t('Please enter a valid email address'), 'error');
+      return;
+    }
+    setIsSendingInvite(true);
+    try {
+      const response = await userRepository.InviteTenantUser({ email: emailTrim });
+      showAlert(response.message, 'success');
+      setInviteEmail('');
+      setInviteModalPage(1);
+      await fetchTenantEmailInvites({ silent: true });
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      console.error(`Error sending invite: ${error}`);
+      showAlert(error.message, 'error');
+    }
+    setIsSendingInvite(false);
+  };
+
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
       <div className="flex w-full bg-[#151815]">
@@ -350,6 +536,7 @@ const MembersPage = () => {
                 onClick={() => {
                   setInviteModalPage(1);
                   setIsOpenInviteModal(true);
+                  fetchTenantEmailInvites();
                 }}
               >
                 {t('Invite')}
@@ -470,6 +657,7 @@ const MembersPage = () => {
               onClose={() => {
                 setIsOpenInviteModal(false);
                 setInviteEmail('');
+                setLoadingTenantEmailInvites(false);
               }}
             >
               <div className="relative">
@@ -497,12 +685,15 @@ const MembersPage = () => {
                   />
                   <button
                     type="button"
-                    className="h-[51px] shrink-0 rounded-lg bg-gradient-to-r from-[#d4f87a] to-[#c8f469] px-8 text-base font-medium text-[#151815] transition-opacity hover:opacity-90"
+                    disabled={isSendingInvite}
+                    className="h-[51px] shrink-0 rounded-lg bg-gradient-to-r from-[#d4f87a] to-[#c8f469] px-8 text-base font-medium text-[#151815] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => {
+                      void handleSendInvite();
+                    }}
                   >
-                    {t('Send')}
+                    {isSendingInvite ? '...' : t('Send')}
                   </button>
                 </div>
-
                 <div className="mt-8 overflow-x-auto border-none">
                   <table className="w-full min-w-[480px] border-collapse text-left text-sm">
                     <thead>
@@ -513,72 +704,134 @@ const MembersPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {mockInviteRows.map(row => (
-                        <tr
-                          key={row.id}
-                          className="border-none"
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <span className="text-white">{row.displayName}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            {row.status === 'sent' ? (
-                              <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#6ED47C]">
-                                {t('Invite Sent')}
-                              </span>
-                            ) : (
-                              <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#FF3D3D]">
-                                {t('Expired')}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-center gap-2">
-                              <button
-                                type="button"
-                                className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                              >
-                                {t('Resend')}
-                              </button>
-                              <button
-                                type="button"
-                                className="rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 text-xs font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20"
-                              >
-                                {t('Cancel')}
-                              </button>
-                            </div>
+                      {loadingTenantEmailInvites ? (
+                        Array.from({ length: userInvitesPerPage }, (_, i) => (
+                          <tr
+                            key={`sk-${i}`}
+                            className="border-none"
+                          >
+                            <td
+                              colSpan={3}
+                              className="px-4 py-3"
+                            >
+                              <div className="h-3 max-w-full animate-pulse rounded-full bg-white/10" />
+                            </td>
+                          </tr>
+                        ))
+                      ) : sortedTenantEmailInvites.length === 0 ? (
+                        <tr className="border-none">
+                          <td
+                            colSpan={3}
+                            className="px-4 py-6 text-center text-white text-opacity-50"
+                          >
+                            {t('No invitations yet')}
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        pagedTenantEmailInvites.map(invite => {
+                          const rowStatus = getInviteModalRowStatus(invite);
+                          return (
+                            <tr
+                              key={invite.id}
+                              className="border-none"
+                            >
+                              <td className="px-4 py-1">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <span
+                                    className="truncate text-white"
+                                    title={invite.email}
+                                  >
+                                    {invite.email}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-1">
+                                {rowStatus === 'expired' ? (
+                                  <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#FF3D3D]">
+                                    {t('Expired')}
+                                  </span>
+                                ) : (
+                                  <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#6ED47C]">
+                                    {t('Invite Sent')}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-1">
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      resendingTenantInviteId === invite.id ||
+                                      removingTenantInviteId === invite.id
+                                    }
+                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    onClick={() => {
+                                      void handleResendTenantInvite(invite.id);
+                                    }}
+                                  >
+                                    {resendingTenantInviteId === invite.id ? '...' : t('Resend')}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      removingTenantInviteId === invite.id ||
+                                      resendingTenantInviteId === invite.id
+                                    }
+                                    className="rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 text-xs font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                    onClick={() => {
+                                      void handleCancelTenantInvite(invite.id);
+                                    }}
+                                  >
+                                    {removingTenantInviteId === invite.id ? '...' : t('Cancel')}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="mt-6 flex items-center justify-center gap-1">
-                  {[1, 2, 3, 4, 5].map(page => (
+                {!loadingTenantEmailInvites && sortedTenantEmailInvites.length > 0 && (
+                  <div className="mt-6 flex items-center justify-center gap-1">
                     <button
-                      key={page}
                       type="button"
-                      onClick={() => setInviteModalPage(page)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                        inviteModalPage === page
-                          ? 'bg-[#c8f469] text-[#151815]'
-                          : 'text-white text-opacity-50 hover:text-opacity-80'
-                      }`}
+                      disabled={inviteModalPage <= 1}
+                      className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label={t('Previous')}
+                      onClick={() => setInviteModalPage(p => Math.max(1, p - 1))}
                     >
-                      {page}
+                      &lt;
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80"
-                    aria-label="Next page"
-                  >
-                    &gt;
-                  </button>
-                </div>
+                    {inviteModalVisiblePageNumbers.map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setInviteModalPage(page)}
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                          inviteModalPage === page
+                            ? 'bg-[#c8f469] text-[#151815]'
+                            : 'text-white text-opacity-50 hover:text-opacity-80'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={inviteModalPage >= inviteModalTotalPages}
+                      className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label={t('Next')}
+                      onClick={() =>
+                        setInviteModalPage(p => Math.min(inviteModalTotalPages, p + 1))
+                      }
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                )}
               </div>
             </Modal>
           )}

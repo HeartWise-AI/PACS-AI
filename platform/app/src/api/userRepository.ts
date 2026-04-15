@@ -8,9 +8,14 @@ import {
   DeleteTenantUserRequest,
   ForgotPasswordRequest,
   GetDoctorSpecialtiesResponse,
+  GetTenantUserEmailInvitesResponse,
   GetUserMetadataResponse,
+  InviteTenantUserRequest,
   LoginRequest,
   LoginResponse,
+  RegisterTenantUserRequest,
+  RemoveTenantUserEmailInviteRequest,
+  ResendTenantInvitationRequest,
   UpdateTenantUserRequest,
   UpdateUserMetadataRequest,
   UserResponse,
@@ -109,6 +114,25 @@ const userRepository = {
       });
   },
   /**
+   * Invite tenant user
+   *
+   * @param   {InviteTenantUserRequest<APIResponse><object>}  request
+   *
+   * @return  {Promise<APIResponse><object>}
+   */
+  async InviteTenantUser(request: InviteTenantUserRequest): Promise<APIResponse<object>> {
+    return Api()
+      .post(`/v1/user/invite`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * User login
    *
    * @param   {LoginRequest<APIResponse><LoginResponse>}  request
@@ -147,6 +171,24 @@ const userRepository = {
       });
   },
   /**
+   * Get tenant user email invites
+   *
+   * @return  {Promise<APIResponse><GetTenantUserEmailInvitesResponse[]>}
+   */
+  async GetTenantUserEmailInvites(): Promise<APIResponse<GetTenantUserEmailInvitesResponse[]>> {
+    return Api()
+      .get(`/v1/user/invites`)
+      .then((response: AxiosResponse<APIResponse<GetTenantUserEmailInvitesResponse[]>>) => {
+        const { data } = response;
+
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
    * Get user metadata
    *
    * @return  {Promise<APIResponse><GetUserMetadataResponse>}
@@ -173,6 +215,67 @@ const userRepository = {
     return Api()
       .post(`/v1/user/tutorial/reset`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Register tenant user
+   *
+   * @param   {RegisterTenantUserRequest<APIResponse><object>}  request
+   *
+   * @return  {Promise<APIResponse><object>}
+   */
+  async RegisterTenantUser(request: RegisterTenantUserRequest): Promise<APIResponse<object>> {
+    return Api()
+      .post(`/v1/user/register`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Resend tenant invitation
+   *
+   * @param   {ResendTenantInvitationRequest<APIResponse><object>}  request
+   *
+   * @return  {Promise<APIResponse><object>}
+   */
+  async ResendTenantInvitation(
+    request: ResendTenantInvitationRequest
+  ): Promise<APIResponse<object>> {
+    return Api()
+      .post(`/v1/user/invite/resend`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Remove tenant user email invite
+   *
+   * @param   {RemoveTenantUserEmailInviteRequest<APIResponse><object>}  request
+   *
+   * @return  {Promise<APIResponse><object>}
+   */
+  async RemoveTenantUserEmailInvite(
+    request: RemoveTenantUserEmailInviteRequest
+  ): Promise<APIResponse<object>> {
+    return Api()
+      .delete(`/v1/user/invite/${request.id}/remove`)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
         const { data } = response;
         return data;
       })
