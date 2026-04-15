@@ -171,26 +171,6 @@ to be still some issues with it. You can read and track bugs below.
 - https://bugs.chromium.org/p/chromium/issues/detail?id=1408247
 :::
 
-### `preferSizeOverAccuracy`
-
-This is another flag that you can set in your [configuration file](../configuration/configurationFiles.md) to force the usage of the `half_float` data type for volume rendering and MPR. The main reason to choose this option over `useNorm16Texture` is its broader support across hardware and browsers. However, it is less accurate than the 16-bit data type and may lead to some rendering artifacts.
-
-```js
-Integers between 0 and 2048 can be exactly represented (and also between −2048 and 0)
-Integers between 2048 and 4096 round to a multiple of 2 (even number)
-Integers between 4096 and 8192 round to a multiple of 4
-Integers between 8192 and 16384 round to a multiple of 8
-Integers between 16384 and 32768 round to a multiple of 16
-Integers between 32768 and 65519 round to a multiple of 32
-```
-
-As you see in the ranges above 2048 there will be inaccuracies in the rendering.
-
-Memory snapshot after enabling `preferSizeOverAccuracy` for the same study as above
-
-![](../assets/img/preferSizeOverAccuracy.png)
-
-
 ## How to dynamically load a measurement
 
 You can dynamically load a measurement by using a combination of `MeasurementService` and `CornerstoneTools` Annotation API. Here, we will demonstrate this with an example of loading a `Rectangle` measurement.
@@ -273,15 +253,7 @@ There is also dedicated example for this in the [cornerstone3D examples](https:/
 
 ## How do I sort the series in the study panel by a specific value
 
-You need to enable the experimental StudyBrowserSort component by setting the `experimentalStudyBrowserSort` to true in your config file. This will add a dropdown in the study panel to sort the series by a specific value. This component is experimental
-since we are re-deigning the study panel and it might change in the future, but the functionality will remain the same.
-
-```js
-{
-  experimentalStudyBrowserSort: true,
-}
-```
-The component will appear in the study panel and will allow you to sort the series by a specific value. It comes with 3 default sorting functions, Series Number, Series Image Count, and Series Date.
+The Study Browser sort dropdown is available in the panel settings area. It includes default sorting functions (Series Number, Series Image Count, and Series Date).
 
 You can sort the series in the study panel by a specific value by adding a custom sorting function in the customizationModule, you can use the existing customizationModule in `extensions/default/src/getCustomizationModule.tsx` or create your own in your extension.
 
@@ -320,7 +292,7 @@ You can define multiple functions and pick which sort to use via the dropdown in
 
 
 ## How can i change the sorting of the thumbnail / study panel / study browser
-We are currently redesigning the study panel and the study browser. During this process, you can enable our undesigned component via the `experimentalStudyBrowserSort` flag. This will look like:
+You can use the Study Browser sort dropdown in the panel settings area. This will look like:
 
 ![alt text](study-sorting.png)
 
