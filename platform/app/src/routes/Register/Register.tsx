@@ -150,9 +150,9 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="relative mx-0 grid h-screen w-screen grid-cols-12">
-      <div className="relative col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
-        <div className="flex h-full min-h-0 flex-col justify-between">
+    <div className="relative mx-0 grid h-screen w-full max-w-full grid-cols-12 overflow-x-hidden">
+      <div className="relative col-span-12 min-w-0 bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
+        <div className="flex h-full min-h-0 min-w-0 flex-col justify-between">
           <div className="shrink-0">
             <button
               type="button"
@@ -173,7 +173,7 @@ const RegisterPage = () => {
               </Typography>
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-[.5px]">
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-[.5px]">
             <Typography
               variant="h3"
               component="h1"
@@ -391,7 +391,7 @@ const RegisterPage = () => {
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
         }}
-        className="col-span-12 hidden p-10 sm:col-span-4 sm:block md:col-span-5 xl:col-span-8"
+        className="col-span-12 hidden min-w-0 p-10 sm:col-span-4 sm:block md:col-span-5 xl:col-span-8"
       ></div>
     </div>
   );
