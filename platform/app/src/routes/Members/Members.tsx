@@ -15,6 +15,8 @@ import { AlertContext } from '../../AlertProvider';
 import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
+import chevronLeft from './../../assets/pacs/icons/chevron-left.png';
+import chevronRight from './../../assets/pacs/icons/chevron-right.png';
 
 const userInvitesPerPage = 5;
 
@@ -735,7 +737,7 @@ const MembersPage = () => {
                               key={invite.id}
                               className="border-none"
                             >
-                              <td className="px-4 py-1">
+                              <td className="px-4 py-1 text-[13px]">
                                 <div className="flex min-w-0 items-center gap-3">
                                   <span
                                     className="truncate text-white"
@@ -745,18 +747,18 @@ const MembersPage = () => {
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-4 py-1">
+                              <td className="px-4 py-1 text-[13px]">
                                 {rowStatus === 'expired' ? (
-                                  <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#FF3D3D]">
+                                  <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 font-medium text-[#FF3D3D]">
                                     {t('Expired')}
                                   </span>
                                 ) : (
-                                  <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 text-xs font-medium text-[#6ED47C]">
+                                  <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 font-medium text-[#6ED47C]">
                                     {t('Invite Sent')}
                                   </span>
                                 )}
                               </td>
-                              <td className="px-4 py-1">
+                              <td className="px-4 py-1 text-[13px]">
                                 <div className="flex flex-wrap items-center justify-center gap-2">
                                   <button
                                     type="button"
@@ -764,7 +766,7 @@ const MembersPage = () => {
                                       resendingTenantInviteId === invite.id ||
                                       removingTenantInviteId === invite.id
                                     }
-                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                                     onClick={() => {
                                       void handleResendTenantInvite(invite.id);
                                     }}
@@ -799,18 +801,22 @@ const MembersPage = () => {
                     <button
                       type="button"
                       disabled={inviteModalPage <= 1}
-                      className="mr-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="mr-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label={t('Previous')}
                       onClick={() => setInviteModalPage(p => Math.max(1, p - 1))}
                     >
-                      &lt;
+                      <img
+                        src={chevronLeft}
+                        alt="Chevron left icon"
+                        className="w-5"
+                      />
                     </button>
                     {inviteModalVisiblePageNumbers.map(page => (
                       <button
                         key={page}
                         type="button"
                         onClick={() => setInviteModalPage(page)}
-                        className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                        className={`flex h-5 w-5 items-center justify-center rounded-md text-sm font-medium transition-colors ${
                           inviteModalPage === page
                             ? 'bg-[#c8f469] text-[#151815]'
                             : 'text-white text-opacity-50 hover:text-opacity-80'
@@ -822,13 +828,17 @@ const MembersPage = () => {
                     <button
                       type="button"
                       disabled={inviteModalPage >= inviteModalTotalPages}
-                      className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="ml-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label={t('Next')}
                       onClick={() =>
                         setInviteModalPage(p => Math.min(inviteModalTotalPages, p + 1))
                       }
                     >
-                      &gt;
+                      <img
+                        src={chevronRight}
+                        alt="Chevron right icon"
+                        className="w-5"
+                      />
                     </button>
                   </div>
                 )}
