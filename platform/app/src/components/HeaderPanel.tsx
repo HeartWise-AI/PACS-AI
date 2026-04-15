@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { Typography } from '@ohif/ui';
 import userRepository from '../api/userRepository';
 import { logoutUser } from '../service/userService';
@@ -13,6 +13,7 @@ const HeaderPanel = ({ title }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const ref = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const tenantId = localStorage.getItem('tenantId') || '';
   let name: string = 'User';
 
@@ -21,13 +22,17 @@ const HeaderPanel = ({ title }) => {
       try {
         const response = await userRepository.GetCurrentUser();
         setCurrentUser(response.data);
+        // if user has not signed consent, redirect to consent page
+        if (!response.data.isConsentSigned && !location.pathname.includes('/user/consent')) {
+          navigate('/user/consent', { replace: true });
+        }
       } catch (error) {
         logoutUser(navigate, tenantId);
       }
     };
 
     fetchCurrentUser();
-  }, [userRepository]);
+  }, [navigate, location.pathname, tenantId, userRepository]);
 
   if (currentUser) {
     name = currentUser.name.split(' ')[0];
