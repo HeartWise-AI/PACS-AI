@@ -67,7 +67,7 @@ export interface RegisterTenantUserRequest {
   password: string;
   licenseNo: string;
   specialty: string;
-  code: string;
+  code?: string;
 }
 
 export interface RemoveTenantUserEmailInviteRequest {

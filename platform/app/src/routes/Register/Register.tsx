@@ -107,14 +107,6 @@ const RegisterPage = () => {
     const tenantIdFromInvite = (params.get('t') || '').trim();
     const codeFromUrl = invitationCode.trim() || (params.get('code') || '').trim();
 
-    if (!tenantIdFromInvite) {
-      showAlert(t('Registration link is missing tenant'), 'error');
-      return;
-    }
-    if (!codeFromUrl) {
-      showAlert(t('Registration link is missing code'), 'error');
-      return;
-    }
     if (
       !email.trim() ||
       !firstName.trim() ||
@@ -136,27 +128,22 @@ const RegisterPage = () => {
       showAlert(t('Passwords do not match'), 'error');
       return;
     }
-    const tenantid = tenantIdFromInvite || localStorage.getItem('tenantId') || '';
+    const tenantId = tenantIdFromInvite || localStorage.getItem('tenantId') || '';
     setIsRegistering(true);
     try {
       const response = await userRepository.RegisterTenantUser({
-        tenantId: tenantIdFromInvite,
+        tenantId,
         role: UserRole.USER,
         name: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim().toLowerCase(),
         password,
         licenseNo: licenseNo.trim(),
         specialty,
-        code: codeFromUrl,
+        ...(codeFromUrl ? { code: codeFromUrl } : {}),
       });
       showAlert(response.message, 'success');
       navigate({ pathname: '/login', search });
     } catch (error) {
-      if (error?.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        setTimeout(() => {
-          logoutUser(navigate, tenantid);
-        }, 3000);
-      }
       showAlert(error?.message || 'Registration failed', 'error');
     }
     setIsRegistering(false);
