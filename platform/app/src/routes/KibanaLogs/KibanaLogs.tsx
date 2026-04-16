@@ -250,6 +250,34 @@ const KibanaLogsPage = () => {
   };
 
   /**
+   * Format cell value
+   */
+  const formatCellValue = value => {
+    if (value === null || value === undefined) {
+      return '-';
+    }
+
+    if (React.isValidElement(value)) {
+      return value;
+    }
+
+    const valueType = typeof value;
+    if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
+      return String(value);
+    }
+
+    if (valueType === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return '[Unserializable value]';
+      }
+    }
+
+    return String(value);
+  };
+
+  /**
    * Handle select for date range filter
    *
    * @param startDate
@@ -395,7 +423,7 @@ const KibanaLogsPage = () => {
                       className={'min-w-[170px]'}
                     >
                       {cell => {
-                        return cell;
+                        return formatCellValue(cell);
                       }}
                     </Table>
                   ) : (
