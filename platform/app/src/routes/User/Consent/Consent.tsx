@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@ohif/ui';
@@ -6,6 +6,7 @@ import userRepository from '../../../api/userRepository';
 import tenantRepository from '../../../api/tenantRepository';
 import type { UserResponse } from '../../../api/userDTO';
 import { logoutUser } from '../../../service/userService';
+import { AlertContext } from '../../../AlertProvider';
 import chevronDownIcon from '../../../assets/pacs/icons/chevron-down.png';
 
 /**
@@ -24,9 +25,11 @@ const UserConsentPage = () => {
   const { t } = useTranslation('Onboarding');
   const { t: tHeader } = useTranslation('HeaderPanel');
   const navigate = useNavigate();
+  const showAlert = useContext(AlertContext);
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const [loadingDocusignIframe, setLoadingDocusignIframe] = useState(true);
   const [consentIframeSrc, setConsentIframeSrc] = useState('about:blank');
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -83,8 +86,31 @@ const UserConsentPage = () => {
 
   const firstName = currentUser?.name?.trim()?.split(/\s+/)[0] || 'User';
 
-  const handleSubmitConsent = () => {
-    navigate('/');
+  /**
+   * Submit the consent form
+   */
+  const handleSubmitConsent = async () => {
+    setIsSubmittingConsent(true);
+    try {
+      const response = await userRepository.GetCurrentUser();
+      if (response.data.isConsentSigned) {
+        setCurrentUser(response.data);
+        navigate('/', { replace: true });
+      } else {
+        showAlert(t('Consent verification failed'), 'error');
+      }
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        showAlert(error.message, 'error');
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
+    } finally {
+      setIsSubmittingConsent(false);
+    }
   };
 
   if (!authReady) {
@@ -177,10 +203,13 @@ const UserConsentPage = () => {
             onLoad={() => setLoadingDocusignIframe(false)}
           />
           <Button
+            disabled={isSubmittingConsent}
             className="mt-6 h-[51px] w-full shrink-0 rounded-lg !px-0 sm:max-w-[350px]"
-            onClick={handleSubmitConsent}
+            onClick={() => {
+              handleSubmitConsent();
+            }}
           >
-            {t('Submit Consent')}
+            {isSubmittingConsent ? '...' : t('Submit Consent')}
           </Button>
         </div>
       </main>

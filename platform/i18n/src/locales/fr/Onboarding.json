@@ -8,6 +8,7 @@
   "Confirm": "Confirmer",
   "Confirm Password": "Confirmer le mot de passe",
   "Consent registration subtitle": "Veuillez remplir les informations ci-dessous pour finaliser votre inscription.",
+  "Consent verification failed": "Votre consentement n'a pas pu être confirmé. Terminez la signature dans DocuSign, puis réessayez.",
   "Email address": "Adresse e-mail",
   "Enter your email and password to sign in.": "Entrez votre adresse e-mail et votre mot de passe pour vous connecter.",
   "Informed Consent": "Consentement éclairé",
