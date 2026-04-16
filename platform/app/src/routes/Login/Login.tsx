@@ -100,7 +100,7 @@ const LoginPage = () => {
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
               localStorage.setItem('tenantId', auth.tenantId);
-              if (!response.data.isEmailVerified) {
+              if (!response.data.isEmailVerified && response.data.isAdminCreated) {
                 navigate(`/change-password`);
               } else {
                 navigate(`/`);

@@ -87,6 +87,7 @@ export interface UserResponse {
   readonly isEmailVerified: boolean;
   readonly isAccountDisabled: boolean;
   readonly isConsentSigned: boolean;
+  readonly isAdminCreated: boolean;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
