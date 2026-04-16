@@ -255,7 +255,7 @@ const LoginPage = () => {
               >
                 {isLoggingIn ? '...' : t('Login')}
               </Button>
-              {tenantInfo.onboardingEnableRegistration !== false && (
+              {tenantInfo.onboardingEnableRegistration === true && (
                 <div className="mt-4 flex w-full justify-center">
                   <p className="text-center text-base">
                     <span className="font-normal text-white text-opacity-70">{t('New here?')}</span>{' '}
