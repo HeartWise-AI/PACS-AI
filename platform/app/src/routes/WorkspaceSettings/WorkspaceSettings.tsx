@@ -1771,7 +1771,7 @@ const WorkspaceSettingsPage = () => {
                           window.open(url, '_blank', 'noopener,noreferrer');
                         }
                       }}
-                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#2f4d2f] bg-[#3f523f] px-4 py-2 text-sm font-semibold text-[#a5e06f] transition-colors hover:bg-[#4a5e4a] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#a5e06f]/10 px-4 py-2 text-sm font-semibold text-[#a5e06f] transition-colors hover:bg-[#4a5e4a] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {t('DocuSign Preview')}
                       <svg
