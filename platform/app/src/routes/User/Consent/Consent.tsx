@@ -18,7 +18,7 @@ import chevronDownIcon from '../../../assets/pacs/icons/chevron-down.png';
  * @returns
  */
 function applyConsentLinkPlaceholders(template: string, name: string, email: string): string {
-  return template.split('{NAME}').join(name).split('{EMAIL}').join(email);
+  return template.replace('{NAME}', name).replace('{EMAIL}', email);
 }
 
 const UserConsentPage = () => {
