@@ -31,7 +31,7 @@ const UserConsentPage = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const [loadingDocusignIframe, setLoadingDocusignIframe] = useState(true);
-  const [consentIframeSrc, setConsentIframeSrc] = useState('about:blank');
+  const [consentIframeSrc, setConsentIframeSrc] = useState('');
   const userMenuRef = useRef<HTMLDivElement>(null);
   const tenantId = localStorage.getItem('tenantId') || '';
 
@@ -53,15 +53,15 @@ const UserConsentPage = () => {
           .then(tenantRes => tenantRes.data)
           .catch(() => undefined)
           .then(tenantData => {
-            let iframeSrc = '';
+            let consentLink = '';
             const link = tenantData?.onboardingConsentLink;
             if (link?.trim()) {
-              iframeSrc = applyConsentLinkPlaceholders(link, user.name ?? '', user.email ?? '');
+              consentLink = applyConsentLinkPlaceholders(link, user.name ?? '', user.email ?? '');
             }
-            if (!iframeSrc.trim()) {
-              iframeSrc = 'about:blank';
+            if (!consentLink.trim()) {
+              consentLink = '';
             }
-            setConsentIframeSrc(iframeSrc);
+            setConsentIframeSrc(consentLink);
             setLoadingDocusignIframe(true);
             document.title = `${t('Informed Consent')} - PACS AI`;
             setAuthReady(true);
@@ -192,11 +192,20 @@ const UserConsentPage = () => {
           {t('Consent registration subtitle')}
         </Typography>
 
-        <div className="mt-10 flex min-h-0 w-full flex-1 flex-col items-center sm:mt-14">
+        <div className="mt-5 flex min-h-0 w-full flex-1 flex-col items-center sm:mt-7">
+          {loadingDocusignIframe && (
+            <div className="flex h-[400px] w-full items-center justify-center">
+              <div
+                className="h-14 w-14 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"
+                role="status"
+                aria-label="Loading"
+              />
+            </div>
+          )}
           <iframe
-            title="DocuSign consent form"
+            title="Docusign Consent Form"
             src={consentIframeSrc}
-            className="w-full max-w-full shrink-0 rounded-lg border-0 bg-white"
+            className="w-full max-w-full shrink-0 rounded-lg border-0"
             width="100%"
             height={loadingDocusignIframe ? 100 : 800}
             style={{ border: 'none' }}
