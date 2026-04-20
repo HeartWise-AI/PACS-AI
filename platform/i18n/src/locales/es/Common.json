@@ -1,9 +1,9 @@
 {
-  "Back to": "Volver a {{location}}",
   "AI Models": "Modelos de IA",
   "Available AI Models": "Modelos de IA disponibles",
   "Action": "Acción",
   "Add a new DICOM modality.": "Añadir una nueva modalidad DICOM.",
+  "Back to": "Volver a {{location}}",
   "Close": "Cerrar",
   "DICOM (Orthanc)": "DICOM (Orthanc)",
   "DocuSign Preview": "Vista previa de DocuSign",
@@ -35,11 +35,11 @@
   "Show": "Mostrar",
   "Stop": "Detener",
   "StudyDate": "Fecha de estudo",
-  "Yes": "Sí",
   "Status": "Estado",
   "Save": "Guardar",
   "Target AET": "AET de destino",
   "Update modality information.": "Actualizar la información de la modalidad.",
   "User Onboarding": "Incorporación de usuarios",
-  "View More": "Ver más"
+  "View More": "Ver más",
+  "Yes": "Sí"
 }
