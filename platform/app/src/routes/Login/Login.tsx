@@ -74,6 +74,10 @@ const LoginPage = () => {
     setShowForgotPasswordForm(false);
   };
 
+  const handleCreateAccountClick = () => {
+    navigate({ pathname: '/register', search: location.search });
+  };
+
   // User login
   const onLogin = e => {
     e.preventDefault();
@@ -96,7 +100,7 @@ const LoginPage = () => {
             // check if user is verified
             userRepository.GetCurrentUser().then(response => {
               localStorage.setItem('tenantId', auth.tenantId);
-              if (!response.data.isEmailVerified) {
+              if (!response.data.isEmailVerified && response.data.isAdminCreated) {
                 navigate(`/change-password`);
               } else {
                 navigate(`/`);
@@ -251,6 +255,21 @@ const LoginPage = () => {
               >
                 {isLoggingIn ? '...' : t('Login')}
               </Button>
+              {tenantInfo.onboardingEnableRegistration === true && (
+                <div className="mt-4 flex w-full justify-center">
+                  <p className="text-center text-base">
+                    <span className="font-normal text-white text-opacity-70">{t('New here?')}</span>{' '}
+                    <button
+                      type="button"
+                      disabled={isLoggingIn}
+                      className="inline rounded-lg bg-transparent p-0 font-bold text-white !ring-0 disabled:opacity-50"
+                      onClick={handleCreateAccountClick}
+                    >
+                      {t('Create an account')}
+                    </button>
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               {versionInfo()}

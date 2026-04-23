@@ -6,6 +6,8 @@ import { ErrorBoundary } from '@ohif/ui-next';
 import DataSourceWrapper from './DataSourceWrapper';
 import WorkList from './WorkList';
 import Login from './Login';
+import Register from './Register';
+import UserConsent from './User/Consent';
 import ChangePassword from './ChangePassword';
 import ResetPassword from './ResetPassword';
 import Local from './Local';
@@ -151,6 +153,20 @@ const createRoutes = ({
     props: { children: Login, servicesManager, extensionManager },
   };
 
+  const RegisterRoute = {
+    path: `/register`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Register, servicesManager, extensionManager },
+  };
+
+  const UserConsentRoute = {
+    path: `/user/consent`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: UserConsent, servicesManager, extensionManager },
+  };
+
   const ChangePasswordRoute = {
     path: `/change-password`,
     children: DataSourceWrapper,
@@ -205,7 +221,9 @@ const createRoutes = ({
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
+    ...(showStudyList ? [UserConsentRoute] : []),
     ...(showStudyList ? [LoginRoute] : []),
+    ...(showStudyList ? [RegisterRoute] : []),
     ...(showStudyList ? [ChangePasswordRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
     ...(showStudyList ? [AIModelsRoute] : []),
