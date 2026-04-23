@@ -280,15 +280,7 @@ There is also dedicated example for this in the [cornerstone3D examples](https:/
 
 ## How do I sort the series in the study panel by a specific value
 
-You need to enable the experimental StudyBrowserSort component by setting the `experimentalStudyBrowserSort` to true in your config file. This will add a dropdown in the study panel to sort the series by a specific value. This component is experimental
-since we are re-deigning the study panel and it might change in the future, but the functionality will remain the same.
-
-```js
-{
-  experimentalStudyBrowserSort: true,
-}
-```
-The component will appear in the study panel and will allow you to sort the series by a specific value. It comes with 3 default sorting functions, Series Number, Series Image Count, and Series Date.
+The Study Browser includes a sort dropdown in the study panel. It comes with 3 default sorting functions: Series Number, Series Image Count, and Series Date.
 
 You can sort the series in the study panel by a specific value by adding a custom sorting function in the customizationModule, you can use the existing customizationModule in `extensions/default/src/getCustomizationModule.tsx` or create your own in your extension.
 
@@ -327,7 +319,7 @@ You can define multiple functions and pick which sort to use via the dropdown in
 
 
 ## How can i change the sorting of the thumbnail / study panel / study browser
-We are currently redesigning the study panel and the study browser. During this process, you can enable our undesigned component via the `experimentalStudyBrowserSort` flag. This will look like:
+The Study Browser provides a built-in sort UI for the study panel:
 
 ![alt text](study-sorting.png)
 
