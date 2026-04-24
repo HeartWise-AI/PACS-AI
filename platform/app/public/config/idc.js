@@ -1,7 +1,6 @@
 /** @type {AppTypes.Config} */
 window.config = {
   routerBasename: null,
-  enableGoogleCloudAdapter: true,
   // below flag is for performance reasons, but it might not work for all servers
   showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
@@ -29,5 +28,4 @@ window.config = {
       revokeAccessTokenOnSignout: true,
     },
   ],
-  studyListFunctionsEnabled: true,
 };
