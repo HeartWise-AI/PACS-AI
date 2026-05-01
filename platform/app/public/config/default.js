@@ -14,9 +14,7 @@ window.config = {
   showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
-  experimentalStudyBrowserSort: false,
   strictZSpacingForVolumeViewport: true,
-  groupEnabledModesFirst: true,
   allowMultiSelectExport: false,
   autoPlayCine: true,
   maxNumRequests: {
