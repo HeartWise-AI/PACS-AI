@@ -1,8 +1,5 @@
 /** @type {AppTypes.Config} */
 window.config = {
-  // Activate the new HP mode....
-  isNewHP: true,
-
   routerBasename: null,
   customizationService: [
     '@ohif/extension-default.customizationModule.datasources',
