@@ -16,8 +16,6 @@ window.config = {
   modes: ['@ohif/mode-test', '@ohif/mode-basic-dev-mode'],
   showStudyList: true,
   maxNumberOfWebWorkers: 4,
-  // below flag is for performance reasons, but it might not work for all servers
-  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
