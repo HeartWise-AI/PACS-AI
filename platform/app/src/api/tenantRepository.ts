@@ -8,6 +8,8 @@ import {
   GetPublicTenantByIDRequest,
   GetPublicTenantByIDResponse,
   GetTenantInfoResponse,
+  UpdateOnboardingConsentConfigRequest,
+  UpdateOnboardingRegistrationConfigRequest,
 } from './tenantDTO';
 
 const tenantRepository = {
@@ -78,6 +80,46 @@ const tenantRepository = {
       .get(`/v1/tenant/onboarding-questionnaire-answers`, { params: request })
       .then((response: AxiosResponse<APIResponse<object>>) => {
         const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update onboarding consent config
+   *
+   * @return  {object}
+   */
+  async UpdateOnboardingConsentConfig(
+    request: UpdateOnboardingConsentConfigRequest
+  ): Promise<APIResponse<object>> {
+    return Api()
+      .put(`/v1/tenant/onboarding-consent/config/update`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Update onboarding registration config
+   *
+   * @return  {object}
+   */
+  async UpdateOnboardingRegistrationConfig(
+    request: UpdateOnboardingRegistrationConfigRequest
+  ): Promise<APIResponse<object>> {
+    return Api()
+      .put(`/v1/tenant/onboarding-registration/config/update`, request)
+      .then((response: AxiosResponse<APIResponse<object>>) => {
+        const { data } = response;
+
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {

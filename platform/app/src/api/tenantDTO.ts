@@ -15,11 +15,15 @@ export interface GetPublicTenantByIDResponse {
   readonly id: string;
   readonly name: string;
   readonly address: string;
+  readonly onboardingEnableRegistration: boolean;
 }
 
 export interface GetTenantInfoResponse {
   readonly id: string;
   readonly name: string;
+  readonly onboardingConsentLink: string;
+  readonly onboardingEnableConsent: boolean;
+  readonly onboardingEnableRegistration: boolean;
   readonly onboardingQuestionnaires: {
     POST_SURVEY: [
       {
@@ -64,4 +68,12 @@ export interface ModelDetails {
   Other_results: { [key: string]: string } | string;
   Uses_and_directions: { [key: string]: string } | string;
   Warnings_and_limitations: { [key: string]: string };
+}
+
+export interface UpdateOnboardingConsentConfigRequest {
+  onboardingEnableConsent: boolean;
+}
+
+export interface UpdateOnboardingRegistrationConfigRequest {
+  onboardingEnableRegistration: boolean;
 }
