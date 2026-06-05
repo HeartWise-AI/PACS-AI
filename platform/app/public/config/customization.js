@@ -4,7 +4,6 @@ window.config = {
   extensions: [],
   modes: ['@ohif/mode-test'],
   showStudyList: true,
-  // below flag is for performance reasons, but it might not work for all servers
   maxNumberOfWebWorkers: 3,
   showCPUFallbackMessage: false,
   strictZSpacingForVolumeViewport: true,
