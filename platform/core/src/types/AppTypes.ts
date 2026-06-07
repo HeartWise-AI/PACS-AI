@@ -34,8 +34,6 @@ import * as PanelModuleTypes from './PanelModule';
 import * as StudyMetadataTypes from './StudyMetadata';
 import * as ViewportGridTypes from './ViewportGridType';
 
-import { StepOptions, TourOptions } from 'shepherd.js';
-
 declare global {
   namespace AppTypes {
     export type ServicesManager = ServicesManagerType;
