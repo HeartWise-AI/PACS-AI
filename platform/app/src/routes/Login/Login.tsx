@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
 import tenantRepository from '../../api/tenantRepository';
@@ -29,6 +29,9 @@ const LoginPage = () => {
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [verificationCooldown, setVerificationCooldown] = useState(0);
   const tenantId = new URLSearchParams(useLocation().search).get('t');
   const frontendVersion = useContext(FrontendVersionContext);
   const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
@@ -64,6 +67,18 @@ const LoginPage = () => {
     fetchAPIInfo();
   }, [userRepository, tenantRepository]);
 
+  useEffect(() => {
+    if (verificationCooldown <= 0) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setVerificationCooldown(seconds => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [verificationCooldown]);
+
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
     setShowForgotPasswordForm(true);
@@ -76,6 +91,28 @@ const LoginPage = () => {
 
   const handleCreateAccountClick = () => {
     navigate({ pathname: '/register', search: location.search });
+  };
+
+  const resendVerificationEmail = () => {
+    const targetEmail = (verificationEmail || email).trim().toLowerCase();
+    if (!targetEmail || !tenantId || verificationCooldown > 0) {
+      return;
+    }
+
+    setIsSendingVerification(true);
+    userRepository
+      .VerifyEmail({ tenantId, email: targetEmail })
+      .then(response => {
+        setVerificationEmail(targetEmail);
+        setVerificationCooldown(60);
+        showAlert(response.message, 'success');
+      })
+      .catch(error => {
+        showAlert(error?.message || 'Unable to send verification email', 'error');
+      })
+      .finally(() => {
+        setIsSendingVerification(false);
+      });
   };
 
   // User login
@@ -106,7 +143,13 @@ const LoginPage = () => {
             showAlert(response.message, 'success');
           })
           .catch(error => {
+            if (error.errorCode === Error.FIREBASE_AUTH_EMAIL_NOT_VERIFIED) {
+              localStorage.removeItem('sessionToken');
+              setVerificationEmail(email.trim().toLowerCase());
+              void signOut(auth);
+            }
             showAlert(error.message, 'error');
+            setIsLoggingIn(false);
           });
       })
       .catch(() => {
@@ -251,6 +294,29 @@ const LoginPage = () => {
               >
                 {isLoggingIn ? '...' : t('Login')}
               </Button>
+              {verificationEmail && (
+                <div className="mt-4 rounded-lg bg-white bg-opacity-10 p-4 text-white">
+                  <Typography
+                    variant="body"
+                    className="text-sm text-white text-opacity-80"
+                  >
+                    {t('Please verify your email before logging in.')}
+                  </Typography>
+                  <Button
+                    disabled={isSendingVerification || verificationCooldown > 0}
+                    className="mt-3 h-[42px] w-full rounded-lg !px-0"
+                    onClick={resendVerificationEmail}
+                  >
+                    {verificationCooldown > 0
+                      ? t('Resend available in {{seconds}}s', {
+                          seconds: verificationCooldown,
+                        })
+                      : isSendingVerification
+                        ? '...'
+                        : t('Resend verification email')}
+                  </Button>
+                </div>
+              )}
               {tenantInfo.onboardingEnableRegistration === true && (
                 <div className="mt-4 flex w-full justify-center">
                   <p className="text-center text-base">
