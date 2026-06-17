@@ -80,7 +80,7 @@
     "dicom-data-dictionary": "^0.3.1",
     "execa": "8.0.1",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
+    "jspdf": "^4.2.1",
     "react-d3-speedometer": "^2.2.1"
   },
   "optionalDependencies": {
@@ -88,7 +88,7 @@
     "@playwright/test": "1.56.1"
   },
   "devDependencies": {
-    "@babel/core": "7.28.0",
+    "@babel/core": "7.29.6",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
     "@babel/plugin-transform-arrow-functions": "7.27.1",
     "@babel/plugin-transform-class-properties": "7.27.1",

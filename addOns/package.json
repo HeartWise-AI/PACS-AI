@@ -21,7 +21,7 @@
     "preinstall": "cd .. && node preinstall.js"
   },
   "devDependencies": {
-    "@babel/core": "7.28.0",
+    "@babel/core": "7.29.6",
     "@babel/plugin-transform-class-properties": "7.27.1",
     "@babel/plugin-transform-object-rest-spread": "7.28.0",
     "@babel/plugin-transform-private-methods": "7.27.1",
