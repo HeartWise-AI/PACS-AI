@@ -19,7 +19,6 @@ window.config = {
     // above, the number of requests can be go a lot higher.
     prefetch: 25,
   },
-  // filterQueryParam: false,
   // Uses the ohif datasource as the default - this requires that KHEOPS be
   // configured with an OHIF path to .../viewer/dicomwebproxy
   defaultDataSourceName: 'ohif',

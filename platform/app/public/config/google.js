@@ -25,7 +25,6 @@ window.config = {
   extensions: [],
   modes: [],
   showStudyList: true,
-  // filterQueryParam: false,
   defaultDataSourceName: 'dicomweb',
   dataSources: [
     {

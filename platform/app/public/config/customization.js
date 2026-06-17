@@ -7,7 +7,6 @@ window.config = {
   maxNumberOfWebWorkers: 3,
   showCPUFallbackMessage: false,
   strictZSpacingForVolumeViewport: true,
-  // filterQueryParam: false,
 
   // Add some customizations to the default e2e datasource
   customizationService: [

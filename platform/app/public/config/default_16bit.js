@@ -22,7 +22,6 @@ window.config = {
     // above, the number of requests can be go a lot higher.
     prefetch: 25,
   },
-  // filterQueryParam: false,
   dataSources: [
     {
       friendlyName: 'dcmjs DICOMWeb Server',
