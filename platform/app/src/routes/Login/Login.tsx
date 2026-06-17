@@ -15,7 +15,7 @@ import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
-import { logoutUser } from '../../service/userService';
+import { logoutUser, navigateAfterAuth } from '../../service/userService';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -97,14 +97,10 @@ const LoginPage = () => {
               localStorage.setItem('sessionToken', sessionToken);
             }
 
-            // check if user is verified
+            // route based on the user's onboarding state (verify email / consent / worklist)
             userRepository.GetCurrentUser().then(response => {
               localStorage.setItem('tenantId', auth.tenantId);
-              if (!response.data.isEmailVerified && response.data.isAdminCreated) {
-                navigate(`/change-password`);
-              } else {
-                navigate(`/`);
-              }
+              navigateAfterAuth(navigate, response.data);
             });
             setIsLoggingIn(false);
             showAlert(response.message, 'success');
@@ -125,7 +121,7 @@ const LoginPage = () => {
       .GetCurrentUser()
       .then(response => {
         if (response.success) {
-          navigate(`/`);
+          navigateAfterAuth(navigate, response.data);
         } else {
           localStorage.removeItem('sessionToken');
         }
