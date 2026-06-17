@@ -19,6 +19,7 @@ import {
   UpdateTenantUserRequest,
   UpdateUserMetadataRequest,
   UserResponse,
+  VerifyEmailRequest,
 } from './userDTO';
 
 const userRepository = {
@@ -70,6 +71,25 @@ const userRepository = {
   async ForgotPassword(request: ForgotPasswordRequest): Promise<APIResponse<void>> {
     return Api()
       .post(`/v1/iam/forgot-password`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Send tenant user email verification
+   *
+   * @param   {VerifyEmailRequest<APIResponse><void>}  request
+   *
+   * @return  {Promise<APIResponse><void>}
+   */
+  async VerifyEmail(request: VerifyEmailRequest): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/iam/verify-email`, request)
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;
