@@ -4,12 +4,9 @@ window.config = {
   extensions: [],
   modes: ['@ohif/mode-test'],
   showStudyList: true,
-  // below flag is for performance reasons, but it might not work for all servers
   maxNumberOfWebWorkers: 3,
-  showWarningMessageForCrossOrigin: false,
   showCPUFallbackMessage: false,
   strictZSpacingForVolumeViewport: true,
-  // filterQueryParam: false,
 
   // Add some customizations to the default e2e datasource
   customizationService: [

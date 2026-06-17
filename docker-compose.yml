@@ -1,6 +1,7 @@
 networks:
   default:
-    name: pacs-net-default
+    external: true
+    name: pacs-net
 
 services:
   pacs-ai:
