@@ -312,7 +312,11 @@ You can define multiple functions and pick which sort to use via the dropdown in
 
 
 ## How can i change the sorting of the thumbnail / study panel / study browser
-You can add your own sorting functions by utilizing the `customizationService` and adding the `studyBrowser.sortFunctions` key, as shown below:
+The StudyBrowserSort component appears in the study panel like this:
+
+![alt text](study-sorting.png)
+
+You can also add your own sorting functions by utilizing the `customizationService` and adding the `studyBrowser.sortFunctions` key, as shown below:
 
 ```
 customizationService.addModeCustomizations([

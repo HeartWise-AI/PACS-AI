@@ -7,7 +7,7 @@ import userRepository from '../../api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../AlertProvider';
 import { Error } from '../../api/dto';
-import { logoutUser } from '../../service/userService';
+import { logoutUser, navigateAfterAuth } from '../../service/userService';
 
 const ChangePasswordPage = () => {
   const { t } = useTranslation();
@@ -15,7 +15,6 @@ const ChangePasswordPage = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
 
@@ -23,10 +22,10 @@ const ChangePasswordPage = () => {
     const fetchCurrentUser = async () => {
       try {
         const response = await userRepository.GetCurrentUser();
-        setCurrentUser(response.data);
 
-        if (currentUser.isEmailVerified) {
-          navigate(`/`);
+        // already verified? leave the change-password page and continue onboarding/worklist
+        if (response.data.isEmailVerified) {
+          navigateAfterAuth(navigate, response.data);
         }
       } catch (error) {
         console.error(error);
@@ -68,10 +67,16 @@ const ChangePasswordPage = () => {
       .UpdatePassword({
         newPassword,
       })
-      .then(response => {
+      .then(async response => {
         setIsChangingPassword(false);
         showAlert(response.message, 'success');
-        navigate(`/`);
+        // re-fetch the user (email is now verified) and route to the next onboarding step
+        try {
+          const userResponse = await userRepository.GetCurrentUser();
+          await navigateAfterAuth(navigate, userResponse.data);
+        } catch {
+          navigate(`/`);
+        }
       })
       .catch(error => {
         setIsChangingPassword(false);

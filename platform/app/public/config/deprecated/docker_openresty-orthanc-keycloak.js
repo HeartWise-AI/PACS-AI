@@ -4,7 +4,6 @@ window.config = {
   showStudyList: true,
   extensions: [],
   modes: [],
-
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
