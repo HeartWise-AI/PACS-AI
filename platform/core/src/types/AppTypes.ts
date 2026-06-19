@@ -87,8 +87,6 @@ declare global {
       modes?: string[];
       defaultDataSourceName?: string;
       hotkeys?: Record<string, Hotkey> | Hotkey[];
-      preferSizeOverAccuracy?: boolean;
-      useNorm16Texture?: boolean;
       useCPURendering?: boolean;
       strictZSpacingForVolumeViewport?: boolean;
       useCursors?: boolean;
@@ -103,10 +101,6 @@ declare global {
       };
       maxNumberOfWebWorkers?: number;
       acceptHeader?: string[];
-      investigationalUseDialog?: {
-        option: 'always' | 'never' | 'configure';
-        days?: number;
-      };
       measurementTrackingMode?: 'standard' | 'simplified' | 'none';
       disableConfirmationPrompts?: boolean;
       showPatientInfo?: 'visible' | 'visibleCollapsed' | 'disabled' | 'visibleReadOnly';
