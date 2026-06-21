@@ -41,7 +41,6 @@ Before running this repository, you need to have the PACS AI backend up and runn
    ```
    PUBLIC_URL=/
    APP_CONFIG=config/local_pacs_ai.js
-   USE_HASH_ROUTER=false
    ```
 
 ## Production Setup
