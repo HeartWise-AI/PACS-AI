@@ -136,10 +136,7 @@ interface ErrorBoundaryProps {
   showErrorDetails?: ShowErrorDetails;
 }
 
-const DefaultFallback = ({
-  error,
-  context,
-}: DefaultFallbackProps) => {
+const DefaultFallback = ({ error, context }: DefaultFallbackProps) => {
   const { t } = useTranslation('ErrorBoundary');
   const [showDetails, setShowDetails] = useState(false);
   const { show } = useNotification();
