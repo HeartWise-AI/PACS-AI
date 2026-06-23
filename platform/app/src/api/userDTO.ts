@@ -104,6 +104,11 @@ export interface UpdateUserMetadataRequest {
   metadata: { [key: string]: string | number | null };
 }
 
+export interface VerifyEmailRequest {
+  tenantId: string;
+  email: string;
+}
+
 export enum UserRole {
   USER = 'USER',
   ADMIN = 'ADMIN',

@@ -177,7 +177,10 @@ const RegisterPage = () => {
         specialty,
         ...(codeFromUrl ? { code: codeFromUrl } : {}),
       });
-      showAlert(response.message, 'success');
+      showAlert(
+        `${response.message} ${t('Please check your email to verify your account before logging in.')}`,
+        'success'
+      );
       navigate({ pathname: '/login', search });
     } catch (error) {
       showAlert(error?.message || 'Registration failed', 'error');
