@@ -237,17 +237,12 @@ const createRoutes = ({
   ];
 
   function RouteWithErrorBoundary({ route, ...rest }) {
-    const [appConfig] = useAppConfig();
-    const { showErrorDetails } = appConfig;
-
     history.navigate = useNavigate();
 
     // eslint-disable-next-line react/jsx-props-no-spreading
     return (
       <ErrorBoundary
         context={`Route ${route.path}`}
-        showErrorDetails={showErrorDetails}
-        showNotification={false} // NOTE: This is a PACS changes (hide the red toast notification)
       >
         <route.children
           {...rest}

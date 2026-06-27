@@ -103,10 +103,6 @@ declare global {
       };
       maxNumberOfWebWorkers?: number;
       acceptHeader?: string[];
-      investigationalUseDialog?: {
-        option: 'always' | 'never' | 'configure';
-        days?: number;
-      };
       measurementTrackingMode?: 'standard' | 'simplified' | 'none';
       disableConfirmationPrompts?: boolean;
       showPatientInfo?: 'visible' | 'visibleCollapsed' | 'disabled' | 'visibleReadOnly';

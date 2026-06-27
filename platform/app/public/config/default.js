@@ -22,7 +22,6 @@ window.config = {
     // above, the number of requests can be go a lot higher.
     prefetch: 25,
   },
-  showErrorDetails: 'always', // 'always', 'dev', 'production'
   // Defines multi-monitor layouts
   multimonitor: [
     {
