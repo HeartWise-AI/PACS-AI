@@ -1,14 +1,12 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { LoadingIndicatorProgress } from '@ohif/ui';
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
 import Sidebar from '@ohif/app/src/components/Sidebar';
 import HeaderPanel from '@ohif/app/src/components/HeaderPanel';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
-import { useTranslation } from 'react-i18next';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 import { logoutUser } from '@ohif/app/src/service/userService';
@@ -43,7 +41,6 @@ function ViewerLayout({
   rightPanelMinimumExpandedWidth,
 }: withAppTypes): React.FunctionComponent {
   const [appConfig] = useAppConfig();
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || ''; // NOTE: This is a PACS changes
   const [inferenceAvailableModels, setInferenceAvailableModels] = useState<

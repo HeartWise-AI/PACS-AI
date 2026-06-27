@@ -241,9 +241,7 @@ const createRoutes = ({
 
     // eslint-disable-next-line react/jsx-props-no-spreading
     return (
-      <ErrorBoundary
-        context={`Route ${route.path}`}
-      >
+      <ErrorBoundary context={`Route ${route.path}`}>
         <route.children
           {...rest}
           {...route.props}
