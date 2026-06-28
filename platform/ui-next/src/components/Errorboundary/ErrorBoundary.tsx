@@ -112,18 +112,9 @@ interface ErrorBoundaryError extends Error {
   stack?: string;
 }
 
-enum ShowErrorDetails {
-  always = 'always',
-  dev = 'dev',
-  production = 'production',
-}
-
 interface DefaultFallbackProps extends FallbackProps {
   error: ErrorBoundaryError;
   context: string;
-  resetErrorBoundary: () => void;
-  showErrorDetails?: ShowErrorDetails;
-  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 interface ErrorBoundaryProps {
@@ -134,29 +125,17 @@ interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallbackRoute?: string | null;
   isPage?: boolean;
-  showErrorDetails?: ShowErrorDetails;
-  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 const DefaultFallback = ({
   error,
   context,
-  resetErrorBoundary = () => {},
-  showErrorDetails,
-  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: DefaultFallbackProps) => {
-  const isShowDetailsButtonVisible =
-    showErrorDetails == null ||
-    showErrorDetails === ShowErrorDetails.always ||
-    (showErrorDetails === ShowErrorDetails.dev && !isProduction) ||
-    (showErrorDetails === ShowErrorDetails.production && isProduction);
-
   const { t } = useTranslation('ErrorBoundary');
   const [showDetails, setShowDetails] = useState(false);
   const { show } = useNotification();
 
   const title = `${t('Something went wrong')}${!isProduction && ` ${t('in')} ${context}`}.`;
-  const subtitle = t('Sorry, something went wrong there. Try again.');
 
   const { errorTitle, code, firstFilename } = parseErrorStack(error);
 
@@ -171,31 +150,6 @@ const DefaultFallback = ({
       });
     }
   };
-
-  useEffect(() => {
-    // NOTE: This is a PACS changes (hide the red toast notification)
-    if (!showNotification) {
-      return;
-    }
-
-    // Use a stable ID based on error message to support deduplication
-    const errorId = `error-${errorTitle || error.message}`;
-
-    // We don't need to track shown state - instead rely on the notification deduplication system
-    show({
-      title,
-      message: subtitle,
-      type: 'error',
-      duration: 0,
-      id: errorId,
-      action: isShowDetailsButtonVisible
-        ? {
-            label: t('Show Details'),
-            onClick: () => setShowDetails(true),
-          }
-        : undefined,
-    });
-  }, [error, errorTitle, subtitle, t, title, show, showNotification]); // NOTE: This is a PACS changes (hide the red toast notification)
 
   return (
     <Dialog
@@ -270,8 +224,6 @@ const ErrorBoundary = ({
   onError = _error => {},
   fallbackComponent: FallbackComponent = DefaultFallback,
   children,
-  showErrorDetails,
-  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: ErrorBoundaryProps) => {
   const [error, setError] = useState<ErrorBoundaryError | null>(null);
 
@@ -326,8 +278,6 @@ const ErrorBoundary = ({
         <FallbackComponent
           {...props}
           context={context}
-          showErrorDetails={showErrorDetails}
-          showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
         />
       )}
       onReset={onResetHandler}
@@ -340,8 +290,6 @@ const ErrorBoundary = ({
             error={error}
             context={context}
             resetErrorBoundary={() => setError(null)}
-            showErrorDetails={showErrorDetails}
-            showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
           />
         )}
       </>
