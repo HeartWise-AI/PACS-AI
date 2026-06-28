@@ -254,6 +254,14 @@ const createRoutes = ({
     );
   }
 
+  RouteWithErrorBoundary.propTypes = {
+    route: PropTypes.shape({
+      path: PropTypes.string.isRequired,
+      children: PropTypes.elementType.isRequired,
+      props: PropTypes.object,
+    }).isRequired,
+  };
+
   const { userAuthenticationService } = servicesManager.services;
 
   // All routes are private by default and then we let the user auth service
