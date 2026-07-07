@@ -41,6 +41,7 @@ import { AlertProvider } from './AlertProvider';
 import { GlobalStateProvider } from './GlobalStateProvider';
 // NOTE: This is a PACS changes
 import TutorialProgressOverlay from './components/TutorialProgressOverlay';
+import InferenceProcessingProvider from './components/inference/InferenceProcessingProvider';
 import './App.css';
 
 // NOTE: This is a PACS changes
@@ -195,10 +196,11 @@ function App({
         <GlobalStateProvider>
           <CombinedProviders>
             <BrowserRouter basename={routerBasename}>
-              {authRoutes}
-              {appRoutes}
-              {/* Global tutorial progress overlay using react-shepherd */}
-              <TutorialProgressOverlay />
+              <InferenceProcessingProvider>
+                {authRoutes}
+                {appRoutes}
+                <TutorialProgressOverlay />
+              </InferenceProcessingProvider>
             </BrowserRouter>
           </CombinedProviders>
         </GlobalStateProvider>
