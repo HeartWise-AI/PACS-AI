@@ -30,6 +30,7 @@ import { Typography } from '@ohif/ui';
 import { AlertContext } from '../AlertProvider';
 import { Error } from '../api/dto';
 import { logoutUser } from '../service/userService';
+import { useDraggableOverlay } from './hooks/useDraggableOverlay';
 
 type QuestionnaireAnswerOption = {
   id: string;
@@ -321,6 +322,15 @@ const TutorialProgressOverlay: React.FC = () => {
   >({});
   const [isModelQuestionnaireSubmitting, setIsModelQuestionnaireSubmitting] = useState(false);
   const [modelsLoading, setModelsLoading] = useState<boolean>(false);
+  const drag = useDraggableOverlay();
+
+  const handleToggleClick = useCallback(() => {
+    if (drag.didDragRef.current) {
+      drag.didDragRef.current = false;
+      return;
+    }
+    setExpanded(prev => !prev);
+  }, [drag]);
 
   // Keep `steps` synced with `availableDefaultSteps` so tenant
   // configuration changes don't clobber per-step completed/current flags.
@@ -1007,7 +1017,14 @@ const TutorialProgressOverlay: React.FC = () => {
       {/* Ensure Shepherd buttons use black text regardless of external styles */}
       <style>{`.shepherd-theme-pacsai .shepherd-button { color: #000 !important; } @keyframes progress-fill { 0% { stroke-dashoffset: 56.55; } 100% { stroke-dashoffset: 0; } }`}</style>
       {/* Tutorial progress toggle and card */}
-      <div className="tutorial-overlay-container pointer-events-none fixed bottom-20 right-5 z-[999] flex flex-col items-end">
+      <div
+        className="tutorial-overlay-container pointer-events-none fixed bottom-20 right-5 z-[999] flex flex-col items-end"
+        style={{
+          transform: `translate(${drag.position.x}px, ${drag.position.y}px)`,
+          cursor: drag.isDragging ? 'grabbing' : undefined,
+        }}
+        onMouseDown={drag.handleMouseDown}
+      >
         {expanded && (
           <div className="tutorial-card pointer-events-auto mb-2 w-[360px] max-w-full rounded-2xl bg-[#151815] text-white shadow-2xl">
             <div className="tutorial-card-header relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-[#1F2C1F] to-[#151815] px-5 py-4">
@@ -1017,7 +1034,7 @@ const TutorialProgressOverlay: React.FC = () => {
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-60"
               />
-              <div className="flex items-start justify-between">
+              <div className="draggable-header flex cursor-grab items-start justify-between active:cursor-grabbing">
                 <div>
                   {progress === 100 ? (
                     <>
@@ -1211,8 +1228,8 @@ const TutorialProgressOverlay: React.FC = () => {
         )}
         <button
           type="button"
-          className="tutorial-toggle pointer-events-auto mb-3 flex h-12 items-center rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white shadow-lg backdrop-blur"
-          onClick={() => setExpanded(prev => !prev)}
+          className="tutorial-toggle draggable-header pointer-events-auto mb-3 flex h-12 cursor-grab items-center rounded-lg border border-white/10 bg-black/70 px-3 py-2 text-sm text-white shadow-lg backdrop-blur active:cursor-grabbing"
+          onClick={handleToggleClick}
         >
           <div className="mr-2 flex h-6 w-6 items-center justify-center">
             <svg
