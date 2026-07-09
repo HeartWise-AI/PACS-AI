@@ -309,3 +309,28 @@ export interface UpdateInferenceIngestionJobRequest {
   scheduleStartTimestamp: number;
   scheduleEndTimestamp: number;
 }
+
+export type CandidateProcessingStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'partial'
+  | 'failed'
+  | '';
+
+export interface GetInferenceIngestionCandidatesRequest {
+  status?: string;
+  jobId?: string;
+  studyInstanceUID?: string;
+}
+
+export interface GetInferenceIngestionCandidatesResponse {
+  id: string;
+  studyInstanceUID: string;
+  patientId: string;
+  modalitiesInStudy: string;
+  processingStatus: CandidateProcessingStatus;
+  processingStatusAt: number;
+  ingestionJobId: string;
+  updatedAt: number;
+}

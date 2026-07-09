@@ -9,6 +9,8 @@ import {
   DeleteInferenceIngestionJobRequest,
   DeleteInferenceModelRequest,
   GetInferenceAvailableModelsResponse,
+  GetInferenceIngestionCandidatesRequest,
+  GetInferenceIngestionCandidatesResponse,
   GetInferenceIngestionJobsResponse,
   GetInferenceModelFactsRequest,
   GetInferenceModelFactsResponse,
@@ -267,6 +269,29 @@ const inferenceRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get inference ingestion candidates
+   *
+   * @param   {GetInferenceIngestionCandidatesRequest}  request
+   *
+   * @return  {Promise<APIResponse><GetInferenceIngestionCandidatesResponse[]>}
+   */
+  async GetInferenceIngestionCandidates(
+    request: GetInferenceIngestionCandidatesRequest = {}
+  ): Promise<APIResponse<GetInferenceIngestionCandidatesResponse[]>> {
+    return Api()
+      .get(`/v1/inference/ingestion/candidates`, { params: request })
+      .then(
+        (response: AxiosResponse<APIResponse<GetInferenceIngestionCandidatesResponse[]>>) => {
+          const { data } = response;
+          return data;
+        }
+      )
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

@@ -7,6 +7,7 @@ import tenantRepository from '../api/tenantRepository';
 import { logoutUser } from '../service/userService';
 import chevronRightIcon from './../assets/pacs/icons/chevron-right.png';
 import chevronDownIcon from './../assets/pacs/icons/chevron-down.png';
+import InferenceNotificationsBell from './inference/InferenceNotificationsBell';
 
 const HeaderPanel = ({ title }) => {
   const { t } = useTranslation('HeaderPanel');
@@ -102,7 +103,8 @@ const HeaderPanel = ({ title }) => {
             </nav>
           )}
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row items-center">
+          <InferenceNotificationsBell />
           <div
             className="relative flex items-center"
             ref={ref}
