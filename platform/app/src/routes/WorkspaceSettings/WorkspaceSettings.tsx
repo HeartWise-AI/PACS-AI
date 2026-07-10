@@ -15,7 +15,6 @@ import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import playIcon from './../../assets/pacs/icons/play.png';
 import stopIcon from './../../assets/pacs/icons/stop.png';
 import tenantRepository from '../../api/tenantRepository';
-import orthancRepository from '../../api/orthancRepository';
 import inferenceRepository from '../../api/inferenceRepository';
 import { GetTenantInfoResponse, ModelDetails } from '../../api/tenantDTO';
 import {
@@ -31,8 +30,6 @@ import {
   DEFAULT_JOB_END_TIME,
   DEFAULT_JOB_START_TIME,
   EMPTY_INFERENCE_MODEL,
-  EMPTY_MODALITY_FORM,
-  getDicomHeaders,
   getInferenceModelHeaders,
   getIngestionJobHeaders,
   InferenceContainerStatus,
@@ -41,10 +38,8 @@ import {
   POLLING_INTERVAL_MS,
 } from './constants';
 import type {
-  DICOMModalities,
   InferenceModelView,
   IngestionScheduleType,
-  ModalityFormState,
   SelectOption,
 } from './types';
 import {
@@ -53,16 +48,17 @@ import {
   getContainerStatusColor,
   getDockerImageVersion,
   handleUnauthorizedAccess,
-  mapOrthancModalities,
   transformInferenceModels,
 } from './utils';
+import { useDicomModalities } from './hooks/useDicomModalities';
+import DicomModalitiesSection from './sections/DicomModalitiesSection';
 
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
   const showAlert = useContext(AlertContext);
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
-  const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
+  const dicom = useDicomModalities();
   const [inferenceModels, setInferenceModels] = useState<InferenceModelView[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
@@ -70,8 +66,6 @@ const WorkspaceSettingsPage = () => {
   const [isUpdatingOnboardingRegistration, setIsUpdatingOnboardingRegistration] = useState(false);
   const [isUpdatingOnboardingConsent, setIsUpdatingOnboardingConsent] = useState(false);
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
-  const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
-  const [selectedModality, setSelectedModality] = useState<ModalityFormState>(EMPTY_MODALITY_FORM);
   const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState<string>('');
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<InferenceModelView>(EMPTY_INFERENCE_MODEL);
@@ -80,24 +74,16 @@ const WorkspaceSettingsPage = () => {
   const [fetchingInferenceModelInfo, setFetchingInferenceModelInfo] = useState<boolean>(false);
   const [environmentalVariableKey, setEnvironmentalVariableKey] = useState<string>('');
   const [environmentalVariableValue, setEnvironmentalVariableValue] = useState<string>('');
-  const [loadingModalities, setLoadingModalities] = useState(true);
   const [loadingInferenceModels, setLoadingInferenceModels] = useState(true);
-  const [isAddModality, setIsAddModality] = useState<boolean>(true);
   const [isAddInferenceModel, setIsAddInferenceModel] = useState<boolean>(true);
   const [isViewInferenceModel, setIsViewInferenceModel] = useState<boolean>(false);
-  const [isUpdatingModality, setIsUpdatingModality] = useState<boolean>(false);
-  const [isAddingModality, setIsAddingModality] = useState<boolean>(false);
   const [isUpdatingInferenceModel, setIsUpdatingInferenceModel] = useState<boolean>(false);
   const [isAddingInferenceModel, setIsAddingInferenceModel] = useState<boolean>(false);
   const [isOpenModelFactsModal, setIsOpenModelFactsModal] = useState<boolean>(false);
-  const [isOpenAddEditModalityModal, setIsOpenAddEditModalityModal] = useState<boolean>(false);
   const [isOpenAddEditInferenceModelModal, setIsOpenAddEditInferenceModelModal] =
     useState<boolean>(false);
-  const [isOpenRemoveModalityModal, setIsOpenRemoveModalityModal] = useState<boolean>(false);
   const [isOpenRemoveInferenceModelModal, setIsOpenRemoveInferenceModelModal] =
     useState<boolean>(false);
-  const [isRefreshingDICOMModalities, setIsRefreshingDICOMModalities] = useState<boolean>(false);
-  const [isRemovingModality, setIsRemovingModality] = useState<boolean>(false);
   const [startingInferenceModelContainer, setStartingInferenceModelContainer] =
     useState<boolean>(false);
   const [stoppingInferenceModelContainer, setStoppingInferenceModelContainer] =
@@ -135,7 +121,6 @@ const WorkspaceSettingsPage = () => {
   const [isImportingIngestionJobs, setIsImportingIngestionJobs] = useState<boolean>(false);
   const ingestionJobsCsvInputRef = useRef<HTMLInputElement>(null);
 
-  const dicomHeaders = getDicomHeaders(t);
   const inferenceModelHeaders = getInferenceModelHeaders(t);
   const inferenceIngestionServiceHeaders = getIngestionJobHeaders(t);
 
@@ -249,47 +234,6 @@ const WorkspaceSettingsPage = () => {
     </button>
   );
 
-  /**
-   * Fetch DICOM modalities
-   */
-  const fetchDICOMModalities = useCallback(async () => {
-    setLoadingModalities(true);
-    setDICOMModalities([]);
-    try {
-      const response = await orthancRepository.GetDICOMModalities();
-      const modalities = mapOrthancModalities(response.data.modalities);
-      setDICOMModalities(modalities);
-      updateModalitiesStatus(modalities);
-    } catch (error) {
-      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-
-      console.error('Error fetching DICOM modalities:', error);
-    } finally {
-      setLoadingModalities(false);
-    }
-  }, [orthancRepository]);
-
-  /**
-   * Update modalities status
-   *
-   * @param modalities
-   */
-  const updateModalitiesStatus = async (modalities: DICOMModalities[]) => {
-    const updatedModalities = [...modalities];
-    const modalityPromises = modalities.map(async (modality, index) => {
-      try {
-        await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
-        updatedModalities[index] = { ...modality, status: 'Connected' };
-      } catch (error) {
-        handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-        console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
-        updatedModalities[index] = { ...modality, status: 'Disconnected' };
-      }
-      setDICOMModalities([...updatedModalities]);
-    });
-
-    await Promise.all(modalityPromises);
-  };
 
   /**
    * Fetch inference models
@@ -349,7 +293,6 @@ const WorkspaceSettingsPage = () => {
 
   useEffect(() => {
     // initial fetch
-    fetchDICOMModalities();
     setLoadingInferenceModels(true);
 
     const fetchInitialData = async () => {
@@ -375,80 +318,10 @@ const WorkspaceSettingsPage = () => {
       }
     };
   }, [
-    fetchDICOMModalities,
     fetchInferenceModels,
     fetchAvailableInferenceModels,
     fetchIngestionJobs,
   ]);
-
-  /**
-   * Update modality status
-   *
-   * @param modalityId
-   */
-  const updateModalityStatus = async (modalityId: string) => {
-    setIsRefreshingDICOMModalities(true);
-    setDICOMModalities(prevModalities =>
-      prevModalities.map(modality =>
-        modality.id === modalityId ? { ...modality, status: 'Connecting' } : modality
-      )
-    );
-    try {
-      await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modalityId });
-      setDICOMModalities(prevModalities =>
-        prevModalities.map(modality =>
-          modality.id === modalityId ? { ...modality, status: 'Connected' } : modality
-        )
-      );
-    } catch (error) {
-      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-      console.error(`Error triggering DICOM Echo for modality ${modalityId}:`, error);
-      setDICOMModalities(prevModalities =>
-        prevModalities.map(modality =>
-          modality.id === modalityId ? { ...modality, status: 'Disconnected' } : modality
-        )
-      );
-    }
-    setIsRefreshingDICOMModalities(false);
-  };
-
-  /**
-   * Add modality
-   */
-  const addModality = async () => {
-    // check if at least one of the targetCFindEnabled, targetCMoveEnabled, or targetCStoreEnabled is true
-    if (
-      !selectedModality.targetCFindEnabled &&
-      !selectedModality.targetCMoveEnabled &&
-      !selectedModality.targetCStoreEnabled
-    ) {
-      showAlert('At least one of C-Find, C-Move, or C-Store must be enabled', 'error');
-      return;
-    }
-
-    setIsAddingModality(true);
-    try {
-      const response = await orthancRepository.UpdateDICOMModality({
-        modalityId: selectedModality.id,
-        aet: selectedModality.aet,
-        host: selectedModality.host,
-        port: +selectedModality.port,
-        cFindEnabled: selectedModality.targetCFindEnabled,
-        cMoveEnabled: selectedModality.targetCMoveEnabled,
-        cStoreEnabled: selectedModality.targetCStoreEnabled,
-      });
-      showAlert(response.message, 'success');
-      setIsOpenAddEditModalityModal(false);
-      clearSelectedModality();
-      // fetch updated modalities after successful addition
-      fetchDICOMModalities();
-    } catch (error) {
-      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-      console.error(`Error adding modality: ${error}`);
-      showAlert(error.message, 'error');
-    }
-    setIsAddingModality(false);
-  };
 
   /**
    * Add inference model
@@ -708,75 +581,6 @@ const WorkspaceSettingsPage = () => {
   };
 
   /**
-   * Update modality
-   *
-   * @param modalityId
-   */
-  const updateModality = async () => {
-    // check if at least one of the targetCFindEnabled, targetCMoveEnabled, or targetCStoreEnabled is true
-    if (
-      !selectedModality.targetCFindEnabled &&
-      !selectedModality.targetCMoveEnabled &&
-      !selectedModality.targetCStoreEnabled
-    ) {
-      showAlert('At least one of C-Find, C-Move, or C-Store must be enabled', 'error');
-      return;
-    }
-
-    setIsUpdatingModality(true);
-    try {
-      const response = await orthancRepository.UpdateDICOMModality({
-        modalityId: selectedModality.id,
-        aet: selectedModality.aet,
-        host: selectedModality.host,
-        port: +selectedModality.port,
-        cFindEnabled: selectedModality.targetCFindEnabled,
-        cMoveEnabled: selectedModality.targetCMoveEnabled,
-        cStoreEnabled: selectedModality.targetCStoreEnabled,
-      });
-      showAlert(response.message, 'success');
-      setIsOpenAddEditModalityModal(false);
-      clearSelectedModality();
-      setIsAddModality(true);
-      // fetch updated modalities after successful update
-      fetchDICOMModalities();
-    } catch (error) {
-      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-      console.error(`Error updating modality: ${error}`);
-      showAlert(error.message, 'error');
-    }
-    setIsUpdatingModality(false);
-  };
-
-  /**
-   * Remove modality
-   *
-   * @param modalityId
-   */
-  const removeModality = async () => {
-    setIsRemovingModality(true);
-    try {
-      const response = await orthancRepository.RemoveDICOMModality({
-        modalityId: selectedModalityToRemove,
-      });
-      showAlert(response.message, 'success');
-      setIsOpenRemoveModalityModal(false);
-      fetchDICOMModalities();
-
-      // check if the deleted modality is the same as the one in localStorage
-      const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
-      if (storedDICOMModality === selectedModalityToRemove) {
-        localStorage.removeItem('selectedDICOMModality');
-      }
-    } catch (error) {
-      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-      console.error(`Error removing modality: ${error}`);
-      showAlert(error.message, 'error');
-    }
-    setIsRemovingModality(false);
-  };
-
-  /**
    * Reset ingestion job form
    */
   const resetIngestionJobForm = () => {
@@ -954,110 +758,12 @@ const WorkspaceSettingsPage = () => {
     );
   };
 
-  /**
-   * Clear selected modality
-   */
-  const clearSelectedModality = () => {
-    setSelectedModality(EMPTY_MODALITY_FORM);
-  };
 
   /**
    * Clear selected modality
    */
   const clearSelectedInferenceModel = () => {
     setSelectedInferenceModel(EMPTY_INFERENCE_MODEL);
-  };
-
-  /**
-   * Table action button
-   *
-   * @param param0 row
-   * @returns
-   */
-  const DICOMActionButton = ({ row }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const buttonRef = useRef(null);
-    const dropdownRef = useRef(null);
-
-    useEffect(() => {
-      const handleClickOutside = event => {
-        if (
-          buttonRef.current &&
-          !buttonRef.current.contains(event.target) &&
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target)
-        ) {
-          setIsOpen(false);
-        }
-      };
-
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }, []);
-
-    const getDropdownPosition = () => {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        return {
-          top: `${rect.top - 10}px`,
-          right: `${window.innerWidth - rect.left}px`,
-        };
-      }
-      return {};
-    };
-
-    return (
-      <div className="relative flex items-center justify-center">
-        <button
-          ref={buttonRef}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <img
-            src={dotsVertical}
-            alt="Dots vertical icon"
-          />
-        </button>
-        {isOpen &&
-          createPortal(
-            <div
-              ref={dropdownRef}
-              className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
-              style={getDropdownPosition()}
-            >
-              <ul className="py-2 text-sm text-white">
-                <li>
-                  <button
-                    className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"
-                    onClick={() => {
-                      setSelectedModality(row);
-                      setIsAddModality(false);
-                      setIsOpenAddEditModalityModal(true);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {t('Edit')}
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"
-                    onClick={() => {
-                      setSelectedModalityToRemove(row.id);
-                      setIsOpenRemoveModalityModal(true);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {t('Delete')}
-                  </button>
-                </li>
-              </ul>
-            </div>,
-            document.body
-          )}
-      </div>
-    );
   };
 
   /**
@@ -1502,116 +1208,7 @@ const WorkspaceSettingsPage = () => {
                 )}
               </div>
             </div>
-            {/* DICOM modality data */}
-            <div>
-              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                <h1 className="text-xl text-white">{t('DICOM (Orthanc)')}</h1>
-                <Button
-                  className="h-[35px] rounded-lg"
-                  onClick={() => setIsOpenAddEditModalityModal(true)}
-                >
-                  {t('New Modality')}
-                </Button>
-              </div>
-            </div>
-            {/* DICOM table container */}
-            <div className="bg-transparent py-5">
-              {loadingModalities ? (
-                <div
-                  role="status"
-                  className={`grid max-w-full animate-pulse grid-cols-5 gap-4`}
-                >
-                  {Array.from({ length: 5 }, (_, c) => (
-                    <div key={c}>
-                      {Array.from({ length: 3 }, (_, r) => (
-                        <div key={r}>
-                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                          <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : dicomModalities.length > 0 ? (
-                <Table
-                  headers={dicomHeaders}
-                  data={dicomModalities}
-                  className={'max-w-[170px]'}
-                >
-                  {(cell, header, row) => {
-                    // aet
-                    if (header.value === 'aet') {
-                      return <div className="w-[250px] text-white">{cell}</div>;
-                    }
-                    // host
-                    if (header.value === 'host') {
-                      return <div className="w-[200px] text-white">{cell}</div>;
-                    }
-                    // port
-                    if (header.value === 'port') {
-                      return <div className="w-[200px] text-white">{cell}</div>;
-                    }
-                    // status
-                    if (header.value === 'status') {
-                      return (
-                        <div className="flex min-w-[100px] items-center gap-2">
-                          <div
-                            className={`inline-flex h-[27px] items-center justify-center rounded-full px-2 ${
-                              cell === 'Connected'
-                                ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
-                                : cell === 'Disconnected'
-                                  ? 'bg-red-300 bg-opacity-10 text-red-500'
-                                  : 'bg-yellow-300 bg-opacity-10 text-yellow-500'
-                            }`}
-                          >
-                            <span>{cell}</span>
-                          </div>
-                          {cell !== 'Connecting' && (
-                            <button
-                              className="h-[27px] w-[27px] rounded-full bg-white bg-opacity-10 p-1.5 focus:ring-0"
-                              onClick={() => updateModalityStatus(row.id)}
-                            >
-                              <img
-                                src={refreshIcon}
-                                alt="refresh icon"
-                                className={`${isRefreshingDICOMModalities ? '' : ''}`}
-                              />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    }
-                    // targetCFindEnabled
-                    if (header.value === 'targetCFindEnabled') {
-                      return (
-                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
-                      );
-                    }
-                    // targetCMoveEnabled
-                    if (header.value === 'targetCMoveEnabled') {
-                      return (
-                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
-                      );
-                    }
-                    // targetCStoreEnabled
-                    if (header.value === 'targetCStoreEnabled') {
-                      return (
-                        <div className="w-[100px] text-white">{cell ? 'Enabled' : 'Disabled'}</div>
-                      );
-                    }
-                    // action
-                    if (header.value === 'action') {
-                      return <DICOMActionButton row={row} />;
-                    }
-                    return cell;
-                  }}
-                </Table>
-              ) : (
-                <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
-              )}
-            </div>
+            <DicomModalitiesSection dicom={dicom} />
             {/* divider */}
             <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
             {/* Inference models data */}
@@ -1977,169 +1574,6 @@ const WorkspaceSettingsPage = () => {
             </div>
           </div>
         </div>
-        {/* add and edit modality modal */}
-        {isOpenAddEditModalityModal && (
-          <Modal
-            isOpen={isOpenAddEditModalityModal}
-            size="w-[520px] max-w-[520px]"
-            isCloseable={true}
-            onClose={() => {
-              setIsAddModality(true);
-              setIsOpenAddEditModalityModal(false);
-              clearSelectedModality();
-            }}
-          >
-            <div className="relative">
-              <Typography
-                variant="h6"
-                className="font-light text-white"
-              >
-                {t(isAddModality ? 'New Modality' : 'Edit Modality')}
-              </Typography>
-              <Typography
-                variant="body"
-                className="mt-2 font-light text-white text-opacity-70"
-              >
-                {t(isAddModality ? 'Add a new DICOM modality.' : 'Update modality information.')}
-              </Typography>
-
-              <div className="mt-4">
-                <div className="flex flex-col gap-4">
-                  <Input
-                    id="modalityId"
-                    disabled={!isAddModality}
-                    placeholder={t('Modality ID')}
-                    className="w-full disabled:opacity-50"
-                    type="text"
-                    autoFocus
-                    value={selectedModality.id}
-                    onChange={e => {
-                      setSelectedModality({ ...selectedModality, id: e.target.value });
-                    }}
-                  />
-                  <Input
-                    id="targetAET"
-                    placeholder={t('Target AET')}
-                    className="w-full"
-                    type="text"
-                    value={selectedModality.aet}
-                    onChange={e => {
-                      setSelectedModality({ ...selectedModality, aet: e.target.value });
-                    }}
-                  />
-                  <Input
-                    id="host"
-                    placeholder={t('Host')}
-                    className="w-full"
-                    type="text"
-                    value={selectedModality.host}
-                    onChange={e => {
-                      setSelectedModality({ ...selectedModality, host: e.target.value });
-                    }}
-                  />
-                  <Input
-                    id="port"
-                    placeholder={t('Port')}
-                    className="w-full"
-                    type="number"
-                    value={selectedModality.port}
-                    onChange={e => {
-                      setSelectedModality({ ...selectedModality, port: e.target.value });
-                    }}
-                  />
-                  {/* Enabled SCUs */}
-                  <div>
-                    <Typography
-                      variant="body"
-                      className="mb-2 text-white"
-                    >
-                      {t('Enabled SCUs')}
-                    </Typography>
-                    <div className="my-2 flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="tag-c-find"
-                        checked={selectedModality.targetCFindEnabled}
-                        onChange={e => {
-                          const isChecked = e.target.checked;
-                          setSelectedModality(prev => ({
-                            ...prev,
-                            targetCFindEnabled: isChecked,
-                          }));
-                        }}
-                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
-                      />
-                      <Typography
-                        variant="body"
-                        component="label"
-                        htmlFor="tag-c-find"
-                        className="cursor-pointer text-white"
-                      >
-                        {t('C-Find')}
-                      </Typography>
-                    </div>
-                    <div className="my-2 flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="tag-c-move"
-                        checked={selectedModality.targetCMoveEnabled}
-                        onChange={e => {
-                          const isChecked = e.target.checked;
-                          setSelectedModality(prev => ({
-                            ...prev,
-                            targetCMoveEnabled: isChecked,
-                          }));
-                        }}
-                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
-                      />
-                      <Typography
-                        variant="body"
-                        component="label"
-                        htmlFor="tag-c-move"
-                        className="cursor-pointer text-white"
-                      >
-                        {t('C-Move')}
-                      </Typography>
-                    </div>
-                    <div className="my-2 flex cursor-pointer items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="tag-c-store"
-                        checked={selectedModality.targetCStoreEnabled}
-                        onChange={e => {
-                          const isChecked = e.target.checked;
-                          setSelectedModality(prev => ({
-                            ...prev,
-                            targetCStoreEnabled: isChecked,
-                          }));
-                        }}
-                        className="accent-primary-light h-4 w-4 cursor-pointer rounded"
-                      />
-                      <Typography
-                        variant="body"
-                        component="label"
-                        htmlFor="tag-c-store"
-                        className="cursor-pointer text-white"
-                      >
-                        {t('C-Store')}
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-5 flex w-full justify-end">
-                <Button
-                  disabled={isAddingModality || isUpdatingModality}
-                  className="h-[41px] w-[111px] rounded-lg"
-                  onClick={isAddModality ? addModality : updateModality}
-                >
-                  {isAddingModality || isUpdatingModality ? '...' : t('Save')}
-                </Button>
-              </div>
-            </div>
-          </Modal>
-        )}
-
         {/* add and edit inference model modal */}
         {isOpenAddEditInferenceModelModal && (
           <Modal
@@ -2527,49 +1961,6 @@ const WorkspaceSettingsPage = () => {
             data={selectedAIModel}
           />
         )}
-        {/* remove modality modal */}
-        {isOpenRemoveModalityModal && (
-          <Modal
-            isOpen={isOpenRemoveModalityModal}
-            size="min-w-[400px]"
-            isCloseable={true}
-            onClose={() => {
-              setIsOpenRemoveModalityModal(false);
-            }}
-          >
-            <div className="relative">
-              <Typography
-                variant="h6"
-                className="font-light text-white"
-              >
-                {t('Remove Modality')}
-              </Typography>
-              <Typography
-                variant="body"
-                className="mt-2 font-light text-white text-opacity-70"
-              >
-                {t('Are you sure you want to delete ')} {selectedModalityToRemove}?
-              </Typography>
-
-              <div className="mt-4 flex w-full justify-end">
-                <button
-                  disabled={isRemovingModality}
-                  className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
-                  onClick={() => setIsOpenRemoveModalityModal(false)}
-                >
-                  {isRemovingModality ? '...' : t('Cancel')}
-                </button>
-                <button
-                  disabled={isRemovingModality}
-                  className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
-                  onClick={removeModality}
-                >
-                  {isRemovingModality ? '...' : t('Confirm')}
-                </button>
-              </div>
-            </div>
-          </Modal>
-        )}
         {/* add/edit ingestion job modal */}
         {isOpenAddEditIngestionJobModal && (
           <Modal
@@ -2618,7 +2009,7 @@ const WorkspaceSettingsPage = () => {
                   >
                     {t('DICOM Modality')}
                   </option>
-                  {dicomModalities.map(m => (
+                  {dicom.modalities.map(m => (
                     <option
                       key={m.id}
                       value={m.id}
