@@ -22,89 +22,40 @@ import {
   GetInferenceAvailableModelsResponse,
   GetInferenceIngestionJobsResponse,
   GetInferenceModelInfoResponse,
-  GetInferenceModelResponse,
 } from '../../api/inferenceDTO';
 import Modal from '../../components/Modal';
 import Table from '../../components/Table';
 import ModelFactsModal from '../../components/ModelFactsModal';
-import { logoutUser } from '../../service/userService';
-import { Error } from '../../api/dto';
 import { DataElementDictionary } from 'dicom-data-dictionary';
-
-interface DICOMModalities {
-  id: string;
-  aet: string;
-  host: string;
-  port: number;
-  status: string;
-  targetCFindEnabled: boolean;
-  targetCMoveEnabled: boolean;
-  targetCStoreEnabled: boolean;
-}
-
-enum InferenceContainerStatus {
-  CREATED = 'created',
-  RUNNING = 'running',
-  PAUSED = 'paused',
-  RESTARTING = 'restarting',
-  EXITED = 'exited',
-  REMOVING = 'removing',
-  DEAD = 'dead',
-  STOPPED = 'stopped',
-}
-
-const containerStatusColors = {
-  [InferenceContainerStatus.CREATED]: {
-    bg: 'bg-blue-300',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-blue-300',
-    dot: 'bg-blue-300',
-  },
-  [InferenceContainerStatus.RUNNING]: {
-    bg: 'bg-[#6ED47C]',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-[#6ED47C]',
-    dot: 'bg-[#6ED47C]',
-  },
-  [InferenceContainerStatus.PAUSED]: {
-    bg: 'bg-yellow-300',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-yellow-300',
-    dot: 'bg-yellow-300',
-  },
-  [InferenceContainerStatus.RESTARTING]: {
-    bg: 'bg-purple-300',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-purple-300',
-    dot: 'bg-purple-300',
-  },
-  [InferenceContainerStatus.EXITED]: {
-    bg: 'bg-red-300',
-    bgOpacity: 'bg-opacity-10',
-    text: 'text-red-500',
-    dot: 'bg-red-500',
-  },
-  [InferenceContainerStatus.REMOVING]: {
-    bg: 'bg-orange-300',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-orange-300',
-    dot: 'bg-orange-300',
-  },
-  [InferenceContainerStatus.DEAD]: {
-    bg: 'bg-red-500',
-    bgOpacity: 'bg-opacity-20',
-    text: 'text-red-500',
-    dot: 'bg-red-500',
-  },
-  [InferenceContainerStatus.STOPPED]: {
-    bg: 'bg-red-300',
-    bgOpacity: 'bg-opacity-10',
-    text: 'text-red-500',
-    dot: 'bg-red-500',
-  },
-};
-
-const minIngestionJobIntervalMinutes = 5;
+import {
+  DEFAULT_JOB_END_TIME,
+  DEFAULT_JOB_START_TIME,
+  EMPTY_INFERENCE_MODEL,
+  EMPTY_MODALITY_FORM,
+  getDicomHeaders,
+  getInferenceModelHeaders,
+  getIngestionJobHeaders,
+  InferenceContainerStatus,
+  minIngestionJobIntervalMinutes,
+  outputModeOptions,
+  POLLING_INTERVAL_MS,
+} from './constants';
+import type {
+  DICOMModalities,
+  InferenceModelView,
+  IngestionScheduleType,
+  ModalityFormState,
+  SelectOption,
+} from './types';
+import {
+  buildTimestampFromDateAndTime,
+  formatEnvsForApi,
+  getContainerStatusColor,
+  getDockerImageVersion,
+  handleUnauthorizedAccess,
+  mapOrthancModalities,
+  transformInferenceModels,
+} from './utils';
 
 const WorkspaceSettingsPage = () => {
   const { t } = useTranslation('Common');
@@ -112,7 +63,7 @@ const WorkspaceSettingsPage = () => {
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
   const [dicomModalities, setDICOMModalities] = useState<DICOMModalities[]>([]);
-  const [inferenceModels, setInferenceModels] = useState<GetInferenceModelResponse[]>([]);
+  const [inferenceModels, setInferenceModels] = useState<InferenceModelView[]>([]);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [informedConsentEnabled, setInformedConsentEnabled] = useState(false);
@@ -120,38 +71,10 @@ const WorkspaceSettingsPage = () => {
   const [isUpdatingOnboardingConsent, setIsUpdatingOnboardingConsent] = useState(false);
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState<string>('');
-  const [selectedModality, setSelectedModality] = useState({
-    id: '',
-    aet: '',
-    host: '',
-    port: '',
-    status: '',
-    targetCFindEnabled: false,
-    targetCMoveEnabled: false,
-    targetCStoreEnabled: false,
-  });
+  const [selectedModality, setSelectedModality] = useState<ModalityFormState>(EMPTY_MODALITY_FORM);
   const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState<string>('');
-  const [selectedInferenceModel, setSelectedInferenceModel] = useState<GetInferenceModelResponse>({
-    id: '',
-    name: '',
-    dockerImage: '',
-    tenantId: '',
-    outputMode: '',
-    envs: [],
-    createdAt: 0,
-    updatedAt: 0,
-    container: {
-      id: '',
-      name: '',
-      status: '',
-      running: false,
-      startedAt: 0,
-      finishedAt: 0,
-      cpuPercentUsage: 0,
-      memoryInBytes: 0,
-    },
-    disallowedDICOMTags: [],
-  });
+  const [selectedInferenceModel, setSelectedInferenceModel] =
+    useState<InferenceModelView>(EMPTY_INFERENCE_MODEL);
   const [selectedInferenceModelInfo, setSelectedInferenceModelInfo] =
     useState<GetInferenceModelInfoResponse>({} as GetInferenceModelInfoResponse);
   const [fetchingInferenceModelInfo, setFetchingInferenceModelInfo] = useState<boolean>(false);
@@ -188,12 +111,12 @@ const WorkspaceSettingsPage = () => {
   const [ingestionJobs, setIngestionJobs] = useState<GetInferenceIngestionJobsResponse[]>([]);
   const [loadingIngestionJobs, setLoadingIngestionJobs] = useState(true);
   const [isOpenAddEditIngestionJobModal, setIsOpenAddEditIngestionJobModal] = useState(false);
-  const [newJobModel, setNewJobModel] = useState<{ value: string; label: string } | null>(null);
-  const [newJobModalities, setNewJobModalities] = useState<{ value: string; label: string }[]>([]);
+  const [newJobModel, setNewJobModel] = useState<SelectOption | null>(null);
+  const [newJobModalities, setNewJobModalities] = useState<SelectOption[]>([]);
   const [newJobInterval, setNewJobInterval] = useState<string>(
     String(minIngestionJobIntervalMinutes)
   );
-  const [newJobScheduleType, setNewJobScheduleType] = useState<'always' | 'dateRange'>('always');
+  const [newJobScheduleType, setNewJobScheduleType] = useState<IngestionScheduleType>('always');
   const [newJobStartDate, setNewJobStartDate] = useState(null);
   const [newJobEndDate, setNewJobEndDate] = useState(null);
   const [newJobFocusedInput, setNewJobFocusedInput] = useState(null);
@@ -205,44 +128,16 @@ const WorkspaceSettingsPage = () => {
     GetInferenceAvailableModelsResponse[]
   >([]);
   const [newJobDicomModality, setNewJobDicomModality] = useState<string>('');
-  const [newJobStartTime, setNewJobStartTime] = useState<string>('00:00');
-  const [newJobEndTime, setNewJobEndTime] = useState<string>('23:59');
+  const [newJobStartTime, setNewJobStartTime] = useState<string>(DEFAULT_JOB_START_TIME);
+  const [newJobEndTime, setNewJobEndTime] = useState<string>(DEFAULT_JOB_END_TIME);
   const [isSavingIngestionJob, setIsSavingIngestionJob] = useState<boolean>(false);
   const [isDeletingIngestionJob, setIsDeletingIngestionJob] = useState<boolean>(false);
   const [isImportingIngestionJobs, setIsImportingIngestionJobs] = useState<boolean>(false);
   const ingestionJobsCsvInputRef = useRef<HTMLInputElement>(null);
 
-  const dicomHeaders = [
-    { text: t('ID'), value: 'id', align: 'left' },
-    { text: t('Target AET'), value: 'aet', align: 'left' },
-    { text: t('Host'), value: 'host', align: 'left' },
-    { text: t('Port'), value: 'port', align: 'left' },
-    { text: t('C-Find'), value: 'targetCFindEnabled', align: 'left' },
-    { text: t('C-Move'), value: 'targetCMoveEnabled', align: 'left' },
-    { text: t('C-Store'), value: 'targetCStoreEnabled', align: 'left' },
-    { text: t('Status'), value: 'status', align: 'left' },
-    { text: t('Action'), value: 'action', align: 'center' },
-  ];
-  const inferenceModelHeaders = [
-    { text: t('Container ID'), value: 'containerId', align: 'left' },
-    { text: t('Name'), value: 'name', align: 'left' },
-    { text: t('Version'), value: 'version', align: 'left' },
-    { text: t('Image'), value: 'dockerImage', align: 'left' },
-    { text: t('Status'), value: 'status', align: 'left' },
-    { text: t('CPU %'), value: 'cpu', align: 'left' },
-    { text: t('Action'), value: 'action', align: 'center' },
-  ];
-  const inferenceIngestionServiceHeaders = [
-    { text: t('Job ID'), value: 'jobId', align: 'left' },
-    { text: t('Model'), value: 'model', align: 'left' },
-    { text: t('DICOM Modality'), value: 'dicomModality', align: 'left' },
-    { text: t('Modalities'), value: 'modalities', align: 'left' },
-    { text: t('Interval'), value: 'interval', align: 'left' },
-    { text: t('Schedule'), value: 'schedule', align: 'left' },
-    { text: t('Status'), value: 'status', align: 'left' },
-    { text: t('Action'), value: 'action', align: 'center' },
-  ];
-  const outputModeOptions = ['JSON', 'OHIF_ANNOTATIONS', 'HTML', 'WEB_APP', 'PDF'];
+  const dicomHeaders = getDicomHeaders(t);
+  const inferenceModelHeaders = getInferenceModelHeaders(t);
+  const inferenceIngestionServiceHeaders = getIngestionJobHeaders(t);
 
   // add polling interval state
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
@@ -287,12 +182,7 @@ const WorkspaceSettingsPage = () => {
       setRegistrationEnabled(next);
       setTenantInfo(prev => ({ ...prev, onboardingEnableRegistration: next }));
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error updating onboarding registration config: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -314,12 +204,7 @@ const WorkspaceSettingsPage = () => {
       setInformedConsentEnabled(next);
       setTenantInfo(prev => ({ ...prev, onboardingEnableConsent: next }));
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error updating onboarding consent config: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -372,28 +257,11 @@ const WorkspaceSettingsPage = () => {
     setDICOMModalities([]);
     try {
       const response = await orthancRepository.GetDICOMModalities();
-      const modalities = Object.entries(response.data.modalities).map(
-        ([id, modality]: [string, any]) => ({
-          id,
-          aet: modality.aet,
-          host: modality.host,
-          port: modality.port,
-          status: 'Connecting',
-          targetCFindEnabled: modality.targetCFindEnabled,
-          targetCMoveEnabled: modality.targetCMoveEnabled,
-          targetCStoreEnabled: modality.targetCStoreEnabled,
-        })
-      );
+      const modalities = mapOrthancModalities(response.data.modalities);
       setDICOMModalities(modalities);
       updateModalitiesStatus(modalities);
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
 
       console.error('Error fetching DICOM modalities:', error);
     } finally {
@@ -413,13 +281,7 @@ const WorkspaceSettingsPage = () => {
         await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
         updatedModalities[index] = { ...modality, status: 'Connected' };
       } catch (error) {
-        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-          showAlert(error.message, 'error');
-
-          setTimeout(() => {
-            logoutUser(navigate, tenantId);
-          }, 3000);
-        }
+        handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
         console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
         updatedModalities[index] = { ...modality, status: 'Disconnected' };
       }
@@ -435,27 +297,9 @@ const WorkspaceSettingsPage = () => {
   const fetchInferenceModels = useCallback(async () => {
     try {
       const response = await inferenceRepository.GetInferenceModels();
-
-      // transform the data without modifying the original response and sort by createdAt
-      const transformedData = response.data
-        .map(model => ({
-          ...model,
-          envs: model.envs.map(env => ({ key: env.split('=')[0], value: env.split('=')[1] })),
-        }))
-        .sort(
-          (a, b) =>
-            new Date(b.container.startedAt).getTime() - new Date(a.container.startedAt).getTime()
-        );
-
-      setInferenceModels(transformedData);
+      setInferenceModels(transformInferenceModels(response.data));
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error fetching inference models:', error);
     }
   }, [inferenceRepository]);
@@ -471,13 +315,7 @@ const WorkspaceSettingsPage = () => {
       const response = await inferenceRepository.GetInferenceModelInfo({ containerID });
       setSelectedInferenceModelInfo(response.data);
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error fetching inference model info:', error);
       showAlert(error.message, 'error');
     }
@@ -504,12 +342,7 @@ const WorkspaceSettingsPage = () => {
       const response = await inferenceRepository.GetInferenceIngestionJobs();
       setIngestionJobs(response.data);
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error fetching inference ingestion jobs:', error);
     }
   }, [inferenceRepository]);
@@ -531,7 +364,7 @@ const WorkspaceSettingsPage = () => {
     const interval = setInterval(() => {
       fetchInferenceModels();
       fetchIngestionJobs();
-    }, 15000); // poll every 15 seconds
+    }, POLLING_INTERVAL_MS); // poll every 15 seconds
 
     setPollingInterval(interval);
 
@@ -568,13 +401,7 @@ const WorkspaceSettingsPage = () => {
         )
       );
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error triggering DICOM Echo for modality ${modalityId}:`, error);
       setDICOMModalities(prevModalities =>
         prevModalities.map(modality =>
@@ -616,13 +443,7 @@ const WorkspaceSettingsPage = () => {
       // fetch updated modalities after successful addition
       fetchDICOMModalities();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error adding modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -652,7 +473,7 @@ const WorkspaceSettingsPage = () => {
         return;
       }
 
-      const envs = selectedInferenceModel.envs.map(env => `${env.key}=${env.value}`);
+      const envs = formatEnvsForApi(selectedInferenceModel.envs);
       const response = await inferenceRepository.AddInferenceModel({
         name: selectedInferenceModel.name.trim(), // remove the leading and trailing spaces
         dockerImage: selectedInferenceModel.dockerImage.replace(/\s+/g, ''), // remove all the spaces
@@ -665,13 +486,7 @@ const WorkspaceSettingsPage = () => {
       clearSelectedInferenceModel();
       fetchInferenceModels();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error adding inference model: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -693,13 +508,7 @@ const WorkspaceSettingsPage = () => {
       clearSelectedInferenceModel();
       fetchInferenceModels();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error updating inference model: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -719,13 +528,7 @@ const WorkspaceSettingsPage = () => {
       fetchInferenceModels();
       setIsOpenRemoveInferenceModelModal(false);
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error deleting inference model: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -769,13 +572,7 @@ const WorkspaceSettingsPage = () => {
       setSelectedContainerToStartStop('');
       fetchInferenceModels();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error starting inference model container: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -795,13 +592,7 @@ const WorkspaceSettingsPage = () => {
       setSelectedContainerToStartStop('');
       fetchInferenceModels();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error stopping inference model container: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -821,12 +612,7 @@ const WorkspaceSettingsPage = () => {
       setSelectedIngestionJobToStartStop('');
       fetchIngestionJobs();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error starting ingestion job: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -846,12 +632,7 @@ const WorkspaceSettingsPage = () => {
       setSelectedIngestionJobToStartStop('');
       fetchIngestionJobs();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error stopping ingestion job: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -872,12 +653,7 @@ const WorkspaceSettingsPage = () => {
       setSelectedIngestionJobId('');
       fetchIngestionJobs();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error deleting ingestion job: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -924,12 +700,7 @@ const WorkspaceSettingsPage = () => {
       showAlert(response.message, 'success');
       fetchIngestionJobs();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error importing ingestion jobs CSV: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -970,13 +741,7 @@ const WorkspaceSettingsPage = () => {
       // fetch updated modalities after successful update
       fetchDICOMModalities();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error updating modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -1004,13 +769,7 @@ const WorkspaceSettingsPage = () => {
         localStorage.removeItem('selectedDICOMModality');
       }
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error removing modality: ${error}`);
       showAlert(error.message, 'error');
     }
@@ -1029,23 +788,8 @@ const WorkspaceSettingsPage = () => {
     setNewJobEndDate(null);
     setNewJobFocusedInput(null);
     setNewJobDicomModality('');
-    setNewJobStartTime('00:00');
-    setNewJobEndTime('23:59');
-  };
-
-  /**
-   * Build timestamp from date and time
-   *
-   * @param date
-   * @param time
-   * @returns
-   */
-  const buildTimestampFromDateAndTime = (date: moment.Moment | null, time: string): number => {
-    if (!date) {
-      return 0;
-    }
-    const [hours, minutes] = time.split(':').map(Number);
-    return date.clone().startOf('day').hours(hours).minutes(minutes).unix();
+    setNewJobStartTime(DEFAULT_JOB_START_TIME);
+    setNewJobEndTime(DEFAULT_JOB_END_TIME);
   };
 
   /**
@@ -1133,12 +877,7 @@ const WorkspaceSettingsPage = () => {
       resetIngestionJobForm();
       fetchIngestionJobs();
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error(`Error saving ingestion job: ${error}`);
       showAlert(error.message, 'error');
     } finally {
@@ -1219,43 +958,14 @@ const WorkspaceSettingsPage = () => {
    * Clear selected modality
    */
   const clearSelectedModality = () => {
-    setSelectedModality({
-      id: '',
-      aet: '',
-      host: '',
-      port: '',
-      status: '',
-      targetCFindEnabled: false,
-      targetCMoveEnabled: false,
-      targetCStoreEnabled: false,
-    });
+    setSelectedModality(EMPTY_MODALITY_FORM);
   };
 
   /**
    * Clear selected modality
    */
   const clearSelectedInferenceModel = () => {
-    setSelectedInferenceModel({
-      id: '',
-      name: '',
-      dockerImage: '',
-      tenantId: '',
-      outputMode: '',
-      envs: [],
-      createdAt: 0,
-      updatedAt: 0,
-      container: {
-        id: '',
-        name: '',
-        status: '',
-        running: false,
-        startedAt: 0,
-        finishedAt: 0,
-        cpuPercentUsage: 0,
-        memoryInBytes: 0,
-      },
-      disallowedDICOMTags: [],
-    });
+    setSelectedInferenceModel(EMPTY_INFERENCE_MODEL);
   };
 
   /**
@@ -1581,8 +1291,8 @@ const WorkspaceSettingsPage = () => {
                         setNewJobScheduleType('always');
                         setNewJobStartDate(null);
                         setNewJobEndDate(null);
-                        setNewJobStartTime('00:00');
-                        setNewJobEndTime('23:59');
+                        setNewJobStartTime(DEFAULT_JOB_START_TIME);
+                        setNewJobEndTime(DEFAULT_JOB_END_TIME);
                       } else {
                         setNewJobScheduleType('dateRange');
                         const startMoment = row.scheduleStartTimestamp
@@ -1593,8 +1303,8 @@ const WorkspaceSettingsPage = () => {
                           : null;
                         setNewJobStartDate(startMoment);
                         setNewJobEndDate(endMoment);
-                        setNewJobStartTime(startMoment ? startMoment.format('HH:mm') : '00:00');
-                        setNewJobEndTime(endMoment ? endMoment.format('HH:mm') : '23:59');
+                        setNewJobStartTime(startMoment ? startMoment.format('HH:mm') : DEFAULT_JOB_START_TIME);
+                        setNewJobEndTime(endMoment ? endMoment.format('HH:mm') : DEFAULT_JOB_END_TIME);
                       }
                       setSelectedIngestionJobId(row.id);
                       setIsAddIngestionJob(false);
@@ -1662,13 +1372,7 @@ const WorkspaceSettingsPage = () => {
       });
       setSelectedAIModel(response.data.en);
     } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        showAlert(error.message, 'error');
-
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       setIsOpenModelFactsModal(false);
       console.error('Error fetching inference model facts:', error);
       showAlert(error.message, 'error');
@@ -1681,6 +1385,10 @@ const WorkspaceSettingsPage = () => {
     setIsViewInferenceModel(true);
     setIsOpenAddEditInferenceModelModal(true);
   };
+
+  const selectedModelStatusColor = getContainerStatusColor(
+    selectedInferenceModel.container?.status || ''
+  );
 
   return (
     <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
@@ -1979,7 +1687,7 @@ const WorkspaceSettingsPage = () => {
                     if (header.value === 'version') {
                       return (
                         <div className="w-[200px] text-white">
-                          {row.dockerImage?.split(':')[1] || ''}
+                          {getDockerImageVersion(row.dockerImage)}
                         </div>
                       );
                     }
@@ -1988,14 +1696,7 @@ const WorkspaceSettingsPage = () => {
                     }
                     // status
                     if (header.value === 'status') {
-                      const statusColor = containerStatusColors[
-                        row.container.status.toLowerCase()
-                      ] || {
-                        bg: 'bg-gray-300',
-                        bgOpacity: 'bg-opacity-20',
-                        text: 'text-gray-300',
-                        dot: 'bg-gray-300',
-                      };
+                      const statusColor = getContainerStatusColor(row.container.status);
 
                       return (
                         <div className="flex min-w-[100px] items-center gap-2">
@@ -2201,12 +1902,7 @@ const WorkspaceSettingsPage = () => {
                       );
                     }
                     if (header.value === 'status') {
-                      const statusColor = containerStatusColors[row.status?.toLowerCase()] || {
-                        bg: 'bg-gray-300',
-                        bgOpacity: 'bg-opacity-20',
-                        text: 'text-gray-300',
-                        dot: 'bg-gray-300',
-                      };
+                      const statusColor = getContainerStatusColor(row.status || '');
                       return (
                         <div className="flex min-w-[100px] items-center gap-2">
                           <div
@@ -2744,29 +2440,13 @@ const WorkspaceSettingsPage = () => {
                         </Typography>
                         <div className="flex min-w-[100px] items-center gap-2">
                           <div
-                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${
-                              containerStatusColors[
-                                selectedInferenceModel.container.status.toLowerCase()
-                              ]?.bg || 'bg-gray-300'
-                            } ${
-                              containerStatusColors[
-                                selectedInferenceModel.container.status.toLowerCase()
-                              ]?.bgOpacity || 'bg-opacity-20'
-                            } ${
-                              containerStatusColors[
-                                selectedInferenceModel.container.status.toLowerCase()
-                              ]?.text || 'text-gray-300'
-                            }`}
+                            className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${selectedModelStatusColor.bg} ${selectedModelStatusColor.bgOpacity} ${selectedModelStatusColor.text}`}
                           >
                             <span className="text-sm capitalize">
                               {selectedInferenceModel.container.status}
                             </span>
                             <div
-                              className={`h-1 w-1 rounded-full ${
-                                containerStatusColors[
-                                  selectedInferenceModel.container.status.toLowerCase()
-                                ]?.dot || 'bg-gray-300'
-                              }`}
+                              className={`h-1 w-1 rounded-full ${selectedModelStatusColor.dot}`}
                             ></div>
                           </div>
                         </div>
