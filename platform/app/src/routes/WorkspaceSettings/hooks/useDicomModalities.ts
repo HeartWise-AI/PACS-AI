@@ -28,25 +28,22 @@ export function useDicomModalities() {
     setSelectedModality(EMPTY_MODALITY_FORM);
   }, []);
 
-  const updateModalitiesStatus = useCallback(
-    async (nextModalities: DICOMModalities[]) => {
-      const updatedModalities = [...nextModalities];
-      const modalityPromises = nextModalities.map(async (modality, index) => {
-        try {
-          await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
-          updatedModalities[index] = { ...modality, status: 'Connected' };
-        } catch (error) {
-          handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
-          console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
-          updatedModalities[index] = { ...modality, status: 'Disconnected' };
-        }
-        setModalities([...updatedModalities]);
-      });
+  const updateModalitiesStatus = async (nextModalities: DICOMModalities[]) => {
+    const updatedModalities = [...nextModalities];
+    const modalityPromises = nextModalities.map(async (modality, index) => {
+      try {
+        await orthancRepository.TriggerDICOMEchoSCU({ modalityId: modality.id });
+        updatedModalities[index] = { ...modality, status: 'Connected' };
+      } catch (error) {
+        handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
+        console.error(`Error triggering DICOM Echo for modality ${modality.id}:`, error);
+        updatedModalities[index] = { ...modality, status: 'Disconnected' };
+      }
+      setModalities([...updatedModalities]);
+    });
 
-      await Promise.all(modalityPromises);
-    },
-    [navigate, showAlert, tenantId]
-  );
+    await Promise.all(modalityPromises);
+  };
 
   const fetchDICOMModalities = useCallback(async () => {
     setLoading(true);
@@ -62,7 +59,8 @@ export function useDicomModalities() {
     } finally {
       setLoading(false);
     }
-  }, [navigate, showAlert, tenantId, updateModalitiesStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- showAlert from AlertContext is unstable
+  }, []);
 
   useEffect(() => {
     fetchDICOMModalities();
