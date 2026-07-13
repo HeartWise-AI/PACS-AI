@@ -91,3 +91,15 @@ export function getDICOMTagsName(tag: string): string {
   const element = dictionary.lookup(tag);
   return element ? element.name : 'Unknown Tag';
 }
+
+export function isCSVFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  if (!name.endsWith('.csv')) {
+    return false;
+  }
+  const type = file.type.toLowerCase();
+  if (!type) {
+    return true;
+  }
+  return type === 'text/csv' || type === 'application/csv' || type === 'text/plain';
+}
