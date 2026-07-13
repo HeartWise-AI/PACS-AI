@@ -151,3 +151,20 @@ export const getIngestionJobHeaders = (t: TranslateFn): TableHeader[] => [
   { text: t('Status'), value: 'status', align: 'left' },
   { text: t('Action'), value: 'action', align: 'center' },
 ];
+
+export const WORKSPACE_SETTINGS_TABS = [
+  { id: 'onboarding', labelKey: 'Onboarding' },
+  { id: 'dicom', labelKey: 'DICOM (Orthanc)' },
+  { id: 'models', labelKey: 'Inference Models' },
+  { id: 'ingestion', labelKey: 'Ingestion Jobs' },
+] as const;
+
+export type WorkspaceSettingsTabId = (typeof WORKSPACE_SETTINGS_TABS)[number]['id'];
+
+export const DEFAULT_WORKSPACE_SETTINGS_TAB: WorkspaceSettingsTabId = 'onboarding';
+
+export function isWorkspaceSettingsTabId(
+  value: string | null
+): value is WorkspaceSettingsTabId {
+  return WORKSPACE_SETTINGS_TABS.some(tab => tab.id === value);
+}
