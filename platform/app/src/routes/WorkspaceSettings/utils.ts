@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { DataElementDictionary } from 'dicom-data-dictionary';
 import { Error } from '../../api/dto';
 import { GetInferenceModelResponse } from '../../api/inferenceDTO';
 import { logoutUser } from '../../service/userService';
@@ -83,4 +84,10 @@ export function getContainerStatusColor(status: string): StatusColorClasses {
 
 export function getDockerImageVersion(dockerImage?: string): string {
   return dockerImage?.split(':')[1] || '';
+}
+
+export function getDICOMTagsName(tag: string): string {
+  const dictionary = new DataElementDictionary();
+  const element = dictionary.lookup(tag);
+  return element ? element.name : 'Unknown Tag';
 }
