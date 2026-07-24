@@ -52,5 +52,4 @@ window.config = {
       },
     },
   ],
-  studyListFunctionsEnabled: true,
 };

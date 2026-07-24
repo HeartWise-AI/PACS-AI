@@ -26,5 +26,4 @@ window.config = {
       revokeAccessTokenOnSignout: true,
     },
   ],
-  studyListFunctionsEnabled: true,
 };

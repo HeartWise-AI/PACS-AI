@@ -7,7 +7,6 @@ import DatePicker from './DatePicker.json';
 import ErrorBoundary from './ErrorBoundary.json';
 import Header from './Header.json';
 import HotkeysValidators from './HotkeysValidators.json';
-import InvestigationalUseDialog from './InvestigationalUseDialog.json';
 import MeasurementTable from './MeasurementTable.json';
 import Modes from './Modes.json';
 import SegmentationTable from './SegmentationTable.json';
@@ -34,7 +33,6 @@ export default {
     ErrorBoundary,
     Header,
     HotkeysValidators,
-    InvestigationalUseDialog,
     MeasurementTable,
     Modes,
     SegmentationTable,

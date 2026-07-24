@@ -8,7 +8,6 @@ window.config = {
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
-  // filterQueryParam: false,
   defaultDataSourceName: 'ohif',
   dataSources: [
     {

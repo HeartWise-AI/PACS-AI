@@ -61,8 +61,6 @@ export type DicomWebConfig = {
   supportsWildcard?: boolean;
   /** Whether the server supports the native DICOM model */
   supportsNativeDICOMModel?: boolean;
-  /** Whether to enable request tag */
-  enableRequestTag?: boolean;
   /** Whether to enable study lazy loading */
   enableStudyLazyLoad?: boolean;
   /** Whether to enable bulkDataURI */
