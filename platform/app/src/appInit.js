@@ -91,7 +91,6 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
   const loadedExtensions = await loadModules([...defaultExtensions, ...appConfig.extensions]);
   await extensionManager.registerExtensions(loadedExtensions, appConfig.dataSources);
 
-  // TODO: We no longer use `utils.addServer`
   // TODO: We no longer init webWorkers at app level
   // TODO: We no longer init the user Manager
 
