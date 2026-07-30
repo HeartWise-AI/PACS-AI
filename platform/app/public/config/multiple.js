@@ -125,7 +125,4 @@ window.config = {
     // Could use services manager here to bring up a dialog/modal if needed.
     console.warn('test, navigate to https://ohif.org/');
   },
-
-  // Only list the unique hotkeys
-  hotkeys: [],
 };
