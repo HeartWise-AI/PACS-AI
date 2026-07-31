@@ -171,7 +171,6 @@ Customizations can be declared at three different scopes, each with its own prio
      1. Add global customizations directly to the application's configuration file:
         ```jsx
         window.config = {
-          name: 'config/default.js',
           routerBasename: null,
           customizationService: [
             {
@@ -193,7 +192,6 @@ Customizations can be declared at three different scopes, each with its own prio
 
         ```jsx
         window.config = {
-          name: 'config/default.js',
           routerBasename: null,
           customizationService: [
             '@ohif/extension-cornerstone.customizationModule.newCustomization',

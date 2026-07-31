@@ -1,7 +1,6 @@
 /** @type {AppTypes.Config} */
 
 window.config = {
-  name: 'config/default.js',
   routerBasename: null,
   // whiteLabeling: {},
   extensions: [],

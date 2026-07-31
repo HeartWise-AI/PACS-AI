@@ -1,7 +1,6 @@
 /** @type {AppTypes.Config} */
 
 window.config = {
-  name: 'config/kheops.js',
   routerBasename: null,
   extensions: [],
   modes: ['@ohif/mode-test'],
