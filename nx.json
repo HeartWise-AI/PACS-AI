@@ -15,7 +15,6 @@
           "test:e2e:serve",
           "build:viewer",
           "build:dev",
-          "build:aws",
           "build:viewer:ci",
           "build:viewer:qa",
           "build:viewer:demo",
