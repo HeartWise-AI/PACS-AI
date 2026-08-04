@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createSearchParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
@@ -21,6 +21,11 @@ import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
+import {
+  createVisibleStudyProcessingFixtureSnapshot,
+  StudyProcessingStatus,
+  useStudyProcessing,
+} from '../../components/inference/studyProcessing';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -44,9 +49,9 @@ function WorkList() {
   const [studyQueryId, setStudyQueryId] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const totalPages = Math.ceil(tableDataSource.length / itemsPerPage);
-  const currentItems = tableDataSource.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const currentItems = useMemo(
+    () => tableDataSource.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [currentPage, itemsPerPage, tableDataSource]
   );
   const [startDate, setStartDate] = useState(moment());
   const [endDate, setEndDate] = useState(moment());
@@ -73,6 +78,8 @@ function WorkList() {
   const filterRef = useRef(studyListFilter);
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
+  const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
+  const { receiveSnapshot } = useStudyProcessing();
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
     value: string;
@@ -181,6 +188,16 @@ function WorkList() {
   useEffect(() => {
     filterRef.current = studyListFilter;
   }, [studyListFilter]);
+
+  useEffect(() => {
+    if (!showStudyProcessingFixtures) {
+      return;
+    }
+
+    receiveSnapshot(
+      createVisibleStudyProcessingFixtureSnapshot(currentItems.map(study => study.studyInstanceUID))
+    );
+  }, [currentItems, receiveSnapshot, showStudyProcessingFixtures]);
 
   // Set body style
   useEffect(() => {
@@ -865,12 +882,17 @@ function WorkList() {
                       <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('Instances')}
                       </th>
+                      {showStudyProcessingFixtures && (
+                        <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-primary-main">
+                          Processing
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
                       {currentItems.map((row, index) => (
-                        <React.Fragment key={index}>
+                        <React.Fragment key={row.studyInstanceUID}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
                             onClick={() => toggleRow(index)}
@@ -897,16 +919,29 @@ function WorkList() {
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
                               className={`py-2 px-4 text-sm font-normal ${
-                                expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                                showStudyProcessingFixtures
+                                  ? ''
+                                  : expandedTableRows[index]
+                                    ? '!rounded-tr-lg'
+                                    : '!rounded-r-lg'
                               }`}
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
+                            {showStudyProcessingFixtures && (
+                              <td
+                                className={`py-2 px-4 ${
+                                  expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                                }`}
+                              >
+                                <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
+                              </td>
+                            )}
                           </tr>
                           {expandedTableRows[index] && (
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
-                                colSpan={7}
+                                colSpan={showStudyProcessingFixtures ? 8 : 7}
                                 className="rounded-bl-lg rounded-br-lg py-4 px-4"
                               >
                                 <div className="flex items-center gap-3">

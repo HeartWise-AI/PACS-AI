@@ -3,3 +3,7 @@ export * from './fixtures';
 export * from './reducer';
 export * from './selectors';
 export * from './StudyProcessingProvider';
+export * from './statusPresentation';
+export * from './StudyProcessingStatusCell';
+export * from './StudyProcessingStatus';
+export * from './fixtureAdapter';
