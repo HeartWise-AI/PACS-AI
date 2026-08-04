@@ -26,6 +26,7 @@ import {
   StudyProcessingStatus,
   useStudyProcessing,
 } from '../../components/inference/studyProcessing';
+import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -38,7 +39,7 @@ function WorkList() {
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [expandedTableRows, setExpandedTableRows] = useState({});
+  const [expandedStudyRows, setExpandedStudyRows] = useState<ExpandedStudyRows>({});
   const [jobInfo, setJobInfo] = useState({
     id: '',
     priority: 0,
@@ -363,13 +364,12 @@ function WorkList() {
 
   /**
    * Table toggle for expandable rows
-   * @param index
+   * @param studyInstanceUID
    */
-  const toggleRow = index => {
-    setExpandedTableRows(prevState => ({
-      ...prevState,
-      [index]: !prevState[index],
-    }));
+  const toggleRow = (studyInstanceUID: string) => {
+    setExpandedStudyRows(previousExpandedStudyRows =>
+      toggleExpandedStudyRow(previousExpandedStudyRows, studyInstanceUID)
+    );
   };
 
   /**
@@ -891,15 +891,17 @@ function WorkList() {
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
-                      {currentItems.map((row, index) => (
+                      {currentItems.map(row => (
                         <React.Fragment key={row.studyInstanceUID}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
-                            onClick={() => toggleRow(index)}
+                            onClick={() => toggleRow(row.studyInstanceUID)}
                           >
                             <td
                               className={`text-md py-2 px-4 font-normal ${
-                                expandedTableRows[index] ? 'rounded-tl-lg' : 'rounded-l-lg'
+                                expandedStudyRows[row.studyInstanceUID]
+                                  ? 'rounded-tl-lg'
+                                  : 'rounded-l-lg'
                               }`}
                             >
                               {row.patientName}
@@ -921,7 +923,7 @@ function WorkList() {
                               className={`py-2 px-4 text-sm font-normal ${
                                 showStudyProcessingFixtures
                                   ? ''
-                                  : expandedTableRows[index]
+                                  : expandedStudyRows[row.studyInstanceUID]
                                     ? '!rounded-tr-lg'
                                     : '!rounded-r-lg'
                               }`}
@@ -931,14 +933,16 @@ function WorkList() {
                             {showStudyProcessingFixtures && (
                               <td
                                 className={`py-2 px-4 ${
-                                  expandedTableRows[index] ? '!rounded-tr-lg' : '!rounded-r-lg'
+                                  expandedStudyRows[row.studyInstanceUID]
+                                    ? '!rounded-tr-lg'
+                                    : '!rounded-r-lg'
                                 }`}
                               >
                                 <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
                               </td>
                             )}
                           </tr>
-                          {expandedTableRows[index] && (
+                          {expandedStudyRows[row.studyInstanceUID] && (
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
                                 colSpan={showStudyProcessingFixtures ? 8 : 7}
