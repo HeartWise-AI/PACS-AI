@@ -8,6 +8,11 @@ import {
   useCandidateProcessingPoll,
   ProcessingTransitionEvent,
 } from '../../hooks/useCandidateProcessingPoll';
+import { useStudyProcessing } from './studyProcessing/StudyProcessingProvider';
+import {
+  getStudyProcessingAuthIdentity,
+  shouldClearStudyProcessingState,
+} from './studyProcessing/authIdentity';
 
 const RECENT_LIMIT = 20;
 
@@ -42,6 +47,8 @@ function InferenceProcessingProvider({ children }) {
   const [pollEnabled, setPollEnabled] = useState(false);
   const [isBellOpen, setBellOpen] = useState(false);
   const isBellOpenRef = useRef(false);
+  const authenticatedIdentityRef = useRef<string | null>(null);
+  const { clearStudyProcessingState } = useStudyProcessing();
 
   isBellOpenRef.current = isBellOpen;
 
@@ -52,6 +59,8 @@ function InferenceProcessingProvider({ children }) {
       const token = localStorage.getItem('sessionToken');
       if (!token) {
         if (!cancelled) {
+          authenticatedIdentityRef.current = null;
+          clearStudyProcessingState();
           setPollEnabled(false);
           setNotifications([]);
         }
@@ -61,6 +70,12 @@ function InferenceProcessingProvider({ children }) {
       try {
         const response = await userRepository.GetCurrentUser();
         if (!cancelled) {
+          const nextIdentity = getStudyProcessingAuthIdentity(response.data);
+          if (shouldClearStudyProcessingState(authenticatedIdentityRef.current, nextIdentity)) {
+            clearStudyProcessingState();
+          }
+          authenticatedIdentityRef.current = nextIdentity;
+
           const role = response.data.role;
           const canPoll = role === UserRole.ADMIN || role === UserRole.OWNER;
           setPollEnabled(canPoll);
@@ -70,6 +85,8 @@ function InferenceProcessingProvider({ children }) {
         }
       } catch {
         if (!cancelled) {
+          authenticatedIdentityRef.current = null;
+          clearStudyProcessingState();
           setPollEnabled(false);
           setNotifications([]);
         }
@@ -81,7 +98,7 @@ function InferenceProcessingProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname]);
+  }, [clearStudyProcessingState, location.pathname]);
 
   const handleTransition = useCallback(
     (event: ProcessingTransitionEvent) => {
