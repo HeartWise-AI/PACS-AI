@@ -63,15 +63,6 @@ export const initialStudyProcessingState: StudyProcessingState = {
   realtimeConnectionError: null,
 };
 
-export function isRealtimeStudyProcessingDataStale(state: StudyProcessingState): boolean {
-  const hasStudyData = Object.keys(state.summariesByStudyInstanceUID).length > 0;
-  const hasRealtimeGap =
-    state.realtimeConnectionStatus === 'reconnecting' ||
-    state.realtimeConnectionStatus === 'degraded';
-
-  return hasStudyData && hasRealtimeGap;
-}
-
 export function shouldApplyStudyProcessingSummary(
   current: StudyProcessingSummary | undefined,
   incoming: StudyProcessingSummary

@@ -5,10 +5,10 @@ import {
 } from './fixtures';
 import {
   initialStudyProcessingState,
-  isRealtimeStudyProcessingDataStale,
   shouldApplyStudyProcessingSummary,
   studyProcessingReducer,
 } from './reducer';
+import { selectIsRealtimeDataStale } from './selectors';
 
 describe('studyProcessingReducer', () => {
   test('merges snapshot summaries by Study Instance UID', () => {
@@ -232,7 +232,7 @@ describe('studyProcessingReducer', () => {
     expect(reconnectingState.summariesByStudyInstanceUID).toBe(
       readyState.summariesByStudyInstanceUID
     );
-    expect(isRealtimeStudyProcessingDataStale(reconnectingState)).toBe(true);
+    expect(selectIsRealtimeDataStale(reconnectingState)).toBe(true);
   });
 
   test('marks existing data stale when real-time updates are degraded', () => {
@@ -247,13 +247,13 @@ describe('studyProcessingReducer', () => {
 
     expect(degradedState.realtimeConnectionStatus).toBe('degraded');
     expect(degradedState.realtimeConnectionError).toBe('Real-time updates are unavailable.');
-    expect(isRealtimeStudyProcessingDataStale(degradedState)).toBe(true);
+    expect(selectIsRealtimeDataStale(degradedState)).toBe(true);
 
     const recoveredState = studyProcessingReducer(degradedState, {
       type: 'connection.connected',
     });
 
-    expect(isRealtimeStudyProcessingDataStale(recoveredState)).toBe(false);
+    expect(selectIsRealtimeDataStale(recoveredState)).toBe(false);
     expect(recoveredState.realtimeConnectionError).toBeNull();
   });
 
@@ -263,7 +263,7 @@ describe('studyProcessingReducer', () => {
       error: null,
     });
 
-    expect(isRealtimeStudyProcessingDataStale(reconnectingState)).toBe(false);
+    expect(selectIsRealtimeDataStale(reconnectingState)).toBe(false);
   });
 });
 
