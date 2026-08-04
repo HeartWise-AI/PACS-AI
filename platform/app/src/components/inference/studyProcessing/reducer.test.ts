@@ -97,6 +97,108 @@ describe('studyProcessingReducer', () => {
     expect(clearedState).toBe(initialStudyProcessingState);
     expect(clearedState.summariesByStudyInstanceUID).toEqual({});
   });
+
+  test('buffers an event while the initial snapshot is loading', () => {
+    const loadingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'initialSnapshot.started',
+    });
+
+    const bufferedState = studyProcessingReducer(loadingState, {
+      type: 'status.updated',
+      summary: studyStatusUpdatedEventFixture,
+    });
+
+    expect(bufferedState.initialSnapshotStatus).toBe('loading');
+    expect(bufferedState.summariesByStudyInstanceUID).toEqual({});
+    expect(
+      bufferedState.bufferedSummariesByStudyInstanceUID[
+        studyStatusUpdatedEventFixture.studyInstanceUID
+      ]
+    ).toBe(studyStatusUpdatedEventFixture);
+  });
+
+  test('does not discard buffered events when loading is started twice', () => {
+    const loadingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'initialSnapshot.started',
+    });
+    const bufferedState = studyProcessingReducer(loadingState, {
+      type: 'status.updated',
+      summary: studyStatusUpdatedEventFixture,
+    });
+
+    const repeatedStartState = studyProcessingReducer(bufferedState, {
+      type: 'initialSnapshot.started',
+    });
+
+    expect(repeatedStartState).toBe(bufferedState);
+  });
+
+  test('applies buffered events after the initial snapshot', () => {
+    const loadingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'initialSnapshot.started',
+    });
+    const bufferedState = studyProcessingReducer(loadingState, {
+      type: 'status.updated',
+      summary: studyStatusUpdatedEventFixture,
+    });
+
+    const readyState = studyProcessingReducer(bufferedState, {
+      type: 'snapshot.received',
+      summaries: studyProcessingSnapshotFixture.items,
+    });
+
+    expect(readyState.initialSnapshotStatus).toBe('ready');
+    expect(readyState.bufferedSummariesByStudyInstanceUID).toEqual({});
+    expect(
+      readyState.summariesByStudyInstanceUID[studyStatusUpdatedEventFixture.studyInstanceUID]
+    ).toBe(studyStatusUpdatedEventFixture);
+  });
+
+  test('keeps only the newest buffered event for each study', () => {
+    const loadingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'initialSnapshot.started',
+    });
+    const newestEvent = {
+      ...studyStatusUpdatedEventFixture,
+      version: studyStatusUpdatedEventFixture.version + 1,
+    };
+    const withNewestEvent = studyProcessingReducer(loadingState, {
+      type: 'status.updated',
+      summary: newestEvent,
+    });
+
+    const afterOlderEvent = studyProcessingReducer(withNewestEvent, {
+      type: 'status.updated',
+      summary: studyStatusUpdatedEventFixture,
+    });
+
+    expect(afterOlderEvent).toBe(withNewestEvent);
+    expect(afterOlderEvent.bufferedSummariesByStudyInstanceUID[newestEvent.studyInstanceUID]).toBe(
+      newestEvent
+    );
+  });
+
+  test('preserves buffered events when the initial snapshot fails', () => {
+    const loadingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'initialSnapshot.started',
+    });
+    const bufferedState = studyProcessingReducer(loadingState, {
+      type: 'status.updated',
+      summary: studyStatusUpdatedEventFixture,
+    });
+
+    const errorState = studyProcessingReducer(bufferedState, {
+      type: 'initialSnapshot.failed',
+      error: 'Unable to load processing status.',
+    });
+
+    expect(errorState.initialSnapshotStatus).toBe('error');
+    expect(errorState.initialSnapshotError).toBe('Unable to load processing status.');
+    expect(errorState.bufferedSummariesByStudyInstanceUID).toEqual({});
+    expect(
+      errorState.summariesByStudyInstanceUID[studyStatusUpdatedEventFixture.studyInstanceUID]
+    ).toBe(studyStatusUpdatedEventFixture);
+  });
 });
 
 describe('shouldApplyStudyProcessingSummary', () => {
