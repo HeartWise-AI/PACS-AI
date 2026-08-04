@@ -1,12 +1,20 @@
 import type { StudyProcessingSummary } from './types';
 
 export type InitialSnapshotStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type RealtimeConnectionStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'degraded';
 
 export interface StudyProcessingState {
   summariesByStudyInstanceUID: Record<string, StudyProcessingSummary>;
   bufferedSummariesByStudyInstanceUID: Record<string, StudyProcessingSummary>;
   initialSnapshotStatus: InitialSnapshotStatus;
   initialSnapshotError: string | null;
+  realtimeConnectionStatus: RealtimeConnectionStatus;
+  realtimeConnectionError: string | null;
 }
 
 export type StudyProcessingAction =
@@ -26,6 +34,23 @@ export type StudyProcessingAction =
       summary: StudyProcessingSummary;
     }
   | {
+      type: 'connection.connecting';
+    }
+  | {
+      type: 'connection.connected';
+    }
+  | {
+      type: 'connection.reconnecting';
+      error: string | null;
+    }
+  | {
+      type: 'connection.degraded';
+      error: string;
+    }
+  | {
+      type: 'connection.disconnected';
+    }
+  | {
       type: 'state.cleared';
     };
 
@@ -34,7 +59,18 @@ export const initialStudyProcessingState: StudyProcessingState = {
   bufferedSummariesByStudyInstanceUID: {},
   initialSnapshotStatus: 'idle',
   initialSnapshotError: null,
+  realtimeConnectionStatus: 'disconnected',
+  realtimeConnectionError: null,
 };
+
+export function isRealtimeStudyProcessingDataStale(state: StudyProcessingState): boolean {
+  const hasStudyData = Object.keys(state.summariesByStudyInstanceUID).length > 0;
+  const hasRealtimeGap =
+    state.realtimeConnectionStatus === 'reconnecting' ||
+    state.realtimeConnectionStatus === 'degraded';
+
+  return hasStudyData && hasRealtimeGap;
+}
 
 export function shouldApplyStudyProcessingSummary(
   current: StudyProcessingSummary | undefined,
@@ -162,6 +198,36 @@ export function studyProcessingReducer(
       }
 
       return mergeSummaries(state, [action.summary]);
+    case 'connection.connecting':
+      return {
+        ...state,
+        realtimeConnectionStatus: 'connecting',
+        realtimeConnectionError: null,
+      };
+    case 'connection.connected':
+      return {
+        ...state,
+        realtimeConnectionStatus: 'connected',
+        realtimeConnectionError: null,
+      };
+    case 'connection.reconnecting':
+      return {
+        ...state,
+        realtimeConnectionStatus: 'reconnecting',
+        realtimeConnectionError: action.error,
+      };
+    case 'connection.degraded':
+      return {
+        ...state,
+        realtimeConnectionStatus: 'degraded',
+        realtimeConnectionError: action.error,
+      };
+    case 'connection.disconnected':
+      return {
+        ...state,
+        realtimeConnectionStatus: 'disconnected',
+        realtimeConnectionError: null,
+      };
     case 'state.cleared':
       return initialStudyProcessingState;
     default:

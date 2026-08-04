@@ -5,6 +5,7 @@ import {
 } from './fixtures';
 import {
   initialStudyProcessingState,
+  isRealtimeStudyProcessingDataStale,
   shouldApplyStudyProcessingSummary,
   studyProcessingReducer,
 } from './reducer';
@@ -198,6 +199,71 @@ describe('studyProcessingReducer', () => {
     expect(
       errorState.summariesByStudyInstanceUID[studyStatusUpdatedEventFixture.studyInstanceUID]
     ).toBe(studyStatusUpdatedEventFixture);
+  });
+
+  test('tracks the real-time connection lifecycle independently from study data', () => {
+    const connectingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'connection.connecting',
+    });
+    const connectedState = studyProcessingReducer(connectingState, {
+      type: 'connection.connected',
+    });
+
+    expect(connectingState.realtimeConnectionStatus).toBe('connecting');
+    expect(connectedState.realtimeConnectionStatus).toBe('connected');
+    expect(connectedState.realtimeConnectionError).toBeNull();
+    expect(connectedState.summariesByStudyInstanceUID).toBe(
+      initialStudyProcessingState.summariesByStudyInstanceUID
+    );
+  });
+
+  test('keeps study data visible while the connection is reconnecting', () => {
+    const readyState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'snapshot.received',
+      summaries: studyProcessingSnapshotFixture.items,
+    });
+    const reconnectingState = studyProcessingReducer(readyState, {
+      type: 'connection.reconnecting',
+      error: 'Connection interrupted.',
+    });
+
+    expect(reconnectingState.realtimeConnectionStatus).toBe('reconnecting');
+    expect(reconnectingState.realtimeConnectionError).toBe('Connection interrupted.');
+    expect(reconnectingState.summariesByStudyInstanceUID).toBe(
+      readyState.summariesByStudyInstanceUID
+    );
+    expect(isRealtimeStudyProcessingDataStale(reconnectingState)).toBe(true);
+  });
+
+  test('marks existing data stale when real-time updates are degraded', () => {
+    const readyState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'snapshot.received',
+      summaries: studyProcessingSnapshotFixture.items,
+    });
+    const degradedState = studyProcessingReducer(readyState, {
+      type: 'connection.degraded',
+      error: 'Real-time updates are unavailable.',
+    });
+
+    expect(degradedState.realtimeConnectionStatus).toBe('degraded');
+    expect(degradedState.realtimeConnectionError).toBe('Real-time updates are unavailable.');
+    expect(isRealtimeStudyProcessingDataStale(degradedState)).toBe(true);
+
+    const recoveredState = studyProcessingReducer(degradedState, {
+      type: 'connection.connected',
+    });
+
+    expect(isRealtimeStudyProcessingDataStale(recoveredState)).toBe(false);
+    expect(recoveredState.realtimeConnectionError).toBeNull();
+  });
+
+  test('does not mark empty state stale during a connection problem', () => {
+    const reconnectingState = studyProcessingReducer(initialStudyProcessingState, {
+      type: 'connection.reconnecting',
+      error: null,
+    });
+
+    expect(isRealtimeStudyProcessingDataStale(reconnectingState)).toBe(false);
   });
 });
 
