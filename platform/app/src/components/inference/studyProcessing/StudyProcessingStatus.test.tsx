@@ -8,6 +8,12 @@ import {
 } from './StudyProcessingProvider';
 import { StudyProcessingStatus } from './StudyProcessingStatus';
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options: Record<string, unknown> = {}) => String(options.defaultValue ?? key),
+  }),
+}));
+
 let contextValue: StudyProcessingContextValue;
 let renderer: ReactTestRenderer;
 
