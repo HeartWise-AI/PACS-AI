@@ -42,6 +42,7 @@ import { GlobalStateProvider } from './GlobalStateProvider';
 // NOTE: This is a PACS changes
 import TutorialProgressOverlay from './components/TutorialProgressOverlay';
 import InferenceProcessingProvider from './components/inference/InferenceProcessingProvider';
+import StudyProcessingProvider from './components/inference/studyProcessing/StudyProcessingProvider';
 import './App.css';
 
 // NOTE: This is a PACS changes
@@ -196,11 +197,13 @@ function App({
         <GlobalStateProvider>
           <CombinedProviders>
             <BrowserRouter basename={routerBasename}>
-              <InferenceProcessingProvider>
-                {authRoutes}
-                {appRoutes}
-                <TutorialProgressOverlay />
-              </InferenceProcessingProvider>
+              <StudyProcessingProvider>
+                <InferenceProcessingProvider>
+                  {authRoutes}
+                  {appRoutes}
+                  <TutorialProgressOverlay />
+                </InferenceProcessingProvider>
+              </StudyProcessingProvider>
             </BrowserRouter>
           </CombinedProviders>
         </GlobalStateProvider>
