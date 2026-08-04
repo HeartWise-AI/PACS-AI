@@ -23,10 +23,15 @@ import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 import {
   createVisibleStudyProcessingFixtureSnapshot,
+  StudyProcessingAttention,
+  StudyProcessingConnectionBanner,
+  StudyProcessingRunHistoryPanel,
   StudyProcessingStatus,
+  StudyProcessingUpdated,
   useStudyProcessing,
 } from '../../components/inference/studyProcessing';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
+import WorklistTopNavigation from './WorklistTopNavigation';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -80,7 +85,7 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { receiveSnapshot } = useStudyProcessing();
+  const { receiveSnapshot, markConnectionConnected } = useStudyProcessing();
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
     value: string;
@@ -198,7 +203,8 @@ function WorkList() {
     receiveSnapshot(
       createVisibleStudyProcessingFixtureSnapshot(currentItems.map(study => study.studyInstanceUID))
     );
-  }, [currentItems, receiveSnapshot, showStudyProcessingFixtures]);
+    markConnectionConnected();
+  }, [currentItems, markConnectionConnected, receiveSnapshot, showStudyProcessingFixtures]);
 
   // Set body style
   useEffect(() => {
@@ -739,13 +745,35 @@ function WorkList() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
+    <div className="min-h-screen w-screen overflow-x-hidden bg-[#151815]">
+      {showStudyProcessingFixtures && <WorklistTopNavigation fixturePreview />}
       <div className="flex w-full bg-[#151815]">
         {/* Sidebar component */}
-        <Sidebar />
-        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
+        {!showStudyProcessingFixtures && <Sidebar />}
+        <div
+          className={`ohif-scrollbar flex grow flex-col overflow-y-auto ${
+            showStudyProcessingFixtures ? 'mx-auto max-w-[1900px] px-7 pb-8' : 'mr-5'
+          }`}
+        >
           {/* HeaderPanel component */}
-          <HeaderPanel title="Studies" />
+          {!showStudyProcessingFixtures && <HeaderPanel title="Studies" />}
+          {showStudyProcessingFixtures && (
+            <div className="flex items-baseline gap-4 pb-5 pt-6">
+              <h1 className="text-2xl font-bold text-white">
+                {t('ProcessingStudyWorklist', { defaultValue: 'Study Worklist' })}
+              </h1>
+              <span className="text-xs text-white/35">
+                {t('ProcessingStudyCount', {
+                  count: tableDataSource.length,
+                  defaultValue: '{{count}} studies',
+                })}{' '}
+                ·{' '}
+                {t('ProcessingJoinedByUID', {
+                  defaultValue: 'processing status joined by StudyInstanceUID',
+                })}
+              </span>
+            </div>
+          )}
           <div className="sticky -top-1 z-10 mx-auto mb-5 w-full rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%]">
             <div className="flex w-full flex-wrap items-center gap-3 bg-transparent p-5">
               <Input
@@ -828,6 +856,7 @@ function WorkList() {
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            {showStudyProcessingFixtures && <StudyProcessingConnectionBanner />}
             <div className="ml-auto flex items-center gap-3">
               <span className="text-[16px] text-white">{t('DICOM Modality')}</span>
               <Select
@@ -887,6 +916,11 @@ function WorkList() {
                           {t('Processing')}
                         </th>
                       )}
+                      {showStudyProcessingFixtures && (
+                        <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                          {t('ProcessingUpdated', { defaultValue: 'Updated' })}
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   {tableDataSource.length > 0 ? (
@@ -900,7 +934,7 @@ function WorkList() {
                             <td
                               className={`text-md py-2 px-4 font-normal ${
                                 expandedStudyRows[row.studyInstanceUID]
-                                  ? 'rounded-tl-lg'
+                                  ? 'rounded-tl-lg border-l-[3px] border-primary-main'
                                   : 'rounded-l-lg'
                               }`}
                             >
@@ -931,6 +965,11 @@ function WorkList() {
                               {row.numberOfStudyRelatedSeries}
                             </td>
                             {showStudyProcessingFixtures && (
+                              <td className="py-2 px-4">
+                                <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
+                              </td>
+                            )}
+                            {showStudyProcessingFixtures && (
                               <td
                                 className={`py-2 px-4 ${
                                   expandedStudyRows[row.studyInstanceUID]
@@ -938,17 +977,31 @@ function WorkList() {
                                     : '!rounded-r-lg'
                                 }`}
                               >
-                                <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
+                                <div className="flex items-center gap-4">
+                                  <StudyProcessingUpdated studyInstanceUID={row.studyInstanceUID} />
+                                  <span
+                                    className="ml-auto text-lg text-white/35"
+                                    aria-hidden="true"
+                                  >
+                                    {expandedStudyRows[row.studyInstanceUID] ? '⌃' : '⌄'}
+                                  </span>
+                                </div>
                               </td>
                             )}
                           </tr>
                           {expandedStudyRows[row.studyInstanceUID] && (
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
-                                colSpan={showStudyProcessingFixtures ? 8 : 7}
-                                className="rounded-bl-lg rounded-br-lg py-4 px-4"
+                                colSpan={showStudyProcessingFixtures ? 9 : 7}
+                                className="rounded-bl-lg rounded-br-lg border-l-[3px] border-primary-main py-4 px-4"
                               >
-                                <div className="flex items-center gap-3">
+                                <StudyProcessingAttention studyInstanceUID={row.studyInstanceUID} />
+                                {showStudyProcessingFixtures && (
+                                  <StudyProcessingRunHistoryPanel
+                                    studyInstanceUID={row.studyInstanceUID}
+                                  />
+                                )}
+                                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
                                   <h1 className="text-lg text-white text-opacity-70">
                                     {t('Tools')}
                                   </h1>

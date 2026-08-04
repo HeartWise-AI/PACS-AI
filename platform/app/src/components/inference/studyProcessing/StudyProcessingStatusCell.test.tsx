@@ -52,7 +52,11 @@ describe('StudyProcessingStatusCell', () => {
 
     expect(progress.props['aria-valuenow']).toBe(1);
     expect(progress.props['aria-valuemax']).toBe(3);
-    expect(modelCount.children.join('')).toBe('1 of 3 models');
+    expect(modelCount.children.join('')).toBe('1 / 3 models');
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-progress-fill' }).props.style
+        .width
+    ).toBe('33%');
 
     act(() => {
       renderer.unmount();

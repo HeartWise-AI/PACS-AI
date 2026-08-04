@@ -16,6 +16,11 @@ export interface StudyProcessingStatusPresentation {
   tone: StudyProcessingStatusTone;
 }
 
+export interface StudyProcessingActivityPresentation {
+  label: string;
+  translationKey: string;
+}
+
 export function getStudyProcessingStatusPresentation(
   summary: StudyProcessingSummary
 ): StudyProcessingStatusPresentation {
@@ -92,4 +97,47 @@ export function getStudyProcessingStatusPresentation(
         tone: 'cancelled',
       };
   }
+}
+
+export function getStudyProcessingActivityPresentation(
+  summary: StudyProcessingSummary
+): StudyProcessingActivityPresentation {
+  switch (summary.lifecycle) {
+    case 'WAITING':
+      return {
+        label: 'Waiting for processing to begin',
+        translationKey: 'ProcessingActivityWaiting',
+      };
+    case 'RETRIEVING':
+      return {
+        label: 'Retrieving study data',
+        translationKey: 'ProcessingActivityRetrieving',
+      };
+    case 'QUEUED':
+      return {
+        label: 'Waiting for an available worker',
+        translationKey: 'ProcessingActivityQueued',
+      };
+    case 'PROCESSING':
+      return {
+        label: 'Models are running',
+        translationKey: 'ProcessingActivityProcessing',
+      };
+    case 'TERMINAL':
+      return {
+        label: summary.runNumber ? `Run #${summary.runNumber} finished` : 'Processing finished',
+        translationKey: summary.runNumber
+          ? 'ProcessingActivityRunFinished'
+          : 'ProcessingActivityFinished',
+      };
+  }
+}
+
+export function getStudyProcessingProgress(summary: StudyProcessingSummary): number {
+  if (summary.expectedModels <= 0) {
+    return 0;
+  }
+
+  const completedModels = Math.min(Math.max(summary.completedModels, 0), summary.expectedModels);
+  return Math.round((completedModels / summary.expectedModels) * 100);
 }
