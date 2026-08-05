@@ -11,4 +11,6 @@ export * from './StudyProcessingAttention';
 export * from './StudyProcessingRunHistoryPanel';
 export * from './StudyProcessingConnectionBanner';
 export * from './runHistoryFixtureAdapter';
+export * from './runHistoryReducer';
+export * from './runHistoryTransport';
 export * from './fixtureAdapter';

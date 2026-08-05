@@ -267,11 +267,7 @@ export const studyProcessingRunHistoryFixture: StudyProcessingRunHistory = {
       completedModels: 3,
       failedModels: 0,
       version: 1,
-      modelExecutions: partialRun.modelExecutions.map(execution => ({
-        ...execution,
-        status: 'completed',
-        error: null,
-      })),
+      modelExecutions: [],
     },
   ],
 };
