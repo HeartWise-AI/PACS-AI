@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecution, ProcessingRun } from './types';
-import { createStudyProcessingRunHistoryFixture } from './runHistoryFixtureAdapter';
 import { useStudyProcessing } from './StudyProcessingProvider';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
@@ -86,18 +85,22 @@ export function StudyProcessingRunHistoryPanel({
   studyInstanceUID,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
-  const { getStudySummary } = useStudyProcessing();
-  const summary = getStudySummary(studyInstanceUID);
+  const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
+  const entry = getRunHistoryEntry(studyInstanceUID);
+  const history = entry.history;
 
-  if (!summary) {
-    return null;
-  }
+  useEffect(() => {
+    void ensureRunHistory(studyInstanceUID);
+  }, [ensureRunHistory, studyInstanceUID]);
 
-  const history = createStudyProcessingRunHistoryFixture(summary);
+  const isInitialLoading = !history && (entry.status === 'idle' || entry.status === 'loading');
+  const hasLoadError = entry.status === 'error' || entry.status === 'unavailable';
+  const retry = () =>
+    history ? refreshRunHistory(studyInstanceUID) : ensureRunHistory(studyInstanceUID);
 
   return (
     <section aria-label={t('ProcessingRunHistory', { defaultValue: 'Processing run history' })}>
-      <div className="mb-4 flex items-center">
+      <div className="mb-4 flex min-h-[28px] items-center">
         <h2 className="text-sm font-bold text-primary-main">
           {t('Processing', { defaultValue: 'Processing' })}
         </h2>
@@ -106,19 +109,86 @@ export function StudyProcessingRunHistoryPanel({
             defaultValue: 'Loaded on demand for this study only',
           })}
         </span>
-        <span className="ml-auto text-xs font-semibold text-[#c5cbc5]">
-          {t('ProcessingRunCount', {
-            count: history.runs.length,
-            defaultValue: '{{count}} runs',
-          })}
-        </span>
+        {history && (
+          <span className="ml-auto text-xs font-semibold text-[#c5cbc5]">
+            {t('ProcessingRunCount', {
+              count: history.runs.length,
+              defaultValue: '{{count}} runs',
+            })}
+          </span>
+        )}
+        {(history || entry.status === 'ready') && (
+          <button
+            type="button"
+            className="ml-4 rounded-md border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:cursor-wait disabled:opacity-50"
+            onClick={() => void refreshRunHistory(studyInstanceUID)}
+            disabled={entry.status === 'refreshing'}
+            data-testid="study-processing-run-history-refresh"
+          >
+            {entry.status === 'refreshing'
+              ? t('ProcessingHistoryRefreshing', { defaultValue: 'Refreshing…' })
+              : t('ProcessingHistoryRefresh', { defaultValue: 'Refresh' })}
+          </button>
+        )}
       </div>
 
-      {history.runs.length === 0 ? (
+      {isInitialLoading && (
+        <div
+          className="rounded-lg bg-[#252925] px-5 py-5"
+          role="status"
+          aria-label={t('ProcessingHistoryLoading', {
+            defaultValue: 'Loading processing run history',
+          })}
+          data-testid="study-processing-run-history-loading"
+        >
+          <div className="h-4 w-56 animate-pulse rounded bg-white/10" />
+          <div className="mt-3 h-3 w-full max-w-xl animate-pulse rounded bg-white/10" />
+        </div>
+      )}
+
+      {entry.status === 'partial' && (
+        <div
+          className="mb-3 rounded-md border border-[#facc15]/35 bg-[#403917] px-4 py-3 text-xs text-[#f8d84a]"
+          role="status"
+          data-testid="study-processing-run-history-partial"
+        >
+          {t('ProcessingHistoryPartial', {
+            defaultValue: 'Some run-history information is unavailable.',
+          })}
+        </div>
+      )}
+
+      {hasLoadError && (
+        <div
+          className="mb-3 flex items-center rounded-md border border-[#f87171]/35 bg-[#482828] px-4 py-3 text-xs text-[#ffb0b0]"
+          role="alert"
+          data-testid="study-processing-run-history-error"
+        >
+          <span>
+            {entry.status === 'unavailable'
+              ? t('ProcessingHistoryUnavailable', {
+                  defaultValue: 'Processing run history is currently unavailable.',
+                })
+              : t('ProcessingHistoryError', {
+                  defaultValue: 'Processing run history could not be loaded.',
+                })}
+          </span>
+          <button
+            type="button"
+            className="ml-auto rounded border border-current px-3 py-1 font-semibold hover:bg-white/10"
+            onClick={() => void retry()}
+            data-testid="study-processing-run-history-retry"
+          >
+            {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
+          </button>
+        </div>
+      )}
+
+      {history && history.runs.length === 0 ? (
         <div className="rounded-lg bg-[#252925] px-5 py-6 text-sm text-[#c5cbc5]">
           {t('ProcessingNoRunHistory', { defaultValue: 'No processing runs yet.' })}
         </div>
-      ) : (
+      ) : history ? (
         <div className="space-y-3">
           {history.runs.map((run, runIndex) => {
             const label = runLabel(run);
@@ -222,7 +292,7 @@ export function StudyProcessingRunHistoryPanel({
             );
           })}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
