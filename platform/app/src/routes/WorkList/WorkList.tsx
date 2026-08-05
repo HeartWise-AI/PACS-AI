@@ -631,6 +631,10 @@ function WorkList() {
       cursor: 'pointer',
       outline: 'none',
     }),
+    input: styles => ({
+      ...styles,
+      color: 'rgba(255, 255, 255, 0.85)',
+    }),
     multiValue: styles => ({
       ...styles,
       backgroundColor: '#c8f469',

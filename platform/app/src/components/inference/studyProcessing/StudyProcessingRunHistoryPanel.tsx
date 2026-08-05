@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ModelExecution, ProcessingRun } from './types';
+import type { ModelExecution, ProcessingAttentionReason, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
@@ -13,6 +13,52 @@ const executionToneClassNames: Record<ModelExecution['status'], string> = {
   cancelled: 'text-[#b2bac2]',
 };
 
+const attentionReasonPresentations: Record<
+  ProcessingAttentionReason,
+  { key: string; label: string }
+> = {
+  DISPATCH_FAILED: {
+    key: 'ProcessingAttentionReason.DISPATCH_FAILED',
+    label: 'Model dispatch failed',
+  },
+  EXPECTED_JOB_MISSING: {
+    key: 'ProcessingAttentionReason.EXPECTED_JOB_MISSING',
+    label: 'An expected model job is missing',
+  },
+  PENDING_STALE: {
+    key: 'ProcessingAttentionReason.PENDING_STALE',
+    label: 'A model has remained pending too long',
+  },
+  QUEUE_STALE: {
+    key: 'ProcessingAttentionReason.QUEUE_STALE',
+    label: 'A model has remained queued too long',
+  },
+  PROCESSING_STALE: {
+    key: 'ProcessingAttentionReason.PROCESSING_STALE',
+    label: 'Model processing appears stalled',
+  },
+  CALLBACK_DEAD_LETTERED: {
+    key: 'ProcessingAttentionReason.CALLBACK_DEAD_LETTERED',
+    label: 'A model callback could not be delivered',
+  },
+  STUDY_SERVICE_JOB_MISSING: {
+    key: 'ProcessingAttentionReason.STUDY_SERVICE_JOB_MISSING',
+    label: 'The study-service job is missing',
+  },
+  STATE_CONFLICT: {
+    key: 'ProcessingAttentionReason.STATE_CONFLICT',
+    label: 'Conflicting processing states were detected',
+  },
+  RECONCILIATION_FAILED: {
+    key: 'ProcessingAttentionReason.RECONCILIATION_FAILED',
+    label: 'Processing state reconciliation failed',
+  },
+  EMPTY_MODEL_PLAN: {
+    key: 'ProcessingAttentionReason.EMPTY_MODEL_PLAN',
+    label: 'No models were selected for this study',
+  },
+};
+
 function formatTimestamp(timestamp: string | null): string {
   if (!timestamp) {
     return '—';
@@ -23,6 +69,10 @@ function formatTimestamp(timestamp: string | null): string {
     minute: '2-digit',
     second: '2-digit',
   });
+}
+
+function formatDateTime(timestamp: string | null): string {
+  return timestamp ? new Date(timestamp).toLocaleString() : '—';
 }
 
 function formatDuration(startedAt: string | null, completedAt: string | null): string {
@@ -265,6 +315,51 @@ export function StudyProcessingRunHistoryPanel({
                     className="overflow-x-auto px-5 pb-4 pt-2"
                     data-testid={`study-processing-run-details-${run.id}`}
                   >
+                    <dl className="grid grid-cols-1 gap-2 py-3 text-xs text-[#b8c0b8] sm:grid-cols-3">
+                      <div>
+                        <dt className="font-semibold text-[#8f978f]">
+                          {t('ProcessingRunStarted', { defaultValue: 'Run started' })}
+                        </dt>
+                        <dd className="mt-1">{formatDateTime(run.startedAt)}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-[#8f978f]">
+                          {t('ProcessingRunCompletedAt', { defaultValue: 'Run completed' })}
+                        </dt>
+                        <dd className="mt-1">{formatDateTime(run.completedAt)}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-[#8f978f]">
+                          {t('ProcessingRunUpdated', { defaultValue: 'Last updated' })}
+                        </dt>
+                        <dd className="mt-1">{formatDateTime(run.updatedAt)}</dd>
+                      </div>
+                    </dl>
+
+                    {run.attentionRequired && run.attentionReasons.length > 0 && (
+                      <div
+                        className="mb-3 rounded-md border border-[#8f7617] bg-[#403917] px-4 py-3 text-sm text-[#f8d84a]"
+                        role="status"
+                        data-testid={`study-processing-run-attention-${run.id}`}
+                      >
+                        <div className="font-semibold">
+                          {t('ProcessingRunRequiresAttention', {
+                            defaultValue: 'This run requires attention',
+                          })}
+                        </div>
+                        <ul className="mt-1 list-disc pl-5 text-xs text-[#f6df7d]">
+                          {run.attentionReasons.map(reason => {
+                            const presentation = attentionReasonPresentations[reason];
+                            return (
+                              <li key={reason}>
+                                {t(presentation.key, { defaultValue: presentation.label })}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+
                     {run.trigger === 'LEGACY_IMPORT' ? (
                       <div
                         className="my-2 rounded-md border border-[#65717c] bg-[#343b40] px-4 py-4 text-sm text-[#d0d6dc]"
@@ -286,6 +381,7 @@ export function StudyProcessingRunHistoryPanel({
                             <th>{t('ProcessingVersionLabel', { defaultValue: 'Version' })}</th>
                             <th>{t('Status')}</th>
                             <th>{t('ProcessingStarted', { defaultValue: 'Started' })}</th>
+                            <th>{t('ProcessingCompletedAt', { defaultValue: 'Completed' })}</th>
                             <th>{t('ProcessingDuration', { defaultValue: 'Duration' })}</th>
                             <th>{t('ProcessingDetails', { defaultValue: 'Details' })}</th>
                           </tr>
@@ -314,18 +410,45 @@ export function StudyProcessingRunHistoryPanel({
                               <td className="font-mono text-[#b8c0b8]">
                                 {formatTimestamp(execution.startedAt)}
                               </td>
+                              <td className="font-mono text-[#b8c0b8]">
+                                {formatTimestamp(execution.completedAt)}
+                              </td>
                               <td className="text-[#b8c0b8]">
                                 {formatDuration(execution.startedAt, execution.completedAt)}
                               </td>
                               <td className="max-w-[360px] truncate text-[#c5cbc5]">
                                 {execution.error ? (
-                                  <span className="text-[#f87171]">
-                                    {execution.error.code || execution.error.message}
+                                  <span
+                                    className="text-[#f87171]"
+                                    data-testid={`study-processing-model-error-${execution.id}`}
+                                  >
+                                    {t('ProcessingModelExecutionFailed', {
+                                      defaultValue: 'Model execution failed',
+                                    })}
+                                    {execution.error.code && (
+                                      <>
+                                        {' · '}
+                                        {t('ProcessingErrorCode', {
+                                          defaultValue: 'Error code',
+                                        })}
+                                        : <code className="font-mono">{execution.error.code}</code>
+                                      </>
+                                    )}
                                   </span>
                                 ) : execution.skipReason ? (
-                                  <span className="text-[#facc15]">
-                                    {t('ProcessingSkipReason', { defaultValue: 'Skip reason' })}:{' '}
-                                    {execution.skipReason.code}
+                                  <span
+                                    className="text-[#facc15]"
+                                    data-testid={`study-processing-model-skip-${execution.id}`}
+                                  >
+                                    {execution.skipReason.message ||
+                                      t('ProcessingModelSkipped', {
+                                        defaultValue: 'Model was skipped',
+                                      })}
+                                    {' · '}
+                                    {t('ProcessingSkipReason', {
+                                      defaultValue: 'Skip reason',
+                                    })}:{' '}
+                                    <code className="font-mono">{execution.skipReason.code}</code>
                                   </span>
                                 ) : execution.status === 'running' ? (
                                   t('ProcessingModelRunning', { defaultValue: 'Model is running' })

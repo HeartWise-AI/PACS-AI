@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { studyProcessingRunHistoryFixture } from './fixtures';
+import { modelExecutionFixtures, studyProcessingRunHistoryFixture } from './fixtures';
 import { StudyProcessingProvider } from './StudyProcessingProvider';
 import { StudyProcessingRunHistoryPanel } from './StudyProcessingRunHistoryPanel';
 import type {
@@ -211,5 +211,64 @@ describe('StudyProcessingRunHistoryPanel', () => {
       })
     ).toBeDefined();
     expect(legacyRun.modelExecutions).toEqual([]);
+  });
+
+  test('shows readable attention reasons and safe structured errors', async () => {
+    const loadRunHistory = jest.fn(async () => ({
+      history: studyProcessingRunHistoryFixture,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+
+    const activeRun = studyProcessingRunHistoryFixture.runs[0];
+    const attention = renderer?.root.findByProps({
+      'data-testid': `study-processing-run-attention-${activeRun.id}`,
+    });
+    const error = renderer?.root.findByProps({
+      'data-testid': `study-processing-model-error-${modelExecutionFixtures.failed.id}`,
+    });
+    const renderedError = JSON.stringify(error?.children);
+
+    expect(JSON.stringify(attention?.children)).toContain('Processing state reconciliation failed');
+    expect(renderedError).toContain('Model execution failed');
+    expect(renderedError).toContain('MODEL_EXECUTION_FAILED');
+    expect(renderedError).not.toContain(modelExecutionFixtures.failed.error?.message);
+  });
+
+  test('shows both the readable skip message and structured skip code', async () => {
+    const skippedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'run-with-skipped-model',
+      studyInstanceUID: 'study-with-skipped-model',
+      attentionRequired: false,
+      attentionReasons: [],
+      expectedModels: 1,
+      completedModels: 0,
+      failedModels: 0,
+      skippedModels: 1,
+      modelExecutions: [modelExecutionFixtures.skipped],
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: {
+        studyInstanceUID: 'study-with-skipped-model',
+        runs: [skippedRun],
+      },
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, 'study-with-skipped-model');
+    });
+
+    const skip = renderer?.root.findByProps({
+      'data-testid': `study-processing-model-skip-${modelExecutionFixtures.skipped.id}`,
+    });
+    const renderedSkip = JSON.stringify(skip?.children);
+
+    expect(renderedSkip).toContain('The model is not applicable to this study.');
+    expect(renderedSkip).toContain('MODEL_NOT_APPLICABLE');
   });
 });
