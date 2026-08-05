@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecution, ProcessingAttentionReason, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
@@ -138,6 +138,10 @@ export function StudyProcessingRunHistoryPanel({
   const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
   const entry = getRunHistoryEntry(studyInstanceUID);
   const history = entry.history;
+  const orderedRuns = useMemo(
+    () => [...(history?.runs ?? [])].sort((left, right) => right.runNumber - left.runNumber),
+    [history]
+  );
   const [expandedRunIds, setExpandedRunIds] = useState<Record<string, boolean>>({});
   const initializedStudyInstanceUID = useRef<string | null>(null);
 
@@ -146,13 +150,17 @@ export function StudyProcessingRunHistoryPanel({
   }, [ensureRunHistory, studyInstanceUID]);
 
   useEffect(() => {
-    if (!history?.runs.length || initializedStudyInstanceUID.current === history.studyInstanceUID) {
+    if (
+      !history ||
+      !orderedRuns.length ||
+      initializedStudyInstanceUID.current === history.studyInstanceUID
+    ) {
       return;
     }
 
     initializedStudyInstanceUID.current = history.studyInstanceUID;
-    setExpandedRunIds({ [history.runs[0].id]: true });
-  }, [history]);
+    setExpandedRunIds({ [orderedRuns[0].id]: true });
+  }, [history, orderedRuns]);
 
   const isInitialLoading = !history && (entry.status === 'idle' || entry.status === 'loading');
   const hasLoadError = entry.status === 'error' || entry.status === 'unavailable';
@@ -168,7 +176,7 @@ export function StudyProcessingRunHistoryPanel({
   return (
     <section aria-label={t('ProcessingRunHistory', { defaultValue: 'Processing run history' })}>
       <div className="mb-4 flex min-h-[28px] items-center">
-        <h2 className="text-sm font-bold text-primary-main">
+        <h2 className="text-primary-main text-sm font-bold">
           {t('Processing', { defaultValue: 'Processing' })}
         </h2>
         {history && (
@@ -252,7 +260,7 @@ export function StudyProcessingRunHistoryPanel({
         </div>
       ) : history ? (
         <div className="space-y-3">
-          {history.runs.map((run, runIndex) => {
+          {orderedRuns.map((run, runIndex) => {
             const label = runLabel(run);
             const isExpanded = Boolean(expandedRunIds[run.id]);
             const detailsId = `study-processing-run-details-${run.id}`;
@@ -447,8 +455,8 @@ export function StudyProcessingRunHistoryPanel({
                                     {' · '}
                                     {t('ProcessingSkipReason', {
                                       defaultValue: 'Skip reason',
-                                    })}:{' '}
-                                    <code className="font-mono">{execution.skipReason.code}</code>
+                                    })}
+                                    : <code className="font-mono">{execution.skipReason.code}</code>
                                   </span>
                                 ) : execution.status === 'running' ? (
                                   t('ProcessingModelRunning', { defaultValue: 'Model is running' })

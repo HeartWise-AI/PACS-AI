@@ -44,12 +44,17 @@ describe('StudyProcessingProvider run history', () => {
       );
     });
 
-    const firstRequest = contextValue.ensureRunHistory(
-      studyProcessingRunHistoryFixture.studyInstanceUID
-    );
-    const duplicateRequest = contextValue.ensureRunHistory(
-      studyProcessingRunHistoryFixture.studyInstanceUID
-    );
+    let firstRequest!: Promise<void>;
+    let duplicateRequest!: Promise<void>;
+
+    act(() => {
+      firstRequest = contextValue.ensureRunHistory(
+        studyProcessingRunHistoryFixture.studyInstanceUID
+      );
+      duplicateRequest = contextValue.ensureRunHistory(
+        studyProcessingRunHistoryFixture.studyInstanceUID
+      );
+    });
 
     expect(firstRequest).toBe(duplicateRequest);
     expect(loadRunHistory).toHaveBeenCalledTimes(1);

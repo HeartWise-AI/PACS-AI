@@ -1,11 +1,16 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import TestRenderer, {
+  act,
+  type ReactTestInstance,
+  type ReactTestRenderer,
+} from 'react-test-renderer';
 import { modelExecutionFixtures, studyProcessingRunHistoryFixture } from './fixtures';
 import { StudyProcessingProvider } from './StudyProcessingProvider';
 import { StudyProcessingRunHistoryPanel } from './StudyProcessingRunHistoryPanel';
-import type {
-  RunHistoryTransportResponse,
-  StudyProcessingRunHistoryTransport,
+import {
+  RunHistoryUnavailableError,
+  type RunHistoryTransportResponse,
+  type StudyProcessingRunHistoryTransport,
 } from './runHistoryTransport';
 
 jest.mock('react-i18next', () => ({
@@ -23,6 +28,14 @@ jest.mock('react-i18next', () => ({
 }));
 
 let renderer: ReactTestRenderer | null;
+
+function getRenderedText(node: ReactTestInstance | string): string {
+  if (typeof node === 'string') {
+    return node;
+  }
+
+  return node.children.map(getRenderedText).join(' ');
+}
 
 function renderPanel(transport: StudyProcessingRunHistoryTransport, studyInstanceUID = 'study-a') {
   renderer = TestRenderer.create(
@@ -62,6 +75,36 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(loadRunHistory).toHaveBeenCalledWith('requested-study');
   });
 
+  test('does not load history while the study details remain collapsed', async () => {
+    const loadRunHistory = jest.fn(async () => ({
+      history: studyProcessingRunHistoryFixture,
+      partial: false,
+    }));
+
+    const renderStudyDetails = (expanded: boolean) => (
+      <StudyProcessingProvider runHistoryTransport={{ loadRunHistory }}>
+        {expanded ? (
+          <StudyProcessingRunHistoryPanel studyInstanceUID="collapsed-study" />
+        ) : (
+          <React.Fragment />
+        )}
+      </StudyProcessingProvider>
+    );
+
+    act(() => {
+      renderer = TestRenderer.create(renderStudyDetails(false));
+    });
+
+    expect(loadRunHistory).not.toHaveBeenCalled();
+
+    await act(async () => {
+      renderer?.update(renderStudyDetails(true));
+    });
+
+    expect(loadRunHistory).toHaveBeenCalledTimes(1);
+    expect(loadRunHistory).toHaveBeenCalledWith('collapsed-study');
+  });
+
   test('shows a loading state while the first request is pending', () => {
     const loadRunHistory = jest.fn(() => new Promise<RunHistoryTransportResponse>(() => undefined));
 
@@ -94,6 +137,81 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(renderer?.root.findAllByType('article')).toHaveLength(
       studyProcessingRunHistoryFixture.runs.length
     );
+  });
+
+  test('shows an empty state when the selected study has no runs', async () => {
+    const loadRunHistory = jest.fn(async () => ({
+      history: { studyInstanceUID: 'empty-study', runs: [] },
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, 'empty-study');
+    });
+
+    expect(getRenderedText(renderer!.root)).toContain('No processing runs yet.');
+  });
+
+  test('shows an unavailable state with a retry action', async () => {
+    const loadRunHistory = jest.fn(async () => {
+      throw new RunHistoryUnavailableError('Service unavailable.');
+    });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, 'unavailable-study');
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': 'study-processing-run-history-error',
+      })
+    ).toBeDefined();
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': 'study-processing-run-history-retry',
+      })
+    ).toBeDefined();
+    expect(getRenderedText(renderer!.root)).toContain(
+      'Processing run history is currently unavailable.'
+    );
+  });
+
+  test('keeps cached runs visible while an explicit refresh is pending', async () => {
+    let resolveRefresh!: (response: RunHistoryTransportResponse) => void;
+    const loadRunHistory = jest
+      .fn()
+      .mockResolvedValueOnce({
+        history: studyProcessingRunHistoryFixture,
+        partial: false,
+      })
+      .mockImplementationOnce(
+        () =>
+          new Promise<RunHistoryTransportResponse>(resolve => {
+            resolveRefresh = resolve;
+          })
+      );
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+
+    act(() => {
+      renderer?.root
+        .findByProps({ 'data-testid': 'study-processing-run-history-refresh' })
+        .props.onClick();
+    });
+
+    expect(renderer?.root.findAllByType('article')).toHaveLength(
+      studyProcessingRunHistoryFixture.runs.length
+    );
+    expect(getRenderedText(renderer!.root)).toContain('Refreshing…');
+
+    await act(async () => {
+      resolveRefresh({
+        history: studyProcessingRunHistoryFixture,
+        partial: false,
+      });
+    });
   });
 
   test('retries a failed initial request', async () => {
@@ -180,6 +298,31 @@ describe('StudyProcessingRunHistoryPanel', () => {
     ).toBe(true);
   });
 
+  test('orders runs newest first even when the transport response is unordered', async () => {
+    const unorderedHistory = {
+      ...studyProcessingRunHistoryFixture,
+      runs: [...studyProcessingRunHistoryFixture.runs].reverse(),
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: unorderedHistory,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, unorderedHistory.studyInstanceUID);
+    });
+
+    const runToggles = renderer!.root.findAll(
+      node =>
+        typeof node.props['data-testid'] === 'string' &&
+        node.props['data-testid'].startsWith('study-processing-run-toggle-')
+    );
+
+    expect(runToggles.map(toggle => toggle.props['data-testid'])).toEqual(
+      studyProcessingRunHistoryFixture.runs.map(run => `study-processing-run-toggle-${run.id}`)
+    );
+  });
+
   test('explains that legacy model history cannot be reconstructed', async () => {
     const loadRunHistory = jest.fn(async () => ({
       history: studyProcessingRunHistoryFixture,
@@ -230,9 +373,10 @@ describe('StudyProcessingRunHistoryPanel', () => {
     const error = renderer?.root.findByProps({
       'data-testid': `study-processing-model-error-${modelExecutionFixtures.failed.id}`,
     });
-    const renderedError = JSON.stringify(error?.children);
+    const renderedAttention = attention ? getRenderedText(attention) : '';
+    const renderedError = error ? getRenderedText(error) : '';
 
-    expect(JSON.stringify(attention?.children)).toContain('Processing state reconciliation failed');
+    expect(renderedAttention).toContain('Processing state reconciliation failed');
     expect(renderedError).toContain('Model execution failed');
     expect(renderedError).toContain('MODEL_EXECUTION_FAILED');
     expect(renderedError).not.toContain(modelExecutionFixtures.failed.error?.message);
@@ -266,9 +410,48 @@ describe('StudyProcessingRunHistoryPanel', () => {
     const skip = renderer?.root.findByProps({
       'data-testid': `study-processing-model-skip-${modelExecutionFixtures.skipped.id}`,
     });
-    const renderedSkip = JSON.stringify(skip?.children);
+    const renderedSkip = skip ? getRenderedText(skip) : '';
 
     expect(renderedSkip).toContain('The model is not applicable to this study.');
     expect(renderedSkip).toContain('MODEL_NOT_APPLICABLE');
+  });
+
+  test('renders every supported model execution status in mixed history', async () => {
+    const statuses = [
+      'pending',
+      'queued',
+      'running',
+      'completed',
+      'failed',
+      'skipped',
+      'cancelled',
+    ] as const;
+    const mixedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'mixed-outcome-run',
+      studyInstanceUID: 'mixed-outcome-study',
+      expectedModels: statuses.length,
+      modelExecutions: statuses.map(status => ({
+        ...modelExecutionFixtures.completed,
+        id: `execution-${status}`,
+        status,
+        error: status === 'failed' ? modelExecutionFixtures.failed.error : null,
+        skipReason: status === 'skipped' ? modelExecutionFixtures.skipped.skipReason : null,
+      })),
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: {
+        studyInstanceUID: mixedRun.studyInstanceUID,
+        runs: [mixedRun],
+      },
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, mixedRun.studyInstanceUID);
+    });
+
+    const renderedPanel = getRenderedText(renderer!.root);
+    statuses.forEach(status => expect(renderedPanel).toContain(status));
   });
 });
