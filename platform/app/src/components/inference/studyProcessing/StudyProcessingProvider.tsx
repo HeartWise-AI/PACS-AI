@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
 import type { StudyProcessingSummary } from './types';
 import {
@@ -7,6 +7,17 @@ import {
   type InitialSnapshotStatus,
   type RealtimeConnectionStatus,
 } from './reducer';
+import {
+  createIdleRunHistoryEntry,
+  initialRunHistoryState,
+  runHistoryReducer,
+  type RunHistoryEntry,
+} from './runHistoryReducer';
+import {
+  createFixtureRunHistoryTransport,
+  RunHistoryUnavailableError,
+  type StudyProcessingRunHistoryTransport,
+} from './runHistoryTransport';
 import {
   selectInitialSnapshotError,
   selectInitialSnapshotStatus,
@@ -36,6 +47,9 @@ export interface StudyProcessingContextValue {
   markConnectionReconnecting: (error?: string | null) => void;
   markConnectionDegraded: (error: string) => void;
   markConnectionDisconnected: () => void;
+  getRunHistoryEntry: (studyInstanceUID: string) => RunHistoryEntry;
+  ensureRunHistory: (studyInstanceUID: string) => Promise<void>;
+  refreshRunHistory: (studyInstanceUID: string) => Promise<void>;
   clearStudyProcessingState: () => void;
 }
 
@@ -51,8 +65,31 @@ export function useStudyProcessing(): StudyProcessingContextValue {
   return context;
 }
 
-export function StudyProcessingProvider({ children }) {
+export interface StudyProcessingProviderProps {
+  children: React.ReactNode;
+  runHistoryTransport?: StudyProcessingRunHistoryTransport;
+}
+
+export function StudyProcessingProvider({
+  children,
+  runHistoryTransport,
+}: StudyProcessingProviderProps) {
   const [state, dispatch] = useReducer(studyProcessingReducer, initialStudyProcessingState);
+  const [runHistoryState, dispatchRunHistory] = useReducer(
+    runHistoryReducer,
+    initialRunHistoryState
+  );
+  const inFlightRunHistoryRequests = useRef<Record<string, Promise<void>>>({});
+  const runHistoryRequestGeneration = useRef(0);
+
+  const effectiveRunHistoryTransport = useMemo(
+    () =>
+      runHistoryTransport ??
+      createFixtureRunHistoryTransport(
+        studyInstanceUID => state.summariesByStudyInstanceUID[studyInstanceUID]
+      ),
+    [runHistoryTransport, state.summariesByStudyInstanceUID]
+  );
 
   const startInitialSnapshot = useCallback(() => {
     dispatch({ type: 'initialSnapshot.started' });
@@ -90,8 +127,81 @@ export function StudyProcessingProvider({ children }) {
     dispatch({ type: 'connection.disconnected' });
   }, []);
 
+  const requestRunHistory = useCallback(
+    (studyInstanceUID: string, forceRefresh: boolean): Promise<void> => {
+      const currentEntry = runHistoryState.entriesByStudyInstanceUID[studyInstanceUID];
+
+      if (!forceRefresh && currentEntry?.history) {
+        return Promise.resolve();
+      }
+
+      const existingRequest = inFlightRunHistoryRequests.current[studyInstanceUID];
+      if (existingRequest) {
+        return existingRequest;
+      }
+
+      dispatchRunHistory({
+        type: 'runHistory.loadStarted',
+        studyInstanceUID,
+      });
+
+      const requestGeneration = runHistoryRequestGeneration.current;
+      const request = effectiveRunHistoryTransport
+        .loadRunHistory(studyInstanceUID)
+        .then(response => {
+          if (requestGeneration !== runHistoryRequestGeneration.current) {
+            return;
+          }
+
+          dispatchRunHistory({
+            type: 'runHistory.received',
+            history: response.history,
+            partial: response.partial,
+          });
+        })
+        .catch((error: unknown) => {
+          if (requestGeneration !== runHistoryRequestGeneration.current) {
+            return;
+          }
+
+          const message =
+            error instanceof Error ? error.message : 'Unable to load processing run history.';
+          dispatchRunHistory({
+            type:
+              error instanceof RunHistoryUnavailableError
+                ? 'runHistory.unavailable'
+                : 'runHistory.failed',
+            studyInstanceUID,
+            error: message,
+          });
+        })
+        .finally(() => {
+          if (inFlightRunHistoryRequests.current[studyInstanceUID] === request) {
+            delete inFlightRunHistoryRequests.current[studyInstanceUID];
+          }
+        });
+
+      inFlightRunHistoryRequests.current[studyInstanceUID] = request;
+      return request;
+    },
+    [effectiveRunHistoryTransport, runHistoryState.entriesByStudyInstanceUID]
+  );
+
+  const ensureRunHistory = useCallback(
+    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, false),
+    [requestRunHistory]
+  );
+
+  const refreshRunHistory = useCallback(
+    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, true),
+    [requestRunHistory]
+  );
+
   const clearStudyProcessingState = useCallback(() => {
+    runHistoryRequestGeneration.current += 1;
+    inFlightRunHistoryRequests.current = {};
     dispatch({ type: 'state.cleared' });
+    dispatchRunHistory({ type: 'runHistory.stateCleared' });
   }, []);
 
   const value = useMemo<StudyProcessingContextValue>(
@@ -113,18 +223,25 @@ export function StudyProcessingProvider({ children }) {
       markConnectionReconnecting,
       markConnectionDegraded,
       markConnectionDisconnected,
+      getRunHistoryEntry: studyInstanceUID =>
+        runHistoryState.entriesByStudyInstanceUID[studyInstanceUID] ?? createIdleRunHistoryEntry(),
+      ensureRunHistory,
+      refreshRunHistory,
       clearStudyProcessingState,
     }),
     [
       applyStatusUpdate,
       clearStudyProcessingState,
       failInitialSnapshot,
+      ensureRunHistory,
       markConnectionConnected,
       markConnectionConnecting,
       markConnectionDegraded,
       markConnectionDisconnected,
       markConnectionReconnecting,
       receiveSnapshot,
+      refreshRunHistory,
+      runHistoryState.entriesByStudyInstanceUID,
       startInitialSnapshot,
       state,
     ]
@@ -137,6 +254,9 @@ export function StudyProcessingProvider({ children }) {
 
 StudyProcessingProvider.propTypes = {
   children: PropTypes.node.isRequired,
+  runHistoryTransport: PropTypes.shape({
+    loadRunHistory: PropTypes.func.isRequired,
+  }),
 };
 
 export default StudyProcessingProvider;
