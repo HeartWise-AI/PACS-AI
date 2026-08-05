@@ -39,7 +39,6 @@
   "ProcessingFixtureConnected": "Test Fixture data connected",
   "ProcessingJoinedByUID": "Test status joined by StudyInstanceUID",
   "ProcessingLiveConnection": "Test Live SSE connected",
-  "ProcessingLoadedOnDemand": "Test Loaded on demand",
   "ProcessingLogout": "Test Logout",
   "ProcessingManualRun": "Test Manual run",
   "ProcessingAutomaticRun": "Test Automatic run",

@@ -41,7 +41,6 @@
   "ProcessingFixtureConnected": "Données de démonstration connectées",
   "ProcessingJoinedByUID": "statut associé par StudyInstanceUID",
   "ProcessingLiveConnection": "Direct · SSE connecté",
-  "ProcessingLoadedOnDemand": "Chargé à la demande pour cette étude seulement",
   "ProcessingLogout": "Déconnexion",
   "ProcessingManualRun": "Manuel · relance opérateur",
   "ProcessingAutomaticRun": "Auto · arrivée de l'étude",

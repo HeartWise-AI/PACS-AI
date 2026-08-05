@@ -104,11 +104,6 @@ export function StudyProcessingRunHistoryPanel({
         <h2 className="text-sm font-bold text-primary-main">
           {t('Processing', { defaultValue: 'Processing' })}
         </h2>
-        <span className="ml-5 text-xs text-[#b4bbb4]">
-          {t('ProcessingLoadedOnDemand', {
-            defaultValue: 'Loaded on demand for this study only',
-          })}
-        </span>
         {history && (
           <span className="ml-auto text-xs font-semibold text-[#c5cbc5]">
             {t('ProcessingRunCount', {

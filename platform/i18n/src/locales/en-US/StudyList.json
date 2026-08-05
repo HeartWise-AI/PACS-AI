@@ -45,7 +45,6 @@
   "ProcessingFixtureConnected": "Fixture data connected",
   "ProcessingJoinedByUID": "processing status joined by StudyInstanceUID",
   "ProcessingLiveConnection": "Live · SSE connected",
-  "ProcessingLoadedOnDemand": "Loaded on demand for this study only",
   "ProcessingLogout": "Logout",
   "ProcessingManualRun": "Manual · operator re-run",
   "ProcessingAutomaticRun": "Auto · study arrival",
