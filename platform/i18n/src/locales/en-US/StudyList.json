@@ -49,6 +49,7 @@
   "ProcessingManualRun": "Manual · operator re-run",
   "ProcessingAutomaticRun": "Auto · study arrival",
   "ProcessingLegacyRun": "Reconstructed from archive",
+  "ProcessingLegacyHistoryUnavailable": "Model-level history was not recorded for this legacy import and cannot be reconstructed.",
   "ProcessingHistoryError": "Processing run history could not be loaded.",
   "ProcessingHistoryLoading": "Loading processing run history",
   "ProcessingHistoryPartial": "Some run-history information is unavailable.",

@@ -122,4 +122,94 @@ describe('StudyProcessingRunHistoryPanel', () => {
       studyProcessingRunHistoryFixture.runs.length
     );
   });
+
+  test('opens the newest run by default and toggles runs independently', async () => {
+    const loadRunHistory = jest.fn(async () => ({
+      history: studyProcessingRunHistoryFixture,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+
+    const newestRun = studyProcessingRunHistoryFixture.runs[0];
+    const historicalRun = studyProcessingRunHistoryFixture.runs[1];
+    const newestToggle = renderer?.root.findByProps({
+      'data-testid': `study-processing-run-toggle-${newestRun.id}`,
+    });
+    const historicalToggle = renderer?.root.findByProps({
+      'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
+    });
+
+    expect(newestToggle?.props['aria-expanded']).toBe(true);
+    expect(historicalToggle?.props['aria-expanded']).toBe(false);
+
+    act(() => {
+      historicalToggle?.props.onClick();
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': `study-processing-run-toggle-${newestRun.id}`,
+      }).props['aria-expanded']
+    ).toBe(true);
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
+      }).props['aria-expanded']
+    ).toBe(true);
+
+    act(() => {
+      renderer?.root
+        .findByProps({
+          'data-testid': `study-processing-run-toggle-${newestRun.id}`,
+        })
+        .props.onClick();
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': `study-processing-run-toggle-${newestRun.id}`,
+      }).props['aria-expanded']
+    ).toBe(false);
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
+      }).props['aria-expanded']
+    ).toBe(true);
+  });
+
+  test('explains that legacy model history cannot be reconstructed', async () => {
+    const loadRunHistory = jest.fn(async () => ({
+      history: studyProcessingRunHistoryFixture,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+
+    const legacyRun = studyProcessingRunHistoryFixture.runs.find(
+      run => run.trigger === 'LEGACY_IMPORT'
+    );
+    if (!legacyRun) {
+      throw new Error('Legacy run fixture is required for this test.');
+    }
+
+    act(() => {
+      renderer?.root
+        .findByProps({
+          'data-testid': `study-processing-run-toggle-${legacyRun.id}`,
+        })
+        .props.onClick();
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': 'study-processing-legacy-history-message',
+      })
+    ).toBeDefined();
+    expect(legacyRun.modelExecutions).toEqual([]);
+  });
 });

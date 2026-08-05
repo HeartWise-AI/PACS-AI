@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
@@ -88,15 +88,32 @@ export function StudyProcessingRunHistoryPanel({
   const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
   const entry = getRunHistoryEntry(studyInstanceUID);
   const history = entry.history;
+  const [expandedRunIds, setExpandedRunIds] = useState<Record<string, boolean>>({});
+  const initializedStudyInstanceUID = useRef<string | null>(null);
 
   useEffect(() => {
     void ensureRunHistory(studyInstanceUID);
   }, [ensureRunHistory, studyInstanceUID]);
 
+  useEffect(() => {
+    if (!history?.runs.length || initializedStudyInstanceUID.current === history.studyInstanceUID) {
+      return;
+    }
+
+    initializedStudyInstanceUID.current = history.studyInstanceUID;
+    setExpandedRunIds({ [history.runs[0].id]: true });
+  }, [history]);
+
   const isInitialLoading = !history && (entry.status === 'idle' || entry.status === 'loading');
   const hasLoadError = entry.status === 'error' || entry.status === 'unavailable';
   const retry = () =>
     history ? refreshRunHistory(studyInstanceUID) : ensureRunHistory(studyInstanceUID);
+  const toggleRun = (runId: string) => {
+    setExpandedRunIds(current => ({
+      ...current,
+      [runId]: !current[runId],
+    }));
+  };
 
   return (
     <section aria-label={t('ProcessingRunHistory', { defaultValue: 'Processing run history' })}>
@@ -187,6 +204,8 @@ export function StudyProcessingRunHistoryPanel({
         <div className="space-y-3">
           {history.runs.map((run, runIndex) => {
             const label = runLabel(run);
+            const isExpanded = Boolean(expandedRunIds[run.id]);
+            const detailsId = `study-processing-run-details-${run.id}`;
 
             return (
               <article
@@ -196,91 +215,129 @@ export function StudyProcessingRunHistoryPanel({
                 }`}
                 style={{ backgroundColor: '#252925' }}
               >
-                <header className="flex min-h-[44px] items-center gap-4 border-b border-[#404640] px-5 py-3">
-                  <span className="text-sm font-bold text-white">Run #{run.runNumber}</span>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${runToneClassName(
-                      run
-                    )}`}
+                <header>
+                  <button
+                    type="button"
+                    className={`flex min-h-[44px] w-full items-center gap-4 px-5 py-3 text-left ${
+                      isExpanded ? 'border-b border-[#404640]' : ''
+                    }`}
+                    onClick={() => toggleRun(run.id)}
+                    aria-expanded={isExpanded}
+                    aria-controls={detailsId}
+                    data-testid={`study-processing-run-toggle-${run.id}`}
                   >
-                    {t(label.key, { defaultValue: label.label })}
-                  </span>
-                  <span className="text-xs text-[#c0c7c0]">
-                    {run.trigger === 'MANUAL_REPROCESS'
-                      ? t('ProcessingManualRun', { defaultValue: 'Manual · operator re-run' })
-                      : run.trigger === 'LEGACY_IMPORT'
-                        ? t('ProcessingLegacyRun', { defaultValue: 'Reconstructed from archive' })
-                        : t('ProcessingAutomaticRun', { defaultValue: 'Auto · study arrival' })}
-                  </span>
-                  <span className="text-xs text-[#c0c7c0]">
-                    {run.completedModels} / {run.expectedModels}{' '}
-                    {t('ProcessingModelsComplete', { defaultValue: 'models complete' })}
-                  </span>
-                  <span className="ml-auto text-xs text-[#aeb6ae]">
-                    {new Date(run.updatedAt).toLocaleString()}
-                  </span>
+                    <span className="text-sm font-bold text-white">Run #{run.runNumber}</span>
+                    <span
+                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${runToneClassName(
+                        run
+                      )}`}
+                    >
+                      {t(label.key, { defaultValue: label.label })}
+                    </span>
+                    <span className="text-xs text-[#c0c7c0]">
+                      {run.trigger === 'MANUAL_REPROCESS'
+                        ? t('ProcessingManualRun', { defaultValue: 'Manual · operator re-run' })
+                        : run.trigger === 'LEGACY_IMPORT'
+                          ? t('ProcessingLegacyRun', {
+                              defaultValue: 'Reconstructed from archive',
+                            })
+                          : t('ProcessingAutomaticRun', { defaultValue: 'Auto · study arrival' })}
+                    </span>
+                    <span className="text-xs text-[#c0c7c0]">
+                      {run.completedModels} / {run.expectedModels}{' '}
+                      {t('ProcessingModelsComplete', { defaultValue: 'models complete' })}
+                    </span>
+                    <span className="ml-auto text-xs text-[#aeb6ae]">
+                      {new Date(run.updatedAt).toLocaleString()}
+                    </span>
+                    <span
+                      className="text-base text-[#aeb6ae]"
+                      aria-hidden="true"
+                    >
+                      {isExpanded ? '⌃' : '⌄'}
+                    </span>
+                  </button>
                 </header>
 
-                {runIndex === 0 && (
-                  <div className="overflow-x-auto px-5 pb-4 pt-2">
-                    <table className="w-full min-w-[900px] bg-transparent text-left">
-                      <thead className="bg-transparent text-[10px] uppercase tracking-wide text-[#aeb6ae]">
-                        <tr>
-                          <th className="py-2">
-                            {t('ProcessingModel', { defaultValue: 'Model' })}
-                          </th>
-                          <th>{t('ProcessingVersionLabel', { defaultValue: 'Version' })}</th>
-                          <th>{t('Status')}</th>
-                          <th>{t('ProcessingStarted', { defaultValue: 'Started' })}</th>
-                          <th>{t('ProcessingDuration', { defaultValue: 'Duration' })}</th>
-                          <th>{t('ProcessingDetails', { defaultValue: 'Details' })}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="border-t border-[#4b514b] bg-transparent text-xs">
-                        {run.modelExecutions.map(execution => (
-                          <tr
-                            key={execution.id}
-                            className="bg-transparent"
-                            style={{ backgroundColor: 'transparent' }}
-                          >
-                            <td className="py-2.5 font-semibold text-white">
-                              {execution.modelName}
-                            </td>
-                            <td className="font-mono text-[#b8c0b8]">v{execution.modelVersion}</td>
-                            <td
-                              className={`font-semibold ${executionToneClassNames[execution.status]}`}
-                            >
-                              ●{' '}
-                              {t(`ProcessingExecutionStatus.${execution.status}`, {
-                                defaultValue: execution.status,
-                              })}
-                            </td>
-                            <td className="font-mono text-[#b8c0b8]">
-                              {formatTimestamp(execution.startedAt)}
-                            </td>
-                            <td className="text-[#b8c0b8]">
-                              {formatDuration(execution.startedAt, execution.completedAt)}
-                            </td>
-                            <td className="max-w-[360px] truncate text-[#c5cbc5]">
-                              {execution.error ? (
-                                <span className="text-[#f87171]">
-                                  {execution.error.code || execution.error.message}
-                                </span>
-                              ) : execution.skipReason ? (
-                                <span className="text-[#facc15]">
-                                  {t('ProcessingSkipReason', { defaultValue: 'Skip reason' })}:{' '}
-                                  {execution.skipReason.code}
-                                </span>
-                              ) : execution.status === 'running' ? (
-                                t('ProcessingModelRunning', { defaultValue: 'Model is running' })
-                              ) : (
-                                t('ProcessingNoAdditionalDetails', { defaultValue: '—' })
-                              )}
-                            </td>
+                {isExpanded && (
+                  <div
+                    id={detailsId}
+                    className="overflow-x-auto px-5 pb-4 pt-2"
+                    data-testid={`study-processing-run-details-${run.id}`}
+                  >
+                    {run.trigger === 'LEGACY_IMPORT' ? (
+                      <div
+                        className="my-2 rounded-md border border-[#65717c] bg-[#343b40] px-4 py-4 text-sm text-[#d0d6dc]"
+                        role="note"
+                        data-testid="study-processing-legacy-history-message"
+                      >
+                        {t('ProcessingLegacyHistoryUnavailable', {
+                          defaultValue:
+                            'Model-level history was not recorded for this legacy import and cannot be reconstructed.',
+                        })}
+                      </div>
+                    ) : (
+                      <table className="w-full min-w-[900px] bg-transparent text-left">
+                        <thead className="bg-transparent text-[10px] uppercase tracking-wide text-[#aeb6ae]">
+                          <tr>
+                            <th className="py-2">
+                              {t('ProcessingModel', { defaultValue: 'Model' })}
+                            </th>
+                            <th>{t('ProcessingVersionLabel', { defaultValue: 'Version' })}</th>
+                            <th>{t('Status')}</th>
+                            <th>{t('ProcessingStarted', { defaultValue: 'Started' })}</th>
+                            <th>{t('ProcessingDuration', { defaultValue: 'Duration' })}</th>
+                            <th>{t('ProcessingDetails', { defaultValue: 'Details' })}</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="border-t border-[#4b514b] bg-transparent text-xs">
+                          {run.modelExecutions.map(execution => (
+                            <tr
+                              key={execution.id}
+                              className="bg-transparent"
+                              style={{ backgroundColor: 'transparent' }}
+                            >
+                              <td className="py-2.5 font-semibold text-white">
+                                {execution.modelName}
+                              </td>
+                              <td className="font-mono text-[#b8c0b8]">
+                                v{execution.modelVersion}
+                              </td>
+                              <td
+                                className={`font-semibold ${executionToneClassNames[execution.status]}`}
+                              >
+                                ●{' '}
+                                {t(`ProcessingExecutionStatus.${execution.status}`, {
+                                  defaultValue: execution.status,
+                                })}
+                              </td>
+                              <td className="font-mono text-[#b8c0b8]">
+                                {formatTimestamp(execution.startedAt)}
+                              </td>
+                              <td className="text-[#b8c0b8]">
+                                {formatDuration(execution.startedAt, execution.completedAt)}
+                              </td>
+                              <td className="max-w-[360px] truncate text-[#c5cbc5]">
+                                {execution.error ? (
+                                  <span className="text-[#f87171]">
+                                    {execution.error.code || execution.error.message}
+                                  </span>
+                                ) : execution.skipReason ? (
+                                  <span className="text-[#facc15]">
+                                    {t('ProcessingSkipReason', { defaultValue: 'Skip reason' })}:{' '}
+                                    {execution.skipReason.code}
+                                  </span>
+                                ) : execution.status === 'running' ? (
+                                  t('ProcessingModelRunning', { defaultValue: 'Model is running' })
+                                ) : (
+                                  t('ProcessingNoAdditionalDetails', { defaultValue: '—' })
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 )}
               </article>
