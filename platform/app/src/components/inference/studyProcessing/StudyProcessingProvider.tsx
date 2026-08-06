@@ -48,8 +48,14 @@ export interface StudyProcessingContextValue {
   markConnectionDegraded: (error: string) => void;
   markConnectionDisconnected: () => void;
   getRunHistoryEntry: (studyInstanceUID: string) => RunHistoryEntry;
-  ensureRunHistory: (studyInstanceUID: string) => Promise<void>;
-  refreshRunHistory: (studyInstanceUID: string) => Promise<void>;
+  ensureRunHistory: (
+    studyInstanceUID: string,
+    transport?: StudyProcessingRunHistoryTransport
+  ) => Promise<void>;
+  refreshRunHistory: (
+    studyInstanceUID: string,
+    transport?: StudyProcessingRunHistoryTransport
+  ) => Promise<void>;
   clearStudyProcessingState: () => void;
 }
 
@@ -128,7 +134,11 @@ export function StudyProcessingProvider({
   }, []);
 
   const requestRunHistory = useCallback(
-    (studyInstanceUID: string, forceRefresh: boolean): Promise<void> => {
+    (
+      studyInstanceUID: string,
+      forceRefresh: boolean,
+      transport?: StudyProcessingRunHistoryTransport
+    ): Promise<void> => {
       const currentEntry = runHistoryState.entriesByStudyInstanceUID[studyInstanceUID];
 
       if (!forceRefresh && currentEntry?.history) {
@@ -146,7 +156,7 @@ export function StudyProcessingProvider({
       });
 
       const requestGeneration = runHistoryRequestGeneration.current;
-      const request = effectiveRunHistoryTransport
+      const request = (transport ?? effectiveRunHistoryTransport)
         .loadRunHistory(studyInstanceUID)
         .then(response => {
           if (requestGeneration !== runHistoryRequestGeneration.current) {
@@ -188,12 +198,14 @@ export function StudyProcessingProvider({
   );
 
   const ensureRunHistory = useCallback(
-    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, false),
+    (studyInstanceUID: string, transport?: StudyProcessingRunHistoryTransport) =>
+      requestRunHistory(studyInstanceUID, false, transport),
     [requestRunHistory]
   );
 
   const refreshRunHistory = useCallback(
-    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, true),
+    (studyInstanceUID: string, transport?: StudyProcessingRunHistoryTransport) =>
+      requestRunHistory(studyInstanceUID, true, transport),
     [requestRunHistory]
   );
 

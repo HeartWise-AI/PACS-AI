@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
+import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
   pending: 'text-[#c3c9c3]',
@@ -129,10 +130,12 @@ function runToneClassName(run: ProcessingRun): string {
 
 export interface StudyProcessingRunHistoryPanelProps {
   studyInstanceUID: string;
+  runHistoryTransport?: StudyProcessingRunHistoryTransport;
 }
 
 export function StudyProcessingRunHistoryPanel({
   studyInstanceUID,
+  runHistoryTransport,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
   const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
@@ -146,8 +149,8 @@ export function StudyProcessingRunHistoryPanel({
   const initializedStudyInstanceUID = useRef<string | null>(null);
 
   useEffect(() => {
-    void ensureRunHistory(studyInstanceUID);
-  }, [ensureRunHistory, studyInstanceUID]);
+    void ensureRunHistory(studyInstanceUID, runHistoryTransport);
+  }, [ensureRunHistory, runHistoryTransport, studyInstanceUID]);
 
   useEffect(() => {
     if (
@@ -165,7 +168,9 @@ export function StudyProcessingRunHistoryPanel({
   const isInitialLoading = !history && (entry.status === 'idle' || entry.status === 'loading');
   const hasLoadError = entry.status === 'error' || entry.status === 'unavailable';
   const retry = () =>
-    history ? refreshRunHistory(studyInstanceUID) : ensureRunHistory(studyInstanceUID);
+    history
+      ? refreshRunHistory(studyInstanceUID, runHistoryTransport)
+      : ensureRunHistory(studyInstanceUID, runHistoryTransport);
   const toggleRun = (runId: string) => {
     setExpandedRunIds(current => ({
       ...current,
@@ -190,8 +195,8 @@ export function StudyProcessingRunHistoryPanel({
         {(history || entry.status === 'ready') && (
           <button
             type="button"
-            className="ml-4 rounded-md border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:cursor-wait disabled:opacity-50"
-            onClick={() => void refreshRunHistory(studyInstanceUID)}
+            className="border-white/15 ml-4 rounded-md border bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:cursor-wait disabled:opacity-50"
+            onClick={() => void refreshRunHistory(studyInstanceUID, runHistoryTransport)}
             disabled={entry.status === 'refreshing'}
             data-testid="study-processing-run-history-refresh"
           >
@@ -218,7 +223,7 @@ export function StudyProcessingRunHistoryPanel({
 
       {entry.status === 'partial' && (
         <div
-          className="mb-3 rounded-md border border-[#facc15]/35 bg-[#403917] px-4 py-3 text-xs text-[#f8d84a]"
+          className="border-[#facc15]/35 mb-3 rounded-md border bg-[#403917] px-4 py-3 text-xs text-[#f8d84a]"
           role="status"
           data-testid="study-processing-run-history-partial"
         >
@@ -230,7 +235,7 @@ export function StudyProcessingRunHistoryPanel({
 
       {hasLoadError && (
         <div
-          className="mb-3 flex items-center rounded-md border border-[#f87171]/35 bg-[#482828] px-4 py-3 text-xs text-[#ffb0b0]"
+          className="border-[#f87171]/35 mb-3 flex items-center rounded-md border bg-[#482828] px-4 py-3 text-xs text-[#ffb0b0]"
           role="alert"
           data-testid="study-processing-run-history-error"
         >

@@ -23,6 +23,8 @@ import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 import {
   createFixtureStudyProcessingSnapshotTransport,
+  createRESTRunHistoryTransport,
+  createStudyProcessingRESTRepository,
   createRESTStudyProcessingSnapshotTransport,
   StudyProcessingAttention,
   StudyProcessingConnectionBanner,
@@ -89,9 +91,14 @@ function WorkList() {
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
   const { canViewStudyProcessing } = useInferenceProcessing();
   const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
+  const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
-    () => createRESTStudyProcessingSnapshotTransport(),
-    []
+    () => createRESTStudyProcessingSnapshotTransport(studyProcessingRESTRepository),
+    [studyProcessingRESTRepository]
+  );
+  const restRunHistoryTransport = useMemo(
+    () => createRESTRunHistoryTransport(studyProcessingRESTRepository),
+    [studyProcessingRESTRepository]
   );
   const fixtureStudyProcessingSnapshotTransport = useMemo(
     () => createFixtureStudyProcessingSnapshotTransport(),
@@ -1017,9 +1024,14 @@ function WorkList() {
                                     studyInstanceUID={row.studyInstanceUID}
                                   />
                                 )}
-                                {showStudyProcessingFixtures && (
+                                {showStudyProcessing && (
                                   <StudyProcessingRunHistoryPanel
                                     studyInstanceUID={row.studyInstanceUID}
+                                    runHistoryTransport={
+                                      showStudyProcessingFixtures
+                                        ? undefined
+                                        : restRunHistoryTransport
+                                    }
                                   />
                                 )}
                                 <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
