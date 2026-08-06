@@ -7,6 +7,7 @@ import {
 } from './StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 import { studyProcessingSummaryFixtures } from './fixtures';
+import type { StudyProcessingSummary } from './types';
 import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
 
 let contextValue: StudyProcessingContextValue;
@@ -37,6 +38,15 @@ function providerWithHarness(props: HarnessProps) {
 
 function renderHarness(props: HarnessProps) {
   renderer = TestRenderer.create(providerWithHarness(props));
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(promiseResolve => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
 }
 
 describe('useVisibleStudyProcessingSnapshot', () => {
@@ -103,6 +113,56 @@ describe('useVisibleStudyProcessingSnapshot', () => {
     expect(loadVisibleStudySnapshot).toHaveBeenCalledTimes(2);
     expect(loadVisibleStudySnapshot).toHaveBeenLastCalledWith(['1.2.3']);
     expect(contextValue.initialSnapshotStatus).toBe('ready');
+  });
+
+  test('ignores a late snapshot after the visible studies change', async () => {
+    const firstPage = deferred<StudyProcessingSummary[]>();
+    const secondPage = deferred<StudyProcessingSummary[]>();
+    const loadVisibleStudySnapshot = jest
+      .fn()
+      .mockReturnValueOnce(firstPage.promise)
+      .mockReturnValueOnce(secondPage.promise);
+    const transport = { loadVisibleStudySnapshot };
+    const firstPageSummary = {
+      ...studyProcessingSummaryFixtures.processing,
+      studyInstanceUID: 'first-page-study',
+    };
+    const secondPageSummary = {
+      ...studyProcessingSummaryFixtures.completed,
+      studyInstanceUID: 'second-page-study',
+    };
+
+    await act(async () => {
+      renderHarness({
+        enabled: true,
+        studyInstanceUIDs: ['first-page-study'],
+        transport,
+      });
+    });
+
+    await act(async () => {
+      renderer.update(
+        providerWithHarness({
+          enabled: true,
+          studyInstanceUIDs: ['second-page-study'],
+          transport,
+        })
+      );
+      secondPage.resolve([secondPageSummary]);
+      await secondPage.promise;
+    });
+
+    expect(contextValue.getStudySummary('second-page-study')).toBe(secondPageSummary);
+
+    await act(async () => {
+      firstPage.resolve([firstPageSummary]);
+      await firstPage.promise;
+    });
+
+    expect(loadVisibleStudySnapshot).toHaveBeenNthCalledWith(1, ['first-page-study']);
+    expect(loadVisibleStudySnapshot).toHaveBeenNthCalledWith(2, ['second-page-study']);
+    expect(contextValue.getStudySummary('first-page-study')).toBeUndefined();
+    expect(contextValue.getStudySummary('second-page-study')).toBe(secondPageSummary);
   });
 
   test('does not request protected processing data when access is disabled', async () => {
