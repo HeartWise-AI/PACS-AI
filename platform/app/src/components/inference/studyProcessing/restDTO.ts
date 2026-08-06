@@ -1,7 +1,6 @@
 import type {
   IngestionStatus,
   ModelExecutionStatus,
-  ModelSkipReasonCode,
   ProcessingRunOutcome,
   ProcessingRunPhase,
   ProcessingRunTrigger,
@@ -82,7 +81,7 @@ export interface ProcessingRunExecutionDTO {
   status: ModelExecutionStatus;
   errorMessage: string | null;
   skipReason: {
-    code: ModelSkipReasonCode;
+    code: string;
     message?: string | null;
   } | null;
   startedAt: string | null;

@@ -114,7 +114,7 @@ export interface StudyProcessingSummary extends ProcessingModelCounts {
 }
 
 export interface ModelSkipReason {
-  code: ModelSkipReasonCode;
+  code: string;
   message: string | null;
 }
 

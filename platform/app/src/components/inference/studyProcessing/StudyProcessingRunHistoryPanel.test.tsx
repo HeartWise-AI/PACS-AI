@@ -477,6 +477,46 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(renderedSkip).toContain('MODEL_NOT_APPLICABLE');
   });
 
+  test('shows a safe fallback for an unknown future skip code', async () => {
+    const futureSkippedExecution = {
+      ...modelExecutionFixtures.skipped,
+      id: 'future-skipped-execution',
+      skipReason: {
+        code: 'FUTURE_BACKEND_SKIP_REASON',
+        message: null,
+      },
+    };
+    const skippedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'run-with-future-skip-reason',
+      studyInstanceUID: 'study-with-future-skip-reason',
+      expectedModels: 1,
+      completedModels: 0,
+      failedModels: 0,
+      skippedModels: 1,
+      modelExecutions: [futureSkippedExecution],
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: {
+        studyInstanceUID: skippedRun.studyInstanceUID,
+        runs: [skippedRun],
+      },
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, skippedRun.studyInstanceUID);
+    });
+
+    const skip = renderer?.root.findByProps({
+      'data-testid': `study-processing-model-skip-${futureSkippedExecution.id}`,
+    });
+    const renderedSkip = skip ? getRenderedText(skip) : '';
+
+    expect(renderedSkip).toContain('Model was skipped');
+    expect(renderedSkip).toContain('FUTURE_BACKEND_SKIP_REASON');
+  });
+
   test('renders every supported model execution status in mixed history', async () => {
     const statuses = [
       'pending',

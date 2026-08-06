@@ -254,4 +254,24 @@ describe('study processing REST mapper', () => {
       message: null,
     });
   });
+
+  test('preserves an unknown future structured skip reason', () => {
+    const run = legacyRun();
+    run.executions[1].skipReason = {
+      code: 'FUTURE_BACKEND_SKIP_REASON',
+      message: 'A future operator-facing skip explanation.',
+    };
+
+    const page = mapStudyProcessingRunHistory('legacy-study', {
+      runs: [run],
+      limit: 25,
+      offset: 0,
+      hasMore: false,
+    });
+
+    expect(page.history.runs[0].modelExecutions[1].skipReason).toEqual({
+      code: 'FUTURE_BACKEND_SKIP_REASON',
+      message: 'A future operator-facing skip explanation.',
+    });
+  });
 });
