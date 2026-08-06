@@ -356,6 +356,46 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(legacyRun.modelExecutions).toEqual([]);
   });
 
+  test('shows an available legacy execution snapshot without implying complete history', async () => {
+    const legacyExecution = {
+      ...modelExecutionFixtures.completed,
+      id: 'legacy-snapshot-execution',
+      modelName: 'LegacySnapshotModel',
+    };
+    const historyWithLegacySnapshot = {
+      ...studyProcessingRunHistoryFixture,
+      runs: studyProcessingRunHistoryFixture.runs.map(run =>
+        run.trigger === 'LEGACY_IMPORT' ? { ...run, modelExecutions: [legacyExecution] } : run
+      ),
+    };
+    const legacyRun = historyWithLegacySnapshot.runs.find(run => run.trigger === 'LEGACY_IMPORT');
+    if (!legacyRun) {
+      throw new Error('Legacy run fixture is required for this test.');
+    }
+    const loadRunHistory = jest.fn(async () => ({
+      history: historyWithLegacySnapshot,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, historyWithLegacySnapshot.studyInstanceUID);
+    });
+
+    act(() => {
+      renderer?.root
+        .findByProps({
+          'data-testid': `study-processing-run-toggle-${legacyRun.id}`,
+        })
+        .props.onClick();
+    });
+
+    const legacyMessage = renderer?.root.findByProps({
+      'data-testid': 'study-processing-legacy-history-message',
+    });
+    expect(getRenderedText(legacyMessage!)).toContain('available execution snapshot');
+    expect(getRenderedText(renderer!.root)).toContain('LegacySnapshotModel');
+  });
+
   test('shows readable attention reasons and safe structured errors', async () => {
     const loadRunHistory = jest.fn(async () => ({
       history: studyProcessingRunHistoryFixture,

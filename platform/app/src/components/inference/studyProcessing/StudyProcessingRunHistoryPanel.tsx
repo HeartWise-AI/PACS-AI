@@ -380,18 +380,25 @@ export function StudyProcessingRunHistoryPanel({
                       </div>
                     )}
 
-                    {run.trigger === 'LEGACY_IMPORT' ? (
+                    {run.trigger === 'LEGACY_IMPORT' && (
                       <div
                         className="my-2 rounded-md border border-[#65717c] bg-[#343b40] px-4 py-4 text-sm text-[#d0d6dc]"
                         role="note"
                         data-testid="study-processing-legacy-history-message"
                       >
-                        {t('ProcessingLegacyHistoryUnavailable', {
-                          defaultValue:
-                            'Model-level history was not recorded for this legacy import and cannot be reconstructed.',
-                        })}
+                        {run.modelExecutions.length > 0
+                          ? t('ProcessingLegacyExecutionSnapshotAvailable', {
+                              defaultValue:
+                                'This legacy import shows the available execution snapshot. Earlier attempts and unavailable history were not reconstructed.',
+                            })
+                          : t('ProcessingLegacyHistoryUnavailable', {
+                              defaultValue:
+                                'Model-level history was not recorded for this legacy import and cannot be reconstructed.',
+                            })}
                       </div>
-                    ) : (
+                    )}
+
+                    {(run.trigger !== 'LEGACY_IMPORT' || run.modelExecutions.length > 0) && (
                       <table className="w-full min-w-[900px] bg-transparent text-left">
                         <thead className="bg-transparent text-[10px] uppercase tracking-wide text-[#aeb6ae]">
                           <tr>
