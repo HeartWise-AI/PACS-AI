@@ -111,6 +111,7 @@
   "ProcessingStatusWaiting": "En attente",
   "ProcessingUpdated": "Mis à jour",
   "ProcessingUpdatedAtVersion": "Mis à jour {{timestamp}}, version {{version}}",
+  "ProcessingUpdatedAt": "Mis à jour {{timestamp}}",
   "ProcessingVersion": "version {{version}}",
   "ProcessingVersionLabel": "Version",
   "ProcessingViewerHint": "Sélectionnez une étude avant d'ouvrir la visionneuse.",

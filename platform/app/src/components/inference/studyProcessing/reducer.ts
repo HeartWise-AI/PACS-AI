@@ -78,7 +78,19 @@ export function shouldApplyStudyProcessingSummary(
     return incomingRunNumber > currentRunNumber;
   }
 
-  return incoming.version > current.version;
+  if (incoming.version !== null && current.version !== null) {
+    return incoming.version > current.version;
+  }
+
+  if (incoming.version !== null) {
+    return true;
+  }
+
+  if (current.version !== null) {
+    return false;
+  }
+
+  return Date.parse(incoming.updatedAt) > Date.parse(current.updatedAt);
 }
 
 function mergeSummaryRecords(

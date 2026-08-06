@@ -14,3 +14,5 @@ export * from './runHistoryFixtureAdapter';
 export * from './runHistoryReducer';
 export * from './runHistoryTransport';
 export * from './fixtureAdapter';
+export * from './restDTO';
+export * from './restMapper';

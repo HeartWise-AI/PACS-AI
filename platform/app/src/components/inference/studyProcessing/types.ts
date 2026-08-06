@@ -52,7 +52,24 @@ export const PROCESSING_ATTENTION_REASONS = [
   'EMPTY_MODEL_PLAN',
 ] as const;
 
-export type ProcessingAttentionReason = (typeof PROCESSING_ATTENTION_REASONS)[number];
+export type KnownProcessingAttentionReasonCode = (typeof PROCESSING_ATTENTION_REASONS)[number];
+
+export interface ProcessingAttentionReason {
+  code: string;
+  message: string | null;
+}
+
+export const INGESTION_STATUSES = [
+  'DISCOVERED',
+  'GROWING',
+  'STABLE',
+  'RETRIEVAL_QUEUED',
+  'RETRIEVED',
+  'DISAPPEARED',
+  'FAILED',
+] as const;
+
+export type IngestionStatus = (typeof INGESTION_STATUSES)[number];
 
 export const MODEL_SKIP_REASONS = [
   'NO_USABLE_DICOM',
@@ -76,6 +93,9 @@ export interface ProcessingModelCounts {
 
 export interface StudyProcessingSummary extends ProcessingModelCounts {
   studyInstanceUID: string;
+  ingestionStatus: IngestionStatus;
+  retrievalState: string | null;
+  retrievalError: string | null;
   runId: string | null;
   runNumber: number | null;
   lifecycle: StudyProcessingLifecycle;
@@ -83,7 +103,7 @@ export interface StudyProcessingSummary extends ProcessingModelCounts {
   outcome: ProcessingRunOutcome | null;
   attentionRequired: boolean;
   attentionReasons: ProcessingAttentionReason[];
-  version: number;
+  version: number | null;
   updatedAt: string;
 }
 
@@ -102,8 +122,8 @@ export interface ModelExecution {
   candidateId: string | null;
   studyServiceJobId: string | null;
   modelName: string;
-  modelVersion: string;
-  modality: string;
+  modelVersion: string | null;
+  modality: string | null;
   status: ModelExecutionStatus;
   skipReason: ModelSkipReason | null;
   error: ModelExecutionError | null;
@@ -142,6 +162,7 @@ export interface PaginatedStudyProcessingSummaries {
   totalItems: number;
 }
 
-export type StudyStatusUpdatedEvent = StudyProcessingSummary & {
+export type StudyStatusUpdatedEvent = Omit<StudyProcessingSummary, 'version'> & {
   type: 'study_status.updated';
+  version: number;
 };

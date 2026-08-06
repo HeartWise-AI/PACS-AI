@@ -73,8 +73,8 @@ describe('studyProcessingReducer', () => {
       type: 'snapshot.received',
       summaries: [processing, success],
     });
-    const staleProcessing = { ...processing, version: processing.version - 1 };
-    const newerSuccess = { ...success, version: success.version + 1 };
+    const staleProcessing = { ...processing, version: (processing.version ?? 0) - 1 };
+    const newerSuccess = { ...success, version: (success.version ?? 0) + 1 };
 
     const nextState = studyProcessingReducer(state, {
       type: 'snapshot.received',
@@ -302,6 +302,27 @@ describe('shouldApplyStudyProcessingSummary', () => {
     };
 
     expect(shouldApplyStudyProcessingSummary(retrieving, firstRun)).toBe(true);
+  });
+
+  test('advances retrieval-only state using its authoritative timestamp', () => {
+    const current = {
+      ...studyProcessingSummaryFixtures.retrieving,
+      version: null,
+      updatedAt: '2026-08-06T14:00:00Z',
+    };
+    const newer = {
+      ...current,
+      retrievalState: 'RUNNING',
+      updatedAt: '2026-08-06T14:01:00Z',
+    };
+    const older = {
+      ...current,
+      retrievalState: 'PENDING',
+      updatedAt: '2026-08-06T13:59:00Z',
+    };
+
+    expect(shouldApplyStudyProcessingSummary(current, newer)).toBe(true);
+    expect(shouldApplyStudyProcessingSummary(newer, older)).toBe(false);
   });
 
   test('rejects equal and older versions', () => {

@@ -115,6 +115,7 @@
   "ProcessingStatusWaiting": "Waiting",
   "ProcessingUpdated": "Updated",
   "ProcessingUpdatedAtVersion": "Updated {{timestamp}}, version {{version}}",
+  "ProcessingUpdatedAt": "Updated {{timestamp}}",
   "ProcessingVersion": "version {{version}}",
   "ProcessingVersionLabel": "Version",
   "ProcessingViewerHint": "Select a study before opening the viewer.",

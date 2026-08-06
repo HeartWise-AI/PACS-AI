@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ModelExecution, ProcessingAttentionReason, ProcessingRun } from './types';
+import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
@@ -14,7 +14,7 @@ const executionToneClassNames: Record<ModelExecution['status'], string> = {
 };
 
 const attentionReasonPresentations: Record<
-  ProcessingAttentionReason,
+  KnownProcessingAttentionReasonCode,
   { key: string; label: string }
 > = {
   DISPATCH_FAILED: {
@@ -356,11 +356,18 @@ export function StudyProcessingRunHistoryPanel({
                           })}
                         </div>
                         <ul className="mt-1 list-disc pl-5 text-xs text-[#f6df7d]">
-                          {run.attentionReasons.map(reason => {
-                            const presentation = attentionReasonPresentations[reason];
+                          {run.attentionReasons.map((reason, index) => {
+                            const presentation =
+                              attentionReasonPresentations[
+                                reason.code as KnownProcessingAttentionReasonCode
+                              ];
+                            const fallbackLabel =
+                              reason.message || reason.code.replaceAll('_', ' ').toLowerCase();
                             return (
-                              <li key={reason}>
-                                {t(presentation.key, { defaultValue: presentation.label })}
+                              <li key={`${reason.code}-${index}`}>
+                                {presentation
+                                  ? t(presentation.key, { defaultValue: presentation.label })
+                                  : fallbackLabel}
                               </li>
                             );
                           })}
@@ -405,7 +412,7 @@ export function StudyProcessingRunHistoryPanel({
                                 {execution.modelName}
                               </td>
                               <td className="font-mono text-[#b8c0b8]">
-                                v{execution.modelVersion}
+                                {execution.modelVersion ? `v${execution.modelVersion}` : '—'}
                               </td>
                               <td
                                 className={`font-semibold ${executionToneClassNames[execution.status]}`}

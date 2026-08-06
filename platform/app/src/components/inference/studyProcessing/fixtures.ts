@@ -25,6 +25,14 @@ const summary = (
   overrides: Partial<StudyProcessingSummary> = {}
 ): StudyProcessingSummary => ({
   studyInstanceUID: `${STUDY_UID_PREFIX}.${STUDY_UID_SUFFIXES[lifecycle]}`,
+  ingestionStatus:
+    lifecycle === 'RETRIEVING'
+      ? 'RETRIEVAL_QUEUED'
+      : lifecycle === 'WAITING'
+        ? 'STABLE'
+        : 'RETRIEVED',
+  retrievalState: lifecycle === 'RETRIEVING' ? 'RUNNING' : null,
+  retrievalError: null,
   runId: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : `run-${lifecycle}`,
   runNumber: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 1,
   lifecycle,
@@ -79,7 +87,7 @@ export const studyProcessingSummaryFixtures = {
     runId: 'run-partial-success',
     runNumber: 3,
     attentionRequired: true,
-    attentionReasons: ['RECONCILIATION_FAILED'],
+    attentionReasons: [{ code: 'RECONCILIATION_FAILED', message: null }],
     expectedModels: 3,
     completedModels: 2,
     failedModels: 1,
@@ -216,7 +224,7 @@ const partialRun: ProcessingRun = {
   phase: 'TERMINAL',
   outcome: 'PARTIAL_SUCCESS',
   attentionRequired: true,
-  attentionReasons: ['RECONCILIATION_FAILED'],
+  attentionReasons: [{ code: 'RECONCILIATION_FAILED', message: null }],
   expectedModels: 3,
   completedModels: 2,
   failedModels: 1,

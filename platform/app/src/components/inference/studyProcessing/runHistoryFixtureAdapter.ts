@@ -51,7 +51,7 @@ function modelExecutionsForSummary(summary: StudyProcessingSummary): ModelExecut
 export function createStudyProcessingRunHistoryFixture(
   summary: StudyProcessingSummary
 ): StudyProcessingRunHistory {
-  if (!summary.runId || !summary.runNumber || !summary.phase) {
+  if (!summary.runId || !summary.runNumber || !summary.phase || summary.version === null) {
     return {
       studyInstanceUID: summary.studyInstanceUID,
       runs: [],

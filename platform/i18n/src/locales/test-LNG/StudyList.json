@@ -109,6 +109,7 @@
   "ProcessingStatusWaiting": "Test Waiting",
   "ProcessingUpdated": "Test Updated",
   "ProcessingUpdatedAtVersion": "Test Updated {{timestamp}}, version {{version}}",
+  "ProcessingUpdatedAt": "Test Updated {{timestamp}}",
   "ProcessingVersion": "Test version {{version}}",
   "ProcessingVersionLabel": "Test Version",
   "ProcessingViewerHint": "Test Select a study before opening viewer",
