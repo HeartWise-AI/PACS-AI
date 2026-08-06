@@ -20,3 +20,4 @@ export * from './restRepository';
 export * from './snapshotTransport';
 export * from './useVisibleStudyProcessingSnapshot';
 export * from './sseParser';
+export * from './sseTransport';
