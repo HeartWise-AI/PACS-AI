@@ -48,6 +48,7 @@ export function mapWorklistStudyStatus(status: WorklistStudyStatusDTO): StudyPro
     retrievalError: status.retrievalError,
     runId: status.runId,
     runNumber: status.runNumber,
+    trigger: status.trigger,
     lifecycle: mapLifecycle(status),
     phase: status.phase,
     outcome: status.outcome,
@@ -63,6 +64,8 @@ export function mapWorklistStudyStatus(status: WorklistStudyStatusDTO): StudyPro
     cancelledModels: status.cancelledModels,
     activeModels: status.activeModels,
     version: status.version,
+    startedAt: status.startedAt,
+    completedAt: status.completedAt,
     updatedAt: status.updatedAt,
   };
 }

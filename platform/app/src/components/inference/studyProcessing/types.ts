@@ -101,12 +101,15 @@ export interface StudyProcessingSummary extends ProcessingModelCounts {
   retrievalError: string | null;
   runId: string | null;
   runNumber: number | null;
+  trigger: ProcessingRunTrigger | null;
   lifecycle: StudyProcessingLifecycle;
   phase: ProcessingRunPhase | null;
   outcome: ProcessingRunOutcome | null;
   attentionRequired: boolean;
   attentionReasons: ProcessingAttentionReason[];
   version: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
   updatedAt: string;
 }
 

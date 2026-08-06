@@ -35,6 +35,7 @@ const summary = (
   retrievalError: null,
   runId: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : `run-${lifecycle}`,
   runNumber: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 1,
+  trigger: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 'AUTO',
   lifecycle,
   phase:
     lifecycle === 'QUEUED' || lifecycle === 'PROCESSING' || lifecycle === 'TERMINAL'
@@ -52,7 +53,9 @@ const summary = (
   skippedModels: 0,
   cancelledModels: 0,
   activeModels: 0,
-  version: 1,
+  version: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 1,
+  startedAt: lifecycle === 'PROCESSING' || lifecycle === 'TERMINAL' ? UPDATED_AT : null,
+  completedAt: lifecycle === 'TERMINAL' ? UPDATED_AT : null,
   updatedAt: UPDATED_AT,
   ...overrides,
 });
@@ -91,6 +94,7 @@ export const studyProcessingSummaryFixtures = {
     studyInstanceUID: `${STUDY_UID_PREFIX}.8`,
     runId: 'run-partial-success',
     runNumber: 3,
+    trigger: 'MANUAL_REPROCESS',
     attentionRequired: true,
     attentionReasons: [{ code: 'RECONCILIATION_FAILED', message: null }],
     expectedModels: 3,

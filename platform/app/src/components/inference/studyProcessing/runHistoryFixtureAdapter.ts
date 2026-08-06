@@ -53,7 +53,13 @@ function modelExecutionsForSummary(summary: StudyProcessingSummary): ModelExecut
 export function createStudyProcessingRunHistoryFixture(
   summary: StudyProcessingSummary
 ): StudyProcessingRunHistory {
-  if (!summary.runId || !summary.runNumber || !summary.phase || summary.version === null) {
+  if (
+    !summary.runId ||
+    !summary.runNumber ||
+    !summary.trigger ||
+    !summary.phase ||
+    summary.version === null
+  ) {
     return {
       studyInstanceUID: summary.studyInstanceUID,
       runs: [],
@@ -66,6 +72,7 @@ export function createStudyProcessingRunHistoryFixture(
     id: summary.runId,
     studyInstanceUID: summary.studyInstanceUID,
     runNumber: summary.runNumber,
+    trigger: summary.trigger,
     phase: summary.phase,
     outcome: summary.outcome,
     attentionRequired: summary.attentionRequired,
@@ -80,7 +87,8 @@ export function createStudyProcessingRunHistoryFixture(
     cancelledModels: summary.cancelledModels,
     activeModels: summary.activeModels,
     version: summary.version,
-    completedAt: summary.lifecycle === 'TERMINAL' ? summary.updatedAt : null,
+    startedAt: summary.startedAt,
+    completedAt: summary.completedAt,
     updatedAt: summary.updatedAt,
     modelExecutions: modelExecutionsForSummary(summary),
   };

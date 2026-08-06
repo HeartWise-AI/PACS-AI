@@ -110,8 +110,40 @@ describe('study processing REST mapper', () => {
       retrievalState: 'RUNNING',
       runId: null,
       runNumber: null,
+      trigger: null,
       phase: null,
       version: null,
+      startedAt: null,
+      completedAt: null,
+    });
+  });
+
+  test('preserves run trigger and timestamps in the canonical summary', () => {
+    const summary = mapWorklistStudyStatus(
+      retrievalStatus({
+        ingestionStatus: 'RETRIEVED',
+        retrievalState: 'COMPLETED',
+        runId: 'run-3',
+        runNumber: 3,
+        trigger: 'MANUAL_REPROCESS',
+        phase: 'TERMINAL',
+        outcome: 'SUCCESS',
+        version: 4,
+        startedAt: '2026-08-06T13:00:00Z',
+        completedAt: '2026-08-06T13:01:00Z',
+      })
+    );
+
+    expect(summary).toMatchObject({
+      runId: 'run-3',
+      runNumber: 3,
+      trigger: 'MANUAL_REPROCESS',
+      lifecycle: 'TERMINAL',
+      phase: 'TERMINAL',
+      outcome: 'SUCCESS',
+      version: 4,
+      startedAt: '2026-08-06T13:00:00Z',
+      completedAt: '2026-08-06T13:01:00Z',
     });
   });
 
