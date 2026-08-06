@@ -13,6 +13,7 @@ export interface RunHistoryEntry {
   status: RunHistoryLoadStatus;
   history: StudyProcessingRunHistory | null;
   error: string | null;
+  retryable: boolean;
 }
 
 export interface RunHistoryState {
@@ -38,6 +39,7 @@ export type RunHistoryAction =
       type: 'runHistory.unavailable';
       studyInstanceUID: string;
       error: string;
+      retryable?: boolean;
     }
   | {
       type: 'runHistory.cleared';
@@ -56,6 +58,7 @@ export function createIdleRunHistoryEntry(): RunHistoryEntry {
     status: 'idle',
     history: null,
     error: null,
+    retryable: true,
   };
 }
 
@@ -89,6 +92,7 @@ export function runHistoryReducer(
         status: current?.history ? 'refreshing' : 'loading',
         history: current?.history ?? null,
         error: null,
+        retryable: true,
       });
     }
     case 'runHistory.received':
@@ -96,6 +100,7 @@ export function runHistoryReducer(
         status: action.partial ? 'partial' : 'ready',
         history: action.history,
         error: null,
+        retryable: true,
       });
     case 'runHistory.failed': {
       const current = state.entriesByStudyInstanceUID[action.studyInstanceUID];
@@ -104,6 +109,7 @@ export function runHistoryReducer(
         status: 'error',
         history: current?.history ?? null,
         error: action.error,
+        retryable: true,
       });
     }
     case 'runHistory.unavailable': {
@@ -113,6 +119,7 @@ export function runHistoryReducer(
         status: 'unavailable',
         history: current?.history ?? null,
         error: action.error,
+        retryable: action.retryable ?? true,
       });
     }
     case 'runHistory.cleared': {

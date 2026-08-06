@@ -20,6 +20,7 @@ import {
 } from './runHistoryTransport';
 import {
   selectInitialSnapshotError,
+  selectInitialSnapshotRetryable,
   selectInitialSnapshotStatus,
   selectIsRealtimeDataStale,
   selectRealtimeConnectionError,
@@ -35,12 +36,13 @@ export interface StudyProcessingContextValue {
   ) => Array<StudyProcessingSummary | undefined>;
   initialSnapshotStatus: InitialSnapshotStatus;
   initialSnapshotError: string | null;
+  initialSnapshotRetryable: boolean;
   realtimeConnectionStatus: RealtimeConnectionStatus;
   realtimeConnectionError: string | null;
   isRealtimeDataStale: boolean;
   startInitialSnapshot: () => void;
   receiveSnapshot: (summaries: StudyProcessingSummary[]) => void;
-  failInitialSnapshot: (error: string) => void;
+  failInitialSnapshot: (error: string, retryable?: boolean) => void;
   applyStatusUpdate: (summary: StudyProcessingSummary) => void;
   markConnectionConnecting: () => void;
   markConnectionConnected: () => void;
@@ -48,8 +50,14 @@ export interface StudyProcessingContextValue {
   markConnectionDegraded: (error: string) => void;
   markConnectionDisconnected: () => void;
   getRunHistoryEntry: (studyInstanceUID: string) => RunHistoryEntry;
-  ensureRunHistory: (studyInstanceUID: string) => Promise<void>;
-  refreshRunHistory: (studyInstanceUID: string) => Promise<void>;
+  ensureRunHistory: (
+    studyInstanceUID: string,
+    transport?: StudyProcessingRunHistoryTransport
+  ) => Promise<void>;
+  refreshRunHistory: (
+    studyInstanceUID: string,
+    transport?: StudyProcessingRunHistoryTransport
+  ) => Promise<void>;
   clearStudyProcessingState: () => void;
 }
 
@@ -81,6 +89,7 @@ export function StudyProcessingProvider({
   );
   const inFlightRunHistoryRequests = useRef<Record<string, Promise<void>>>({});
   const runHistoryRequestGeneration = useRef(0);
+  const runHistoryEntriesRef = useRef(runHistoryState.entriesByStudyInstanceUID);
 
   const effectiveRunHistoryTransport = useMemo(
     () =>
@@ -90,6 +99,9 @@ export function StudyProcessingProvider({
       ),
     [runHistoryTransport, state.summariesByStudyInstanceUID]
   );
+  const effectiveRunHistoryTransportRef = useRef(effectiveRunHistoryTransport);
+  runHistoryEntriesRef.current = runHistoryState.entriesByStudyInstanceUID;
+  effectiveRunHistoryTransportRef.current = effectiveRunHistoryTransport;
 
   const startInitialSnapshot = useCallback(() => {
     dispatch({ type: 'initialSnapshot.started' });
@@ -99,8 +111,8 @@ export function StudyProcessingProvider({
     dispatch({ type: 'snapshot.received', summaries });
   }, []);
 
-  const failInitialSnapshot = useCallback((error: string) => {
-    dispatch({ type: 'initialSnapshot.failed', error });
+  const failInitialSnapshot = useCallback((error: string, retryable = true) => {
+    dispatch({ type: 'initialSnapshot.failed', error, retryable });
   }, []);
 
   const applyStatusUpdate = useCallback((summary: StudyProcessingSummary) => {
@@ -128,8 +140,12 @@ export function StudyProcessingProvider({
   }, []);
 
   const requestRunHistory = useCallback(
-    (studyInstanceUID: string, forceRefresh: boolean): Promise<void> => {
-      const currentEntry = runHistoryState.entriesByStudyInstanceUID[studyInstanceUID];
+    (
+      studyInstanceUID: string,
+      forceRefresh: boolean,
+      transport?: StudyProcessingRunHistoryTransport
+    ): Promise<void> => {
+      const currentEntry = runHistoryEntriesRef.current[studyInstanceUID];
 
       if (!forceRefresh && currentEntry?.history) {
         return Promise.resolve();
@@ -146,7 +162,7 @@ export function StudyProcessingProvider({
       });
 
       const requestGeneration = runHistoryRequestGeneration.current;
-      const request = effectiveRunHistoryTransport
+      const request = (transport ?? effectiveRunHistoryTransportRef.current)
         .loadRunHistory(studyInstanceUID)
         .then(response => {
           if (requestGeneration !== runHistoryRequestGeneration.current) {
@@ -166,14 +182,20 @@ export function StudyProcessingProvider({
 
           const message =
             error instanceof Error ? error.message : 'Unable to load processing run history.';
-          dispatchRunHistory({
-            type:
-              error instanceof RunHistoryUnavailableError
-                ? 'runHistory.unavailable'
-                : 'runHistory.failed',
-            studyInstanceUID,
-            error: message,
-          });
+          if (error instanceof RunHistoryUnavailableError) {
+            dispatchRunHistory({
+              type: 'runHistory.unavailable',
+              studyInstanceUID,
+              error: message,
+              retryable: error.retryable,
+            });
+          } else {
+            dispatchRunHistory({
+              type: 'runHistory.failed',
+              studyInstanceUID,
+              error: message,
+            });
+          }
         })
         .finally(() => {
           if (inFlightRunHistoryRequests.current[studyInstanceUID] === request) {
@@ -184,16 +206,18 @@ export function StudyProcessingProvider({
       inFlightRunHistoryRequests.current[studyInstanceUID] = request;
       return request;
     },
-    [effectiveRunHistoryTransport, runHistoryState.entriesByStudyInstanceUID]
+    []
   );
 
   const ensureRunHistory = useCallback(
-    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, false),
+    (studyInstanceUID: string, transport?: StudyProcessingRunHistoryTransport) =>
+      requestRunHistory(studyInstanceUID, false, transport),
     [requestRunHistory]
   );
 
   const refreshRunHistory = useCallback(
-    (studyInstanceUID: string) => requestRunHistory(studyInstanceUID, true),
+    (studyInstanceUID: string, transport?: StudyProcessingRunHistoryTransport) =>
+      requestRunHistory(studyInstanceUID, true, transport),
     [requestRunHistory]
   );
 
@@ -211,6 +235,7 @@ export function StudyProcessingProvider({
         selectVisibleStudyProcessingSummaries(state, visibleStudyInstanceUIDs),
       initialSnapshotStatus: selectInitialSnapshotStatus(state),
       initialSnapshotError: selectInitialSnapshotError(state),
+      initialSnapshotRetryable: selectInitialSnapshotRetryable(state),
       realtimeConnectionStatus: selectRealtimeConnectionStatus(state),
       realtimeConnectionError: selectRealtimeConnectionError(state),
       isRealtimeDataStale: selectIsRealtimeDataStale(state),

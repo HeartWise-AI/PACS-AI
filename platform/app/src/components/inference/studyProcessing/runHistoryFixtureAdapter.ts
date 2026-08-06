@@ -15,7 +15,9 @@ function executionStatusesForSummary(summary: StudyProcessingSummary): ModelExec
     ...Array(summary.failedModels).fill('failed'),
     ...Array(summary.skippedModels).fill('skipped'),
     ...Array(summary.cancelledModels).fill('cancelled'),
-    ...Array(summary.activeModels).fill('running'),
+    ...Array(summary.runningModels).fill('running'),
+    ...Array(summary.queuedModels).fill('queued'),
+    ...Array(summary.pendingModels).fill('pending'),
   ].slice(0, summary.expectedModels) as ModelExecutionStatus[];
 }
 
@@ -51,7 +53,13 @@ function modelExecutionsForSummary(summary: StudyProcessingSummary): ModelExecut
 export function createStudyProcessingRunHistoryFixture(
   summary: StudyProcessingSummary
 ): StudyProcessingRunHistory {
-  if (!summary.runId || !summary.runNumber || !summary.phase) {
+  if (
+    !summary.runId ||
+    !summary.runNumber ||
+    !summary.trigger ||
+    !summary.phase ||
+    summary.version === null
+  ) {
     return {
       studyInstanceUID: summary.studyInstanceUID,
       runs: [],
@@ -64,18 +72,23 @@ export function createStudyProcessingRunHistoryFixture(
     id: summary.runId,
     studyInstanceUID: summary.studyInstanceUID,
     runNumber: summary.runNumber,
+    trigger: summary.trigger,
     phase: summary.phase,
     outcome: summary.outcome,
     attentionRequired: summary.attentionRequired,
     attentionReasons: summary.attentionReasons,
     expectedModels: summary.expectedModels,
+    pendingModels: summary.pendingModels,
+    queuedModels: summary.queuedModels,
+    runningModels: summary.runningModels,
     completedModels: summary.completedModels,
     failedModels: summary.failedModels,
     skippedModels: summary.skippedModels,
     cancelledModels: summary.cancelledModels,
     activeModels: summary.activeModels,
     version: summary.version,
-    completedAt: summary.lifecycle === 'TERMINAL' ? summary.updatedAt : null,
+    startedAt: summary.startedAt,
+    completedAt: summary.completedAt,
     updatedAt: summary.updatedAt,
     modelExecutions: modelExecutionsForSummary(summary),
   };

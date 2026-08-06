@@ -15,6 +15,10 @@ export function formatStudyProcessingRelativeTime(
   const differenceMinutes = Math.round((updatedAtMilliseconds - now) / 60000);
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
 
+  if (differenceMinutes === 0) {
+    return formatter.format(0, 'second');
+  }
+
   if (Math.abs(differenceMinutes) < 60) {
     return formatter.format(differenceMinutes, 'minute');
   }
@@ -42,26 +46,35 @@ export function StudyProcessingUpdated({ studyInstanceUID }: StudyProcessingUpda
   }
 
   const exactTimestamp = new Date(summary.updatedAt).toLocaleString(i18n.language);
+  const accessibleLabel =
+    summary.version === null
+      ? t('ProcessingUpdatedAt', {
+          timestamp: exactTimestamp,
+          defaultValue: 'Updated {{timestamp}}',
+        })
+      : t('ProcessingUpdatedAtVersion', {
+          timestamp: exactTimestamp,
+          version: summary.version,
+          defaultValue: 'Updated {{timestamp}}, version {{version}}',
+        });
 
   return (
     <div
       className="min-w-[92px]"
       title={exactTimestamp}
-      aria-label={t('ProcessingUpdatedAtVersion', {
-        timestamp: exactTimestamp,
-        version: summary.version,
-        defaultValue: 'Updated {{timestamp}}, version {{version}}',
-      })}
+      aria-label={accessibleLabel}
     >
       <div className="text-xs text-[#d1d5db]">
         {formatStudyProcessingRelativeTime(summary.updatedAt, i18n.language)}
       </div>
-      <div className="mt-0.5 font-mono text-[10px] text-[#9ca3af]">
-        {t('ProcessingVersion', {
-          version: summary.version,
-          defaultValue: 'version {{version}}',
-        })}
-      </div>
+      {summary.version !== null && (
+        <div className="mt-0.5 font-mono text-[10px] text-[#9ca3af]">
+          {t('ProcessingVersion', {
+            version: summary.version,
+            defaultValue: 'version {{version}}',
+          })}
+        </div>
+      )}
     </div>
   );
 }

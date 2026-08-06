@@ -13,6 +13,7 @@ export interface StudyProcessingState {
   bufferedSummariesByStudyInstanceUID: Record<string, StudyProcessingSummary>;
   initialSnapshotStatus: InitialSnapshotStatus;
   initialSnapshotError: string | null;
+  initialSnapshotRetryable: boolean;
   realtimeConnectionStatus: RealtimeConnectionStatus;
   realtimeConnectionError: string | null;
 }
@@ -28,6 +29,7 @@ export type StudyProcessingAction =
   | {
       type: 'initialSnapshot.failed';
       error: string;
+      retryable?: boolean;
     }
   | {
       type: 'status.updated';
@@ -59,6 +61,7 @@ export const initialStudyProcessingState: StudyProcessingState = {
   bufferedSummariesByStudyInstanceUID: {},
   initialSnapshotStatus: 'idle',
   initialSnapshotError: null,
+  initialSnapshotRetryable: true,
   realtimeConnectionStatus: 'disconnected',
   realtimeConnectionError: null,
 };
@@ -78,7 +81,19 @@ export function shouldApplyStudyProcessingSummary(
     return incomingRunNumber > currentRunNumber;
   }
 
-  return incoming.version > current.version;
+  if (incoming.version !== null && current.version !== null) {
+    return incoming.version > current.version;
+  }
+
+  if (incoming.version !== null) {
+    return true;
+  }
+
+  if (current.version !== null) {
+    return false;
+  }
+
+  return Date.parse(incoming.updatedAt) > Date.parse(current.updatedAt);
 }
 
 function mergeSummaryRecords(
@@ -138,6 +153,7 @@ export function studyProcessingReducer(
         bufferedSummariesByStudyInstanceUID: {},
         initialSnapshotStatus: 'loading',
         initialSnapshotError: null,
+        initialSnapshotRetryable: true,
       };
     case 'snapshot.received': {
       const snapshotSummaries = mergeSummaryRecords(
@@ -155,6 +171,7 @@ export function studyProcessingReducer(
         bufferedSummariesByStudyInstanceUID: {},
         initialSnapshotStatus: 'ready',
         initialSnapshotError: null,
+        initialSnapshotRetryable: true,
       };
     }
     case 'initialSnapshot.failed': {
@@ -169,6 +186,7 @@ export function studyProcessingReducer(
         bufferedSummariesByStudyInstanceUID: {},
         initialSnapshotStatus: 'error',
         initialSnapshotError: action.error,
+        initialSnapshotRetryable: action.retryable ?? true,
       };
     }
     case 'status.updated':

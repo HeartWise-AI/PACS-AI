@@ -13,6 +13,11 @@ describe('run history fixture adapter', () => {
     expect(history.studyInstanceUID).toBe('visible-study');
     expect(history.runs.map(run => run.runNumber)).toEqual([3, 2, 1]);
     expect(history.runs.every(run => run.studyInstanceUID === 'visible-study')).toBe(true);
+    expect(history.runs[0]).toMatchObject({
+      trigger: summary.trigger,
+      startedAt: summary.startedAt,
+      completedAt: summary.completedAt,
+    });
   });
 
   it('makes model execution states agree with the current summary counts', () => {

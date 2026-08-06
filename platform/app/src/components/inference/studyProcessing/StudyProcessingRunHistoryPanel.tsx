@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ModelExecution, ProcessingAttentionReason, ProcessingRun } from './types';
+import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
+import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
   pending: 'text-[#c3c9c3]',
@@ -14,7 +15,7 @@ const executionToneClassNames: Record<ModelExecution['status'], string> = {
 };
 
 const attentionReasonPresentations: Record<
-  ProcessingAttentionReason,
+  KnownProcessingAttentionReasonCode,
   { key: string; label: string }
 > = {
   DISPATCH_FAILED: {
@@ -129,10 +130,12 @@ function runToneClassName(run: ProcessingRun): string {
 
 export interface StudyProcessingRunHistoryPanelProps {
   studyInstanceUID: string;
+  runHistoryTransport?: StudyProcessingRunHistoryTransport;
 }
 
 export function StudyProcessingRunHistoryPanel({
   studyInstanceUID,
+  runHistoryTransport,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
   const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
@@ -146,8 +149,8 @@ export function StudyProcessingRunHistoryPanel({
   const initializedStudyInstanceUID = useRef<string | null>(null);
 
   useEffect(() => {
-    void ensureRunHistory(studyInstanceUID);
-  }, [ensureRunHistory, studyInstanceUID]);
+    void ensureRunHistory(studyInstanceUID, runHistoryTransport);
+  }, [ensureRunHistory, runHistoryTransport, studyInstanceUID]);
 
   useEffect(() => {
     if (
@@ -165,7 +168,9 @@ export function StudyProcessingRunHistoryPanel({
   const isInitialLoading = !history && (entry.status === 'idle' || entry.status === 'loading');
   const hasLoadError = entry.status === 'error' || entry.status === 'unavailable';
   const retry = () =>
-    history ? refreshRunHistory(studyInstanceUID) : ensureRunHistory(studyInstanceUID);
+    history
+      ? refreshRunHistory(studyInstanceUID, runHistoryTransport)
+      : ensureRunHistory(studyInstanceUID, runHistoryTransport);
   const toggleRun = (runId: string) => {
     setExpandedRunIds(current => ({
       ...current,
@@ -190,8 +195,8 @@ export function StudyProcessingRunHistoryPanel({
         {(history || entry.status === 'ready') && (
           <button
             type="button"
-            className="ml-4 rounded-md border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:cursor-wait disabled:opacity-50"
-            onClick={() => void refreshRunHistory(studyInstanceUID)}
+            className="border-white/15 ml-4 rounded-md border bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:cursor-wait disabled:opacity-50"
+            onClick={() => void refreshRunHistory(studyInstanceUID, runHistoryTransport)}
             disabled={entry.status === 'refreshing'}
             data-testid="study-processing-run-history-refresh"
           >
@@ -218,7 +223,7 @@ export function StudyProcessingRunHistoryPanel({
 
       {entry.status === 'partial' && (
         <div
-          className="mb-3 rounded-md border border-[#facc15]/35 bg-[#403917] px-4 py-3 text-xs text-[#f8d84a]"
+          className="border-[#facc15]/35 mb-3 rounded-md border bg-[#403917] px-4 py-3 text-xs text-[#f8d84a]"
           role="status"
           data-testid="study-processing-run-history-partial"
         >
@@ -230,7 +235,7 @@ export function StudyProcessingRunHistoryPanel({
 
       {hasLoadError && (
         <div
-          className="mb-3 flex items-center rounded-md border border-[#f87171]/35 bg-[#482828] px-4 py-3 text-xs text-[#ffb0b0]"
+          className="border-[#f87171]/35 mb-3 flex items-center rounded-md border bg-[#482828] px-4 py-3 text-xs text-[#ffb0b0]"
           role="alert"
           data-testid="study-processing-run-history-error"
         >
@@ -243,14 +248,16 @@ export function StudyProcessingRunHistoryPanel({
                   defaultValue: 'Processing run history could not be loaded.',
                 })}
           </span>
-          <button
-            type="button"
-            className="ml-auto rounded border border-current px-3 py-1 font-semibold hover:bg-white/10"
-            onClick={() => void retry()}
-            data-testid="study-processing-run-history-retry"
-          >
-            {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
-          </button>
+          {entry.retryable && (
+            <button
+              type="button"
+              className="ml-auto rounded border border-current px-3 py-1 font-semibold hover:bg-white/10"
+              onClick={() => void retry()}
+              data-testid="study-processing-run-history-retry"
+            >
+              {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
+            </button>
+          )}
         </div>
       )}
 
@@ -356,11 +363,18 @@ export function StudyProcessingRunHistoryPanel({
                           })}
                         </div>
                         <ul className="mt-1 list-disc pl-5 text-xs text-[#f6df7d]">
-                          {run.attentionReasons.map(reason => {
-                            const presentation = attentionReasonPresentations[reason];
+                          {run.attentionReasons.map((reason, index) => {
+                            const presentation =
+                              attentionReasonPresentations[
+                                reason.code as KnownProcessingAttentionReasonCode
+                              ];
+                            const fallbackLabel =
+                              reason.message || reason.code.replaceAll('_', ' ').toLowerCase();
                             return (
-                              <li key={reason}>
-                                {t(presentation.key, { defaultValue: presentation.label })}
+                              <li key={`${reason.code}-${index}`}>
+                                {presentation
+                                  ? t(presentation.key, { defaultValue: presentation.label })
+                                  : fallbackLabel}
                               </li>
                             );
                           })}
@@ -368,18 +382,25 @@ export function StudyProcessingRunHistoryPanel({
                       </div>
                     )}
 
-                    {run.trigger === 'LEGACY_IMPORT' ? (
+                    {run.trigger === 'LEGACY_IMPORT' && (
                       <div
                         className="my-2 rounded-md border border-[#65717c] bg-[#343b40] px-4 py-4 text-sm text-[#d0d6dc]"
                         role="note"
                         data-testid="study-processing-legacy-history-message"
                       >
-                        {t('ProcessingLegacyHistoryUnavailable', {
-                          defaultValue:
-                            'Model-level history was not recorded for this legacy import and cannot be reconstructed.',
-                        })}
+                        {run.modelExecutions.length > 0
+                          ? t('ProcessingLegacyExecutionSnapshotAvailable', {
+                              defaultValue:
+                                'This legacy import shows the available execution snapshot. Earlier attempts and unavailable history were not reconstructed.',
+                            })
+                          : t('ProcessingLegacyHistoryUnavailable', {
+                              defaultValue:
+                                'Model-level history was not recorded for this legacy import and cannot be reconstructed.',
+                            })}
                       </div>
-                    ) : (
+                    )}
+
+                    {(run.trigger !== 'LEGACY_IMPORT' || run.modelExecutions.length > 0) && (
                       <table className="w-full min-w-[900px] bg-transparent text-left">
                         <thead className="bg-transparent text-[10px] uppercase tracking-wide text-[#aeb6ae]">
                           <tr>
@@ -405,7 +426,7 @@ export function StudyProcessingRunHistoryPanel({
                                 {execution.modelName}
                               </td>
                               <td className="font-mono text-[#b8c0b8]">
-                                v{execution.modelVersion}
+                                {execution.modelVersion ? `v${execution.modelVersion}` : '—'}
                               </td>
                               <td
                                 className={`font-semibold ${executionToneClassNames[execution.status]}`}

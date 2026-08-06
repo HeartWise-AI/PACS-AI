@@ -176,6 +176,27 @@ describe('StudyProcessingRunHistoryPanel', () => {
     );
   });
 
+  test('does not offer retry for an authentication or permission failure', async () => {
+    const loadRunHistory = jest.fn(async () => {
+      throw new RunHistoryUnavailableError('Authentication is required.', false);
+    });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, 'unauthorized-study');
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': 'study-processing-run-history-error',
+      })
+    ).toBeDefined();
+    expect(
+      renderer?.root.findAllByProps({
+        'data-testid': 'study-processing-run-history-retry',
+      })
+    ).toHaveLength(0);
+  });
+
   test('keeps cached runs visible while an explicit refresh is pending', async () => {
     let resolveRefresh!: (response: RunHistoryTransportResponse) => void;
     const loadRunHistory = jest
@@ -356,6 +377,46 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(legacyRun.modelExecutions).toEqual([]);
   });
 
+  test('shows an available legacy execution snapshot without implying complete history', async () => {
+    const legacyExecution = {
+      ...modelExecutionFixtures.completed,
+      id: 'legacy-snapshot-execution',
+      modelName: 'LegacySnapshotModel',
+    };
+    const historyWithLegacySnapshot = {
+      ...studyProcessingRunHistoryFixture,
+      runs: studyProcessingRunHistoryFixture.runs.map(run =>
+        run.trigger === 'LEGACY_IMPORT' ? { ...run, modelExecutions: [legacyExecution] } : run
+      ),
+    };
+    const legacyRun = historyWithLegacySnapshot.runs.find(run => run.trigger === 'LEGACY_IMPORT');
+    if (!legacyRun) {
+      throw new Error('Legacy run fixture is required for this test.');
+    }
+    const loadRunHistory = jest.fn(async () => ({
+      history: historyWithLegacySnapshot,
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, historyWithLegacySnapshot.studyInstanceUID);
+    });
+
+    act(() => {
+      renderer?.root
+        .findByProps({
+          'data-testid': `study-processing-run-toggle-${legacyRun.id}`,
+        })
+        .props.onClick();
+    });
+
+    const legacyMessage = renderer?.root.findByProps({
+      'data-testid': 'study-processing-legacy-history-message',
+    });
+    expect(getRenderedText(legacyMessage!)).toContain('available execution snapshot');
+    expect(getRenderedText(renderer!.root)).toContain('LegacySnapshotModel');
+  });
+
   test('shows readable attention reasons and safe structured errors', async () => {
     const loadRunHistory = jest.fn(async () => ({
       history: studyProcessingRunHistoryFixture,
@@ -414,6 +475,46 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
     expect(renderedSkip).toContain('The model is not applicable to this study.');
     expect(renderedSkip).toContain('MODEL_NOT_APPLICABLE');
+  });
+
+  test('shows a safe fallback for an unknown future skip code', async () => {
+    const futureSkippedExecution = {
+      ...modelExecutionFixtures.skipped,
+      id: 'future-skipped-execution',
+      skipReason: {
+        code: 'FUTURE_BACKEND_SKIP_REASON',
+        message: null,
+      },
+    };
+    const skippedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'run-with-future-skip-reason',
+      studyInstanceUID: 'study-with-future-skip-reason',
+      expectedModels: 1,
+      completedModels: 0,
+      failedModels: 0,
+      skippedModels: 1,
+      modelExecutions: [futureSkippedExecution],
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: {
+        studyInstanceUID: skippedRun.studyInstanceUID,
+        runs: [skippedRun],
+      },
+      partial: false,
+    }));
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, skippedRun.studyInstanceUID);
+    });
+
+    const skip = renderer?.root.findByProps({
+      'data-testid': `study-processing-model-skip-${futureSkippedExecution.id}`,
+    });
+    const renderedSkip = skip ? getRenderedText(skip) : '';
+
+    expect(renderedSkip).toContain('Model was skipped');
+    expect(renderedSkip).toContain('FUTURE_BACKEND_SKIP_REASON');
   });
 
   test('renders every supported model execution status in mixed history', async () => {

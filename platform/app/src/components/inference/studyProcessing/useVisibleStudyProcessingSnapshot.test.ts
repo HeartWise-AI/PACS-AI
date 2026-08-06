@@ -1,0 +1,243 @@
+import React from 'react';
+import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import {
+  StudyProcessingProvider,
+  useStudyProcessing,
+  type StudyProcessingContextValue,
+} from './StudyProcessingProvider';
+import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
+import { studyProcessingSummaryFixtures } from './fixtures';
+import { StudyProcessingRESTError } from './restRepository';
+import type { StudyProcessingSummary } from './types';
+import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
+
+let contextValue: StudyProcessingContextValue;
+let renderer: ReactTestRenderer;
+let retryVisibleSnapshot: () => void;
+
+interface HarnessProps {
+  enabled: boolean;
+  fixtureMode?: boolean;
+  studyInstanceUIDs: string[];
+  transport: StudyProcessingSnapshotTransport;
+}
+
+function Harness({ enabled, fixtureMode = false, studyInstanceUIDs, transport }: HarnessProps) {
+  retryVisibleSnapshot = useVisibleStudyProcessingSnapshot({
+    enabled,
+    fixtureMode,
+    studyInstanceUIDs,
+    transport,
+  });
+  contextValue = useStudyProcessing();
+  return null;
+}
+
+function providerWithHarness(props: HarnessProps) {
+  return React.createElement(StudyProcessingProvider, null, React.createElement(Harness, props));
+}
+
+function renderHarness(props: HarnessProps) {
+  renderer = TestRenderer.create(providerWithHarness(props));
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(promiseResolve => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
+}
+
+describe('useVisibleStudyProcessingSnapshot', () => {
+  afterEach(() => {
+    if (renderer) {
+      act(() => renderer.unmount());
+    }
+  });
+
+  test('loads visible summaries into the provider store', async () => {
+    const loadVisibleStudySnapshot = jest
+      .fn()
+      .mockResolvedValue([studyProcessingSummaryFixtures.processing]);
+    const transport = { loadVisibleStudySnapshot };
+
+    await act(async () => {
+      renderHarness({
+        enabled: true,
+        studyInstanceUIDs: ['1.2.840.processing'],
+        transport,
+      });
+      await Promise.resolve();
+    });
+
+    expect(loadVisibleStudySnapshot).toHaveBeenCalledWith(['1.2.840.processing']);
+    expect(contextValue.initialSnapshotStatus).toBe('ready');
+    expect(
+      contextValue.getStudySummary(studyProcessingSummaryFixtures.processing.studyInstanceUID)
+    ).toBe(studyProcessingSummaryFixtures.processing);
+  });
+
+  test('reports a safe transport failure through the provider store', async () => {
+    const transport = {
+      loadVisibleStudySnapshot: jest.fn().mockRejectedValue(new Error('Service unavailable.')),
+    };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+    expect(contextValue.initialSnapshotError).toBe('Service unavailable.');
+    expect(contextValue.initialSnapshotRetryable).toBe(true);
+  });
+
+  test.each([401, 403])('marks HTTP %i snapshot failures as non-retryable', async status => {
+    const transport = {
+      loadVisibleStudySnapshot: jest
+        .fn()
+        .mockRejectedValue(new StudyProcessingRESTError('Authorization failed.', status)),
+    };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+    expect(contextValue.initialSnapshotRetryable).toBe(false);
+  });
+
+  test.each([400, 404, 500, 503])('keeps HTTP %i snapshot failures retryable', async status => {
+    const transport = {
+      loadVisibleStudySnapshot: jest
+        .fn()
+        .mockRejectedValue(new StudyProcessingRESTError('Request failed safely.', status)),
+    };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+    expect(contextValue.initialSnapshotRetryable).toBe(true);
+  });
+
+  test('retries the same visible studies after a snapshot failure', async () => {
+    const loadVisibleStudySnapshot = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('Service unavailable.'))
+      .mockResolvedValueOnce([]);
+    const transport = { loadVisibleStudySnapshot };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+
+    await act(async () => {
+      retryVisibleSnapshot();
+      await Promise.resolve();
+    });
+
+    expect(loadVisibleStudySnapshot).toHaveBeenCalledTimes(2);
+    expect(loadVisibleStudySnapshot).toHaveBeenLastCalledWith(['1.2.3']);
+    expect(contextValue.initialSnapshotStatus).toBe('ready');
+  });
+
+  test('ignores a late snapshot after the visible studies change', async () => {
+    const firstPage = deferred<StudyProcessingSummary[]>();
+    const secondPage = deferred<StudyProcessingSummary[]>();
+    const loadVisibleStudySnapshot = jest
+      .fn()
+      .mockReturnValueOnce(firstPage.promise)
+      .mockReturnValueOnce(secondPage.promise);
+    const transport = { loadVisibleStudySnapshot };
+    const firstPageSummary = {
+      ...studyProcessingSummaryFixtures.processing,
+      studyInstanceUID: 'first-page-study',
+    };
+    const secondPageSummary = {
+      ...studyProcessingSummaryFixtures.completed,
+      studyInstanceUID: 'second-page-study',
+    };
+
+    await act(async () => {
+      renderHarness({
+        enabled: true,
+        studyInstanceUIDs: ['first-page-study'],
+        transport,
+      });
+    });
+
+    await act(async () => {
+      renderer.update(
+        providerWithHarness({
+          enabled: true,
+          studyInstanceUIDs: ['second-page-study'],
+          transport,
+        })
+      );
+      secondPage.resolve([secondPageSummary]);
+      await secondPage.promise;
+    });
+
+    expect(contextValue.getStudySummary('second-page-study')).toBe(secondPageSummary);
+
+    await act(async () => {
+      firstPage.resolve([firstPageSummary]);
+      await firstPage.promise;
+    });
+
+    expect(loadVisibleStudySnapshot).toHaveBeenNthCalledWith(1, ['first-page-study']);
+    expect(loadVisibleStudySnapshot).toHaveBeenNthCalledWith(2, ['second-page-study']);
+    expect(contextValue.getStudySummary('first-page-study')).toBeUndefined();
+    expect(contextValue.getStudySummary('second-page-study')).toBe(secondPageSummary);
+  });
+
+  test('does not request protected processing data when access is disabled', async () => {
+    const loadVisibleStudySnapshot = jest.fn();
+
+    await act(async () => {
+      renderHarness({
+        enabled: false,
+        studyInstanceUIDs: ['1.2.3'],
+        transport: { loadVisibleStudySnapshot },
+      });
+      await Promise.resolve();
+    });
+
+    expect(loadVisibleStudySnapshot).not.toHaveBeenCalled();
+    expect(contextValue.initialSnapshotStatus).toBe('idle');
+  });
+
+  test('marks fixture mode connected without claiming REST is realtime-connected', async () => {
+    const liveTransport = { loadVisibleStudySnapshot: jest.fn().mockResolvedValue([]) };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: [], transport: liveTransport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.realtimeConnectionStatus).toBe('disconnected');
+
+    const fixtureTransport = { loadVisibleStudySnapshot: jest.fn().mockResolvedValue([]) };
+    await act(async () => {
+      renderer.update(
+        providerWithHarness({
+          enabled: true,
+          fixtureMode: true,
+          studyInstanceUIDs: [],
+          transport: fixtureTransport,
+        })
+      );
+      await Promise.resolve();
+    });
+
+    expect(contextValue.realtimeConnectionStatus).toBe('connected');
+  });
+});

@@ -4,6 +4,10 @@ import { studyProcessingSummaryFixtures } from './fixtures';
 import { StudyProcessingStatusCell } from './StudyProcessingStatusCell';
 import { getStudyProcessingStatusPresentation } from './statusPresentation';
 
+jest.mock('@ohif/ui-next', () => ({
+  Icons: { StatusWarning: 'span' },
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options: Record<string, unknown> = {}) => {

@@ -5,11 +5,13 @@ import { useStudyProcessing } from './StudyProcessingProvider';
 
 export interface StudyProcessingStatusProps {
   studyInstanceUID: string;
+  onRetry?: () => void;
 }
 
-export function StudyProcessingStatus({ studyInstanceUID }: StudyProcessingStatusProps) {
+export function StudyProcessingStatus({ studyInstanceUID, onRetry }: StudyProcessingStatusProps) {
   const { t } = useTranslation('StudyList');
-  const { getStudySummary, initialSnapshotError, initialSnapshotStatus } = useStudyProcessing();
+  const { getStudySummary, initialSnapshotError, initialSnapshotRetryable, initialSnapshotStatus } =
+    useStudyProcessing();
   const summary = getStudySummary(studyInstanceUID);
 
   if (summary) {
@@ -19,7 +21,7 @@ export function StudyProcessingStatus({ studyInstanceUID }: StudyProcessingStatu
   if (initialSnapshotStatus === 'error') {
     return (
       <div
-        className="min-w-[208px]"
+        className="flex min-w-[208px] items-center gap-3"
         role="status"
         aria-label={t('ProcessingStatusUnavailable', {
           defaultValue: 'Processing status unavailable',
@@ -32,7 +34,7 @@ export function StudyProcessingStatus({ studyInstanceUID }: StudyProcessingStatu
         }
         data-testid="study-processing-unavailable"
       >
-        <span className="inline-flex h-[22px] items-center gap-2 rounded-full border border-[#9ca3af]/35 bg-[#9ca3af]/15 px-3 text-xs font-semibold text-[#9ca3af]">
+        <span className="border-[#9ca3af]/35 bg-[#9ca3af]/15 inline-flex h-[22px] items-center gap-2 rounded-full border px-3 text-xs font-semibold text-[#9ca3af]">
           <span
             className="h-[7px] w-[7px] rounded-full bg-[#9ca3af]"
             aria-hidden="true"
@@ -41,6 +43,22 @@ export function StudyProcessingStatus({ studyInstanceUID }: StudyProcessingStatu
             defaultValue: 'Status unavailable',
           })}
         </span>
+        {onRetry && initialSnapshotRetryable && (
+          <button
+            type="button"
+            className="border-white/15 rounded-md border bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10"
+            onClick={event => {
+              event.stopPropagation();
+              onRetry();
+            }}
+            aria-label={t('ProcessingStatusRetry', {
+              defaultValue: 'Retry processing status',
+            })}
+            data-testid="study-processing-status-retry"
+          >
+            {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
+          </button>
+        )}
       </div>
     );
   }
@@ -58,7 +76,7 @@ export function StudyProcessingStatus({ studyInstanceUID }: StudyProcessingStatu
         })}
         data-testid="study-processing-empty"
       >
-        <span className="inline-flex h-[22px] items-center gap-2 rounded-full border border-[#7c8b9a]/35 bg-[#7c8b9a]/15 px-3 text-xs font-semibold text-[#7c8b9a]">
+        <span className="border-[#7c8b9a]/35 bg-[#7c8b9a]/15 inline-flex h-[22px] items-center gap-2 rounded-full border px-3 text-xs font-semibold text-[#7c8b9a]">
           <span
             className="h-[7px] w-[7px] rounded-full bg-[#7c8b9a]"
             aria-hidden="true"

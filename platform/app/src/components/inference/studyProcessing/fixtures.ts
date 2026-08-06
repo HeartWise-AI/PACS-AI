@@ -25,8 +25,17 @@ const summary = (
   overrides: Partial<StudyProcessingSummary> = {}
 ): StudyProcessingSummary => ({
   studyInstanceUID: `${STUDY_UID_PREFIX}.${STUDY_UID_SUFFIXES[lifecycle]}`,
+  ingestionStatus:
+    lifecycle === 'RETRIEVING'
+      ? 'RETRIEVAL_QUEUED'
+      : lifecycle === 'WAITING'
+        ? 'STABLE'
+        : 'RETRIEVED',
+  retrievalState: lifecycle === 'RETRIEVING' ? 'RUNNING' : null,
+  retrievalError: null,
   runId: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : `run-${lifecycle}`,
   runNumber: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 1,
+  trigger: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 'AUTO',
   lifecycle,
   phase:
     lifecycle === 'QUEUED' || lifecycle === 'PROCESSING' || lifecycle === 'TERMINAL'
@@ -36,12 +45,17 @@ const summary = (
   attentionRequired: false,
   attentionReasons: [],
   expectedModels: 0,
+  pendingModels: 0,
+  queuedModels: 0,
+  runningModels: 0,
   completedModels: 0,
   failedModels: 0,
   skippedModels: 0,
   cancelledModels: 0,
   activeModels: 0,
-  version: 1,
+  version: lifecycle === 'WAITING' || lifecycle === 'RETRIEVING' ? null : 1,
+  startedAt: lifecycle === 'PROCESSING' || lifecycle === 'TERMINAL' ? UPDATED_AT : null,
+  completedAt: lifecycle === 'TERMINAL' ? UPDATED_AT : null,
   updatedAt: UPDATED_AT,
   ...overrides,
 });
@@ -51,10 +65,12 @@ export const studyProcessingSummaryFixtures = {
   retrieving: summary('RETRIEVING', null),
   queued: summary('QUEUED', null, {
     expectedModels: 3,
+    queuedModels: 3,
     activeModels: 3,
   }),
   processing: summary('PROCESSING', null, {
     expectedModels: 3,
+    runningModels: 2,
     completedModels: 1,
     activeModels: 2,
     version: 4,
@@ -78,8 +94,9 @@ export const studyProcessingSummaryFixtures = {
     studyInstanceUID: `${STUDY_UID_PREFIX}.8`,
     runId: 'run-partial-success',
     runNumber: 3,
+    trigger: 'MANUAL_REPROCESS',
     attentionRequired: true,
-    attentionReasons: ['RECONCILIATION_FAILED'],
+    attentionReasons: [{ code: 'RECONCILIATION_FAILED', message: null }],
     expectedModels: 3,
     completedModels: 2,
     failedModels: 1,
@@ -118,6 +135,7 @@ export const studyProcessingSnapshotFixture: PaginatedStudyProcessingSummaries =
 export const studyStatusUpdatedEventFixture: StudyStatusUpdatedEvent = {
   ...studyProcessingSummaryFixtures.processing,
   type: 'study_status.updated',
+  runningModels: 1,
   completedModels: 2,
   activeModels: 1,
   version: 5,
@@ -216,8 +234,11 @@ const partialRun: ProcessingRun = {
   phase: 'TERMINAL',
   outcome: 'PARTIAL_SUCCESS',
   attentionRequired: true,
-  attentionReasons: ['RECONCILIATION_FAILED'],
+  attentionReasons: [{ code: 'RECONCILIATION_FAILED', message: null }],
   expectedModels: 3,
+  pendingModels: 0,
+  queuedModels: 0,
+  runningModels: 0,
   completedModels: 2,
   failedModels: 1,
   skippedModels: 0,
