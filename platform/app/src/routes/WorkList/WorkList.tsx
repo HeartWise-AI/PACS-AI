@@ -111,7 +111,7 @@ function WorkList() {
     () => currentItems.map(study => study.studyInstanceUID),
     [currentItems]
   );
-  useVisibleStudyProcessingSnapshot({
+  const retryVisibleStudyProcessingSnapshot = useVisibleStudyProcessingSnapshot({
     enabled: showStudyProcessing,
     fixtureMode: showStudyProcessingFixtures,
     studyInstanceUIDs: visibleStudyInstanceUIDs,
@@ -990,7 +990,10 @@ function WorkList() {
                             </td>
                             {showStudyProcessing && (
                               <td className="py-2 px-4">
-                                <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
+                                <StudyProcessingStatus
+                                  studyInstanceUID={row.studyInstanceUID}
+                                  onRetry={retryVisibleStudyProcessingSnapshot}
+                                />
                               </td>
                             )}
                             {showStudyProcessing && (

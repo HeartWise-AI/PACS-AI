@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { useStudyProcessing } from './StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 
@@ -14,7 +14,7 @@ export function useVisibleStudyProcessingSnapshot({
   fixtureMode,
   studyInstanceUIDs,
   transport,
-}: UseVisibleStudyProcessingSnapshotOptions): void {
+}: UseVisibleStudyProcessingSnapshotOptions): () => void {
   const {
     clearStudyProcessingState,
     failInitialSnapshot,
@@ -24,6 +24,8 @@ export function useVisibleStudyProcessingSnapshot({
   } = useStudyProcessing();
   const requestGeneration = useRef(0);
   const previousTransport = useRef(transport);
+  const [requestVersion, requestRetry] = useReducer(version => version + 1, 0);
+  const retry = useCallback(() => requestRetry(), []);
 
   useEffect(() => {
     if (!enabled) {
@@ -73,8 +75,11 @@ export function useVisibleStudyProcessingSnapshot({
     fixtureMode,
     markConnectionConnected,
     receiveSnapshot,
+    requestVersion,
     startInitialSnapshot,
     studyInstanceUIDs,
     transport,
   ]);
+
+  return retry;
 }

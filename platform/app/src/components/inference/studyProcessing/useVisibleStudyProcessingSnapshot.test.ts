@@ -11,6 +11,7 @@ import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSn
 
 let contextValue: StudyProcessingContextValue;
 let renderer: ReactTestRenderer;
+let retryVisibleSnapshot: () => void;
 
 interface HarnessProps {
   enabled: boolean;
@@ -20,7 +21,7 @@ interface HarnessProps {
 }
 
 function Harness({ enabled, fixtureMode = false, studyInstanceUIDs, transport }: HarnessProps) {
-  useVisibleStudyProcessingSnapshot({
+  retryVisibleSnapshot = useVisibleStudyProcessingSnapshot({
     enabled,
     fixtureMode,
     studyInstanceUIDs,
@@ -79,6 +80,29 @@ describe('useVisibleStudyProcessingSnapshot', () => {
 
     expect(contextValue.initialSnapshotStatus).toBe('error');
     expect(contextValue.initialSnapshotError).toBe('Service unavailable.');
+  });
+
+  test('retries the same visible studies after a snapshot failure', async () => {
+    const loadVisibleStudySnapshot = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('Service unavailable.'))
+      .mockResolvedValueOnce([]);
+    const transport = { loadVisibleStudySnapshot };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+
+    await act(async () => {
+      retryVisibleSnapshot();
+      await Promise.resolve();
+    });
+
+    expect(loadVisibleStudySnapshot).toHaveBeenCalledTimes(2);
+    expect(loadVisibleStudySnapshot).toHaveBeenLastCalledWith(['1.2.3']);
+    expect(contextValue.initialSnapshotStatus).toBe('ready');
   });
 
   test('does not request protected processing data when access is disabled', async () => {
