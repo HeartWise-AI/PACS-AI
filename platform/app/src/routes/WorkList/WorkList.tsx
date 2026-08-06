@@ -22,14 +22,16 @@ import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from './../../assets/pacs/icons/chevron-right.png';
 import {
-  createVisibleStudyProcessingFixtureSnapshot,
+  createFixtureStudyProcessingSnapshotTransport,
+  createRESTStudyProcessingSnapshotTransport,
   StudyProcessingAttention,
   StudyProcessingConnectionBanner,
   StudyProcessingRunHistoryPanel,
   StudyProcessingStatus,
   StudyProcessingUpdated,
-  useStudyProcessing,
+  useVisibleStudyProcessingSnapshot,
 } from '../../components/inference/studyProcessing';
+import { useInferenceProcessing } from '../../components/inference/InferenceProcessingProvider';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
 
@@ -85,7 +87,29 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { receiveSnapshot, markConnectionConnected } = useStudyProcessing();
+  const { canViewStudyProcessing } = useInferenceProcessing();
+  const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
+  const restStudyProcessingSnapshotTransport = useMemo(
+    () => createRESTStudyProcessingSnapshotTransport(),
+    []
+  );
+  const fixtureStudyProcessingSnapshotTransport = useMemo(
+    () => createFixtureStudyProcessingSnapshotTransport(),
+    []
+  );
+  const studyProcessingSnapshotTransport = showStudyProcessingFixtures
+    ? fixtureStudyProcessingSnapshotTransport
+    : restStudyProcessingSnapshotTransport;
+  const visibleStudyInstanceUIDs = useMemo(
+    () => currentItems.map(study => study.studyInstanceUID),
+    [currentItems]
+  );
+  useVisibleStudyProcessingSnapshot({
+    enabled: showStudyProcessing,
+    fixtureMode: showStudyProcessingFixtures,
+    studyInstanceUIDs: visibleStudyInstanceUIDs,
+    transport: studyProcessingSnapshotTransport,
+  });
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
     value: string;
@@ -194,17 +218,6 @@ function WorkList() {
   useEffect(() => {
     filterRef.current = studyListFilter;
   }, [studyListFilter]);
-
-  useEffect(() => {
-    if (!showStudyProcessingFixtures) {
-      return;
-    }
-
-    receiveSnapshot(
-      createVisibleStudyProcessingFixtureSnapshot(currentItems.map(study => study.studyInstanceUID))
-    );
-    markConnectionConnected();
-  }, [currentItems, markConnectionConnected, receiveSnapshot, showStudyProcessingFixtures]);
 
   // Set body style
   useEffect(() => {
@@ -766,7 +779,7 @@ function WorkList() {
               <h1 className="text-2xl font-bold text-white">
                 {t('ProcessingStudyWorklist', { defaultValue: 'Study Worklist' })}
               </h1>
-              <span className="text-xs text-white/35">
+              <span className="text-white/35 text-xs">
                 {t('ProcessingStudyCount', {
                   count: tableDataSource.length,
                   defaultValue: '{{count}} studies',
@@ -915,12 +928,12 @@ function WorkList() {
                       <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('Instances')}
                       </th>
-                      {showStudyProcessingFixtures && (
+                      {showStudyProcessing && (
                         <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                           {t('Processing')}
                         </th>
                       )}
-                      {showStudyProcessingFixtures && (
+                      {showStudyProcessing && (
                         <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                           {t('ProcessingUpdated', { defaultValue: 'Updated' })}
                         </th>
@@ -938,7 +951,7 @@ function WorkList() {
                             <td
                               className={`text-md py-2 px-4 font-normal ${
                                 expandedStudyRows[row.studyInstanceUID]
-                                  ? 'rounded-tl-lg border-l-[3px] border-primary-main'
+                                  ? 'border-primary-main rounded-tl-lg border-l-[3px]'
                                   : 'rounded-l-lg'
                               }`}
                             >
@@ -959,7 +972,7 @@ function WorkList() {
                             <td className="py-2 px-4">{row.accessionNumber}</td>
                             <td
                               className={`py-2 px-4 text-sm font-normal ${
-                                showStudyProcessingFixtures
+                                showStudyProcessing
                                   ? ''
                                   : expandedStudyRows[row.studyInstanceUID]
                                     ? '!rounded-tr-lg'
@@ -968,12 +981,12 @@ function WorkList() {
                             >
                               {row.numberOfStudyRelatedSeries}
                             </td>
-                            {showStudyProcessingFixtures && (
+                            {showStudyProcessing && (
                               <td className="py-2 px-4">
                                 <StudyProcessingStatus studyInstanceUID={row.studyInstanceUID} />
                               </td>
                             )}
-                            {showStudyProcessingFixtures && (
+                            {showStudyProcessing && (
                               <td
                                 className={`py-2 px-4 ${
                                   expandedStudyRows[row.studyInstanceUID]
@@ -984,7 +997,7 @@ function WorkList() {
                                 <div className="flex items-center gap-4">
                                   <StudyProcessingUpdated studyInstanceUID={row.studyInstanceUID} />
                                   <span
-                                    className="ml-auto text-lg text-white/35"
+                                    className="text-white/35 ml-auto text-lg"
                                     aria-hidden="true"
                                   >
                                     {expandedStudyRows[row.studyInstanceUID] ? '⌃' : '⌄'}
@@ -996,10 +1009,14 @@ function WorkList() {
                           {expandedStudyRows[row.studyInstanceUID] && (
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
-                                colSpan={showStudyProcessingFixtures ? 9 : 7}
-                                className="rounded-bl-lg rounded-br-lg border-l-[3px] border-primary-main py-4 px-4"
+                                colSpan={showStudyProcessing ? 9 : 7}
+                                className="border-primary-main rounded-bl-lg rounded-br-lg border-l-[3px] py-4 px-4"
                               >
-                                <StudyProcessingAttention studyInstanceUID={row.studyInstanceUID} />
+                                {showStudyProcessing && (
+                                  <StudyProcessingAttention
+                                    studyInstanceUID={row.studyInstanceUID}
+                                  />
+                                )}
                                 {showStudyProcessingFixtures && (
                                   <StudyProcessingRunHistoryPanel
                                     studyInstanceUID={row.studyInstanceUID}

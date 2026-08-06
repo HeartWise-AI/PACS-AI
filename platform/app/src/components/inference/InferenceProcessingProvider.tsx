@@ -25,6 +25,7 @@ type InferenceProcessingContextValue = {
   notifications: InferenceNotification[];
   unreadCount: number;
   canShowBell: boolean;
+  canViewStudyProcessing: boolean;
   markAllRead: () => void;
   isBellOpen: boolean;
   setBellOpen: (open: boolean) => void;
@@ -144,6 +145,7 @@ function InferenceProcessingProvider({ children }) {
         notifications,
         unreadCount,
         canShowBell: pollEnabled,
+        canViewStudyProcessing: pollEnabled,
         markAllRead,
         isBellOpen,
         setBellOpen,
