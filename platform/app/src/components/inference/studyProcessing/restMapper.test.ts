@@ -161,6 +161,34 @@ describe('study processing REST mapper', () => {
     ]);
   });
 
+  test('preserves every backend model count in the canonical summary', () => {
+    const summary = mapWorklistStudyStatus(
+      retrievalStatus({
+        expectedModels: 9,
+        pendingModels: 1,
+        queuedModels: 2,
+        runningModels: 3,
+        completedModels: 1,
+        failedModels: 1,
+        skippedModels: 0,
+        cancelledModels: 1,
+        activeModels: 6,
+      })
+    );
+
+    expect(summary).toMatchObject({
+      expectedModels: 9,
+      pendingModels: 1,
+      queuedModels: 2,
+      runningModels: 3,
+      completedModels: 1,
+      failedModels: 1,
+      skippedModels: 0,
+      cancelledModels: 1,
+      activeModels: 6,
+    });
+  });
+
   test('maps available legacy executions without fabricating private identifiers', () => {
     const page = mapStudyProcessingRunHistory('legacy-study', {
       runs: [legacyRun()],

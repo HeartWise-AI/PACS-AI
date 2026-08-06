@@ -84,6 +84,9 @@ export type ModelSkipReasonCode = (typeof MODEL_SKIP_REASONS)[number];
 
 export interface ProcessingModelCounts {
   expectedModels: number;
+  pendingModels: number;
+  queuedModels: number;
+  runningModels: number;
   completedModels: number;
   failedModels: number;
   skippedModels: number;

@@ -15,7 +15,9 @@ function executionStatusesForSummary(summary: StudyProcessingSummary): ModelExec
     ...Array(summary.failedModels).fill('failed'),
     ...Array(summary.skippedModels).fill('skipped'),
     ...Array(summary.cancelledModels).fill('cancelled'),
-    ...Array(summary.activeModels).fill('running'),
+    ...Array(summary.runningModels).fill('running'),
+    ...Array(summary.queuedModels).fill('queued'),
+    ...Array(summary.pendingModels).fill('pending'),
   ].slice(0, summary.expectedModels) as ModelExecutionStatus[];
 }
 
@@ -69,6 +71,9 @@ export function createStudyProcessingRunHistoryFixture(
     attentionRequired: summary.attentionRequired,
     attentionReasons: summary.attentionReasons,
     expectedModels: summary.expectedModels,
+    pendingModels: summary.pendingModels,
+    queuedModels: summary.queuedModels,
+    runningModels: summary.runningModels,
     completedModels: summary.completedModels,
     failedModels: summary.failedModels,
     skippedModels: summary.skippedModels,
