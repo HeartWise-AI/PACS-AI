@@ -101,6 +101,7 @@
   "ProcessingStatusProcessing": "Test Processing",
   "ProcessingStatusQueued": "Test Queued",
   "ProcessingStatusRetrieving": "Test Retrieving",
+  "ProcessingStatusRetry": "Test Retry processing status",
   "ProcessingStatusServiceUnavailable": "Test Processing status service unavailable",
   "ProcessingStatusSuccess": "Test Success",
   "ProcessingStatusSuccessWithSkips": "Test Success with skips",

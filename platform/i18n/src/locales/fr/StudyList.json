@@ -103,6 +103,7 @@
   "ProcessingStatusProcessing": "Traitement en cours",
   "ProcessingStatusQueued": "En file d'attente",
   "ProcessingStatusRetrieving": "Récupération",
+  "ProcessingStatusRetry": "Réessayer de charger le statut de traitement",
   "ProcessingStatusServiceUnavailable": "Le service de statut de traitement est indisponible.",
   "ProcessingStatusSuccess": "Réussite",
   "ProcessingStatusSuccessWithSkips": "Réussite avec éléments ignorés",

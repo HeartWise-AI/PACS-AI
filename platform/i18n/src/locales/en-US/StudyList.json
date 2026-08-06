@@ -107,6 +107,7 @@
   "ProcessingStatusProcessing": "Processing",
   "ProcessingStatusQueued": "Queued",
   "ProcessingStatusRetrieving": "Retrieving",
+  "ProcessingStatusRetry": "Retry processing status",
   "ProcessingStatusServiceUnavailable": "The processing status service is unavailable.",
   "ProcessingStatusSuccess": "Success",
   "ProcessingStatusSuccessWithSkips": "Success with skips",
