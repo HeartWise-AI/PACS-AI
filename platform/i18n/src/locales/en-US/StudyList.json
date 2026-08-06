@@ -61,6 +61,7 @@
   "ProcessingAutomaticRun": "Auto · study arrival",
   "ProcessingLegacyRun": "Reconstructed from archive",
   "ProcessingLegacyHistoryUnavailable": "Model-level history was not recorded for this legacy import and cannot be reconstructed.",
+  "ProcessingLegacyExecutionSnapshotAvailable": "This legacy import shows the available execution snapshot. Earlier attempts and unavailable history were not reconstructed.",
   "ProcessingHistoryError": "Processing run history could not be loaded.",
   "ProcessingHistoryLoading": "Loading processing run history",
   "ProcessingHistoryPartial": "Some run-history information is unavailable.",

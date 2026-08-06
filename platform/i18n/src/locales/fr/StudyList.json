@@ -57,6 +57,7 @@
   "ProcessingAutomaticRun": "Auto · arrivée de l'étude",
   "ProcessingLegacyRun": "Reconstruit depuis l'archive",
   "ProcessingLegacyHistoryUnavailable": "L'historique des modèles n'a pas été enregistré pour cet import historique et ne peut pas être reconstruit.",
+  "ProcessingLegacyExecutionSnapshotAvailable": "Cet import historique affiche l'instantané d'exécution disponible. Les tentatives antérieures et l'historique indisponible n'ont pas été reconstruits.",
   "ProcessingHistoryError": "L'historique du traitement n'a pas pu être chargé.",
   "ProcessingHistoryLoading": "Chargement de l'historique du traitement",
   "ProcessingHistoryPartial": "Certaines informations de l'historique sont indisponibles.",

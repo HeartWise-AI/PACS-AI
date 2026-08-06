@@ -55,6 +55,7 @@
   "ProcessingAutomaticRun": "Test Automatic run",
   "ProcessingLegacyRun": "Test Legacy run",
   "ProcessingLegacyHistoryUnavailable": "Test Legacy model history unavailable",
+  "ProcessingLegacyExecutionSnapshotAvailable": "Test Legacy execution snapshot available",
   "ProcessingHistoryError": "Test Processing run history could not be loaded",
   "ProcessingHistoryLoading": "Test Loading processing run history",
   "ProcessingHistoryPartial": "Test Some run-history information is unavailable",
