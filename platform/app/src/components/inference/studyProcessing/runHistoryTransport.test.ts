@@ -65,8 +65,8 @@ describe('REST run history transport', () => {
     );
   });
 
-  test('preserves retryable server failures as ordinary load errors', async () => {
-    const error = new StudyProcessingRESTError('Service error.', 500);
+  test.each([400, 500])('preserves retryable HTTP %i as an ordinary load error', async status => {
+    const error = new StudyProcessingRESTError('Service error.', status);
     const repository = {
       loadStudyProcessingRunHistory: jest.fn().mockRejectedValue(error),
     } as unknown as StudyProcessingRESTRepository;

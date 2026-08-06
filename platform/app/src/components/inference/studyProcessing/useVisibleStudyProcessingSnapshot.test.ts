@@ -110,6 +110,22 @@ describe('useVisibleStudyProcessingSnapshot', () => {
     expect(contextValue.initialSnapshotRetryable).toBe(false);
   });
 
+  test.each([400, 404, 500, 503])('keeps HTTP %i snapshot failures retryable', async status => {
+    const transport = {
+      loadVisibleStudySnapshot: jest
+        .fn()
+        .mockRejectedValue(new StudyProcessingRESTError('Request failed safely.', status)),
+    };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+    expect(contextValue.initialSnapshotRetryable).toBe(true);
+  });
+
   test('retries the same visible studies after a snapshot failure', async () => {
     const loadVisibleStudySnapshot = jest
       .fn()

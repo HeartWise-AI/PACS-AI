@@ -176,8 +176,11 @@ describe('study processing REST repository', () => {
   });
 
   test.each([
+    [400, 'The processing status request was invalid.'],
     [401, 'Authentication is required to load processing status.'],
     [403, 'You do not have permission to view processing status.'],
+    [404, 'The requested processing information was not found.'],
+    [500, 'The processing status service encountered an error.'],
     [503, 'The processing status service is temporarily unavailable.'],
   ])('maps HTTP %i to a safe frontend error', async (status, message) => {
     const { client, get } = createClient();
