@@ -16,3 +16,4 @@ export * from './runHistoryTransport';
 export * from './fixtureAdapter';
 export * from './restDTO';
 export * from './restMapper';
+export * from './restRepository';
