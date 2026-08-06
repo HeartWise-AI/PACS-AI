@@ -10,7 +10,8 @@ export interface StudyProcessingStatusProps {
 
 export function StudyProcessingStatus({ studyInstanceUID, onRetry }: StudyProcessingStatusProps) {
   const { t } = useTranslation('StudyList');
-  const { getStudySummary, initialSnapshotError, initialSnapshotStatus } = useStudyProcessing();
+  const { getStudySummary, initialSnapshotError, initialSnapshotRetryable, initialSnapshotStatus } =
+    useStudyProcessing();
   const summary = getStudySummary(studyInstanceUID);
 
   if (summary) {
@@ -42,7 +43,7 @@ export function StudyProcessingStatus({ studyInstanceUID, onRetry }: StudyProces
             defaultValue: 'Status unavailable',
           })}
         </span>
-        {onRetry && (
+        {onRetry && initialSnapshotRetryable && (
           <button
             type="button"
             className="border-white/15 rounded-md border bg-white/5 px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10"

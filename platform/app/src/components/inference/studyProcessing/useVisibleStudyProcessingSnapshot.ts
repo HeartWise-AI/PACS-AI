@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { StudyProcessingRESTError } from './restRepository';
 import { useStudyProcessing } from './StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 
@@ -58,8 +59,13 @@ export function useVisibleStudyProcessingSnapshot({
           return;
         }
 
+        const retryable = !(
+          error instanceof StudyProcessingRESTError &&
+          (error.status === 401 || error.status === 403)
+        );
         failInitialSnapshot(
-          error instanceof Error ? error.message : 'Unable to load processing status.'
+          error instanceof Error ? error.message : 'Unable to load processing status.',
+          retryable
         );
       });
 

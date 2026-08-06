@@ -191,10 +191,12 @@ describe('studyProcessingReducer', () => {
     const errorState = studyProcessingReducer(bufferedState, {
       type: 'initialSnapshot.failed',
       error: 'Unable to load processing status.',
+      retryable: false,
     });
 
     expect(errorState.initialSnapshotStatus).toBe('error');
     expect(errorState.initialSnapshotError).toBe('Unable to load processing status.');
+    expect(errorState.initialSnapshotRetryable).toBe(false);
     expect(errorState.bufferedSummariesByStudyInstanceUID).toEqual({});
     expect(
       errorState.summariesByStudyInstanceUID[studyStatusUpdatedEventFixture.studyInstanceUID]

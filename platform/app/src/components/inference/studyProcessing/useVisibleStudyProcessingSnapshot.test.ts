@@ -7,6 +7,7 @@ import {
 } from './StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 import { studyProcessingSummaryFixtures } from './fixtures';
+import { StudyProcessingRESTError } from './restRepository';
 import type { StudyProcessingSummary } from './types';
 import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
 
@@ -90,6 +91,23 @@ describe('useVisibleStudyProcessingSnapshot', () => {
 
     expect(contextValue.initialSnapshotStatus).toBe('error');
     expect(contextValue.initialSnapshotError).toBe('Service unavailable.');
+    expect(contextValue.initialSnapshotRetryable).toBe(true);
+  });
+
+  test.each([401, 403])('marks HTTP %i snapshot failures as non-retryable', async status => {
+    const transport = {
+      loadVisibleStudySnapshot: jest
+        .fn()
+        .mockRejectedValue(new StudyProcessingRESTError('Authorization failed.', status)),
+    };
+
+    await act(async () => {
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      await Promise.resolve();
+    });
+
+    expect(contextValue.initialSnapshotStatus).toBe('error');
+    expect(contextValue.initialSnapshotRetryable).toBe(false);
   });
 
   test('retries the same visible studies after a snapshot failure', async () => {

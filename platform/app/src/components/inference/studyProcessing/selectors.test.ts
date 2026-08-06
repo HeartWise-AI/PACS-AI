@@ -2,6 +2,7 @@ import { studyProcessingSnapshotFixture, studyProcessingSummaryFixtures } from '
 import { initialStudyProcessingState, studyProcessingReducer } from './reducer';
 import {
   selectInitialSnapshotError,
+  selectInitialSnapshotRetryable,
   selectInitialSnapshotStatus,
   selectIsRealtimeDataStale,
   selectRealtimeConnectionError,
@@ -50,10 +51,12 @@ describe('study processing selectors', () => {
     const errorState = studyProcessingReducer(loadingState, {
       type: 'initialSnapshot.failed',
       error: 'Snapshot unavailable.',
+      retryable: false,
     });
 
     expect(selectInitialSnapshotStatus(errorState)).toBe('error');
     expect(selectInitialSnapshotError(errorState)).toBe('Snapshot unavailable.');
+    expect(selectInitialSnapshotRetryable(errorState)).toBe(false);
   });
 
   test('selects connection status and error', () => {

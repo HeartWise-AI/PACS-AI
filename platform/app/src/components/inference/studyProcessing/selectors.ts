@@ -29,6 +29,10 @@ export function selectInitialSnapshotError(state: StudyProcessingState): string 
   return state.initialSnapshotError;
 }
 
+export function selectInitialSnapshotRetryable(state: StudyProcessingState): boolean {
+  return state.initialSnapshotRetryable;
+}
+
 export function selectRealtimeConnectionStatus(
   state: StudyProcessingState
 ): RealtimeConnectionStatus {

@@ -58,4 +58,25 @@ describe('StudyProcessingStatus retry', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
     expect(retryButton.props['aria-label']).toBe('Retry processing status');
   });
+
+  test('does not offer retry for an authentication or permission failure', () => {
+    const onRetry = jest.fn();
+    act(() => {
+      renderer = TestRenderer.create(
+        React.createElement(
+          StudyProcessingProvider,
+          null,
+          React.createElement(Consumer, { onRetry })
+        )
+      );
+    });
+    act(() => contextValue.failInitialSnapshot('Authorization failed.', false));
+
+    expect(
+      renderer.root.findAllByProps({
+        'data-testid': 'study-processing-status-retry',
+      })
+    ).toHaveLength(0);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
 });

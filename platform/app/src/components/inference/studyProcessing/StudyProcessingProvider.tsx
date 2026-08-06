@@ -20,6 +20,7 @@ import {
 } from './runHistoryTransport';
 import {
   selectInitialSnapshotError,
+  selectInitialSnapshotRetryable,
   selectInitialSnapshotStatus,
   selectIsRealtimeDataStale,
   selectRealtimeConnectionError,
@@ -35,12 +36,13 @@ export interface StudyProcessingContextValue {
   ) => Array<StudyProcessingSummary | undefined>;
   initialSnapshotStatus: InitialSnapshotStatus;
   initialSnapshotError: string | null;
+  initialSnapshotRetryable: boolean;
   realtimeConnectionStatus: RealtimeConnectionStatus;
   realtimeConnectionError: string | null;
   isRealtimeDataStale: boolean;
   startInitialSnapshot: () => void;
   receiveSnapshot: (summaries: StudyProcessingSummary[]) => void;
-  failInitialSnapshot: (error: string) => void;
+  failInitialSnapshot: (error: string, retryable?: boolean) => void;
   applyStatusUpdate: (summary: StudyProcessingSummary) => void;
   markConnectionConnecting: () => void;
   markConnectionConnected: () => void;
@@ -109,8 +111,8 @@ export function StudyProcessingProvider({
     dispatch({ type: 'snapshot.received', summaries });
   }, []);
 
-  const failInitialSnapshot = useCallback((error: string) => {
-    dispatch({ type: 'initialSnapshot.failed', error });
+  const failInitialSnapshot = useCallback((error: string, retryable = true) => {
+    dispatch({ type: 'initialSnapshot.failed', error, retryable });
   }, []);
 
   const applyStatusUpdate = useCallback((summary: StudyProcessingSummary) => {
@@ -233,6 +235,7 @@ export function StudyProcessingProvider({
         selectVisibleStudyProcessingSummaries(state, visibleStudyInstanceUIDs),
       initialSnapshotStatus: selectInitialSnapshotStatus(state),
       initialSnapshotError: selectInitialSnapshotError(state),
+      initialSnapshotRetryable: selectInitialSnapshotRetryable(state),
       realtimeConnectionStatus: selectRealtimeConnectionStatus(state),
       realtimeConnectionError: selectRealtimeConnectionError(state),
       isRealtimeDataStale: selectIsRealtimeDataStale(state),
