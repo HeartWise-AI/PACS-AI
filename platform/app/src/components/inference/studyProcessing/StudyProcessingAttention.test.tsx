@@ -8,6 +8,10 @@ import {
 } from './StudyProcessingProvider';
 import { StudyProcessingAttention } from './StudyProcessingAttention';
 
+jest.mock('@ohif/ui-next', () => ({
+  Icons: { StatusWarning: 'span' },
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options: Record<string, unknown> = {}) => {
