@@ -37,7 +37,22 @@ describe('REST run history transport', () => {
     expect(loadProcessingRunDetail).not.toHaveBeenCalled();
   });
 
-  test.each([403, 404, 503])('maps HTTP %i to unavailable history', async status => {
+  test.each([401, 403])('maps HTTP %i to non-retryable unavailable history', async status => {
+    const repository = {
+      loadStudyProcessingRunHistory: jest
+        .fn()
+        .mockRejectedValue(new StudyProcessingRESTError('History unavailable.', status)),
+    } as unknown as StudyProcessingRESTRepository;
+    const transport = createRESTRunHistoryTransport(repository);
+
+    await expect(transport.loadRunHistory('1.2.3')).rejects.toMatchObject({
+      name: 'RunHistoryUnavailableError',
+      message: 'History unavailable.',
+      retryable: false,
+    });
+  });
+
+  test.each([404, 503])('maps HTTP %i to retryable unavailable history', async status => {
     const repository = {
       loadStudyProcessingRunHistory: jest
         .fn()

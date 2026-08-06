@@ -176,6 +176,27 @@ describe('StudyProcessingRunHistoryPanel', () => {
     );
   });
 
+  test('does not offer retry for an authentication or permission failure', async () => {
+    const loadRunHistory = jest.fn(async () => {
+      throw new RunHistoryUnavailableError('Authentication is required.', false);
+    });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, 'unauthorized-study');
+    });
+
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': 'study-processing-run-history-error',
+      })
+    ).toBeDefined();
+    expect(
+      renderer?.root.findAllByProps({
+        'data-testid': 'study-processing-run-history-retry',
+      })
+    ).toHaveLength(0);
+  });
+
   test('keeps cached runs visible while an explicit refresh is pending', async () => {
     let resolveRefresh!: (response: RunHistoryTransportResponse) => void;
     const loadRunHistory = jest

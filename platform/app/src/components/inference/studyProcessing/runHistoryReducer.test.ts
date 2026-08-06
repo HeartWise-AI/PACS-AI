@@ -18,6 +18,7 @@ describe('runHistoryReducer', () => {
       status: 'loading',
       history: null,
       error: null,
+      retryable: true,
     });
     expect(state.entriesByStudyInstanceUID['another-study']).toBeUndefined();
   });
@@ -32,6 +33,7 @@ describe('runHistoryReducer', () => {
       status: 'ready',
       history: studyProcessingRunHistoryFixture,
       error: null,
+      retryable: true,
     });
   });
 
@@ -60,6 +62,7 @@ describe('runHistoryReducer', () => {
       status: 'refreshing',
       history: studyProcessingRunHistoryFixture,
       error: null,
+      retryable: true,
     });
   });
 
@@ -79,6 +82,7 @@ describe('runHistoryReducer', () => {
       status: 'error',
       history: studyProcessingRunHistoryFixture,
       error: 'Unable to refresh run history.',
+      retryable: true,
     });
   });
 
@@ -93,6 +97,7 @@ describe('runHistoryReducer', () => {
       status: 'unavailable',
       history: null,
       error: 'Run history service is unavailable.',
+      retryable: true,
     });
   });
 
@@ -135,6 +140,21 @@ describe('runHistoryReducer', () => {
       status: 'idle',
       history: null,
       error: null,
+      retryable: true,
+    });
+  });
+
+  test('marks authorization failures as non-retryable', () => {
+    const state = runHistoryReducer(initialRunHistoryState, {
+      type: 'runHistory.unavailable',
+      studyInstanceUID,
+      error: 'Authentication is required.',
+      retryable: false,
+    });
+
+    expect(state.entriesByStudyInstanceUID[studyInstanceUID]).toMatchObject({
+      status: 'unavailable',
+      retryable: false,
     });
   });
 });

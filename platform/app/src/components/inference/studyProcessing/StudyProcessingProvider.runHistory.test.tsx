@@ -73,6 +73,7 @@ describe('StudyProcessingProvider run history', () => {
       status: 'ready',
       history: studyProcessingRunHistoryFixture,
       error: null,
+      retryable: true,
     });
 
     await act(async () => {
@@ -131,6 +132,7 @@ describe('StudyProcessingProvider run history', () => {
       status: 'idle',
       history: null,
       error: null,
+      retryable: true,
     });
   });
 });

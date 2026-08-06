@@ -87,6 +87,7 @@ export function StudyProcessingProvider({
   );
   const inFlightRunHistoryRequests = useRef<Record<string, Promise<void>>>({});
   const runHistoryRequestGeneration = useRef(0);
+  const runHistoryEntriesRef = useRef(runHistoryState.entriesByStudyInstanceUID);
 
   const effectiveRunHistoryTransport = useMemo(
     () =>
@@ -96,6 +97,9 @@ export function StudyProcessingProvider({
       ),
     [runHistoryTransport, state.summariesByStudyInstanceUID]
   );
+  const effectiveRunHistoryTransportRef = useRef(effectiveRunHistoryTransport);
+  runHistoryEntriesRef.current = runHistoryState.entriesByStudyInstanceUID;
+  effectiveRunHistoryTransportRef.current = effectiveRunHistoryTransport;
 
   const startInitialSnapshot = useCallback(() => {
     dispatch({ type: 'initialSnapshot.started' });
@@ -139,7 +143,7 @@ export function StudyProcessingProvider({
       forceRefresh: boolean,
       transport?: StudyProcessingRunHistoryTransport
     ): Promise<void> => {
-      const currentEntry = runHistoryState.entriesByStudyInstanceUID[studyInstanceUID];
+      const currentEntry = runHistoryEntriesRef.current[studyInstanceUID];
 
       if (!forceRefresh && currentEntry?.history) {
         return Promise.resolve();
@@ -156,7 +160,7 @@ export function StudyProcessingProvider({
       });
 
       const requestGeneration = runHistoryRequestGeneration.current;
-      const request = (transport ?? effectiveRunHistoryTransport)
+      const request = (transport ?? effectiveRunHistoryTransportRef.current)
         .loadRunHistory(studyInstanceUID)
         .then(response => {
           if (requestGeneration !== runHistoryRequestGeneration.current) {
@@ -176,14 +180,20 @@ export function StudyProcessingProvider({
 
           const message =
             error instanceof Error ? error.message : 'Unable to load processing run history.';
-          dispatchRunHistory({
-            type:
-              error instanceof RunHistoryUnavailableError
-                ? 'runHistory.unavailable'
-                : 'runHistory.failed',
-            studyInstanceUID,
-            error: message,
-          });
+          if (error instanceof RunHistoryUnavailableError) {
+            dispatchRunHistory({
+              type: 'runHistory.unavailable',
+              studyInstanceUID,
+              error: message,
+              retryable: error.retryable,
+            });
+          } else {
+            dispatchRunHistory({
+              type: 'runHistory.failed',
+              studyInstanceUID,
+              error: message,
+            });
+          }
         })
         .finally(() => {
           if (inFlightRunHistoryRequests.current[studyInstanceUID] === request) {
@@ -194,7 +204,7 @@ export function StudyProcessingProvider({
       inFlightRunHistoryRequests.current[studyInstanceUID] = request;
       return request;
     },
-    [effectiveRunHistoryTransport, runHistoryState.entriesByStudyInstanceUID]
+    []
   );
 
   const ensureRunHistory = useCallback(

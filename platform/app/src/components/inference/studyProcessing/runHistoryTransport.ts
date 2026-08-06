@@ -18,9 +18,12 @@ export interface StudyProcessingRunHistoryTransport {
 }
 
 export class RunHistoryUnavailableError extends Error {
-  constructor(message: string) {
+  readonly retryable: boolean;
+
+  constructor(message: string, retryable = true) {
     super(message);
     this.name = 'RunHistoryUnavailableError';
+    this.retryable = retryable;
   }
 }
 
@@ -60,7 +63,14 @@ export function createRESTRunHistoryTransport(
       } catch (error: unknown) {
         if (
           error instanceof StudyProcessingRESTError &&
-          (error.status === 403 || error.status === 404 || error.status === 503)
+          (error.status === 401 || error.status === 403)
+        ) {
+          throw new RunHistoryUnavailableError(error.message, false);
+        }
+
+        if (
+          error instanceof StudyProcessingRESTError &&
+          (error.status === 404 || error.status === 503)
         ) {
           throw new RunHistoryUnavailableError(error.message);
         }

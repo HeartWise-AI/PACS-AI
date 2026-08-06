@@ -248,14 +248,16 @@ export function StudyProcessingRunHistoryPanel({
                   defaultValue: 'Processing run history could not be loaded.',
                 })}
           </span>
-          <button
-            type="button"
-            className="ml-auto rounded border border-current px-3 py-1 font-semibold hover:bg-white/10"
-            onClick={() => void retry()}
-            data-testid="study-processing-run-history-retry"
-          >
-            {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
-          </button>
+          {entry.retryable && (
+            <button
+              type="button"
+              className="ml-auto rounded border border-current px-3 py-1 font-semibold hover:bg-white/10"
+              onClick={() => void retry()}
+              data-testid="study-processing-run-history-retry"
+            >
+              {t('ProcessingHistoryRetry', { defaultValue: 'Retry' })}
+            </button>
+          )}
         </div>
       )}
 
