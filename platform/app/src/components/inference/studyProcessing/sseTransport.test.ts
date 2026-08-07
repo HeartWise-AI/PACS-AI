@@ -86,11 +86,13 @@ describe('study processing SSE transport', () => {
     localStorage.setItem('sessionToken', 'frontend-session-token');
     const { response } = createResponse([]);
     const fetchImplementation = jest.fn().mockResolvedValue(response);
+    const onOpen = jest.fn();
 
     await streamStudyProcessingEvents({
       apiBaseURL: 'https://api.example.test/',
       fetchImplementation,
       createTextDecoder,
+      onOpen,
       onEvent: jest.fn(),
     });
 
@@ -107,6 +109,7 @@ describe('study processing SSE transport', () => {
     );
     expect(fetchImplementation.mock.calls[0][0]).not.toContain('frontend-session-token');
     expect(fetchImplementation.mock.calls[0][0]).not.toContain('tenant');
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
   it('decodes chunked bytes and emits validated study updates', async () => {

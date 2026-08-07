@@ -42,6 +42,7 @@ export interface StreamStudyProcessingEventsOptions {
   fetchImplementation?: StudyProcessingSSEFetch;
   createTextDecoder?: () => StudyProcessingTextDecoder;
   signal?: AbortSignal;
+  onOpen?(): void;
   onEvent(event: StudyProcessingSummary): void;
   onInvalidEvent?(): void;
 }
@@ -146,6 +147,7 @@ export async function streamStudyProcessingEvents(
     );
   }
 
+  options.onOpen?.();
   const reader = response.body.getReader();
   const decoder = options.createTextDecoder?.() ?? new TextDecoder();
   const parser = createServerSentEventParser();
