@@ -175,6 +175,66 @@ describe('useStudyProcessingRealtime', () => {
     expect(contextValue.isRealtimeDataStale).toBe(false);
   });
 
+  test('derives notification transitions from live events before updating the canonical store', () => {
+    const doubles = createRealtimeDoubles();
+    const onNotificationTransition = jest.fn();
+
+    act(() => {
+      renderHarness({
+        enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+        refreshVisibleStudySnapshot: jest.fn(),
+        onNotificationTransition,
+        connectionFactory: doubles.connectionFactory,
+        reconnectControllerFactory: doubles.reconnectControllerFactory,
+        recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
+      });
+    });
+
+    const processing = studyProcessingSummaryFixtures.processing;
+    const terminal = {
+      ...processing,
+      lifecycle: 'TERMINAL' as const,
+      phase: 'TERMINAL' as const,
+      outcome: 'SUCCESS' as const,
+      version: (processing.version ?? 0) + 1,
+    };
+
+    act(() => {
+      doubles.connectionOptions().onEvent(processing);
+      doubles.connectionOptions().onEvent(terminal);
+      doubles.connectionOptions().onEvent(terminal);
+    });
+
+    expect(onNotificationTransition).toHaveBeenCalledTimes(1);
+    expect(onNotificationTransition).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'terminal', summary: terminal })
+    );
+    expect(contextValue.getStudySummary(processing.studyInstanceUID)).toEqual(terminal);
+  });
+
+  test('never derives notifications from authoritative recovery snapshots', () => {
+    const doubles = createRealtimeDoubles();
+    const onNotificationTransition = jest.fn();
+
+    act(() => {
+      renderHarness({
+        enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+        refreshVisibleStudySnapshot: jest.fn(),
+        onNotificationTransition,
+        connectionFactory: doubles.connectionFactory,
+        reconnectControllerFactory: doubles.reconnectControllerFactory,
+        recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
+      });
+      contextValue.receiveSnapshot([studyProcessingSummaryFixtures.success]);
+    });
+
+    expect(onNotificationTransition).not.toHaveBeenCalled();
+  });
+
   test('gives reconnect recovery the visible-study snapshot callback', () => {
     const doubles = createRealtimeDoubles();
     const refreshVisibleStudySnapshot = jest.fn();

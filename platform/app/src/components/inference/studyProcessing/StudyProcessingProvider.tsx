@@ -31,6 +31,7 @@ import {
 
 export interface StudyProcessingContextValue {
   getStudySummary: (studyInstanceUID: string) => StudyProcessingSummary | undefined;
+  getLatestStudySummary: (studyInstanceUID: string) => StudyProcessingSummary | undefined;
   getVisibleSummaries: (
     visibleStudyInstanceUIDs: string[]
   ) => Array<StudyProcessingSummary | undefined>;
@@ -90,6 +91,7 @@ export function StudyProcessingProvider({
   const inFlightRunHistoryRequests = useRef<Record<string, Promise<void>>>({});
   const runHistoryRequestGeneration = useRef(0);
   const runHistoryEntriesRef = useRef(runHistoryState.entriesByStudyInstanceUID);
+  const stateRef = useRef(state);
 
   const effectiveRunHistoryTransport = useMemo(
     () =>
@@ -102,6 +104,19 @@ export function StudyProcessingProvider({
   const effectiveRunHistoryTransportRef = useRef(effectiveRunHistoryTransport);
   runHistoryEntriesRef.current = runHistoryState.entriesByStudyInstanceUID;
   effectiveRunHistoryTransportRef.current = effectiveRunHistoryTransport;
+  stateRef.current = state;
+
+  const getStudySummary = useCallback(
+    (studyInstanceUID: string) => selectStudyProcessingSummary(stateRef.current, studyInstanceUID),
+    []
+  );
+
+  const getLatestStudySummary = useCallback((studyInstanceUID: string) => {
+    return (
+      stateRef.current.bufferedSummariesByStudyInstanceUID[studyInstanceUID] ??
+      selectStudyProcessingSummary(stateRef.current, studyInstanceUID)
+    );
+  }, []);
 
   const startInitialSnapshot = useCallback(() => {
     dispatch({ type: 'initialSnapshot.started' });
@@ -230,7 +245,8 @@ export function StudyProcessingProvider({
 
   const value = useMemo<StudyProcessingContextValue>(
     () => ({
-      getStudySummary: studyInstanceUID => selectStudyProcessingSummary(state, studyInstanceUID),
+      getStudySummary,
+      getLatestStudySummary,
       getVisibleSummaries: visibleStudyInstanceUIDs =>
         selectVisibleStudyProcessingSummaries(state, visibleStudyInstanceUIDs),
       initialSnapshotStatus: selectInitialSnapshotStatus(state),
@@ -259,6 +275,8 @@ export function StudyProcessingProvider({
       clearStudyProcessingState,
       failInitialSnapshot,
       ensureRunHistory,
+      getLatestStudySummary,
+      getStudySummary,
       markConnectionConnected,
       markConnectionConnecting,
       markConnectionDegraded,
