@@ -200,7 +200,7 @@ function InferenceProcessingProvider({ children }) {
 
   useCandidateProcessingPoll({
     onTransition: handleTransition,
-    enabled: processingAvailability.canPollCandidates,
+    enabled: processingAvailability.canUseCandidateNotificationFallback,
   });
 
   const markAllRead = useCallback(() => {
@@ -215,7 +215,8 @@ function InferenceProcessingProvider({ children }) {
         notifications,
         unreadCount,
         canShowBell:
-          processingAvailability.canUseRealtimeSSE || processingAvailability.canPollCandidates,
+          processingAvailability.canUseStudyEventNotifications ||
+          processingAvailability.canUseCandidateNotificationFallback,
         canViewStudyProcessing: processingAvailability.canViewProcessing,
         canUseStudyProcessingRealtime: processingAvailability.canUseRealtimeSSE,
         studyProcessingAuthIdentity,

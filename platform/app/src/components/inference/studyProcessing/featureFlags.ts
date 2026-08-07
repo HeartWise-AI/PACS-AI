@@ -4,6 +4,8 @@ export interface StudyProcessingFeatureFlags {
 }
 
 export interface StudyProcessingFeatureAvailability {
+  canUseCandidateNotificationFallback: boolean;
+  canUseStudyEventNotifications: boolean;
   canPollCandidates: boolean;
   canUseRealtimeSSE: boolean;
   canViewProcessing: boolean;
@@ -41,9 +43,14 @@ export function getStudyProcessingFeatureAvailability(
   hasProcessingRole: boolean,
   flags: StudyProcessingFeatureFlags = studyProcessingFeatureFlags
 ): StudyProcessingFeatureAvailability {
+  const canPollCandidates = hasProcessingRole && flags.candidatePollingEnabled;
+  const canUseRealtimeSSE = hasProcessingRole && flags.realtimeSSEEnabled;
+
   return {
-    canPollCandidates: hasProcessingRole && flags.candidatePollingEnabled,
-    canUseRealtimeSSE: hasProcessingRole && flags.realtimeSSEEnabled,
+    canUseCandidateNotificationFallback: canPollCandidates && !canUseRealtimeSSE,
+    canUseStudyEventNotifications: canUseRealtimeSSE,
+    canPollCandidates,
+    canUseRealtimeSSE,
     canViewProcessing: hasProcessingRole,
   };
 }
