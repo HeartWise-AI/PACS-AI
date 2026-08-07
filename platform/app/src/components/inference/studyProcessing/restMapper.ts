@@ -12,6 +12,7 @@ import type {
   ProcessingRunExecutionDTO,
   StudyProcessingRunHistoryPageDTO,
   WorklistStudyStatusDTO,
+  WorklistStudyStatusEventDTO,
   WorklistStudyStatusPageDTO,
 } from './restDTO';
 
@@ -68,6 +69,19 @@ export function mapWorklistStudyStatus(status: WorklistStudyStatusDTO): StudyPro
     completedAt: status.completedAt,
     updatedAt: status.updatedAt,
   };
+}
+
+export function mapWorklistStudyStatusEvent(
+  event: WorklistStudyStatusEventDTO
+): StudyProcessingSummary {
+  const eventStatus = {
+    ...event,
+    ingestionStatus: 'RETRIEVED' as const,
+    retrievalState: null,
+    retrievalError: null,
+  };
+
+  return mapWorklistStudyStatus(eventStatus);
 }
 
 export function mapWorklistStudyStatusPage(page: WorklistStudyStatusPageDTO): {

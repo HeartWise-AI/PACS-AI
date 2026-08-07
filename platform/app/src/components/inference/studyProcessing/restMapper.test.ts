@@ -1,12 +1,14 @@
 import {
   mapStudyProcessingRunHistory,
   mapWorklistStudyStatus,
+  mapWorklistStudyStatusEvent,
   mapWorklistStudyStatusPage,
 } from './restMapper';
 import type {
   ProcessingRunCountsDTO,
   ProcessingRunDetailDTO,
   WorklistStudyStatusDTO,
+  WorklistStudyStatusEventDTO,
 } from './restDTO';
 
 const counts: ProcessingRunCountsDTO = {
@@ -39,6 +41,28 @@ function retrievalStatus(overrides: Partial<WorklistStudyStatusDTO> = {}): Workl
     startedAt: null,
     completedAt: null,
     updatedAt: '2026-08-06T14:00:00Z',
+    ...overrides,
+  };
+}
+
+function liveStatusEvent(
+  overrides: Partial<WorklistStudyStatusEventDTO> = {}
+): WorklistStudyStatusEventDTO {
+  return {
+    ...counts,
+    type: 'study_status.updated',
+    studyInstanceUID: 'study-live',
+    runId: 'run-live-2',
+    runNumber: 2,
+    trigger: 'AUTO',
+    phase: 'PROCESSING',
+    outcome: null,
+    attentionRequired: false,
+    attentionReasons: [],
+    version: 7,
+    startedAt: '2026-08-07T14:00:00Z',
+    completedAt: null,
+    updatedAt: '2026-08-07T14:01:00Z',
     ...overrides,
   };
 }
@@ -145,6 +169,48 @@ describe('study processing REST mapper', () => {
       startedAt: '2026-08-06T13:00:00Z',
       completedAt: '2026-08-06T13:01:00Z',
     });
+  });
+
+  test('maps a live run event into the same canonical summary used by REST', () => {
+    const summary = mapWorklistStudyStatusEvent(
+      liveStatusEvent({
+        expectedModels: 3,
+        runningModels: 1,
+        completedModels: 2,
+        activeModels: 1,
+        attentionRequired: true,
+        attentionReasons: [
+          {
+            code: 'FUTURE_LIVE_WARNING',
+            message: 'A readable live warning.',
+          },
+        ],
+      })
+    );
+
+    expect(summary).toMatchObject({
+      studyInstanceUID: 'study-live',
+      ingestionStatus: 'RETRIEVED',
+      retrievalState: null,
+      retrievalError: null,
+      runId: 'run-live-2',
+      runNumber: 2,
+      trigger: 'AUTO',
+      lifecycle: 'PROCESSING',
+      phase: 'PROCESSING',
+      expectedModels: 3,
+      runningModels: 1,
+      completedModels: 2,
+      activeModels: 1,
+      version: 7,
+      attentionReasons: [
+        {
+          code: 'FUTURE_LIVE_WARNING',
+          message: 'A readable live warning.',
+        },
+      ],
+    });
+    expect(summary).not.toHaveProperty('type');
   });
 
   test('preserves retrieval errors and maps waiting lifecycle states', () => {

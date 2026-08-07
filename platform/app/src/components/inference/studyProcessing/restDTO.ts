@@ -57,6 +57,22 @@ export interface WorklistStudyStatusPageDTO extends WorklistPageDTO {
   studies: WorklistStudyStatusDTO[];
 }
 
+export interface WorklistStudyStatusEventDTO extends ProcessingRunCountsDTO {
+  type: 'study_status.updated';
+  studyInstanceUID: string;
+  runId: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  outcome: ProcessingRunOutcome | null;
+  attentionRequired: boolean;
+  attentionReasons: ProcessingAttentionReasonDTO[];
+  version: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
 export interface ProcessingRunSummaryDTO extends ProcessingRunCountsDTO {
   runId: string;
   studyInstanceUID: string;
