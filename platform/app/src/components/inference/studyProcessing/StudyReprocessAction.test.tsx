@@ -10,6 +10,12 @@ import {
 import type { CreatedStudyProcessingRun } from './types';
 import { StudyReprocessError } from './reprocessTransport';
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
 const studyInstanceUID = '1.2.3';
 const createdRun: CreatedStudyProcessingRun = {
   id: 'run-2',
@@ -88,6 +94,71 @@ describe('StudyReprocessAction', () => {
 
     expect(reprocessStudy).toHaveBeenCalledTimes(1);
     expect(reprocessStudy).toHaveBeenCalledWith(studyInstanceUID);
+  });
+
+  it('cancels confirmation without submitting', () => {
+    const reprocessStudy = renderAction();
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-action',
+        })
+        .props.onClick();
+    });
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-cancel',
+        })
+        .props.onClick();
+    });
+
+    expect(reprocessStudy).not.toHaveBeenCalled();
+    expect(renderer.root.findAllByProps({ role: 'dialog' })).toHaveLength(0);
+  });
+
+  it('disables every submission control while the request is pending', async () => {
+    let resolveRequest!: (run: CreatedStudyProcessingRun) => void;
+    renderAction({
+      reprocessStudy: jest.fn(
+        () =>
+          new Promise<CreatedStudyProcessingRun>(resolve => {
+            resolveRequest = resolve;
+          })
+      ),
+    });
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-action',
+        })
+        .props.onClick();
+    });
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-confirm',
+        })
+        .props.onClick();
+    });
+
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' }).props
+        .disabled
+    ).toBe(true);
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-confirm' }).props
+        .disabled
+    ).toBe(true);
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-cancel' }).props
+        .disabled
+    ).toBe(true);
+
+    await act(async () => {
+      resolveRequest(createdRun);
+      await Promise.resolve();
+    });
   });
 
   it('is disabled when the study already has an active run', () => {

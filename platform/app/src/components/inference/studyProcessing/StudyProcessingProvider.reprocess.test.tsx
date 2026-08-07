@@ -76,6 +76,9 @@ describe('StudyProcessingProvider reprocessing', () => {
     expect(contextValue.getRunHistoryEntry(studyInstanceUID).history?.runs[0].id).toBe(
       createdRun.id
     );
+    expect(contextValue.getRunHistoryEntry(studyInstanceUID).history?.runs).toEqual(
+      expect.arrayContaining(studyProcessingRunHistoryFixture.runs)
+    );
   });
 
   it('shares duplicate submissions without duplicating reconciliation', async () => {
@@ -165,5 +168,36 @@ describe('StudyProcessingProvider reprocessing', () => {
 
     expect(refreshVisibleStudySnapshot).toHaveBeenCalledTimes(1);
     expect(contextValue.getStudyReprocessRequestEntry(studyInstanceUID).status).toBe('error');
+  });
+
+  it('clears pending state and ignores a late response after the auth lifecycle changes', async () => {
+    let resolveRequest!: (run: CreatedStudyProcessingRun) => void;
+    const reprocessStudy = jest.fn(
+      () =>
+        new Promise<CreatedStudyProcessingRun>(resolve => {
+          resolveRequest = resolve;
+        })
+    );
+    act(() => {
+      renderer = TestRenderer.create(
+        <StudyProcessingProvider reprocessTransport={{ reprocessStudy }}>
+          <ContextConsumer />
+        </StudyProcessingProvider>
+      );
+    });
+
+    let request!: Promise<CreatedStudyProcessingRun>;
+    act(() => {
+      request = contextValue.reprocessStudy(studyInstanceUID);
+      contextValue.clearStudyProcessingState();
+    });
+    expect(contextValue.getStudyReprocessRequestEntry(studyInstanceUID).status).toBe('idle');
+
+    await act(async () => {
+      resolveRequest(createdRun);
+      await request;
+    });
+
+    expect(contextValue.getStudyReprocessRequestEntry(studyInstanceUID).status).toBe('idle');
   });
 });
