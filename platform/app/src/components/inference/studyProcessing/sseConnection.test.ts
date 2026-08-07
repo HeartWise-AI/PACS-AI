@@ -67,6 +67,33 @@ describe('study processing SSE connection lifecycle', () => {
     await running;
   });
 
+  it('allows recovery logic to subscribe and unsubscribe from state changes', async () => {
+    const stream = deferredStream();
+    const streamEvents = jest.fn(options => {
+      options.onOpen?.();
+      return stream.promise;
+    });
+    const connection = createStudyProcessingSSEConnection({
+      streamEvents,
+      onEvent: jest.fn(),
+    });
+    const listener = jest.fn();
+    const unsubscribe = connection.subscribe(listener);
+
+    const running = connection.start();
+    expect(listener.mock.calls).toEqual([
+      ['connecting', null],
+      ['connected', null],
+    ]);
+
+    unsubscribe();
+    connection.stop();
+    stream.resolve();
+    await running;
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it('starts one stream and exposes its AbortSignal', async () => {
     const stream = deferredStream();
     const streamEvents = jest.fn().mockReturnValue(stream.promise);

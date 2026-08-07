@@ -14,6 +14,7 @@ function createConnection(
     reconnect: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn(),
     isActive: jest.fn().mockReturnValue(false),
+    subscribe: jest.fn().mockReturnValue(() => {}),
     ...overrides,
   };
 }

@@ -9,6 +9,11 @@ export type StudyProcessingSSEStream = (
   options: StreamStudyProcessingEventsOptions
 ) => Promise<void>;
 
+export type StudyProcessingSSEConnectionStateListener = (
+  status: RealtimeConnectionStatus,
+  error: string | null
+) => void;
+
 export interface CreateStudyProcessingSSEConnectionOptions
   extends Omit<StreamStudyProcessingEventsOptions, 'signal'> {
   createAbortController?: () => AbortController;
@@ -21,6 +26,7 @@ export interface StudyProcessingSSEConnection {
   reconnect(error?: string | null): Promise<void>;
   stop(): void;
   isActive(): boolean;
+  subscribe(listener: StudyProcessingSSEConnectionStateListener): () => void;
 }
 
 function safeConnectionErrorMessage(error: unknown): string {
@@ -43,6 +49,10 @@ export function createStudyProcessingSSEConnection(
   let activePromise: Promise<void> | null = null;
   let currentStatus: RealtimeConnectionStatus = 'disconnected';
   let currentError: string | null = null;
+  const stateListeners = new Set<StudyProcessingSSEConnectionStateListener>();
+  if (onStateChange) {
+    stateListeners.add(onStateChange);
+  }
 
   function setState(status: RealtimeConnectionStatus, error: string | null = null) {
     if (currentStatus === status && currentError === error) {
@@ -51,7 +61,7 @@ export function createStudyProcessingSSEConnection(
 
     currentStatus = status;
     currentError = error;
-    onStateChange?.(status, error);
+    stateListeners.forEach(listener => listener(status, error));
   }
 
   function begin(
@@ -130,5 +140,10 @@ export function createStudyProcessingSSEConnection(
     return activeController !== null && !activeController.signal.aborted;
   }
 
-  return { start, reconnect, stop, isActive };
+  function subscribe(listener: StudyProcessingSSEConnectionStateListener): () => void {
+    stateListeners.add(listener);
+    return () => stateListeners.delete(listener);
+  }
+
+  return { start, reconnect, stop, isActive, subscribe };
 }
