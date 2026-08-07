@@ -848,7 +848,7 @@ function WorkList() {
               <h1 className="text-2xl font-bold text-white">
                 {t('ProcessingStudyWorklist', { defaultValue: 'Study Worklist' })}
               </h1>
-              <span className="text-white/35 text-xs">
+              <span className="text-xs text-white/35">
                 {t('ProcessingStudyCount', {
                   count: tableDataSource.length,
                   defaultValue: '{{count}} studies',
@@ -979,31 +979,31 @@ function WorkList() {
                       <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('PatientName')}
                       </th>
-                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                      <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('MRN')}
                       </th>
-                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                      <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('StudyDate')}
                       </th>
-                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                      <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('Description')}
                       </th>
-                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                      <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('Modality')}
                       </th>
-                      <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                      <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('AccessionNumber')}
                       </th>
                       <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('Instances')}
                       </th>
                       {showStudyProcessing && (
-                        <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                           {t('Processing')}
                         </th>
                       )}
                       {showStudyProcessing && (
-                        <th className="py-3 px-4 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                        <th className="px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                           {t('ProcessingUpdated', { defaultValue: 'Updated' })}
                         </th>
                       )}
@@ -1014,11 +1014,11 @@ function WorkList() {
                       {currentItems.map(row => (
                         <React.Fragment key={row.studyInstanceUID}>
                           <tr
-                            className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] py-2 px-2 text-white"
+                            className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] px-2 py-2 text-white"
                             onClick={() => toggleRow(row.studyInstanceUID)}
                           >
                             <td
-                              className={`text-md py-2 px-4 font-normal ${
+                              className={`text-md px-4 py-2 font-normal ${
                                 expandedStudyRows[row.studyInstanceUID]
                                   ? 'border-primary-main rounded-tl-lg border-l-[3px]'
                                   : 'rounded-l-lg'
@@ -1026,21 +1026,21 @@ function WorkList() {
                             >
                               {row.patientName}
                             </td>
-                            <td className="text-md py-2 px-4 font-normal">
+                            <td className="text-md px-4 py-2 font-normal">
                               {row.patientId.substring(0, 10)}
                             </td>
-                            <td className="text-md py-2 px-4 font-normal">
+                            <td className="text-md px-4 py-2 font-normal">
                               {formatDate(row.studyDate)}
                             </td>
-                            <td className="text-md py-2 px-4 font-normal">
+                            <td className="text-md px-4 py-2 font-normal">
                               {row.studyDescription}
                             </td>
-                            <td className="text-md py-2 px-4 font-normal">
+                            <td className="text-md px-4 py-2 font-normal">
                               {row.modalitiesInStudy}
                             </td>
-                            <td className="py-2 px-4">{row.accessionNumber}</td>
+                            <td className="px-4 py-2">{row.accessionNumber}</td>
                             <td
-                              className={`py-2 px-4 text-sm font-normal ${
+                              className={`px-4 py-2 text-sm font-normal ${
                                 showStudyProcessing
                                   ? ''
                                   : expandedStudyRows[row.studyInstanceUID]
@@ -1051,7 +1051,7 @@ function WorkList() {
                               {row.numberOfStudyRelatedSeries}
                             </td>
                             {showStudyProcessing && (
-                              <td className="py-2 px-4">
+                              <td className="px-4 py-2">
                                 <StudyProcessingStatus
                                   studyInstanceUID={row.studyInstanceUID}
                                   onRetry={retryVisibleStudyProcessingSnapshot}
@@ -1060,7 +1060,7 @@ function WorkList() {
                             )}
                             {showStudyProcessing && (
                               <td
-                                className={`py-2 px-4 ${
+                                className={`px-4 py-2 ${
                                   expandedStudyRows[row.studyInstanceUID]
                                     ? '!rounded-tr-lg'
                                     : '!rounded-r-lg'
@@ -1069,7 +1069,7 @@ function WorkList() {
                                 <div className="flex items-center gap-4">
                                   <StudyProcessingUpdated studyInstanceUID={row.studyInstanceUID} />
                                   <span
-                                    className="text-white/35 ml-auto text-lg"
+                                    className="ml-auto text-lg text-white/35"
                                     aria-hidden="true"
                                   >
                                     {expandedStudyRows[row.studyInstanceUID] ? '⌃' : '⌄'}
@@ -1082,7 +1082,7 @@ function WorkList() {
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
                                 colSpan={showStudyProcessing ? 9 : 7}
-                                className="border-primary-main rounded-bl-lg rounded-br-lg border-l-[3px] py-4 px-4"
+                                className="border-primary-main rounded-bl-lg rounded-br-lg border-l-[3px] px-4 py-4"
                               >
                                 {showStudyProcessing && (
                                   <StudyProcessingAttention
