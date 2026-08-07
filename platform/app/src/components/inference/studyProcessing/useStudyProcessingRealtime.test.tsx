@@ -18,6 +18,8 @@ import type {
   CreateStudyProcessingSSERecoveryOptions,
   StudyProcessingSSERecovery,
 } from './sseRecovery';
+import type { StudyProcessingSSETelemetry } from './sseTelemetry';
+import { StudyProcessingSSEError } from './sseTransport';
 import {
   useStudyProcessingRealtime,
   type UseStudyProcessingRealtimeOptions,
@@ -53,6 +55,12 @@ function createRealtimeDoubles() {
     stop: jest.fn(),
     waitForIdle: jest.fn().mockResolvedValue(undefined),
   };
+  const telemetry: StudyProcessingSSETelemetry = {
+    recordConnectionError: jest.fn(),
+    recordConnectionState: jest.fn(),
+    recordInvalidEvent: jest.fn(),
+    recordRetryScheduled: jest.fn(),
+  };
   const connectionFactory = jest.fn((options: CreateStudyProcessingSSEConnectionOptions) => {
     connectionOptions = options;
     return connection;
@@ -78,6 +86,7 @@ function createRealtimeDoubles() {
     recovery,
     recoveryFactory,
     recoveryOptions: () => recoveryOptions,
+    telemetry,
   };
 }
 
@@ -108,6 +117,7 @@ describe('useStudyProcessingRealtime', () => {
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
         recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
       });
     });
 
@@ -135,12 +145,15 @@ describe('useStudyProcessingRealtime', () => {
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
         recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
       });
     });
 
     act(() => {
       doubles.connectionOptions().onEvent(studyProcessingSummaryFixtures.processing);
       doubles.connectionOptions().onStateChange?.('reconnecting', 'Connection interrupted.');
+      doubles.connectionOptions().onInvalidEvent?.();
+      doubles.reconnectOptions().onRetryScheduled?.(2, 2000);
     });
 
     expect(
@@ -149,6 +162,9 @@ describe('useStudyProcessingRealtime', () => {
     expect(contextValue.realtimeConnectionStatus).toBe('reconnecting');
     expect(contextValue.realtimeConnectionError).toBe('Connection interrupted.');
     expect(contextValue.isRealtimeDataStale).toBe(true);
+    expect(doubles.telemetry.recordConnectionState).toHaveBeenCalledWith('reconnecting');
+    expect(doubles.telemetry.recordInvalidEvent).toHaveBeenCalledTimes(1);
+    expect(doubles.telemetry.recordRetryScheduled).toHaveBeenCalledWith(2, 2000);
 
     act(() => {
       doubles.connectionOptions().onStateChange?.('connected', null);
@@ -171,6 +187,7 @@ describe('useStudyProcessingRealtime', () => {
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
         recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
       });
     });
 
@@ -195,6 +212,7 @@ describe('useStudyProcessingRealtime', () => {
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
         recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
       });
     });
 
@@ -212,6 +230,7 @@ describe('useStudyProcessingRealtime', () => {
       connectionFactory: doubles.connectionFactory,
       reconnectControllerFactory: doubles.reconnectControllerFactory,
       recoveryFactory: doubles.recoveryFactory,
+      telemetry: doubles.telemetry,
     };
 
     act(() => {
@@ -246,6 +265,7 @@ describe('useStudyProcessingRealtime', () => {
       connectionFactory: doubles.connectionFactory,
       reconnectControllerFactory: doubles.reconnectControllerFactory,
       recoveryFactory: doubles.recoveryFactory,
+      telemetry: doubles.telemetry,
     };
 
     act(() => {
@@ -272,5 +292,26 @@ describe('useStudyProcessingRealtime', () => {
     expect(doubles.reconnectController.start).toHaveBeenCalledTimes(1);
     expect(doubles.recovery.stop).toHaveBeenCalledTimes(2);
     expect(doubles.reconnectController.stop).toHaveBeenCalledTimes(2);
+  });
+
+  test('reports a terminal connection failure through the safe telemetry adapter', async () => {
+    const doubles = createRealtimeDoubles();
+    const error = new StudyProcessingSSEError('Sensitive authorization response.', 403);
+    (doubles.reconnectController.start as jest.Mock).mockRejectedValue(error);
+
+    await act(async () => {
+      renderHarness({
+        enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+        refreshVisibleStudySnapshot: jest.fn(),
+        connectionFactory: doubles.connectionFactory,
+        reconnectControllerFactory: doubles.reconnectControllerFactory,
+        recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
+      });
+      await Promise.resolve();
+    });
+
+    expect(doubles.telemetry.recordConnectionError).toHaveBeenCalledWith(error);
   });
 });

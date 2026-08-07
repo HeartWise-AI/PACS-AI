@@ -16,6 +16,7 @@ import {
   type StudyProcessingSSERecovery,
 } from './sseRecovery';
 import type { RealtimeConnectionStatus } from './reducer';
+import { studyProcessingSSETelemetry, type StudyProcessingSSETelemetry } from './sseTelemetry';
 
 type StudyProcessingSSEConnectionFactory = (
   options: CreateStudyProcessingSSEConnectionOptions
@@ -36,6 +37,7 @@ export interface UseStudyProcessingRealtimeOptions {
   connectionFactory?: StudyProcessingSSEConnectionFactory;
   reconnectControllerFactory?: StudyProcessingSSEReconnectControllerFactory;
   recoveryFactory?: StudyProcessingSSERecoveryFactory;
+  telemetry?: StudyProcessingSSETelemetry;
 }
 
 const RECOVERY_ERROR = 'Unable to refresh visible processing status after reconnecting.';
@@ -47,6 +49,7 @@ export function useStudyProcessingRealtime({
   connectionFactory = createStudyProcessingSSEConnection,
   reconnectControllerFactory = createStudyProcessingSSEReconnectController,
   recoveryFactory = createStudyProcessingSSERecovery,
+  telemetry = studyProcessingSSETelemetry,
 }: UseStudyProcessingRealtimeOptions): void {
   const {
     applyStatusUpdate,
@@ -56,9 +59,12 @@ export function useStudyProcessingRealtime({
     markConnectionDegraded,
     markConnectionDisconnected,
   } = useStudyProcessing();
+  const { recordConnectionError, recordConnectionState, recordInvalidEvent, recordRetryScheduled } =
+    telemetry;
 
   const handleConnectionState = useCallback(
     (status: RealtimeConnectionStatus, error: string | null) => {
+      recordConnectionState(status);
       switch (status) {
         case 'connecting':
           markConnectionConnecting();
@@ -83,6 +89,7 @@ export function useStudyProcessingRealtime({
       markConnectionDegraded,
       markConnectionDisconnected,
       markConnectionReconnecting,
+      recordConnectionState,
     ]
   );
 
@@ -90,14 +97,19 @@ export function useStudyProcessingRealtime({
     () =>
       connectionFactory({
         onEvent: applyStatusUpdate,
+        onInvalidEvent: recordInvalidEvent,
         onStateChange: handleConnectionState,
       }),
-    [applyStatusUpdate, connectionFactory, handleConnectionState]
+    [applyStatusUpdate, connectionFactory, handleConnectionState, recordInvalidEvent]
   );
 
   const reconnectController = useMemo(
-    () => reconnectControllerFactory({ connection }),
-    [connection, reconnectControllerFactory]
+    () =>
+      reconnectControllerFactory({
+        connection,
+        onRetryScheduled: recordRetryScheduled,
+      }),
+    [connection, reconnectControllerFactory, recordRetryScheduled]
   );
 
   const recovery = useMemo(
@@ -118,13 +130,14 @@ export function useStudyProcessingRealtime({
     }
 
     recovery.start();
-    void reconnectController.start().catch(() => {
+    void reconnectController.start().catch(error => {
       // Non-retryable failures are already reflected through onStateChange.
+      recordConnectionError(error);
     });
 
     return () => {
       recovery.stop();
       reconnectController.stop();
     };
-  }, [authenticatedIdentity, enabled, reconnectController, recovery]);
+  }, [authenticatedIdentity, enabled, reconnectController, recordConnectionError, recovery]);
 }
