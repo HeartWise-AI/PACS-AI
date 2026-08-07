@@ -13,6 +13,7 @@ import {
   getStudyProcessingAuthIdentity,
   shouldClearStudyProcessingState,
 } from './studyProcessing/authIdentity';
+import { getStudyProcessingFeatureAvailability } from './studyProcessing/featureFlags';
 
 const RECENT_LIMIT = 20;
 
@@ -26,6 +27,7 @@ type InferenceProcessingContextValue = {
   unreadCount: number;
   canShowBell: boolean;
   canViewStudyProcessing: boolean;
+  canUseStudyProcessingRealtime: boolean;
   studyProcessingAuthIdentity: string | null;
   markAllRead: () => void;
   isBellOpen: boolean;
@@ -46,7 +48,7 @@ function InferenceProcessingProvider({ children }) {
   const { show } = useNotification();
   const location = useLocation();
   const [notifications, setNotifications] = useState<InferenceNotification[]>([]);
-  const [pollEnabled, setPollEnabled] = useState(false);
+  const [hasProcessingRole, setHasProcessingRole] = useState(false);
   const [studyProcessingAuthIdentity, setStudyProcessingAuthIdentity] = useState<string | null>(
     null
   );
@@ -67,7 +69,7 @@ function InferenceProcessingProvider({ children }) {
           authenticatedIdentityRef.current = null;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
-          setPollEnabled(false);
+          setHasProcessingRole(false);
           setNotifications([]);
         }
         return;
@@ -84,9 +86,9 @@ function InferenceProcessingProvider({ children }) {
           setStudyProcessingAuthIdentity(nextIdentity);
 
           const role = response.data.role;
-          const canPoll = role === UserRole.ADMIN || role === UserRole.OWNER;
-          setPollEnabled(canPoll);
-          if (!canPoll) {
+          const nextHasProcessingRole = role === UserRole.ADMIN || role === UserRole.OWNER;
+          setHasProcessingRole(nextHasProcessingRole);
+          if (!nextHasProcessingRole) {
             setNotifications([]);
           }
         }
@@ -95,7 +97,7 @@ function InferenceProcessingProvider({ children }) {
           authenticatedIdentityRef.current = null;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
-          setPollEnabled(false);
+          setHasProcessingRole(false);
           setNotifications([]);
         }
       }
@@ -135,9 +137,11 @@ function InferenceProcessingProvider({ children }) {
     [show]
   );
 
+  const processingAvailability = getStudyProcessingFeatureAvailability(hasProcessingRole);
+
   useCandidateProcessingPoll({
     onTransition: handleTransition,
-    enabled: pollEnabled,
+    enabled: processingAvailability.canPollCandidates,
   });
 
   const markAllRead = useCallback(() => {
@@ -151,8 +155,9 @@ function InferenceProcessingProvider({ children }) {
       value={{
         notifications,
         unreadCount,
-        canShowBell: pollEnabled,
-        canViewStudyProcessing: pollEnabled,
+        canShowBell: processingAvailability.canPollCandidates,
+        canViewStudyProcessing: processingAvailability.canViewProcessing,
+        canUseStudyProcessingRealtime: processingAvailability.canUseRealtimeSSE,
         studyProcessingAuthIdentity,
         markAllRead,
         isBellOpen,

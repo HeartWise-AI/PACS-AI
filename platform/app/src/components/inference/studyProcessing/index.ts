@@ -2,6 +2,7 @@ export * from './types';
 export * from './fixtures';
 export * from './reducer';
 export * from './selectors';
+export * from './featureFlags';
 export * from './StudyProcessingProvider';
 export * from './statusPresentation';
 export * from './StudyProcessingStatusCell';

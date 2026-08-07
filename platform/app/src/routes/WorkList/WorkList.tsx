@@ -90,7 +90,8 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { canViewStudyProcessing, studyProcessingAuthIdentity } = useInferenceProcessing();
+  const { canUseStudyProcessingRealtime, canViewStudyProcessing, studyProcessingAuthIdentity } =
+    useInferenceProcessing();
   const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
@@ -119,7 +120,7 @@ function WorkList() {
     transport: studyProcessingSnapshotTransport,
   });
   useStudyProcessingRealtime({
-    enabled: canViewStudyProcessing && !showStudyProcessingFixtures,
+    enabled: canUseStudyProcessingRealtime && !showStudyProcessingFixtures,
     authenticatedIdentity: studyProcessingAuthIdentity,
     refreshVisibleStudySnapshot: retryVisibleStudyProcessingSnapshot,
   });

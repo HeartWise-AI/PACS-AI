@@ -29,6 +29,8 @@ Before running this repository, you need to have the PACS AI backend up and runn
    |----------|-------------|
    | `APP_PUBLIC_API_URL` | PACS AI backend URL (local: `http://localhost/api`, prod: `https://hostname/api`) |
    | `APP_PUBLIC_DEFAULT_TENANT` | Tenant ID from Google Cloud Platform |
+   | `APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED` | Enables authenticated live worklist updates; set to `false` to roll back to REST snapshots |
+   | `APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED` | Keeps legacy candidate transition polling independently available during SSE rollout |
    | `APP_FIREBASE_API_KEY` | Firebase project API key |
    | `APP_FIREBASE_AUTH_DOMAIN` | Firebase authentication domain |
    | `APP_FIREBASE_PROJECT_ID` | Firebase project ID |
