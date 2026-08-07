@@ -26,6 +26,7 @@ type InferenceProcessingContextValue = {
   unreadCount: number;
   canShowBell: boolean;
   canViewStudyProcessing: boolean;
+  studyProcessingAuthIdentity: string | null;
   markAllRead: () => void;
   isBellOpen: boolean;
   setBellOpen: (open: boolean) => void;
@@ -46,6 +47,9 @@ function InferenceProcessingProvider({ children }) {
   const location = useLocation();
   const [notifications, setNotifications] = useState<InferenceNotification[]>([]);
   const [pollEnabled, setPollEnabled] = useState(false);
+  const [studyProcessingAuthIdentity, setStudyProcessingAuthIdentity] = useState<string | null>(
+    null
+  );
   const [isBellOpen, setBellOpen] = useState(false);
   const isBellOpenRef = useRef(false);
   const authenticatedIdentityRef = useRef<string | null>(null);
@@ -61,6 +65,7 @@ function InferenceProcessingProvider({ children }) {
       if (!token) {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
+          setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
           setPollEnabled(false);
           setNotifications([]);
@@ -76,6 +81,7 @@ function InferenceProcessingProvider({ children }) {
             clearStudyProcessingState();
           }
           authenticatedIdentityRef.current = nextIdentity;
+          setStudyProcessingAuthIdentity(nextIdentity);
 
           const role = response.data.role;
           const canPoll = role === UserRole.ADMIN || role === UserRole.OWNER;
@@ -87,6 +93,7 @@ function InferenceProcessingProvider({ children }) {
       } catch {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
+          setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
           setPollEnabled(false);
           setNotifications([]);
@@ -146,6 +153,7 @@ function InferenceProcessingProvider({ children }) {
         unreadCount,
         canShowBell: pollEnabled,
         canViewStudyProcessing: pollEnabled,
+        studyProcessingAuthIdentity,
         markAllRead,
         isBellOpen,
         setBellOpen,

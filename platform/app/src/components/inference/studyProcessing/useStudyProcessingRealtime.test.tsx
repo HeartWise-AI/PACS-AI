@@ -103,6 +103,7 @@ describe('useStudyProcessingRealtime', () => {
     act(() => {
       renderHarness({
         enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
         refreshVisibleStudySnapshot: jest.fn(),
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
@@ -129,6 +130,7 @@ describe('useStudyProcessingRealtime', () => {
     act(() => {
       renderHarness({
         enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
         refreshVisibleStudySnapshot: jest.fn(),
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
@@ -164,6 +166,7 @@ describe('useStudyProcessingRealtime', () => {
     act(() => {
       renderHarness({
         enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
         refreshVisibleStudySnapshot,
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
@@ -187,6 +190,7 @@ describe('useStudyProcessingRealtime', () => {
     act(() => {
       renderHarness({
         enabled: false,
+        authenticatedIdentity: null,
         refreshVisibleStudySnapshot: jest.fn(),
         connectionFactory: doubles.connectionFactory,
         reconnectControllerFactory: doubles.reconnectControllerFactory,
@@ -198,5 +202,75 @@ describe('useStudyProcessingRealtime', () => {
     expect(doubles.reconnectController.start).not.toHaveBeenCalled();
     expect(doubles.recovery.stop).toHaveBeenCalledTimes(1);
     expect(doubles.reconnectController.stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('restarts the live connection when the authenticated tenant or user changes', () => {
+    const doubles = createRealtimeDoubles();
+    const baseOptions = {
+      enabled: true,
+      refreshVisibleStudySnapshot: jest.fn(),
+      connectionFactory: doubles.connectionFactory,
+      reconnectControllerFactory: doubles.reconnectControllerFactory,
+      recoveryFactory: doubles.recoveryFactory,
+    };
+
+    act(() => {
+      renderHarness({
+        ...baseOptions,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+      });
+    });
+
+    act(() => {
+      renderer?.update(
+        <StudyProcessingProvider>
+          <Harness
+            {...baseOptions}
+            authenticatedIdentity={'["tenant-2","user-1"]'}
+          />
+        </StudyProcessingProvider>
+      );
+    });
+
+    expect(doubles.connectionFactory).toHaveBeenCalledTimes(1);
+    expect(doubles.recovery.stop).toHaveBeenCalledTimes(1);
+    expect(doubles.reconnectController.stop).toHaveBeenCalledTimes(1);
+    expect(doubles.recovery.start).toHaveBeenCalledTimes(2);
+    expect(doubles.reconnectController.start).toHaveBeenCalledTimes(2);
+  });
+
+  test('stops without reconnecting when the authenticated identity is cleared', () => {
+    const doubles = createRealtimeDoubles();
+    const baseOptions = {
+      refreshVisibleStudySnapshot: jest.fn(),
+      connectionFactory: doubles.connectionFactory,
+      reconnectControllerFactory: doubles.reconnectControllerFactory,
+      recoveryFactory: doubles.recoveryFactory,
+    };
+
+    act(() => {
+      renderHarness({
+        ...baseOptions,
+        enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+      });
+    });
+
+    act(() => {
+      renderer?.update(
+        <StudyProcessingProvider>
+          <Harness
+            {...baseOptions}
+            enabled={false}
+            authenticatedIdentity={null}
+          />
+        </StudyProcessingProvider>
+      );
+    });
+
+    expect(doubles.recovery.start).toHaveBeenCalledTimes(1);
+    expect(doubles.reconnectController.start).toHaveBeenCalledTimes(1);
+    expect(doubles.recovery.stop).toHaveBeenCalledTimes(2);
+    expect(doubles.reconnectController.stop).toHaveBeenCalledTimes(2);
   });
 });

@@ -90,7 +90,7 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { canViewStudyProcessing } = useInferenceProcessing();
+  const { canViewStudyProcessing, studyProcessingAuthIdentity } = useInferenceProcessing();
   const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
@@ -120,6 +120,7 @@ function WorkList() {
   });
   useStudyProcessingRealtime({
     enabled: canViewStudyProcessing && !showStudyProcessingFixtures,
+    authenticatedIdentity: studyProcessingAuthIdentity,
     refreshVisibleStudySnapshot: retryVisibleStudyProcessingSnapshot,
   });
   const [selectedModalities, setSelectedModalities] = useState([]);

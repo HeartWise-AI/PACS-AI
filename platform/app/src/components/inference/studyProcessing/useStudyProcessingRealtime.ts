@@ -31,6 +31,7 @@ type StudyProcessingSSERecoveryFactory = (
 
 export interface UseStudyProcessingRealtimeOptions {
   enabled: boolean;
+  authenticatedIdentity: string | null;
   refreshVisibleStudySnapshot(): Promise<void> | void;
   connectionFactory?: StudyProcessingSSEConnectionFactory;
   reconnectControllerFactory?: StudyProcessingSSEReconnectControllerFactory;
@@ -41,6 +42,7 @@ const RECOVERY_ERROR = 'Unable to refresh visible processing status after reconn
 
 export function useStudyProcessingRealtime({
   enabled,
+  authenticatedIdentity,
   refreshVisibleStudySnapshot,
   connectionFactory = createStudyProcessingSSEConnection,
   reconnectControllerFactory = createStudyProcessingSSEReconnectController,
@@ -109,7 +111,7 @@ export function useStudyProcessingRealtime({
   );
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !authenticatedIdentity) {
       recovery.stop();
       reconnectController.stop();
       return;
@@ -124,5 +126,5 @@ export function useStudyProcessingRealtime({
       recovery.stop();
       reconnectController.stop();
     };
-  }, [enabled, reconnectController, recovery]);
+  }, [authenticatedIdentity, enabled, reconnectController, recovery]);
 }
