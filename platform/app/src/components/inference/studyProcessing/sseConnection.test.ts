@@ -16,6 +16,57 @@ function deferredStream() {
 }
 
 describe('study processing SSE connection lifecycle', () => {
+  it('reports connecting, connected, and disconnected around a healthy stream', async () => {
+    const stream = deferredStream();
+    const onStateChange = jest.fn();
+    const streamEvents = jest.fn(options => {
+      options.onOpen?.();
+      return stream.promise;
+    });
+    const connection = createStudyProcessingSSEConnection({
+      streamEvents,
+      onEvent: jest.fn(),
+      onStateChange,
+    });
+
+    const running = connection.start();
+
+    expect(onStateChange.mock.calls).toEqual([
+      ['connecting', null],
+      ['connected', null],
+    ]);
+
+    stream.resolve();
+    await running;
+
+    expect(onStateChange).toHaveBeenLastCalledWith('disconnected', null);
+  });
+
+  it('reports a reconnect attempt separately from the initial connection', async () => {
+    const stream = deferredStream();
+    const onStateChange = jest.fn();
+    const streamEvents = jest.fn(options => {
+      options.onOpen?.();
+      return stream.promise;
+    });
+    const connection = createStudyProcessingSSEConnection({
+      streamEvents,
+      onEvent: jest.fn(),
+      onStateChange,
+    });
+
+    const running = connection.reconnect('Previous connection was interrupted.');
+
+    expect(onStateChange.mock.calls).toEqual([
+      ['reconnecting', 'Previous connection was interrupted.'],
+      ['connected', null],
+    ]);
+
+    connection.stop();
+    stream.resolve();
+    await running;
+  });
+
   it('starts one stream and exposes its AbortSignal', async () => {
     const stream = deferredStream();
     const streamEvents = jest.fn().mockReturnValue(stream.promise);
@@ -88,13 +139,19 @@ describe('study processing SSE connection lifecycle', () => {
 
   it('does not hide a genuine connection failure', async () => {
     const failure = new Error('network unavailable');
+    const onStateChange = jest.fn();
     const connection = createStudyProcessingSSEConnection({
       streamEvents: jest.fn().mockRejectedValue(failure),
       onEvent: jest.fn(),
+      onStateChange,
     });
 
     await expect(connection.start()).rejects.toBe(failure);
     expect(connection.isActive()).toBe(false);
+    expect(onStateChange).toHaveBeenLastCalledWith(
+      'degraded',
+      'Live processing connection was interrupted.'
+    );
   });
 
   it('can be stopped safely when no stream is active', () => {
