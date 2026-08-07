@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useStudyProcessing } from './StudyProcessingProvider';
+import {
+  deriveLiveStudyProcessingNotificationTransitions,
+  type StudyProcessingNotificationTransition,
+} from './notificationTransitions';
+import { shouldApplyStudyProcessingSummary } from './reducer';
 import {
   createStudyProcessingSSEConnection,
   type CreateStudyProcessingSSEConnectionOptions,
@@ -17,6 +22,7 @@ import {
 } from './sseRecovery';
 import type { RealtimeConnectionStatus } from './reducer';
 import { studyProcessingSSETelemetry, type StudyProcessingSSETelemetry } from './sseTelemetry';
+import type { StudyProcessingSummary } from './types';
 
 type StudyProcessingSSEConnectionFactory = (
   options: CreateStudyProcessingSSEConnectionOptions
@@ -34,6 +40,7 @@ export interface UseStudyProcessingRealtimeOptions {
   enabled: boolean;
   authenticatedIdentity: string | null;
   refreshVisibleStudySnapshot(): Promise<void> | void;
+  onNotificationTransition?: (transition: StudyProcessingNotificationTransition) => void;
   connectionFactory?: StudyProcessingSSEConnectionFactory;
   reconnectControllerFactory?: StudyProcessingSSEReconnectControllerFactory;
   recoveryFactory?: StudyProcessingSSERecoveryFactory;
@@ -46,6 +53,7 @@ export function useStudyProcessingRealtime({
   enabled,
   authenticatedIdentity,
   refreshVisibleStudySnapshot,
+  onNotificationTransition,
   connectionFactory = createStudyProcessingSSEConnection,
   reconnectControllerFactory = createStudyProcessingSSEReconnectController,
   recoveryFactory = createStudyProcessingSSERecovery,
@@ -53,12 +61,14 @@ export function useStudyProcessingRealtime({
 }: UseStudyProcessingRealtimeOptions): void {
   const {
     applyStatusUpdate,
+    getLatestStudySummary,
     markConnectionConnecting,
     markConnectionConnected,
     markConnectionReconnecting,
     markConnectionDegraded,
     markConnectionDisconnected,
   } = useStudyProcessing();
+  const latestLiveSummariesRef = useRef<Map<string, StudyProcessingSummary>>(new Map());
   const { recordConnectionError, recordConnectionState, recordInvalidEvent, recordRetryScheduled } =
     telemetry;
 
@@ -93,14 +103,31 @@ export function useStudyProcessingRealtime({
     ]
   );
 
+  const handleLiveStatusUpdate = useCallback(
+    (summary: StudyProcessingSummary) => {
+      const previous =
+        latestLiveSummariesRef.current.get(summary.studyInstanceUID) ??
+        getLatestStudySummary(summary.studyInstanceUID);
+      const transitions = deriveLiveStudyProcessingNotificationTransitions(previous, summary);
+
+      if (shouldApplyStudyProcessingSummary(previous, summary)) {
+        latestLiveSummariesRef.current.set(summary.studyInstanceUID, summary);
+      }
+
+      applyStatusUpdate(summary);
+      transitions.forEach(transition => onNotificationTransition?.(transition));
+    },
+    [applyStatusUpdate, getLatestStudySummary, onNotificationTransition]
+  );
+
   const connection = useMemo(
     () =>
       connectionFactory({
-        onEvent: applyStatusUpdate,
+        onEvent: handleLiveStatusUpdate,
         onInvalidEvent: recordInvalidEvent,
         onStateChange: handleConnectionState,
       }),
-    [applyStatusUpdate, connectionFactory, handleConnectionState, recordInvalidEvent]
+    [connectionFactory, handleConnectionState, handleLiveStatusUpdate, recordInvalidEvent]
   );
 
   const reconnectController = useMemo(
@@ -123,6 +150,8 @@ export function useStudyProcessingRealtime({
   );
 
   useEffect(() => {
+    latestLiveSummariesRef.current = new Map();
+
     if (!enabled || !authenticatedIdentity) {
       recovery.stop();
       reconnectController.stop();

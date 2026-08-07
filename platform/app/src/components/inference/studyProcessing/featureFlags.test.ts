@@ -21,6 +21,8 @@ describe('study processing feature flags', () => {
         realtimeSSEEnabled: false,
       })
     ).toEqual({
+      canUseCandidateNotificationFallback: true,
+      canUseStudyEventNotifications: false,
       canPollCandidates: true,
       canUseRealtimeSSE: false,
       canViewProcessing: true,
@@ -32,8 +34,40 @@ describe('study processing feature flags', () => {
         realtimeSSEEnabled: true,
       })
     ).toEqual({
+      canUseCandidateNotificationFallback: false,
+      canUseStudyEventNotifications: true,
       canPollCandidates: false,
       canUseRealtimeSSE: true,
+      canViewProcessing: true,
+    });
+  });
+
+  test('prefers live study events when both transports are enabled', () => {
+    expect(
+      getStudyProcessingFeatureAvailability(true, {
+        candidatePollingEnabled: true,
+        realtimeSSEEnabled: true,
+      })
+    ).toEqual({
+      canUseCandidateNotificationFallback: false,
+      canUseStudyEventNotifications: true,
+      canPollCandidates: true,
+      canUseRealtimeSSE: true,
+      canViewProcessing: true,
+    });
+  });
+
+  test('disables notifications when both transports are disabled', () => {
+    expect(
+      getStudyProcessingFeatureAvailability(true, {
+        candidatePollingEnabled: false,
+        realtimeSSEEnabled: false,
+      })
+    ).toEqual({
+      canUseCandidateNotificationFallback: false,
+      canUseStudyEventNotifications: false,
+      canPollCandidates: false,
+      canUseRealtimeSSE: false,
       canViewProcessing: true,
     });
   });
@@ -45,6 +79,8 @@ describe('study processing feature flags', () => {
         realtimeSSEEnabled: true,
       })
     ).toEqual({
+      canUseCandidateNotificationFallback: false,
+      canUseStudyEventNotifications: false,
       canPollCandidates: false,
       canUseRealtimeSSE: false,
       canViewProcessing: false,

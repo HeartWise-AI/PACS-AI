@@ -35,6 +35,10 @@ import {
   useVisibleStudyProcessingSnapshot,
 } from '../../components/inference/studyProcessing';
 import { useInferenceProcessing } from '../../components/inference/InferenceProcessingProvider';
+import {
+  findProcessingNotificationStudyPage,
+  PROCESSING_NOTIFICATION_STUDY_PARAM,
+} from '../../components/inference/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
 
@@ -90,8 +94,13 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { canUseStudyProcessingRealtime, canViewStudyProcessing, studyProcessingAuthIdentity } =
-    useInferenceProcessing();
+  const {
+    canUseStudyProcessingRealtime,
+    canViewStudyProcessing,
+    handleStudyProcessingNotificationTransition,
+    setVisibleStudyNotificationMetadata,
+    studyProcessingAuthIdentity,
+  } = useInferenceProcessing();
   const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
@@ -113,6 +122,17 @@ function WorkList() {
     () => currentItems.map(study => study.studyInstanceUID),
     [currentItems]
   );
+  useEffect(() => {
+    setVisibleStudyNotificationMetadata(
+      currentItems.map(study => ({
+        modalitiesInStudy: study.modalitiesInStudy || null,
+        patientName: study.patientName || null,
+        studyInstanceUID: study.studyInstanceUID,
+      }))
+    );
+
+    return () => setVisibleStudyNotificationMetadata([]);
+  }, [currentItems, setVisibleStudyNotificationMetadata]);
   const retryVisibleStudyProcessingSnapshot = useVisibleStudyProcessingSnapshot({
     enabled: showStudyProcessing,
     fixtureMode: showStudyProcessingFixtures,
@@ -123,6 +143,7 @@ function WorkList() {
     enabled: canUseStudyProcessingRealtime && !showStudyProcessingFixtures,
     authenticatedIdentity: studyProcessingAuthIdentity,
     refreshVisibleStudySnapshot: retryVisibleStudyProcessingSnapshot,
+    onNotificationTransition: handleStudyProcessingNotificationTransition,
   });
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
@@ -156,6 +177,23 @@ function WorkList() {
       const sortedStudies = sortStudies(data.data.studies);
       // update the table with the new or cached study data
       setTableDataSource(sortedStudies);
+      const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
+      if (notificationStudyInstanceUID) {
+        const targetPage = findProcessingNotificationStudyPage(
+          sortedStudies.map(study => study.studyInstanceUID),
+          notificationStudyInstanceUID,
+          itemsPerPage
+        );
+        if (targetPage) {
+          setCurrentPage(targetPage);
+          setExpandedStudyRows(previousExpandedStudyRows => ({
+            ...previousExpandedStudyRows,
+            [notificationStudyInstanceUID]: true,
+          }));
+        } else {
+          showAlert(t('ProcessingNotificationStudyNotFound'), 'error');
+        }
+      }
       setStudyQueryId(data.data.queryId);
       setIsSearching(false); // reset searching flag after successful response
     }
@@ -284,6 +322,15 @@ function WorkList() {
       );
     }
 
+    if (params[PROCESSING_NOTIFICATION_STUDY_PARAM]) {
+      updatePromises.push(
+        new Promise(resolve => {
+          handleInputChange('studyInstanceUID', params[PROCESSING_NOTIFICATION_STUDY_PARAM]);
+          resolve();
+        })
+      );
+    }
+
     if (params.modalitiesInStudy) {
       updatePromises.push(
         new Promise(resolve => {
@@ -369,7 +416,7 @@ function WorkList() {
           (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type ===
             'reload');
 
-      if (isPageRefresh) {
+      if (isPageRefresh || params[PROCESSING_NOTIFICATION_STUDY_PARAM]) {
         searchStudyList();
       }
     });
