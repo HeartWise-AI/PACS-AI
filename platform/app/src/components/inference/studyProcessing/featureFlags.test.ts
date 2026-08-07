@@ -1,4 +1,20 @@
-import { getStudyProcessingFeatureAvailability, parseBooleanFeatureFlag } from './featureFlags';
+import {
+  getStudyProcessingFeatureAvailability,
+  parseBooleanFeatureFlag,
+  resolveStudyProcessingFeatureFlags,
+  type StudyProcessingFeatureFlags,
+} from './featureFlags';
+
+const allEnabled: StudyProcessingFeatureFlags = {
+  candidatePollingEnabled: true,
+  fixturePreviewEnabled: true,
+  manualReprocessingEnabled: true,
+  processingUIEnabled: true,
+  realtimeSSEEnabled: true,
+  restSnapshotsEnabled: true,
+  runHistoryEnabled: true,
+  studyEventNotificationsEnabled: true,
+};
 
 describe('study processing feature flags', () => {
   test.each(['true', 'TRUE', '1', 'yes', 'on'])('parses %s as enabled', value => {
@@ -9,81 +25,113 @@ describe('study processing feature flags', () => {
     expect(parseBooleanFeatureFlag(value, true)).toBe(false);
   });
 
-  test('uses the supplied default for missing or invalid configuration', () => {
+  test('accepts native runtime booleans and defaults invalid configuration', () => {
+    expect(parseBooleanFeatureFlag(true, false)).toBe(true);
+    expect(parseBooleanFeatureFlag(false, true)).toBe(false);
     expect(parseBooleanFeatureFlag(undefined, true)).toBe(true);
     expect(parseBooleanFeatureFlag('invalid', false)).toBe(false);
   });
 
-  test('keeps SSE and candidate polling independently controllable', () => {
+  test('lets runtime configuration override build-time environment values', () => {
+    expect(
+      resolveStudyProcessingFeatureFlags(
+        {
+          processingUIEnabled: false,
+          realtimeSSEEnabled: 'true',
+        },
+        {
+          APP_PUBLIC_STUDY_PROCESSING_UI_ENABLED: 'true',
+          APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED: 'false',
+        }
+      )
+    ).toMatchObject({
+      fixturePreviewEnabled: false,
+      processingUIEnabled: false,
+      realtimeSSEEnabled: true,
+    });
+  });
+
+  test('uses rollout-safe defaults and keeps fixture preview opt-in', () => {
+    expect(resolveStudyProcessingFeatureFlags({}, {})).toEqual({
+      ...allEnabled,
+      fixturePreviewEnabled: false,
+    });
+  });
+
+  test('enables the complete authorized processing pipeline', () => {
+    expect(getStudyProcessingFeatureAvailability(true, allEnabled)).toEqual({
+      canPollCandidates: true,
+      canReprocessStudy: true,
+      canUseCandidateNotificationFallback: false,
+      canUseFixturePreview: true,
+      canUseRESTSnapshots: true,
+      canUseRealtimeSSE: true,
+      canUseStudyEventNotifications: true,
+      canViewProcessing: true,
+      canViewRunHistory: true,
+    });
+  });
+
+  test('falls back to candidate notifications when live notifications are disabled', () => {
     expect(
       getStudyProcessingFeatureAvailability(true, {
-        candidatePollingEnabled: true,
-        realtimeSSEEnabled: false,
+        ...allEnabled,
+        studyEventNotificationsEnabled: false,
       })
-    ).toEqual({
+    ).toMatchObject({
+      canPollCandidates: true,
       canUseCandidateNotificationFallback: true,
-      canUseStudyEventNotifications: false,
-      canPollCandidates: true,
-      canUseRealtimeSSE: false,
-      canViewProcessing: true,
-    });
-
-    expect(
-      getStudyProcessingFeatureAvailability(true, {
-        candidatePollingEnabled: false,
-        realtimeSSEEnabled: true,
-      })
-    ).toEqual({
-      canUseCandidateNotificationFallback: false,
-      canUseStudyEventNotifications: true,
-      canPollCandidates: false,
       canUseRealtimeSSE: true,
-      canViewProcessing: true,
+      canUseStudyEventNotifications: false,
     });
   });
 
-  test('prefers live study events when both transports are enabled', () => {
+  test('disabling REST also disables dependent history, SSE, notifications, and reprocessing', () => {
     expect(
       getStudyProcessingFeatureAvailability(true, {
-        candidatePollingEnabled: true,
-        realtimeSSEEnabled: true,
+        ...allEnabled,
+        restSnapshotsEnabled: false,
       })
-    ).toEqual({
-      canUseCandidateNotificationFallback: false,
-      canUseStudyEventNotifications: true,
-      canPollCandidates: true,
-      canUseRealtimeSSE: true,
+    ).toMatchObject({
+      canReprocessStudy: false,
+      canUseRESTSnapshots: false,
+      canUseRealtimeSSE: false,
+      canUseStudyEventNotifications: false,
       canViewProcessing: true,
+      canViewRunHistory: false,
     });
   });
 
-  test('disables notifications when both transports are disabled', () => {
+  test('disabling the processing UI releases every protected capability', () => {
     expect(
       getStudyProcessingFeatureAvailability(true, {
-        candidatePollingEnabled: false,
-        realtimeSSEEnabled: false,
+        ...allEnabled,
+        processingUIEnabled: false,
       })
     ).toEqual({
-      canUseCandidateNotificationFallback: false,
-      canUseStudyEventNotifications: false,
       canPollCandidates: false,
+      canReprocessStudy: false,
+      canUseCandidateNotificationFallback: false,
+      canUseFixturePreview: false,
+      canUseRESTSnapshots: false,
       canUseRealtimeSSE: false,
-      canViewProcessing: true,
+      canUseStudyEventNotifications: false,
+      canViewProcessing: false,
+      canViewRunHistory: false,
     });
   });
 
   test('disables protected processing features without the required role', () => {
-    expect(
-      getStudyProcessingFeatureAvailability(false, {
-        candidatePollingEnabled: true,
-        realtimeSSEEnabled: true,
-      })
-    ).toEqual({
-      canUseCandidateNotificationFallback: false,
-      canUseStudyEventNotifications: false,
+    expect(getStudyProcessingFeatureAvailability(false, allEnabled)).toEqual({
       canPollCandidates: false,
+      canReprocessStudy: false,
+      canUseCandidateNotificationFallback: false,
+      canUseFixturePreview: false,
+      canUseRESTSnapshots: false,
       canUseRealtimeSSE: false,
+      canUseStudyEventNotifications: false,
       canViewProcessing: false,
+      canViewRunHistory: false,
     });
   });
 });
