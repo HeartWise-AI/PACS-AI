@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { CandidateProcessingStatus } from '../../api/inferenceDTO';
 import { useInferenceProcessing } from './InferenceProcessingProvider';
+import { getInferenceNotificationPresentation } from './inferenceNotifications';
 
-function formatRelativeTime(unixSeconds: number) {
-  if (!unixSeconds) {
+function formatRelativeTime(timestamp: string) {
+  const then = Date.parse(timestamp);
+  if (!Number.isFinite(then)) {
     return 'Unknown time';
   }
 
-  const then = unixSeconds * 1000;
   const diffMinutes = Math.round((then - Date.now()) / 60000);
   const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 
@@ -25,24 +26,11 @@ function formatRelativeTime(unixSeconds: number) {
   return rtf.format(diffDays, 'day');
 }
 
-function statusLabel(status: CandidateProcessingStatus) {
-  switch (status) {
-    case 'completed':
-      return 'Completed';
-    case 'partial':
-      return 'Partial';
-    case 'failed':
-      return 'Failed';
-    default:
-      return status;
-  }
-}
-
-function statusClassName(status: CandidateProcessingStatus) {
-  if (status === 'failed') {
+function statusClassName(tone: 'error' | 'info' | 'success') {
+  if (tone === 'error') {
     return 'text-red-400';
   }
-  if (status === 'partial') {
+  if (tone === 'info') {
     return 'text-yellow-400';
   }
   return 'text-green-400';
@@ -68,6 +56,7 @@ function BellIcon() {
 }
 
 export default function InferenceNotificationsBell() {
+  const { t } = useTranslation('StudyList');
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { notifications, unreadCount, canShowBell, markAllRead, isBellOpen, setBellOpen } =
@@ -133,7 +122,7 @@ export default function InferenceNotificationsBell() {
       >
         <BellIcon />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white">
+          <span className="min-w-5 absolute -right-0.5 -top-0.5 flex h-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-semibold text-white">
             {unreadCount}
           </span>
         )}
@@ -142,20 +131,22 @@ export default function InferenceNotificationsBell() {
       {isBellOpen && (
         <div className="absolute right-0 top-full z-50 mt-2 w-96 rounded-lg border border-gray-600 bg-[#4C504B] shadow-xl">
           <div className="border-b border-gray-600 px-4 py-3">
-            <p className="text-sm font-semibold text-white">Inference notifications</p>
+            <p className="text-sm font-semibold text-white">{t('ProcessingNotificationsTitle')}</p>
             <p className="mt-0.5 text-xs text-white/60">
-              {notifications.length} {notifications.length === 1 ? 'notification' : 'notifications'}
+              {t('ProcessingNotificationsCount', { count: notifications.length })}
             </p>
           </div>
 
           <div className="max-h-[28rem] overflow-y-auto">
             {notifications.length === 0 && (
-              <div className="px-4 py-3 text-sm text-white/60">No inference notifications yet</div>
+              <div className="px-4 py-3 text-sm text-white/60">
+                {t('ProcessingNotificationsEmpty')}
+              </div>
             )}
 
             {notifications.map(notification => (
               <button
-                key={`${notification.candidateId}-${notification.processingStatusAt}`}
+                key={notification.deduplicationKey}
                 type="button"
                 onClick={() => handleItemClick(notification.studyInstanceUID)}
                 className="block w-full border-b border-gray-600 px-4 py-3 text-left transition-colors hover:bg-gray-700"
@@ -163,19 +154,21 @@ export default function InferenceNotificationsBell() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-white">
-                      {notification.patientId || 'Unknown patient'}
+                      {notification.patientName ?? t('ProcessingNotificationUnknownStudy')}
                     </p>
                     <p className="mt-0.5 text-xs text-white/60">
-                      {notification.modalitiesInStudy || 'Unknown modality'}
+                      {notification.modalitiesInStudy ?? t('ProcessingNotificationUnknownModality')}
                     </p>
                     <p className="mt-1 text-xs text-white/40">
-                      {formatRelativeTime(notification.processingStatusAt)}
+                      {formatRelativeTime(notification.occurredAt)}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 text-xs font-medium ${statusClassName(notification.processingStatus)}`}
+                    className={`shrink-0 text-xs font-medium ${statusClassName(
+                      getInferenceNotificationPresentation(notification).tone
+                    )}`}
                   >
-                    {statusLabel(notification.processingStatus)}
+                    {t(getInferenceNotificationPresentation(notification).labelKey)}
                   </span>
                 </div>
               </button>

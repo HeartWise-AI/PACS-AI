@@ -90,8 +90,13 @@ function WorkList() {
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
-  const { canUseStudyProcessingRealtime, canViewStudyProcessing, studyProcessingAuthIdentity } =
-    useInferenceProcessing();
+  const {
+    canUseStudyProcessingRealtime,
+    canViewStudyProcessing,
+    handleStudyProcessingNotificationTransition,
+    setVisibleStudyNotificationMetadata,
+    studyProcessingAuthIdentity,
+  } = useInferenceProcessing();
   const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
@@ -113,6 +118,17 @@ function WorkList() {
     () => currentItems.map(study => study.studyInstanceUID),
     [currentItems]
   );
+  useEffect(() => {
+    setVisibleStudyNotificationMetadata(
+      currentItems.map(study => ({
+        modalitiesInStudy: study.modalitiesInStudy || null,
+        patientName: study.patientName || null,
+        studyInstanceUID: study.studyInstanceUID,
+      }))
+    );
+
+    return () => setVisibleStudyNotificationMetadata([]);
+  }, [currentItems, setVisibleStudyNotificationMetadata]);
   const retryVisibleStudyProcessingSnapshot = useVisibleStudyProcessingSnapshot({
     enabled: showStudyProcessing,
     fixtureMode: showStudyProcessingFixtures,
@@ -123,6 +139,7 @@ function WorkList() {
     enabled: canUseStudyProcessingRealtime && !showStudyProcessingFixtures,
     authenticatedIdentity: studyProcessingAuthIdentity,
     refreshVisibleStudySnapshot: retryVisibleStudyProcessingSnapshot,
+    onNotificationTransition: handleStudyProcessingNotificationTransition,
   });
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
