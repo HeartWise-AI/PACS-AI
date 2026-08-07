@@ -65,9 +65,11 @@ function processingRun(runId: string): ProcessingRunDetailDTO {
 
 function createClient() {
   const get = jest.fn();
+  const post = jest.fn();
   return {
     get,
-    client: { get } as unknown as StudyProcessingHTTPClient,
+    post,
+    client: { get, post } as unknown as StudyProcessingHTTPClient,
   };
 }
 
@@ -160,6 +162,34 @@ describe('study processing REST repository', () => {
       '/v1/inference/processing/runs/run%2Fwith%20separator',
       undefined
     );
+  });
+
+  test('creates one manual study run using only the encoded Study Instance UID', async () => {
+    const { client, post } = createClient();
+    post.mockResolvedValue({
+      data: {
+        success: true,
+        message: 'created',
+        data: {
+          runId: 'run-2',
+          runNumber: 2,
+          trigger: 'MANUAL_REPROCESS',
+          phase: 'QUEUED',
+          expectedModels: 3,
+        },
+      },
+    });
+    const repository = createStudyProcessingRESTRepository(client);
+
+    await expect(repository.reprocessStudy('1.2/3')).resolves.toEqual({
+      id: 'run-2',
+      runNumber: 2,
+      trigger: 'MANUAL_REPROCESS',
+      phase: 'QUEUED',
+      expectedModels: 3,
+    });
+    expect(post).toHaveBeenCalledWith('/v1/inference/worklist/studies/1.2%2F3/reprocess');
+    expect(post.mock.calls[0][0]).not.toContain('tenant');
   });
 
   test('rejects unbounded pagination before sending a request', async () => {

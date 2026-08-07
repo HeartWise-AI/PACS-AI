@@ -161,6 +161,14 @@ export interface StudyProcessingRunHistory {
   runs: ProcessingRun[];
 }
 
+export interface CreatedStudyProcessingRun {
+  id: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  expectedModels: number;
+}
+
 export interface PaginatedStudyProcessingSummaries {
   items: StudyProcessingSummary[];
   page: number;

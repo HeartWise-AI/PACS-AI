@@ -1,4 +1,5 @@
 import type {
+  CreatedStudyProcessingRun,
   ModelExecution,
   ProcessingAttentionReason,
   ProcessingRun,
@@ -7,6 +8,7 @@ import type {
   StudyProcessingSummary,
 } from './types';
 import type {
+  CreateStudyProcessingRunResponseDTO,
   ProcessingAttentionReasonDTO,
   ProcessingRunDetailDTO,
   ProcessingRunExecutionDTO,
@@ -15,6 +17,18 @@ import type {
   WorklistStudyStatusEventDTO,
   WorklistStudyStatusPageDTO,
 } from './restDTO';
+
+export function mapCreatedStudyProcessingRun(
+  run: CreateStudyProcessingRunResponseDTO
+): CreatedStudyProcessingRun {
+  return {
+    id: run.runId,
+    runNumber: run.runNumber,
+    trigger: run.trigger,
+    phase: run.phase,
+    expectedModels: run.expectedModels,
+  };
+}
 
 function mapAttentionReason(reason: ProcessingAttentionReasonDTO): ProcessingAttentionReason {
   return {

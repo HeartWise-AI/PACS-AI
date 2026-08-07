@@ -1,16 +1,23 @@
 import Api from '../../../pacsAPIAxios';
 import {
+  mapCreatedStudyProcessingRun,
   mapProcessingRun,
   mapStudyProcessingRunHistory,
   mapWorklistStudyStatusPage,
 } from './restMapper';
 import type {
+  CreateStudyProcessingRunResponseDTO,
   ProcessingRunDetailDTO,
   StudyProcessingRunHistoryPageDTO,
   WorklistAPIResponse,
   WorklistStudyStatusPageDTO,
 } from './restDTO';
-import type { ProcessingRun, StudyProcessingRunHistory, StudyProcessingSummary } from './types';
+import type {
+  CreatedStudyProcessingRun,
+  ProcessingRun,
+  StudyProcessingRunHistory,
+  StudyProcessingSummary,
+} from './types';
 
 export const DEFAULT_STUDY_PROCESSING_PAGE_SIZE = 25;
 export const MAX_STUDY_PROCESSING_PAGE_SIZE = 100;
@@ -21,6 +28,7 @@ interface HTTPResponse<T> {
 
 export interface StudyProcessingHTTPClient {
   get<T>(url: string, config?: { params?: URLSearchParams }): Promise<HTTPResponse<T>>;
+  post<T>(url: string): Promise<HTTPResponse<T>>;
 }
 
 export interface StudyProcessingPageRequest {
@@ -58,6 +66,7 @@ export interface StudyProcessingRESTRepository {
     request: StudyProcessingRunHistoryRequest
   ): Promise<StudyProcessingRunHistoryResult>;
   loadProcessingRunDetail(runId: string): Promise<ProcessingRun>;
+  reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun>;
 }
 
 export class StudyProcessingRESTError extends Error {
@@ -172,6 +181,20 @@ async function getResponseData<T>(
   }
 }
 
+async function postResponseData<T>(client: StudyProcessingHTTPClient, path: string): Promise<T> {
+  try {
+    const response = await client.post<WorklistAPIResponse<T>>(path);
+
+    if (!response.data.success) {
+      throw new StudyProcessingRESTError('Unable to reprocess study.', null);
+    }
+
+    return response.data.data;
+  } catch (error: unknown) {
+    throw safeRESTError(error);
+  }
+}
+
 export function createStudyProcessingRESTRepository(
   client: StudyProcessingHTTPClient = Api() as StudyProcessingHTTPClient
 ): StudyProcessingRESTRepository {
@@ -214,6 +237,18 @@ export function createStudyProcessingRESTRepository(
         `/v1/inference/processing/runs/${encodedRunId}`
       );
       return mapProcessingRun(run);
+    },
+
+    async reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun> {
+      const encodedStudyInstanceUID = requiredPathIdentifier(
+        studyInstanceUID,
+        'Study Instance UID'
+      );
+      const run = await postResponseData<CreateStudyProcessingRunResponseDTO>(
+        client,
+        `/v1/inference/worklist/studies/${encodedStudyInstanceUID}/reprocess`
+      );
+      return mapCreatedStudyProcessingRun(run);
     },
   };
 }

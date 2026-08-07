@@ -112,3 +112,11 @@ export interface ProcessingRunDetailDTO extends ProcessingRunSummaryDTO {
 export interface StudyProcessingRunHistoryPageDTO extends WorklistPageDTO {
   runs: ProcessingRunDetailDTO[];
 }
+
+export interface CreateStudyProcessingRunResponseDTO {
+  runId: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  expectedModels: number;
+}
