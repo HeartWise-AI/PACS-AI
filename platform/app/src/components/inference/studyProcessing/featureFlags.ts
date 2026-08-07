@@ -47,6 +47,33 @@ const DEFAULT_STUDY_PROCESSING_FEATURE_FLAGS: StudyProcessingFeatureFlags = {
   studyEventNotificationsEnabled: true,
 };
 
+function buildTimeStudyProcessingEnvironment(): StudyProcessingEnvironmentFlags {
+  // DotenvWebpack replaces configured direct property accesses during the
+  // build. Undefined optional values can remain in the bundle, so guard the
+  // Node global before evaluating them in a browser.
+  if (typeof process === 'undefined') {
+    return {};
+  }
+
+  return {
+    APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED:
+      process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_FIXTURES_ENABLED:
+      process.env.APP_PUBLIC_STUDY_PROCESSING_FIXTURES_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_HISTORY_ENABLED:
+      process.env.APP_PUBLIC_STUDY_PROCESSING_HISTORY_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_NOTIFICATIONS_ENABLED:
+      process.env.APP_PUBLIC_STUDY_PROCESSING_NOTIFICATIONS_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_REPROCESS_ENABLED:
+      process.env.APP_PUBLIC_STUDY_PROCESSING_REPROCESS_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_REST_ENABLED: process.env.APP_PUBLIC_STUDY_PROCESSING_REST_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED: process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED,
+    APP_PUBLIC_STUDY_PROCESSING_UI_ENABLED: process.env.APP_PUBLIC_STUDY_PROCESSING_UI_ENABLED,
+  };
+}
+
+const BUILD_TIME_STUDY_PROCESSING_ENVIRONMENT = buildTimeStudyProcessingEnvironment();
+
 export function parseBooleanFeatureFlag(
   value: boolean | string | undefined,
   defaultValue: boolean
@@ -123,7 +150,7 @@ function runtimeFeatureFlagOverrides(): StudyProcessingFeatureFlagOverrides {
 
 export function resolveStudyProcessingFeatureFlags(
   runtimeOverrides: StudyProcessingFeatureFlagOverrides = runtimeFeatureFlagOverrides(),
-  environment: StudyProcessingEnvironmentFlags = process.env
+  environment: StudyProcessingEnvironmentFlags = BUILD_TIME_STUDY_PROCESSING_ENVIRONMENT
 ): StudyProcessingFeatureFlags {
   const environmentFlags = environmentFeatureFlags(environment);
 
