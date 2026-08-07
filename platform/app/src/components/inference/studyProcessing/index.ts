@@ -26,4 +26,5 @@ export * from './sseConnection';
 export * from './sseReconnect';
 export * from './sseRecovery';
 export * from './sseTelemetry';
+export * from './notificationTransitions';
 export * from './useStudyProcessingRealtime';
