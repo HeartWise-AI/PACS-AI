@@ -6,10 +6,12 @@ import {
   useStudyProcessing,
   type StudyProcessingContextValue,
 } from './StudyProcessingProvider';
-import type {
-  RunHistoryTransportResponse,
-  StudyProcessingRunHistoryTransport,
+import {
+  RunHistoryUnavailableError,
+  type RunHistoryTransportResponse,
+  type StudyProcessingRunHistoryTransport,
 } from './runHistoryTransport';
+import type { StudyProcessingRolloutTelemetry } from './rolloutTelemetry';
 
 let contextValue: StudyProcessingContextValue;
 let renderer: ReactTestRenderer;
@@ -99,5 +101,36 @@ describe('StudyProcessingProvider run-history transport override', () => {
     });
 
     expect(loadRunHistory).toHaveBeenCalledTimes(2);
+  });
+
+  test('reports unavailable history through identifier-free rollout telemetry', async () => {
+    const error = new RunHistoryUnavailableError('History is temporarily unavailable.');
+    const loadRunHistory = jest.fn().mockRejectedValue(error);
+    const rolloutTelemetry: StudyProcessingRolloutTelemetry = {
+      recordSnapshotFailure: jest.fn(),
+      recordRunHistoryFailure: jest.fn(),
+      recordCandidateFallbackActivation: jest.fn(),
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        React.createElement(
+          StudyProcessingProvider,
+          { rolloutTelemetry },
+          React.createElement(ContextConsumer)
+        )
+      );
+    });
+
+    await act(async () => {
+      await contextValue.ensureRunHistory(studyProcessingRunHistoryFixture.studyInstanceUID, {
+        loadRunHistory,
+      });
+    });
+
+    expect(rolloutTelemetry.recordRunHistoryFailure).toHaveBeenCalledWith(error);
+    expect(
+      contextValue.getRunHistoryEntry(studyProcessingRunHistoryFixture.studyInstanceUID)
+    ).toMatchObject({ status: 'unavailable', retryable: true });
   });
 });

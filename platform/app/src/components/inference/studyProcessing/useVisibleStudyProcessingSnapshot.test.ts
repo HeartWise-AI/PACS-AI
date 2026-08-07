@@ -8,25 +8,39 @@ import {
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 import { studyProcessingSummaryFixtures } from './fixtures';
 import { StudyProcessingRESTError } from './restRepository';
+import type { StudyProcessingRolloutTelemetry } from './rolloutTelemetry';
 import type { StudyProcessingSummary } from './types';
 import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
 
 let contextValue: StudyProcessingContextValue;
 let renderer: ReactTestRenderer;
 let retryVisibleSnapshot: () => void;
+const silentTelemetry: StudyProcessingRolloutTelemetry = {
+  recordSnapshotFailure: () => undefined,
+  recordRunHistoryFailure: () => undefined,
+  recordCandidateFallbackActivation: () => undefined,
+};
 
 interface HarnessProps {
   enabled: boolean;
   fixtureMode?: boolean;
   studyInstanceUIDs: string[];
+  telemetry?: StudyProcessingRolloutTelemetry;
   transport: StudyProcessingSnapshotTransport;
 }
 
-function Harness({ enabled, fixtureMode = false, studyInstanceUIDs, transport }: HarnessProps) {
+function Harness({
+  enabled,
+  fixtureMode = false,
+  studyInstanceUIDs,
+  telemetry = silentTelemetry,
+  transport,
+}: HarnessProps) {
   retryVisibleSnapshot = useVisibleStudyProcessingSnapshot({
     enabled,
     fixtureMode,
     studyInstanceUIDs,
+    telemetry,
     transport,
   });
   contextValue = useStudyProcessing();
@@ -80,18 +94,25 @@ describe('useVisibleStudyProcessingSnapshot', () => {
   });
 
   test('reports a safe transport failure through the provider store', async () => {
+    const telemetry: StudyProcessingRolloutTelemetry = {
+      recordSnapshotFailure: jest.fn(),
+      recordRunHistoryFailure: jest.fn(),
+      recordCandidateFallbackActivation: jest.fn(),
+    };
+    const error = new Error('Service unavailable.');
     const transport = {
-      loadVisibleStudySnapshot: jest.fn().mockRejectedValue(new Error('Service unavailable.')),
+      loadVisibleStudySnapshot: jest.fn().mockRejectedValue(error),
     };
 
     await act(async () => {
-      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], transport });
+      renderHarness({ enabled: true, studyInstanceUIDs: ['1.2.3'], telemetry, transport });
       await Promise.resolve();
     });
 
     expect(contextValue.initialSnapshotStatus).toBe('error');
     expect(contextValue.initialSnapshotError).toBe('Service unavailable.');
     expect(contextValue.initialSnapshotRetryable).toBe(true);
+    expect(telemetry.recordSnapshotFailure).toHaveBeenCalledWith(error);
   });
 
   test.each([401, 403])('marks HTTP %i snapshot failures as non-retryable', async status => {

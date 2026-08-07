@@ -31,6 +31,10 @@ import {
   type StudyReprocessTransport,
 } from './reprocessTransport';
 import {
+  studyProcessingRolloutTelemetry,
+  type StudyProcessingRolloutTelemetry,
+} from './rolloutTelemetry';
+import {
   selectInitialSnapshotError,
   selectInitialSnapshotRetryable,
   selectInitialSnapshotStatus,
@@ -97,12 +101,14 @@ export interface StudyProcessingProviderProps {
   children: React.ReactNode;
   runHistoryTransport?: StudyProcessingRunHistoryTransport;
   reprocessTransport?: StudyReprocessTransport;
+  rolloutTelemetry?: StudyProcessingRolloutTelemetry;
 }
 
 export function StudyProcessingProvider({
   children,
   runHistoryTransport,
   reprocessTransport,
+  rolloutTelemetry = studyProcessingRolloutTelemetry,
 }: StudyProcessingProviderProps) {
   const [state, dispatch] = useReducer(studyProcessingReducer, initialStudyProcessingState);
   const [runHistoryState, dispatchRunHistory] = useReducer(
@@ -231,6 +237,7 @@ export function StudyProcessingProvider({
 
           const message =
             error instanceof Error ? error.message : 'Unable to load processing run history.';
+          rolloutTelemetry.recordRunHistoryFailure(error);
           if (error instanceof RunHistoryUnavailableError) {
             dispatchRunHistory({
               type: 'runHistory.unavailable',
@@ -255,7 +262,7 @@ export function StudyProcessingProvider({
       inFlightRunHistoryRequests.current[studyInstanceUID] = request;
       return request;
     },
-    []
+    [rolloutTelemetry]
   );
 
   const ensureRunHistory = useCallback(

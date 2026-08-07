@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { StudyProcessingRESTError } from './restRepository';
+import {
+  studyProcessingRolloutTelemetry,
+  type StudyProcessingRolloutTelemetry,
+} from './rolloutTelemetry';
 import { useStudyProcessing } from './StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 
@@ -8,6 +12,7 @@ export interface UseVisibleStudyProcessingSnapshotOptions {
   fixtureMode: boolean;
   studyInstanceUIDs: string[];
   transport: StudyProcessingSnapshotTransport;
+  telemetry?: StudyProcessingRolloutTelemetry;
 }
 
 export function useVisibleStudyProcessingSnapshot({
@@ -15,6 +20,7 @@ export function useVisibleStudyProcessingSnapshot({
   fixtureMode,
   studyInstanceUIDs,
   transport,
+  telemetry = studyProcessingRolloutTelemetry,
 }: UseVisibleStudyProcessingSnapshotOptions): () => void {
   const {
     clearStudyProcessingState,
@@ -63,6 +69,7 @@ export function useVisibleStudyProcessingSnapshot({
           error instanceof StudyProcessingRESTError &&
           (error.status === 401 || error.status === 403)
         );
+        telemetry.recordSnapshotFailure(error);
         failInitialSnapshot(
           error instanceof Error ? error.message : 'Unable to load processing status.',
           retryable
@@ -84,6 +91,7 @@ export function useVisibleStudyProcessingSnapshot({
     requestVersion,
     startInitialSnapshot,
     studyInstanceUIDs,
+    telemetry,
     transport,
   ]);
 

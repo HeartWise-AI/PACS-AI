@@ -15,6 +15,7 @@ import {
   shouldClearStudyProcessingState,
 } from './studyProcessing/authIdentity';
 import { getStudyProcessingFeatureAvailability } from './studyProcessing/featureFlags';
+import { studyProcessingRolloutTelemetry } from './studyProcessing/rolloutTelemetry';
 import type { StudyProcessingNotificationTransition } from './studyProcessing';
 import {
   addRecentInferenceNotification,
@@ -72,6 +73,7 @@ function InferenceProcessingProvider({ children }) {
   const authenticatedIdentityRef = useRef<string | null>(null);
   const notificationDeduplicationKeysRef = useRef(new Set<string>());
   const visibleStudyMetadataRef = useRef(new Map<string, StudyNotificationWorklistMetadata>());
+  const candidateFallbackActiveRef = useRef(false);
   const { clearStudyProcessingState } = useStudyProcessing();
 
   isBellOpenRef.current = isBellOpen;
@@ -202,6 +204,25 @@ function InferenceProcessingProvider({ children }) {
   );
 
   const processingAvailability = getStudyProcessingFeatureAvailability(hasProcessingRole);
+
+  useEffect(() => {
+    if (!processingAvailability.canUseCandidateNotificationFallback) {
+      candidateFallbackActiveRef.current = false;
+      return;
+    }
+
+    if (!candidateFallbackActiveRef.current) {
+      studyProcessingRolloutTelemetry.recordCandidateFallbackActivation(
+        processingAvailability.canUseRealtimeSSE
+          ? 'live_notifications_disabled'
+          : 'realtime_unavailable'
+      );
+      candidateFallbackActiveRef.current = true;
+    }
+  }, [
+    processingAvailability.canUseCandidateNotificationFallback,
+    processingAvailability.canUseRealtimeSSE,
+  ]);
 
   useEffect(() => {
     if (processingAvailability.canViewProcessing) {
