@@ -21,3 +21,4 @@ export * from './snapshotTransport';
 export * from './useVisibleStudyProcessingSnapshot';
 export * from './sseParser';
 export * from './sseTransport';
+export * from './sseConnection';
