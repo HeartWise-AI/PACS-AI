@@ -31,6 +31,7 @@ import {
   StudyProcessingRunHistoryPanel,
   StudyProcessingStatus,
   StudyProcessingUpdated,
+  useStudyProcessingRealtime,
   useVisibleStudyProcessingSnapshot,
 } from '../../components/inference/studyProcessing';
 import { useInferenceProcessing } from '../../components/inference/InferenceProcessingProvider';
@@ -116,6 +117,10 @@ function WorkList() {
     fixtureMode: showStudyProcessingFixtures,
     studyInstanceUIDs: visibleStudyInstanceUIDs,
     transport: studyProcessingSnapshotTransport,
+  });
+  useStudyProcessingRealtime({
+    enabled: canViewStudyProcessing && !showStudyProcessingFixtures,
+    refreshVisibleStudySnapshot: retryVisibleStudyProcessingSnapshot,
   });
   const [selectedModalities, setSelectedModalities] = useState([]);
   const [selectedDICOMModality, setSelectedDICOMModality] = useState<{
@@ -880,7 +885,7 @@ function WorkList() {
             </div>
           </div>
           <div className="mb-5 flex flex-col rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            {showStudyProcessingFixtures && <StudyProcessingConnectionBanner />}
+            {showStudyProcessing && <StudyProcessingConnectionBanner />}
             <div className="ml-auto flex items-center gap-3">
               <span className="text-[16px] text-white">{t('DICOM Modality')}</span>
               <Select

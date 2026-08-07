@@ -6,7 +6,7 @@ import { StudyProcessingRESTError } from './restRepository';
 
 export interface CreateStudyProcessingSSERecoveryOptions {
   connection: StudyProcessingSSEConnection;
-  refreshVisibleStudySnapshot(): Promise<void>;
+  refreshVisibleStudySnapshot(): Promise<void> | void;
   onRecoveryError?(message: string): void;
 }
 
