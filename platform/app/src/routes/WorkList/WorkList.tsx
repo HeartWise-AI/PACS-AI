@@ -93,15 +93,23 @@ function WorkList() {
   const filterRef = useRef(studyListFilter);
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
-  const showStudyProcessingFixtures = searchParams.get('studyProcessingFixtures') === 'true';
   const {
+    canReprocessStudy,
+    canUseStudyProcessingFixtures,
+    canUseStudyProcessingREST,
     canUseStudyProcessingRealtime,
     canViewStudyProcessing,
+    canViewStudyProcessingRunHistory,
     handleStudyProcessingNotificationTransition,
     setVisibleStudyNotificationMetadata,
     studyProcessingAuthIdentity,
   } = useInferenceProcessing();
-  const showStudyProcessing = showStudyProcessingFixtures || canViewStudyProcessing;
+  const showStudyProcessingFixtures =
+    canUseStudyProcessingFixtures && searchParams.get('studyProcessingFixtures') === 'true';
+  const showStudyProcessing =
+    showStudyProcessingFixtures || (canViewStudyProcessing && canUseStudyProcessingREST);
+  const showStudyProcessingRunHistory =
+    showStudyProcessingFixtures || canViewStudyProcessingRunHistory;
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
     () => createRESTStudyProcessingSnapshotTransport(studyProcessingRESTRepository),
@@ -134,7 +142,7 @@ function WorkList() {
     return () => setVisibleStudyNotificationMetadata([]);
   }, [currentItems, setVisibleStudyNotificationMetadata]);
   const retryVisibleStudyProcessingSnapshot = useVisibleStudyProcessingSnapshot({
-    enabled: showStudyProcessing,
+    enabled: showStudyProcessingFixtures || canUseStudyProcessingREST,
     fixtureMode: showStudyProcessingFixtures,
     studyInstanceUIDs: visibleStudyInstanceUIDs,
     transport: studyProcessingSnapshotTransport,
@@ -1081,10 +1089,10 @@ function WorkList() {
                                     studyInstanceUID={row.studyInstanceUID}
                                   />
                                 )}
-                                {showStudyProcessing && (
+                                {showStudyProcessing && showStudyProcessingRunHistory && (
                                   <StudyProcessingRunHistoryPanel
                                     studyInstanceUID={row.studyInstanceUID}
-                                    canReprocessStudy={canViewStudyProcessing}
+                                    canReprocessStudy={canReprocessStudy}
                                     reprocessingDisabled={showStudyProcessingFixtures}
                                     refreshVisibleStudySnapshot={
                                       retryVisibleStudyProcessingSnapshot

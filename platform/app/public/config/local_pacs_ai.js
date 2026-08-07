@@ -11,6 +11,18 @@ window.config = {
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
   autoPlayCine: true,
+  // Runtime rollout controls. These values can be changed in the deployed
+  // app-config.js without rebuilding the frontend bundle.
+  studyProcessing: {
+    processingUIEnabled: true,
+    restSnapshotsEnabled: true,
+    runHistoryEnabled: true,
+    realtimeSSEEnabled: true,
+    studyEventNotificationsEnabled: true,
+    manualReprocessingEnabled: true,
+    candidatePollingEnabled: true,
+    fixturePreviewEnabled: false,
+  },
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,

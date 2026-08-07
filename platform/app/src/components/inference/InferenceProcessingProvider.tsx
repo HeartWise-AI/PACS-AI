@@ -32,7 +32,11 @@ type InferenceProcessingContextValue = {
   notifications: InferenceNotification[];
   unreadCount: number;
   canShowBell: boolean;
+  canReprocessStudy: boolean;
+  canUseStudyProcessingFixtures: boolean;
+  canUseStudyProcessingREST: boolean;
   canViewStudyProcessing: boolean;
+  canViewStudyProcessingRunHistory: boolean;
   canUseStudyProcessingRealtime: boolean;
   studyProcessingAuthIdentity: string | null;
   handleStudyProcessingNotificationTransition: (
@@ -199,6 +203,15 @@ function InferenceProcessingProvider({ children }) {
 
   const processingAvailability = getStudyProcessingFeatureAvailability(hasProcessingRole);
 
+  useEffect(() => {
+    if (processingAvailability.canViewProcessing) {
+      return;
+    }
+
+    clearStudyProcessingState();
+    clearNotificationState();
+  }, [clearNotificationState, clearStudyProcessingState, processingAvailability.canViewProcessing]);
+
   useCandidateProcessingPoll({
     onTransition: handleTransition,
     enabled: processingAvailability.canUseCandidateNotificationFallback,
@@ -218,7 +231,11 @@ function InferenceProcessingProvider({ children }) {
         canShowBell:
           processingAvailability.canUseStudyEventNotifications ||
           processingAvailability.canUseCandidateNotificationFallback,
+        canReprocessStudy: processingAvailability.canReprocessStudy,
+        canUseStudyProcessingFixtures: processingAvailability.canUseFixturePreview,
+        canUseStudyProcessingREST: processingAvailability.canUseRESTSnapshots,
         canViewStudyProcessing: processingAvailability.canViewProcessing,
+        canViewStudyProcessingRunHistory: processingAvailability.canViewRunHistory,
         canUseStudyProcessingRealtime: processingAvailability.canUseRealtimeSSE,
         studyProcessingAuthIdentity,
         handleStudyProcessingNotificationTransition,
