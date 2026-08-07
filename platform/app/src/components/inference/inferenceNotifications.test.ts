@@ -5,6 +5,7 @@ import {
   createCandidatePollInferenceNotification,
   createStudyEventInferenceNotification,
   getInferenceNotificationPresentation,
+  markAllInferenceNotificationsRead,
 } from './inferenceNotifications';
 
 const terminalTransition: StudyProcessingNotificationTransition = {
@@ -18,6 +19,29 @@ const terminalTransition: StudyProcessingNotificationTransition = {
 };
 
 describe('inference notifications', () => {
+  test.each([
+    ['SUCCESS', 'ProcessingStatusSuccess', 'success'],
+    ['SUCCESS_WITH_SKIPS', 'ProcessingStatusSuccessWithSkips', 'success'],
+    ['PARTIAL_SUCCESS', 'ProcessingStatusPartialSuccess', 'info'],
+    ['NO_RESULT', 'ProcessingStatusNoResult', 'info'],
+    ['FAILED', 'ProcessingStatusFailed', 'error'],
+    ['CANCELLED', 'ProcessingStatusCancelled', 'info'],
+  ] as const)('presents the %s terminal outcome', (outcome, labelKey, tone) => {
+    const notification = createStudyEventInferenceNotification(
+      {
+        ...terminalTransition,
+        summary: { ...terminalTransition.summary, outcome },
+      },
+      undefined,
+      1000,
+      false
+    );
+
+    expect(getInferenceNotificationPresentation(notification)).toEqual(
+      expect.objectContaining({ labelKey, tone })
+    );
+  });
+
   it('enriches a study event only from supplied visible-worklist metadata', () => {
     const notification = createStudyEventInferenceNotification(
       terminalTransition,
@@ -73,6 +97,33 @@ describe('inference notifications', () => {
     const withFirst = addRecentInferenceNotification([], first, 1);
     expect(addRecentInferenceNotification(withFirst, first, 1)).toBe(withFirst);
     expect(addRecentInferenceNotification(withFirst, second, 1)).toEqual([second]);
+  });
+
+  it('keeps only the most recent bounded notifications and marks them read', () => {
+    const notifications = Array.from({ length: 25 }, (_, index) =>
+      createStudyEventInferenceNotification(
+        {
+          ...terminalTransition,
+          deduplicationKey: `study-${index}:run-${index}:7:terminal`,
+          summary: {
+            ...terminalTransition.summary,
+            studyInstanceUID: `study-${index}`,
+            runId: `run-${index}`,
+          },
+        },
+        undefined,
+        index,
+        false
+      )
+    ).reduce(
+      (recent, notification) => addRecentInferenceNotification(recent, notification, 20),
+      []
+    );
+
+    expect(notifications).toHaveLength(20);
+    expect(notifications[0].studyInstanceUID).toBe('study-24');
+    expect(notifications[19].studyInstanceUID).toBe('study-5');
+    expect(markAllInferenceNotificationsRead(notifications).every(item => item.read)).toBe(true);
   });
 
   it('keeps terminal outcome and attention presentation independent', () => {

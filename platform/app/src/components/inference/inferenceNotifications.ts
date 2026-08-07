@@ -145,6 +145,14 @@ export function addRecentInferenceNotification(
   return [incoming, ...notifications].slice(0, recentLimit);
 }
 
+export function markAllInferenceNotificationsRead(
+  notifications: InferenceNotification[]
+): InferenceNotification[] {
+  return notifications.map(notification =>
+    notification.read ? notification : { ...notification, read: true }
+  );
+}
+
 export function getInferenceNotificationPresentation(
   notification: InferenceNotification
 ): InferenceNotificationPresentation {

@@ -21,6 +21,7 @@ import {
   createCandidatePollInferenceNotification,
   createStudyEventInferenceNotification,
   getInferenceNotificationPresentation,
+  markAllInferenceNotificationsRead,
   type InferenceNotification,
   type StudyNotificationWorklistMetadata,
 } from './inferenceNotifications';
@@ -204,7 +205,7 @@ function InferenceProcessingProvider({ children }) {
   });
 
   const markAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(item => ({ ...item, read: true })));
+    setNotifications(markAllInferenceNotificationsRead);
   }, []);
 
   const unreadCount = notifications.filter(item => !item.read).length;
