@@ -1,4 +1,5 @@
-import type { WorklistStudyStatusEventDTO } from './restDTO';
+import { mapWorklistStudyStatusEvent } from './restMapper';
+import type { StudyProcessingSummary } from './types';
 import {
   createServerSentEventParser,
   parseWorklistStudyStatusEvent,
@@ -41,7 +42,7 @@ export interface StreamStudyProcessingEventsOptions {
   fetchImplementation?: StudyProcessingSSEFetch;
   createTextDecoder?: () => StudyProcessingTextDecoder;
   signal?: AbortSignal;
-  onEvent(event: WorklistStudyStatusEventDTO): void;
+  onEvent(event: StudyProcessingSummary): void;
   onInvalidEvent?(): void;
 }
 
@@ -89,7 +90,7 @@ function dispatchFrames(
 
     const event = parseWorklistStudyStatusEvent(frame);
     if (event) {
-      options.onEvent(event);
+      options.onEvent(mapWorklistStudyStatusEvent(event));
     } else {
       options.onInvalidEvent?.();
     }

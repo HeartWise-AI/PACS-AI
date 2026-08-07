@@ -1,4 +1,5 @@
 import type { WorklistStudyStatusEventDTO } from './restDTO';
+import { mapWorklistStudyStatusEvent } from './restMapper';
 import { WORKLIST_STUDY_STATUS_EVENT } from './sseParser';
 import {
   streamStudyProcessingEvents,
@@ -127,7 +128,7 @@ describe('study processing SSE transport', () => {
     });
 
     expect(onEvent).toHaveBeenCalledTimes(1);
-    expect(onEvent).toHaveBeenCalledWith(eventPayload);
+    expect(onEvent).toHaveBeenCalledWith(mapWorklistStudyStatusEvent(eventPayload));
     expect(releaseLock).toHaveBeenCalledTimes(1);
   });
 
