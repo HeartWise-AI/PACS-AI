@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
-import type { StudyProcessingSummary } from './types';
+import type { CreatedStudyProcessingRun, StudyProcessingSummary } from './types';
 import {
   initialStudyProcessingState,
   studyProcessingReducer,
@@ -18,6 +18,18 @@ import {
   RunHistoryUnavailableError,
   type StudyProcessingRunHistoryTransport,
 } from './runHistoryTransport';
+import {
+  createIdleStudyReprocessRequestEntry,
+  initialStudyReprocessRequestState,
+  studyReprocessRequestReducer,
+  type StudyReprocessRequestEntry,
+} from './reprocessReducer';
+import {
+  createRESTStudyReprocessTransport,
+  createStudyReprocessRequestCoordinator,
+  StudyReprocessError,
+  type StudyReprocessTransport,
+} from './reprocessTransport';
 import {
   selectInitialSnapshotError,
   selectInitialSnapshotRetryable,
@@ -59,6 +71,13 @@ export interface StudyProcessingContextValue {
     studyInstanceUID: string,
     transport?: StudyProcessingRunHistoryTransport
   ) => Promise<void>;
+  getStudyReprocessRequestEntry: (studyInstanceUID: string) => StudyReprocessRequestEntry;
+  reprocessStudy: (
+    studyInstanceUID: string,
+    refreshVisibleStudySnapshot?: () => Promise<void> | void,
+    runHistoryTransport?: StudyProcessingRunHistoryTransport
+  ) => Promise<CreatedStudyProcessingRun>;
+  dismissStudyReprocessResult: (studyInstanceUID: string) => void;
   clearStudyProcessingState: () => void;
 }
 
@@ -77,21 +96,28 @@ export function useStudyProcessing(): StudyProcessingContextValue {
 export interface StudyProcessingProviderProps {
   children: React.ReactNode;
   runHistoryTransport?: StudyProcessingRunHistoryTransport;
+  reprocessTransport?: StudyReprocessTransport;
 }
 
 export function StudyProcessingProvider({
   children,
   runHistoryTransport,
+  reprocessTransport,
 }: StudyProcessingProviderProps) {
   const [state, dispatch] = useReducer(studyProcessingReducer, initialStudyProcessingState);
   const [runHistoryState, dispatchRunHistory] = useReducer(
     runHistoryReducer,
     initialRunHistoryState
   );
+  const [reprocessRequestState, dispatchReprocessRequest] = useReducer(
+    studyReprocessRequestReducer,
+    initialStudyReprocessRequestState
+  );
   const inFlightRunHistoryRequests = useRef<Record<string, Promise<void>>>({});
   const runHistoryRequestGeneration = useRef(0);
   const runHistoryEntriesRef = useRef(runHistoryState.entriesByStudyInstanceUID);
   const stateRef = useRef(state);
+  const reprocessRequestGeneration = useRef(0);
 
   const effectiveRunHistoryTransport = useMemo(
     () =>
@@ -102,6 +128,14 @@ export function StudyProcessingProvider({
     [runHistoryTransport, state.summariesByStudyInstanceUID]
   );
   const effectiveRunHistoryTransportRef = useRef(effectiveRunHistoryTransport);
+  const effectiveReprocessTransport = useMemo(
+    () => reprocessTransport ?? createRESTStudyReprocessTransport(),
+    [reprocessTransport]
+  );
+  const reprocessRequestCoordinator = useMemo(
+    () => createStudyReprocessRequestCoordinator(effectiveReprocessTransport),
+    [effectiveReprocessTransport]
+  );
   runHistoryEntriesRef.current = runHistoryState.entriesByStudyInstanceUID;
   effectiveRunHistoryTransportRef.current = effectiveRunHistoryTransport;
   stateRef.current = state;
@@ -236,12 +270,76 @@ export function StudyProcessingProvider({
     [requestRunHistory]
   );
 
+  const reprocessStudy = useCallback(
+    (
+      studyInstanceUID: string,
+      refreshVisibleStudySnapshot?: () => Promise<void> | void,
+      transport?: StudyProcessingRunHistoryTransport
+    ): Promise<CreatedStudyProcessingRun> => {
+      const wasAlreadyPending = reprocessRequestCoordinator.isPending(studyInstanceUID);
+      const request = reprocessRequestCoordinator.submit(studyInstanceUID);
+      if (wasAlreadyPending) {
+        return request;
+      }
+
+      const requestGeneration = reprocessRequestGeneration.current;
+      dispatchReprocessRequest({ type: 'reprocess.started', studyInstanceUID });
+
+      return request
+        .then(async createdRun => {
+          if (requestGeneration !== reprocessRequestGeneration.current) {
+            return createdRun;
+          }
+
+          dispatchReprocessRequest({
+            type: 'reprocess.succeeded',
+            studyInstanceUID,
+            createdRun,
+          });
+
+          const refreshes: Array<Promise<void>> = [refreshRunHistory(studyInstanceUID, transport)];
+          if (refreshVisibleStudySnapshot) {
+            refreshes.push(Promise.resolve(refreshVisibleStudySnapshot()));
+          }
+          await Promise.allSettled(refreshes);
+          return createdRun;
+        })
+        .catch((error: unknown) => {
+          const normalizedError =
+            error instanceof Error ? error : new Error('Unable to reprocess study.');
+          if (requestGeneration === reprocessRequestGeneration.current) {
+            dispatchReprocessRequest({
+              type: 'reprocess.failed',
+              studyInstanceUID,
+              error: normalizedError,
+            });
+            if (
+              normalizedError instanceof StudyReprocessError &&
+              normalizedError.status === 409 &&
+              refreshVisibleStudySnapshot
+            ) {
+              void Promise.resolve(refreshVisibleStudySnapshot());
+            }
+          }
+          throw normalizedError;
+        });
+    },
+    [refreshRunHistory, reprocessRequestCoordinator]
+  );
+
+  const dismissStudyReprocessResult = useCallback((studyInstanceUID: string) => {
+    dispatchReprocessRequest({ type: 'reprocess.dismissed', studyInstanceUID });
+  }, []);
+
   const clearStudyProcessingState = useCallback(() => {
     runHistoryRequestGeneration.current += 1;
     inFlightRunHistoryRequests.current = {};
+    reprocessRequestGeneration.current += 1;
+    reprocessRequestCoordinator.clear();
     dispatch({ type: 'state.cleared' });
     dispatchRunHistory({ type: 'runHistory.stateCleared' });
-  }, []);
+    dispatchReprocessRequest({ type: 'reprocess.stateCleared' });
+  }, [reprocessRequestCoordinator]);
 
   const value = useMemo<StudyProcessingContextValue>(
     () => ({
@@ -268,11 +366,17 @@ export function StudyProcessingProvider({
         runHistoryState.entriesByStudyInstanceUID[studyInstanceUID] ?? createIdleRunHistoryEntry(),
       ensureRunHistory,
       refreshRunHistory,
+      getStudyReprocessRequestEntry: studyInstanceUID =>
+        reprocessRequestState.entriesByStudyInstanceUID[studyInstanceUID] ??
+        createIdleStudyReprocessRequestEntry(),
+      reprocessStudy,
+      dismissStudyReprocessResult,
       clearStudyProcessingState,
     }),
     [
       applyStatusUpdate,
       clearStudyProcessingState,
+      dismissStudyReprocessResult,
       failInitialSnapshot,
       ensureRunHistory,
       getLatestStudySummary,
@@ -283,6 +387,8 @@ export function StudyProcessingProvider({
       markConnectionDisconnected,
       markConnectionReconnecting,
       receiveSnapshot,
+      reprocessRequestState.entriesByStudyInstanceUID,
+      reprocessStudy,
       refreshRunHistory,
       runHistoryState.entriesByStudyInstanceUID,
       startInitialSnapshot,
@@ -299,6 +405,9 @@ StudyProcessingProvider.propTypes = {
   children: PropTypes.node.isRequired,
   runHistoryTransport: PropTypes.shape({
     loadRunHistory: PropTypes.func.isRequired,
+  }),
+  reprocessTransport: PropTypes.shape({
+    reprocessStudy: PropTypes.func.isRequired,
   }),
 };
 

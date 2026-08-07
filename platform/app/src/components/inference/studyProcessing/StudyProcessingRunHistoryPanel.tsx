@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
 import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
+import { StudyReprocessAction } from './StudyReprocessAction';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
   pending: 'text-[#c3c9c3]',
@@ -131,11 +132,17 @@ function runToneClassName(run: ProcessingRun): string {
 export interface StudyProcessingRunHistoryPanelProps {
   studyInstanceUID: string;
   runHistoryTransport?: StudyProcessingRunHistoryTransport;
+  canReprocessStudy?: boolean;
+  reprocessingDisabled?: boolean;
+  refreshVisibleStudySnapshot?: () => Promise<void> | void;
 }
 
 export function StudyProcessingRunHistoryPanel({
   studyInstanceUID,
   runHistoryTransport,
+  canReprocessStudy = false,
+  reprocessingDisabled = false,
+  refreshVisibleStudySnapshot,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
   const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
@@ -192,6 +199,13 @@ export function StudyProcessingRunHistoryPanel({
             })}
           </span>
         )}
+        <StudyReprocessAction
+          studyInstanceUID={studyInstanceUID}
+          authorized={canReprocessStudy}
+          disabled={reprocessingDisabled}
+          refreshVisibleStudySnapshot={refreshVisibleStudySnapshot}
+          runHistoryTransport={runHistoryTransport}
+        />
         {(history || entry.status === 'ready') && (
           <button
             type="button"

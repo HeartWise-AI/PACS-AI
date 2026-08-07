@@ -28,3 +28,6 @@ export * from './sseRecovery';
 export * from './sseTelemetry';
 export * from './notificationTransitions';
 export * from './useStudyProcessingRealtime';
+export * from './reprocessTransport';
+export * from './reprocessReducer';
+export * from './StudyReprocessAction';

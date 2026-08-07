@@ -1084,6 +1084,11 @@ function WorkList() {
                                 {showStudyProcessing && (
                                   <StudyProcessingRunHistoryPanel
                                     studyInstanceUID={row.studyInstanceUID}
+                                    canReprocessStudy={canViewStudyProcessing}
+                                    reprocessingDisabled={showStudyProcessingFixtures}
+                                    refreshVisibleStudySnapshot={
+                                      retryVisibleStudyProcessingSnapshot
+                                    }
                                     runHistoryTransport={
                                       showStudyProcessingFixtures
                                         ? undefined
