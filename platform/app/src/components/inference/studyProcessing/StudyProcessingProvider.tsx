@@ -27,6 +27,7 @@ import {
 import {
   createRESTStudyReprocessTransport,
   createStudyReprocessRequestCoordinator,
+  StudyReprocessError,
   type StudyReprocessTransport,
 } from './reprocessTransport';
 import {
@@ -312,6 +313,13 @@ export function StudyProcessingProvider({
               studyInstanceUID,
               error: normalizedError,
             });
+            if (
+              normalizedError instanceof StudyReprocessError &&
+              normalizedError.status === 409 &&
+              refreshVisibleStudySnapshot
+            ) {
+              void Promise.resolve(refreshVisibleStudySnapshot());
+            }
           }
           throw normalizedError;
         });

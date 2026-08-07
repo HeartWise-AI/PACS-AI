@@ -7,6 +7,7 @@ import {
   type StudyProcessingContextValue,
 } from './StudyProcessingProvider';
 import type { CreatedStudyProcessingRun } from './types';
+import { StudyReprocessError } from './reprocessTransport';
 
 const studyInstanceUID = studyProcessingRunHistoryFixture.studyInstanceUID;
 const createdRun: CreatedStudyProcessingRun = {
@@ -141,5 +142,28 @@ describe('StudyProcessingProvider reprocessing', () => {
       createdRun: null,
       error: existingError,
     });
+  });
+
+  it('refreshes authoritative status after an active-run conflict', async () => {
+    const refreshVisibleStudySnapshot = jest.fn();
+    const conflict = new StudyReprocessError('Active run.', 409);
+    act(() => {
+      renderer = TestRenderer.create(
+        <StudyProcessingProvider
+          reprocessTransport={{ reprocessStudy: jest.fn().mockRejectedValue(conflict) }}
+        >
+          <ContextConsumer />
+        </StudyProcessingProvider>
+      );
+    });
+
+    await act(async () => {
+      await expect(
+        contextValue.reprocessStudy(studyInstanceUID, refreshVisibleStudySnapshot)
+      ).rejects.toBe(conflict);
+    });
+
+    expect(refreshVisibleStudySnapshot).toHaveBeenCalledTimes(1);
+    expect(contextValue.getStudyReprocessRequestEntry(studyInstanceUID).status).toBe('error');
   });
 });

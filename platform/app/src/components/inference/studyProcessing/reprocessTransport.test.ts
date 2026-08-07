@@ -3,6 +3,7 @@ import {
   createStudyReprocessRequestCoordinator,
   type StudyReprocessTransport,
 } from './reprocessTransport';
+import { StudyReprocessRESTError } from './restRepository';
 import type { CreatedStudyProcessingRun } from './types';
 
 const createdRun: CreatedStudyProcessingRun = {
@@ -20,6 +21,18 @@ describe('study reprocess transport', () => {
 
     await expect(transport.reprocessStudy('1.2.3')).resolves.toBe(createdRun);
     expect(reprocessStudy).toHaveBeenCalledWith('1.2.3');
+  });
+
+  it('converts REST failures into a transport-independent action error', async () => {
+    const transport = createRESTStudyReprocessTransport({
+      reprocessStudy: jest.fn().mockRejectedValue(new StudyReprocessRESTError('Active run.', 409)),
+    } as never);
+
+    await expect(transport.reprocessStudy('1.2.3')).rejects.toMatchObject({
+      name: 'StudyReprocessError',
+      message: 'Active run.',
+      status: 409,
+    });
   });
 
   it('returns one shared in-flight request for repeated submissions of the same study', async () => {

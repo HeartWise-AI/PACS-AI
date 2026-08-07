@@ -1,11 +1,22 @@
 import {
   createStudyProcessingRESTRepository,
+  StudyReprocessRESTError,
   type StudyProcessingRESTRepository,
 } from './restRepository';
 import type { CreatedStudyProcessingRun } from './types';
 
 export interface StudyReprocessTransport {
   reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun>;
+}
+
+export class StudyReprocessError extends Error {
+  readonly status: number | null;
+
+  constructor(message: string, status: number | null) {
+    super(message);
+    this.name = 'StudyReprocessError';
+    this.status = status;
+  }
 }
 
 export interface StudyReprocessRequestCoordinator {
@@ -18,7 +29,16 @@ export function createRESTStudyReprocessTransport(
   repository: StudyProcessingRESTRepository = createStudyProcessingRESTRepository()
 ): StudyReprocessTransport {
   return {
-    reprocessStudy: studyInstanceUID => repository.reprocessStudy(studyInstanceUID),
+    async reprocessStudy(studyInstanceUID) {
+      try {
+        return await repository.reprocessStudy(studyInstanceUID);
+      } catch (error: unknown) {
+        if (error instanceof StudyReprocessRESTError) {
+          throw new StudyReprocessError(error.message, error.status);
+        }
+        throw new StudyReprocessError('Unable to reprocess this study.', null);
+      }
+    },
   };
 }
 

@@ -79,6 +79,13 @@ export class StudyProcessingRESTError extends Error {
   }
 }
 
+export class StudyReprocessRESTError extends StudyProcessingRESTError {
+  constructor(message: string, status: number | null) {
+    super(message, status);
+    this.name = 'StudyReprocessRESTError';
+  }
+}
+
 function normalizePageRequest(request: StudyProcessingPageRequest): {
   limit: number;
   offset: number;
@@ -160,6 +167,28 @@ function safeRESTError(error: unknown): StudyProcessingRESTError {
   );
 }
 
+function safeReprocessRESTError(error: unknown): StudyReprocessRESTError {
+  if (error instanceof StudyReprocessRESTError) {
+    return error;
+  }
+
+  const status = responseStatus(error);
+  const messageByStatus: Record<number, string> = {
+    400: 'The Study Instance UID is invalid.',
+    401: 'Authentication is required to reprocess this study.',
+    403: 'You do not have permission to reprocess this study.',
+    404: 'No processing candidates were found for this study.',
+    409: 'This study already has an active processing run.',
+    500: 'The processing service could not create a new run.',
+    503: 'The processing service is temporarily unavailable.',
+  };
+
+  return new StudyReprocessRESTError(
+    (status && messageByStatus[status]) || 'Unable to reprocess this study.',
+    status
+  );
+}
+
 async function getResponseData<T>(
   client: StudyProcessingHTTPClient,
   path: string,
@@ -186,12 +215,12 @@ async function postResponseData<T>(client: StudyProcessingHTTPClient, path: stri
     const response = await client.post<WorklistAPIResponse<T>>(path);
 
     if (!response.data.success) {
-      throw new StudyProcessingRESTError('Unable to reprocess study.', null);
+      throw new StudyReprocessRESTError('Unable to reprocess this study.', null);
     }
 
     return response.data.data;
   } catch (error: unknown) {
-    throw safeRESTError(error);
+    throw safeReprocessRESTError(error);
   }
 }
 

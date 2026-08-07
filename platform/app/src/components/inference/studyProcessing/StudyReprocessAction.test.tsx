@@ -1,13 +1,14 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { studyProcessingSummaryFixtures } from './fixtures';
-import { StudyReprocessAction } from './StudyReprocessAction';
+import { getStudyReprocessErrorPresentation, StudyReprocessAction } from './StudyReprocessAction';
 import {
   StudyProcessingProvider,
   useStudyProcessing,
   type StudyProcessingContextValue,
 } from './StudyProcessingProvider';
 import type { CreatedStudyProcessingRun } from './types';
+import { StudyReprocessError } from './reprocessTransport';
 
 const studyInstanceUID = '1.2.3';
 const createdRun: CreatedStudyProcessingRun = {
@@ -113,5 +114,73 @@ describe('StudyReprocessAction', () => {
       renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' }).props
         .disabled
     ).toBe(true);
+  });
+
+  test.each([
+    [400, 'ProcessingReprocessError400'],
+    [401, 'ProcessingReprocessError401'],
+    [403, 'ProcessingReprocessError403'],
+    [404, 'ProcessingReprocessError404'],
+    [409, 'ProcessingReprocessError409'],
+    [500, 'ProcessingReprocessError500'],
+    [503, 'ProcessingReprocessError503'],
+    [null, 'ProcessingReprocessErrorUnavailable'],
+  ])('selects safe translated feedback for status %s', (status, key) => {
+    expect(
+      getStudyReprocessErrorPresentation(new StudyReprocessError('private detail', status)).key
+    ).toBe(key);
+  });
+
+  it('renders the created run acknowledgement after success', async () => {
+    renderAction();
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-action',
+        })
+        .props.onClick();
+    });
+
+    await act(async () => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-confirm',
+        })
+        .props.onClick();
+      await Promise.resolve();
+    });
+
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-success' })
+    ).toBeDefined();
+  });
+
+  it('renders safe error feedback without discarding the action', async () => {
+    renderAction({
+      reprocessStudy: jest.fn().mockRejectedValue(new StudyReprocessError('private detail', 500)),
+    });
+    act(() => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-action',
+        })
+        .props.onClick();
+    });
+
+    await act(async () => {
+      renderer.root
+        .findByProps({
+          'data-testid': 'study-processing-reprocess-confirm',
+        })
+        .props.onClick();
+      await Promise.resolve();
+    });
+
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-error' })
+    ).toBeDefined();
+    expect(
+      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' })
+    ).toBeDefined();
   });
 });

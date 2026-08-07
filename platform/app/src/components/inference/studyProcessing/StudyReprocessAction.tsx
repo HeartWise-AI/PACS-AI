@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
+import { StudyReprocessError } from './reprocessTransport';
 import { useStudyProcessing } from './StudyProcessingProvider';
 
 export interface StudyReprocessActionProps {
@@ -9,6 +10,50 @@ export interface StudyReprocessActionProps {
   disabled?: boolean;
   refreshVisibleStudySnapshot?: () => Promise<void> | void;
   runHistoryTransport?: StudyProcessingRunHistoryTransport;
+}
+
+export function getStudyReprocessErrorPresentation(error: Error | null): {
+  key: string;
+  defaultValue: string;
+} {
+  const status = error instanceof StudyReprocessError ? error.status : null;
+  const presentationByStatus: Record<number, { key: string; defaultValue: string }> = {
+    400: {
+      key: 'ProcessingReprocessError400',
+      defaultValue: 'The Study Instance UID is invalid.',
+    },
+    401: {
+      key: 'ProcessingReprocessError401',
+      defaultValue: 'Please sign in again before reprocessing this study.',
+    },
+    403: {
+      key: 'ProcessingReprocessError403',
+      defaultValue: 'You do not have permission to reprocess this study.',
+    },
+    404: {
+      key: 'ProcessingReprocessError404',
+      defaultValue: 'No processing candidates were found for this study.',
+    },
+    409: {
+      key: 'ProcessingReprocessError409',
+      defaultValue: 'This study already has an active processing run. Its status was refreshed.',
+    },
+    500: {
+      key: 'ProcessingReprocessError500',
+      defaultValue: 'The processing service could not create a new run.',
+    },
+    503: {
+      key: 'ProcessingReprocessError503',
+      defaultValue: 'The processing service is temporarily unavailable.',
+    },
+  };
+
+  return (
+    (status && presentationByStatus[status]) || {
+      key: 'ProcessingReprocessErrorUnavailable',
+      defaultValue: 'Unable to reprocess this study. Please try again.',
+    }
+  );
 }
 
 export function StudyReprocessAction({
@@ -30,6 +75,7 @@ export function StudyReprocessAction({
   const requestEntry = getStudyReprocessRequestEntry(studyInstanceUID);
   const activeRun = summary?.phase === 'QUEUED' || summary?.phase === 'PROCESSING';
   const submitting = requestEntry.status === 'submitting';
+  const errorPresentation = getStudyReprocessErrorPresentation(requestEntry.error);
 
   if (!authorized) {
     return null;
@@ -49,10 +95,10 @@ export function StudyReprocessAction({
   };
 
   return (
-    <>
+    <div className="ml-4 flex items-center gap-2">
       <button
         type="button"
-        className="border-primary-main text-primary-main disabled:border-white/15 disabled:text-white/35 ml-4 rounded-md border px-3 py-1 text-xs font-semibold hover:bg-[#c8f469]/10 disabled:cursor-not-allowed"
+        className="border-primary-main text-primary-main disabled:border-white/15 disabled:text-white/35 rounded-md border px-3 py-1 text-xs font-semibold hover:bg-[#c8f469]/10 disabled:cursor-not-allowed"
         onClick={openConfirmation}
         disabled={actionDisabled}
         aria-label={t('ProcessingReprocessStudyAriaLabel', {
@@ -71,6 +117,29 @@ export function StudyReprocessAction({
           ? t('ProcessingReprocessSubmitting', { defaultValue: 'Starting…' })
           : t('ProcessingReprocessStudy', { defaultValue: 'Reprocess study' })}
       </button>
+
+      {requestEntry.status === 'success' && requestEntry.createdRun && (
+        <span
+          className="text-xs font-semibold text-[#5bea8f]"
+          role="status"
+          data-testid="study-processing-reprocess-success"
+        >
+          {t('ProcessingReprocessSuccess', {
+            runNumber: requestEntry.createdRun.runNumber,
+            defaultValue: 'Run #{{runNumber}} was created.',
+          })}
+        </span>
+      )}
+
+      {requestEntry.status === 'error' && (
+        <span
+          className="max-w-sm text-xs font-semibold text-[#ff9b9b]"
+          role="alert"
+          data-testid="study-processing-reprocess-error"
+        >
+          {t(errorPresentation.key, { defaultValue: errorPresentation.defaultValue })}
+        </span>
+      )}
 
       {confirmationOpen && (
         <div
@@ -129,7 +198,7 @@ export function StudyReprocessAction({
           </section>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

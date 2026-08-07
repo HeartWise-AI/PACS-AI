@@ -221,4 +221,20 @@ describe('study processing REST repository', () => {
       repository.loadWorklistStudyStatuses({ studyInstanceUIDs: ['1.2.3'] })
     ).rejects.toEqual(new StudyProcessingRESTError(message, status));
   });
+
+  test.each([
+    [400, 'The Study Instance UID is invalid.'],
+    [401, 'Authentication is required to reprocess this study.'],
+    [403, 'You do not have permission to reprocess this study.'],
+    [404, 'No processing candidates were found for this study.'],
+    [409, 'This study already has an active processing run.'],
+    [500, 'The processing service could not create a new run.'],
+    [503, 'The processing service is temporarily unavailable.'],
+  ])('maps reprocess HTTP %i to a safe action error', async (status, message) => {
+    const { client, post } = createClient();
+    post.mockRejectedValue({ response: { status, data: { message: 'private backend detail' } } });
+    const repository = createStudyProcessingRESTRepository(client);
+
+    await expect(repository.reprocessStudy('1.2.3')).rejects.toMatchObject({ status, message });
+  });
 });
