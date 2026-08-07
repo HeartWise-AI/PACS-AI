@@ -88,6 +88,8 @@
   "ProcessingNotificationTitle.UNKNOWN": "Traitement d'inférence terminé",
   "ProcessingNotificationUnknownModality": "Modalité indisponible",
   "ProcessingNotificationUnknownStudy": "Mise à jour du traitement d'une étude",
+  "ProcessingNotificationStudyNotFound": "Cette étude n'est plus disponible dans la liste de travail actuelle.",
+  "ProcessingNotificationsAriaLabel": "Notifications de traitement",
   "ProcessingNotificationsCount": "{{count}} notification",
   "ProcessingNotificationsCount_plural": "{{count}} notifications",
   "ProcessingNotificationsEmpty": "Aucune notification de traitement",

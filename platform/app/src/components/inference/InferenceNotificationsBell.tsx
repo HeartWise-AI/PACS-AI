@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useInferenceProcessing } from './InferenceProcessingProvider';
 import { getInferenceNotificationPresentation } from './inferenceNotifications';
+import { buildProcessingNotificationWorklistPath } from './processingNotificationNavigation';
 
 function formatRelativeTime(timestamp: string) {
   const then = Date.parse(timestamp);
@@ -104,7 +105,7 @@ export default function InferenceNotificationsBell() {
 
   const handleItemClick = (studyInstanceUID: string) => {
     setBellOpen(false);
-    navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}`);
+    navigate(buildProcessingNotificationWorklistPath(studyInstanceUID));
   };
 
   return (
@@ -116,7 +117,7 @@ export default function InferenceNotificationsBell() {
         type="button"
         onClick={handleBellClick}
         className="relative inline-flex items-center justify-center rounded-lg bg-transparent p-2.5 text-white hover:text-white/80"
-        aria-label="Inference notifications"
+        aria-label={t('ProcessingNotificationsAriaLabel')}
         aria-expanded={isBellOpen}
         aria-haspopup="true"
       >

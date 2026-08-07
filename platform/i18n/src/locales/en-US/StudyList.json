@@ -92,6 +92,8 @@
   "ProcessingNotificationTitle.UNKNOWN": "Inference processing finished",
   "ProcessingNotificationUnknownModality": "Modality unavailable",
   "ProcessingNotificationUnknownStudy": "Study processing update",
+  "ProcessingNotificationStudyNotFound": "This study is no longer available in the current worklist.",
+  "ProcessingNotificationsAriaLabel": "Processing notifications",
   "ProcessingNotificationsCount": "{{count}} notification",
   "ProcessingNotificationsCount_plural": "{{count}} notifications",
   "ProcessingNotificationsEmpty": "No processing notifications yet",
