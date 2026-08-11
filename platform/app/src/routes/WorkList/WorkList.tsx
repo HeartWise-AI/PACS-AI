@@ -41,6 +41,10 @@ import {
 } from '../../components/inference/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
+import {
+  saveSubmittedWorklistSearch,
+  updateSubmittedWorklistSearchPage,
+} from '../../utils/worklistSearchSession';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -498,6 +502,9 @@ function WorkList() {
   // Handle page change
   const handlePageChange = page => {
     setCurrentPage(page);
+    if (studyProcessingAuthIdentity) {
+      updateSubmittedWorklistSearchPage(studyProcessingAuthIdentity, page);
+    }
   };
 
   /**
@@ -523,6 +530,18 @@ function WorkList() {
    */
   const searchStudyList = async () => {
     await fetchStudyListData();
+  };
+
+  const submitStudyListSearch = async () => {
+    setIsSearching(true);
+    setCurrentPage(1);
+    if (studyProcessingAuthIdentity) {
+      saveSubmittedWorklistSearch(studyProcessingAuthIdentity, {
+        filters: { ...filterRef.current },
+        currentPage: 1,
+      });
+    }
+    await searchStudyList();
   };
 
   /**
@@ -932,10 +951,7 @@ function WorkList() {
               <Button
                 disabled={isStudyListDataLoading}
                 className="h-[51px] w-full rounded-lg !px-5 md:w-[100px]"
-                onClick={() => {
-                  setIsSearching(true);
-                  searchStudyList();
-                }}
+                onClick={submitStudyListSearch}
               >
                 {isStudyListDataLoading ? '...' : t('Search')}
               </Button>

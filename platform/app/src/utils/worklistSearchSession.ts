@@ -137,6 +137,26 @@ export function loadSubmittedWorklistSearch(
   }
 }
 
+export function updateSubmittedWorklistSearchPage(
+  authenticatedIdentity: string,
+  currentPage: number,
+  storage?: SessionStorage
+): void {
+  const submittedSearch = loadSubmittedWorklistSearch(authenticatedIdentity, storage);
+  if (!submittedSearch) {
+    return;
+  }
+
+  saveSubmittedWorklistSearch(
+    authenticatedIdentity,
+    {
+      ...submittedSearch,
+      currentPage,
+    },
+    storage
+  );
+}
+
 export function clearSubmittedWorklistSearch(storage?: SessionStorage): void {
   const sessionStorage = getSessionStorage(storage);
   if (!sessionStorage) {

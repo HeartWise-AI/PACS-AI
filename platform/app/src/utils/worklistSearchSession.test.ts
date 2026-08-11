@@ -2,6 +2,7 @@ import {
   clearSubmittedWorklistSearch,
   loadSubmittedWorklistSearch,
   saveSubmittedWorklistSearch,
+  updateSubmittedWorklistSearchPage,
   WORKLIST_SEARCH_FILTER_KEYS,
   WORKLIST_SEARCH_SESSION_STORAGE_KEY,
   type WorklistSearchFilters,
@@ -72,6 +73,24 @@ describe('worklist search session', () => {
     });
 
     clearSubmittedWorklistSearch();
+
+    expect(loadSubmittedWorklistSearch('tenant-a:user-a')).toBeNull();
+  });
+
+  it('updates only the page of an existing submitted search', () => {
+    const filters = createFilters({ patientName: 'DOE^JANE' });
+    saveSubmittedWorklistSearch('tenant-a:user-a', { filters, currentPage: 1 });
+
+    updateSubmittedWorklistSearchPage('tenant-a:user-a', 4);
+
+    expect(loadSubmittedWorklistSearch('tenant-a:user-a')).toEqual({
+      filters,
+      currentPage: 4,
+    });
+  });
+
+  it('does not create persisted criteria from pagination alone', () => {
+    updateSubmittedWorklistSearchPage('tenant-a:user-a', 2);
 
     expect(loadSubmittedWorklistSearch('tenant-a:user-a')).toBeNull();
   });
