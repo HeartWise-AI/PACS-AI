@@ -1,21 +1,20 @@
 import {
   clearSubmittedWorklistSearch,
+  createWorklistSearchFilters,
   loadSubmittedWorklistSearch,
   saveSubmittedWorklistSearch,
   updateSubmittedWorklistSearchPage,
-  WORKLIST_SEARCH_FILTER_KEYS,
   WORKLIST_SEARCH_SESSION_STORAGE_KEY,
   type WorklistSearchFilters,
 } from './worklistSearchSession';
 
 function createFilters(overrides: Partial<WorklistSearchFilters> = {}): WorklistSearchFilters {
-  return {
-    ...Object.fromEntries(WORKLIST_SEARCH_FILTER_KEYS.map(key => [key, ''])),
+  return createWorklistSearchFilters({
     studyDate: '20260801-20260811',
     modalitiesInStudy: 'XA',
     modalityId: 'ORTHANC-A',
     ...overrides,
-  } as WorklistSearchFilters;
+  });
 }
 
 describe('worklist search session', () => {

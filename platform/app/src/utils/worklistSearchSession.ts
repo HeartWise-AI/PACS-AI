@@ -22,6 +22,30 @@ export const WORKLIST_SEARCH_FILTER_KEYS = [
 export type WorklistSearchFilterKey = (typeof WORKLIST_SEARCH_FILTER_KEYS)[number];
 export type WorklistSearchFilters = Record<WorklistSearchFilterKey, string>;
 
+export function createWorklistSearchFilters(
+  overrides: Partial<WorklistSearchFilters> = {}
+): WorklistSearchFilters {
+  return {
+    modalityId: '',
+    accessionNumber: '',
+    institutionName: '',
+    modalitiesInStudy: '',
+    numberOfStudyRelatedSeries: '',
+    patientBirthDate: '',
+    patientId: '',
+    patientName: '',
+    patientSex: '',
+    referringPhysicianName: '',
+    requestingPhysician: '',
+    studyDate: '',
+    studyDescription: '',
+    studyId: '',
+    studyInstanceUID: '',
+    studyTime: '',
+    ...overrides,
+  };
+}
+
 export interface SubmittedWorklistSearch {
   filters: WorklistSearchFilters;
   currentPage: number;

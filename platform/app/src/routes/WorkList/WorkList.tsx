@@ -42,9 +42,42 @@ import {
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
 import {
+  createWorklistSearchFilters,
+  loadSubmittedWorklistSearch,
   saveSubmittedWorklistSearch,
   updateSubmittedWorklistSearchPage,
+  WORKLIST_SEARCH_FILTER_KEYS,
+  type WorklistSearchFilters,
 } from '../../utils/worklistSearchSession';
+
+function getFiltersFromSearchParams(
+  searchParams: URLSearchParams,
+  fallbackDICOMModality: string
+): { filters: WorklistSearchFilters; shouldSearch: boolean } {
+  const filters = createWorklistSearchFilters({ modalityId: fallbackDICOMModality });
+  let shouldSearch = false;
+
+  WORKLIST_SEARCH_FILTER_KEYS.forEach(key => {
+    const value = searchParams.get(key);
+    if (value !== null) {
+      filters[key] = value;
+      shouldSearch = true;
+    }
+  });
+
+  const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
+  if (notificationStudyInstanceUID) {
+    filters.studyInstanceUID = notificationStudyInstanceUID;
+    shouldSearch = true;
+  }
+
+  if (!shouldSearch) {
+    const today = moment().format('YYYYMMDD');
+    filters.studyDate = `${today}-${today}`;
+  }
+
+  return { filters, shouldSearch };
+}
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -54,6 +87,7 @@ function WorkList() {
   const [isStudyListDataLoading, setIsStudyListDataLoading] = useState<boolean>(false);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [modalityOptions, setModalityOptions] = useState<string[]>([]);
+  const [areDICOMModalitiesLoaded, setAreDICOMModalitiesLoaded] = useState(false);
   const [tableDataSource, setTableDataSource] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -74,27 +108,14 @@ function WorkList() {
   );
   const [startDate, setStartDate] = useState(moment());
   const [endDate, setEndDate] = useState(moment());
-  const formattedStartDate = moment().format('YYYYMMDD');
-  const formattedEndDate = moment().format('YYYYMMDD');
-  const [studyListFilter, setStudyListFilter] = useState({
-    modalityId: '',
-    accessionNumber: '',
-    institutionName: '',
-    modalitiesInStudy: '',
-    numberOfStudyRelatedSeries: '',
-    patientBirthDate: '',
-    patientId: '',
-    patientName: '',
-    patientSex: '',
-    referringPhysicianName: '',
-    requestingPhysician: '',
-    studyDate: `${formattedStartDate}-${formattedEndDate}`,
-    studyDescription: '',
-    studyId: '',
-    studyInstanceUID: '',
-    studyTime: '',
+  const [studyListFilter, setStudyListFilter] = useState<WorklistSearchFilters>(() => {
+    const today = moment().format('YYYYMMDD');
+    return createWorklistSearchFilters({ studyDate: `${today}-${today}` });
   });
   const filterRef = useRef(studyListFilter);
+  const restoredIdentityRef = useRef<string | null>(null);
+  const handledNotificationStudyRef = useRef<string | null>(null);
+  const pendingRestoredSearchRef = useRef(false);
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const {
@@ -163,6 +184,41 @@ function WorkList() {
     label: string;
   } | null>(null);
 
+  const applyStudyListSearchState = useCallback((filters: WorklistSearchFilters, page: number) => {
+    const restoredFilters = { ...filters };
+    filterRef.current = restoredFilters;
+    setStudyListFilter(restoredFilters);
+    setCurrentPage(Math.max(1, page));
+
+    const restoredModalities = restoredFilters.modalitiesInStudy
+      ? restoredFilters.modalitiesInStudy.split('\\')
+      : [];
+    setSelectedModalities(
+      filtersMeta[4].inputProps.options.filter(option => restoredModalities.includes(option.value))
+    );
+
+    if (restoredFilters.modalityId) {
+      setSelectedDICOMModality({
+        value: restoredFilters.modalityId,
+        label: restoredFilters.modalityId,
+      });
+      localStorage.setItem('selectedDICOMModality', restoredFilters.modalityId);
+    } else {
+      setSelectedDICOMModality(null);
+    }
+
+    const [start, end] = restoredFilters.studyDate.split('-');
+    const restoredStartDate = moment(start, 'YYYYMMDD', true);
+    const restoredEndDate = moment(end, 'YYYYMMDD', true);
+    if (restoredStartDate.isValid() && restoredEndDate.isValid()) {
+      setStartDate(restoredStartDate);
+      setEndDate(restoredEndDate);
+    } else {
+      setStartDate(null);
+      setEndDate(null);
+    }
+  }, []);
+
   const { data, error, refetch } = useQuery(
     ['studyData', JSON.stringify(studyListFilter)],
     async () => await orthancRepository.GetModalityStudies(filterRef.current),
@@ -189,6 +245,13 @@ function WorkList() {
       const sortedStudies = sortStudies(data.data.studies);
       // update the table with the new or cached study data
       setTableDataSource(sortedStudies);
+      const lastAvailablePage = Math.max(1, Math.ceil(sortedStudies.length / itemsPerPage));
+      if (currentPage > lastAvailablePage) {
+        setCurrentPage(lastAvailablePage);
+        if (studyProcessingAuthIdentity) {
+          updateSubmittedWorklistSearchPage(studyProcessingAuthIdentity, lastAvailablePage);
+        }
+      }
       const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
       if (notificationStudyInstanceUID) {
         const targetPage = findProcessingNotificationStudyPage(
@@ -250,29 +313,10 @@ function WorkList() {
           localStorage.removeItem('selectedDICOMModality');
           setSelectedDICOMModality(null);
         }
-
-        // check localStorage for selectedDICOMModality
-        const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
-
-        if (!storedDICOMModality && options.length > 0) {
-          // if not exist, assign the first key in the response.modalities
-          const firstDICOMModalityKey = options[0];
-          if (firstDICOMModalityKey) {
-            setSelectedDICOMModality({
-              value: firstDICOMModalityKey,
-              label: firstDICOMModalityKey,
-            });
-
-            setStudyListFilter(prevFilter => ({
-              ...prevFilter,
-              modalityId: firstDICOMModalityKey,
-            }));
-            localStorage.setItem('selectedDICOMModality', firstDICOMModalityKey);
-            fetchStudyListData();
-          }
-        }
       } catch (error) {
         console.error('Error fetching DICOM modalities:', error);
+      } finally {
+        setAreDICOMModalitiesLoaded(true);
       }
     };
 
@@ -292,147 +336,103 @@ function WorkList() {
   }, []);
 
   useEffect(() => {
-    const params = Object.fromEntries(searchParams.entries());
-
-    // array to store promises for each state update
-    const updatePromises: Promise<void>[] = [];
-
-    // auto-fill the fields using these parameters
-    if (params.patientName) {
-      updatePromises.push(
-        new Promise(resolve => {
-          handleInputChange('patientName', params.patientName);
-          resolve();
-        })
-      );
+    if (
+      !areDICOMModalitiesLoaded ||
+      !studyProcessingAuthIdentity ||
+      restoredIdentityRef.current === studyProcessingAuthIdentity
+    ) {
+      return;
     }
 
-    if (params.patientId) {
-      updatePromises.push(
-        new Promise(resolve => {
-          handleInputChange('patientId', params.patientId);
-          resolve();
-        })
-      );
+    const previousIdentity = restoredIdentityRef.current;
+    restoredIdentityRef.current = studyProcessingAuthIdentity;
+    if (previousIdentity && previousIdentity !== studyProcessingAuthIdentity) {
+      setTableDataSource([]);
+      setExpandedStudyRows({});
+      setStudyQueryId('');
     }
-
-    if (params.studyDescription) {
-      updatePromises.push(
-        new Promise(resolve => {
-          handleInputChange('studyDescription', params.studyDescription);
-          resolve();
-        })
-      );
-    }
-
-    if (params.accessionNumber) {
-      updatePromises.push(
-        new Promise(resolve => {
-          handleInputChange('accessionNumber', params.accessionNumber);
-          resolve();
-        })
-      );
-    }
-
-    if (params[PROCESSING_NOTIFICATION_STUDY_PARAM]) {
-      updatePromises.push(
-        new Promise(resolve => {
-          handleInputChange('studyInstanceUID', params[PROCESSING_NOTIFICATION_STUDY_PARAM]);
-          resolve();
-        })
-      );
-    }
-
-    if (params.modalitiesInStudy) {
-      updatePromises.push(
-        new Promise(resolve => {
-          const modalitiesArray = params.modalitiesInStudy.split('\\');
-          const selectedOptions = filtersMeta[4].inputProps.options.filter(option =>
-            modalitiesArray.includes(option.value)
-          );
-          setSelectedModalities(selectedOptions);
-          const updatedModalitiesInStudy = selectedOptions.map(option => option.value).join('\\');
-          setStudyListFilter(prevFilter => ({
-            ...prevFilter,
-            modalitiesInStudy: updatedModalitiesInStudy,
-          }));
-          resolve();
-        })
-      );
-    }
-
-    if (params.studyDate) {
-      updatePromises.push(
-        new Promise(resolve => {
-          const [start, end] = params.studyDate.split('-');
-          const startDateMoment = moment(start, 'YYYYMMDD');
-          const endDateMoment = moment(end, 'YYYYMMDD');
-
-          setStartDate(startDateMoment);
-          setEndDate(endDateMoment);
-
-          const formattedStartDate = startDateMoment.format('YYYYMMDD');
-          const formattedEndDate = endDateMoment.format('YYYYMMDD');
-          const formattedDateRange = `${formattedStartDate}-${formattedEndDate}`;
-
-          setStudyListFilter(prevFilter => ({
-            ...prevFilter,
-            studyDate: formattedDateRange,
-          }));
-          resolve();
-        })
-      );
-    } else if (Object.keys(params).length === 0) {
-      // if there are no parameters, set today's date
-      const today = moment();
-      setStartDate(today);
-      setEndDate(today);
-    } else {
-      // if there are other parameters but no studyDate, clear the date fields
-      setStartDate(null);
-      setEndDate(null);
-
-      setStudyListFilter(prevFilter => ({
-        ...prevFilter,
-        studyDate: '',
-      }));
-    }
-
-    // include selectedDICOMModality from localStorage
     const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
-    if (storedDICOMModality) {
-      updatePromises.push(
-        new Promise(resolve => {
-          setSelectedDICOMModality({
-            value: storedDICOMModality,
-            label: storedDICOMModality,
-          });
-          setStudyListFilter(prevFilter => ({
-            ...prevFilter,
-            modalityId: storedDICOMModality,
-          }));
-          resolve();
-        })
+    const fallbackDICOMModality =
+      (storedDICOMModality && modalityOptions.includes(storedDICOMModality)
+        ? storedDICOMModality
+        : modalityOptions[0]) || '';
+    const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
+    const submittedSearch = notificationStudyInstanceUID
+      ? null
+      : loadSubmittedWorklistSearch(studyProcessingAuthIdentity);
+
+    if (submittedSearch) {
+      const restoredDICOMModality = modalityOptions.includes(submittedSearch.filters.modalityId)
+        ? submittedSearch.filters.modalityId
+        : fallbackDICOMModality;
+      applyStudyListSearchState(
+        {
+          ...submittedSearch.filters,
+          modalityId: restoredDICOMModality,
+        },
+        submittedSearch.currentPage
       );
+      if (restoredDICOMModality) {
+        pendingRestoredSearchRef.current = true;
+      }
+      return;
     }
 
-    // after all updates are done, check if it's a page refresh
-    Promise.all(updatePromises).then(() => {
-      // check if it's a page refresh by looking at the performance navigation type
-      const isPageRefresh =
-        (window.performance &&
-          window.performance.navigation &&
-          window.performance.navigation.type === 1) ||
-        (window.performance &&
-          performance.getEntriesByType('navigation').length > 0 &&
-          (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).type ===
-            'reload');
+    const restoredSearch = getFiltersFromSearchParams(searchParams, fallbackDICOMModality);
+    applyStudyListSearchState(restoredSearch.filters, 1);
+    if (notificationStudyInstanceUID) {
+      handledNotificationStudyRef.current = notificationStudyInstanceUID;
+    }
+    if (restoredSearch.shouldSearch && fallbackDICOMModality) {
+      pendingRestoredSearchRef.current = true;
+    }
+  }, [
+    applyStudyListSearchState,
+    areDICOMModalitiesLoaded,
+    modalityOptions,
+    searchParams,
+    studyProcessingAuthIdentity,
+  ]);
 
-      if (isPageRefresh || params[PROCESSING_NOTIFICATION_STUDY_PARAM]) {
-        searchStudyList();
-      }
-    });
-  }, [searchParams]);
+  useEffect(() => {
+    const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
+    if (
+      !notificationStudyInstanceUID ||
+      !areDICOMModalitiesLoaded ||
+      !studyProcessingAuthIdentity ||
+      restoredIdentityRef.current !== studyProcessingAuthIdentity ||
+      handledNotificationStudyRef.current === notificationStudyInstanceUID
+    ) {
+      return;
+    }
+
+    const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+    const fallbackDICOMModality =
+      (storedDICOMModality && modalityOptions.includes(storedDICOMModality)
+        ? storedDICOMModality
+        : modalityOptions[0]) || '';
+    const restoredSearch = getFiltersFromSearchParams(searchParams, fallbackDICOMModality);
+    handledNotificationStudyRef.current = notificationStudyInstanceUID;
+    applyStudyListSearchState(restoredSearch.filters, 1);
+    if (fallbackDICOMModality) {
+      pendingRestoredSearchRef.current = true;
+    }
+  }, [
+    applyStudyListSearchState,
+    areDICOMModalitiesLoaded,
+    modalityOptions,
+    searchParams,
+    studyProcessingAuthIdentity,
+  ]);
+
+  useEffect(() => {
+    if (!pendingRestoredSearchRef.current) {
+      return;
+    }
+
+    pendingRestoredSearchRef.current = false;
+    fetchStudyListData();
+  }, [studyListFilter]);
 
   /**
    *  Sort studies
