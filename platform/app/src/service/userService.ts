@@ -1,5 +1,6 @@
 import tenantRepository from '../api/tenantRepository';
 import type { UserResponse } from '../api/userDTO';
+import { clearAuthenticatedSession } from '../utils/authenticatedSession';
 
 /**
  * Resolve where a freshly-authenticated user should land based on their onboarding
@@ -39,7 +40,7 @@ export const navigateAfterAuth = async (navigate, user: UserResponse) => {
 };
 
 export const logoutUser = (navigate, tenantId, forcedLogout = true) => {
-  localStorage.removeItem('sessionToken');
+  clearAuthenticatedSession();
 
   if (forcedLogout) {
     // if unauthorized user error, redirect to login page using window.location.href to clear the cache and state, and avoid re-rendering

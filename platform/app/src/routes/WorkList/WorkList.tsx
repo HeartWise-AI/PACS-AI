@@ -41,43 +41,14 @@ import {
 } from '../../components/inference/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
+import { getFiltersFromSearchParams } from './worklistSearchRestore';
 import {
   createWorklistSearchFilters,
   loadSubmittedWorklistSearch,
   saveSubmittedWorklistSearch,
   updateSubmittedWorklistSearchPage,
-  WORKLIST_SEARCH_FILTER_KEYS,
   type WorklistSearchFilters,
 } from '../../utils/worklistSearchSession';
-
-function getFiltersFromSearchParams(
-  searchParams: URLSearchParams,
-  fallbackDICOMModality: string
-): { filters: WorklistSearchFilters; shouldSearch: boolean } {
-  const filters = createWorklistSearchFilters({ modalityId: fallbackDICOMModality });
-  let shouldSearch = false;
-
-  WORKLIST_SEARCH_FILTER_KEYS.forEach(key => {
-    const value = searchParams.get(key);
-    if (value !== null) {
-      filters[key] = value;
-      shouldSearch = true;
-    }
-  });
-
-  const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
-  if (notificationStudyInstanceUID) {
-    filters.studyInstanceUID = notificationStudyInstanceUID;
-    shouldSearch = true;
-  }
-
-  if (!shouldSearch) {
-    const today = moment().format('YYYYMMDD');
-    filters.studyDate = `${today}-${today}`;
-  }
-
-  return { filters, shouldSearch };
-}
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -378,7 +349,12 @@ function WorkList() {
       return;
     }
 
-    const restoredSearch = getFiltersFromSearchParams(searchParams, fallbackDICOMModality);
+    const today = moment().format('YYYYMMDD');
+    const restoredSearch = getFiltersFromSearchParams(
+      searchParams,
+      fallbackDICOMModality,
+      `${today}-${today}`
+    );
     applyStudyListSearchState(restoredSearch.filters, 1);
     if (notificationStudyInstanceUID) {
       handledNotificationStudyRef.current = notificationStudyInstanceUID;
@@ -411,7 +387,12 @@ function WorkList() {
       (storedDICOMModality && modalityOptions.includes(storedDICOMModality)
         ? storedDICOMModality
         : modalityOptions[0]) || '';
-    const restoredSearch = getFiltersFromSearchParams(searchParams, fallbackDICOMModality);
+    const today = moment().format('YYYYMMDD');
+    const restoredSearch = getFiltersFromSearchParams(
+      searchParams,
+      fallbackDICOMModality,
+      `${today}-${today}`
+    );
     handledNotificationStudyRef.current = notificationStudyInstanceUID;
     applyStudyListSearchState(restoredSearch.filters, 1);
     if (fallbackDICOMModality) {
