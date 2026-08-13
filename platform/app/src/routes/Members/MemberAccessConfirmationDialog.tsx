@@ -57,7 +57,10 @@ export default function MemberAccessConfirmationDialog({
         </h2>
 
         <p className="mt-2 text-sm text-white text-opacity-70">{target.email}</p>
-        <p className="mt-4 text-sm leading-6 text-white text-opacity-70">
+        <p
+          id="member-access-effect"
+          className="mt-4 text-sm leading-6 text-white text-opacity-70"
+        >
           {t(
             suspending
               ? 'Suspending access immediately blocks new sign-ins and revokes all active sessions.'
@@ -77,17 +80,22 @@ export default function MemberAccessConfirmationDialog({
           maxLength={MEMBER_ACCESS_REASON_MAX_LENGTH}
           disabled={busy}
           rows={4}
+          aria-describedby="member-access-effect member-access-reason-count"
           className="focus:border-primary-main mt-2 w-full resize-y rounded-lg border border-white border-opacity-10 bg-white bg-opacity-10 p-3 text-white placeholder:text-white placeholder:text-opacity-40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={t('Add a reason for the audit trail')}
           onChange={event => onReasonChange(event.target.value)}
         />
-        <div className="mt-1 text-right text-xs text-white text-opacity-50">
+        <div
+          id="member-access-reason-count"
+          className="mt-1 text-right text-xs text-white text-opacity-50"
+        >
           {t('{{count}} / 500 characters', { count: reason.length })}
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
+            autoFocus
             disabled={busy}
             className="h-[41px] min-w-[111px] rounded-lg bg-transparent px-4 text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onCancel}

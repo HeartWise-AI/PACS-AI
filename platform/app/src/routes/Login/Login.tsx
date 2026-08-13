@@ -16,14 +16,17 @@ import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
 import { logoutUser, navigateAfterAuth } from '../../service/userService';
-import { ACCOUNT_SUSPENDED_REDIRECT_REASON } from '../../service/accountAccessSession';
+import { consumeAccountSuspendedRedirect } from '../../service/accountAccessSession';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const showAlert = useContext(AlertContext);
+  const showAlert = useContext(AlertContext) as (
+    message: string,
+    type: 'success' | 'error'
+  ) => void;
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
@@ -45,8 +48,8 @@ const LoginPage = () => {
   }, []);
 
   useEffect(() => {
-    const search = new URLSearchParams(location.search);
-    if (search.get('reason') !== ACCOUNT_SUSPENDED_REDIRECT_REASON) {
+    const suspendedRedirect = consumeAccountSuspendedRedirect(location.search);
+    if (!suspendedRedirect.suspended) {
       return;
     }
 
@@ -54,9 +57,7 @@ const LoginPage = () => {
       t('Your account access has been suspended. Contact your workspace administrator.'),
       'error'
     );
-    search.delete('reason');
-    const nextSearch = search.toString();
-    navigate({ pathname: '/login', search: nextSearch ? `?${nextSearch}` : '' }, { replace: true });
+    navigate({ pathname: '/login', search: suspendedRedirect.nextSearch }, { replace: true });
   }, [location.search, navigate, showAlert, t]);
 
   useEffect(() => {
@@ -79,10 +80,23 @@ const LoginPage = () => {
         console.error(error);
       }
     };
-    fetchTenantInfo();
-    getCurrentUser();
-    fetchAPIInfo();
-  }, [userRepository, tenantRepository]);
+    const getCurrentUser = async () => {
+      try {
+        const response = await userRepository.GetCurrentUser();
+        if (response.success) {
+          await navigateAfterAuth(navigate, response.data);
+        } else {
+          localStorage.removeItem('sessionToken');
+        }
+      } catch (error) {
+        console.warn('GetCurrentUser failed on login page', error);
+      }
+    };
+
+    void fetchTenantInfo();
+    void getCurrentUser();
+    void fetchAPIInfo();
+  }, [defaultTenant, navigate, tenantId]);
 
   useEffect(() => {
     if (verificationCooldown <= 0) {
@@ -172,22 +186,6 @@ const LoginPage = () => {
       .catch(() => {
         showAlert('Invalid email or password', 'error');
         setIsLoggingIn(false);
-      });
-  };
-
-  // Get current user info
-  const getCurrentUser = () => {
-    userRepository
-      .GetCurrentUser()
-      .then(response => {
-        if (response.success) {
-          navigateAfterAuth(navigate, response.data);
-        } else {
-          localStorage.removeItem('sessionToken');
-        }
-      })
-      .catch(error => {
-        console.warn('GetCurrentUser failed on login page', error);
       });
   };
 

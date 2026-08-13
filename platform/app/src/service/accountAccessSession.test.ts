@@ -1,4 +1,8 @@
-import { ACCOUNT_SUSPENDED_ERROR_CODE, handleAccountSuspendedError } from './accountAccessSession';
+import {
+  ACCOUNT_SUSPENDED_ERROR_CODE,
+  consumeAccountSuspendedRedirect,
+  handleAccountSuspendedError,
+} from './accountAccessSession';
 
 const createStorage = (values: Record<string, string>) => ({
   getItem: jest.fn((key: string) => values[key] ?? null),
@@ -49,5 +53,16 @@ describe('suspended account session handling', () => {
     ).toBe(false);
     expect(storage.removeItem).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  test('consumes the suspension marker once while preserving tenant context', () => {
+    expect(consumeAccountSuspendedRedirect('?t=tenant-a&reason=account_suspended')).toEqual({
+      suspended: true,
+      nextSearch: '?t=tenant-a',
+    });
+    expect(consumeAccountSuspendedRedirect('?t=tenant-a')).toEqual({
+      suspended: false,
+      nextSearch: '?t=tenant-a',
+    });
   });
 });

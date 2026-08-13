@@ -87,13 +87,13 @@ export interface RemoveTenantUserEmailInviteRequest {
 export interface UserResponse {
   readonly id: string;
   readonly tenantId: string;
-  readonly role: string;
+  readonly role: UserRole;
   readonly accessState: UserAccessState;
   readonly name: string;
   readonly firstName?: string;
   readonly lastName?: string;
   readonly email: string;
-  readonly licenseNo: number;
+  readonly licenseNo: string;
   readonly specialty: string;
   readonly isEmailVerified: boolean;
   readonly isAccountDisabled: boolean;

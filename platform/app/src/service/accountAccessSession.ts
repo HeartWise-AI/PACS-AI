@@ -14,6 +14,11 @@ export interface AccountSuspendedRedirectOptions {
   redirect?: (url: string) => void;
 }
 
+export interface AccountSuspendedRedirectState {
+  suspended: boolean;
+  nextSearch: string;
+}
+
 export const getSuspendedAccountLoginURL = (tenantId?: string | null): string => {
   const search = new URLSearchParams();
   if (tenantId) {
@@ -21,6 +26,18 @@ export const getSuspendedAccountLoginURL = (tenantId?: string | null): string =>
   }
   search.set('reason', ACCOUNT_SUSPENDED_REDIRECT_REASON);
   return `/login?${search.toString()}`;
+};
+
+export const consumeAccountSuspendedRedirect = (
+  currentSearch: string
+): AccountSuspendedRedirectState => {
+  const search = new URLSearchParams(currentSearch);
+  const suspended = search.get('reason') === ACCOUNT_SUSPENDED_REDIRECT_REASON;
+  if (suspended) {
+    search.delete('reason');
+  }
+  const nextSearch = search.toString();
+  return { suspended, nextSearch: nextSearch ? `?${nextSearch}` : '' };
 };
 
 export const handleAccountSuspendedError = (

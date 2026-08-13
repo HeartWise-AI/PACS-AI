@@ -1,44 +1,27 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import ReactDOM from 'react-dom';
 import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import userRepository from '../../api/userRepository';
-import {
-  GetTenantUserEmailInvitesResponse,
-  UserAccessState,
-  UserResponse,
-  UserRole,
-} from '../../api/userDTO';
+import { GetTenantUserEmailInvitesResponse, UserResponse, UserRole } from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
 import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
-import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left.png';
 import chevronRight from './../../assets/pacs/icons/chevron-right.png';
-import { getMemberAccessStatusPresentation } from './memberAccessStatus';
-import { getMemberAccessEligibility } from './memberAccessPolicy';
-import MemberAccessConfirmationDialog, {
-  type MemberAccessAction,
-} from './MemberAccessConfirmationDialog';
-import {
-  ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS,
-  executeMemberAccessTransition,
-  type MemberAccessTransitionError,
-} from './memberAccessTransition';
+import MemberAccessManagement from './MemberAccessManagement';
+import MemberAccessStatusBadge from './MemberAccessStatusBadge';
 import { filterMembers } from './memberSearch';
 
 const userInvitesPerPage = 5;
 
-type MemberRow = Omit<UserResponse, 'role' | 'licenseNo'> & {
-  role: UserRole;
-  licenseNo: string;
+type MemberRow = UserResponse & {
   firstName: string;
   lastName: string;
 };
@@ -46,12 +29,14 @@ type MemberRow = Omit<UserResponse, 'role' | 'licenseNo'> & {
 const MembersPage = () => {
   const { t } = useTranslation('Members');
   const navigate = useNavigate();
-  const [filteredItems, setFilteredItems] = useState([]);
-  const [listOfUsers, setListOfUsers] = useState([]);
+  const [listOfUsers, setListOfUsers] = useState<MemberRow[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
-  const showAlert = useContext(AlertContext);
+  const showAlert = useContext(AlertContext) as (
+    message: string,
+    type: 'success' | 'error'
+  ) => void;
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [isDeletingMember, setIsDeletingMember] = useState(false);
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
@@ -68,12 +53,6 @@ const MembersPage = () => {
   const [resendingTenantInviteId, setResendingTenantInviteId] = useState<string | null>(null);
   const [removingTenantInviteId, setRemovingTenantInviteId] = useState<string | null>(null);
   const [isOpenDeleteMemberModal, setIsOpenDeleteMemberModal] = useState<boolean>(false);
-  const [memberAccessDialog, setMemberAccessDialog] = useState<{
-    action: MemberAccessAction;
-    target: MemberRow;
-  } | null>(null);
-  const [memberAccessReason, setMemberAccessReason] = useState('');
-  const [isChangingMemberAccess, setIsChangingMemberAccess] = useState(false);
   const [selectedUser, setSelectedUser] = useState({
     id: '',
     tenantId: '',
@@ -105,17 +84,15 @@ const MembersPage = () => {
     { text: t('Action'), value: 'action', align: 'center' },
   ];
   const tenantId = localStorage.getItem('tenantId') || '';
+  const filteredItems = useMemo(
+    () => filterMembers(listOfUsers, searchValue),
+    [listOfUsers, searchValue]
+  );
 
   // Set page title
   useEffect(() => {
     document.title = 'Admin Members - PACS AI';
   }, []);
-
-  useEffect(() => {
-    getAllTenantUsers();
-    getCurrentUser();
-    getDoctorSpecialties();
-  }, [userRepository]);
 
   /**
    * Add tenant user
@@ -146,117 +123,6 @@ const MembersPage = () => {
     }
     setIsAddingMember(false);
     setIsAddMember(true);
-  };
-
-  /**
-   * Table action button
-   *
-   * @param param0 row
-   * @returns
-   */
-  const ActionButton = ({ row }: { row: MemberRow }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-    const accessEligibility = getMemberAccessEligibility(currentUser, row);
-    const memberAccessAction: MemberAccessAction | null =
-      row.accessState === UserAccessState.ACTIVE
-        ? 'suspend'
-        : row.accessState === UserAccessState.SUSPENDED
-          ? 'reactivate'
-          : null;
-    const showMemberAccessAction = accessEligibility.allowed && memberAccessAction !== null;
-
-    useEffect(() => {
-      if (isOpen && ref.current) {
-        const rect = ref.current.getBoundingClientRect();
-        // Calculate position for the dropdown menu
-        // Adjust if near the bottom of the viewport
-        const menuHeight = showMemberAccessAction ? 156 : 104;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom;
-        setMenuPosition({
-          top,
-          left: rect.right - 176,
-        });
-      }
-    }, [isOpen, showMemberAccessAction]);
-
-    // Dropdown menu content
-    const menu = (
-      <div
-        className="fixed z-50 w-44 divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow-lg"
-        style={{ top: menuPosition.top, left: menuPosition.left }}
-      >
-        <ul className="py-2 text-sm text-white">
-          <li>
-            <button
-              type="button"
-              className="block w-full px-4 py-2 text-left hover:bg-gray-700"
-              onClick={() => {
-                setSelectedUser(row);
-                setIsAddMember(false);
-                setIsOpenAddEditMemberModal(true);
-                setIsOpen(false);
-              }}
-            >
-              {t('Edit')}
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className="block w-full px-4 py-2 text-left hover:bg-gray-700"
-              onClick={() => {
-                setIsOpenDeleteMemberModal(true);
-                setSelectedUserToDelete({ id: row.id });
-                setIsOpen(false);
-              }}
-            >
-              {t('Delete')}
-            </button>
-          </li>
-          {showMemberAccessAction && (
-            <li>
-              <button
-                type="button"
-                className={`block w-full px-4 py-2 text-left hover:bg-gray-700 ${
-                  memberAccessAction === 'suspend' ? 'text-[#FF9A9A]' : 'text-[#8BE397]'
-                }`}
-                onClick={() => {
-                  setMemberAccessReason('');
-                  setMemberAccessDialog({ action: memberAccessAction, target: row });
-                  setIsOpen(false);
-                }}
-              >
-                {t(memberAccessAction === 'suspend' ? 'Suspend access' : 'Reactivate access')}
-              </button>
-            </li>
-          )}
-        </ul>
-      </div>
-    );
-
-    return (
-      <div
-        className="relative flex items-center justify-center"
-        ref={ref}
-      >
-        <button
-          type="button"
-          aria-label={t('Actions for {{member}}', { member: row.name || row.email })}
-          onClick={() => {
-            setIsOpen(!isOpen);
-          }}
-        >
-          <img
-            src={dotsVertical}
-            alt=""
-          />
-        </button>
-        {isOpen && ReactDOM.createPortal(menu, document.body)}
-      </div>
-    );
   };
 
   const clearSelectedUser = () => {
@@ -300,39 +166,41 @@ const MembersPage = () => {
   /**
    * Get all tenant users
    */
-  const getAllTenantUsers = async (options?: { silent?: boolean }) => {
-    if (!options?.silent) {
-      setListOfUsers([]);
-    }
-    try {
-      const response = await userRepository.GetAllTenantUsers();
-      const listOfUsers = response.data.map(user => {
-        const fullNameParts = user.name.split(' ');
-        const lastName = fullNameParts.pop();
-        const firstName = fullNameParts.join(' ');
-        return {
-          ...user,
-          firstName: firstName,
-          lastName: lastName,
-        };
-      });
-      setListOfUsers(listOfUsers);
-      setFilteredItems(filterMembers(listOfUsers, searchValue));
-    } catch (error) {
-      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
+  const getAllTenantUsers = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setListOfUsers([]);
       }
+      try {
+        const response = await userRepository.GetAllTenantUsers();
+        const listOfUsers = response.data.map(user => {
+          const fullNameParts = user.name.split(' ');
+          const lastName = fullNameParts.pop() ?? '';
+          const firstName = fullNameParts.join(' ');
+          return {
+            ...user,
+            firstName: firstName,
+            lastName: lastName,
+          };
+        });
+        setListOfUsers(listOfUsers);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
 
-      showAlert(error.message, 'error');
-    }
-  };
+        showAlert(error.message, 'error');
+      }
+    },
+    [navigate, showAlert, tenantId]
+  );
 
   /**
    * Get the current actor used to fail closed on access-management permissions.
    */
-  const getCurrentUser = async () => {
+  const getCurrentUser = useCallback(async () => {
     try {
       const response = await userRepository.GetCurrentUser();
       setCurrentUser(response.data);
@@ -345,16 +213,16 @@ const MembersPage = () => {
       }
       showAlert(error.message, 'error');
     }
-  };
+  }, [navigate, showAlert, tenantId]);
 
   /**
    * Get doctors specialties
    */
-  const getDoctorSpecialties = async () => {
+  const getDoctorSpecialties = useCallback(async () => {
     try {
       const response = await userRepository.GetDoctorSpecialties();
       setListOfDoctorSpecialities(response.data);
-      setSelectedUser({ ...selectedUser, specialty: response.data[0].id });
+      setSelectedUser(user => ({ ...user, specialty: response.data[0]?.id ?? '' }));
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -364,7 +232,13 @@ const MembersPage = () => {
 
       showAlert(error.message, 'error');
     }
-  };
+  }, [navigate, showAlert, tenantId]);
+
+  useEffect(() => {
+    void getAllTenantUsers();
+    void getCurrentUser();
+    void getDoctorSpecialties();
+  }, [getAllTenantUsers, getCurrentUser, getDoctorSpecialties]);
 
   /**
    * Update tenant user
@@ -404,52 +278,6 @@ const MembersPage = () => {
    */
   const searchItems = (searchValue: string) => {
     setSearchValue(searchValue);
-    setFilteredItems(filterMembers(listOfUsers, searchValue));
-  };
-
-  /**
-   * Confirm an eligible member access transition against the live backend.
-   */
-  const changeMemberAccess = async () => {
-    if (!memberAccessDialog) {
-      return;
-    }
-
-    const eligibility = getMemberAccessEligibility(currentUser, memberAccessDialog.target);
-    if (!eligibility.allowed) {
-      setMemberAccessDialog(null);
-      setMemberAccessReason('');
-      showAlert(t('Account access management is no longer available for this member.'), 'error');
-      return;
-    }
-
-    setIsChangingMemberAccess(true);
-    try {
-      const response = await executeMemberAccessTransition({
-        action: memberAccessDialog.action,
-        userId: memberAccessDialog.target.id,
-        reason: memberAccessReason,
-        repository: userRepository,
-        refreshMembers: () => getAllTenantUsers({ silent: true }),
-      });
-      showAlert(response.message, 'success');
-      setMemberAccessDialog(null);
-      setMemberAccessReason('');
-    } catch (error) {
-      const accessError = error as MemberAccessTransitionError;
-      if (accessError.errorCode === ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS) {
-        setMemberAccessDialog(null);
-        setMemberAccessReason('');
-      }
-      if (accessError.errorCode === Error.UNAUTHORIZED_ACCESS) {
-        setTimeout(() => {
-          logoutUser(navigate, tenantId);
-        }, 3000);
-      }
-      showAlert(accessError.message || t('Unable to update account access.'), 'error');
-    } finally {
-      setIsChangingMemberAccess(false);
-    }
   };
 
   /**
@@ -677,7 +505,7 @@ const MembersPage = () => {
             </div>
           </div>
           {/* table container */}
-          <div className="mt-5 mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="mb-5 mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             {listOfUsers.length === 0 ? null : filteredItems && filteredItems.length > 0 ? (
               <Table
                 headers={headers}
@@ -719,7 +547,7 @@ const MembersPage = () => {
                   if (header.value === 'isEmailVerified') {
                     return (
                       <div
-                        className={`rounded-full py-1 px-2 ${
+                        className={`rounded-full px-2 py-1 ${
                           cell
                             ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
                             : 'bg-gray-300 bg-opacity-10 text-gray-500'
@@ -732,16 +560,7 @@ const MembersPage = () => {
 
                   // account access status
                   if (header.value === 'accessState') {
-                    const { labelKey, className } = getMemberAccessStatusPresentation(cell);
-                    const label = t(labelKey);
-                    return (
-                      <span
-                        className={`inline-block rounded-full py-1 px-2 ${className}`}
-                        aria-label={`${t('Access Status')}: ${label}`}
-                      >
-                        {label}
-                      </span>
-                    );
+                    return <MemberAccessStatusBadge accessState={cell} />;
                   }
 
                   // created at
@@ -758,7 +577,29 @@ const MembersPage = () => {
 
                   // action
                   if (header.value === 'action') {
-                    return <ActionButton row={row} />;
+                    return (
+                      <MemberAccessManagement
+                        actor={currentUser}
+                        target={row}
+                        repository={userRepository}
+                        refreshMembers={() => getAllTenantUsers({ silent: true })}
+                        notify={showAlert}
+                        onUnauthorized={() => {
+                          setTimeout(() => {
+                            logoutUser(navigate, tenantId);
+                          }, 3000);
+                        }}
+                        onEdit={() => {
+                          setSelectedUser(row);
+                          setIsAddMember(false);
+                          setIsOpenAddEditMemberModal(true);
+                        }}
+                        onDelete={() => {
+                          setIsOpenDeleteMemberModal(true);
+                          setSelectedUserToDelete({ id: row.id });
+                        }}
+                      />
+                    );
                   }
                   return cell;
                 }}
@@ -1044,7 +885,7 @@ const MembersPage = () => {
                       onChange={e =>
                         setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
                       }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                     >
                       {Object.values(UserRole)
                         .filter(role => role !== UserRole.OWNER)
@@ -1096,7 +937,7 @@ const MembersPage = () => {
                       onChange={e =>
                         setSelectedUser({ ...selectedUser, specialty: e.target.value as string })
                       }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                     >
                       {Object.values(listOfDoctorSpecialities).map(specialty => (
                         <option
@@ -1172,25 +1013,6 @@ const MembersPage = () => {
                 </div>
               </div>
             </Modal>
-          )}
-
-          {memberAccessDialog && (
-            <MemberAccessConfirmationDialog
-              action={memberAccessDialog.action}
-              target={memberAccessDialog.target}
-              reason={memberAccessReason}
-              busy={isChangingMemberAccess}
-              onReasonChange={setMemberAccessReason}
-              onCancel={() => {
-                if (!isChangingMemberAccess) {
-                  setMemberAccessDialog(null);
-                  setMemberAccessReason('');
-                }
-              }}
-              onConfirm={() => {
-                void changeMemberAccess();
-              }}
-            />
           )}
         </div>
       </div>

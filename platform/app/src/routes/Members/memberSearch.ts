@@ -1,7 +1,4 @@
-export const filterMembers = <T extends Record<string, unknown>>(
-  members: T[],
-  searchValue: string
-): T[] => {
+export const filterMembers = <T extends object>(members: T[], searchValue: string): T[] => {
   const normalizedSearch = searchValue.trim().toLowerCase();
   if (!normalizedSearch) {
     return members;
