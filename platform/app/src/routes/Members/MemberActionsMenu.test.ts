@@ -87,4 +87,27 @@ describe('member actions menu', () => {
     fireEvent.keyDown(menu, { key: 'End' });
     expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Suspend access' }));
   });
+
+  test('uses the rendered menu height when positioning above the viewport edge', () => {
+    const originalInnerHeight = window.innerHeight;
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 400 });
+    const rectSpy = jest
+      .spyOn(Element.prototype, 'getBoundingClientRect')
+      .mockImplementation(function () {
+        if ((this as Element).getAttribute('role') === 'menu') {
+          return { height: 240 } as DOMRect;
+        }
+        return { top: 300, bottom: 340, right: 200 } as DOMRect;
+      });
+
+    renderMenu(member('admin', UserRole.ADMIN), member('user', UserRole.USER));
+
+    expect(screen.getByRole('menu').style.top).toBe('60px');
+
+    rectSpy.mockRestore();
+    Object.defineProperty(window, 'innerHeight', {
+      configurable: true,
+      value: originalInnerHeight,
+    });
+  });
 });

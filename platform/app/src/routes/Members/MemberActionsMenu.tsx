@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { UserAccessState } from '../../api/userDTO';
@@ -41,13 +41,13 @@ export default function MemberActionsMenu({
         : null;
   const showAccessAction = eligibility.allowed && accessAction !== null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen || !triggerRef.current) {
       return;
     }
 
     const rect = triggerRef.current.getBoundingClientRect();
-    const menuHeight = showAccessAction ? 156 : 104;
+    const menuHeight = menuRef.current?.getBoundingClientRect().height ?? 0;
     const spaceBelow = window.innerHeight - rect.bottom;
     setMenuPosition({
       top: spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom,
