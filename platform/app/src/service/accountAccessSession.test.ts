@@ -82,9 +82,11 @@ describe('suspended account session handling', () => {
       nextSearch: '?t=tenant-a',
     });
     expect(storage.removeItem).toHaveBeenCalledWith(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY);
-    expect(consumeAccountSuspendedRedirect('?t=tenant-a')).toEqual({
+    storage.removeItem.mockClear();
+    expect(consumeAccountSuspendedRedirect('?t=tenant-a', storage)).toEqual({
       suspended: false,
       nextSearch: '?t=tenant-a',
     });
+    expect(storage.removeItem).toHaveBeenCalledWith(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY);
   });
 });

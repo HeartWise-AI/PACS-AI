@@ -39,8 +39,10 @@ export const consumeAccountSuspendedRedirect = (
   const suspended = search.get('reason') === ACCOUNT_SUSPENDED_REDIRECT_REASON;
   if (suspended) {
     search.delete('reason');
-    storage.removeItem(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY);
   }
+  // Reaching Login ends the short handoff window between the interceptor and
+  // downstream request handlers, even if an intermediate navigation lost the reason.
+  storage.removeItem(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY);
   const nextSearch = search.toString();
   return { suspended, nextSearch: nextSearch ? `?${nextSearch}` : '' };
 };
