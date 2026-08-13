@@ -8,7 +8,12 @@ import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import userRepository from '../../api/userRepository';
-import { GetTenantUserEmailInvitesResponse, UserRole } from '../../api/userDTO';
+import {
+  GetTenantUserEmailInvitesResponse,
+  UserAccessState,
+  UserResponse,
+  UserRole,
+} from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
@@ -18,14 +23,33 @@ import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left.png';
 import chevronRight from './../../assets/pacs/icons/chevron-right.png';
 import { getMemberAccessStatusPresentation } from './memberAccessStatus';
+import { getMemberAccessEligibility } from './memberAccessPolicy';
+import MemberAccessConfirmationDialog, {
+  type MemberAccessAction,
+} from './MemberAccessConfirmationDialog';
+import {
+  ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS,
+  executeMemberAccessTransition,
+  type MemberAccessTransitionError,
+} from './memberAccessTransition';
+import { filterMembers } from './memberSearch';
 
 const userInvitesPerPage = 5;
+
+type MemberRow = Omit<UserResponse, 'role' | 'licenseNo'> & {
+  role: UserRole;
+  licenseNo: string;
+  firstName: string;
+  lastName: string;
+};
 
 const MembersPage = () => {
   const { t } = useTranslation('Members');
   const navigate = useNavigate();
   const [filteredItems, setFilteredItems] = useState([]);
   const [listOfUsers, setListOfUsers] = useState([]);
+  const [searchValue, setSearchValue] = useState('');
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
   const showAlert = useContext(AlertContext);
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -44,6 +68,12 @@ const MembersPage = () => {
   const [resendingTenantInviteId, setResendingTenantInviteId] = useState<string | null>(null);
   const [removingTenantInviteId, setRemovingTenantInviteId] = useState<string | null>(null);
   const [isOpenDeleteMemberModal, setIsOpenDeleteMemberModal] = useState<boolean>(false);
+  const [memberAccessDialog, setMemberAccessDialog] = useState<{
+    action: MemberAccessAction;
+    target: MemberRow;
+  } | null>(null);
+  const [memberAccessReason, setMemberAccessReason] = useState('');
+  const [isChangingMemberAccess, setIsChangingMemberAccess] = useState(false);
   const [selectedUser, setSelectedUser] = useState({
     id: '',
     tenantId: '',
@@ -83,6 +113,7 @@ const MembersPage = () => {
 
   useEffect(() => {
     getAllTenantUsers();
+    getCurrentUser();
     getDoctorSpecialties();
   }, [userRepository]);
 
@@ -123,36 +154,45 @@ const MembersPage = () => {
    * @param param0 row
    * @returns
    */
-  const ActionButton = ({ row }) => {
+  const ActionButton = ({ row }: { row: MemberRow }) => {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const accessEligibility = getMemberAccessEligibility(currentUser, row);
+    const memberAccessAction: MemberAccessAction | null =
+      row.accessState === UserAccessState.ACTIVE
+        ? 'suspend'
+        : row.accessState === UserAccessState.SUSPENDED
+          ? 'reactivate'
+          : null;
+    const showMemberAccessAction = accessEligibility.allowed && memberAccessAction !== null;
 
     useEffect(() => {
       if (isOpen && ref.current) {
         const rect = ref.current.getBoundingClientRect();
         // Calculate position for the dropdown menu
         // Adjust if near the bottom of the viewport
-        const menuHeight = 100; // Approximate height of the menu
+        const menuHeight = showMemberAccessAction ? 156 : 104;
         const spaceBelow = window.innerHeight - rect.bottom;
         const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom;
         setMenuPosition({
           top,
-          left: rect.right - 120, // 180px is the width of the menu (w-28)
+          left: rect.right - 176,
         });
       }
-    }, [isOpen]);
+    }, [isOpen, showMemberAccessAction]);
 
     // Dropdown menu content
     const menu = (
       <div
-        className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
+        className="fixed z-50 w-44 divide-y divide-gray-100 rounded-lg bg-[#4C504B] shadow-lg"
         style={{ top: menuPosition.top, left: menuPosition.left }}
       >
         <ul className="py-2 text-sm text-white">
           <li>
-            <a
-              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+            <button
+              type="button"
+              className="block w-full px-4 py-2 text-left hover:bg-gray-700"
               onClick={() => {
                 setSelectedUser(row);
                 setIsAddMember(false);
@@ -161,11 +201,12 @@ const MembersPage = () => {
               }}
             >
               {t('Edit')}
-            </a>
+            </button>
           </li>
           <li>
-            <a
-              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
+            <button
+              type="button"
+              className="block w-full px-4 py-2 text-left hover:bg-gray-700"
               onClick={() => {
                 setIsOpenDeleteMemberModal(true);
                 setSelectedUserToDelete({ id: row.id });
@@ -173,8 +214,25 @@ const MembersPage = () => {
               }}
             >
               {t('Delete')}
-            </a>
+            </button>
           </li>
+          {showMemberAccessAction && (
+            <li>
+              <button
+                type="button"
+                className={`block w-full px-4 py-2 text-left hover:bg-gray-700 ${
+                  memberAccessAction === 'suspend' ? 'text-[#FF9A9A]' : 'text-[#8BE397]'
+                }`}
+                onClick={() => {
+                  setMemberAccessReason('');
+                  setMemberAccessDialog({ action: memberAccessAction, target: row });
+                  setIsOpen(false);
+                }}
+              >
+                {t(memberAccessAction === 'suspend' ? 'Suspend access' : 'Reactivate access')}
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     );
@@ -185,13 +243,15 @@ const MembersPage = () => {
         ref={ref}
       >
         <button
+          type="button"
+          aria-label={t('Actions for {{member}}', { member: row.name || row.email })}
           onClick={() => {
             setIsOpen(!isOpen);
           }}
         >
           <img
             src={dotsVertical}
-            alt="Dots vertical icon"
+            alt=""
           />
         </button>
         {isOpen && ReactDOM.createPortal(menu, document.body)}
@@ -240,8 +300,10 @@ const MembersPage = () => {
   /**
    * Get all tenant users
    */
-  const getAllTenantUsers = async () => {
-    setListOfUsers([]);
+  const getAllTenantUsers = async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setListOfUsers([]);
+    }
     try {
       const response = await userRepository.GetAllTenantUsers();
       const listOfUsers = response.data.map(user => {
@@ -255,7 +317,7 @@ const MembersPage = () => {
         };
       });
       setListOfUsers(listOfUsers);
-      setFilteredItems(listOfUsers);
+      setFilteredItems(filterMembers(listOfUsers, searchValue));
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -263,6 +325,24 @@ const MembersPage = () => {
         }, 3000);
       }
 
+      showAlert(error.message, 'error');
+    }
+  };
+
+  /**
+   * Get the current actor used to fail closed on access-management permissions.
+   */
+  const getCurrentUser = async () => {
+    try {
+      const response = await userRepository.GetCurrentUser();
+      setCurrentUser(response.data);
+    } catch (error) {
+      setCurrentUser(null);
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
       showAlert(error.message, 'error');
     }
   };
@@ -323,13 +403,52 @@ const MembersPage = () => {
    * @param searchValue
    */
   const searchItems = (searchValue: string) => {
-    if (searchValue === '') {
-      setFilteredItems(listOfUsers);
-    } else {
-      const filteredData = listOfUsers.filter(item => {
-        return Object.values(item).join(' ').toLowerCase().includes(searchValue.toLowerCase());
+    setSearchValue(searchValue);
+    setFilteredItems(filterMembers(listOfUsers, searchValue));
+  };
+
+  /**
+   * Confirm an eligible member access transition against the live backend.
+   */
+  const changeMemberAccess = async () => {
+    if (!memberAccessDialog) {
+      return;
+    }
+
+    const eligibility = getMemberAccessEligibility(currentUser, memberAccessDialog.target);
+    if (!eligibility.allowed) {
+      setMemberAccessDialog(null);
+      setMemberAccessReason('');
+      showAlert(t('Account access management is no longer available for this member.'), 'error');
+      return;
+    }
+
+    setIsChangingMemberAccess(true);
+    try {
+      const response = await executeMemberAccessTransition({
+        action: memberAccessDialog.action,
+        userId: memberAccessDialog.target.id,
+        reason: memberAccessReason,
+        repository: userRepository,
+        refreshMembers: () => getAllTenantUsers({ silent: true }),
       });
-      setFilteredItems(filteredData);
+      showAlert(response.message, 'success');
+      setMemberAccessDialog(null);
+      setMemberAccessReason('');
+    } catch (error) {
+      const accessError = error as MemberAccessTransitionError;
+      if (accessError.errorCode === ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS) {
+        setMemberAccessDialog(null);
+        setMemberAccessReason('');
+      }
+      if (accessError.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      showAlert(accessError.message || t('Unable to update account access.'), 'error');
+    } finally {
+      setIsChangingMemberAccess(false);
     }
   };
 
@@ -531,6 +650,7 @@ const MembersPage = () => {
               placeholder={t('Search member name, email, license no., etc.')}
               className="w-[70%] lg:w-[40%]"
               type="text"
+              value={searchValue}
               onChange={e => searchItems(e.target.value)}
             />
             <div className="flex shrink-0 gap-2">
@@ -1052,6 +1172,25 @@ const MembersPage = () => {
                 </div>
               </div>
             </Modal>
+          )}
+
+          {memberAccessDialog && (
+            <MemberAccessConfirmationDialog
+              action={memberAccessDialog.action}
+              target={memberAccessDialog.target}
+              reason={memberAccessReason}
+              busy={isChangingMemberAccess}
+              onReasonChange={setMemberAccessReason}
+              onCancel={() => {
+                if (!isChangingMemberAccess) {
+                  setMemberAccessDialog(null);
+                  setMemberAccessReason('');
+                }
+              }}
+              onConfirm={() => {
+                void changeMemberAccess();
+              }}
+            />
           )}
         </div>
       </div>

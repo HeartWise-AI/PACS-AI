@@ -4,6 +4,8 @@
   "Active": "Active",
   "Add a reason for the audit trail": "Add a reason for the audit trail",
   "Administrative reason (optional)": "Administrative reason (optional)",
+  "Actions for {{member}}": "Actions for {{member}}",
+  "Account access management is no longer available for this member.": "Account access management is no longer available for this member.",
   "Add Member": "Add Member",
   "Add a new member.": "Add a new member.",
   "Are you sure you want to delete this user?": "Are you sure you want to delete this user?",
@@ -44,6 +46,7 @@
   "Suspended": "Suspended",
   "Suspending access immediately blocks new sign-ins and revokes all active sessions.": "Suspending access immediately blocks new sign-ins and revokes all active sessions.",
   "Unknown": "Unknown",
+  "Unable to update account access.": "Unable to update account access.",
   "Update member information.": "Update member information.",
   "{{count}} / 500 characters": "{{count}} / 500 characters"
 }
