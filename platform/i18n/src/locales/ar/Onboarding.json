@@ -35,5 +35,11 @@
   "Submit Consent": "إرسال الموافقة",
   "To reset your password, please provide your registered email address.": "لإعادة تعيين كلمة المرور الخاصة بك، يرجى توفير عنوان البريد الإلكتروني المسجل الخاص بك.",
   "User": "مستخدم",
+  "Complete the verification before registering.": "أكمل التحقق قبل التسجيل.",
+  "Human verification": "التحقق البشري",
+  "Loading registration verification…": "جارٍ تحميل التحقق من التسجيل…",
+  "Registration verification expired. Please complete it again.": "انتهت صلاحية التحقق من التسجيل. يرجى إكماله مرة أخرى.",
+  "Registration verification failed. Please try again.": "فشل التحقق من التسجيل. يرجى المحاولة مرة أخرى.",
+  "Registration verification is unavailable. Please try again later.": "التحقق من التسجيل غير متاح. يرجى المحاولة مرة أخرى لاحقًا.",
   "Welcome to PACS AI": "مرحبًا بك في PACS AI"
 }

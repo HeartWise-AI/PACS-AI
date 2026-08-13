@@ -35,5 +35,11 @@
   "Submit Consent": "Enviar consentimiento",
   "To reset your password, please provide your registered email address.": "Para restablecer su contraseña, por favor proporcione su dirección de correo electrónico registrada.",
   "User": "Usuario",
+  "Complete the verification before registering.": "Complete la verificación antes de registrarse.",
+  "Human verification": "Verificación humana",
+  "Loading registration verification…": "Cargando la verificación de registro…",
+  "Registration verification expired. Please complete it again.": "La verificación de registro ha caducado. Complétela de nuevo.",
+  "Registration verification failed. Please try again.": "La verificación de registro ha fallado. Inténtelo de nuevo.",
+  "Registration verification is unavailable. Please try again later.": "La verificación de registro no está disponible. Inténtelo de nuevo más tarde.",
   "Welcome to PACS AI": "Bienvenido a PACS AI"
 }

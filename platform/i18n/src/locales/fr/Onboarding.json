@@ -35,5 +35,11 @@
   "Submit Consent": "Envoyer le consentement",
   "To reset your password, please provide your registered email address.": "Pour réinitialiser votre mot de passe, veuillez indiquer votre adresse e-mail enregistrée.",
   "User": "Utilisateur",
+  "Complete the verification before registering.": "Terminez la vérification avant de vous inscrire.",
+  "Human verification": "Vérification humaine",
+  "Loading registration verification…": "Chargement de la vérification d'inscription…",
+  "Registration verification expired. Please complete it again.": "La vérification d'inscription a expiré. Veuillez la refaire.",
+  "Registration verification failed. Please try again.": "La vérification d'inscription a échoué. Veuillez réessayer.",
+  "Registration verification is unavailable. Please try again later.": "La vérification d'inscription est indisponible. Veuillez réessayer plus tard.",
   "Welcome to PACS AI": "Bienvenue dans PACS AI"
 }

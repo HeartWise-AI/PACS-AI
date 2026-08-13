@@ -61,12 +61,12 @@ export interface ResendTenantInvitationRequest {
 
 export interface RegisterTenantUserRequest {
   tenantId: string;
-  role: string;
   name: string;
   email: string;
   password: string;
   licenseNo: string;
   specialty: string;
+  turnstileToken: string;
   code?: string;
 }
 
