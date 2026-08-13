@@ -13,29 +13,14 @@ import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import eyeOff from './../../assets/pacs/icons/eye-off.png';
 import eyeOn from './../../assets/pacs/icons/eye-on.png';
 import { createRegistrationRequest } from './registrationRequest';
+import { getRegistrationErrorMessage } from './registrationError';
+import { getRegistrationValidationMessage } from './registrationValidation';
 import TurnstileWidget from './TurnstileWidget';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
 
-const passwordMinLength = 8;
 const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
-
-const getPasswordValidationMessage = (password: string): string | null => {
-  if (password.length < passwordMinLength) {
-    return 'Password must be at least 8 characters';
-  }
-  if (!/[A-Z]/.test(password)) {
-    return 'Password must contain one uppercase';
-  }
-  if (!/[a-z]/.test(password)) {
-    return 'Password must contain one lowercase';
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    return 'Password must contain one special character';
-  }
-  return null;
-};
 
 const RegisterPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -151,25 +136,18 @@ const RegisterPage = () => {
     const tenantIdFromInvite = (params.get('t') || '').trim();
     const codeFromUrl = invitationCode.trim() || (params.get('code') || '').trim();
 
-    if (
-      !email.trim() ||
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !licenseNo.trim() ||
-      !specialty ||
-      !password.trim() ||
-      !confirmPassword.trim()
-    ) {
-      showAlert(t('Please fill all required fields'), 'error');
-      return;
-    }
-    const pwdMsg = getPasswordValidationMessage(password);
-    if (pwdMsg) {
-      showAlert(t(pwdMsg), 'error');
-      return;
-    }
-    if (password !== confirmPassword) {
-      showAlert(t('Passwords do not match'), 'error');
+    const validationMessage = getRegistrationValidationMessage({
+      email,
+      firstName,
+      lastName,
+      licenseNo,
+      specialty,
+      password,
+      confirmPassword,
+      invitationCode: codeFromUrl,
+    });
+    if (validationMessage) {
+      showAlert(t(validationMessage), 'error');
       return;
     }
     if (!turnstileToken) {
@@ -199,7 +177,7 @@ const RegisterPage = () => {
       );
       navigate({ pathname: '/login', search });
     } catch (error) {
-      showAlert(error?.message || 'Registration failed', 'error');
+      showAlert(getRegistrationErrorMessage(error, t), 'error');
       setTurnstileToken(null);
       setTurnstileResetKey(value => value + 1);
     } finally {
@@ -265,8 +243,9 @@ const RegisterPage = () => {
                   id="register-email"
                   placeholder={tMembers('Email')}
                   className="mb-4 w-full"
-                  type="text"
+                  type="email"
                   autoComplete="email"
+                  maxLength={254}
                   value={email}
                   onChange={e => setEmail(e.target.value.toLowerCase())}
                   onKeyPress={e => e.key === ' ' && e.preventDefault()}
@@ -277,6 +256,7 @@ const RegisterPage = () => {
                   className="mb-4 w-full"
                   type="text"
                   autoComplete="given-name"
+                  maxLength={100}
                   autoFocus
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
@@ -287,6 +267,7 @@ const RegisterPage = () => {
                   className="mb-4 w-full"
                   type="text"
                   autoComplete="family-name"
+                  maxLength={100}
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
                 />
@@ -295,6 +276,7 @@ const RegisterPage = () => {
                   placeholder={tMembers('License No.')}
                   className="mb-4 w-full"
                   type="text"
+                  maxLength={100}
                   value={licenseNo}
                   onChange={e => setLicenseNo(e.target.value)}
                 />
@@ -339,6 +321,7 @@ const RegisterPage = () => {
                     className="w-full pr-12"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
+                    maxLength={128}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                   />
@@ -372,6 +355,7 @@ const RegisterPage = () => {
                     className="w-full pr-12"
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
+                    maxLength={128}
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                   />
