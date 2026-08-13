@@ -2,6 +2,8 @@
   "Action": "الإجراء",
   "Access Status": "حالة الوصول",
   "Active": "نشط",
+  "Add a reason for the audit trail": "أضف سببًا إلى سجل التدقيق",
+  "Administrative reason (optional)": "السبب الإداري (اختياري)",
   "Add a new member.": "إضافة عضو جديد.",
   "Add Member": "إضافة عضو",
   "Are you sure you want to delete this user?": "هل أنت متأكد أنك تريد حذف هذا المستخدم؟",
@@ -27,6 +29,9 @@
   "No invitations yet": "لا توجد دعوات حتى الآن.",
   "Personal Information": "المعلومات الشخصية",
   "Previous": "السابق",
+  "Reactivate access": "إعادة تفعيل الوصول",
+  "Reactivate access for {{member}}?": "إعادة تفعيل وصول {{member}}؟",
+  "Reactivating access restores sign-in without changing the member profile or role.": "تعيد إعادة التفعيل تسجيل الدخول دون تغيير ملف العضو أو دوره.",
   "Role": "الدور",
   "Resend": "إعادة الإرسال",
   "Save": "حفظ",
@@ -34,7 +39,11 @@
   "Send": "إرسال",
   "Specialty": "التخصص",
   "Status": "الحالة",
+  "Suspend access": "تعليق الوصول",
+  "Suspend access for {{member}}?": "تعليق وصول {{member}}؟",
   "Suspended": "معلّق",
+  "Suspending access immediately blocks new sign-ins and revokes all active sessions.": "يؤدي التعليق فورًا إلى منع تسجيلات الدخول الجديدة وإلغاء جميع الجلسات النشطة.",
   "Unknown": "غير معروف",
-  "Update member information.": "تحديث معلومات العضو."
+  "Update member information.": "تحديث معلومات العضو.",
+  "{{count}} / 500 characters": "{{count}} / 500 حرف"
 }

@@ -2,6 +2,8 @@
   "Action": "Action",
   "Access Status": "Access Status",
   "Active": "Active",
+  "Add a reason for the audit trail": "Add a reason for the audit trail",
+  "Administrative reason (optional)": "Administrative reason (optional)",
   "Add Member": "Add Member",
   "Add a new member.": "Add a new member.",
   "Are you sure you want to delete this user?": "Are you sure you want to delete this user?",
@@ -27,6 +29,9 @@
   "No invitations yet": "No invitations yet.",
   "Personal Information": "Personal Information",
   "Previous": "Previous",
+  "Reactivate access": "Reactivate access",
+  "Reactivate access for {{member}}?": "Reactivate access for {{member}}?",
+  "Reactivating access restores sign-in without changing the member profile or role.": "Reactivating access restores sign-in without changing the member profile or role.",
   "Resend": "Resend",
   "Role": "Role",
   "Save": "Save",
@@ -34,7 +39,11 @@
   "Send": "Send",
   "Specialty": "Specialty",
   "Status": "Status",
+  "Suspend access": "Suspend access",
+  "Suspend access for {{member}}?": "Suspend access for {{member}}?",
   "Suspended": "Suspended",
+  "Suspending access immediately blocks new sign-ins and revokes all active sessions.": "Suspending access immediately blocks new sign-ins and revokes all active sessions.",
   "Unknown": "Unknown",
-  "Update member information.": "Update member information."
+  "Update member information.": "Update member information.",
+  "{{count}} / 500 characters": "{{count}} / 500 characters"
 }
