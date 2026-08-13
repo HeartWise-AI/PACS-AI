@@ -1,5 +1,7 @@
 {
   "Action": "الإجراء",
+  "Access Status": "حالة الوصول",
+  "Active": "نشط",
   "Add a new member.": "إضافة عضو جديد.",
   "Add Member": "إضافة عضو",
   "Are you sure you want to delete this user?": "هل أنت متأكد أنك تريد حذف هذا المستخدم؟",
@@ -32,5 +34,7 @@
   "Send": "إرسال",
   "Specialty": "التخصص",
   "Status": "الحالة",
+  "Suspended": "معلّق",
+  "Unknown": "غير معروف",
   "Update member information.": "تحديث معلومات العضو."
 }

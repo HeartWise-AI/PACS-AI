@@ -17,6 +17,7 @@ import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left.png';
 import chevronRight from './../../assets/pacs/icons/chevron-right.png';
+import { getMemberAccessStatusPresentation } from './memberAccessStatus';
 
 const userInvitesPerPage = 5;
 
@@ -69,6 +70,7 @@ const MembersPage = () => {
     { text: t('License No.'), value: 'licenseNo', align: 'left' },
     { text: t('Specialty'), value: 'specialty', align: 'left' },
     { text: t('Email Status'), value: 'isEmailVerified', align: 'center' },
+    { text: t('Access Status'), value: 'accessState', align: 'center' },
     { text: t('Created At'), value: 'createdAt', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
@@ -605,6 +607,20 @@ const MembersPage = () => {
                       >
                         {cell ? 'Verified' : 'Unverified'}
                       </div>
+                    );
+                  }
+
+                  // account access status
+                  if (header.value === 'accessState') {
+                    const { labelKey, className } = getMemberAccessStatusPresentation(cell);
+                    const label = t(labelKey);
+                    return (
+                      <span
+                        className={`inline-block rounded-full py-1 px-2 ${className}`}
+                        aria-label={`${t('Access Status')}: ${label}`}
+                      >
+                        {label}
+                      </span>
                     );
                   }
 
