@@ -1,4 +1,5 @@
 import {
+  createPasswordCharacterPatterns,
   getRegistrationValidationMessage,
   type RegistrationValidationValues,
 } from './registrationValidation';
@@ -35,12 +36,30 @@ describe('getRegistrationValidationMessage', () => {
     expect(
       getRegistrationValidationMessage({ ...validRegistration, password: 'NoSpecialCharacter' })
     ).toBe('Password must contain one special character');
+    const overlongPassword = 'A!'.padEnd(129, 'a');
+    expect(
+      getRegistrationValidationMessage({ ...validRegistration, password: overlongPassword })
+    ).toBe('Password must be 128 characters or fewer.');
+  });
+
+  it('matches the backend Unicode character categories in supported browsers', () => {
     expect(
       getRegistrationValidationMessage({
         ...validRegistration,
-        password: `Aa!${'x'.repeat(126)}`,
+        password: 'Éclair—password',
+        confirmPassword: 'Éclair—password',
       })
-    ).toBe('Password must be 128 characters or fewer.');
+    ).toBeNull();
+  });
+
+  it('uses compatible ASCII checks when Unicode property escapes are unavailable', () => {
+    const patterns = createPasswordCharacterPatterns(() => {
+      throw new SyntaxError('Unicode property escapes are unavailable');
+    });
+
+    expect(patterns.uppercase.test('A')).toBe(true);
+    expect(patterns.lowercase.test('a')).toBe(true);
+    expect(patterns.special.test('!')).toBe(true);
   });
 
   it('rejects bounded fields before sending them', () => {

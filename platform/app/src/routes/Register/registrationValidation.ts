@@ -11,6 +11,34 @@ export interface RegistrationValidationValues {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+interface PasswordCharacterPatterns {
+  uppercase: RegExp;
+  lowercase: RegExp;
+  special: RegExp;
+}
+
+type RegExpFactory = (source: string, flags: string) => RegExp;
+
+export const createPasswordCharacterPatterns = (
+  createRegExp: RegExpFactory = (source, flags) => new RegExp(source, flags)
+): PasswordCharacterPatterns => {
+  try {
+    return {
+      uppercase: createRegExp('\\p{Lu}', 'u'),
+      lowercase: createRegExp('\\p{Ll}', 'u'),
+      special: createRegExp('[^\\p{L}\\p{N}\\s]', 'u'),
+    };
+  } catch {
+    return {
+      uppercase: /[A-Z]/,
+      lowercase: /[a-z]/,
+      special: /[^A-Za-z0-9\s]/,
+    };
+  }
+};
+
+const passwordCharacterPatterns = createPasswordCharacterPatterns();
+
 export const getRegistrationValidationMessage = ({
   email,
   firstName,
@@ -47,13 +75,13 @@ export const getRegistrationValidationMessage = ({
   if (password.length > 128) {
     return 'Password must be 128 characters or fewer.';
   }
-  if (!/\p{Lu}/u.test(password)) {
+  if (!passwordCharacterPatterns.uppercase.test(password)) {
     return 'Password must contain one uppercase';
   }
-  if (!/\p{Ll}/u.test(password)) {
+  if (!passwordCharacterPatterns.lowercase.test(password)) {
     return 'Password must contain one lowercase';
   }
-  if (!/[^\p{L}\p{N}\s]/u.test(password)) {
+  if (!passwordCharacterPatterns.special.test(password)) {
     return 'Password must contain one special character';
   }
   if (password !== confirmPassword) {
