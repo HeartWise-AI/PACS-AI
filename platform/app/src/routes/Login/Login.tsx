@@ -16,6 +16,7 @@ import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
 import { logoutUser, navigateAfterAuth } from '../../service/userService';
+import { ACCOUNT_SUSPENDED_REDIRECT_REASON } from '../../service/accountAccessSession';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -32,7 +33,8 @@ const LoginPage = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
+  const location = useLocation();
+  const tenantId = new URLSearchParams(location.search).get('t');
   const frontendVersion = useContext(FrontendVersionContext);
   const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
   auth.tenantId = tenantId;
@@ -41,6 +43,21 @@ const LoginPage = () => {
   useEffect(() => {
     document.title = 'Login - PACS AI';
   }, []);
+
+  useEffect(() => {
+    const search = new URLSearchParams(location.search);
+    if (search.get('reason') !== ACCOUNT_SUSPENDED_REDIRECT_REASON) {
+      return;
+    }
+
+    showAlert(
+      t('Your account access has been suspended. Contact your workspace administrator.'),
+      'error'
+    );
+    search.delete('reason');
+    const nextSearch = search.toString();
+    navigate({ pathname: '/login', search: nextSearch ? `?${nextSearch}` : '' }, { replace: true });
+  }, [location.search, navigate, showAlert, t]);
 
   useEffect(() => {
     const fetchTenantInfo = async () => {
