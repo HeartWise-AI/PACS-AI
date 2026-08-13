@@ -36,14 +36,18 @@ const loadTurnstile = (): Promise<TurnstileApi> => {
   }
 
   turnstileLoadPromise = new Promise<TurnstileApi>((resolve, reject) => {
+    const rejectAndRemoveScript = (message: string) => {
+      document.getElementById(turnstileScriptId)?.remove();
+      reject(new Error(message));
+    };
     const handleLoad = () => {
       if (window.turnstile) {
         resolve(window.turnstile);
         return;
       }
-      reject(new Error('Cloudflare Turnstile did not initialize'));
+      rejectAndRemoveScript('Cloudflare Turnstile did not initialize');
     };
-    const handleError = () => reject(new Error('Cloudflare Turnstile failed to load'));
+    const handleError = () => rejectAndRemoveScript('Cloudflare Turnstile failed to load');
     const existingScript = document.getElementById(turnstileScriptId) as HTMLScriptElement | null;
 
     if (existingScript) {

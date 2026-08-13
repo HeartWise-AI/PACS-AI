@@ -37,6 +37,7 @@ describe('TurnstileWidget', () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    document.getElementById('cloudflare-turnstile-script')?.remove();
     delete window.turnstile;
     remove.mockReset();
   });
@@ -110,5 +111,50 @@ describe('TurnstileWidget', () => {
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       'Registration verification is unavailable. Please try again later.'
     );
+  });
+
+  it('removes a failed script so a later mount can load a fresh copy', async () => {
+    delete window.turnstile;
+    const onTokenChange = jest.fn();
+
+    await act(async () => {
+      root.render(
+        React.createElement(TurnstileWidget, {
+          siteKey: 'public-site-key',
+          resetKey: 0,
+          onTokenChange,
+        })
+      );
+    });
+
+    const failedScript = document.getElementById('cloudflare-turnstile-script');
+    expect(failedScript).not.toBeNull();
+    await act(async () => {
+      failedScript?.dispatchEvent(new Event('error'));
+    });
+    expect(failedScript?.isConnected).toBe(false);
+
+    act(() => root.render(null));
+    await act(async () => {
+      root.render(
+        React.createElement(TurnstileWidget, {
+          siteKey: 'public-site-key',
+          resetKey: 0,
+          onTokenChange,
+        })
+      );
+    });
+
+    const replacementScript = document.getElementById('cloudflare-turnstile-script');
+    expect(replacementScript).not.toBeNull();
+    expect(replacementScript).not.toBe(failedScript);
+    window.turnstile = {
+      render: jest.fn(() => 'replacement-widget-id'),
+      remove,
+    };
+    await act(async () => {
+      replacementScript?.dispatchEvent(new Event('load'));
+    });
+    expect(window.turnstile?.render).toHaveBeenCalled();
   });
 });
