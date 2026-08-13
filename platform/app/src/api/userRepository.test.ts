@@ -39,9 +39,9 @@ describe('user repository access transitions', () => {
     };
     post.mockResolvedValue({ data: response });
 
-    await expect(
-      userRepository.ReactivateTenantUser({ userId: 'user-123' })
-    ).resolves.toEqual(response);
+    await expect(userRepository.ReactivateTenantUser({ userId: 'user-123' })).resolves.toEqual(
+      response
+    );
 
     expect(post).toHaveBeenCalledWith('/v1/user/user-123/reactivate', {
       reason: undefined,
@@ -56,8 +56,8 @@ describe('user repository access transitions', () => {
     };
     post.mockRejectedValue({ response: { data: errorResponse } });
 
-    await expect(
-      userRepository.SuspendTenantUser({ userId: 'user-123' })
-    ).rejects.toEqual(errorResponse);
+    await expect(userRepository.SuspendTenantUser({ userId: 'user-123' })).rejects.toEqual(
+      errorResponse
+    );
   });
 });
