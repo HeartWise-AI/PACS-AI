@@ -63,6 +63,7 @@
   "Too many registration attempts. Please try again later.": "Too many registration attempts. Please try again later.",
   "Too many registration attempts. Please wait 1 second before trying again.": "Too many registration attempts. Please wait 1 second before trying again.",
   "Too many registration attempts. Please wait {{seconds}} seconds before trying again.": "Too many registration attempts. Please wait {{seconds}} seconds before trying again.",
+  "Try verification again": "Try verification again",
   "Unable to reach registration service. Check your connection and try again.": "Unable to reach registration service. Check your connection and try again.",
   "opens in a new tab": "opens in a new tab",
   "Welcome to PACS AI": "Welcome to PACS AI"

@@ -63,6 +63,7 @@
   "Too many registration attempts. Please try again later.": "Demasiados intentos de registro. Inténtelo de nuevo más tarde.",
   "Too many registration attempts. Please wait 1 second before trying again.": "Demasiados intentos de registro. Espere 1 segundo antes de volver a intentarlo.",
   "Too many registration attempts. Please wait {{seconds}} seconds before trying again.": "Demasiados intentos de registro. Espere {{seconds}} segundos antes de volver a intentarlo.",
+  "Try verification again": "Volver a intentar la verificación",
   "Unable to reach registration service. Check your connection and try again.": "No se puede acceder al servicio de registro. Compruebe su conexión e inténtelo de nuevo.",
   "opens in a new tab": "se abre en una pestaña nueva",
   "Welcome to PACS AI": "Bienvenido a PACS AI"

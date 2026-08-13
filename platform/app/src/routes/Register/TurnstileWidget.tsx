@@ -16,6 +16,7 @@ type TurnstileRenderOptions = {
 
 type TurnstileApi = {
   render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
+  reset: (widgetId: string) => void;
   remove: (widgetId: string) => void;
 };
 
@@ -84,6 +85,8 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
   const { t } = useTranslation('Onboarding');
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenChangeRef = useRef(onTokenChange);
+  const apiRef = useRef<TurnstileApi | null>(null);
+  const widgetIdRef = useRef<string | null>(null);
   const [status, setStatus] = useState<VerificationStatus>('loading');
 
   useEffect(() => {
@@ -127,6 +130,8 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
             onTokenChangeRef.current(null);
           },
         });
+        apiRef.current = loadedApi;
+        widgetIdRef.current = widgetId;
       })
       .catch(() => {
         if (!cancelled) {
@@ -140,8 +145,22 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
       if (api && widgetId) {
         api.remove(widgetId);
       }
+      if (apiRef.current === api && widgetIdRef.current === widgetId) {
+        apiRef.current = null;
+        widgetIdRef.current = null;
+      }
     };
   }, [resetKey, siteKey]);
+
+  const retryChallenge = () => {
+    if (!apiRef.current || !widgetIdRef.current) {
+      return;
+    }
+
+    onTokenChangeRef.current(null);
+    setStatus('loading');
+    apiRef.current.reset(widgetIdRef.current);
+  };
 
   const statusMessage =
     status === 'failed'
@@ -167,12 +186,18 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
         </p>
       )}
       {statusMessage && (
-        <p
-          className="mt-2 text-sm text-red-300"
-          role="alert"
-        >
-          {statusMessage}
-        </p>
+        <div className="mt-2 text-sm text-red-300">
+          <p role="alert">{statusMessage}</p>
+          {(status === 'failed' || status === 'expired') && (
+            <button
+              type="button"
+              className="focus:ring-primary mt-2 rounded underline underline-offset-2 focus:outline-none focus:ring-2"
+              onClick={retryChallenge}
+            >
+              {t('Try verification again')}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

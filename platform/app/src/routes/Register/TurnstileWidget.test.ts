@@ -11,6 +11,7 @@ describe('TurnstileWidget', () => {
   let root: Root;
   let renderOptions: Record<string, unknown>;
   const remove = jest.fn();
+  const reset = jest.fn();
 
   beforeAll(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -30,6 +31,7 @@ describe('TurnstileWidget', () => {
         renderOptions = options as unknown as Record<string, unknown>;
         return 'widget-id';
       }),
+      reset,
       remove,
     };
   });
@@ -40,6 +42,7 @@ describe('TurnstileWidget', () => {
     document.getElementById('cloudflare-turnstile-script')?.remove();
     delete window.turnstile;
     remove.mockReset();
+    reset.mockReset();
   });
 
   it('renders with the public site key and returns the generated proof', async () => {
@@ -91,6 +94,43 @@ describe('TurnstileWidget', () => {
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       'Registration verification failed. Please try again.'
     );
+
+    act(() => {
+      (container.querySelector('button') as HTMLButtonElement).click();
+    });
+    expect(reset).toHaveBeenCalledWith('widget-id');
+    expect(onTokenChange).toHaveBeenLastCalledWith(null);
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      'Loading registration verification…'
+    );
+  });
+
+  it('lets the visitor request a fresh challenge after the token expires', async () => {
+    const onTokenChange = jest.fn();
+
+    await act(async () => {
+      root.render(
+        React.createElement(TurnstileWidget, {
+          siteKey: 'public-site-key',
+          resetKey: 0,
+          onTokenChange,
+        })
+      );
+    });
+
+    act(() => {
+      (renderOptions.callback as (token: string) => void)('expired-proof');
+      (renderOptions['expired-callback'] as () => void)();
+    });
+    expect(onTokenChange).toHaveBeenLastCalledWith(null);
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      'Registration verification expired. Please complete it again.'
+    );
+
+    act(() => {
+      (container.querySelector('button') as HTMLButtonElement).click();
+    });
+    expect(reset).toHaveBeenCalledWith('widget-id');
   });
 
   it('does not render when the public site key is missing', async () => {
@@ -150,6 +190,7 @@ describe('TurnstileWidget', () => {
     expect(replacementScript).not.toBe(failedScript);
     window.turnstile = {
       render: jest.fn(() => 'replacement-widget-id'),
+      reset,
       remove,
     };
     await act(async () => {
