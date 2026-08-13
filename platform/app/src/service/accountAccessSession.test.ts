@@ -1,6 +1,8 @@
 import {
   ACCOUNT_SUSPENDED_ERROR_CODE,
+  ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY,
   consumeAccountSuspendedRedirect,
+  getPendingAccountSuspendedLoginURL,
   handleAccountSuspendedError,
 } from './accountAccessSession';
 
@@ -8,6 +10,9 @@ const createStorage = (values: Record<string, string>) => ({
   getItem: jest.fn((key: string) => values[key] ?? null),
   removeItem: jest.fn((key: string) => {
     delete values[key];
+  }),
+  setItem: jest.fn((key: string, value: string) => {
+    values[key] = value;
   }),
 });
 
@@ -26,7 +31,19 @@ describe('suspended account session handling', () => {
 
     expect(storage.removeItem).toHaveBeenCalledWith('sessionToken');
     expect(storageValues).not.toHaveProperty('sessionToken');
+    expect(storageValues).toHaveProperty(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY, 'true');
     expect(redirect).toHaveBeenCalledWith('/login?t=tenant+%2F+east&reason=account_suspended');
+  });
+
+  test('keeps later logout handlers on the suspension-aware login URL', () => {
+    const storage = createStorage({
+      tenantId: 'tenant-a',
+      [ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY]: 'true',
+    });
+
+    expect(getPendingAccountSuspendedLoginURL(storage)).toBe(
+      '/login?t=tenant-a&reason=account_suspended'
+    );
   });
 
   test('uses a tenant-independent login URL when tenant context is unavailable', () => {
@@ -56,10 +73,15 @@ describe('suspended account session handling', () => {
   });
 
   test('consumes the suspension marker once while preserving tenant context', () => {
-    expect(consumeAccountSuspendedRedirect('?t=tenant-a&reason=account_suspended')).toEqual({
+    const storage = createStorage({ [ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY]: 'true' });
+
+    expect(
+      consumeAccountSuspendedRedirect('?t=tenant-a&reason=account_suspended', storage)
+    ).toEqual({
       suspended: true,
       nextSearch: '?t=tenant-a',
     });
+    expect(storage.removeItem).toHaveBeenCalledWith(ACCOUNT_SUSPENDED_REDIRECT_PENDING_KEY);
     expect(consumeAccountSuspendedRedirect('?t=tenant-a')).toEqual({
       suspended: false,
       nextSearch: '?t=tenant-a',
