@@ -60,6 +60,17 @@ describe('getRegistrationValidationMessage', () => {
     expect(patterns.uppercase.test('A')).toBe(true);
     expect(patterns.lowercase.test('a')).toBe(true);
     expect(patterns.special.test('!')).toBe(true);
+    expect(patterns.special.test('\u0001')).toBe(false);
+  });
+
+  it('does not count control characters as backend-valid punctuation or symbols', () => {
+    expect(
+      getRegistrationValidationMessage({
+        ...validRegistration,
+        password: 'Control\u0001Character',
+        confirmPassword: 'Control\u0001Character',
+      })
+    ).toBe('Password must contain one special character');
   });
 
   it('rejects bounded fields before sending them', () => {

@@ -26,13 +26,13 @@ export const createPasswordCharacterPatterns = (
     return {
       uppercase: createRegExp('\\p{Lu}', 'u'),
       lowercase: createRegExp('\\p{Ll}', 'u'),
-      special: createRegExp('[^\\p{L}\\p{N}\\s]', 'u'),
+      special: createRegExp('[\\p{P}\\p{S}]', 'u'),
     };
   } catch {
     return {
       uppercase: /[A-Z]/,
       lowercase: /[a-z]/,
-      special: /[^A-Za-z0-9\s]/,
+      special: /[\u0021-\u002f\u003a-\u0040\u005b-\u0060\u007b-\u007e]/,
     };
   }
 };
