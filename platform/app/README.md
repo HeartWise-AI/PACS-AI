@@ -30,6 +30,8 @@ Before running this repository, you need to have the PACS AI backend up and runn
    | `APP_PUBLIC_API_URL` | PACS AI backend URL (local: `http://localhost/api`, prod: `https://hostname/api`) |
    | `APP_PUBLIC_DEFAULT_TENANT` | Tenant ID from Google Cloud Platform |
    | `APP_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile site key used by the registration form; never place the secret key in the frontend |
+   | `APP_PUBLIC_TERMS_OF_USE_URL` | Current Terms of Use document URL shown during public registration |
+   | `APP_PUBLIC_PRIVACY_POLICY_URL` | Current Privacy Policy document URL shown during public registration |
    | `APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED` | Enables authenticated live worklist updates; set to `false` to roll back to REST snapshots |
    | `APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED` | Keeps legacy candidate transition polling independently available during SSE rollout |
    | `APP_FIREBASE_API_KEY` | Firebase project API key |
@@ -39,6 +41,10 @@ Before running this repository, you need to have the PACS AI backend up and runn
    | `APP_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
    | `APP_FIREBASE_APP_ID` | Firebase application ID |
    | `APP_FIREBASE_MEASUREMENT_ID` | Firebase measurement ID |
+
+   The registration policy links are informational configuration only. Versioned policy identifiers,
+   required acceptance, persistence, and post-login enforcement remain blocked by
+   `HeartWise-AI/pacs-ai-backend#282`; do not treat the presence of these links as recorded acceptance.
 
    Default configurations (no changes needed):
    ```

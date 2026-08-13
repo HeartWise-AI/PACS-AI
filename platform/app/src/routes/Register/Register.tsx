@@ -16,12 +16,18 @@ import { createRegistrationRequest } from './registrationRequest';
 import { getRegistrationErrorMessage } from './registrationError';
 import { getRegistrationValidationMessage } from './registrationValidation';
 import { getRegistrationContextError, resolveRegistrationContext } from './registrationContext';
+import { getConfiguredPublicPolicyLinks } from './publicPolicyLinks';
+import RegistrationPolicyLinks from './RegistrationPolicyLinks';
 import TurnstileWidget from './TurnstileWidget';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
 
 const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
+const publicPolicyLinks = getConfiguredPublicPolicyLinks({
+  APP_PUBLIC_TERMS_OF_USE_URL: process.env.APP_PUBLIC_TERMS_OF_USE_URL,
+  APP_PUBLIC_PRIVACY_POLICY_URL: process.env.APP_PUBLIC_PRIVACY_POLICY_URL,
+});
 
 const RegisterPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -375,6 +381,8 @@ const RegisterPage = () => {
                   </button>
                 </div>
               </div>
+
+              <RegistrationPolicyLinks {...publicPolicyLinks} />
 
               <TurnstileWidget
                 siteKey={turnstileSiteKey}
