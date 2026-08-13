@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Typography } from '@ohif/ui';
@@ -15,6 +15,7 @@ import eyeOn from './../../assets/pacs/icons/eye-on.png';
 import { createRegistrationRequest } from './registrationRequest';
 import { getRegistrationErrorMessage } from './registrationError';
 import { getRegistrationValidationMessage } from './registrationValidation';
+import { getRegistrationContextError, resolveRegistrationContext } from './registrationContext';
 import TurnstileWidget from './TurnstileWidget';
 
 const membersSelectClassName =
@@ -28,15 +29,17 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const showAlert = useContext(AlertContext) as (message: string, variant: string) => void;
+  const registrationContext = useMemo(
+    () =>
+      resolveRegistrationContext(
+        search,
+        localStorage.getItem('tenantId'),
+        process.env.APP_PUBLIC_DEFAULT_TENANT
+      ),
+    [search]
+  );
 
-  const [email, setEmail] = useState(() => {
-    const p = new URLSearchParams(search);
-    return (p.get('email') || '').trim().toLowerCase();
-  });
-  const [invitationCode, setInvitationCode] = useState(() => {
-    const p = new URLSearchParams(search);
-    return (p.get('code') || '').trim();
-  });
+  const [email, setEmail] = useState(() => registrationContext.invitedEmail);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [licenseNo, setLicenseNo] = useState('');
@@ -59,12 +62,7 @@ const RegisterPage = () => {
   useEffect(() => {
     let cancelled = false;
     const guardRegistrationEnabled = async () => {
-      const params = new URLSearchParams(search);
-      const tenantId =
-        (params.get('t') || '').trim() ||
-        localStorage.getItem('tenantId') ||
-        process.env.APP_PUBLIC_DEFAULT_TENANT ||
-        '';
+      const { tenantId } = registrationContext;
       if (!tenantId) {
         return;
       }
@@ -88,16 +86,13 @@ const RegisterPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [search, navigate]);
+  }, [registrationContext, navigate]);
 
   useEffect(() => {
-    const params = new URLSearchParams(search);
-    setInvitationCode((params.get('code') || '').trim());
-    const emailParam = params.get('email');
-    if (emailParam?.trim()) {
-      setEmail(emailParam.trim().toLowerCase());
+    if (registrationContext.invitedEmail) {
+      setEmail(registrationContext.invitedEmail);
     }
-  }, [search]);
+  }, [registrationContext.invitedEmail]);
 
   useEffect(() => {
     const loadSpecialties = async () => {
@@ -119,7 +114,7 @@ const RegisterPage = () => {
    * @returns
    */
   const handleBackToLogin = () => {
-    navigate({ pathname: '/login', search });
+    navigate({ pathname: '/login', search: registrationContext.canonicalSearch });
   };
 
   /**
@@ -132,9 +127,11 @@ const RegisterPage = () => {
       return;
     }
 
-    const params = new URLSearchParams(search);
-    const tenantIdFromInvite = (params.get('t') || '').trim();
-    const codeFromUrl = invitationCode.trim() || (params.get('code') || '').trim();
+    const contextError = getRegistrationContextError(registrationContext);
+    if (contextError) {
+      showAlert(t(contextError), 'error');
+      return;
+    }
 
     const validationMessage = getRegistrationValidationMessage({
       email,
@@ -144,7 +141,7 @@ const RegisterPage = () => {
       specialty,
       password,
       confirmPassword,
-      invitationCode: codeFromUrl,
+      invitationCode: registrationContext.invitationCode,
     });
     if (validationMessage) {
       showAlert(t(validationMessage), 'error');
@@ -154,14 +151,13 @@ const RegisterPage = () => {
       showAlert(t('Complete the verification before registering.'), 'error');
       return;
     }
-    const tenantId = tenantIdFromInvite || localStorage.getItem('tenantId') || '';
     isRegisteringRef.current = true;
     setIsRegistering(true);
     try {
-      const response = await userRepository.RegisterTenantUser(
+      await userRepository.RegisterTenantUser(
         createRegistrationRequest({
-          tenantId,
-          invitationCode: codeFromUrl,
+          tenantId: registrationContext.tenantId,
+          invitationCode: registrationContext.invitationCode,
           firstName,
           lastName,
           email,
@@ -171,11 +167,8 @@ const RegisterPage = () => {
           turnstileToken,
         })
       );
-      showAlert(
-        `${response.message} ${t('Please check your email to verify your account before logging in.')}`,
-        'success'
-      );
-      navigate({ pathname: '/login', search });
+      showAlert(t('Account created. Check your email to verify it before signing in.'), 'success');
+      navigate({ pathname: '/login', search: registrationContext.canonicalSearch });
     } catch (error) {
       showAlert(getRegistrationErrorMessage(error, t), 'error');
       setTurnstileToken(null);
