@@ -10,6 +10,16 @@ export interface DeleteTenantUserRequest {
   userId: string;
 }
 
+export interface ChangeTenantUserAccessRequest {
+  userId: string;
+  reason?: string;
+}
+
+export interface ChangeTenantUserAccessResponse {
+  readonly userId: string;
+  readonly accessState: UserAccessState;
+}
+
 export interface ChangePasswordRequest {
   newPassword: string;
 }
@@ -61,12 +71,12 @@ export interface ResendTenantInvitationRequest {
 
 export interface RegisterTenantUserRequest {
   tenantId: string;
-  role: string;
   name: string;
   email: string;
   password: string;
   licenseNo: string;
   specialty: string;
+  turnstileToken: string;
   code?: string;
 }
 
@@ -77,12 +87,13 @@ export interface RemoveTenantUserEmailInviteRequest {
 export interface UserResponse {
   readonly id: string;
   readonly tenantId: string;
-  readonly role: string;
+  readonly role: UserRole;
+  readonly accessState: UserAccessState;
   readonly name: string;
   readonly firstName?: string;
   readonly lastName?: string;
   readonly email: string;
-  readonly licenseNo: number;
+  readonly licenseNo: string;
   readonly specialty: string;
   readonly isEmailVerified: boolean;
   readonly isAccountDisabled: boolean;
@@ -113,4 +124,9 @@ export enum UserRole {
   USER = 'USER',
   ADMIN = 'ADMIN',
   OWNER = 'OWNER',
+}
+
+export enum UserAccessState {
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
 }

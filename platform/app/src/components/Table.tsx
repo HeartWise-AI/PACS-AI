@@ -1,6 +1,30 @@
 import React from 'react';
 
-const Table = ({ headers, data, children, className, onRowClick }) => {
+export interface TableHeader {
+  text: React.ReactNode;
+  value: string;
+  align?: string;
+}
+
+// Dynamic columns intentionally defer cell-value narrowing to each render callback.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TableCellValue = any;
+
+export interface TableProps<T extends object> {
+  headers: TableHeader[];
+  data: T[];
+  children?: (cell: TableCellValue, header: TableHeader, row: T) => React.ReactNode;
+  className?: string;
+  onRowClick?: (row: T) => void;
+}
+
+const Table = <T extends object>({
+  headers,
+  data,
+  children,
+  className = '',
+  onRowClick,
+}: TableProps<T>) => {
   return (
     <div className="max-w-full overflow-x-auto">
       <table className="w-full text-left text-sm rtl:text-right">
@@ -20,7 +44,7 @@ const Table = ({ headers, data, children, className, onRowClick }) => {
         <tbody>
           {data.map((item, rowIndex) => (
             <tr
-              key={rowIndex}
+              key={((item as Record<string, unknown>).id as React.Key) ?? rowIndex}
               className={`bg-transparent text-base text-white ${
                 onRowClick ? 'cursor-pointer' : ''
               } hover:bg-white hover:bg-opacity-10`}
@@ -31,7 +55,7 @@ const Table = ({ headers, data, children, className, onRowClick }) => {
                   key={cellIndex}
                   className={`break-words px-2 py-2 text-${header.align} ${className}`}
                 >
-                  {children(item[header.value], header, item)}
+                  {children?.((item as Record<string, unknown>)[header.value], header, item)}
                 </td>
               ))}
             </tr>

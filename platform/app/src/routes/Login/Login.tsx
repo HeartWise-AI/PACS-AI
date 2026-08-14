@@ -16,13 +16,17 @@ import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
 import { logoutUser, navigateAfterAuth } from '../../service/userService';
+import { consumeAccountSuspendedRedirect } from '../../service/accountAccessSession';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const showAlert = useContext(AlertContext);
+  const showAlert = useContext(AlertContext) as (
+    message: string,
+    type: 'success' | 'error'
+  ) => void;
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
@@ -32,7 +36,8 @@ const LoginPage = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
-  const tenantId = new URLSearchParams(useLocation().search).get('t');
+  const location = useLocation();
+  const tenantId = new URLSearchParams(location.search).get('t');
   const frontendVersion = useContext(FrontendVersionContext);
   const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
   auth.tenantId = tenantId;
@@ -41,6 +46,19 @@ const LoginPage = () => {
   useEffect(() => {
     document.title = 'Login - PACS AI';
   }, []);
+
+  useEffect(() => {
+    const suspendedRedirect = consumeAccountSuspendedRedirect(location.search);
+    if (!suspendedRedirect.suspended) {
+      return;
+    }
+
+    showAlert(
+      t('Your account access has been suspended. Contact your workspace administrator.'),
+      'error'
+    );
+    navigate({ pathname: '/login', search: suspendedRedirect.nextSearch }, { replace: true });
+  }, [location.search, navigate, showAlert, t]);
 
   useEffect(() => {
     const fetchTenantInfo = async () => {
@@ -62,10 +80,23 @@ const LoginPage = () => {
         console.error(error);
       }
     };
-    fetchTenantInfo();
-    getCurrentUser();
-    fetchAPIInfo();
-  }, [userRepository, tenantRepository]);
+    const getCurrentUser = async () => {
+      try {
+        const response = await userRepository.GetCurrentUser();
+        if (response.success) {
+          await navigateAfterAuth(navigate, response.data);
+        } else {
+          localStorage.removeItem('sessionToken');
+        }
+      } catch (error) {
+        console.warn('GetCurrentUser failed on login page', error);
+      }
+    };
+
+    void fetchTenantInfo();
+    void getCurrentUser();
+    void fetchAPIInfo();
+  }, [defaultTenant, navigate, tenantId]);
 
   useEffect(() => {
     if (verificationCooldown <= 0) {
@@ -155,22 +186,6 @@ const LoginPage = () => {
       .catch(() => {
         showAlert('Invalid email or password', 'error');
         setIsLoggingIn(false);
-      });
-  };
-
-  // Get current user info
-  const getCurrentUser = () => {
-    userRepository
-      .GetCurrentUser()
-      .then(response => {
-        if (response.success) {
-          navigateAfterAuth(navigate, response.data);
-        } else {
-          localStorage.removeItem('sessionToken');
-        }
-      })
-      .catch(error => {
-        console.warn('GetCurrentUser failed on login page', error);
       });
   };
 

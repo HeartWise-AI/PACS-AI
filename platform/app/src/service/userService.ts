@@ -1,6 +1,7 @@
 import tenantRepository from '../api/tenantRepository';
 import type { UserResponse } from '../api/userDTO';
 import { clearAuthenticatedSession } from '../utils/authenticatedSession';
+import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
 
 /**
  * Resolve where a freshly-authenticated user should land based on their onboarding
@@ -41,6 +42,14 @@ export const navigateAfterAuth = async (navigate, user: UserResponse) => {
 
 export const logoutUser = (navigate, tenantId, forcedLogout = true) => {
   clearAuthenticatedSession();
+
+  const suspendedLoginURL = getPendingAccountSuspendedLoginURL();
+  if (suspendedLoginURL) {
+    // The API interceptor already initiated this redirect. Replacing with the same URL
+    // prevents generic request handlers from overwriting the suspension reason.
+    window.location.replace(suspendedLoginURL);
+    return;
+  }
 
   if (forcedLogout) {
     // if unauthorized user error, redirect to login page using window.location.href to clear the cache and state, and avoid re-rendering
