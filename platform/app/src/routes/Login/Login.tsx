@@ -1,10 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from './../../firebase';
 import userRepository from '../../api/userRepository';
 import tenantRepository from '../../api/tenantRepository';
 import repository from '../../api/repository';
@@ -17,6 +15,12 @@ import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
 import { logoutUser, navigateAfterAuth } from '../../service/userService';
 import { consumeAccountSuspendedRedirect } from '../../service/accountAccessSession';
+import TurnstileWidget from '../../components/auth/TurnstileWidget';
+import type { LoginAPIError } from '../../api/loginAPIError';
+import { getLoginErrorMessage, requiresLoginChallenge } from './loginError';
+import { createLoginRequest } from './loginRequest';
+
+const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
 
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -36,11 +40,17 @@ const LoginPage = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [loginCooldown, setLoginCooldown] = useState(0);
+  const isLoggingInRef = useRef(false);
+  const loginCooldownUntilRef = useRef(0);
+  const challengePromptRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const tenantId = new URLSearchParams(location.search).get('t');
   const frontendVersion = useContext(FrontendVersionContext);
   const defaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
-  auth.tenantId = tenantId;
 
   // Set page title
   useEffect(() => {
@@ -110,6 +120,31 @@ const LoginPage = () => {
     return () => window.clearInterval(interval);
   }, [verificationCooldown]);
 
+  useEffect(() => {
+    if (loginCooldown <= 0) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      const remainingSeconds = Math.max(
+        Math.ceil((loginCooldownUntilRef.current - Date.now()) / 1000),
+        0
+      );
+      setLoginCooldown(remainingSeconds);
+      if (remainingSeconds === 0) {
+        loginCooldownUntilRef.current = 0;
+      }
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [loginCooldown]);
+
+  useEffect(() => {
+    if (challengeRequired) {
+      challengePromptRef.current?.focus();
+    }
+  }, [challengeRequired]);
+
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
     setShowForgotPasswordForm(true);
@@ -147,46 +182,73 @@ const LoginPage = () => {
   };
 
   // User login
-  const onLogin = e => {
+  const onLogin = async e => {
     e.preventDefault();
-    setIsLoggingIn(true);
-    signInWithEmailAndPassword(auth, email, password)
-      .then(userCredential => {
-        // Signed-in in firebase auth
-        userRepository
-          .Login({
-            tenantId: auth.tenantId,
-            idToken: userCredential._tokenResponse.idToken,
-          })
-          .then(response => {
-            // save sessionToken in localStorage
-            const sessionToken = response.data.sessionToken;
-            if (sessionToken) {
-              localStorage.setItem('sessionToken', sessionToken);
-            }
+    if (
+      isLoggingInRef.current ||
+      (loginCooldownUntilRef.current > 0 && Date.now() < loginCooldownUntilRef.current)
+    ) {
+      return;
+    }
+    if (!tenantId) {
+      showAlert(t('Unable to determine the workspace. Reload the page and try again.'), 'error');
+      return;
+    }
+    if (challengeRequired && !turnstileToken) {
+      showAlert(t('Complete the login verification to continue.'), 'error');
+      challengePromptRef.current?.focus();
+      return;
+    }
 
-            // route based on the user's onboarding state (verify email / consent / worklist)
-            userRepository.GetCurrentUser().then(response => {
-              localStorage.setItem('tenantId', auth.tenantId);
-              navigateAfterAuth(navigate, response.data);
-            });
-            setIsLoggingIn(false);
-            showAlert(response.message, 'success');
-          })
-          .catch(error => {
-            if (error.errorCode === Error.FIREBASE_AUTH_EMAIL_NOT_VERIFIED) {
-              localStorage.removeItem('sessionToken');
-              setVerificationEmail(email.trim().toLowerCase());
-              void signOut(auth);
-            }
-            showAlert(error.message, 'error');
-            setIsLoggingIn(false);
-          });
-      })
-      .catch(() => {
-        showAlert('Invalid email or password', 'error');
-        setIsLoggingIn(false);
-      });
+    const submittedTurnstileToken = challengeRequired ? turnstileToken || undefined : undefined;
+    isLoggingInRef.current = true;
+    setIsLoggingIn(true);
+
+    try {
+      // Keep the public tenant context available to suspension redirects and later navigation.
+      localStorage.setItem('tenantId', tenantId);
+      const response = await userRepository.Login(
+        createLoginRequest({
+          tenantId,
+          email,
+          password,
+          turnstileToken: submittedTurnstileToken,
+        })
+      );
+      const sessionToken = response.data.sessionToken;
+      if (!sessionToken) {
+        showAlert(t('Login is temporarily unavailable. Please try again later.'), 'error');
+        return;
+      }
+
+      localStorage.setItem('sessionToken', sessionToken);
+      setPassword('');
+      setChallengeRequired(false);
+      const currentUserResponse = await userRepository.GetCurrentUser();
+      await navigateAfterAuth(navigate, currentUserResponse.data);
+      showAlert(response.message, 'success');
+    } catch (failure) {
+      const error = (failure || {}) as Partial<LoginAPIError>;
+      if (requiresLoginChallenge(error)) {
+        setChallengeRequired(true);
+      }
+      if (error.retryAfterSeconds && error.retryAfterSeconds > 0) {
+        loginCooldownUntilRef.current = Date.now() + error.retryAfterSeconds * 1000;
+        setLoginCooldown(error.retryAfterSeconds);
+      }
+      if (error.errorCode === Error.FIREBASE_AUTH_EMAIL_NOT_VERIFIED) {
+        localStorage.removeItem('sessionToken');
+        setVerificationEmail(email.trim().toLowerCase());
+      }
+      showAlert(getLoginErrorMessage(error, t), 'error');
+    } finally {
+      if (submittedTurnstileToken) {
+        setTurnstileToken(null);
+        setTurnstileResetKey(value => value + 1);
+      }
+      isLoggingInRef.current = false;
+      setIsLoggingIn(false);
+    }
   };
 
   // User reset password
@@ -302,8 +364,53 @@ const LoginPage = () => {
                   {t('Forgot Password')}?
                 </button>
               </div>
+              {challengeRequired && (
+                <div
+                  ref={challengePromptRef}
+                  tabIndex={-1}
+                  className="mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2 focus:ring-primary-light"
+                  aria-live="polite"
+                >
+                  <Typography
+                    variant="body"
+                    component="p"
+                    className="text-sm text-white text-opacity-80"
+                  >
+                    {t('Additional verification is required before signing in.')}
+                  </Typography>
+                  <TurnstileWidget
+                    siteKey={turnstileSiteKey}
+                    action="login"
+                    copy={{
+                      ariaLabel: t('Login human verification'),
+                      loading: t('Loading login verification…'),
+                      failed: t('Login verification failed. Please try again.'),
+                      expired: t('Login verification expired. Please complete it again.'),
+                      unavailable: t(
+                        'Login verification is unavailable. Please try again later.'
+                      ),
+                      retry: t('Try login verification again'),
+                    }}
+                    resetKey={turnstileResetKey}
+                    onTokenChange={setTurnstileToken}
+                  />
+                </div>
+              )}
+              {loginCooldown > 0 && (
+                <p
+                  className="mb-4 text-sm text-amber-200"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {t('Login is temporarily limited. Try again in {{seconds}} seconds.', {
+                    seconds: loginCooldown,
+                  })}
+                </p>
+              )}
               <Button
-                disabled={isLoggingIn}
+                disabled={
+                  isLoggingIn || loginCooldown > 0 || (challengeRequired && !turnstileToken)
+                }
                 className="h-[51px] w-full rounded-lg !px-0"
                 onClick={onLogin}
               >
