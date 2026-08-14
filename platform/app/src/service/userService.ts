@@ -15,7 +15,7 @@ import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
 export const navigateAfterAuth = async (navigate, user: UserResponse) => {
   // Admin-created users who have not verified their email must set a password first.
   if (!user.isEmailVerified && user.isAdminCreated) {
-    navigate('/change-password');
+    navigate('/change-password', { replace: true });
     return;
   }
 
@@ -28,7 +28,8 @@ export const navigateAfterAuth = async (navigate, user: UserResponse) => {
       if (tenantResponse.data.onboardingEnableConsent === false) {
         consentRequired = false;
       }
-    } catch {
+    } catch (error) {
+      void error;
       // if tenant settings cannot be loaded, keep default (redirect) for safety
     }
     if (consentRequired) {
@@ -37,7 +38,7 @@ export const navigateAfterAuth = async (navigate, user: UserResponse) => {
     }
   }
 
-  navigate('/');
+  navigate('/', { replace: true });
 };
 
 export const logoutUser = (navigate, tenantId, forcedLogout = true) => {
