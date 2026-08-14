@@ -1,40 +1,33 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import userRepository from '../../api/userRepository';
 import tenantRepository from '../../api/tenantRepository';
-import { GetDoctorSpecialtiesResponse, UserRole } from '../../api/userDTO';
-import { Error } from '../../api/dto';
+import { GetDoctorSpecialtiesResponse } from '../../api/userDTO';
 import { AlertContext } from '../../AlertProvider';
-import { logoutUser } from '../../service/userService';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import eyeOff from './../../assets/pacs/icons/eye-off.png';
 import eyeOn from './../../assets/pacs/icons/eye-on.png';
+import { createRegistrationRequest } from './registrationRequest';
+import { getRegistrationErrorMessage } from './registrationError';
+import { getRegistrationValidationMessage } from './registrationValidation';
+import { getRegistrationContextError, resolveRegistrationContext } from './registrationContext';
+import { getConfiguredPublicPolicyLinks } from './publicPolicyLinks';
+import RegistrationPolicyLinks from './RegistrationPolicyLinks';
+import TurnstileWidget from './TurnstileWidget';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
 
-const passwordMinLength = 8;
-
-const getPasswordValidationMessage = (password: string): string | null => {
-  if (password.length < passwordMinLength) {
-    return 'Password must be at least 8 characters';
-  }
-  if (!/[A-Z]/.test(password)) {
-    return 'Password must contain one uppercase';
-  }
-  if (!/[a-z]/.test(password)) {
-    return 'Password must contain one lowercase';
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    return 'Password must contain one special character';
-  }
-  return null;
-};
+const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
+const publicPolicyLinks = getConfiguredPublicPolicyLinks({
+  APP_PUBLIC_TERMS_OF_USE_URL: process.env.APP_PUBLIC_TERMS_OF_USE_URL,
+  APP_PUBLIC_PRIVACY_POLICY_URL: process.env.APP_PUBLIC_PRIVACY_POLICY_URL,
+});
 
 const RegisterPage = () => {
   const { t } = useTranslation('Onboarding');
@@ -42,15 +35,17 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { search } = useLocation();
   const showAlert = useContext(AlertContext) as (message: string, variant: string) => void;
+  const registrationContext = useMemo(
+    () =>
+      resolveRegistrationContext(
+        search,
+        localStorage.getItem('tenantId'),
+        process.env.APP_PUBLIC_DEFAULT_TENANT
+      ),
+    [search]
+  );
 
-  const [email, setEmail] = useState(() => {
-    const p = new URLSearchParams(search);
-    return (p.get('email') || '').trim().toLowerCase();
-  });
-  const [invitationCode, setInvitationCode] = useState(() => {
-    const p = new URLSearchParams(search);
-    return (p.get('code') || '').trim();
-  });
+  const [email, setEmail] = useState(() => registrationContext.invitedEmail);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [licenseNo, setLicenseNo] = useState('');
@@ -61,6 +56,9 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const isRegisteringRef = useRef(false);
 
   useEffect(() => {
     document.title = 'Create an account - PACS AI';
@@ -70,12 +68,7 @@ const RegisterPage = () => {
   useEffect(() => {
     let cancelled = false;
     const guardRegistrationEnabled = async () => {
-      const params = new URLSearchParams(search);
-      const tenantId =
-        (params.get('t') || '').trim() ||
-        localStorage.getItem('tenantId') ||
-        process.env.APP_PUBLIC_DEFAULT_TENANT ||
-        '';
+      const { tenantId } = registrationContext;
       if (!tenantId) {
         return;
       }
@@ -99,16 +92,13 @@ const RegisterPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [search, navigate]);
+  }, [registrationContext, navigate]);
 
   useEffect(() => {
-    const params = new URLSearchParams(search);
-    setInvitationCode((params.get('code') || '').trim());
-    const emailParam = params.get('email');
-    if (emailParam?.trim()) {
-      setEmail(emailParam.trim().toLowerCase());
+    if (registrationContext.invitedEmail) {
+      setEmail(registrationContext.invitedEmail);
     }
-  }, [search]);
+  }, [registrationContext.invitedEmail]);
 
   useEffect(() => {
     const loadSpecialties = async () => {
@@ -130,7 +120,7 @@ const RegisterPage = () => {
    * @returns
    */
   const handleBackToLogin = () => {
-    navigate({ pathname: '/login', search });
+    navigate({ pathname: '/login', search: registrationContext.canonicalSearch });
   };
 
   /**
@@ -139,53 +129,60 @@ const RegisterPage = () => {
    * @returns
    */
   const submitRegister = async () => {
-    const params = new URLSearchParams(search);
-    const tenantIdFromInvite = (params.get('t') || '').trim();
-    const codeFromUrl = invitationCode.trim() || (params.get('code') || '').trim();
+    if (isRegisteringRef.current) {
+      return;
+    }
 
-    if (
-      !email.trim() ||
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !licenseNo.trim() ||
-      !specialty ||
-      !password.trim() ||
-      !confirmPassword.trim()
-    ) {
-      showAlert(t('Please fill all required fields'), 'error');
+    const contextError = getRegistrationContextError(registrationContext);
+    if (contextError) {
+      showAlert(t(contextError), 'error');
       return;
     }
-    const pwdMsg = getPasswordValidationMessage(password);
-    if (pwdMsg) {
-      showAlert(t(pwdMsg), 'error');
+
+    const validationMessage = getRegistrationValidationMessage({
+      email,
+      firstName,
+      lastName,
+      licenseNo,
+      specialty,
+      password,
+      confirmPassword,
+      invitationCode: registrationContext.invitationCode,
+    });
+    if (validationMessage) {
+      showAlert(t(validationMessage), 'error');
       return;
     }
-    if (password !== confirmPassword) {
-      showAlert(t('Passwords do not match'), 'error');
+    if (!turnstileToken) {
+      showAlert(t('Complete the verification before registering.'), 'error');
       return;
     }
-    const tenantId = tenantIdFromInvite || localStorage.getItem('tenantId') || '';
+    isRegisteringRef.current = true;
     setIsRegistering(true);
     try {
-      const response = await userRepository.RegisterTenantUser({
-        tenantId,
-        role: UserRole.USER,
-        name: `${firstName.trim()} ${lastName.trim()}`,
-        email: email.trim().toLowerCase(),
-        password,
-        licenseNo: licenseNo.trim(),
-        specialty,
-        ...(codeFromUrl ? { code: codeFromUrl } : {}),
-      });
-      showAlert(
-        `${response.message} ${t('Please check your email to verify your account before logging in.')}`,
-        'success'
+      await userRepository.RegisterTenantUser(
+        createRegistrationRequest({
+          tenantId: registrationContext.tenantId,
+          invitationCode: registrationContext.invitationCode,
+          firstName,
+          lastName,
+          email,
+          password,
+          licenseNo,
+          specialty,
+          turnstileToken,
+        })
       );
-      navigate({ pathname: '/login', search });
+      showAlert(t('Account created. Check your email to verify it before signing in.'), 'success');
+      navigate({ pathname: '/login', search: registrationContext.canonicalSearch });
     } catch (error) {
-      showAlert(error?.message || 'Registration failed', 'error');
+      showAlert(getRegistrationErrorMessage(error, t), 'error');
+      setTurnstileToken(null);
+      setTurnstileResetKey(value => value + 1);
+    } finally {
+      isRegisteringRef.current = false;
+      setIsRegistering(false);
     }
-    setIsRegistering(false);
   };
 
   return (
@@ -245,8 +242,9 @@ const RegisterPage = () => {
                   id="register-email"
                   placeholder={tMembers('Email')}
                   className="mb-4 w-full"
-                  type="text"
+                  type="email"
                   autoComplete="email"
+                  maxLength={254}
                   value={email}
                   onChange={e => setEmail(e.target.value.toLowerCase())}
                   onKeyPress={e => e.key === ' ' && e.preventDefault()}
@@ -257,6 +255,7 @@ const RegisterPage = () => {
                   className="mb-4 w-full"
                   type="text"
                   autoComplete="given-name"
+                  maxLength={100}
                   autoFocus
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
@@ -267,37 +266,16 @@ const RegisterPage = () => {
                   className="mb-4 w-full"
                   type="text"
                   autoComplete="family-name"
+                  maxLength={100}
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
                 />
-                <div className="relative">
-                  <select
-                    id="register-role"
-                    value={UserRole.USER}
-                    className={membersSelectClassName}
-                    aria-label={tMembers('Role')}
-                  >
-                    <option
-                      value={UserRole.USER}
-                      className="!cursor-pointer !bg-[#323631] !py-2"
-                    >
-                      {t('User')}
-                    </option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <img
-                      src={chevronDown}
-                      alt="Chevron down icon"
-                      className="w-5"
-                    />
-                  </div>
-                </div>
-
                 <Input
                   id="register-license"
                   placeholder={tMembers('License No.')}
                   className="mb-4 w-full"
                   type="text"
+                  maxLength={100}
                   value={licenseNo}
                   onChange={e => setLicenseNo(e.target.value)}
                 />
@@ -342,6 +320,7 @@ const RegisterPage = () => {
                     className="w-full pr-12"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
+                    maxLength={128}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                   />
@@ -349,7 +328,7 @@ const RegisterPage = () => {
                     type="button"
                     tabIndex={-1}
                     aria-label={showPassword ? t('Hide password') : t('Show password')}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
                     onClick={() => setShowPassword(v => !v)}
                   >
                     {showPassword ? (
@@ -375,6 +354,7 @@ const RegisterPage = () => {
                     className="w-full pr-12"
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
+                    maxLength={128}
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                   />
@@ -382,7 +362,7 @@ const RegisterPage = () => {
                     type="button"
                     tabIndex={-1}
                     aria-label={showConfirmPassword ? t('Hide password') : t('Show password')}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-white text-opacity-50 transition hover:text-opacity-90"
                     onClick={() => setShowConfirmPassword(v => !v)}
                   >
                     {showConfirmPassword ? (
@@ -402,12 +382,18 @@ const RegisterPage = () => {
                 </div>
               </div>
 
+              <RegistrationPolicyLinks {...publicPolicyLinks} />
+
+              <TurnstileWidget
+                siteKey={turnstileSiteKey}
+                resetKey={turnstileResetKey}
+                onTokenChange={setTurnstileToken}
+              />
+
               <Button
-                disabled={isRegistering}
+                type="submit"
+                disabled={isRegistering || !turnstileToken}
                 className="mt-6 h-[51px] w-full rounded-lg !px-0"
-                onClick={() => {
-                  void submitRegister();
-                }}
               >
                 {isRegistering ? '...' : t('Register')}
               </Button>

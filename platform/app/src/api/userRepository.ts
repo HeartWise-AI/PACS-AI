@@ -1,6 +1,7 @@
 import type { AxiosResponse, AxiosError } from 'axios';
 import { object } from 'prop-types';
 import { APIResponse, ErrorAPIResponse } from './dto';
+import { createRegistrationAPIError } from './registrationAPIError';
 import Api from '../pacsAPIAxios';
 import {
   AddTenantUserRequest,
@@ -298,8 +299,7 @@ const userRepository = {
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
-        const { response } = error;
-        throw response?.data !== undefined ? response.data : object;
+        throw createRegistrationAPIError(error);
       });
   },
   /**
