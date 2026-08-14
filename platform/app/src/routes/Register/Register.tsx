@@ -391,9 +391,7 @@ const RegisterPage = () => {
                   ariaLabel: t('Human verification'),
                   loading: t('Loading registration verification…'),
                   failed: t('Registration verification failed. Please try again.'),
-                  expired: t(
-                    'Registration verification expired. Please complete it again.'
-                  ),
+                  expired: t('Registration verification expired. Please complete it again.'),
                   unavailable: t(
                     'Registration verification is unavailable. Please try again later.'
                   ),

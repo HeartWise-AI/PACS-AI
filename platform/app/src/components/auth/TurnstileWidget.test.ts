@@ -63,9 +63,7 @@ describe('TurnstileWidget', () => {
     const onTokenChange = jest.fn();
 
     await act(async () => {
-      root.render(
-        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
-      );
+      root.render(React.createElement(TurnstileWidget, widgetProps(onTokenChange)));
     });
 
     expect(window.turnstile?.render).toHaveBeenCalledWith(
@@ -109,16 +107,16 @@ describe('TurnstileWidget', () => {
       (renderOptions['error-callback'] as () => boolean)();
     });
     expect(container.querySelector('[aria-label="Login human verification"]')).not.toBeNull();
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe('Login verification failed.');
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      'Login verification failed.'
+    );
   });
 
   it('clears the proof and announces challenge failures', async () => {
     const onTokenChange = jest.fn();
 
     await act(async () => {
-      root.render(
-        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
-      );
+      root.render(React.createElement(TurnstileWidget, widgetProps(onTokenChange)));
     });
 
     act(() => {
@@ -144,9 +142,7 @@ describe('TurnstileWidget', () => {
     const onTokenChange = jest.fn();
 
     await act(async () => {
-      root.render(
-        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
-      );
+      root.render(React.createElement(TurnstileWidget, widgetProps(onTokenChange)));
     });
 
     act(() => {
@@ -185,9 +181,7 @@ describe('TurnstileWidget', () => {
     const onTokenChange = jest.fn();
 
     await act(async () => {
-      root.render(
-        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
-      );
+      root.render(React.createElement(TurnstileWidget, widgetProps(onTokenChange)));
     });
 
     const failedScript = document.getElementById('cloudflare-turnstile-script');
@@ -199,9 +193,7 @@ describe('TurnstileWidget', () => {
 
     act(() => root.render(null));
     await act(async () => {
-      root.render(
-        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
-      );
+      root.render(React.createElement(TurnstileWidget, widgetProps(onTokenChange)));
     });
 
     const replacementScript = document.getElementById('cloudflare-turnstile-script');

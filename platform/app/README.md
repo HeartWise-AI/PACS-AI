@@ -29,7 +29,7 @@ Before running this repository, you need to have the PACS AI backend up and runn
    |----------|-------------|
    | `APP_PUBLIC_API_URL` | PACS AI backend URL (local: `http://localhost/api`, prod: `https://hostname/api`) |
    | `APP_PUBLIC_DEFAULT_TENANT` | Tenant ID from Google Cloud Platform |
-   | `APP_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile site key used by the registration form; never place the secret key in the frontend |
+   | `APP_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile site key used by registration and server-requested login challenges; never place the secret key in the frontend |
    | `APP_PUBLIC_TERMS_OF_USE_URL` | Current Terms of Use document URL shown during public registration |
    | `APP_PUBLIC_PRIVACY_POLICY_URL` | Current Privacy Policy document URL shown during public registration |
    | `APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED` | Enables authenticated live worklist updates; set to `false` to roll back to REST snapshots |
@@ -45,6 +45,14 @@ Before running this repository, you need to have the PACS AI backend up and runn
    The registration policy links are informational configuration only. Versioned policy identifiers,
    required acceptance, persistence, and post-login enforcement remain blocked by
    `HeartWise-AI/pacs-ai-backend#282`; do not treat the presence of these links as recorded acceptance.
+
+   Login bot protection is adaptive: ordinary login does not render Turnstile. When the backend
+   requires additional verification, the frontend renders the same public widget with the dedicated
+   `login` action and sends its single-use token only to the backend login endpoint. The Turnstile
+   secret and verification policy remain backend-only. Login credentials are sent directly to the
+   PACS AI backend over the configured API connection; browser-side Firebase password authentication
+   is not part of this login flow. Except for local development, `APP_PUBLIC_API_URL` must use HTTPS
+   so credentials are encrypted in transit.
 
    Default configurations (no changes needed):
    ```

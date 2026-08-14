@@ -14,9 +14,7 @@ export interface LoginAPIError extends ErrorAPIResponse {
   readonly retryAfterSeconds?: number;
 }
 
-export const createLoginAPIError = (
-  error: AxiosError<LoginErrorResponse>
-): LoginAPIError => {
+export const createLoginAPIError = (error: AxiosError<LoginErrorResponse>): LoginAPIError => {
   const response = error.response;
   const responseBody = response?.data;
   const retryAfterSeconds = parseRetryAfterSeconds(response?.headers?.['retry-after']);

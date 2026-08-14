@@ -6,10 +6,12 @@ const t = (key: string, values: Record<string, unknown> = {}) =>
 describe('login errors', () => {
   it('enters challenge mode from either the stable code or response data', () => {
     expect(requiresLoginChallenge({ errorCode: 'LOGIN_CHALLENGE_REQUIRED' })).toBe(true);
-    expect(requiresLoginChallenge({
-      errorCode: 'UNAUTHORIZED_ACCESS',
-      challengeRequired: true,
-    })).toBe(true);
+    expect(
+      requiresLoginChallenge({
+        errorCode: 'UNAUTHORIZED_ACCESS',
+        challengeRequired: true,
+      })
+    ).toBe(true);
     expect(requiresLoginChallenge({ errorCode: 'UNAUTHORIZED_ACCESS' })).toBe(false);
   });
 

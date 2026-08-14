@@ -222,9 +222,21 @@ const LoginPage = () => {
       }
 
       localStorage.setItem('sessionToken', sessionToken);
+      let currentUserResponse;
+      try {
+        currentUserResponse = await userRepository.GetCurrentUser();
+      } catch {
+        localStorage.removeItem('sessionToken');
+        showAlert(t('Login is temporarily unavailable. Please try again later.'), 'error');
+        return;
+      }
+      if (!currentUserResponse.success || !currentUserResponse.data) {
+        localStorage.removeItem('sessionToken');
+        showAlert(t('Login is temporarily unavailable. Please try again later.'), 'error');
+        return;
+      }
       setPassword('');
       setChallengeRequired(false);
-      const currentUserResponse = await userRepository.GetCurrentUser();
       await navigateAfterAuth(navigate, currentUserResponse.data);
       showAlert(response.message, 'success');
     } catch (failure) {
@@ -302,7 +314,7 @@ const LoginPage = () => {
 
   return (
     <div className="relative mx-0 grid h-screen w-screen grid-cols-12">
-      <div className="col-span-12 bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
+      <div className="col-span-12 overflow-y-auto bg-[#151815] p-10 sm:col-span-8 md:col-span-7 xl:col-span-4">
         {showLoginForm && (
           <div className="flex h-full flex-col justify-between">
             <div>
@@ -327,95 +339,105 @@ const LoginPage = () => {
               >
                 {t('Enter your email and password to sign in.')}
               </Typography>
-              <Input
-                placeholder={t('Email address')}
-                autoFocus
-                id="email"
-                className="mb-4 w-full"
-                type="text"
-                onChange={e => setEmail(e.target.value.toLowerCase())}
-                onKeyPress={e => {
-                  if (e.key === ' ') {
-                    e.preventDefault();
-                  }
-                  if (e.key === 'Enter') {
-                    onLogin(e);
-                  }
-                }}
-              />
-              <Input
-                placeholder={t('Password')}
-                id="password"
-                className="mb-4 w-full"
-                type="password"
-                onChange={e => setPassword(e.target.value)}
-                onKeyPress={e => {
-                  if (e.key === 'Enter') {
-                    onLogin(e);
-                  }
-                }}
-              />
-              <div className="mb-7 flex justify-end">
-                <button
-                  type="button"
-                  className="text-md rounded-lg bg-transparent p-0 font-medium text-white text-opacity-70 !ring-0"
-                  onClick={handleForgotPasswordClick}
+              <form onSubmit={onLogin}>
+                <label
+                  className="sr-only"
+                  htmlFor="email"
                 >
-                  {t('Forgot Password')}?
-                </button>
-              </div>
-              {challengeRequired && (
-                <div
-                  ref={challengePromptRef}
-                  tabIndex={-1}
-                  className="mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2 focus:ring-primary-light"
-                  aria-live="polite"
+                  {t('Email address')}
+                </label>
+                <Input
+                  placeholder={t('Email address')}
+                  autoFocus
+                  autoComplete="email"
+                  id="email"
+                  className="mb-4 w-full"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value.toLowerCase())}
+                  onKeyPress={e => e.key === ' ' && e.preventDefault()}
+                />
+                <label
+                  className="sr-only"
+                  htmlFor="password"
                 >
-                  <Typography
-                    variant="body"
-                    component="p"
-                    className="text-sm text-white text-opacity-80"
+                  {t('Password')}
+                </label>
+                <Input
+                  placeholder={t('Password')}
+                  autoComplete="current-password"
+                  id="password"
+                  className="mb-4 w-full"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
+                <div className="mb-7 flex justify-end">
+                  <button
+                    type="button"
+                    className="text-md rounded-lg bg-transparent p-0 font-medium text-white text-opacity-70 !ring-0"
+                    onClick={handleForgotPasswordClick}
                   >
-                    {t('Additional verification is required before signing in.')}
-                  </Typography>
-                  <TurnstileWidget
-                    siteKey={turnstileSiteKey}
-                    action="login"
-                    copy={{
-                      ariaLabel: t('Login human verification'),
-                      loading: t('Loading login verification…'),
-                      failed: t('Login verification failed. Please try again.'),
-                      expired: t('Login verification expired. Please complete it again.'),
-                      unavailable: t(
-                        'Login verification is unavailable. Please try again later.'
-                      ),
-                      retry: t('Try login verification again'),
-                    }}
-                    resetKey={turnstileResetKey}
-                    onTokenChange={setTurnstileToken}
-                  />
+                    {t('Forgot Password')}?
+                  </button>
                 </div>
-              )}
-              {loginCooldown > 0 && (
-                <p
-                  className="mb-4 text-sm text-amber-200"
-                  role="status"
-                  aria-live="polite"
+                {challengeRequired && (
+                  <div
+                    ref={challengePromptRef}
+                    tabIndex={-1}
+                    role="group"
+                    aria-labelledby="login-verification-heading"
+                    className="mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2 focus:ring-primary-light"
+                  >
+                    <Typography
+                      id="login-verification-heading"
+                      variant="body"
+                      component="p"
+                      className="text-sm text-white text-opacity-80"
+                    >
+                      {t('Additional verification is required before signing in.')}
+                    </Typography>
+                    <TurnstileWidget
+                      siteKey={turnstileSiteKey}
+                      action="login"
+                      copy={{
+                        ariaLabel: t('Login human verification'),
+                        loading: t('Loading login verification…'),
+                        failed: t('Login verification failed. Please try again.'),
+                        expired: t('Login verification expired. Please complete it again.'),
+                        unavailable: t(
+                          'Login verification is unavailable. Please try again later.'
+                        ),
+                        retry: t('Try login verification again'),
+                      }}
+                      resetKey={turnstileResetKey}
+                      onTokenChange={setTurnstileToken}
+                    />
+                  </div>
+                )}
+                {loginCooldown > 0 && (
+                  <p
+                    className="mb-4 text-sm text-amber-200"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {t('Login is temporarily limited. Try again in {{seconds}} seconds.', {
+                      seconds: loginCooldown,
+                    })}
+                  </p>
+                )}
+                <Button
+                  type="submit"
+                  disabled={
+                    isLoggingIn || loginCooldown > 0 || (challengeRequired && !turnstileToken)
+                  }
+                  className="h-[51px] w-full rounded-lg !px-0"
                 >
-                  {t('Login is temporarily limited. Try again in {{seconds}} seconds.', {
-                    seconds: loginCooldown,
-                  })}
-                </p>
-              )}
-              <Button
-                disabled={
-                  isLoggingIn || loginCooldown > 0 || (challengeRequired && !turnstileToken)
-                }
-                className="h-[51px] w-full rounded-lg !px-0"
-                onClick={onLogin}
-              >
-                {isLoggingIn ? '...' : t('Login')}
-              </Button>
+                  {isLoggingIn ? t('Signing in…') : t('Login')}
+                </Button>
+              </form>
               {verificationEmail && (
                 <div className="mt-4 rounded-lg bg-white bg-opacity-10 p-4 text-white">
                   <Typography

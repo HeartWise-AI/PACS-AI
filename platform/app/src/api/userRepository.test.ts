@@ -118,11 +118,13 @@ describe('user repository login', () => {
       },
     });
 
-    const failure = await userRepository.Login({
-      tenantId: 'tenant-a',
-      email: 'visitor@example.org',
-      password: sensitiveValue,
-    }).catch(error => error);
+    const failure = await userRepository
+      .Login({
+        tenantId: 'tenant-a',
+        email: 'visitor@example.org',
+        password: sensitiveValue,
+      })
+      .catch(error => error);
 
     expect(failure).toEqual({
       success: false,
