@@ -13,6 +13,18 @@ const pacsAPIAxios = () => {
     },
   });
 
+  api.interceptors.request.use(config => {
+    const currentToken = localStorage.getItem('sessionToken');
+
+    if (currentToken) {
+      config.headers.Authorization = `Bearer ${currentToken}`;
+    } else {
+      delete config.headers.Authorization;
+    }
+
+    return config;
+  });
+
   api.interceptors.response.use(
     response => response,
     error => {
