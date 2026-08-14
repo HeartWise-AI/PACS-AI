@@ -4,6 +4,8 @@ import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
 import {
   AddTenantUserRequest,
+  ChangeTenantUserAccessRequest,
+  ChangeTenantUserAccessResponse,
   ChangePasswordRequest,
   DeleteTenantUserRequest,
   ForgotPasswordRequest,
@@ -53,6 +55,44 @@ const userRepository = {
     return Api()
       .delete(`/v1/user/${request.userId}/remove`)
       .then((response: AxiosResponse<APIResponse<void>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Suspend a tenant user's access and revoke their active sessions.
+   */
+  async SuspendTenantUser(
+    request: ChangeTenantUserAccessRequest
+  ): Promise<APIResponse<ChangeTenantUserAccessResponse>> {
+    return Api()
+      .post(`/v1/user/${encodeURIComponent(request.userId)}/suspend`, {
+        reason: request.reason,
+      })
+      .then((response: AxiosResponse<APIResponse<ChangeTenantUserAccessResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Reactivate a tenant user's access.
+   */
+  async ReactivateTenantUser(
+    request: ChangeTenantUserAccessRequest
+  ): Promise<APIResponse<ChangeTenantUserAccessResponse>> {
+    return Api()
+      .post(`/v1/user/${encodeURIComponent(request.userId)}/reactivate`, {
+        reason: request.reason,
+      })
+      .then((response: AxiosResponse<APIResponse<ChangeTenantUserAccessResponse>>) => {
         const { data } = response;
         return data;
       })

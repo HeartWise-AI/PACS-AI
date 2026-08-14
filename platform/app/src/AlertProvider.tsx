@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 export const AlertContext = React.createContext();
 
@@ -6,7 +6,7 @@ export const AlertContext = React.createContext();
 export const AlertProvider = ({ children }) => {
   const [alert, setAlert] = useState({ message: '', variant: '' });
 
-  const showAlert = (message: string, variant: string) => {
+  const showAlert = useCallback((message: string, variant: string) => {
     let variantClass = '';
     switch (variant) {
       case 'error':
@@ -20,7 +20,7 @@ export const AlertProvider = ({ children }) => {
     }
 
     setAlert({ message, variant: variantClass });
-  };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
