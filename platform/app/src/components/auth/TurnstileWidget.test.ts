@@ -2,9 +2,23 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import TurnstileWidget from './TurnstileWidget';
 
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+const registrationCopy = {
+  ariaLabel: 'Human verification',
+  loading: 'Loading registration verification…',
+  failed: 'Registration verification failed. Please try again.',
+  expired: 'Registration verification expired. Please complete it again.',
+  unavailable: 'Registration verification is unavailable. Please try again later.',
+  retry: 'Try verification again',
+};
+
+const widgetProps = (onTokenChange: jest.Mock, overrides: Record<string, unknown> = {}) => ({
+  siteKey: 'public-site-key',
+  action: 'register',
+  copy: registrationCopy,
+  resetKey: 0,
+  onTokenChange,
+  ...overrides,
+});
 
 describe('TurnstileWidget', () => {
   let container: HTMLDivElement;
@@ -50,11 +64,7 @@ describe('TurnstileWidget', () => {
 
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: 'public-site-key',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
       );
     });
 
@@ -73,16 +83,41 @@ describe('TurnstileWidget', () => {
     expect(onTokenChange).toHaveBeenLastCalledWith('turnstile-proof');
   });
 
+  it('uses a caller-provided action and accessible copy', async () => {
+    const onTokenChange = jest.fn();
+    const loginCopy = {
+      ...registrationCopy,
+      ariaLabel: 'Login human verification',
+      failed: 'Login verification failed.',
+    };
+
+    await act(async () => {
+      root.render(
+        React.createElement(
+          TurnstileWidget,
+          widgetProps(onTokenChange, { action: 'login', copy: loginCopy })
+        )
+      );
+    });
+
+    expect(window.turnstile?.render).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      expect.objectContaining({ action: 'login' })
+    );
+
+    act(() => {
+      (renderOptions['error-callback'] as () => boolean)();
+    });
+    expect(container.querySelector('[aria-label="Login human verification"]')).not.toBeNull();
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('Login verification failed.');
+  });
+
   it('clears the proof and announces challenge failures', async () => {
     const onTokenChange = jest.fn();
 
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: 'public-site-key',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
       );
     });
 
@@ -110,11 +145,7 @@ describe('TurnstileWidget', () => {
 
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: 'public-site-key',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
       );
     });
 
@@ -138,11 +169,7 @@ describe('TurnstileWidget', () => {
 
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: '',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange, { siteKey: '' }))
       );
     });
 
@@ -159,11 +186,7 @@ describe('TurnstileWidget', () => {
 
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: 'public-site-key',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
       );
     });
 
@@ -177,11 +200,7 @@ describe('TurnstileWidget', () => {
     act(() => root.render(null));
     await act(async () => {
       root.render(
-        React.createElement(TurnstileWidget, {
-          siteKey: 'public-site-key',
-          resetKey: 0,
-          onTokenChange,
-        })
+        React.createElement(TurnstileWidget, widgetProps(onTokenChange))
       );
     });
 
