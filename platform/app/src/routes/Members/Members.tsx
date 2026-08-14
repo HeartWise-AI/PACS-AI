@@ -1,32 +1,42 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import ReactDOM from 'react-dom';
 import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import Table from '../../components/Table';
 import HeaderPanel from '../../components/HeaderPanel';
 import SidebarAdmin from '../../components/SidebarAdmin';
 import userRepository from '../../api/userRepository';
-import { GetTenantUserEmailInvitesResponse, UserRole } from '../../api/userDTO';
+import { GetTenantUserEmailInvitesResponse, UserResponse, UserRole } from '../../api/userDTO';
 import { Error } from '../../api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../AlertProvider';
 import { logoutUser } from '../../service/userService';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
-import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left.png';
 import chevronRight from './../../assets/pacs/icons/chevron-right.png';
+import MemberAccessManagement from './MemberAccessManagement';
+import MemberAccessStatusBadge from './MemberAccessStatusBadge';
+import { filterMembers } from './memberSearch';
 
 const userInvitesPerPage = 5;
+
+type MemberRow = UserResponse & {
+  firstName: string;
+  lastName: string;
+};
 
 const MembersPage = () => {
   const { t } = useTranslation('Members');
   const navigate = useNavigate();
-  const [filteredItems, setFilteredItems] = useState([]);
-  const [listOfUsers, setListOfUsers] = useState([]);
+  const [listOfUsers, setListOfUsers] = useState<MemberRow[]>([]);
+  const [searchValue, setSearchValue] = useState('');
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
-  const showAlert = useContext(AlertContext);
+  const showAlert = useContext(AlertContext) as (
+    message: string,
+    type: 'success' | 'error'
+  ) => void;
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [isDeletingMember, setIsDeletingMember] = useState(false);
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
@@ -69,20 +79,20 @@ const MembersPage = () => {
     { text: t('License No.'), value: 'licenseNo', align: 'left' },
     { text: t('Specialty'), value: 'specialty', align: 'left' },
     { text: t('Email Status'), value: 'isEmailVerified', align: 'center' },
+    { text: t('Access Status'), value: 'accessState', align: 'center' },
     { text: t('Created At'), value: 'createdAt', align: 'left' },
     { text: t('Action'), value: 'action', align: 'center' },
   ];
   const tenantId = localStorage.getItem('tenantId') || '';
+  const filteredItems = useMemo(
+    () => filterMembers(listOfUsers, searchValue),
+    [listOfUsers, searchValue]
+  );
 
   // Set page title
   useEffect(() => {
     document.title = 'Admin Members - PACS AI';
   }, []);
-
-  useEffect(() => {
-    getAllTenantUsers();
-    getDoctorSpecialties();
-  }, [userRepository]);
 
   /**
    * Add tenant user
@@ -113,88 +123,6 @@ const MembersPage = () => {
     }
     setIsAddingMember(false);
     setIsAddMember(true);
-  };
-
-  /**
-   * Table action button
-   *
-   * @param param0 row
-   * @returns
-   */
-  const ActionButton = ({ row }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-
-    useEffect(() => {
-      if (isOpen && ref.current) {
-        const rect = ref.current.getBoundingClientRect();
-        // Calculate position for the dropdown menu
-        // Adjust if near the bottom of the viewport
-        const menuHeight = 100; // Approximate height of the menu
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom;
-        setMenuPosition({
-          top,
-          left: rect.right - 120, // 180px is the width of the menu (w-28)
-        });
-      }
-    }, [isOpen]);
-
-    // Dropdown menu content
-    const menu = (
-      <div
-        className="fixed z-50 w-28 divide-y divide-gray-100 rounded-lg bg-[#4C504B]"
-        style={{ top: menuPosition.top, left: menuPosition.left }}
-      >
-        <ul className="py-2 text-sm text-white">
-          <li>
-            <a
-              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-              onClick={() => {
-                setSelectedUser(row);
-                setIsAddMember(false);
-                setIsOpenAddEditMemberModal(true);
-                setIsOpen(false);
-              }}
-            >
-              {t('Edit')}
-            </a>
-          </li>
-          <li>
-            <a
-              className="block cursor-pointer px-4 py-2 hover:bg-gray-700"
-              onClick={() => {
-                setIsOpenDeleteMemberModal(true);
-                setSelectedUserToDelete({ id: row.id });
-                setIsOpen(false);
-              }}
-            >
-              {t('Delete')}
-            </a>
-          </li>
-        </ul>
-      </div>
-    );
-
-    return (
-      <div
-        className="relative flex items-center justify-center"
-        ref={ref}
-      >
-        <button
-          onClick={() => {
-            setIsOpen(!isOpen);
-          }}
-        >
-          <img
-            src={dotsVertical}
-            alt="Dots vertical icon"
-          />
-        </button>
-        {isOpen && ReactDOM.createPortal(menu, document.body)}
-      </div>
-    );
   };
 
   const clearSelectedUser = () => {
@@ -238,41 +166,63 @@ const MembersPage = () => {
   /**
    * Get all tenant users
    */
-  const getAllTenantUsers = async () => {
-    setListOfUsers([]);
+  const getAllTenantUsers = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setListOfUsers([]);
+      }
+      try {
+        const response = await userRepository.GetAllTenantUsers();
+        const listOfUsers = response.data.map(user => {
+          const fullNameParts = user.name.split(' ');
+          const lastName = fullNameParts.pop() ?? '';
+          const firstName = fullNameParts.join(' ');
+          return {
+            ...user,
+            firstName: firstName,
+            lastName: lastName,
+          };
+        });
+        setListOfUsers(listOfUsers);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
+      }
+    },
+    [navigate, showAlert, tenantId]
+  );
+
+  /**
+   * Get the current actor used to fail closed on access-management permissions.
+   */
+  const getCurrentUser = useCallback(async () => {
     try {
-      const response = await userRepository.GetAllTenantUsers();
-      const listOfUsers = response.data.map(user => {
-        const fullNameParts = user.name.split(' ');
-        const lastName = fullNameParts.pop();
-        const firstName = fullNameParts.join(' ');
-        return {
-          ...user,
-          firstName: firstName,
-          lastName: lastName,
-        };
-      });
-      setListOfUsers(listOfUsers);
-      setFilteredItems(listOfUsers);
+      const response = await userRepository.GetCurrentUser();
+      setCurrentUser(response.data);
     } catch (error) {
+      setCurrentUser(null);
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
           logoutUser(navigate, tenantId);
         }, 3000);
       }
-
       showAlert(error.message, 'error');
     }
-  };
+  }, [navigate, showAlert, tenantId]);
 
   /**
    * Get doctors specialties
    */
-  const getDoctorSpecialties = async () => {
+  const getDoctorSpecialties = useCallback(async () => {
     try {
       const response = await userRepository.GetDoctorSpecialties();
       setListOfDoctorSpecialities(response.data);
-      setSelectedUser({ ...selectedUser, specialty: response.data[0].id });
+      setSelectedUser(user => ({ ...user, specialty: response.data[0]?.id ?? '' }));
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -282,7 +232,13 @@ const MembersPage = () => {
 
       showAlert(error.message, 'error');
     }
-  };
+  }, [navigate, showAlert, tenantId]);
+
+  useEffect(() => {
+    void getAllTenantUsers();
+    void getCurrentUser();
+    void getDoctorSpecialties();
+  }, [getAllTenantUsers, getCurrentUser, getDoctorSpecialties]);
 
   /**
    * Update tenant user
@@ -321,14 +277,7 @@ const MembersPage = () => {
    * @param searchValue
    */
   const searchItems = (searchValue: string) => {
-    if (searchValue === '') {
-      setFilteredItems(listOfUsers);
-    } else {
-      const filteredData = listOfUsers.filter(item => {
-        return Object.values(item).join(' ').toLowerCase().includes(searchValue.toLowerCase());
-      });
-      setFilteredItems(filteredData);
-    }
+    setSearchValue(searchValue);
   };
 
   /**
@@ -529,6 +478,7 @@ const MembersPage = () => {
               placeholder={t('Search member name, email, license no., etc.')}
               className="w-[70%] lg:w-[40%]"
               type="text"
+              value={searchValue}
               onChange={e => searchItems(e.target.value)}
             />
             <div className="flex shrink-0 gap-2">
@@ -555,7 +505,7 @@ const MembersPage = () => {
             </div>
           </div>
           {/* table container */}
-          <div className="mt-5 mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <div className="mb-5 mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             {listOfUsers.length === 0 ? null : filteredItems && filteredItems.length > 0 ? (
               <Table
                 headers={headers}
@@ -597,7 +547,7 @@ const MembersPage = () => {
                   if (header.value === 'isEmailVerified') {
                     return (
                       <div
-                        className={`rounded-full py-1 px-2 ${
+                        className={`rounded-full px-2 py-1 ${
                           cell
                             ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
                             : 'bg-gray-300 bg-opacity-10 text-gray-500'
@@ -606,6 +556,11 @@ const MembersPage = () => {
                         {cell ? 'Verified' : 'Unverified'}
                       </div>
                     );
+                  }
+
+                  // account access status
+                  if (header.value === 'accessState') {
+                    return <MemberAccessStatusBadge accessState={cell} />;
                   }
 
                   // created at
@@ -622,7 +577,29 @@ const MembersPage = () => {
 
                   // action
                   if (header.value === 'action') {
-                    return <ActionButton row={row} />;
+                    return (
+                      <MemberAccessManagement
+                        actor={currentUser}
+                        target={row}
+                        repository={userRepository}
+                        refreshMembers={() => getAllTenantUsers({ silent: true })}
+                        notify={showAlert}
+                        onUnauthorized={() => {
+                          setTimeout(() => {
+                            logoutUser(navigate, tenantId);
+                          }, 3000);
+                        }}
+                        onEdit={() => {
+                          setSelectedUser(row);
+                          setIsAddMember(false);
+                          setIsOpenAddEditMemberModal(true);
+                        }}
+                        onDelete={() => {
+                          setIsOpenDeleteMemberModal(true);
+                          setSelectedUserToDelete({ id: row.id });
+                        }}
+                      />
+                    );
                   }
                   return cell;
                 }}
@@ -908,7 +885,7 @@ const MembersPage = () => {
                       onChange={e =>
                         setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
                       }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                     >
                       {Object.values(UserRole)
                         .filter(role => role !== UserRole.OWNER)
@@ -960,7 +937,7 @@ const MembersPage = () => {
                       onChange={e =>
                         setSelectedUser({ ...selectedUser, specialty: e.target.value as string })
                       }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                     >
                       {Object.values(listOfDoctorSpecialities).map(specialty => (
                         <option

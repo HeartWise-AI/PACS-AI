@@ -66,5 +66,6 @@
   "Try verification again": "Réessayer la vérification",
   "Unable to reach registration service. Check your connection and try again.": "Impossible de joindre le service d'inscription. Vérifiez votre connexion et réessayez.",
   "opens in a new tab": "s'ouvre dans un nouvel onglet",
-  "Welcome to PACS AI": "Bienvenue dans PACS AI"
+  "Welcome to PACS AI": "Bienvenue dans PACS AI",
+  "Your account access has been suspended. Contact your workspace administrator.": "L’accès à votre compte a été suspendu. Contactez l’administrateur de votre espace de travail."
 }

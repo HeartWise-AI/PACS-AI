@@ -66,5 +66,6 @@
   "Try verification again": "Try verification again",
   "Unable to reach registration service. Check your connection and try again.": "Unable to reach registration service. Check your connection and try again.",
   "opens in a new tab": "opens in a new tab",
-  "Welcome to PACS AI": "Welcome to PACS AI"
+  "Welcome to PACS AI": "Welcome to PACS AI",
+  "Your account access has been suspended. Contact your workspace administrator.": "Your account access has been suspended. Contact your workspace administrator."
 }

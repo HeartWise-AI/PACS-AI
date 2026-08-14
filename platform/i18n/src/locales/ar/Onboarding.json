@@ -66,5 +66,6 @@
   "Try verification again": "أعد محاولة التحقق",
   "Unable to reach registration service. Check your connection and try again.": "تعذر الوصول إلى خدمة التسجيل. تحقق من اتصالك وحاول مرة أخرى.",
   "opens in a new tab": "يفتح في علامة تبويب جديدة",
-  "Welcome to PACS AI": "مرحبًا بك في PACS AI"
+  "Welcome to PACS AI": "مرحبًا بك في PACS AI",
+  "Your account access has been suspended. Contact your workspace administrator.": "تم تعليق الوصول إلى حسابك. تواصل مع مسؤول مساحة العمل."
 }
