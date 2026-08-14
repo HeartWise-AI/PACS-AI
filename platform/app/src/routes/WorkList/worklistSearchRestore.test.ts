@@ -1,5 +1,8 @@
 import { PROCESSING_NOTIFICATION_STUDY_PARAM } from '../../components/inference/processingNotificationNavigation';
-import { getFiltersFromSearchParams } from './worklistSearchRestore';
+import {
+  getFiltersFromSearchParams,
+  getProcessingNotificationSearchTransition,
+} from './worklistSearchRestore';
 
 describe('worklist URL search restoration', () => {
   it('uses the default date and does not search for unrelated URL parameters', () => {
@@ -65,5 +68,29 @@ describe('worklist URL search restoration', () => {
     expect(restoredSearch.notificationStudyInstanceUID).toBe('study-from-notification');
     expect(restoredSearch.filters.studyInstanceUID).toBe('study-from-notification');
     expect(restoredSearch.filters.studyDate).toBe('');
+  });
+
+  it('restores the worklist when leaving a notification and allows reopening it', () => {
+    expect(getProcessingNotificationSearchTransition(null, 'study-from-notification')).toEqual({
+      kind: 'enter',
+      studyInstanceUID: 'study-from-notification',
+    });
+    expect(getProcessingNotificationSearchTransition('study-from-notification', null)).toEqual({
+      kind: 'leave',
+    });
+    expect(getProcessingNotificationSearchTransition(null, 'study-from-notification')).toEqual({
+      kind: 'enter',
+      studyInstanceUID: 'study-from-notification',
+    });
+  });
+
+  it('ignores an unchanged notification location', () => {
+    expect(getProcessingNotificationSearchTransition(null, null)).toBeNull();
+    expect(
+      getProcessingNotificationSearchTransition(
+        'study-from-notification',
+        'study-from-notification'
+      )
+    ).toBeNull();
   });
 });

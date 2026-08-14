@@ -41,7 +41,10 @@ import {
 } from '../../components/inference/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
-import { getFiltersFromSearchParams } from './worklistSearchRestore';
+import {
+  getFiltersFromSearchParams,
+  getProcessingNotificationSearchTransition,
+} from './worklistSearchRestore';
 import {
   createWorklistSearchFilters,
   loadSubmittedWorklistSearch,
@@ -372,12 +375,15 @@ function WorkList() {
 
   useEffect(() => {
     const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
+    const notificationTransition = getProcessingNotificationSearchTransition(
+      handledNotificationStudyRef.current,
+      notificationStudyInstanceUID
+    );
     if (
-      !notificationStudyInstanceUID ||
+      !notificationTransition ||
       !areDICOMModalitiesLoaded ||
       !studyProcessingAuthIdentity ||
-      restoredIdentityRef.current !== studyProcessingAuthIdentity ||
-      handledNotificationStudyRef.current === notificationStudyInstanceUID
+      restoredIdentityRef.current !== studyProcessingAuthIdentity
     ) {
       return;
     }
@@ -387,13 +393,36 @@ function WorkList() {
       (storedDICOMModality && modalityOptions.includes(storedDICOMModality)
         ? storedDICOMModality
         : modalityOptions[0]) || '';
+
+    if (notificationTransition.kind === 'leave') {
+      handledNotificationStudyRef.current = null;
+      const submittedSearch = loadSubmittedWorklistSearch(studyProcessingAuthIdentity);
+      if (submittedSearch) {
+        const restoredDICOMModality = modalityOptions.includes(submittedSearch.filters.modalityId)
+          ? submittedSearch.filters.modalityId
+          : fallbackDICOMModality;
+        applyStudyListSearchState(
+          {
+            ...submittedSearch.filters,
+            modalityId: restoredDICOMModality,
+          },
+          submittedSearch.currentPage
+        );
+        if (restoredDICOMModality) {
+          pendingRestoredSearchRef.current = true;
+        }
+        return;
+      }
+    } else {
+      handledNotificationStudyRef.current = notificationTransition.studyInstanceUID;
+    }
+
     const today = moment().format('YYYYMMDD');
     const restoredSearch = getFiltersFromSearchParams(
       searchParams,
       fallbackDICOMModality,
       `${today}-${today}`
     );
-    handledNotificationStudyRef.current = notificationStudyInstanceUID;
     applyStudyListSearchState(restoredSearch.filters, 1);
     if (fallbackDICOMModality) {
       pendingRestoredSearchRef.current = true;

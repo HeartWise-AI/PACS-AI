@@ -11,6 +11,24 @@ export interface URLWorklistSearchRestore {
   shouldSearch: boolean;
 }
 
+export type ProcessingNotificationSearchTransition =
+  | { kind: 'enter'; studyInstanceUID: string }
+  | { kind: 'leave' }
+  | null;
+
+export function getProcessingNotificationSearchTransition(
+  handledStudyInstanceUID: string | null,
+  requestedStudyInstanceUID: string | null
+): ProcessingNotificationSearchTransition {
+  if (requestedStudyInstanceUID) {
+    return requestedStudyInstanceUID === handledStudyInstanceUID
+      ? null
+      : { kind: 'enter', studyInstanceUID: requestedStudyInstanceUID };
+  }
+
+  return handledStudyInstanceUID ? { kind: 'leave' } : null;
+}
+
 export function getFiltersFromSearchParams(
   searchParams: URLSearchParams,
   fallbackDICOMModality: string,
