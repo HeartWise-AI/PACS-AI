@@ -12,14 +12,18 @@ const mockedSuspendedHandler = handleAccountSuspendedError as jest.MockedFunctio
   typeof handleAccountSuspendedError
 >;
 
-describe('PACS API client suspended-session interceptor', () => {
+describe('PACS API client interceptors', () => {
+  const requestInterceptorUse = jest.fn();
   const responseInterceptorUse = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.setItem('sessionToken', 'session-token');
     mockedAxios.create.mockReturnValue({
-      interceptors: { response: { use: responseInterceptorUse } },
+      interceptors: {
+        request: { use: requestInterceptorUse },
+        response: { use: responseInterceptorUse },
+      },
     } as never);
   });
 
@@ -35,7 +39,28 @@ describe('PACS API client suspended-session interceptor', () => {
         headers: expect.objectContaining({ Authorization: 'Bearer session-token' }),
       })
     );
+    expect(requestInterceptorUse).toHaveBeenCalledTimes(1);
     expect(responseInterceptorUse).toHaveBeenCalledTimes(1);
+  });
+
+  test('uses the latest bearer token when a request is sent', () => {
+    pacsAPIAxios();
+    localStorage.setItem('sessionToken', 'refreshed-session-token');
+    const requestHandler = requestInterceptorUse.mock.calls[0][0];
+
+    const config = requestHandler({ headers: { Authorization: 'Bearer session-token' } });
+
+    expect(config.headers.Authorization).toBe('Bearer refreshed-session-token');
+  });
+
+  test('does not reuse a bearer token after the session is cleared', () => {
+    pacsAPIAxios();
+    localStorage.removeItem('sessionToken');
+    const requestHandler = requestInterceptorUse.mock.calls[0][0];
+
+    const config = requestHandler({ headers: { Authorization: 'Bearer session-token' } });
+
+    expect(config.headers.Authorization).toBeUndefined();
   });
 
   test('handles suspension before preserving the original rejection', async () => {
