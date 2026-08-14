@@ -222,10 +222,8 @@ const LoginPage = () => {
       }
 
       localStorage.setItem('sessionToken', sessionToken);
-      let currentUserResponse;
-      try {
-        currentUserResponse = await userRepository.GetCurrentUser();
-      } catch {
+      const currentUserResponse = await userRepository.GetCurrentUser().catch(() => null);
+      if (!currentUserResponse) {
         localStorage.removeItem('sessionToken');
         showAlert(t('Login is temporarily unavailable. Please try again later.'), 'error');
         return;
@@ -389,7 +387,7 @@ const LoginPage = () => {
                     tabIndex={-1}
                     role="group"
                     aria-labelledby="login-verification-heading"
-                    className="mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2 focus:ring-primary-light"
+                    className="focus:ring-primary-light mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
                   >
                     <Typography
                       id="login-verification-heading"

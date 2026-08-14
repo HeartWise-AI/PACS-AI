@@ -24,24 +24,32 @@ jest.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.mock('@ohif/ui', () => {
-  const React = require('react');
-  return {
-    Button: ({ children, ...props }) => React.createElement('button', props, children),
-    Logo: () => React.createElement('div', { 'data-testid': 'logo' }),
-    Typography: ({ children, component = 'div', variant, ...props }) => {
-      void variant;
-      return React.createElement(component, props, children);
-    },
-  };
-});
+jest.mock(
+  '@ohif/ui',
+  () => {
+    const React = require('react');
+    return {
+      Button: ({ children, ...props }) => React.createElement('button', props, children),
+      Logo: () => React.createElement('div', { 'data-testid': 'logo' }),
+      Typography: ({ children, component = 'div', variant, ...props }) => {
+        void variant;
+        return React.createElement(component, props, children);
+      },
+    };
+  },
+  { virtual: true }
+);
 
-jest.mock('@ohif/ui-next', () => {
-  const React = require('react');
-  return {
-    Input: props => React.createElement('input', props),
-  };
-});
+jest.mock(
+  '@ohif/ui-next',
+  () => {
+    const React = require('react');
+    return {
+      Input: props => React.createElement('input', props),
+    };
+  },
+  { virtual: true }
+);
 
 jest.mock('../../App', () => {
   const React = require('react');
@@ -107,8 +115,9 @@ jest.mock('../../components/auth/TurnstileWidget', () => {
 
 const flushPromises = async () => {
   await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+    for (let index = 0; index < 5; index += 1) {
+      await Promise.resolve();
+    }
   });
 };
 
@@ -341,8 +350,10 @@ describe('LoginPage adaptive challenge', () => {
     });
     mockGetCurrentUser.mockRejectedValueOnce(new Error('request failed'));
 
-    submit(form);
-    await flushPromises();
+    await act(async () => {
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await new Promise(resolve => window.setTimeout(resolve, 0));
+    });
 
     expect(localStorage.getItem('sessionToken')).toBeNull();
     expect(mockNavigateAfterAuth).not.toHaveBeenCalled();
