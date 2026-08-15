@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
 import { useStudyProcessing } from './StudyProcessingProvider';
 import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
+import {
+  createRunHistorySynchronizationCoordinator,
+  getRunHistorySynchronizationTarget,
+} from './runHistorySynchronization';
 import { StudyReprocessAction } from './StudyReprocessAction';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
@@ -145,19 +149,61 @@ export function StudyProcessingRunHistoryPanel({
   refreshVisibleStudySnapshot,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
-  const { ensureRunHistory, getRunHistoryEntry, refreshRunHistory } = useStudyProcessing();
+  const { ensureRunHistory, getLatestStudySummary, getRunHistoryEntry, refreshRunHistory } =
+    useStudyProcessing();
   const entry = getRunHistoryEntry(studyInstanceUID);
   const history = entry.history;
+  const latestSummary = getLatestStudySummary(studyInstanceUID);
   const orderedRuns = useMemo(
     () => [...(history?.runs ?? [])].sort((left, right) => right.runNumber - left.runNumber),
     [history]
   );
   const [expandedRunIds, setExpandedRunIds] = useState<Record<string, boolean>>({});
   const initializedStudyInstanceUID = useRef<string | null>(null);
+  const synchronizationCoordinatorRef = useRef(createRunHistorySynchronizationCoordinator());
+  const synchronizationCoordinator = synchronizationCoordinatorRef.current;
+  const hadLoadedHistoryRef = useRef(false);
+
+  useEffect(() => {
+    synchronizationCoordinator.reset();
+    hadLoadedHistoryRef.current = false;
+
+    return () => synchronizationCoordinator.reset();
+  }, [studyInstanceUID, synchronizationCoordinator]);
+
+  useEffect(() => {
+    if (history) {
+      hadLoadedHistoryRef.current = true;
+      return;
+    }
+
+    if (hadLoadedHistoryRef.current) {
+      synchronizationCoordinator.reset();
+      hadLoadedHistoryRef.current = false;
+    }
+  }, [history, synchronizationCoordinator]);
 
   useEffect(() => {
     void ensureRunHistory(studyInstanceUID, runHistoryTransport);
   }, [ensureRunHistory, runHistoryTransport, studyInstanceUID]);
+
+  useEffect(() => {
+    const target = getRunHistorySynchronizationTarget(latestSummary, history);
+    if (!target) {
+      return;
+    }
+
+    void synchronizationCoordinator.request(target, () =>
+      refreshRunHistory(studyInstanceUID, runHistoryTransport)
+    );
+  }, [
+    history,
+    latestSummary,
+    refreshRunHistory,
+    runHistoryTransport,
+    studyInstanceUID,
+    synchronizationCoordinator,
+  ]);
 
   useEffect(() => {
     if (

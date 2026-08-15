@@ -4,8 +4,16 @@ import TestRenderer, {
   type ReactTestInstance,
   type ReactTestRenderer,
 } from 'react-test-renderer';
-import { modelExecutionFixtures, studyProcessingRunHistoryFixture } from './fixtures';
-import { StudyProcessingProvider } from './StudyProcessingProvider';
+import {
+  modelExecutionFixtures,
+  studyProcessingRunHistoryFixture,
+  studyProcessingSummaryFixtures,
+} from './fixtures';
+import {
+  StudyProcessingProvider,
+  type StudyProcessingContextValue,
+  useStudyProcessing,
+} from './StudyProcessingProvider';
 import { StudyProcessingRunHistoryPanel } from './StudyProcessingRunHistoryPanel';
 import {
   RunHistoryUnavailableError,
@@ -28,6 +36,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 let renderer: ReactTestRenderer | null;
+let contextValue: StudyProcessingContextValue;
 
 function getRenderedText(node: ReactTestInstance | string): string {
   if (typeof node === 'string') {
@@ -37,10 +46,33 @@ function getRenderedText(node: ReactTestInstance | string): string {
   return node.children.map(getRenderedText).join(' ');
 }
 
-function renderPanel(transport: StudyProcessingRunHistoryTransport, studyInstanceUID = 'study-a') {
+function PanelWithContext({
+  studyInstanceUID,
+  transport,
+}: {
+  studyInstanceUID: string;
+  transport: StudyProcessingRunHistoryTransport;
+}) {
+  contextValue = useStudyProcessing();
+  return (
+    <StudyProcessingRunHistoryPanel
+      studyInstanceUID={studyInstanceUID}
+      runHistoryTransport={transport}
+    />
+  );
+}
+
+function renderPanel(
+  transport: StudyProcessingRunHistoryTransport,
+  studyInstanceUID = 'study-a',
+  providerTransport = transport
+) {
   renderer = TestRenderer.create(
-    <StudyProcessingProvider runHistoryTransport={transport}>
-      <StudyProcessingRunHistoryPanel studyInstanceUID={studyInstanceUID} />
+    <StudyProcessingProvider runHistoryTransport={providerTransport}>
+      <PanelWithContext
+        studyInstanceUID={studyInstanceUID}
+        transport={transport}
+      />
     </StudyProcessingProvider>
   );
 }
@@ -103,6 +135,250 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
     expect(loadRunHistory).toHaveBeenCalledTimes(1);
     expect(loadRunHistory).toHaveBeenCalledWith('collapsed-study');
+  });
+
+  test('refreshes cached run details from the panel transport when SSE reports completion', async () => {
+    const cachedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      phase: 'PROCESSING' as const,
+      outcome: null,
+      version: 12,
+      completedAt: null,
+      runningModels: 1,
+      completedModels: 1,
+      failedModels: 0,
+      activeModels: 1,
+      modelExecutions: [
+        {
+          ...modelExecutionFixtures.completed,
+          status: 'running' as const,
+          completedAt: null,
+        },
+      ],
+    };
+    const completedRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      outcome: 'SUCCESS' as const,
+      version: 13,
+      completedModels: 3,
+      failedModels: 0,
+      attentionRequired: false,
+      attentionReasons: [],
+      modelExecutions: studyProcessingRunHistoryFixture.runs[0].modelExecutions.map(execution => ({
+        ...execution,
+        status: 'completed' as const,
+        error: null,
+      })),
+    };
+    const cachedHistory = {
+      ...studyProcessingRunHistoryFixture,
+      runs: [cachedRun, ...studyProcessingRunHistoryFixture.runs.slice(1)],
+    };
+    const completedHistory = {
+      ...studyProcessingRunHistoryFixture,
+      runs: [completedRun, ...studyProcessingRunHistoryFixture.runs.slice(1)],
+    };
+    const panelLoadRunHistory = jest
+      .fn()
+      .mockResolvedValueOnce({ history: cachedHistory, partial: false })
+      .mockResolvedValueOnce({ history: completedHistory, partial: false });
+    const providerLoadRunHistory = jest.fn(() => {
+      throw new Error('The provider default transport must not be used by the expanded panel.');
+    });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory: panelLoadRunHistory }, cachedHistory.studyInstanceUID, {
+        loadRunHistory: providerLoadRunHistory,
+      });
+    });
+
+    act(() => {
+      contextValue.receiveSnapshot([
+        {
+          ...studyProcessingSummaryFixtures.partialSuccess,
+          lifecycle: 'PROCESSING',
+          phase: 'PROCESSING',
+          outcome: null,
+          version: 12,
+          completedAt: null,
+        },
+      ]);
+    });
+
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        outcome: 'SUCCESS',
+        version: 13,
+      });
+    });
+
+    expect(panelLoadRunHistory).toHaveBeenCalledTimes(2);
+    expect(providerLoadRunHistory).not.toHaveBeenCalled();
+    expect(getRenderedText(renderer!.root)).toContain('Completed');
+
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        outcome: 'SUCCESS',
+        version: 13,
+      });
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        version: 12,
+      });
+    });
+
+    expect(panelLoadRunHistory).toHaveBeenCalledTimes(2);
+  });
+
+  test('fetches and displays a newly announced run for an expanded study', async () => {
+    const newRun = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'run-manual-4',
+      runNumber: 4,
+      phase: 'QUEUED' as const,
+      outcome: null,
+      version: 1,
+      completedAt: null,
+      modelExecutions: [],
+    };
+    const refreshedHistory = {
+      ...studyProcessingRunHistoryFixture,
+      runs: [newRun, ...studyProcessingRunHistoryFixture.runs],
+    };
+    const loadRunHistory = jest
+      .fn()
+      .mockResolvedValueOnce({ history: studyProcessingRunHistoryFixture, partial: false })
+      .mockResolvedValueOnce({ history: refreshedHistory, partial: false });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+    act(() => {
+      contextValue.receiveSnapshot([studyProcessingSummaryFixtures.partialSuccess]);
+    });
+
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        runId: newRun.id,
+        runNumber: newRun.runNumber,
+        lifecycle: 'QUEUED',
+        phase: 'QUEUED',
+        outcome: null,
+        version: newRun.version,
+        completedAt: null,
+      });
+    });
+
+    expect(loadRunHistory).toHaveBeenCalledTimes(2);
+    expect(
+      renderer?.root.findByProps({
+        'data-testid': `study-processing-run-toggle-${newRun.id}`,
+      })
+    ).toBeDefined();
+    expect(renderer?.root.findAllByType('article')).toHaveLength(refreshedHistory.runs.length);
+  });
+
+  test('coalesces rapid SSE versions into one trailing authoritative refresh', async () => {
+    let resolveFirstRefresh!: (response: RunHistoryTransportResponse) => void;
+    const version13History = {
+      ...studyProcessingRunHistoryFixture,
+      runs: studyProcessingRunHistoryFixture.runs.map((run, index) =>
+        index === 0 ? { ...run, version: 13 } : run
+      ),
+    };
+    const version15History = {
+      ...studyProcessingRunHistoryFixture,
+      runs: studyProcessingRunHistoryFixture.runs.map((run, index) =>
+        index === 0 ? { ...run, version: 15 } : run
+      ),
+    };
+    const loadRunHistory = jest
+      .fn()
+      .mockResolvedValueOnce({ history: studyProcessingRunHistoryFixture, partial: false })
+      .mockImplementationOnce(
+        () =>
+          new Promise<RunHistoryTransportResponse>(resolve => {
+            resolveFirstRefresh = resolve;
+          })
+      )
+      .mockResolvedValueOnce({ history: version15History, partial: false });
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+    act(() => {
+      contextValue.receiveSnapshot([studyProcessingSummaryFixtures.partialSuccess]);
+    });
+
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        version: 13,
+      });
+    });
+    expect(loadRunHistory).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        version: 14,
+      });
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        version: 15,
+      });
+    });
+    expect(loadRunHistory).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resolveFirstRefresh({ history: version13History, partial: false });
+    });
+
+    expect(loadRunHistory).toHaveBeenCalledTimes(3);
+    expect(contextValue.getRunHistoryEntry(version15History.studyInstanceUID).history).toEqual(
+      version15History
+    );
+  });
+
+  test('ignores an automatic refresh response that arrives after auth state is cleared', async () => {
+    let resolveRefresh!: (response: RunHistoryTransportResponse) => void;
+    const loadRunHistory = jest
+      .fn()
+      .mockResolvedValueOnce({ history: studyProcessingRunHistoryFixture, partial: false })
+      .mockImplementationOnce(
+        () =>
+          new Promise<RunHistoryTransportResponse>(resolve => {
+            resolveRefresh = resolve;
+          })
+      );
+
+    await act(async () => {
+      renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
+    });
+    act(() => {
+      contextValue.receiveSnapshot([studyProcessingSummaryFixtures.partialSuccess]);
+    });
+    await act(async () => {
+      contextValue.applyStatusUpdate({
+        ...studyProcessingSummaryFixtures.partialSuccess,
+        version: 13,
+      });
+    });
+    expect(loadRunHistory).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      contextValue.clearStudyProcessingState();
+    });
+    await act(async () => {
+      resolveRefresh({ history: studyProcessingRunHistoryFixture, partial: false });
+    });
+
+    expect(
+      contextValue.getRunHistoryEntry(studyProcessingRunHistoryFixture.studyInstanceUID)
+    ).toMatchObject({ status: 'idle', history: null });
   });
 
   test('shows a loading state while the first request is pending', () => {
