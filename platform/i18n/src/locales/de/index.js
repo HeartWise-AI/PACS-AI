@@ -19,6 +19,7 @@ import StoreFileButton from './StoreFileButton.json';
 import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
+import TopNavigation from './TopNavigation.json';
 
 export default {
   de: {
@@ -43,5 +44,6 @@ export default {
     TutorialProgressOverlay,
     UserPreferencesModal,
     ViewportDownloadForm,
+    TopNavigation,
   },
 };

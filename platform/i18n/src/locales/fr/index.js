@@ -21,6 +21,7 @@ import StoreFileButton from './StoreFileButton.json';
 import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
+import TopNavigation from './TopNavigation.json';
 
 export default {
   fr: {
@@ -47,5 +48,6 @@ export default {
     UserPreferencesModal,
     StudyList,
     ViewportDownloadForm,
+    TopNavigation,
   },
 };

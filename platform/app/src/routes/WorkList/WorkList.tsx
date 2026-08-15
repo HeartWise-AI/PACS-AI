@@ -10,8 +10,6 @@ import { Button } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
-import HeaderPanel from '../../components/HeaderPanel';
-import Sidebar from '../../components/Sidebar';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
@@ -860,18 +858,9 @@ function WorkList() {
   };
 
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden bg-[#151815]">
-      {showStudyProcessingFixtures && <WorklistTopNavigation fixturePreview />}
-      <div className="flex w-full bg-[#151815]">
-        {/* Sidebar component */}
-        {!showStudyProcessingFixtures && <Sidebar />}
-        <div
-          className={`ohif-scrollbar flex grow flex-col overflow-y-auto ${
-            showStudyProcessingFixtures ? 'mx-auto max-w-[1900px] px-7 pb-8' : 'mr-5'
-          }`}
-        >
-          {/* HeaderPanel component */}
-          {!showStudyProcessingFixtures && <HeaderPanel title="Studies" />}
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <WorklistTopNavigation fixturePreview={showStudyProcessingFixtures} />
+      <main className="ohif-scrollbar mx-auto flex min-h-0 w-full max-w-[1900px] grow flex-col overflow-y-auto px-4 pb-8 sm:px-5 lg:px-7">
           {showStudyProcessingFixtures && (
             <div className="flex items-baseline gap-4 pb-5 pt-6">
               <h1 className="text-2xl font-bold text-white">
@@ -1186,7 +1175,7 @@ function WorkList() {
             </div>
             {totalPages > 1 && <TablePagination />}
           </div>
-        </div>
+      </main>
         <Modal
           isOpen={isOpenOrthancServiceModal}
           size="w-[400px]"
@@ -1236,7 +1225,6 @@ function WorkList() {
           )}
         </Modal>
       </div>
-    </div>
   );
 }
 

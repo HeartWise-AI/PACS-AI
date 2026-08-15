@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ButtonGradient, Typography } from '@ohif/ui';
-import HeaderPanel from '../../components/HeaderPanel';
-import Sidebar from '../../components/Sidebar';
+import TopNavigation from '../../components/TopNavigation';
 import tenantRepository from '../../api/tenantRepository';
 import { ModelDetails } from '../../api/inferenceDTO';
 import ModelFactsModal from '../../components/ModelFactsModal';
@@ -43,11 +42,9 @@ const AIModelsPage = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815]">
-        <Sidebar />
-        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <HeaderPanel title="AI Models" />
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <TopNavigation title="AI Models" />
+      <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
           {fetchingAvailableModels && (
             <div
               role="aiModels"
@@ -117,7 +114,6 @@ const AIModelsPage = () => {
                 </div>
               ))}
           </div>
-        </div>
         {isOpenAIModelModal && (
           <ModelFactsModal
             isOpen={isOpenAIModelModal}
@@ -127,7 +123,7 @@ const AIModelsPage = () => {
             data={selectedAIModel}
           />
         )}
-      </div>
+      </main>
     </div>
   );
 };
