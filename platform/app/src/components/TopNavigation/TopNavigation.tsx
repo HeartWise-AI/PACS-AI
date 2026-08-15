@@ -294,7 +294,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
         </div>
 
         <nav
-          className="ml-1 hidden min-w-0 items-center gap-1 md:flex"
+          className="ml-1 hidden min-w-0 items-center gap-1 lg:flex"
           aria-label={t('Primary navigation')}
           data-testid="desktop-navigation"
         >
@@ -315,7 +315,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
           {accessory}
           <InferenceNotificationsBell />
 
-          <div className="relative hidden md:block">
+          <div className="relative hidden lg:block">
             <button
               ref={accountMenu.triggerRef}
               type="button"
@@ -386,7 +386,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
             )}
           </div>
 
-          <div className="relative md:hidden">
+          <div className="relative lg:hidden">
             <button
               ref={mobileMenu.triggerRef}
               type="button"

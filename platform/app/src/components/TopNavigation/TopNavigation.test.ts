@@ -137,6 +137,8 @@ describe('TopNavigation', () => {
     await screen.findByText('Ada Clinician');
 
     const trigger = screen.getByRole('button', { name: 'Open navigation menu' });
+    expect(screen.getByTestId('desktop-navigation').className).toContain('lg:flex');
+    expect(trigger.parentElement?.className).toContain('lg:hidden');
     fireEvent.click(trigger);
     const menu = screen.getByTestId('mobile-navigation-menu');
     const studies = within(menu).getByRole('menuitem', { name: 'Studies' });
@@ -169,6 +171,16 @@ describe('TopNavigation', () => {
 
     fireEvent.click(within(menu).getByRole('menuitem', { name: 'Logout' }));
     expect(mockLogoutUser).toHaveBeenCalledWith(expect.any(Function), 'tenant-1', false);
+  });
+
+  test('closes an open account menu when focus moves to page content', async () => {
+    renderNavigation('/');
+    await screen.findByText('Ada Clinician');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    expect(screen.getByTestId('account-menu')).not.toBeNull();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByTestId('account-menu')).toBeNull();
   });
 
   test('preserves consent enforcement on authenticated pages', async () => {

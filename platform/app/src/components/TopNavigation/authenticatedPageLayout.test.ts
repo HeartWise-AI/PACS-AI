@@ -8,6 +8,7 @@ const authenticatedPages = [
   ['members', '../../routes/Members/Members.tsx', 'TopNavigation'],
   ['Kibana logs', '../../routes/KibanaLogs/KibanaLogs.tsx', 'TopNavigation'],
   ['workspace settings', '../../routes/WorkspaceSettings/WorkspaceSettings.tsx', 'TopNavigation'],
+  ['informed consent', '../../routes/User/Consent/Consent.tsx', 'TopNavigation'],
 ] as const;
 
 describe('authenticated page top-navigation layout', () => {

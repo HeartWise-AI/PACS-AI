@@ -8,7 +8,7 @@ import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
  * state, and navigate there.
  *
  * This keeps the onboarding gate in the auth flow rather than relying on a
- * component side-effect (HeaderPanel) to redirect after the worklist has already
+ * component side-effect (TopNavigation) to redirect after the worklist has already
  * mounted. New users who still need onboarding go straight to the right page
  * instead of flashing through `/` first.
  */
