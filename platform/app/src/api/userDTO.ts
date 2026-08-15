@@ -100,6 +100,21 @@ export interface PolicyDefinition {
   readonly required: boolean;
 }
 
+export interface PolicyStatusItem extends PolicyDefinition {
+  readonly accepted: boolean;
+  readonly acceptedAt?: number;
+}
+
+export interface PolicyStatus {
+  readonly policies: PolicyStatusItem[];
+  readonly acceptanceRequired: boolean;
+  readonly enforcementActive: boolean;
+}
+
+export interface AcceptPoliciesRequest {
+  acceptances: PolicyAcceptanceInput[];
+}
+
 export interface RemoveTenantUserEmailInviteRequest {
   id: string;
 }

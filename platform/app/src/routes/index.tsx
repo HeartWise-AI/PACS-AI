@@ -7,6 +7,7 @@ import DataSourceWrapper from './DataSourceWrapper';
 import WorkList from './WorkList';
 import Login from './Login';
 import Register from './Register';
+import PolicyAcceptance from './PolicyAcceptance';
 import UserConsent from './User/Consent';
 import ChangePassword from './ChangePassword';
 import ResetPassword from './ResetPassword';
@@ -160,6 +161,13 @@ const createRoutes = ({
     props: { children: Register, servicesManager, extensionManager },
   };
 
+  const PolicyAcceptanceRoute = {
+    path: `/policies/accept`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: PolicyAcceptance, servicesManager, extensionManager },
+  };
+
   const UserConsentRoute = {
     path: `/user/consent`,
     children: DataSourceWrapper,
@@ -224,6 +232,7 @@ const createRoutes = ({
     ...(showStudyList ? [UserConsentRoute] : []),
     ...(showStudyList ? [LoginRoute] : []),
     ...(showStudyList ? [RegisterRoute] : []),
+    ...(showStudyList ? [PolicyAcceptanceRoute] : []),
     ...(showStudyList ? [ChangePasswordRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
     ...(showStudyList ? [AIModelsRoute] : []),

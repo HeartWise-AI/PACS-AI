@@ -1,7 +1,9 @@
 import tenantRepository from '../api/tenantRepository';
+import userRepository from '../api/userRepository';
 import type { UserResponse } from '../api/userDTO';
 import { clearAuthenticatedSession } from '../utils/authenticatedSession';
 import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
+import { getPolicyAcceptanceURL } from './policyAcceptanceSession';
 
 /**
  * Resolve where a freshly-authenticated user should land based on their onboarding
@@ -12,10 +14,23 @@ import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
  * mounted. New users who still need onboarding go straight to the right page
  * instead of flashing through `/` first.
  */
-export const navigateAfterAuth = async (navigate, user: UserResponse) => {
+export const navigateAfterAuth = async (navigate, user: UserResponse, destination = '/') => {
   // Admin-created users who have not verified their email must set a password first.
   if (!user.isEmailVerified && user.isAdminCreated) {
     navigate('/change-password', { replace: true });
+    return;
+  }
+
+  try {
+    const policyStatus = await userRepository.GetPolicyStatus();
+    if (policyStatus.data.acceptanceRequired) {
+      navigate(getPolicyAcceptanceURL(destination), { replace: true });
+      return;
+    }
+  } catch (error) {
+    void error;
+    // The policy page provides a safe retry path when status cannot be loaded.
+    navigate(getPolicyAcceptanceURL(destination), { replace: true });
     return;
   }
 
@@ -38,7 +53,7 @@ export const navigateAfterAuth = async (navigate, user: UserResponse) => {
     }
   }
 
-  navigate('/', { replace: true });
+  navigate(destination, { replace: true });
 };
 
 export const logoutUser = (navigate, tenantId, forcedLogout = true) => {

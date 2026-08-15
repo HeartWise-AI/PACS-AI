@@ -96,5 +96,12 @@
   "Unable to reach the login service. Check your connection and try again.": "Der Anmeldedienst ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
   "opens in a new tab": "wird in einem neuen Tab geöffnet",
   "Welcome to PACS AI": "Willkommen bei PACS AI",
-  "Your account access has been suspended. Contact your workspace administrator.": "Ihr Kontozugriff wurde gesperrt. Wenden Sie sich an Ihren Workspace-Administrator."
+  "Your account access has been suspended. Contact your workspace administrator.": "Ihr Kontozugriff wurde gesperrt. Wenden Sie sich an Ihren Workspace-Administrator.",
+  "Review service policies": "Dienstrichtlinien prüfen",
+  "Please review the current Terms and Privacy Policy before continuing to PACS AI.": "Bitte lesen Sie die aktuellen Nutzungsbedingungen und Datenschutzrichtlinien, bevor Sie mit PACS AI fortfahren.",
+  "Your policy acceptance has been recorded.": "Ihre Zustimmung zu den Richtlinien wurde gespeichert.",
+  "The policies have changed. Please review the current versions.": "Die Richtlinien wurden geändert. Bitte prüfen Sie die aktuellen Versionen.",
+  "Unable to record policy acceptance. Please try again.": "Die Zustimmung zu den Richtlinien konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+  "Saving…": "Wird gespeichert…",
+  "Agree and continue": "Zustimmen und fortfahren"
 }

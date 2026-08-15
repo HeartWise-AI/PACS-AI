@@ -96,5 +96,12 @@
   "Unable to reach the login service. Check your connection and try again.": "Unable to reach the login service. Check your connection and try again.",
   "opens in a new tab": "opens in a new tab",
   "Welcome to PACS AI": "Welcome to PACS AI",
-  "Your account access has been suspended. Contact your workspace administrator.": "Your account access has been suspended. Contact your workspace administrator."
+  "Your account access has been suspended. Contact your workspace administrator.": "Your account access has been suspended. Contact your workspace administrator.",
+  "Review service policies": "Review service policies",
+  "Please review the current Terms and Privacy Policy before continuing to PACS AI.": "Please review the current Terms and Privacy Policy before continuing to PACS AI.",
+  "Your policy acceptance has been recorded.": "Your policy acceptance has been recorded.",
+  "The policies have changed. Please review the current versions.": "The policies have changed. Please review the current versions.",
+  "Unable to record policy acceptance. Please try again.": "Unable to record policy acceptance. Please try again.",
+  "Saving…": "Saving…",
+  "Agree and continue": "Agree and continue"
 }

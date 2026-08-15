@@ -96,5 +96,12 @@
   "Unable to reach the login service. Check your connection and try again.": "No se puede acceder al servicio de inicio de sesión. Compruebe su conexión e inténtelo de nuevo.",
   "opens in a new tab": "se abre en una pestaña nueva",
   "Welcome to PACS AI": "Bienvenido a PACS AI",
-  "Your account access has been suspended. Contact your workspace administrator.": "El acceso a su cuenta ha sido suspendido. Contacte con el administrador de su espacio de trabajo."
+  "Your account access has been suspended. Contact your workspace administrator.": "El acceso a su cuenta ha sido suspendido. Contacte con el administrador de su espacio de trabajo.",
+  "Review service policies": "Revisar las políticas del servicio",
+  "Please review the current Terms and Privacy Policy before continuing to PACS AI.": "Revise los Términos del servicio y la Política de privacidad actuales antes de continuar a PACS AI.",
+  "Your policy acceptance has been recorded.": "Su aceptación de las políticas ha sido registrada.",
+  "The policies have changed. Please review the current versions.": "Las políticas han cambiado. Revise las versiones actuales.",
+  "Unable to record policy acceptance. Please try again.": "No se pudo registrar la aceptación de las políticas. Inténtelo de nuevo.",
+  "Saving…": "Guardando…",
+  "Agree and continue": "Aceptar y continuar"
 }
