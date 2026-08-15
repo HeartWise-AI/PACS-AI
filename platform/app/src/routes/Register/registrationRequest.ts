@@ -1,4 +1,5 @@
 import type { RegisterTenantUserRequest } from '../../api/userDTO';
+import type { PolicyAcceptanceInput } from '../../api/userDTO';
 
 export interface RegistrationRequestValues {
   tenantId: string;
@@ -10,6 +11,7 @@ export interface RegistrationRequestValues {
   licenseNo: string;
   specialty: string;
   turnstileToken: string;
+  policyAcceptances: PolicyAcceptanceInput[];
 }
 
 export const createRegistrationRequest = ({
@@ -22,6 +24,7 @@ export const createRegistrationRequest = ({
   licenseNo,
   specialty,
   turnstileToken,
+  policyAcceptances,
 }: RegistrationRequestValues): RegisterTenantUserRequest => {
   const code = invitationCode?.trim();
 
@@ -33,6 +36,7 @@ export const createRegistrationRequest = ({
     licenseNo: licenseNo.trim(),
     specialty,
     turnstileToken,
+    policyAcceptances,
     ...(code ? { code } : {}),
   };
 };

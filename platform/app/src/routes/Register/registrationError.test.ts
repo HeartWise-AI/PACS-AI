@@ -30,6 +30,12 @@ describe('getRegistrationErrorMessage', () => {
     expect(message).not.toContain('already exists');
   });
 
+  it('requires another review when the backend reports a policy version change', () => {
+    expect(getRegistrationErrorMessage({ errorCode: 'POLICY_VERSION_STALE', status: 409 }, t)).toBe(
+      'The policies were updated. Review the current versions and check the box again.'
+    );
+  });
+
   it('keeps safe backend field validation details', () => {
     expect(
       getRegistrationErrorMessage(

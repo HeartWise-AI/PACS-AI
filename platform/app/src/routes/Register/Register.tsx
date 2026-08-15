@@ -5,6 +5,7 @@ import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import userRepository from '../../api/userRepository';
 import tenantRepository from '../../api/tenantRepository';
+import { Error } from '../../api/dto';
 import { GetDoctorSpecialtiesResponse } from '../../api/userDTO';
 import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
@@ -16,19 +17,14 @@ import { createRegistrationRequest } from './registrationRequest';
 import { getRegistrationErrorMessage } from './registrationError';
 import { getRegistrationValidationMessage } from './registrationValidation';
 import { getRegistrationContextError, resolveRegistrationContext } from './registrationContext';
-import { getConfiguredPublicPolicyLinks } from './publicPolicyLinks';
 import RegistrationPolicyLinks from './RegistrationPolicyLinks';
+import { RegistrationPolicyPair, resolveRegistrationPolicyPair } from './registrationPolicies';
 import TurnstileWidget from '../../components/auth/TurnstileWidget';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
 
 const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
-const publicPolicyLinks = getConfiguredPublicPolicyLinks({
-  APP_PUBLIC_TERMS_OF_USE_URL: process.env.APP_PUBLIC_TERMS_OF_USE_URL,
-  APP_PUBLIC_PRIVACY_POLICY_URL: process.env.APP_PUBLIC_PRIVACY_POLICY_URL,
-});
-
 const RegisterPage = () => {
   const { t } = useTranslation('Onboarding');
   const { t: tMembers } = useTranslation('Members');
@@ -58,6 +54,15 @@ const RegisterPage = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [registrationPolicies, setRegistrationPolicies] = useState<RegistrationPolicyPair | null>(
+    null
+  );
+  const [policyLoadStatus, setPolicyLoadStatus] = useState<'loading' | 'ready' | 'error'>(
+    'loading'
+  );
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [policyLoadAttempt, setPolicyLoadAttempt] = useState(0);
+  const policyCheckboxRef = useRef<HTMLInputElement>(null);
   const isRegisteringRef = useRef(false);
 
   useEffect(() => {
@@ -99,6 +104,36 @@ const RegisterPage = () => {
       setEmail(registrationContext.invitedEmail);
     }
   }, [registrationContext.invitedEmail]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPolicies = async () => {
+      if (!registrationContext.tenantId) {
+        setRegistrationPolicies(null);
+        setPolicyLoadStatus('error');
+        return;
+      }
+      setPolicyLoadStatus('loading');
+      setPolicyAccepted(false);
+      try {
+        const response = await userRepository.GetRegistrationPolicies(registrationContext.tenantId);
+        const pair = resolveRegistrationPolicyPair(response.data || []);
+        if (!cancelled) {
+          setRegistrationPolicies(pair);
+          setPolicyLoadStatus('ready');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRegistrationPolicies(null);
+          setPolicyLoadStatus('error');
+        }
+      }
+    };
+    void loadPolicies();
+    return () => {
+      cancelled = true;
+    };
+  }, [registrationContext.tenantId, policyLoadAttempt]);
 
   useEffect(() => {
     const loadSpecialties = async () => {
@@ -157,6 +192,14 @@ const RegisterPage = () => {
       showAlert(t('Complete the verification before registering.'), 'error');
       return;
     }
+    if (policyLoadStatus !== 'ready' || !registrationPolicies || !policyAccepted) {
+      showAlert(
+        t('Agree to the current Terms of Service and acknowledge the Privacy Policy.'),
+        'error'
+      );
+      policyCheckboxRef.current?.focus();
+      return;
+    }
     isRegisteringRef.current = true;
     setIsRegistering(true);
     try {
@@ -171,12 +214,21 @@ const RegisterPage = () => {
           licenseNo,
           specialty,
           turnstileToken,
+          policyAcceptances: registrationPolicies.acceptances,
         })
       );
       showAlert(t('Account created. Check your email to verify it before signing in.'), 'success');
       navigate({ pathname: '/login', search: registrationContext.canonicalSearch });
     } catch (error) {
       showAlert(getRegistrationErrorMessage(error, t), 'error');
+      const errorCode = (error as { errorCode?: string })?.errorCode;
+      if (
+        errorCode === Error.POLICY_VERSION_STALE ||
+        errorCode === Error.POLICY_ACCEPTANCE_REQUIRED
+      ) {
+        setPolicyAccepted(false);
+        setPolicyLoadAttempt(value => value + 1);
+      }
       setTurnstileToken(null);
       setTurnstileResetKey(value => value + 1);
     } finally {
@@ -382,7 +434,14 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <RegistrationPolicyLinks {...publicPolicyLinks} />
+              <RegistrationPolicyLinks
+                policies={registrationPolicies}
+                status={policyLoadStatus}
+                accepted={policyAccepted}
+                onAcceptedChange={setPolicyAccepted}
+                onRetry={() => setPolicyLoadAttempt(value => value + 1)}
+                inputRef={policyCheckboxRef}
+              />
 
               <TurnstileWidget
                 siteKey={turnstileSiteKey}
@@ -403,7 +462,12 @@ const RegisterPage = () => {
 
               <Button
                 type="submit"
-                disabled={isRegistering || !turnstileToken}
+                disabled={
+                  isRegistering ||
+                  !turnstileToken ||
+                  policyLoadStatus !== 'ready' ||
+                  !policyAccepted
+                }
                 className="mt-6 h-[51px] w-full rounded-lg !px-0"
               >
                 {isRegistering ? '...' : t('Register')}

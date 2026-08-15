@@ -29,6 +29,12 @@ export const getRegistrationErrorMessage = (failure: unknown, t: Translate): str
       return t('Registration verification is temporarily unavailable. Please try again.');
     case Error.DUPLICATE_RECORD:
       return t(genericDuplicateMessage);
+    case Error.POLICY_ACCEPTANCE_REQUIRED:
+      return t('Agree to the current Terms of Service and acknowledge the Privacy Policy.');
+    case Error.POLICY_VERSION_STALE:
+      return t('The policies were updated. Review the current versions and check the box again.');
+    case Error.POLICY_CONFIGURATION_UNAVAILABLE:
+      return t('Terms and Privacy Policy are temporarily unavailable. Please try again later.');
     case Error.INVALID_PAYLOAD:
       return error.message || t('Please review your registration details and try again.');
     case Error.INVALID_REQUEST_PAYLOAD:
