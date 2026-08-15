@@ -13,6 +13,7 @@ export * from './StudyProcessingRunHistoryPanel';
 export * from './StudyProcessingConnectionBanner';
 export * from './runHistoryFixtureAdapter';
 export * from './runHistoryReducer';
+export * from './runHistorySynchronization';
 export * from './runHistoryTransport';
 export * from './fixtureAdapter';
 export * from './restDTO';
