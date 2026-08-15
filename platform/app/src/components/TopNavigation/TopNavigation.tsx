@@ -35,7 +35,12 @@ const getEnabledMenuItems = (menu: HTMLDivElement | null): HTMLElement[] =>
     item => item.getAttribute('aria-disabled') !== 'true'
   );
 
-const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, closeMenu: () => void) => {
+  if (event.key === 'Tab') {
+    closeMenu();
+    return;
+  }
+
   const items = getEnabledMenuItems(event.currentTarget);
   if (!items.length) {
     return;
@@ -259,6 +264,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
         onClick={() => mobileMenu.setOpen(false)}
       >
         {label}
+        {item.opensInNewTab && <span className="sr-only"> ({t('Opens in new tab')})</span>}
       </Link>
     );
   };
@@ -345,7 +351,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
                 role="menu"
                 aria-label={t('Account menu')}
                 className="absolute right-0 top-full mt-2 w-60 rounded-lg border border-white/10 bg-[#2a2e2a] p-2 shadow-2xl"
-                onKeyDown={handleMenuKeyDown}
+                onKeyDown={event => handleMenuKeyDown(event, () => accountMenu.setOpen(false))}
                 data-testid="account-menu"
               >
                 <div className="border-b border-white/10 px-3 pb-2 pt-1">
@@ -413,7 +419,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
                 role="menu"
                 aria-label={t('Navigation menu')}
                 className="absolute right-0 top-full mt-2 max-h-[calc(100vh-5rem)] w-72 overflow-y-auto rounded-lg border border-white/10 bg-[#2a2e2a] p-2 shadow-2xl"
-                onKeyDown={handleMenuKeyDown}
+                onKeyDown={event => handleMenuKeyDown(event, () => mobileMenu.setOpen(false))}
                 data-testid="mobile-navigation-menu"
               >
                 <div className="border-b border-white/10 px-3 pb-2 pt-1">

@@ -115,6 +115,13 @@ describe('TopNavigation', () => {
     });
     expect(adminConsole.getAttribute('href')).toBe('/admin/members');
     expect(adminConsole.getAttribute('target')).toBe('_blank');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
+    const mobileAdminConsole = within(screen.getByTestId('mobile-navigation-menu')).getByRole(
+      'menuitem',
+      { name: 'Admin Console (Opens in new tab)' }
+    );
+    expect(mobileAdminConsole.getAttribute('target')).toBe('_blank');
   });
 
   test('shows the existing admin destinations on admin pages', async () => {
@@ -181,6 +188,17 @@ describe('TopNavigation', () => {
     expect(screen.getByTestId('account-menu')).not.toBeNull();
     fireEvent.pointerDown(document.body);
     expect(screen.queryByTestId('account-menu')).toBeNull();
+  });
+
+  test('dismisses menus on Tab without trapping keyboard focus', async () => {
+    renderNavigation('/');
+    await screen.findByText('Ada Clinician');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation menu' }));
+    const menu = screen.getByTestId('mobile-navigation-menu');
+    fireEvent.keyDown(menu, { key: 'Tab' });
+
+    expect(screen.queryByTestId('mobile-navigation-menu')).toBeNull();
   });
 
   test('preserves consent enforcement on authenticated pages', async () => {
