@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import HeaderPanel from '../../components/HeaderPanel';
-import SidebarAdmin from '../../components/SidebarAdmin';
+import TopNavigation from '../../components/TopNavigation';
 import WorkspaceSettingsNav from './components/WorkspaceSettingsNav';
 import { useDicomModalities } from './hooks/useDicomModalities';
 import { useInferenceModels } from './hooks/useInferenceModels';
@@ -33,11 +32,9 @@ const WorkspaceSettingsPage = () => {
   });
 
   return (
-    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815]">
-        <SidebarAdmin />
-        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <HeaderPanel title="Workspace Settings" />
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <TopNavigation title="Workspace Settings" />
+      <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
           <div className="mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
             <TenantHeader tenantInfo={onboarding.tenantInfo} />
             <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
@@ -60,8 +57,7 @@ const WorkspaceSettingsPage = () => {
               />
             </div>
           </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

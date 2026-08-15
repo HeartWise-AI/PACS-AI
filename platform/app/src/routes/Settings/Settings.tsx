@@ -5,8 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button, Typography } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import i18n from '@ohif/i18n';
-import HeaderPanel from '../../components/HeaderPanel';
-import Sidebar from '../../components/Sidebar';
+import TopNavigation from '../../components/TopNavigation';
 import copyIcon from './../../assets/pacs/icons/copy-gradient.png';
 import chevronDown from './../../assets/pacs/icons/chevron-down.png';
 import logoVertical from './../../assets/pacs/logo/pacs-ai-logo-v.png';
@@ -409,11 +408,9 @@ const SettingsPage = () => {
     );
   };
   return (
-    <div className="h-screen w-screen overflow-x-hidden bg-[#151815]">
-      <div className="flex w-full bg-[#151815]">
-        <Sidebar />
-        <div className="ohif-scrollbar mr-5 flex grow flex-col overflow-y-auto">
-          <HeaderPanel title="Settings" />
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <TopNavigation title="Settings" />
+      <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
           <div className="mb-5">
             <ul className="-mb-px flex flex-wrap text-center text-sm font-medium">
               <li
@@ -553,8 +550,7 @@ const SettingsPage = () => {
               </div>
             </Modal>
           )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
