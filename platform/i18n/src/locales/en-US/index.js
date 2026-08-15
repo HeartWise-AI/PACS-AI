@@ -24,6 +24,7 @@ import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
+import TopNavigation from './TopNavigation.json';
 
 export default {
   'en-US': {
@@ -53,5 +54,6 @@ export default {
     ViewportDownloadForm,
     Messages,
     WindowLevelActionMenu,
+    TopNavigation,
   },
 };

@@ -25,6 +25,7 @@ import ThumbnailTracked from './ThumbnailTracked.json';
 import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
+import TopNavigation from './TopNavigation.json';
 import Messages from './Messages.json';
 import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
@@ -58,6 +59,7 @@ export default {
     TrackedCornerstoneViewport,
     UserPreferencesModal,
     ViewportDownloadForm,
+    TopNavigation,
     Messages,
     TutorialProgressOverlay,
     WindowLevelActionMenu,
