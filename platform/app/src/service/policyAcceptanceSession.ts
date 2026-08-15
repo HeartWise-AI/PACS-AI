@@ -23,7 +23,16 @@ interface PolicyAcceptanceRedirectOptions {
 }
 
 export const isSafeReturnPath = (value: string | null): value is string =>
-  Boolean(value && value.startsWith('/') && !value.startsWith('//'));
+  Boolean(
+    value &&
+      value.startsWith('/') &&
+      !value.startsWith('//') &&
+      !value.includes('\\') &&
+      !Array.from(value).some(character => {
+        const codePoint = character.codePointAt(0) ?? 0;
+        return codePoint <= 31 || codePoint === 127;
+      })
+  );
 
 export const getPolicyAcceptanceURL = (returnTo = '/'): string => {
   const safeReturnTo = isSafeReturnPath(returnTo) ? returnTo : '/';

@@ -74,6 +74,8 @@ describe('policy acceptance session handling', () => {
     expect(getPolicyAcceptanceURL('https://evil.example')).toBe('/policies/accept?returnTo=%2F');
     expect(getPolicyAcceptanceReturnPath('?returnTo=%2F%2Fevil.example')).toBe('/');
     expect(getPolicyAcceptanceReturnPath('?returnTo=%2Fpolicies%2Faccept%3Fretry%3D1')).toBe('/');
+    expect(getPolicyAcceptanceReturnPath('?returnTo=%2F%5Cevil.example')).toBe('/');
+    expect(getPolicyAcceptanceReturnPath('?returnTo=%2Fviewer%0Aignored')).toBe('/');
     expect(getPolicyAcceptanceReturnPath('?returnTo=%2Fviewer%3Fstudy%3D1')).toBe(
       '/viewer?study=1'
     );
