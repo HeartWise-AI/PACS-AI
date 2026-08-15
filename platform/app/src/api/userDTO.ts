@@ -58,7 +58,9 @@ export interface InviteTenantUserRequest {
 
 export interface LoginRequest {
   tenantId: string;
-  idToken: string;
+  email: string;
+  password: string;
+  turnstileToken?: string;
 }
 
 export interface LoginResponse {

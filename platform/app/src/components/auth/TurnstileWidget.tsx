@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 const turnstileScriptId = 'cloudflare-turnstile-script';
 const turnstileScriptUrl = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
@@ -75,14 +74,30 @@ const loadTurnstile = (): Promise<TurnstileApi> => {
 
 type VerificationStatus = 'loading' | 'ready' | 'failed' | 'expired' | 'unavailable';
 
+export interface TurnstileWidgetCopy {
+  ariaLabel: string;
+  loading: string;
+  failed: string;
+  expired: string;
+  unavailable: string;
+  retry: string;
+}
+
 interface TurnstileWidgetProps {
   siteKey: string;
+  action: string;
+  copy: TurnstileWidgetCopy;
   resetKey: number;
   onTokenChange: (token: string | null) => void;
 }
 
-const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetProps) => {
-  const { t } = useTranslation('Onboarding');
+const TurnstileWidget = ({
+  siteKey,
+  action,
+  copy,
+  resetKey,
+  onTokenChange,
+}: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenChangeRef = useRef(onTokenChange);
   const apiRef = useRef<TurnstileApi | null>(null);
@@ -113,7 +128,7 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
         api = loadedApi;
         widgetId = loadedApi.render(containerRef.current, {
           sitekey: siteKey,
-          action: 'register',
+          action,
           theme: 'dark',
           size: 'flexible',
           callback: token => {
@@ -150,7 +165,7 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
         widgetIdRef.current = null;
       }
     };
-  }, [resetKey, siteKey]);
+  }, [action, resetKey, siteKey]);
 
   const retryChallenge = () => {
     if (!apiRef.current || !widgetIdRef.current) {
@@ -164,17 +179,17 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
 
   const statusMessage =
     status === 'failed'
-      ? t('Registration verification failed. Please try again.')
+      ? copy.failed
       : status === 'expired'
-        ? t('Registration verification expired. Please complete it again.')
+        ? copy.expired
         : status === 'unavailable'
-          ? t('Registration verification is unavailable. Please try again later.')
+          ? copy.unavailable
           : null;
 
   return (
     <div
       className="mt-5"
-      aria-label={t('Human verification')}
+      aria-label={copy.ariaLabel}
     >
       <div ref={containerRef} />
       {status === 'loading' && (
@@ -182,7 +197,7 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
           className="mt-2 text-sm text-white text-opacity-70"
           role="status"
         >
-          {t('Loading registration verification…')}
+          {copy.loading}
         </p>
       )}
       {statusMessage && (
@@ -194,7 +209,7 @@ const TurnstileWidget = ({ siteKey, resetKey, onTokenChange }: TurnstileWidgetPr
               className="focus:ring-primary mt-2 rounded underline underline-offset-2 focus:outline-none focus:ring-2"
               onClick={retryChallenge}
             >
-              {t('Try verification again')}
+              {copy.retry}
             </button>
           )}
         </div>

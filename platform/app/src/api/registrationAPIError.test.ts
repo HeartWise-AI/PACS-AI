@@ -1,6 +1,7 @@
 import type { AxiosError } from 'axios';
 import type { ErrorAPIResponse } from './dto';
-import { createRegistrationAPIError, parseRetryAfterSeconds } from './registrationAPIError';
+import { parseRetryAfterSeconds } from './httpRetryAfter';
+import { createRegistrationAPIError } from './registrationAPIError';
 
 describe('registrationAPIError', () => {
   it('parses delta-seconds and HTTP-date Retry-After values', () => {

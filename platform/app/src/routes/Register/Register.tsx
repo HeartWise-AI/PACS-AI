@@ -18,7 +18,7 @@ import { getRegistrationValidationMessage } from './registrationValidation';
 import { getRegistrationContextError, resolveRegistrationContext } from './registrationContext';
 import { getConfiguredPublicPolicyLinks } from './publicPolicyLinks';
 import RegistrationPolicyLinks from './RegistrationPolicyLinks';
-import TurnstileWidget from './TurnstileWidget';
+import TurnstileWidget from '../../components/auth/TurnstileWidget';
 
 const membersSelectClassName =
   'mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none';
@@ -386,6 +386,17 @@ const RegisterPage = () => {
 
               <TurnstileWidget
                 siteKey={turnstileSiteKey}
+                action="register"
+                copy={{
+                  ariaLabel: t('Human verification'),
+                  loading: t('Loading registration verification…'),
+                  failed: t('Registration verification failed. Please try again.'),
+                  expired: t('Registration verification expired. Please complete it again.'),
+                  unavailable: t(
+                    'Registration verification is unavailable. Please try again later.'
+                  ),
+                  retry: t('Try verification again'),
+                }}
                 resetKey={turnstileResetKey}
                 onTokenChange={setTurnstileToken}
               />
