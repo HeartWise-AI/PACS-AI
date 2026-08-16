@@ -22,19 +22,6 @@ function primitiveValue(value: unknown): string {
   return String(value);
 }
 
-function valueKind(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `array · ${value.length}`;
-  }
-  if (isRecord(value)) {
-    return `object · ${Object.keys(value).length}`;
-  }
-  if (value === null) {
-    return 'null';
-  }
-  return typeof value;
-}
-
 interface ResultNodeProps {
   label: string;
   value: unknown;
@@ -79,6 +66,15 @@ function ResultNode({ label, value, depth, path }: ResultNodeProps) {
 
   const visibleEntries = entries.slice(0, GENERIC_RESULT_MAX_COLLECTION_ITEMS);
   const hiddenEntryCount = entries.length - visibleEntries.length;
+  const collectionSummary = arrayValue
+    ? t('ProcessingModelResultArraySummary', {
+        count: entries.length,
+        defaultValue: 'array · {{count}}',
+      })
+    : t('ProcessingModelResultObjectSummary', {
+        count: entries.length,
+        defaultValue: 'object · {{count}}',
+      });
 
   return (
     <details
@@ -90,9 +86,9 @@ function ResultNode({ label, value, depth, path }: ResultNodeProps) {
         {label}{' '}
         <span
           className="font-normal text-[#9fa89f]"
-          aria-label={valueKind(value)}
+          aria-label={collectionSummary}
         >
-          ({valueKind(value)})
+          ({collectionSummary})
         </span>
       </summary>
       {entries.length === 0 ? (

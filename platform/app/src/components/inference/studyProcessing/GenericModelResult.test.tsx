@@ -61,6 +61,8 @@ describe('GenericModelResult', () => {
     expect(text).toContain('false');
     expect(text).toContain('exact_key_name');
     expect(text).toContain('preserved');
+    expect(text).toContain('array · 2');
+    expect(text).toContain('object · 5');
     expect(renderer!.root.findAllByType('details').length).toBeGreaterThan(0);
   });
 
