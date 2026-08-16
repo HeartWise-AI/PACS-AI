@@ -8,6 +8,7 @@ export const CARDIO_SYNTAX_TERRITORIES = [
 ] as const;
 
 export const CARDIO_SYNTAX_CATEGORIES = ['no_disease', 'mild', 'moderate', 'severe'] as const;
+export const CARDIO_SYNTAX_SCORE_RANGE = { minimum: 0, maximum: 100 } as const;
 
 export type CardioSyntaxTerritory = (typeof CARDIO_SYNTAX_TERRITORIES)[number];
 export type CardioSyntaxCategory = (typeof CARDIO_SYNTAX_CATEGORIES)[number];
@@ -45,6 +46,8 @@ function parsePrediction(value: unknown): CardioSyntaxPrediction | null {
   if (
     typeof regression !== 'number' ||
     !Number.isFinite(regression) ||
+    regression < CARDIO_SYNTAX_SCORE_RANGE.minimum ||
+    regression > CARDIO_SYNTAX_SCORE_RANGE.maximum ||
     !isCardioSyntaxCategory(category)
   ) {
     return null;

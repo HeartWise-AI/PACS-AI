@@ -60,6 +60,24 @@ describe('CardioSyntax result contract', () => {
         },
       },
     ],
+    [
+      'score below the documented range',
+      {
+        predictions: {
+          ...cardioSyntaxResultFixtures.validV1.predictions,
+          'Global Cardiac Syntax': { regression: -0.1, category: 'no_disease' },
+        },
+      },
+    ],
+    [
+      'score above the documented range',
+      {
+        predictions: {
+          ...cardioSyntaxResultFixtures.validV1.predictions,
+          'Global Cardiac Syntax': { regression: 100.1, category: 'severe' },
+        },
+      },
+    ],
     ['missing recommendations', { modelRecommendations: null }],
     [
       'invalid recommendation metadata',

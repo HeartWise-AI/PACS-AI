@@ -41,3 +41,4 @@ export * from './useModelExecutionResultViewer';
 export * from './modelResults/cardioSyntaxContract';
 export * from './modelResults/modelResultRendererRegistry';
 export * from './modelResults/CardioSyntaxResult';
+export * from './modelResults/ModelResultRenderer';

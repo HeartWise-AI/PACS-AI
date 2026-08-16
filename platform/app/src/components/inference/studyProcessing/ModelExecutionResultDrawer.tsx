@@ -1,9 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecutionResultQueryState } from './executionResultQuery';
-import { GenericModelResult } from './GenericModelResult';
-import { CardioSyntaxResult } from './modelResults/CardioSyntaxResult';
-import { resolveModelResultRenderer } from './modelResults/modelResultRendererRegistry';
+import { ModelResultRenderer } from './modelResults/ModelResultRenderer';
 import {
   getModelExecutionResultFailurePresentation,
   isEmptyModelExecutionResult,
@@ -90,7 +88,6 @@ export function ModelExecutionResultDrawer({
   const completedAt = state.result?.completedAt ?? null;
   const failurePresentation = getModelExecutionResultFailurePresentation(state.failure);
   const emptyResult = state.status === 'ready' && isEmptyModelExecutionResult(state.result?.result);
-  const resolvedRenderer = state.result ? resolveModelResultRenderer(state.result) : null;
 
   return (
     <div
@@ -162,13 +159,8 @@ export function ModelExecutionResultDrawer({
               </div>
             </div>
           )}
-          {state.status === 'ready' &&
-            !emptyResult &&
-            resolvedRenderer?.kind === 'cardiosyntax' && (
-              <CardioSyntaxResult payload={resolvedRenderer.payload} />
-            )}
-          {state.status === 'ready' && !emptyResult && resolvedRenderer?.kind === 'generic' && (
-            <GenericModelResult value={resolvedRenderer.payload} />
+          {state.status === 'ready' && !emptyResult && state.result && (
+            <ModelResultRenderer result={state.result} />
           )}
           {emptyResult && (
             <div

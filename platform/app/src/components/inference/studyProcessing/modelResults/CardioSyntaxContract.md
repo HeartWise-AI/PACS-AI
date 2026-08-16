@@ -26,8 +26,8 @@ study identifiers, result values, or source payloads were copied into this repos
 | `modelRecommendations.presentable` | boolean | yes |
 
 The model implementation documents the category keys `no_disease`, `mild`, `moderate`, and
-`severe`. Completed payloads with missing territory predictions do not qualify for the custom
-renderer and must fall back safely.
+`severe` and an AI-predicted score range of 0–100. Completed payloads with out-of-range scores or
+missing territory predictions do not qualify for the custom renderer and must fall back safely.
 
 ## Pending clinical and product approval
 
