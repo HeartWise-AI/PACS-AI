@@ -8,6 +8,8 @@ import {
   getRunHistorySynchronizationTarget,
 } from './runHistorySynchronization';
 import { StudyReprocessAction } from './StudyReprocessAction';
+import type { ModelExecutionResultSelection } from './executionResultQuery';
+import { createModelExecutionResultSelection } from './executionResultSelection';
 
 const executionToneClassNames: Record<ModelExecution['status'], string> = {
   pending: 'text-[#c3c9c3]',
@@ -139,6 +141,10 @@ export interface StudyProcessingRunHistoryPanelProps {
   canReprocessStudy?: boolean;
   reprocessingDisabled?: boolean;
   refreshVisibleStudySnapshot?: () => Promise<void> | void;
+  onSelectExecutionResult?: (
+    selection: ModelExecutionResultSelection,
+    trigger: HTMLButtonElement
+  ) => void;
 }
 
 export function StudyProcessingRunHistoryPanel({
@@ -147,6 +153,7 @@ export function StudyProcessingRunHistoryPanel({
   canReprocessStudy = false,
   reprocessingDisabled = false,
   refreshVisibleStudySnapshot,
+  onSelectExecutionResult,
 }: StudyProcessingRunHistoryPanelProps) {
   const { t } = useTranslation('StudyList');
   const { ensureRunHistory, getLatestStudySummary, getRunHistoryEntry, refreshRunHistory } =
@@ -476,77 +483,108 @@ export function StudyProcessingRunHistoryPanel({
                           </tr>
                         </thead>
                         <tbody className="border-t border-[#4b514b] bg-transparent text-xs">
-                          {run.modelExecutions.map(execution => (
-                            <tr
-                              key={execution.id}
-                              className="bg-transparent"
-                              style={{ backgroundColor: 'transparent' }}
-                            >
-                              <td className="py-2.5 font-semibold text-white">
-                                {execution.modelName}
-                              </td>
-                              <td className="font-mono text-[#b8c0b8]">
-                                {execution.modelVersion ? `v${execution.modelVersion}` : '—'}
-                              </td>
-                              <td
-                                className={`font-semibold ${executionToneClassNames[execution.status]}`}
+                          {run.modelExecutions.map(execution => {
+                            const resultSelection = createModelExecutionResultSelection(
+                              run,
+                              execution
+                            );
+
+                            return (
+                              <tr
+                                key={execution.id}
+                                className="bg-transparent"
+                                style={{ backgroundColor: 'transparent' }}
                               >
-                                ●{' '}
-                                {t(`ProcessingExecutionStatus.${execution.status}`, {
-                                  defaultValue: execution.status,
-                                })}
-                              </td>
-                              <td className="font-mono text-[#b8c0b8]">
-                                {formatTimestamp(execution.startedAt)}
-                              </td>
-                              <td className="font-mono text-[#b8c0b8]">
-                                {formatTimestamp(execution.completedAt)}
-                              </td>
-                              <td className="text-[#b8c0b8]">
-                                {formatDuration(execution.startedAt, execution.completedAt)}
-                              </td>
-                              <td className="max-w-[360px] truncate text-[#c5cbc5]">
-                                {execution.error ? (
-                                  <span
-                                    className="text-[#f87171]"
-                                    data-testid={`study-processing-model-error-${execution.id}`}
-                                  >
-                                    {t('ProcessingModelExecutionFailed', {
-                                      defaultValue: 'Model execution failed',
-                                    })}
-                                    {execution.error.code && (
-                                      <>
-                                        {' · '}
-                                        {t('ProcessingErrorCode', {
-                                          defaultValue: 'Error code',
-                                        })}
-                                        : <code className="font-mono">{execution.error.code}</code>
-                                      </>
-                                    )}
-                                  </span>
-                                ) : execution.skipReason ? (
-                                  <span
-                                    className="text-[#facc15]"
-                                    data-testid={`study-processing-model-skip-${execution.id}`}
-                                  >
-                                    {execution.skipReason.message ||
-                                      t('ProcessingModelSkipped', {
-                                        defaultValue: 'Model was skipped',
+                                <td className="py-2.5 font-semibold text-white">
+                                  {execution.modelName}
+                                </td>
+                                <td className="font-mono text-[#b8c0b8]">
+                                  {execution.modelVersion ? `v${execution.modelVersion}` : '—'}
+                                </td>
+                                <td
+                                  className={`font-semibold ${executionToneClassNames[execution.status]}`}
+                                >
+                                  ●{' '}
+                                  {t(`ProcessingExecutionStatus.${execution.status}`, {
+                                    defaultValue: execution.status,
+                                  })}
+                                </td>
+                                <td className="font-mono text-[#b8c0b8]">
+                                  {formatTimestamp(execution.startedAt)}
+                                </td>
+                                <td className="font-mono text-[#b8c0b8]">
+                                  {formatTimestamp(execution.completedAt)}
+                                </td>
+                                <td className="text-[#b8c0b8]">
+                                  {formatDuration(execution.startedAt, execution.completedAt)}
+                                </td>
+                                <td className="max-w-[360px] truncate text-[#c5cbc5]">
+                                  {resultSelection && onSelectExecutionResult ? (
+                                    <button
+                                      type="button"
+                                      className="rounded border border-[#60a5fa]/70 px-3 py-1 font-semibold text-[#78b7f5] hover:bg-[#24384c] focus:outline-none focus:ring-2 focus:ring-[#78b7f5] focus:ring-offset-2 focus:ring-offset-[#252925]"
+                                      onClick={event =>
+                                        onSelectExecutionResult(
+                                          resultSelection,
+                                          event.currentTarget
+                                        )
+                                      }
+                                      aria-label={t('ProcessingViewModelResultFor', {
+                                        modelName: execution.modelName,
+                                        defaultValue: 'View result for {{modelName}}',
                                       })}
-                                    {' · '}
-                                    {t('ProcessingSkipReason', {
-                                      defaultValue: 'Skip reason',
-                                    })}
-                                    : <code className="font-mono">{execution.skipReason.code}</code>
-                                  </span>
-                                ) : execution.status === 'running' ? (
-                                  t('ProcessingModelRunning', { defaultValue: 'Model is running' })
-                                ) : (
-                                  t('ProcessingNoAdditionalDetails', { defaultValue: '—' })
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                                      data-testid={`study-processing-view-result-${execution.id}`}
+                                    >
+                                      {t('ProcessingViewModelResult', {
+                                        defaultValue: 'View result',
+                                      })}
+                                    </button>
+                                  ) : execution.error ? (
+                                    <span
+                                      className="text-[#f87171]"
+                                      data-testid={`study-processing-model-error-${execution.id}`}
+                                    >
+                                      {t('ProcessingModelExecutionFailed', {
+                                        defaultValue: 'Model execution failed',
+                                      })}
+                                      {execution.error.code && (
+                                        <>
+                                          {' · '}
+                                          {t('ProcessingErrorCode', {
+                                            defaultValue: 'Error code',
+                                          })}
+                                          :{' '}
+                                          <code className="font-mono">{execution.error.code}</code>
+                                        </>
+                                      )}
+                                    </span>
+                                  ) : execution.skipReason ? (
+                                    <span
+                                      className="text-[#facc15]"
+                                      data-testid={`study-processing-model-skip-${execution.id}`}
+                                    >
+                                      {execution.skipReason.message ||
+                                        t('ProcessingModelSkipped', {
+                                          defaultValue: 'Model was skipped',
+                                        })}
+                                      {' · '}
+                                      {t('ProcessingSkipReason', {
+                                        defaultValue: 'Skip reason',
+                                      })}
+                                      :{' '}
+                                      <code className="font-mono">{execution.skipReason.code}</code>
+                                    </span>
+                                  ) : execution.status === 'running' ? (
+                                    t('ProcessingModelRunning', {
+                                      defaultValue: 'Model is running',
+                                    })
+                                  ) : (
+                                    t('ProcessingNoAdditionalDetails', { defaultValue: '—' })
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     )}

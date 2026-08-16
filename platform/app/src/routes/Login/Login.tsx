@@ -76,7 +76,7 @@ const LoginPage = () => {
         const response = await tenantRepository.GetPublicTenantByID({
           tenantId,
         });
-        setTenantInfo(response.data);
+        setTenantInfo(response.data || {});
       } catch (error) {
         navigate(`/login?t=${defaultTenant}`, { replace: true });
         window.location.reload();
@@ -85,7 +85,7 @@ const LoginPage = () => {
     const fetchAPIInfo = async () => {
       try {
         const response = await repository.GetAPIInfo();
-        setAPIInfo(response.data);
+        setAPIInfo(response.data || {});
       } catch (error) {
         console.error(error);
       }

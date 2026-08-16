@@ -24,11 +24,13 @@ import {
   createRESTRunHistoryTransport,
   createStudyProcessingRESTRepository,
   createRESTStudyProcessingSnapshotTransport,
+  ModelExecutionResultDrawer,
   StudyProcessingAttention,
   StudyProcessingConnectionBanner,
   StudyProcessingRunHistoryPanel,
   StudyProcessingStatus,
   StudyProcessingUpdated,
+  useModelExecutionResultViewer,
   useStudyProcessingRealtime,
   useVisibleStudyProcessingSnapshot,
 } from '../../components/inference/studyProcessing';
@@ -107,6 +109,7 @@ function WorkList() {
     showStudyProcessingFixtures || (canViewStudyProcessing && canUseStudyProcessingREST);
   const showStudyProcessingRunHistory =
     showStudyProcessingFixtures || canViewStudyProcessingRunHistory;
+  const modelExecutionResultViewer = useModelExecutionResultViewer(studyProcessingAuthIdentity);
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
     () => createRESTStudyProcessingSnapshotTransport(studyProcessingRESTRepository),
@@ -1117,6 +1120,7 @@ function WorkList() {
                                         ? undefined
                                         : restRunHistoryTransport
                                     }
+                                    onSelectExecutionResult={modelExecutionResultViewer.open}
                                   />
                                 )}
                                 <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
@@ -1176,6 +1180,11 @@ function WorkList() {
             {totalPages > 1 && <TablePagination />}
           </div>
       </main>
+        <ModelExecutionResultDrawer
+          state={modelExecutionResultViewer.state}
+          onClose={modelExecutionResultViewer.close}
+          onRetry={modelExecutionResultViewer.retry}
+        />
         <Modal
           isOpen={isOpenOrthancServiceModal}
           size="w-[400px]"
