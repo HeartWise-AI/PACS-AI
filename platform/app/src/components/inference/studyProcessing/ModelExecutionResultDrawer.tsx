@@ -2,6 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecutionResultQueryState } from './executionResultQuery';
 import { GenericModelResult } from './GenericModelResult';
+import {
+  getModelExecutionResultFailurePresentation,
+  isEmptyModelExecutionResult,
+} from './modelExecutionResultPresentation';
 
 export interface ModelExecutionResultDrawerProps {
   state: ModelExecutionResultQueryState;
@@ -15,7 +19,7 @@ const FOCUSABLE_SELECTOR =
 export function ModelExecutionResultDrawer({
   state,
   onClose,
-  onRetry: _onRetry,
+  onRetry,
 }: ModelExecutionResultDrawerProps) {
   const { t } = useTranslation('StudyList');
   const drawerRef = useRef<HTMLElement | null>(null);
@@ -63,6 +67,8 @@ export function ModelExecutionResultDrawer({
   };
 
   const completedAt = state.result?.completedAt ?? null;
+  const failurePresentation = getModelExecutionResultFailurePresentation(state.failure);
+  const emptyResult = state.status === 'ready' && isEmptyModelExecutionResult(state.result?.result);
 
   return (
     <div
@@ -134,16 +140,42 @@ export function ModelExecutionResultDrawer({
               </div>
             </div>
           )}
-          {state.status === 'ready' && <GenericModelResult value={state.result?.result} />}
-          {state.status === 'error' && (
-            <p
-              role="alert"
-              className="text-sm text-[#ffb0b0]"
+          {state.status === 'ready' && !emptyResult && (
+            <GenericModelResult value={state.result?.result} />
+          )}
+          {emptyResult && (
+            <div
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-[#c5cbc5]"
+              role="status"
+              data-testid="model-execution-result-empty"
             >
-              {t('ProcessingModelResultLoadError', {
-                defaultValue: 'The model result could not be displayed.',
+              {t('ProcessingModelResultEmpty', {
+                defaultValue: 'This completed model result contains no fields to display.',
               })}
-            </p>
+            </div>
+          )}
+          {state.status === 'error' && (
+            <div
+              role="alert"
+              className="border-[#f87171]/35 rounded-lg border bg-[#482828] px-5 py-4 text-sm text-[#ffb0b0]"
+              data-testid={`model-execution-result-error-${state.failure?.kind ?? 'unknown'}`}
+            >
+              <p>
+                {t(failurePresentation.key, {
+                  defaultValue: failurePresentation.defaultValue,
+                })}
+              </p>
+              {state.failure?.retryable && (
+                <button
+                  type="button"
+                  className="mt-4 rounded-md border border-current px-4 py-2 text-xs font-bold hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#ffb0b0]"
+                  onClick={onRetry}
+                  data-testid="model-execution-result-retry"
+                >
+                  {t('ProcessingModelResultRetry', { defaultValue: 'Try again' })}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </aside>

@@ -1,6 +1,9 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { modelExecutionResultFixtures } from './executionResultFixtures';
+import {
+  modelExecutionResultFailureFixtures,
+  modelExecutionResultFixtures,
+} from './executionResultFixtures';
 import {
   initialModelExecutionResultQueryState,
   modelExecutionResultQueryKey,
@@ -130,5 +133,86 @@ describe('ModelExecutionResultDrawer', () => {
     expect(rendered).toContain('2026');
     expect(rendered).toContain('syntax_score');
     expect(rendered).toContain('24.5');
+  });
+
+  test.each([
+    [modelExecutionResultFailureFixtures.notReady, 'viewable completed result'],
+    [modelExecutionResultFailureFixtures.terminalWithoutResult, 'missing'],
+    [modelExecutionResultFailureFixtures.malformed, 'missing'],
+    [modelExecutionResultFailureFixtures.forbidden, 'permission'],
+    [modelExecutionResultFailureFixtures.notFound, 'unavailable'],
+    [modelExecutionResultFailureFixtures.upstreamUnavailable, 'temporarily unavailable'],
+  ])('shows operator-safe state for a normalized result failure', (failure, expectedCopy) => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'error', failure })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    const rendered = JSON.stringify(renderer!.toJSON());
+    expect(rendered).toContain(expectedCopy);
+    expect(rendered).not.toMatch(/patient|credential|upstream body|job[_ -]?id/i);
+  });
+
+  test('offers retry only for a transient failure', () => {
+    const onRetry = jest.fn();
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({
+            status: 'error',
+            failure: modelExecutionResultFailureFixtures.upstreamUnavailable,
+          })}
+          onClose={jest.fn()}
+          onRetry={onRetry}
+        />
+      );
+    });
+
+    const retry = renderer!.root.findByProps({
+      'data-testid': 'model-execution-result-retry',
+    });
+    act(() => retry.props.onClick());
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      renderer!.update(
+        <ModelExecutionResultDrawer
+          state={queryState({
+            status: 'error',
+            failure: modelExecutionResultFailureFixtures.notFound,
+          })}
+          onClose={jest.fn()}
+          onRetry={onRetry}
+        />
+      );
+    });
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'model-execution-result-retry' })
+    ).toHaveLength(0);
+  });
+
+  test.each([
+    ['empty object', modelExecutionResultFixtures.emptyObject],
+    ['empty array', modelExecutionResultFixtures.emptyArray],
+  ])('shows an intentional empty state for an %s result', (_label, result) => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(
+      renderer!.root.findByProps({ 'data-testid': 'model-execution-result-empty' }).props.role
+    ).toBe('status');
+    expect(JSON.stringify(renderer!.toJSON())).toContain('contains no fields');
   });
 });
