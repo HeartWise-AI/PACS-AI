@@ -79,7 +79,40 @@ export interface RegisterTenantUserRequest {
   licenseNo: string;
   specialty: string;
   turnstileToken: string;
+  policyAcceptances: PolicyAcceptanceInput[];
   code?: string;
+}
+
+export type PolicyKey = 'TERMS_OF_SERVICE' | 'PRIVACY_POLICY';
+
+export interface PolicyAcceptanceInput {
+  policyKey: PolicyKey;
+  version: string;
+}
+
+export interface PolicyDefinition {
+  readonly policyKey: PolicyKey;
+  readonly version: string;
+  readonly title: string;
+  readonly url: string;
+  readonly effectiveAt: string;
+  readonly acceptanceAction: 'AGREE' | 'ACKNOWLEDGE';
+  readonly required: boolean;
+}
+
+export interface PolicyStatusItem extends PolicyDefinition {
+  readonly accepted: boolean;
+  readonly acceptedAt?: number;
+}
+
+export interface PolicyStatus {
+  readonly policies: PolicyStatusItem[];
+  readonly acceptanceRequired: boolean;
+  readonly enforcementActive: boolean;
+}
+
+export interface AcceptPoliciesRequest {
+  acceptances: PolicyAcceptanceInput[];
 }
 
 export interface RemoveTenantUserEmailInviteRequest {

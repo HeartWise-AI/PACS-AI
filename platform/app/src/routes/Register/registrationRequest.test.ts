@@ -12,6 +12,10 @@ describe('createRegistrationRequest', () => {
       licenseNo: ' 12345 ',
       specialty: 'cardiology',
       turnstileToken: 'turnstile-proof',
+      policyAcceptances: [
+        { policyKey: 'TERMS_OF_SERVICE', version: 'terms-v1' },
+        { policyKey: 'PRIVACY_POLICY', version: 'privacy-v1' },
+      ],
     });
 
     expect(request).toEqual({
@@ -23,6 +27,10 @@ describe('createRegistrationRequest', () => {
       licenseNo: '12345',
       specialty: 'cardiology',
       turnstileToken: 'turnstile-proof',
+      policyAcceptances: [
+        { policyKey: 'TERMS_OF_SERVICE', version: 'terms-v1' },
+        { policyKey: 'PRIVACY_POLICY', version: 'privacy-v1' },
+      ],
     });
     expect(request).not.toHaveProperty('role');
   });
@@ -38,6 +46,10 @@ describe('createRegistrationRequest', () => {
       licenseNo: '67890',
       specialty: 'radiology',
       turnstileToken: 'turnstile-proof',
+      policyAcceptances: [
+        { policyKey: 'TERMS_OF_SERVICE', version: 'terms-v1' },
+        { policyKey: 'PRIVACY_POLICY', version: 'privacy-v1' },
+      ],
     });
 
     expect(request.tenantId).toBe('tenant-from-session');

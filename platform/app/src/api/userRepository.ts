@@ -6,12 +6,15 @@ import { createLoginAPIError } from './loginAPIError';
 import Api from '../pacsAPIAxios';
 import {
   AddTenantUserRequest,
+  AcceptPoliciesRequest,
   ChangeTenantUserAccessRequest,
   ChangeTenantUserAccessResponse,
   ChangePasswordRequest,
   DeleteTenantUserRequest,
   ForgotPasswordRequest,
   GetDoctorSpecialtiesResponse,
+  PolicyDefinition,
+  PolicyStatus,
   GetTenantUserEmailInvitesResponse,
   GetUserMetadataResponse,
   InviteTenantUserRequest,
@@ -170,6 +173,36 @@ const userRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /** Get the authoritative policy versions required for public registration. */
+  async GetRegistrationPolicies(tenantId: string): Promise<APIResponse<PolicyDefinition[]>> {
+    return Api()
+      .get(`/v1/user/policies/registration`, { params: { tenantId } })
+      .then((response: AxiosResponse<APIResponse<PolicyDefinition[]>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /** Get the signed-in user's acceptance state for the current policy versions. */
+  async GetPolicyStatus(): Promise<APIResponse<PolicyStatus>> {
+    return Api()
+      .get(`/v1/user/policies/status`)
+      .then((response: AxiosResponse<APIResponse<PolicyStatus>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /** Record the signed-in user's acceptance of every current required policy. */
+  async AcceptPolicies(request: AcceptPoliciesRequest): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/user/policies/accept`, request)
+      .then((response: AxiosResponse<APIResponse<void>>) => response.data)
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

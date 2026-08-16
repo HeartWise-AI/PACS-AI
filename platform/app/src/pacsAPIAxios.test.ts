@@ -1,15 +1,22 @@
 import axios from 'axios';
 import pacsAPIAxios from './pacsAPIAxios';
 import { handleAccountSuspendedError } from './service/accountAccessSession';
+import { handlePolicyAcceptanceRequiredError } from './service/policyAcceptanceSession';
 
 jest.mock('axios');
 jest.mock('./service/accountAccessSession', () => ({
   handleAccountSuspendedError: jest.fn(),
 }));
+jest.mock('./service/policyAcceptanceSession', () => ({
+  handlePolicyAcceptanceRequiredError: jest.fn(),
+}));
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedSuspendedHandler = handleAccountSuspendedError as jest.MockedFunction<
   typeof handleAccountSuspendedError
+>;
+const mockedPolicyHandler = handlePolicyAcceptanceRequiredError as jest.MockedFunction<
+  typeof handlePolicyAcceptanceRequiredError
 >;
 
 describe('PACS API client interceptors', () => {
@@ -36,7 +43,9 @@ describe('PACS API client interceptors', () => {
 
     expect(mockedAxios.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer session-token' }),
+        headers: expect.objectContaining({
+          Authorization: 'Bearer session-token',
+        }),
       })
     );
     expect(requestInterceptorUse).toHaveBeenCalledTimes(1);
@@ -48,7 +57,9 @@ describe('PACS API client interceptors', () => {
     localStorage.setItem('sessionToken', 'refreshed-session-token');
     const requestHandler = requestInterceptorUse.mock.calls[0][0];
 
-    const config = requestHandler({ headers: { Authorization: 'Bearer session-token' } });
+    const config = requestHandler({
+      headers: { Authorization: 'Bearer session-token' },
+    });
 
     expect(config.headers.Authorization).toBe('Bearer refreshed-session-token');
   });
@@ -58,7 +69,9 @@ describe('PACS API client interceptors', () => {
     localStorage.removeItem('sessionToken');
     const requestHandler = requestInterceptorUse.mock.calls[0][0];
 
-    const config = requestHandler({ headers: { Authorization: 'Bearer session-token' } });
+    const config = requestHandler({
+      headers: { Authorization: 'Bearer session-token' },
+    });
 
     expect(config.headers.Authorization).toBeUndefined();
   });
@@ -70,5 +83,6 @@ describe('PACS API client interceptors', () => {
 
     await expect(rejectionHandler(error)).rejects.toBe(error);
     expect(mockedSuspendedHandler).toHaveBeenCalledWith(error);
+    expect(mockedPolicyHandler).toHaveBeenCalledWith(error);
   });
 });
