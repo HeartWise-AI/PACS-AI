@@ -78,6 +78,8 @@
   "ProcessingModelPlanPending": "Model plan pending",
   "ProcessingModelsComplete": "models complete",
   "ProcessingNoAdditionalDetails": "—",
+  "ProcessingViewModelResult": "View result",
+  "ProcessingViewModelResultFor": "View result for {{modelName}}",
   "ProcessingNoRunHistory": "No processing runs yet.",
   "ProcessingNoStatusDescription": "This study has not entered the processing pipeline.",
   "ProcessingNoStatusYet": "No processing status yet",

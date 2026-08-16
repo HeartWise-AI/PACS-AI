@@ -74,6 +74,8 @@
   "ProcessingModelPlanPending": "Plan de modèles en attente",
   "ProcessingModelsComplete": "modèles terminés",
   "ProcessingNoAdditionalDetails": "—",
+  "ProcessingViewModelResult": "Voir le résultat",
+  "ProcessingViewModelResultFor": "Voir le résultat pour {{modelName}}",
   "ProcessingNoRunHistory": "Aucune exécution de traitement.",
   "ProcessingNoStatusDescription": "Cette étude n'est pas encore entrée dans le pipeline de traitement.",
   "ProcessingNoStatusYet": "Aucun statut de traitement pour le moment",

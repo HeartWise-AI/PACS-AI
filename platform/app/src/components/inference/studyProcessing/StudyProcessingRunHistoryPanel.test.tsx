@@ -20,6 +20,7 @@ import {
   type RunHistoryTransportResponse,
   type StudyProcessingRunHistoryTransport,
 } from './runHistoryTransport';
+import type { ModelExecutionResultSelection } from './executionResultQuery';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -49,15 +50,18 @@ function getRenderedText(node: ReactTestInstance | string): string {
 function PanelWithContext({
   studyInstanceUID,
   transport,
+  onSelectExecutionResult,
 }: {
   studyInstanceUID: string;
   transport: StudyProcessingRunHistoryTransport;
+  onSelectExecutionResult?: (selection: ModelExecutionResultSelection) => void;
 }) {
   contextValue = useStudyProcessing();
   return (
     <StudyProcessingRunHistoryPanel
       studyInstanceUID={studyInstanceUID}
       runHistoryTransport={transport}
+      onSelectExecutionResult={onSelectExecutionResult}
     />
   );
 }
@@ -65,13 +69,15 @@ function PanelWithContext({
 function renderPanel(
   transport: StudyProcessingRunHistoryTransport,
   studyInstanceUID = 'study-a',
-  providerTransport = transport
+  providerTransport = transport,
+  onSelectExecutionResult?: (selection: ModelExecutionResultSelection) => void
 ) {
   renderer = TestRenderer.create(
     <StudyProcessingProvider runHistoryTransport={providerTransport}>
       <PanelWithContext
         studyInstanceUID={studyInstanceUID}
         transport={transport}
+        onSelectExecutionResult={onSelectExecutionResult}
       />
     </StudyProcessingProvider>
   );
@@ -751,6 +757,74 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
     expect(renderedSkip).toContain('The model is not applicable to this study.');
     expect(renderedSkip).toContain('MODEL_NOT_APPLICABLE');
+  });
+
+  test('offers an accessible result action only for a completed execution with stable identity', async () => {
+    const statuses = [
+      'pending',
+      'queued',
+      'running',
+      'completed',
+      'failed',
+      'skipped',
+      'cancelled',
+    ] as const;
+    const run = {
+      ...studyProcessingRunHistoryFixture.runs[0],
+      id: 'result-action-run',
+      studyInstanceUID: 'result-action-study',
+      modelExecutions: [
+        ...statuses.map(status => ({
+          ...modelExecutionFixtures.completed,
+          id: `execution-${status}`,
+          modelName: `Model ${status}`,
+          status,
+          error: status === 'failed' ? modelExecutionFixtures.failed.error : null,
+          skipReason: status === 'skipped' ? modelExecutionFixtures.skipped.skipReason : null,
+        })),
+        {
+          ...modelExecutionFixtures.completed,
+          id: '   ',
+          modelName: 'Completed without identity',
+        },
+      ],
+    };
+    const loadRunHistory = jest.fn(async () => ({
+      history: { studyInstanceUID: run.studyInstanceUID, runs: [run] },
+      partial: false,
+    }));
+    const onSelectExecutionResult = jest.fn();
+
+    await act(async () => {
+      renderPanel(
+        { loadRunHistory },
+        run.studyInstanceUID,
+        { loadRunHistory },
+        onSelectExecutionResult
+      );
+    });
+
+    const actions = renderer!.root.findAll(
+      node =>
+        typeof node.props['data-testid'] === 'string' &&
+        node.props['data-testid'].startsWith('study-processing-view-result-')
+    );
+    expect(actions).toHaveLength(1);
+    expect(actions[0].props.type).toBe('button');
+    expect(actions[0].props['aria-label']).toBe('View result for Model completed');
+
+    act(() => {
+      actions[0].props.onClick();
+    });
+
+    expect(onSelectExecutionResult).toHaveBeenCalledWith({
+      studyInstanceUID: run.studyInstanceUID,
+      runId: run.id,
+      executionId: 'execution-completed',
+      modelName: 'Model completed',
+      modelVersion: modelExecutionFixtures.completed.modelVersion,
+      status: 'completed',
+    });
   });
 
   test('shows a safe fallback for an unknown future skip code', async () => {

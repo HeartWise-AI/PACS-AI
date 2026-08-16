@@ -72,6 +72,8 @@
   "ProcessingModelPlanPending": "Test Model plan pending",
   "ProcessingModelsComplete": "Test models complete",
   "ProcessingNoAdditionalDetails": "Test no details",
+  "ProcessingViewModelResult": "Test view result",
+  "ProcessingViewModelResultFor": "Test view result for {{modelName}}",
   "ProcessingNoRunHistory": "Test no processing runs",
   "ProcessingNoStatusDescription": "Test No processing status description",
   "ProcessingNoStatusYet": "Test No processing status yet",
