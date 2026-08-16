@@ -115,7 +115,7 @@ describe('ModelExecutionResultDrawer', () => {
     expect(onClose).toHaveBeenCalledTimes(3);
   });
 
-  test('shows completion context only from the correlated loaded result', () => {
+  test('shows completion context and generic data only from the correlated loaded result', () => {
     act(() => {
       renderer = TestRenderer.create(
         <ModelExecutionResultDrawer
@@ -126,8 +126,9 @@ describe('ModelExecutionResultDrawer', () => {
       );
     });
 
-    expect(JSON.stringify(renderer!.toJSON())).toContain('Model result loaded.');
-    expect(JSON.stringify(renderer!.toJSON())).toContain('2026');
-    expect(JSON.stringify(renderer!.toJSON())).not.toContain('syntax_score');
+    const rendered = JSON.stringify(renderer!.toJSON());
+    expect(rendered).toContain('2026');
+    expect(rendered).toContain('syntax_score');
+    expect(rendered).toContain('24.5');
   });
 });

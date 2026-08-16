@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecutionResultQueryState } from './executionResultQuery';
+import { GenericModelResult } from './GenericModelResult';
 
 export interface ModelExecutionResultDrawerProps {
   state: ModelExecutionResultQueryState;
@@ -133,14 +134,7 @@ export function ModelExecutionResultDrawer({
               </div>
             </div>
           )}
-          {state.status === 'ready' && (
-            <p
-              role="status"
-              className="text-sm text-[#c5cbc5]"
-            >
-              {t('ProcessingModelResultLoaded', { defaultValue: 'Model result loaded.' })}
-            </p>
-          )}
+          {state.status === 'ready' && <GenericModelResult value={state.result?.result} />}
           {state.status === 'error' && (
             <p
               role="alert"
