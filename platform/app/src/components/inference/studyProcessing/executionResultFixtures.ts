@@ -1,4 +1,5 @@
 import type { ModelExecutionResult, ModelExecutionResultFailure } from './types';
+import { MODEL_EXECUTION_RESULT_ERROR_CODES } from './executionResultContract';
 
 const BASE_RESULT = {
   runId: 'run-result-1',
@@ -49,42 +50,42 @@ export const modelExecutionResultFailureFixtures = {
   notReady: {
     kind: 'not_available',
     status: 409,
-    errorCode: 'INFERENCE_EXECUTION_RESULT_NOT_AVAILABLE',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.notAvailable,
     retryable: false,
     message: 'This model execution does not have a viewable completed result.',
   },
   terminalWithoutResult: {
     kind: 'invalid_result',
     status: 422,
-    errorCode: 'INFERENCE_EXECUTION_RESULT_INVALID',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.invalidResult,
     retryable: false,
     message: 'The completed model result is unavailable.',
   },
   malformed: {
     kind: 'invalid_result',
     status: 422,
-    errorCode: 'INFERENCE_EXECUTION_RESULT_INVALID',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.invalidResult,
     retryable: false,
     message: 'The completed model result is unavailable.',
   },
   forbidden: {
     kind: 'forbidden',
     status: 403,
-    errorCode: 'FORBIDDEN_ACCESS',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.forbidden,
     retryable: false,
     message: 'You do not have permission to view this model result.',
   },
   notFound: {
     kind: 'not_found',
     status: 404,
-    errorCode: 'MISSING_RECORD',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.missing,
     retryable: false,
     message: 'The model execution result was not found.',
   },
   upstreamUnavailable: {
     kind: 'service_unavailable',
     status: 503,
-    errorCode: 'INFERENCE_RESULT_SERVICE_UNAVAILABLE',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.serviceUnavailable,
     retryable: true,
     message: 'Model results are temporarily unavailable.',
   },

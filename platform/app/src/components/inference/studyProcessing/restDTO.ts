@@ -129,6 +129,12 @@ export interface ProcessingRunExecutionResultDTO {
   result: unknown;
 }
 
+export interface ProcessingRunExecutionResultResponseDTO {
+  success: true;
+  message: string;
+  data: ProcessingRunExecutionResultDTO;
+}
+
 export interface StudyProcessingRunHistoryPageDTO extends WorklistPageDTO {
   runs: ProcessingRunDetailDTO[];
 }

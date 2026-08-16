@@ -1,5 +1,13 @@
 import Api from '../../../pacsAPIAxios';
-import type { ProcessingRunExecutionResultDTO, WorklistAPIResponse } from './restDTO';
+import {
+  buildModelExecutionResultPath,
+  KNOWN_MODEL_EXECUTION_RESULT_ERROR_CODES,
+  MODEL_EXECUTION_RESULT_ERROR_CODES,
+} from './executionResultContract';
+import type {
+  ProcessingRunExecutionResultDTO,
+  ProcessingRunExecutionResultResponseDTO,
+} from './restDTO';
 import type { ModelExecutionResult, ModelExecutionResultFailure } from './types';
 
 interface HTTPResponse<T> {
@@ -43,7 +51,7 @@ function requiredPathIdentifier(value: string, label: string): string {
     throw new ModelExecutionResultClientError({
       kind: 'unknown',
       status: 400,
-      errorCode: 'INVALID_PAYLOAD',
+      errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.invalidPayload,
       retryable: false,
       message: `${label} is required.`,
     });
@@ -61,18 +69,6 @@ function responseStatus(error: unknown): number | null {
   return typeof response?.status === 'number' ? response.status : null;
 }
 
-const KNOWN_RESULT_ERROR_CODES = new Set([
-  'INVALID_PAYLOAD',
-  'UNAUTHORIZED_ACCESS',
-  'FORBIDDEN_ACCESS',
-  'MISSING_RECORD',
-  'INFERENCE_EXECUTION_RESULT_NOT_AVAILABLE',
-  'INFERENCE_EXECUTION_RESULT_INVALID',
-  'INFERENCE_RESULT_SERVICE_UNAVAILABLE',
-  'SERVER_ERROR',
-  'DATABASE_ERROR',
-]);
-
 function responseErrorCode(error: unknown): string | null {
   if (!error || typeof error !== 'object' || !('response' in error)) {
     return null;
@@ -80,7 +76,7 @@ function responseErrorCode(error: unknown): string | null {
 
   const response = (error as { response?: { data?: { errorCode?: unknown } } }).response;
   const errorCode = response?.data?.errorCode;
-  return typeof errorCode === 'string' && KNOWN_RESULT_ERROR_CODES.has(errorCode)
+  return typeof errorCode === 'string' && KNOWN_MODEL_EXECUTION_RESULT_ERROR_CODES.has(errorCode)
     ? errorCode
     : null;
 }
@@ -224,8 +220,8 @@ export function createModelExecutionResultClient(
       const encodedExecutionId = requiredPathIdentifier(executionId, 'Model execution ID');
 
       try {
-        const response = await client.get<WorklistAPIResponse<ProcessingRunExecutionResultDTO>>(
-          `/v1/inference/processing/runs/${encodedRunId}/executions/${encodedExecutionId}/result`,
+        const response = await client.get<ProcessingRunExecutionResultResponseDTO>(
+          buildModelExecutionResultPath(encodedRunId, encodedExecutionId),
           request.signal ? { signal: request.signal } : undefined
         );
 

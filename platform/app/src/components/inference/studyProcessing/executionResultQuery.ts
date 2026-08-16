@@ -4,6 +4,7 @@ import {
   ModelExecutionResultClientError,
   type ModelExecutionResultClient,
 } from './executionResultClient';
+import { MODEL_EXECUTION_RESULT_ERROR_CODES } from './executionResultContract';
 import type {
   ModelExecutionResult,
   ModelExecutionResultFailure,
@@ -65,7 +66,7 @@ function invalidSelectionFailure(): ModelExecutionResultFailure {
   return {
     kind: 'unknown',
     status: 400,
-    errorCode: 'INVALID_PAYLOAD',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.invalidPayload,
     retryable: false,
     message: 'The model result request was invalid.',
   };
@@ -75,7 +76,7 @@ function notAvailableFailure(): ModelExecutionResultFailure {
   return {
     kind: 'not_available',
     status: 409,
-    errorCode: 'INFERENCE_EXECUTION_RESULT_NOT_AVAILABLE',
+    errorCode: MODEL_EXECUTION_RESULT_ERROR_CODES.notAvailable,
     retryable: false,
     message: 'This model execution does not have a viewable completed result.',
   };
