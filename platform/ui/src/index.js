@@ -18,8 +18,6 @@ export {
   Select,
   StudyListExpandedRow,
   StudyListFilter,
-  Sidebar,
-  SidebarAdmin,
   StudyListPagination,
   StudyListTable,
   StudyListTableRow,

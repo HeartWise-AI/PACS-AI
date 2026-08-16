@@ -4,11 +4,9 @@ import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
-import HeaderPanel from './HeaderPanel.json';
 import Members from './Members.json';
 import Onboarding from './Onboarding.json';
 import Settings from './Settings.json';
-import Sidebar from './Sidebar.json';
 import StoreFileButton from './StoreFileButton.json';
 import ErrorBoundary from './ErrorBoundary.json';
 import Header from './Header.json';
@@ -38,11 +36,9 @@ export default {
     Common,
     DataSourceConfiguration,
     DatePicker,
-    HeaderPanel,
     Members,
     Onboarding,
     Settings,
-    Sidebar,
     StoreFileButton,
     ErrorBoundary,
     Header,
