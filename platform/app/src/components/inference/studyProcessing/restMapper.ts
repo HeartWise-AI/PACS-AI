@@ -115,8 +115,6 @@ export function mapWorklistStudyStatusPage(page: WorklistStudyStatusPageDTO): {
 function mapProcessingRunExecution(execution: ProcessingRunExecutionDTO): ModelExecution {
   return {
     id: execution.executionId,
-    candidateId: null,
-    studyServiceJobId: null,
     modelName: execution.modelName,
     modelVersion: execution.modelVersion,
     modality: execution.modality,

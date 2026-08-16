@@ -12,6 +12,13 @@ export interface WorklistAPIResponse<T> {
   data: T;
 }
 
+export interface WorklistAPIErrorResponse {
+  success: false;
+  message: string;
+  errorCode: string;
+  data: unknown;
+}
+
 export interface WorklistPageDTO {
   limit: number;
   offset: number;
@@ -107,6 +114,25 @@ export interface ProcessingRunExecutionDTO {
 
 export interface ProcessingRunDetailDTO extends ProcessingRunSummaryDTO {
   executions: ProcessingRunExecutionDTO[];
+}
+
+// The shared transport treats result as opaque JSON and does not define any
+// model-specific fields.
+export interface ProcessingRunExecutionResultDTO {
+  runId: string;
+  executionId: string;
+  studyInstanceUID: string;
+  modelName: string;
+  modelVersion: string | null;
+  status: 'completed';
+  completedAt: string;
+  result: unknown;
+}
+
+export interface ProcessingRunExecutionResultResponseDTO {
+  success: true;
+  message: string;
+  data: ProcessingRunExecutionResultDTO;
 }
 
 export interface StudyProcessingRunHistoryPageDTO extends WorklistPageDTO {

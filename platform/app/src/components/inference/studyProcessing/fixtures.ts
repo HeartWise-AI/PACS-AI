@@ -145,8 +145,6 @@ export const studyStatusUpdatedEventFixture: StudyStatusUpdatedEvent = {
 export const modelExecutionFixtures = {
   completed: {
     id: 'execution-panecho',
-    candidateId: 'candidate-panecho',
-    studyServiceJobId: 'job-panecho',
     modelName: 'PanEcho',
     modelVersion: '1.4.0',
     modality: 'US',
@@ -160,8 +158,6 @@ export const modelExecutionFixtures = {
   },
   completedCathEf: {
     id: 'execution-cathef',
-    candidateId: 'candidate-cathef',
-    studyServiceJobId: 'job-cathef',
     modelName: 'CathEF-CLIP',
     modelVersion: '2.1.0',
     modality: 'US',
@@ -175,8 +171,6 @@ export const modelExecutionFixtures = {
   },
   failed: {
     id: 'execution-deeprv',
-    candidateId: 'candidate-deeprv',
-    studyServiceJobId: 'job-deeprv',
     modelName: 'DeepRV-CLIP',
     modelVersion: '1.3.2',
     modality: 'US',
@@ -193,8 +187,6 @@ export const modelExecutionFixtures = {
   },
   skipped: {
     id: 'execution-skipped',
-    candidateId: 'candidate-skipped',
-    studyServiceJobId: null,
     modelName: 'DeepCORO-CLIP',
     modelVersion: '1.0.0',
     modality: 'US',
@@ -211,8 +203,6 @@ export const modelExecutionFixtures = {
   },
   cancelled: {
     id: 'execution-cancelled',
-    candidateId: 'candidate-cancelled',
-    studyServiceJobId: 'job-cancelled',
     modelName: 'EchoPrime',
     modelVersion: '1.2.0',
     modality: 'US',

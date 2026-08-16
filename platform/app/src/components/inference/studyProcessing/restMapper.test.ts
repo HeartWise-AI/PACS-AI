@@ -305,8 +305,6 @@ describe('study processing REST mapper', () => {
     });
     expect(history.runs[0].modelExecutions[0]).toMatchObject({
       id: 'legacy-failed',
-      candidateId: null,
-      studyServiceJobId: null,
       modelVersion: null,
       modality: null,
       queuedAt: null,

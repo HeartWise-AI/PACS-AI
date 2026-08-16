@@ -341,8 +341,6 @@ describe('deployed REST and SSE contract reconciliation scenarios', () => {
       attentionReasons: [{ code: 'LEGACY_HISTORY_INCOMPLETE', message: null }],
     });
     expect(result.history.runs[0].modelExecutions[0]).toMatchObject({
-      candidateId: null,
-      studyServiceJobId: null,
       modelVersion: null,
       modality: null,
       queuedAt: null,
