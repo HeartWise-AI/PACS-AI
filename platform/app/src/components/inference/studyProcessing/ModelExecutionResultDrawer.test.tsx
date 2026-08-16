@@ -13,6 +13,7 @@ import {
   getModelResultDrawerFocusableElements,
   ModelExecutionResultDrawer,
 } from './ModelExecutionResultDrawer';
+import { cardioSyntaxResultFixtures } from './modelResults/cardioSyntaxFixtures';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -163,6 +164,51 @@ describe('ModelExecutionResultDrawer', () => {
     expect(rendered).toContain('2026');
     expect(rendered).toContain('syntax_score');
     expect(rendered).toContain('24.5');
+  });
+
+  test('selects the CardioSyntax renderer for an exact supported result', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      result: cardioSyntaxResultFixtures.validV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('retains the generic renderer for an unsupported CardioSyntax version', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      modelVersion: '2.0.0',
+      result: cardioSyntaxResultFixtures.validV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(0);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' }).length
+    ).toBeGreaterThan(0);
   });
 
   test.each([
