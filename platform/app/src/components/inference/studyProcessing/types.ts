@@ -125,8 +125,6 @@ export interface ModelExecutionError {
 
 export interface ModelExecution {
   id: string;
-  candidateId: string | null;
-  studyServiceJobId: string | null;
   modelName: string;
   modelVersion: string | null;
   modality: string | null;
@@ -137,6 +135,37 @@ export interface ModelExecution {
   startedAt: string | null;
   completedAt: string | null;
   updatedAt: string;
+}
+
+// ModelExecutionResult is the model-agnostic public result envelope. The
+// payload remains unknown until a renderer explicitly recognizes its shape.
+export interface ModelExecutionResult {
+  runId: string;
+  executionId: string;
+  studyInstanceUID: string;
+  modelName: string;
+  modelVersion: string | null;
+  status: 'completed';
+  completedAt: string;
+  result: unknown;
+}
+
+export type ModelExecutionResultFailureKind =
+  | 'not_available'
+  | 'invalid_result'
+  | 'not_found'
+  | 'forbidden'
+  | 'service_unavailable'
+  | 'unknown';
+
+// ModelExecutionResultFailure contains only operator-safe normalized state;
+// backend or upstream response bodies must never be retained here.
+export interface ModelExecutionResultFailure {
+  kind: ModelExecutionResultFailureKind;
+  status: number | null;
+  errorCode: string | null;
+  retryable: boolean;
+  message: string;
 }
 
 export interface ProcessingRun extends ProcessingModelCounts {
