@@ -242,6 +242,22 @@ describe('LoginPage adaptive challenge', () => {
     expect((container.querySelector('#password') as HTMLInputElement).value).toBe('');
   });
 
+  it('keeps the login page available when public metadata responses omit data', async () => {
+    act(() => root.unmount());
+    mockGetPublicTenant.mockResolvedValueOnce({ data: undefined });
+    mockGetAPIInfo.mockResolvedValueOnce({ data: undefined });
+    root = createRoot(container);
+
+    await act(async () => {
+      root.render(React.createElement(LoginPage));
+    });
+    await flushPromises();
+
+    expect(container.querySelector('[data-testid="logo"]')).not.toBeNull();
+    expect(container.querySelector('form')).not.toBeNull();
+    expect(container.textContent).toContain('Welcome to PACS AI');
+  });
+
   it('escalates from a generic 401 and resets every challenged failure', async () => {
     const form = container.querySelector('form') as HTMLFormElement;
     fillCredentials();
