@@ -9,7 +9,10 @@ import {
   modelExecutionResultQueryKey,
   type ModelExecutionResultQueryState,
 } from './executionResultQuery';
-import { ModelExecutionResultDrawer } from './ModelExecutionResultDrawer';
+import {
+  getModelResultDrawerFocusableElements,
+  ModelExecutionResultDrawer,
+} from './ModelExecutionResultDrawer';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -116,6 +119,33 @@ describe('ModelExecutionResultDrawer', () => {
     });
 
     expect(onClose).toHaveBeenCalledTimes(3);
+  });
+
+  test('includes visible summary controls in the focus trap and excludes closed descendants', () => {
+    const drawer = document.createElement('aside');
+    drawer.innerHTML = `
+      <button id="close">Close</button>
+      <details>
+        <summary id="root-summary">result</summary>
+        <button id="hidden-button">hidden</button>
+        <details>
+          <summary id="nested-summary">nested</summary>
+        </details>
+      </details>
+    `;
+
+    expect(getModelResultDrawerFocusableElements(drawer).map(element => element.id)).toEqual([
+      'close',
+      'root-summary',
+    ]);
+
+    drawer.querySelector('details')?.setAttribute('open', '');
+    expect(getModelResultDrawerFocusableElements(drawer).map(element => element.id)).toEqual([
+      'close',
+      'root-summary',
+      'hidden-button',
+      'nested-summary',
+    ]);
   });
 
   test('shows completion context and generic data only from the correlated loaded result', () => {

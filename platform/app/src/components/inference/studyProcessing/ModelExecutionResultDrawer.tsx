@@ -14,7 +14,28 @@ export interface ModelExecutionResultDrawerProps {
 }
 
 const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), summary, [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function isVisibleInsideClosedDetails(element: HTMLElement, drawer: HTMLElement): boolean {
+  let ancestor = element.parentElement;
+  while (ancestor && ancestor !== drawer) {
+    if (
+      ancestor.tagName === 'DETAILS' &&
+      !ancestor.hasAttribute('open') &&
+      ancestor.firstElementChild !== element
+    ) {
+      return false;
+    }
+    ancestor = ancestor.parentElement;
+  }
+  return true;
+}
+
+export function getModelResultDrawerFocusableElements(drawer: HTMLElement): HTMLElement[] {
+  return Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(element =>
+    isVisibleInsideClosedDetails(element, drawer)
+  );
+}
 
 export function ModelExecutionResultDrawer({
   state,
@@ -47,9 +68,7 @@ export function ModelExecutionResultDrawer({
       return;
     }
 
-    const focusableElements = Array.from(
-      drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    );
+    const focusableElements = getModelResultDrawerFocusableElements(drawerRef.current);
     if (!focusableElements.length) {
       event.preventDefault();
       return;

@@ -7,7 +7,7 @@ import {
 
 export interface ModelExecutionResultViewerController {
   state: ModelExecutionResultQueryState;
-  open: (selection: ModelExecutionResultSelection) => void;
+  open: (selection: ModelExecutionResultSelection, trigger?: HTMLElement | null) => void;
   close: () => void;
   retry: () => void;
 }
@@ -31,8 +31,13 @@ export function useModelExecutionResultViewer(
   );
 
   const open = useCallback(
-    (selection: ModelExecutionResultSelection) => {
-      if (typeof HTMLElement !== 'undefined' && document.activeElement instanceof HTMLElement) {
+    (selection: ModelExecutionResultSelection, trigger?: HTMLElement | null) => {
+      if (trigger) {
+        returnFocusRef.current = trigger;
+      } else if (
+        typeof HTMLElement !== 'undefined' &&
+        document.activeElement instanceof HTMLElement
+      ) {
         returnFocusRef.current = document.activeElement;
       }
       void coordinator.select(selection);

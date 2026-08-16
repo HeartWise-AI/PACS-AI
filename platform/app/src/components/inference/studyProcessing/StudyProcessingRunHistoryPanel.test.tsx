@@ -54,7 +54,10 @@ function PanelWithContext({
 }: {
   studyInstanceUID: string;
   transport: StudyProcessingRunHistoryTransport;
-  onSelectExecutionResult?: (selection: ModelExecutionResultSelection) => void;
+  onSelectExecutionResult?: (
+    selection: ModelExecutionResultSelection,
+    trigger: HTMLButtonElement
+  ) => void;
 }) {
   contextValue = useStudyProcessing();
   return (
@@ -70,7 +73,10 @@ function renderPanel(
   transport: StudyProcessingRunHistoryTransport,
   studyInstanceUID = 'study-a',
   providerTransport = transport,
-  onSelectExecutionResult?: (selection: ModelExecutionResultSelection) => void
+  onSelectExecutionResult?: (
+    selection: ModelExecutionResultSelection,
+    trigger: HTMLButtonElement
+  ) => void
 ) {
   renderer = TestRenderer.create(
     <StudyProcessingProvider runHistoryTransport={providerTransport}>
@@ -814,17 +820,20 @@ describe('StudyProcessingRunHistoryPanel', () => {
     expect(actions[0].props['aria-label']).toBe('View result for Model completed');
 
     act(() => {
-      actions[0].props.onClick();
+      actions[0].props.onClick({ currentTarget: actions[0] });
     });
 
-    expect(onSelectExecutionResult).toHaveBeenCalledWith({
-      studyInstanceUID: run.studyInstanceUID,
-      runId: run.id,
-      executionId: 'execution-completed',
-      modelName: 'Model completed',
-      modelVersion: modelExecutionFixtures.completed.modelVersion,
-      status: 'completed',
-    });
+    expect(onSelectExecutionResult).toHaveBeenCalledWith(
+      {
+        studyInstanceUID: run.studyInstanceUID,
+        runId: run.id,
+        executionId: 'execution-completed',
+        modelName: 'Model completed',
+        modelVersion: modelExecutionFixtures.completed.modelVersion,
+        status: 'completed',
+      },
+      actions[0]
+    );
   });
 
   test('shows a safe fallback for an unknown future skip code', async () => {

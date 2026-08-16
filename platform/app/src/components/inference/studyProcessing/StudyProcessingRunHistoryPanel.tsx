@@ -141,7 +141,10 @@ export interface StudyProcessingRunHistoryPanelProps {
   canReprocessStudy?: boolean;
   reprocessingDisabled?: boolean;
   refreshVisibleStudySnapshot?: () => Promise<void> | void;
-  onSelectExecutionResult?: (selection: ModelExecutionResultSelection) => void;
+  onSelectExecutionResult?: (
+    selection: ModelExecutionResultSelection,
+    trigger: HTMLButtonElement
+  ) => void;
 }
 
 export function StudyProcessingRunHistoryPanel({
@@ -520,7 +523,12 @@ export function StudyProcessingRunHistoryPanel({
                                     <button
                                       type="button"
                                       className="rounded border border-[#60a5fa]/70 px-3 py-1 font-semibold text-[#78b7f5] hover:bg-[#24384c] focus:outline-none focus:ring-2 focus:ring-[#78b7f5] focus:ring-offset-2 focus:ring-offset-[#252925]"
-                                      onClick={() => onSelectExecutionResult(resultSelection)}
+                                      onClick={event =>
+                                        onSelectExecutionResult(
+                                          resultSelection,
+                                          event.currentTarget
+                                        )
+                                      }
                                       aria-label={t('ProcessingViewModelResultFor', {
                                         modelName: execution.modelName,
                                         defaultValue: 'View result for {{modelName}}',

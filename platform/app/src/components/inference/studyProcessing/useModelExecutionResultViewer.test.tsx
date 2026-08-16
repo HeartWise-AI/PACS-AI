@@ -64,7 +64,7 @@ describe('useModelExecutionResultViewer', () => {
     expect(loadExecutionResult).not.toHaveBeenCalled();
 
     await act(async () => {
-      controller.open(selection);
+      controller.open(selection, trigger);
       await Promise.resolve();
     });
 
