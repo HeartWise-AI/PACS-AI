@@ -5,6 +5,12 @@ import {
   type CardioSyntaxResultPayload,
   parseCardioSyntaxResultPayload,
 } from './cardioSyntaxContract';
+import {
+  DEEP_CORO_CLIP_MODEL_NAME,
+  DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroClipResultPayload,
+  parseDeepCoroClipResultPayload,
+} from './deepCoroClipContract';
 
 interface ModelResultRendererContext {
   modelName: string;
@@ -16,6 +22,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'cardiosyntax';
       payload: CardioSyntaxResultPayload;
+    }
+  | {
+      kind: 'deepcoro-clip';
+      payload: DeepCoroClipResultPayload;
     }
   | {
       kind: 'generic';
@@ -37,7 +47,20 @@ const cardioSyntaxAdapter: ModelResultRendererAdapter = {
   },
 };
 
-const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [cardioSyntaxAdapter];
+const deepCoroClipAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_CLIP_MODEL_NAME &&
+    DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroClipResultPayload(result);
+    return payload ? { kind: 'deepcoro-clip', payload } : null;
+  },
+};
+
+const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
+  cardioSyntaxAdapter,
+  deepCoroClipAdapter,
+];
 
 export function resolveModelResultRenderer(
   result: Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>

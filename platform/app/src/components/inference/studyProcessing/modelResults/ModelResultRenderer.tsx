@@ -43,7 +43,7 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
   const resolved = resolveModelResultRenderer(result);
   const genericFallback = <GenericModelResult value={result.result} />;
 
-  if (resolved.kind === 'generic') {
+  if (resolved.kind !== 'cardiosyntax') {
     return genericFallback;
   }
 

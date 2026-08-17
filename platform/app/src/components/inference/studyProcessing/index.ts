@@ -39,6 +39,7 @@ export * from './GenericModelResult';
 export * from './modelExecutionResultPresentation';
 export * from './useModelExecutionResultViewer';
 export * from './modelResults/cardioSyntaxContract';
+export * from './modelResults/deepCoroClipContract';
 export * from './modelResults/modelResultRendererRegistry';
 export * from './modelResults/CardioSyntaxResult';
 export * from './modelResults/ModelResultRenderer';
