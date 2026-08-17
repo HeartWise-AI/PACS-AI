@@ -2,8 +2,6 @@ import AIModelButton from './AIModelButton';
 import ButtonGradient from './ButtonGradient';
 import ButtonSecondary from './ButtonSecondary';
 import Logo from './Logo';
-import Sidebar from './Sidebar';
-import SidebarAdmin from './SidebarAdmin';
 import StoreFileButton from './StoreFileButton';
 import EmptyStudies from './EmptyStudies';
 import Icon from './Icon';
@@ -35,8 +33,6 @@ export {
   ButtonGradient,
   ButtonSecondary,
   Logo,
-  Sidebar,
-  SidebarAdmin,
   StoreFileButton,
   ContextMenu,
   EmptyStudies,

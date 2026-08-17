@@ -6,14 +6,12 @@ import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
 import Header from './Header.json';
-import HeaderPanel from './HeaderPanel.json';
 import MeasurementTable from './MeasurementTable.json';
 import Members from './Members.json';
 import Messages from './Messages.json';
 import Onboarding from './Onboarding.json';
 import ResultModal from './ResultModal.json';
 import Settings from './Settings.json';
-import Sidebar from './Sidebar.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyList from './StudyList.json';
@@ -33,14 +31,12 @@ export default {
     DataSourceConfiguration,
     DatePicker,
     Header,
-    HeaderPanel,
     MeasurementTable,
     Members,
     Messages,
     Onboarding,
     ResultModal,
     Settings,
-    Sidebar,
     SidePanel,
     StudyBrowser,
     StoreFileButton,
