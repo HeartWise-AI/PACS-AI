@@ -2,6 +2,7 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { modelExecutionResultFixtures } from '../executionResultFixtures';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
+import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
 
 jest.mock('react-i18next', () => ({
@@ -36,6 +37,28 @@ describe('ModelResultRenderer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+  });
+
+  test('renders a valid DeepCORO-CLIP payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepCoro_CLIP_generic',
+            modelVersion: '1.0.0',
+            result: deepCoroClipResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
+      1
+    );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
   });
 
   test('renders unsupported and malformed payload content as generic text', () => {

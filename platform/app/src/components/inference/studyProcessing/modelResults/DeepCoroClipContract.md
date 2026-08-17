@@ -59,3 +59,16 @@ Before the DeepCORO-CLIP presentation is considered clinically approved, stakeho
 
 Until those decisions are recorded, the renderer must not invent thresholds, recommendations, or
 clinical interpretations. Model-provided HTML is never supported.
+
+## Review template implemented in PR #414
+
+The review template intentionally:
+
+- shows all 18 documented arteries in RCA, LCA, and Other groups;
+- formats the 0–100 stenosis estimate and 0–1 probabilities as one-decimal percentages;
+- displays the model-provided categorical diagnoses without recalculating thresholds;
+- uses neutral table styling rather than threshold-derived clinical colours;
+- omits the model-authored diagnosis and recommendation prose;
+- includes an assistive-AI note and semantic table markup.
+
+These presentation choices remain subject to the stakeholder approval listed above.

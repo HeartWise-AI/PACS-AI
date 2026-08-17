@@ -14,6 +14,7 @@ import {
   ModelExecutionResultDrawer,
 } from './ModelExecutionResultDrawer';
 import { cardioSyntaxResultFixtures } from './modelResults/cardioSyntaxFixtures';
+import { deepCoroClipResultFixtures } from './modelResults/deepCoroClipFixtures';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -209,6 +210,32 @@ describe('ModelExecutionResultDrawer', () => {
     expect(
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' }).length
     ).toBeGreaterThan(0);
+  });
+
+  test('selects the DeepCORO-CLIP renderer for an exact supported result', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      modelName: 'DeepCoro_CLIP_generic',
+      modelVersion: '1.0.0',
+      result: deepCoroClipResultFixtures.validV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
+      1
+    );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
   });
 
   test.each([

@@ -42,4 +42,5 @@ export * from './modelResults/cardioSyntaxContract';
 export * from './modelResults/deepCoroClipContract';
 export * from './modelResults/modelResultRendererRegistry';
 export * from './modelResults/CardioSyntaxResult';
+export * from './modelResults/DeepCoroClipResult';
 export * from './modelResults/ModelResultRenderer';

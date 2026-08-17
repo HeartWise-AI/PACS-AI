@@ -2,6 +2,7 @@ import React from 'react';
 import type { ModelExecutionResult } from '../types';
 import { GenericModelResult } from '../GenericModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
+import { DeepCoroClipResult } from './DeepCoroClipResult';
 import { resolveModelResultRenderer } from './modelResultRendererRegistry';
 
 interface ModelResultRendererBoundaryProps {
@@ -43,16 +44,23 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
   const resolved = resolveModelResultRenderer(result);
   const genericFallback = <GenericModelResult value={result.result} />;
 
-  if (resolved.kind !== 'cardiosyntax') {
+  if (resolved.kind === 'generic') {
     return genericFallback;
   }
+
+  const customResult =
+    resolved.kind === 'cardiosyntax' ? (
+      <CardioSyntaxResult payload={resolved.payload} />
+    ) : (
+      <DeepCoroClipResult payload={resolved.payload} />
+    );
 
   return (
     <ModelResultRendererBoundary
       fallback={genericFallback}
       resetKey={JSON.stringify([result.runId, result.executionId])}
     >
-      <CardioSyntaxResult payload={resolved.payload} />
+      {customResult}
     </ModelResultRendererBoundary>
   );
 }
