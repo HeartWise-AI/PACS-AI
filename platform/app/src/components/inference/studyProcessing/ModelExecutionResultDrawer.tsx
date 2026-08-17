@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelExecutionResultQueryState } from './executionResultQuery';
-import { GenericModelResult } from './GenericModelResult';
+import { ModelResultRenderer } from './modelResults/ModelResultRenderer';
 import {
   getModelExecutionResultFailurePresentation,
   isEmptyModelExecutionResult,
@@ -159,8 +159,8 @@ export function ModelExecutionResultDrawer({
               </div>
             </div>
           )}
-          {state.status === 'ready' && !emptyResult && (
-            <GenericModelResult value={state.result?.result} />
+          {state.status === 'ready' && !emptyResult && state.result && (
+            <ModelResultRenderer result={state.result} />
           )}
           {emptyResult && (
             <div
