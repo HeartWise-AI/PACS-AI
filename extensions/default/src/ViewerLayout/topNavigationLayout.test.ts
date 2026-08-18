@@ -8,6 +8,7 @@ describe('viewer top-navigation layout', () => {
     expect(source).toContain("import TopNavigation from '@ohif/app/src/components/TopNavigation'");
     expect(source).toContain('<TopNavigation title="Viewer" />');
     expect(source).not.toMatch(/components\/(Sidebar|HeaderPanel)/);
+    expect(source).not.toContain('InvestigationalUseDialog');
   });
 
   test('gives the clinical viewport the stable remaining flex area', () => {
