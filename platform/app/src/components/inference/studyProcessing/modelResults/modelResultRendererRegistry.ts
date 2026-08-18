@@ -11,6 +11,18 @@ import {
   type DeepCoroClipResultPayload,
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
+import {
+  ECHO_PRIME_MODEL_NAME,
+  ECHO_PRIME_SUPPORTED_MODEL_VERSIONS,
+  type EchoPrimeResultPayload,
+  parseEchoPrimeResultPayload,
+} from './echoPrimeContract';
+import {
+  PAN_ECHO_MODEL_NAME,
+  PAN_ECHO_SUPPORTED_MODEL_VERSIONS,
+  type PanEchoResultPayload,
+  parsePanEchoResultPayload,
+} from './panEchoContract';
 
 interface ModelResultRendererContext {
   modelName: string;
@@ -26,6 +38,21 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'deepcoro-clip';
       payload: DeepCoroClipResultPayload;
+    }
+  | {
+      kind: 'panecho';
+      payload: PanEchoResultPayload;
+    }
+  | {
+      kind: 'echoprime';
+      payload: EchoPrimeResultPayload;
+    }
+  | {
+      kind: 'unsupported';
+      modelName: string;
+      modelVersion: string | null;
+      payload: unknown;
+      reason: 'payload' | 'version';
     }
   | {
       kind: 'generic';
@@ -57,9 +84,31 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const panEchoAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === PAN_ECHO_MODEL_NAME &&
+    PAN_ECHO_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parsePanEchoResultPayload(result);
+    return payload ? { kind: 'panecho', payload } : null;
+  },
+};
+
+const echoPrimeAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === ECHO_PRIME_MODEL_NAME &&
+    ECHO_PRIME_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseEchoPrimeResultPayload(result);
+    return payload ? { kind: 'echoprime', payload } : null;
+  },
+};
+
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
   deepCoroClipAdapter,
+  panEchoAdapter,
+  echoPrimeAdapter,
 ];
 
 export function resolveModelResultRenderer(
@@ -81,6 +130,18 @@ export function resolveModelResultRenderer(
     } catch {
       // Model adapters are optional presentation enhancements. Their failures must not hide data.
     }
+  }
+
+  const knownEchoModel =
+    context.modelName === PAN_ECHO_MODEL_NAME || context.modelName === ECHO_PRIME_MODEL_NAME;
+  if (knownEchoModel) {
+    return {
+      kind: 'unsupported',
+      modelName: context.modelName,
+      modelVersion: context.modelVersion,
+      payload: context.result,
+      reason: adapter ? 'payload' : 'version',
+    };
   }
 
   return { kind: 'generic', payload: result.result };

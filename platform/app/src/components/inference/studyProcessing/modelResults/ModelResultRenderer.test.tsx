@@ -3,6 +3,8 @@ import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { modelExecutionResultFixtures } from '../executionResultFixtures';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { echoPrimeResultFixtures } from './echoPrimeFixtures';
+import { panEchoResultFixtures } from './panEchoFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
 
 jest.mock('react-i18next', () => ({
@@ -60,6 +62,58 @@ describe('ModelResultRenderer', () => {
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);
   });
+
+  test.each([
+    ['PanEcho', '1.0.0', panEchoResultFixtures.successfulV1, 'panecho-result'],
+    ['EchoPrime', '1.2.0', echoPrimeResultFixtures.successfulV1, 'echoprime-result'],
+  ])(
+    'renders a valid %s payload with its custom component',
+    (modelName, modelVersion, payload, id) => {
+      act(() => {
+        renderer = TestRenderer.create(
+          <ModelResultRenderer
+            result={{
+              ...modelExecutionResultFixtures.available,
+              modelName,
+              modelVersion,
+              result: payload,
+            }}
+          />
+        );
+      });
+
+      expect(renderer!.root.findAllByProps({ 'data-testid': id })).toHaveLength(1);
+    }
+  );
+
+  test.each([
+    ['PanEcho', '9.0.0', panEchoResultFixtures.successfulV1],
+    ['EchoPrime', '1.2.0', 'malformed scalar payload'],
+  ])(
+    'shows raw troubleshooting access for unsupported %s output',
+    (modelName, modelVersion, payload) => {
+      act(() => {
+        renderer = TestRenderer.create(
+          <ModelResultRenderer
+            result={{
+              ...modelExecutionResultFixtures.available,
+              modelName,
+              modelVersion,
+              result: payload,
+            }}
+          />
+        );
+      });
+
+      expect(
+        renderer!.root.findAllByProps({ 'data-testid': 'unsupported-model-result' })
+      ).toHaveLength(1);
+      expect(
+        renderer!.root.findAllByProps({ 'data-testid': 'unsupported-model-result-raw' })
+      ).toHaveLength(1);
+      expect(JSON.stringify(renderer!.toJSON())).toContain('View raw result');
+    }
+  );
 
   test('renders unsupported and malformed payload content as generic text', () => {
     const payload = {
