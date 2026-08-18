@@ -2,7 +2,6 @@ import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { LoadingIndicatorProgress } from '@ohif/ui';
-import { InvestigationalUseDialog } from '@ohif/ui-next';
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
 import TopNavigation from '@ohif/app/src/components/TopNavigation';
 import { useAppConfig } from '@state';
@@ -273,8 +272,6 @@ function ViewerLayout({
         </main>
       </AvailableModelsContext.Provider>
       <Onboarding tours={customizationService.getCustomization('ohif.tours')} />
-      {/* NOTE: This is a PACS changes */}
-      {/* <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} /> */}
     </div>
   );
 }
