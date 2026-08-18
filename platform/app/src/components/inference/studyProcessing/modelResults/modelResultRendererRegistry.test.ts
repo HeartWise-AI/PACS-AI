@@ -1,6 +1,10 @@
 import type { ModelExecutionResult } from '../types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { parseEchoPrimeResultPayload } from './echoPrimeContract';
+import { echoPrimeResultFixtures } from './echoPrimeFixtures';
+import { parsePanEchoResultPayload } from './panEchoContract';
+import { panEchoResultFixtures } from './panEchoFixtures';
 import { resolveModelResultRenderer } from './modelResultRendererRegistry';
 
 function result(
@@ -130,5 +134,57 @@ describe('model result renderer registry', () => {
 
     expect(resolved).toEqual({ kind: 'generic', payload });
     expect(resolved.payload).toBe(payload);
+  });
+
+  test.each([
+    ['1.0.0', panEchoResultFixtures.successfulV1],
+    ['1.4.0', panEchoResultFixtures.partialV1],
+  ])('selects PanEcho for supported version %s', (modelVersion, payload) => {
+    expect(
+      resolveModelResultRenderer({ modelName: 'PanEcho', modelVersion, result: payload })
+    ).toEqual({
+      kind: 'panecho',
+      payload: parsePanEchoResultPayload(payload),
+    });
+  });
+
+  test('selects EchoPrime for its supported identity and version', () => {
+    expect(
+      resolveModelResultRenderer({
+        modelName: 'EchoPrime',
+        modelVersion: '1.2.0',
+        result: echoPrimeResultFixtures.successfulV1,
+      })
+    ).toEqual({
+      kind: 'echoprime',
+      payload: parseEchoPrimeResultPayload(echoPrimeResultFixtures.successfulV1),
+    });
+  });
+
+  test.each([
+    ['PanEcho', '9.0.0', panEchoResultFixtures.successfulV1],
+    ['EchoPrime', null, echoPrimeResultFixtures.successfulV1],
+  ])('provides an unsupported-version fallback for %s %s', (modelName, modelVersion, payload) => {
+    expect(resolveModelResultRenderer({ modelName, modelVersion, result: payload })).toEqual({
+      kind: 'unsupported',
+      modelName,
+      modelVersion,
+      payload,
+      reason: 'version',
+    });
+  });
+
+  test.each([
+    ['PanEcho', '1.0.0'],
+    ['EchoPrime', '1.2.0'],
+  ])('provides a raw fallback for a malformed %s payload', (modelName, modelVersion) => {
+    const payload = 'unsupported scalar payload';
+    expect(resolveModelResultRenderer({ modelName, modelVersion, result: payload })).toEqual({
+      kind: 'unsupported',
+      modelName,
+      modelVersion,
+      payload,
+      reason: 'payload',
+    });
   });
 });
