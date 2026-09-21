@@ -26,5 +26,6 @@
   "Run Inference": "Lancer l'inférence",
   "Open the AI Models menu to apply a model to the current study.": "Ouvrez le menu Modèles IA pour appliquer un modèle à l'étude en cours.",
   "Close": "Fermer",
-  "Please answer all questions before submitting.": "Veuillez répondre à toutes les questions avant de soumettre."
+  "Please answer all questions before submitting.": "Veuillez répondre à toutes les questions avant de soumettre.",
+  "One or more answers are incorrect. Please review and try again.": "Une ou plusieurs réponses sont incorrectes. Veuillez les vérifier et réessayer."
 }

@@ -26,5 +26,6 @@
   "Run Inference": "Run Inference",
   "Open the AI Models menu to apply a model to the current study.": "Open the AI Models menu to apply a model to the current study.",
   "Close": "Close",
-  "Please answer all questions before submitting.": "Please answer all questions before submitting."
+  "Please answer all questions before submitting.": "Please answer all questions before submitting.",
+  "One or more answers are incorrect. Please review and try again.": "One or more answers are incorrect. Please review and try again."
 }
