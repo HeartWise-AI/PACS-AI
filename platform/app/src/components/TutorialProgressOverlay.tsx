@@ -30,7 +30,12 @@ import { Typography } from '@ohif/ui';
 import { AlertContext } from '../AlertProvider';
 import { Error } from '../api/dto';
 import { logoutUser } from '../service/userService';
-import { resetTutorialAndNotify, TUTORIAL_RESET_EVENT } from '../service/tutorialService';
+import {
+  resetTutorialAndNotify,
+  submitBeforeTutorialReset,
+  TutorialResetInProgressError,
+  TUTORIAL_RESET_EVENT,
+} from '../service/tutorialService';
 import { useDraggableOverlay } from './hooks/useDraggableOverlay';
 import {
   hasConfiguredModelQuestionnaires,
@@ -693,17 +698,22 @@ const TutorialProgressOverlay: React.FC = () => {
           []
         );
 
-        await inferenceRepository.AddOnboardingModelQuestionnaireAnswers({
-          modelId: currentModel.modelId,
-          onboardingModelQuestionnaireAnswers:
-            onboardingModelQuestionnaireAnswers.length > 0
-              ? (onboardingModelQuestionnaireAnswers as AddOnboardingModelQuestionnaireAnswersRequest['onboardingModelQuestionnaireAnswers'])
-              : null,
-        });
+        await submitBeforeTutorialReset(() =>
+          inferenceRepository.AddOnboardingModelQuestionnaireAnswers({
+            modelId: currentModel.modelId,
+            onboardingModelQuestionnaireAnswers:
+              onboardingModelQuestionnaireAnswers.length > 0
+                ? (onboardingModelQuestionnaireAnswers as AddOnboardingModelQuestionnaireAnswersRequest['onboardingModelQuestionnaireAnswers'])
+                : null,
+          })
+        );
 
         // Record locally so pendingModelQuestionnaires reflects the change immediately.
         setAnsweredModelIds(prev => new Set([...prev, currentModel.modelId]));
       } catch (error) {
+        if (error instanceof TutorialResetInProgressError) {
+          return;
+        }
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           setTimeout(() => {
             logoutUser(navigate, tenantId);
@@ -712,6 +722,7 @@ const TutorialProgressOverlay: React.FC = () => {
 
         showAlert(error.message, 'error');
         console.error('Failed to submit model questionnaire answers', error);
+        return;
       } finally {
         setIsModelQuestionnaireSubmitting(false);
       }
