@@ -1482,10 +1482,14 @@ const TutorialProgressOverlay: React.FC = () => {
           const mqQuestions = (mqModel.onboardingModelQuestionnaires || []) as Questionnaire[];
           const mqHasScoredQuestions = hasScoredModelQuestionnaire(mqQuestions);
           const mqIsFrench = i18n.language?.toLowerCase().startsWith('fr');
-          // TODO: for testing purposes
-          // const mqTotal = modelQuestionnaireQueue.length;
-          // const mqProgressLabel =
-          //   mqTotal > 1 ? ` (${modelQuestionnaireQueueIndex + 1} of ${mqTotal})` : '';
+          const mqTotal = modelQuestionnaireQueue.length;
+          const mqProgressLabel =
+            mqTotal > 1
+              ? t('Questionnaire {{current}} of {{total}}', {
+                  current: modelQuestionnaireQueueIndex + 1,
+                  total: mqTotal,
+                })
+              : null;
           return ReactDOM.createPortal(
             <div
               id="model-questionnaire-modal"
@@ -1521,6 +1525,9 @@ const TutorialProgressOverlay: React.FC = () => {
                   >
                     {t('Model Questionnaire')} ({mqModel.modelName})
                   </h2>
+                  {mqProgressLabel && (
+                    <p className="mb-4 text-[13px] text-white/60">{mqProgressLabel}</p>
+                  )}
                   <form
                     onSubmit={handleModelQuestionnaireSubmit}
                     className="space-y-6 text-xs text-white"

@@ -12,6 +12,7 @@
   "Run Inference to Model": "Run Inference to Model",
   "Model Questionnaire": "Model Questionnaire",
   "Model Questionnaires": "Model Questionnaires",
+  "Questionnaire {{current}} of {{total}}": "Questionnaire {{current}} of {{total}}",
   "Enter your answer here": "Enter your answer here",
   "Skip": "Skip",
   "Submit": "Submit",
