@@ -27,5 +27,7 @@
   "Open the AI Models menu to apply a model to the current study.": "Open the AI Models menu to apply a model to the current study.",
   "Close": "Close",
   "Please answer all questions before submitting.": "Please answer all questions before submitting.",
-  "One or more answers are incorrect. Please review and try again.": "One or more answers are incorrect. Please review and try again."
+  "One or more answers are incorrect. Please review and try again.": "One or more answers are incorrect. Please review and try again.",
+  "No model questionnaires are currently available.": "No model questionnaires are currently available.",
+  "All available model questionnaires have already been completed.": "All available model questionnaires have already been completed."
 }

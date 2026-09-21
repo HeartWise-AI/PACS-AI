@@ -32,6 +32,7 @@ import { Error } from '../api/dto';
 import { logoutUser } from '../service/userService';
 import { useDraggableOverlay } from './hooks/useDraggableOverlay';
 import {
+  hasConfiguredModelQuestionnaires,
   hasScoredModelQuestionnaire,
   validateModelQuestionnaireAnswers,
 } from './modelQuestionnaireValidation';
@@ -957,7 +958,10 @@ const TutorialProgressOverlay: React.FC = () => {
       }
 
       if (pendingModelQuestionnaires.length === 0) {
-        // all models already answered (or none have questionnaires) — mark complete immediately.
+        const message = hasConfiguredModelQuestionnaires(inferenceAvailableModels)
+          ? 'All available model questionnaires have already been completed.'
+          : 'No model questionnaires are currently available.';
+        showAlert(t(message), 'info');
         markStepCompleted('model-questionnaire');
         return;
       }

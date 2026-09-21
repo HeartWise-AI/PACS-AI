@@ -1,4 +1,5 @@
 import {
+  hasConfiguredModelQuestionnaires,
   hasScoredModelQuestionnaire,
   validateModelQuestionnaireAnswers,
   type ModelQuestionnaireQuestion,
@@ -87,5 +88,21 @@ describe('model questionnaire validation', () => {
 
   it('identifies questionnaires with an answer key as scored', () => {
     expect(hasScoredModelQuestionnaire([radioQuestion, checkboxQuestion])).toBe(true);
+  });
+
+  it('detects whether any available model provides onboarding questions', () => {
+    expect(hasConfiguredModelQuestionnaires([])).toBe(false);
+    expect(
+      hasConfiguredModelQuestionnaires([
+        { onboardingModelQuestionnaires: undefined },
+        { onboardingModelQuestionnaires: [] },
+      ])
+    ).toBe(false);
+    expect(
+      hasConfiguredModelQuestionnaires([
+        { onboardingModelQuestionnaires: [] },
+        { onboardingModelQuestionnaires: [radioQuestion] },
+      ])
+    ).toBe(true);
   });
 });

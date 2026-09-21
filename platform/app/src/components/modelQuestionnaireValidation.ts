@@ -9,6 +9,10 @@ export type ModelQuestionnaireQuestion = {
 
 export type ModelQuestionnaireValidationResult = 'valid' | 'incomplete' | 'incorrect';
 
+type ModelQuestionnaireSource = {
+  onboardingModelQuestionnaires?: unknown;
+};
+
 const hasQuestionText = (question: ModelQuestionnaireQuestion): boolean =>
   Boolean(question.questionEn?.trim());
 
@@ -66,6 +70,13 @@ const hasCorrectAnswer = (
 
 export const hasScoredModelQuestionnaire = (questions: ModelQuestionnaireQuestion[]): boolean =>
   questions.some(question => hasQuestionText(question) && hasAnswerKey(question));
+
+export const hasConfiguredModelQuestionnaires = (models: ModelQuestionnaireSource[]): boolean =>
+  models.some(
+    model =>
+      Array.isArray(model.onboardingModelQuestionnaires) &&
+      model.onboardingModelQuestionnaires.length > 0
+  );
 
 export const validateModelQuestionnaireAnswers = (
   questions: ModelQuestionnaireQuestion[],
