@@ -31,6 +31,11 @@ import { AlertContext } from '../AlertProvider';
 import { Error } from '../api/dto';
 import { logoutUser } from '../service/userService';
 import { useDraggableOverlay } from './hooks/useDraggableOverlay';
+import {
+  hasConfiguredModelQuestionnaires,
+  hasScoredModelQuestionnaire,
+  validateModelQuestionnaireAnswers,
+} from './modelQuestionnaireValidation';
 
 type QuestionnaireAnswerOption = {
   id: string;
@@ -44,6 +49,7 @@ type Questionnaire = {
   questionFr?: string;
   answerOptionsEn?: (QuestionnaireAnswerOption | string)[];
   answerOptionsFr?: (QuestionnaireAnswerOption | string)[];
+  correctAnswerIds?: string[];
 };
 
 /**
@@ -596,25 +602,16 @@ const TutorialProgressOverlay: React.FC = () => {
 
       const questions = (currentModel.onboardingModelQuestionnaires || []) as Questionnaire[];
 
-      // validate all questions have an answer
-      const unanswered = questions.filter(q => {
-        if (!q.questionEn?.trim()) {
-          return false;
-        }
-        const ans = modelQuestionnaireAnswers[q.id];
-        if (q.type === 'TEXT') {
-          return !ans || !(ans as string).trim();
-        }
-        if (q.type === 'RADIO') {
-          return !ans;
-        }
-        if (q.type === 'CHECKBOX') {
-          return !Array.isArray(ans) || ans.length === 0;
-        }
-        return false;
-      });
-      if (unanswered.length > 0) {
+      const validationResult = validateModelQuestionnaireAnswers(
+        questions,
+        modelQuestionnaireAnswers
+      );
+      if (validationResult === 'incomplete') {
         showAlert(t('Please answer all questions before submitting.'), 'error');
+        return;
+      }
+      if (validationResult === 'incorrect') {
+        showAlert(t('One or more answers are incorrect. Please review and try again.'), 'error');
         return;
       }
 
@@ -961,7 +958,10 @@ const TutorialProgressOverlay: React.FC = () => {
       }
 
       if (pendingModelQuestionnaires.length === 0) {
-        // all models already answered (or none have questionnaires) — mark complete immediately.
+        const message = hasConfiguredModelQuestionnaires(inferenceAvailableModels)
+          ? 'All available model questionnaires have already been completed.'
+          : 'No model questionnaires are currently available.';
+        showAlert(t(message), 'info');
         markStepCompleted('model-questionnaire');
         return;
       }
@@ -1480,6 +1480,7 @@ const TutorialProgressOverlay: React.FC = () => {
             return null;
           }
           const mqQuestions = (mqModel.onboardingModelQuestionnaires || []) as Questionnaire[];
+          const mqHasScoredQuestions = hasScoredModelQuestionnaire(mqQuestions);
           const mqIsFrench = i18n.language?.toLowerCase().startsWith('fr');
           // TODO: for testing purposes
           // const mqTotal = modelQuestionnaireQueue.length;
@@ -1663,13 +1664,15 @@ const TutorialProgressOverlay: React.FC = () => {
                     })}
 
                     <div className="mt-6 flex justify-end gap-2">
-                      <button
-                        type="button"
-                        className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
-                        onClick={handleModelQuestionnaireSkip}
-                      >
-                        {t('Skip')}
-                      </button>
+                      {!mqHasScoredQuestions && (
+                        <button
+                          type="button"
+                          className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
+                          onClick={handleModelQuestionnaireSkip}
+                        >
+                          {t('Skip')}
+                        </button>
+                      )}
                       <button
                         type="submit"
                         className="h-[41px] min-w-[90px] rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-[14px] font-medium text-black"

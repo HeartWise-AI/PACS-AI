@@ -111,6 +111,7 @@ export interface GetInferenceAvailableModelsResponse {
     {
       answerOptionsEn: [{ answer: string; id: string }] | null;
       answerOptionsFr: [{ answer: string; id: string }] | null;
+      correctAnswerIds?: string[];
       id: string;
       questionEn: string;
       questionFr: string;
