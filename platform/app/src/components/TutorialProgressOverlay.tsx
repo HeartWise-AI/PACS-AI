@@ -30,6 +30,7 @@ import { Typography } from '@ohif/ui';
 import { AlertContext } from '../AlertProvider';
 import { Error } from '../api/dto';
 import { logoutUser } from '../service/userService';
+import { resetTutorialAndNotify, TUTORIAL_RESET_EVENT } from '../service/tutorialService';
 import { useDraggableOverlay } from './hooks/useDraggableOverlay';
 import {
   hasConfiguredModelQuestionnaires,
@@ -329,6 +330,14 @@ const TutorialProgressOverlay: React.FC = () => {
   const [isModelQuestionnaireSubmitting, setIsModelQuestionnaireSubmitting] = useState(false);
   const [modelsLoading, setModelsLoading] = useState<boolean>(false);
   const drag = useDraggableOverlay();
+
+  const resetModelQuestionnaireState = useCallback(() => {
+    setAnsweredModelIds(new Set());
+    setModelQuestionnaireQueue([]);
+    setModelQuestionnaireQueueIndex(0);
+    setModelQuestionnaireAnswers({});
+    setIsModelQuestionnaireSubmitting(false);
+  }, []);
 
   const handleToggleClick = useCallback(() => {
     if (drag.didDragRef.current) {
@@ -734,17 +743,15 @@ const TutorialProgressOverlay: React.FC = () => {
   const progress = Math.round((completedCount / totalCount) * 100);
 
   const resetTutorial = async () => {
-    setSteps(availableDefaultSteps);
     try {
-      await userRepository.ResetTutorial();
-      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
+      await resetTutorialAndNotify();
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
           logoutUser(navigate, tenantId);
         }, 3000);
-        showAlert(error.message, 'error');
       }
+      showAlert(error.message || t('Failed to reset tutorial'), 'error');
       console.error(error);
     }
   };
@@ -754,14 +761,15 @@ const TutorialProgressOverlay: React.FC = () => {
   useEffect(() => {
     const handleTutorialReset = () => {
       setSteps(availableDefaultSteps);
+      resetModelQuestionnaireState();
       setLoadedAsCompleted(false);
       setExpanded(true);
       // ensure overlay is allowed to render after a manual reset.
       setProgressLoaded(true);
     };
-    window.addEventListener('tutorial-reset', handleTutorialReset);
-    return () => window.removeEventListener('tutorial-reset', handleTutorialReset);
-  }, []);
+    window.addEventListener(TUTORIAL_RESET_EVENT, handleTutorialReset);
+    return () => window.removeEventListener(TUTORIAL_RESET_EVENT, handleTutorialReset);
+  }, [availableDefaultSteps, resetModelQuestionnaireState]);
 
   const handleSkipClick = useCallback((e?: React.MouseEvent) => {
     if (e && typeof e.stopPropagation === 'function') {
