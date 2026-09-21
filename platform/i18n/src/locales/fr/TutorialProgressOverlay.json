@@ -12,6 +12,7 @@
   "Run Inference to Model": "Lancer une inférence sur le modèle",
   "Model Questionnaire": "Questionnaire du modèle",
   "Model Questionnaires": "Questionnaires du modèle",
+  "Questionnaire {{current}} of {{total}}": "Questionnaire {{current}} sur {{total}}",
   "Enter your answer here": "Entrez votre réponse ici",
   "Skip": "Passer",
   "Submit": "Soumettre",
