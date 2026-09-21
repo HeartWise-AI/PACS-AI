@@ -17,6 +17,7 @@ import { AlertContext } from '../../AlertProvider';
 import Modal from '../../components/Modal';
 import tenantRepository from '../../api/tenantRepository';
 import { logoutUser } from '../../service/userService';
+import { resetTutorialAndNotify } from '../../service/tutorialService';
 import { FrontendVersionContext } from '../../App';
 
 const SettingsPage = () => {
@@ -197,12 +198,9 @@ const SettingsPage = () => {
   const resetTutorial = async () => {
     setIsResettingTutorial(true);
     try {
-      await userRepository.ResetTutorial();
-      await userRepository.UpdateUserMetadata({ metadata: { tutorialProgressStep: 0 } });
-      showAlert(t('Tutorial has been reset successfully'), 'success');
+      await resetTutorialAndNotify();
+      showAlert(t('Tutorial progress and questionnaire answers have been reset successfully'), 'success');
       setIsOpenResetTutorialModal(false);
-      // notify TutorialProgressOverlay to reappear expanded regardless of current progress.
-      window.dispatchEvent(new CustomEvent('tutorial-reset'));
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -322,7 +320,7 @@ const SettingsPage = () => {
             <div>
               <h2 className="text-base font-light text-white">{t('Reset Tutorial')}</h2>
               <h2 className="text-sm text-white text-opacity-70">
-                {t('Clear your current progress and begin the tutorial again')}
+                {t('Clear your progress and stored questionnaire answers, then begin again')}
               </h2>
             </div>
             <button
@@ -476,7 +474,7 @@ const SettingsPage = () => {
                   className="mt-2 font-light text-white text-opacity-70"
                 >
                   {t(
-                    'Are you sure you want to reset the tutorial? Your current progress will be cleared.'
+                    'Are you sure you want to reset the tutorial? Your progress and stored questionnaire answers will be cleared.'
                   )}
                 </Typography>
                 <div className="mt-5 flex w-full justify-end gap-2">

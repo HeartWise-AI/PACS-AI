@@ -11,6 +11,7 @@ import HotkeysValidators from './HotkeysValidators.json';
 import MeasurementTable from './MeasurementTable.json';
 import Modes from './Modes.json';
 import SegmentationTable from './SegmentationTable.json';
+import Settings from './Settings.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyItem from './StudyItem.json';
@@ -41,6 +42,7 @@ export default {
     MeasurementTable,
     Modes,
     SegmentationTable,
+    Settings,
     SidePanel,
     StudyBrowser,
     StudyItem,
