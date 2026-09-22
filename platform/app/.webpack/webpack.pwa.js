@@ -88,7 +88,11 @@ module.exports = (env, argv) => {
     plugins: [
       // For debugging re-renders
       // MillionLint.webpack(),
-      new Dotenv({ defaults: path.resolve(__dirname, '../.env.example') }),
+      new Dotenv({
+        defaults: path.resolve(__dirname, '../.env.example'),
+        // Docker/CI build variables must override the empty public defaults.
+        systemvars: true,
+      }),
       // Clean output.path
       new CleanWebpackPlugin(),
       // Copy "Public" Folder to Dist
