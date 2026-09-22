@@ -324,7 +324,8 @@ const RegisterPage = () => {
                 />
                 <Input
                   id="register-license"
-                  placeholder={tMembers('License No.')}
+                  placeholder={tMembers('License No. (optional)')}
+                  aria-label={tMembers('License No. (optional)')}
                   className="mb-4 w-full"
                   type="text"
                   maxLength={100}
