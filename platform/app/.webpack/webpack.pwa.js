@@ -55,6 +55,11 @@ module.exports = (env, argv) => {
   const baseConfig = webpackBase(env, argv, { SRC_DIR, DIST_DIR });
   const isProdBuild = process.env.NODE_ENV === 'production';
   const hasProxy = PROXY_TARGET && PROXY_DOMAIN;
+  const dotenvPlugin = new Dotenv({ defaults: path.resolve(__dirname, '../.env.example') });
+
+  // This public key is explicitly allowlisted by webpack.base.js so Docker/CI
+  // can provide it without exposing every variable from the build environment.
+  delete dotenvPlugin.definitions['process.env.APP_PUBLIC_TURNSTILE_SITE_KEY'];
 
   const mergedConfig = merge(baseConfig, {
     entry: {
@@ -88,11 +93,7 @@ module.exports = (env, argv) => {
     plugins: [
       // For debugging re-renders
       // MillionLint.webpack(),
-      new Dotenv({
-        defaults: path.resolve(__dirname, '../.env.example'),
-        // Docker/CI build variables must override the empty public defaults.
-        systemvars: true,
-      }),
+      dotenvPlugin,
       // Clean output.path
       new CleanWebpackPlugin(),
       // Copy "Public" Folder to Dist

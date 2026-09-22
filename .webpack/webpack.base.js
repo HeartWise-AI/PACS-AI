@@ -51,6 +51,9 @@ const defineValues = {
   'process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED': JSON.stringify(
     process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED || 'true'
   ),
+  'process.env.APP_PUBLIC_TURNSTILE_SITE_KEY': JSON.stringify(
+    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY || ''
+  ),
   /* i18n */
   'process.env.USE_LOCIZE': JSON.stringify(process.env.USE_LOCIZE || ''),
   'process.env.LOCIZE_PROJECTID': JSON.stringify(process.env.LOCIZE_PROJECTID || ''),
