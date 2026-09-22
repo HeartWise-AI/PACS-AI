@@ -72,6 +72,7 @@ To build the Docker image from the terminal:
     docker build . -t ohif-viewer-image \
       --build-arg APP_CONFIG=config/e2e.js \
       --build-arg PUBLIC_URL=/ohif/ \
+      --build-arg APP_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key> \
       --build-arg PORT=6000
     ```
 
@@ -80,6 +81,7 @@ You can use the following build arguments to customize the Docker image:
 
 - `APP_CONFIG`: (Optional) Sets the default app configuration (e.g., `config/e2e.js`). This value can be overridden later by setting an environment variable (you can set it in the docker run command).
 - `PUBLIC_URL`: (Optional) Specifies the public path for serving the OHIF Viewer (e.g., `/ohif/`). This value is baked into the build and cannot be changed without rebuilding the image.
+- `APP_PUBLIC_TURNSTILE_SITE_KEY`: (Optional) Sets the public Turnstile site key for login and registration widget rendering.
 - `PORT`: (Optional) Sets the application’s port.
 
 #### Examples of Using Build Arguments
@@ -103,10 +105,16 @@ Here are examples of how to use the `--build-arg` option:
     docker build . --build-arg PORT=6000
     ```
 
+- Set the Turnstile site key:
+
+    ```sh
+    docker build . --build-arg APP_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key>
+    ```
+
 - Combine multiple arguments:
 
     ```sh
-    docker build . --build-arg PUBLIC_URL=/ohif/ --build-arg APP_CONFIG=config/kheops.js --build-arg PORT=6000
+    docker build . --build-arg PUBLIC_URL=/ohif/ --build-arg APP_CONFIG=config/kheops.js --build-arg APP_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key> --build-arg PORT=6000
     ```
 
 :::info PUBLIC_URL Explanation
