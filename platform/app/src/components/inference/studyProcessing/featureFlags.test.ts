@@ -134,4 +134,18 @@ describe('study processing feature flags', () => {
       canViewRunHistory: false,
     });
   });
+
+  test('lets authenticated users view processing while keeping mutations gated', () => {
+    expect(getStudyProcessingFeatureAvailability(true, allEnabled, false)).toEqual({
+      canPollCandidates: false,
+      canReprocessStudy: false,
+      canUseCandidateNotificationFallback: false,
+      canUseFixturePreview: true,
+      canUseRESTSnapshots: true,
+      canUseRealtimeSSE: true,
+      canUseStudyEventNotifications: true,
+      canViewProcessing: true,
+      canViewRunHistory: true,
+    });
+  });
 });

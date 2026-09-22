@@ -166,19 +166,24 @@ export function resolveStudyProcessingFeatureFlags(
 }
 
 export function getStudyProcessingFeatureAvailability(
-  hasProcessingRole: boolean,
-  flags: StudyProcessingFeatureFlags = resolveStudyProcessingFeatureFlags()
+  hasReadAccess: boolean,
+  flags: StudyProcessingFeatureFlags = resolveStudyProcessingFeatureFlags(),
+  hasMutationAccess = hasReadAccess
 ): StudyProcessingFeatureAvailability {
-  const canViewProcessing = hasProcessingRole && flags.processingUIEnabled;
+  const canViewProcessing = hasReadAccess && flags.processingUIEnabled;
   const canUseRESTSnapshots = canViewProcessing && flags.restSnapshotsEnabled;
   const canUseRealtimeSSE = canUseRESTSnapshots && flags.realtimeSSEEnabled;
   const canUseStudyEventNotifications = canUseRealtimeSSE && flags.studyEventNotificationsEnabled;
-  const canPollCandidates = canViewProcessing && flags.candidatePollingEnabled;
+  const canPollCandidates = hasMutationAccess && canViewProcessing && flags.candidatePollingEnabled;
   const canViewRunHistory = canUseRESTSnapshots && flags.runHistoryEnabled;
 
   return {
     canPollCandidates,
-    canReprocessStudy: canViewRunHistory && canUseRESTSnapshots && flags.manualReprocessingEnabled,
+    canReprocessStudy:
+      hasMutationAccess &&
+      canViewRunHistory &&
+      canUseRESTSnapshots &&
+      flags.manualReprocessingEnabled,
     canUseCandidateNotificationFallback: canPollCandidates && !canUseStudyEventNotifications,
     canUseFixturePreview: canViewProcessing && flags.fixturePreviewEnabled,
     canUseRESTSnapshots,

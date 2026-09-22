@@ -14,7 +14,10 @@ import {
   getStudyProcessingAuthIdentity,
   shouldClearStudyProcessingState,
 } from './studyProcessing/authIdentity';
-import { getStudyProcessingFeatureAvailability } from './studyProcessing/featureFlags';
+import {
+  getStudyProcessingFeatureAvailability,
+  resolveStudyProcessingFeatureFlags,
+} from './studyProcessing/featureFlags';
 import { studyProcessingRolloutTelemetry } from './studyProcessing/rolloutTelemetry';
 import type { StudyProcessingNotificationTransition } from './studyProcessing';
 import {
@@ -64,7 +67,8 @@ function InferenceProcessingProvider({ children }) {
   const { show } = useNotification();
   const location = useLocation();
   const [notifications, setNotifications] = useState<InferenceNotification[]>([]);
-  const [hasProcessingRole, setHasProcessingRole] = useState(false);
+  const [canViewProcessing, setCanViewProcessing] = useState(false);
+  const [canMutateProcessing, setCanMutateProcessing] = useState(false);
   const [studyProcessingAuthIdentity, setStudyProcessingAuthIdentity] = useState<string | null>(
     null
   );
@@ -138,7 +142,8 @@ function InferenceProcessingProvider({ children }) {
           authenticatedIdentityRef.current = null;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
-          setHasProcessingRole(false);
+          setCanViewProcessing(false);
+          setCanMutateProcessing(false);
           clearNotificationState();
         }
         return;
@@ -156,18 +161,16 @@ function InferenceProcessingProvider({ children }) {
           setStudyProcessingAuthIdentity(nextIdentity);
 
           const role = response.data.role;
-          const nextHasProcessingRole = role === UserRole.ADMIN || role === UserRole.OWNER;
-          setHasProcessingRole(nextHasProcessingRole);
-          if (!nextHasProcessingRole) {
-            clearNotificationState();
-          }
+          setCanViewProcessing(true);
+          setCanMutateProcessing(role === UserRole.ADMIN || role === UserRole.OWNER);
         }
       } catch {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
-          setHasProcessingRole(false);
+          setCanViewProcessing(false);
+          setCanMutateProcessing(false);
           clearNotificationState();
         }
       }
@@ -203,7 +206,11 @@ function InferenceProcessingProvider({ children }) {
     [addNotification]
   );
 
-  const processingAvailability = getStudyProcessingFeatureAvailability(hasProcessingRole);
+  const processingAvailability = getStudyProcessingFeatureAvailability(
+    canViewProcessing,
+    resolveStudyProcessingFeatureFlags(),
+    canMutateProcessing
+  );
 
   useEffect(() => {
     if (!processingAvailability.canUseCandidateNotificationFallback) {
