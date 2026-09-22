@@ -55,4 +55,23 @@ describe('createRegistrationRequest', () => {
     expect(request.tenantId).toBe('tenant-from-session');
     expect(request).not.toHaveProperty('code');
   });
+
+  it('normalizes a blank license number for the public registration API', () => {
+    const request = createRegistrationRequest({
+      tenantId: 'tenant-from-session',
+      firstName: 'Grace',
+      lastName: 'Hopper',
+      email: 'grace@example.com',
+      password: 'Strong!Password',
+      licenseNo: '   ',
+      specialty: 'radiology',
+      turnstileToken: 'turnstile-proof',
+      policyAcceptances: [
+        { policyKey: 'TERMS_OF_SERVICE', version: 'terms-v1' },
+        { policyKey: 'PRIVACY_POLICY', version: 'privacy-v1' },
+      ],
+    });
+
+    expect(request.licenseNo).toBe('');
+  });
 });

@@ -53,7 +53,6 @@ export const getRegistrationValidationMessage = ({
     !email.trim() ||
     !firstName.trim() ||
     !lastName.trim() ||
-    !licenseNo.trim() ||
     !specialty.trim() ||
     !password ||
     !confirmPassword

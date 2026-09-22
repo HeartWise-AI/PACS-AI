@@ -20,6 +20,11 @@ describe('getRegistrationValidationMessage', () => {
     expect(getRegistrationValidationMessage(validRegistration)).toBeNull();
   });
 
+  it('accepts an omitted public-registration license number', () => {
+    expect(getRegistrationValidationMessage({ ...validRegistration, licenseNo: '' })).toBeNull();
+    expect(getRegistrationValidationMessage({ ...validRegistration, licenseNo: '   ' })).toBeNull();
+  });
+
   it('rejects invalid email and mismatched passwords clearly', () => {
     expect(getRegistrationValidationMessage({ ...validRegistration, email: 'not-an-email' })).toBe(
       'Please enter a valid email address.'
@@ -81,6 +86,12 @@ describe('getRegistrationValidationMessage', () => {
         lastName: 'y',
       })
     ).toBe('First and last name together must be 100 characters or fewer.');
+    expect(
+      getRegistrationValidationMessage({
+        ...validRegistration,
+        licenseNo: 'x'.repeat(101),
+      })
+    ).toBe('License number must be 100 characters or fewer.');
     expect(
       getRegistrationValidationMessage({
         ...validRegistration,

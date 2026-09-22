@@ -19,6 +19,7 @@ import tenantRepository from '../../api/tenantRepository';
 import { logoutUser } from '../../service/userService';
 import { resetTutorialAndNotify } from '../../service/tutorialService';
 import { FrontendVersionContext } from '../../App';
+import { getProfileCredentialDetails } from './profileCredentialDetails';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -214,6 +215,11 @@ const SettingsPage = () => {
   };
 
   const GeneralSettings = () => {
+    const profileCredentials = getProfileCredentialDetails(
+      currentUser.specialty,
+      currentUser.licenseNo
+    );
+
     return (
       <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
         <div className="">
@@ -230,11 +236,13 @@ const SettingsPage = () => {
             <div className="ml-3">
               <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
               <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center">
-                <div className="text-left capitalize">{currentUser.specialty} •</div>
-                <div className="flex items-center sm:ml-1">
-                  {currentUser.licenseNo}
-                  <CopyToClipboardButton text={currentUser.licenseNo} />
-                </div>
+                <div className="text-left capitalize">{profileCredentials.specialtyLabel}</div>
+                {profileCredentials.licenseNo && (
+                  <div className="flex items-center sm:ml-1">
+                    {profileCredentials.licenseNo}
+                    <CopyToClipboardButton text={profileCredentials.licenseNo} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
