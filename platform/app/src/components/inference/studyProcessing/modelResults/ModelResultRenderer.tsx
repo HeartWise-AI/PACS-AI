@@ -3,6 +3,7 @@ import type { ModelExecutionResult } from '../types';
 import { GenericModelResult } from '../GenericModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
+import { DeepRVClipResult } from './DeepRVClipResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
@@ -69,6 +70,9 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
       break;
     case 'deepcoro-clip':
       customResult = <DeepCoroClipResult payload={resolved.payload} />;
+      break;
+    case 'deeprv-clip':
+      customResult = <DeepRVClipResult payload={resolved.payload} />;
       break;
     case 'panecho':
       customResult = (
