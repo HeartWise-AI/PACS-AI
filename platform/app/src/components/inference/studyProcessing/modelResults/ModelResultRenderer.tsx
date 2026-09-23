@@ -3,6 +3,7 @@ import type { ModelExecutionResult } from '../types';
 import { GenericModelResult } from '../GenericModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { CathEfClipResult } from './CathEfClipResult';
+import { CathEfResult } from './CathEfResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
 import { DeepCoroMaceResult } from './DeepCoroMaceResult';
 import { DeepRVClipResult } from './DeepRVClipResult';
@@ -73,6 +74,9 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
       break;
     case 'cathef-clip':
       customResult = <CathEfClipResult payload={resolved.payload} />;
+      break;
+    case 'cathef':
+      customResult = <CathEfResult payload={resolved.payload} />;
       break;
     case 'deepcoro-clip':
       customResult = <DeepCoroClipResult payload={resolved.payload} />;

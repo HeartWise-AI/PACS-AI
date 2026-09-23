@@ -1,6 +1,7 @@
 import type { ModelExecutionResult } from '../types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
+import { cathEfResultFixtures } from './cathEfFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
@@ -18,6 +19,17 @@ function result(
     modelName: 'CardioSyntax',
     modelVersion: '1.0.0',
     result: cardioSyntaxResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function cathEfResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'CathEF',
+    modelVersion: '1.6.0',
+    result: cathEfResultFixtures.withLvefV1,
     ...overrides,
   };
 }
@@ -114,6 +126,49 @@ describe('model result renderer registry', () => {
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a CardioSyntax payload with %s', (_name, payload) => {
     expect(resolveModelResultRenderer(result({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test.each([
+    ['vessel and LVEF output', cathEfResultFixtures.withLvefV1],
+    ['vessel-only output', cathEfResultFixtures.vesselOnlyV1],
+  ])('selects CathEF for valid %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(cathEfResult({ result: payload }))).toEqual({
+      kind: 'cathef',
+      payload,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'cathef' }],
+    ['different model', { modelName: 'CathEF-CLIP' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for CathEF with %s', (_name, override) => {
+    const executionResult = cathEfResult(override);
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    ['missing vessels', { ...cathEfResultFixtures.withLvefV1, predictions: {} }],
+    [
+      'invalid LVEF',
+      {
+        ...cathEfResultFixtures.withLvefV1,
+        predictions: {
+          ...cathEfResultFixtures.withLvefV1.predictions,
+          LVEF: { presentable: true, values: [{ seriesNumber: 1, value: 101 }] },
+        },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a CathEF payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(cathEfResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });

@@ -15,6 +15,7 @@ import {
 } from './ModelExecutionResultDrawer';
 import { cardioSyntaxResultFixtures } from './modelResults/cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './modelResults/cathEfClipFixtures';
+import { cathEfResultFixtures } from './modelResults/cathEfFixtures';
 import { deepCoroClipResultFixtures } from './modelResults/deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './modelResults/deepCoroMaceFixtures';
 import { deepRVClipResultFixtures } from './modelResults/deepRVClipFixtures';
@@ -188,6 +189,30 @@ describe('ModelExecutionResultDrawer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('selects the CathEF renderer for an exact supported result', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      modelName: 'CathEF',
+      modelVersion: '1.6.0',
+      result: cathEfResultFixtures.withLvefV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-result' })).toHaveLength(1);
     expect(
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);
