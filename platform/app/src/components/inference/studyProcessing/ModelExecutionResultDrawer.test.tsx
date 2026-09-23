@@ -17,7 +17,9 @@ import { cardioSyntaxResultFixtures } from './modelResults/cardioSyntaxFixtures'
 import { cathEfClipResultFixtures } from './modelResults/cathEfClipFixtures';
 import { cathEfResultFixtures } from './modelResults/cathEfFixtures';
 import { deepCoroClipResultFixtures } from './modelResults/deepCoroClipFixtures';
+import { deepCoroCtoResultFixtures } from './modelResults/deepCoroCtoFixtures';
 import { deepCoroMaceResultFixtures } from './modelResults/deepCoroMaceFixtures';
+import { deepCoroSyntaxResultFixtures } from './modelResults/deepCoroSyntaxFixtures';
 import { deepRVClipResultFixtures } from './modelResults/deepRVClipFixtures';
 import { deepRVResultFixtures } from './modelResults/deepRVFixtures';
 
@@ -268,7 +270,7 @@ describe('ModelExecutionResultDrawer', () => {
   test('selects the DeepCORO-CLIP renderer for an exact supported result', () => {
     const result = {
       ...modelExecutionResultFixtures.available,
-      modelName: 'DeepCoro_CLIP_generic',
+      modelName: 'DeepCORO-CLIP',
       modelVersion: '1.0.0',
       result: deepCoroClipResultFixtures.validV1,
     };
@@ -342,7 +344,7 @@ describe('ModelExecutionResultDrawer', () => {
   test('selects the DeepCORO-MACE renderer for an exact supported result', () => {
     const result = {
       ...modelExecutionResultFixtures.available,
-      modelName: 'DeepCORO_MACE',
+      modelName: 'DeepCORO-MACE',
       modelVersion: '1.0.0',
       result: deepCoroMaceResultFixtures.validV1,
     };
@@ -364,6 +366,37 @@ describe('ModelExecutionResultDrawer', () => {
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);
   });
+
+  test.each([
+    ['DeepCORO-CTO', '2.0.0', deepCoroCtoResultFixtures.validV2, 'deepcoro-cto-result'],
+    ['DeepCORO-SYNTAX', '5.0.0', deepCoroSyntaxResultFixtures.validV5, 'deepcoro-syntax-result'],
+  ])(
+    'selects the %s renderer for an exact supported result',
+    (modelName, modelVersion, result, testId) => {
+      act(() => {
+        renderer = TestRenderer.create(
+          <ModelExecutionResultDrawer
+            state={queryState({
+              status: 'ready',
+              result: {
+                ...modelExecutionResultFixtures.available,
+                modelName,
+                modelVersion,
+                result,
+              },
+            })}
+            onClose={jest.fn()}
+            onRetry={jest.fn()}
+          />
+        );
+      });
+
+      expect(renderer!.root.findAllByProps({ 'data-testid': testId })).toHaveLength(1);
+      expect(
+        renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      ).toHaveLength(0);
+    }
+  );
 
   test.each([
     [modelExecutionResultFailureFixtures.notReady, 'viewable completed result'],

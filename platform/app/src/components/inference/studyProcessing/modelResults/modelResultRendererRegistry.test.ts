@@ -3,7 +3,9 @@ import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { cathEfResultFixtures } from './cathEfFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepCoroCtoResultFixtures } from './deepCoroCtoFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
+import { deepCoroSyntaxResultFixtures } from './deepCoroSyntaxFixtures';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
 import { deepRVResultFixtures } from './deepRVFixtures';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
@@ -85,6 +87,28 @@ function deepCoroMaceResult(
     modelName: 'DeepCORO_MACE',
     modelVersion: '1.0.0',
     result: deepCoroMaceResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function deepCoroCtoResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepCORO-CTO',
+    modelVersion: '2.0.0',
+    result: deepCoroCtoResultFixtures.validV2,
+    ...overrides,
+  };
+}
+
+function deepCoroSyntaxResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepCORO-SYNTAX',
+    modelVersion: '5.0.0',
+    result: deepCoroSyntaxResultFixtures.validV5,
     ...overrides,
   };
 }
@@ -224,8 +248,15 @@ describe('model result renderer registry', () => {
     });
   });
 
-  test('selects DeepCORO-CLIP only for the exact supported model and version', () => {
+  test('selects DeepCORO-CLIP for the canonical model identity', () => {
     expect(resolveModelResultRenderer(deepCoroResult())).toEqual({
+      kind: 'deepcoro-clip',
+      payload: deepCoroClipResultFixtures.validV1,
+    });
+  });
+
+  test('selects DeepCORO-CLIP for the deployed display identity', () => {
+    expect(resolveModelResultRenderer(deepCoroResult({ modelName: 'DeepCORO-CLIP' }))).toEqual({
       kind: 'deepcoro-clip',
       payload: deepCoroClipResultFixtures.validV1,
     });
@@ -233,7 +264,6 @@ describe('model result renderer registry', () => {
 
   test.each([
     ['different capitalization', { modelName: 'deepcoro_clip_generic' }],
-    ['display name instead of canonical identity', { modelName: 'DeepCORO-CLIP' }],
     ['unsupported version', { modelVersion: '2.0.0' }],
     ['missing version', { modelVersion: null }],
   ])('keeps the generic renderer for DeepCORO-CLIP with %s', (_name, override) => {
@@ -359,8 +389,15 @@ describe('model result renderer registry', () => {
     });
   });
 
-  test('selects DeepCORO-MACE only for the exact supported model and version', () => {
+  test('selects DeepCORO-MACE for the canonical model identity', () => {
     expect(resolveModelResultRenderer(deepCoroMaceResult())).toEqual({
+      kind: 'deepcoro-mace',
+      payload: deepCoroMaceResultFixtures.parsedV1,
+    });
+  });
+
+  test('selects DeepCORO-MACE for the deployed display identity', () => {
+    expect(resolveModelResultRenderer(deepCoroMaceResult({ modelName: 'DeepCORO-MACE' }))).toEqual({
       kind: 'deepcoro-mace',
       payload: deepCoroMaceResultFixtures.parsedV1,
     });
@@ -368,7 +405,6 @@ describe('model result renderer registry', () => {
 
   test.each([
     ['different capitalization', { modelName: 'deepcoro_mace' }],
-    ['display name punctuation', { modelName: 'DeepCORO-MACE' }],
     ['unsupported version', { modelVersion: '2.0.0' }],
     ['missing version', { modelVersion: null }],
   ])('keeps the generic renderer for DeepCORO-MACE with %s', (_name, override) => {
@@ -397,6 +433,60 @@ describe('model result renderer registry', () => {
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a DeepCORO-MACE payload with %s', (_name, payload) => {
     expect(resolveModelResultRenderer(deepCoroMaceResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepCORO-CTO for its deployed identity and version', () => {
+    expect(resolveModelResultRenderer(deepCoroCtoResult())).toEqual({
+      kind: 'deepcoro-cto',
+      payload: deepCoroCtoResultFixtures.parsedV2,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deepcoro-cto' }],
+    ['unsupported version', { modelVersion: '1.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepCORO-CTO with %s', (_name, override) => {
+    const executionResult = deepCoroCtoResult(override);
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test('keeps the generic renderer for malformed DeepCORO-CTO output', () => {
+    const payload = { ...deepCoroCtoResultFixtures.validV2, predictions: {} };
+    expect(resolveModelResultRenderer(deepCoroCtoResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepCORO-SYNTAX for its deployed identity and version', () => {
+    expect(resolveModelResultRenderer(deepCoroSyntaxResult())).toEqual({
+      kind: 'deepcoro-syntax',
+      payload: deepCoroSyntaxResultFixtures.validV5,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deepcoro-syntax' }],
+    ['unsupported version', { modelVersion: '1.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepCORO-SYNTAX with %s', (_name, override) => {
+    const executionResult = deepCoroSyntaxResult(override);
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test('keeps the generic renderer for malformed DeepCORO-SYNTAX output', () => {
+    const payload = { ...deepCoroSyntaxResultFixtures.validV5, predictions: {} };
+    expect(resolveModelResultRenderer(deepCoroSyntaxResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });

@@ -1,6 +1,7 @@
-# DeepCORO_MACE result contract
+# DeepCORO-MACE result contract
 
-The dedicated renderer is selected only for `DeepCORO_MACE` version `1.0.0` and the deployed
+The dedicated renderer is selected for `DeepCORO_MACE` or the deployed display identity
+`DeepCORO-MACE`, version `1.0.0`, and the deployed
 payload shape represented by `deepCoroMaceContract.ts`.
 
 The contract requires the one-year horizon, all four primary endpoints, all five exploratory

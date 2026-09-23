@@ -1,4 +1,5 @@
 export const DEEP_CORO_CLIP_MODEL_NAME = 'DeepCoro_CLIP_generic';
+export const DEEP_CORO_CLIP_MODEL_NAMES = [DEEP_CORO_CLIP_MODEL_NAME, 'DeepCORO-CLIP'] as const;
 export const DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS = ['1.0.0'] as const;
 
 export const DEEP_CORO_CLIP_ARTERY_GROUPS = {

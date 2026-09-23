@@ -18,17 +18,29 @@ import {
   parseCathEfResultPayload,
 } from './cathEfContract';
 import {
-  DEEP_CORO_CLIP_MODEL_NAME,
+  DEEP_CORO_CLIP_MODEL_NAMES,
   DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS,
   type DeepCoroClipResultPayload,
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
 import {
-  DEEP_CORO_MACE_MODEL_NAME,
+  DEEP_CORO_CTO_MODEL_NAME,
+  DEEP_CORO_CTO_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroCtoResultPayload,
+  parseDeepCoroCtoResultPayload,
+} from './deepCoroCtoContract';
+import {
+  DEEP_CORO_MACE_MODEL_NAMES,
   DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS,
   type DeepCoroMaceResultPayload,
   parseDeepCoroMaceResultPayload,
 } from './deepCoroMaceContract';
+import {
+  DEEP_CORO_SYNTAX_MODEL_NAME,
+  DEEP_CORO_SYNTAX_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroSyntaxResultPayload,
+  parseDeepCoroSyntaxResultPayload,
+} from './deepCoroSyntaxContract';
 import {
   DEEP_RV_CLIP_MODEL_NAME,
   DEEP_RV_CLIP_SUPPORTED_MODEL_VERSIONS,
@@ -78,8 +90,16 @@ export type ResolvedModelResultRenderer =
       payload: DeepCoroClipResultPayload;
     }
   | {
+      kind: 'deepcoro-cto';
+      payload: DeepCoroCtoResultPayload;
+    }
+  | {
       kind: 'deepcoro-mace';
       payload: DeepCoroMaceResultPayload;
+    }
+  | {
+      kind: 'deepcoro-syntax';
+      payload: DeepCoroSyntaxResultPayload;
     }
   | {
       kind: 'deeprv-clip';
@@ -146,7 +166,7 @@ const cathEfAdapter: ModelResultRendererAdapter = {
 
 const deepCoroClipAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
-    modelName === DEEP_CORO_CLIP_MODEL_NAME &&
+    DEEP_CORO_CLIP_MODEL_NAMES.some(name => name === modelName) &&
     DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
   resolve: ({ result }) => {
     const payload = parseDeepCoroClipResultPayload(result);
@@ -154,13 +174,33 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const deepCoroCtoAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_CTO_MODEL_NAME &&
+    DEEP_CORO_CTO_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroCtoResultPayload(result);
+    return payload ? { kind: 'deepcoro-cto', payload } : null;
+  },
+};
+
 const deepCoroMaceAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
-    modelName === DEEP_CORO_MACE_MODEL_NAME &&
+    DEEP_CORO_MACE_MODEL_NAMES.some(name => name === modelName) &&
     DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
   resolve: ({ result }) => {
     const payload = parseDeepCoroMaceResultPayload(result);
     return payload ? { kind: 'deepcoro-mace', payload } : null;
+  },
+};
+
+const deepCoroSyntaxAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_SYNTAX_MODEL_NAME &&
+    DEEP_CORO_SYNTAX_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroSyntaxResultPayload(result);
+    return payload ? { kind: 'deepcoro-syntax', payload } : null;
   },
 };
 
@@ -209,7 +249,9 @@ const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cathEfClipAdapter,
   cathEfAdapter,
   deepCoroClipAdapter,
+  deepCoroCtoAdapter,
   deepCoroMaceAdapter,
+  deepCoroSyntaxAdapter,
   deepRVClipAdapter,
   deepRVAdapter,
   panEchoAdapter,

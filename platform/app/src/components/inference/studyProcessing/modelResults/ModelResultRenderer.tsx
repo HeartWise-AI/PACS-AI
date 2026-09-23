@@ -5,7 +5,9 @@ import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { CathEfClipResult } from './CathEfClipResult';
 import { CathEfResult } from './CathEfResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
+import { DeepCoroCtoResult } from './DeepCoroCtoResult';
 import { DeepCoroMaceResult } from './DeepCoroMaceResult';
+import { DeepCoroSyntaxResult } from './DeepCoroSyntaxResult';
 import { DeepRVClipResult } from './DeepRVClipResult';
 import { DeepRVResult } from './DeepRVResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
@@ -81,8 +83,14 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
     case 'deepcoro-clip':
       customResult = <DeepCoroClipResult payload={resolved.payload} />;
       break;
+    case 'deepcoro-cto':
+      customResult = <DeepCoroCtoResult payload={resolved.payload} />;
+      break;
     case 'deepcoro-mace':
       customResult = <DeepCoroMaceResult payload={resolved.payload} />;
+      break;
+    case 'deepcoro-syntax':
+      customResult = <DeepCoroSyntaxResult payload={resolved.payload} />;
       break;
     case 'deeprv-clip':
       customResult = <DeepRVClipResult payload={resolved.payload} />;

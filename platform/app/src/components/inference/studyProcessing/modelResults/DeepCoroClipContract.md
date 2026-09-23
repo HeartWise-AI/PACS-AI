@@ -2,7 +2,7 @@
 
 ## Approved scope
 
-- Priority model: `DeepCoro_CLIP_generic`
+- Supported model identities: `DeepCoro_CLIP_generic` and deployed display identity `DeepCORO-CLIP`
 - First supported execution model version: `1.0.0`
 - Deployed image family: `heartwisehub/pacs-ai-deepcoro-clip-generic:1.0`
 - Transport: the existing tenant-scoped execution-result endpoint from issues #392 and #393
@@ -13,7 +13,7 @@
 Only aggregate model/version/status counts and JSON key names/types were inspected on 2026-08-16.
 No patient identifiers, study identifiers, result values, or source payloads were copied into this
 repository. The deployed service reports completed results under canonical model
-`DeepCoro_CLIP_generic` and version `1.0.0`.
+`DeepCoro_CLIP_generic` or `DeepCORO-CLIP`, and version `1.0.0`.
 
 Every supported payload contains:
 
