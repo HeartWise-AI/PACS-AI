@@ -5,6 +5,7 @@ import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { CathEfClipResult } from './CathEfClipResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
 import { DeepCoroMaceResult } from './DeepCoroMaceResult';
+import { DeepRVClipResult } from './DeepRVClipResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
@@ -77,6 +78,9 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
       break;
     case 'deepcoro-mace':
       customResult = <DeepCoroMaceResult payload={resolved.payload} />;
+      break;
+    case 'deeprv-clip':
+      customResult = <DeepRVClipResult payload={resolved.payload} />;
       break;
     case 'panecho':
       customResult = (
