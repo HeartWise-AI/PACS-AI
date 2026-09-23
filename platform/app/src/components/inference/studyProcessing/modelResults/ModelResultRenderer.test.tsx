@@ -5,7 +5,9 @@ import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { cathEfResultFixtures } from './cathEfFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepCoroCtoResultFixtures } from './deepCoroCtoFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
+import { deepCoroSyntaxResultFixtures } from './deepCoroSyntaxFixtures';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
 import { deepRVResultFixtures } from './deepRVFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
@@ -92,7 +94,7 @@ describe('ModelResultRenderer', () => {
         <ModelResultRenderer
           result={{
             ...modelExecutionResultFixtures.available,
-            modelName: 'DeepCoro_CLIP_generic',
+            modelName: 'DeepCORO-CLIP',
             modelVersion: '1.0.0',
             result: deepCoroClipResultFixtures.validV1,
           }}
@@ -154,7 +156,7 @@ describe('ModelResultRenderer', () => {
         <ModelResultRenderer
           result={{
             ...modelExecutionResultFixtures.available,
-            modelName: 'DeepCORO_MACE',
+            modelName: 'DeepCORO-MACE',
             modelVersion: '1.0.0',
             result: deepCoroMaceResultFixtures.validV1,
           }}
@@ -163,6 +165,46 @@ describe('ModelResultRenderer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-mace-result' })).toHaveLength(
+      1
+    );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepCORO-CTO payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepCORO-CTO',
+            modelVersion: '2.0.0',
+            result: deepCoroCtoResultFixtures.validV2,
+          }}
+        />
+      );
+    });
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-cto-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepCORO-SYNTAX payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepCORO-SYNTAX',
+            modelVersion: '5.0.0',
+            result: deepCoroSyntaxResultFixtures.validV5,
+          }}
+        />
+      );
+    });
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-syntax-result' })).toHaveLength(
       1
     );
     expect(
