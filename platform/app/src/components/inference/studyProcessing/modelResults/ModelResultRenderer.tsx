@@ -2,8 +2,12 @@ import React from 'react';
 import type { ModelExecutionResult } from '../types';
 import { GenericModelResult } from '../GenericModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
+import { CathEfClipResult } from './CathEfClipResult';
 import { CathEfResult } from './CathEfResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
+import { DeepCoroMaceResult } from './DeepCoroMaceResult';
+import { DeepRVClipResult } from './DeepRVClipResult';
+import { DeepRVResult } from './DeepRVResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
@@ -68,11 +72,23 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
     case 'cardiosyntax':
       customResult = <CardioSyntaxResult payload={resolved.payload} />;
       break;
+    case 'cathef-clip':
+      customResult = <CathEfClipResult payload={resolved.payload} />;
+      break;
     case 'cathef':
       customResult = <CathEfResult payload={resolved.payload} />;
       break;
     case 'deepcoro-clip':
       customResult = <DeepCoroClipResult payload={resolved.payload} />;
+      break;
+    case 'deepcoro-mace':
+      customResult = <DeepCoroMaceResult payload={resolved.payload} />;
+      break;
+    case 'deeprv-clip':
+      customResult = <DeepRVClipResult payload={resolved.payload} />;
+      break;
+    case 'deeprv':
+      customResult = <DeepRVResult payload={resolved.payload} />;
       break;
     case 'panecho':
       customResult = (

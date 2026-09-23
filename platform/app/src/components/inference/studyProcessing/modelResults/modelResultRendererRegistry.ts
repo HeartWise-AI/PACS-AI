@@ -6,6 +6,12 @@ import {
   parseCardioSyntaxResultPayload,
 } from './cardioSyntaxContract';
 import {
+  CATH_EF_CLIP_MODEL_NAME,
+  CATH_EF_CLIP_SUPPORTED_MODEL_VERSIONS,
+  type CathEfClipResultPayload,
+  parseCathEfClipResultPayload,
+} from './cathEfClipContract';
+import {
   CATH_EF_MODEL_NAME,
   CATH_EF_SUPPORTED_MODEL_VERSIONS,
   type CathEfResultPayload,
@@ -17,6 +23,24 @@ import {
   type DeepCoroClipResultPayload,
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
+import {
+  DEEP_CORO_MACE_MODEL_NAME,
+  DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroMaceResultPayload,
+  parseDeepCoroMaceResultPayload,
+} from './deepCoroMaceContract';
+import {
+  DEEP_RV_CLIP_MODEL_NAME,
+  DEEP_RV_CLIP_SUPPORTED_MODEL_VERSIONS,
+  type DeepRVClipResultPayload,
+  parseDeepRVClipResultPayload,
+} from './deepRVClipContract';
+import {
+  DEEP_RV_MODEL_NAME,
+  DEEP_RV_SUPPORTED_MODEL_VERSIONS,
+  type DeepRVResultPayload,
+  parseDeepRVResultPayload,
+} from './deepRVContract';
 import {
   ECHO_PRIME_MODEL_NAME,
   ECHO_PRIME_SUPPORTED_MODEL_VERSIONS,
@@ -42,12 +66,28 @@ export type ResolvedModelResultRenderer =
       payload: CardioSyntaxResultPayload;
     }
   | {
+      kind: 'cathef-clip';
+      payload: CathEfClipResultPayload;
+    }
+  | {
       kind: 'cathef';
       payload: CathEfResultPayload;
     }
   | {
       kind: 'deepcoro-clip';
       payload: DeepCoroClipResultPayload;
+    }
+  | {
+      kind: 'deepcoro-mace';
+      payload: DeepCoroMaceResultPayload;
+    }
+  | {
+      kind: 'deeprv-clip';
+      payload: DeepRVClipResultPayload;
+    }
+  | {
+      kind: 'deeprv';
+      payload: DeepRVResultPayload;
     }
   | {
       kind: 'panecho';
@@ -84,6 +124,16 @@ const cardioSyntaxAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const cathEfClipAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === CATH_EF_CLIP_MODEL_NAME &&
+    CATH_EF_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseCathEfClipResultPayload(result);
+    return payload ? { kind: 'cathef-clip', payload } : null;
+  },
+};
+
 const cathEfAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
     modelName === CATH_EF_MODEL_NAME &&
@@ -101,6 +151,36 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   resolve: ({ result }) => {
     const payload = parseDeepCoroClipResultPayload(result);
     return payload ? { kind: 'deepcoro-clip', payload } : null;
+  },
+};
+
+const deepCoroMaceAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_MACE_MODEL_NAME &&
+    DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroMaceResultPayload(result);
+    return payload ? { kind: 'deepcoro-mace', payload } : null;
+  },
+};
+
+const deepRVClipAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_RV_CLIP_MODEL_NAME &&
+    DEEP_RV_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepRVClipResultPayload(result);
+    return payload ? { kind: 'deeprv-clip', payload } : null;
+  },
+};
+
+const deepRVAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_RV_MODEL_NAME &&
+    DEEP_RV_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepRVResultPayload(result);
+    return payload ? { kind: 'deeprv', payload } : null;
   },
 };
 
@@ -126,8 +206,12 @@ const echoPrimeAdapter: ModelResultRendererAdapter = {
 
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
+  cathEfClipAdapter,
   cathEfAdapter,
   deepCoroClipAdapter,
+  deepCoroMaceAdapter,
+  deepRVClipAdapter,
+  deepRVAdapter,
   panEchoAdapter,
   echoPrimeAdapter,
 ];

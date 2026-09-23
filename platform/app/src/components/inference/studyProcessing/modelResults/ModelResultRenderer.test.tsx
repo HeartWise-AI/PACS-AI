@@ -2,8 +2,12 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { modelExecutionResultFixtures } from '../executionResultFixtures';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
+import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { cathEfResultFixtures } from './cathEfFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
+import { deepRVClipResultFixtures } from './deepRVClipFixtures';
+import { deepRVResultFixtures } from './deepRVFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { panEchoResultFixtures } from './panEchoFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
@@ -62,6 +66,26 @@ describe('ModelResultRenderer', () => {
     ).toHaveLength(0);
   });
 
+  test('renders a valid CathEF-CLIP payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'CathEF-CLIP',
+            modelVersion: '1.0.0',
+            result: cathEfClipResultFixtures.reducedV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-clip-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
   test('renders a valid DeepCORO-CLIP payload with the custom component', () => {
     act(() => {
       renderer = TestRenderer.create(
@@ -77,6 +101,68 @@ describe('ModelResultRenderer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
+      1
+    );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepRV payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepRV',
+            modelVersion: '1.0.0',
+            result: deepRVResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepRV-CLIP payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepRV-CLIP',
+            modelVersion: '1.0.0',
+            result: deepRVClipResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-clip-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepCORO-MACE payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepCORO_MACE',
+            modelVersion: '1.0.0',
+            result: deepCoroMaceResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-mace-result' })).toHaveLength(
       1
     );
     expect(
