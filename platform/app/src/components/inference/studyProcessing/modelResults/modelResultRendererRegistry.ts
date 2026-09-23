@@ -18,13 +18,13 @@ import {
   parseCathEfResultPayload,
 } from './cathEfContract';
 import {
-  DEEP_CORO_CLIP_MODEL_NAME,
+  DEEP_CORO_CLIP_MODEL_NAMES,
   DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS,
   type DeepCoroClipResultPayload,
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
 import {
-  DEEP_CORO_MACE_MODEL_NAME,
+  DEEP_CORO_MACE_MODEL_NAMES,
   DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS,
   type DeepCoroMaceResultPayload,
   parseDeepCoroMaceResultPayload,
@@ -146,7 +146,7 @@ const cathEfAdapter: ModelResultRendererAdapter = {
 
 const deepCoroClipAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
-    modelName === DEEP_CORO_CLIP_MODEL_NAME &&
+    DEEP_CORO_CLIP_MODEL_NAMES.some(name => name === modelName) &&
     DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
   resolve: ({ result }) => {
     const payload = parseDeepCoroClipResultPayload(result);
@@ -156,7 +156,7 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
 
 const deepCoroMaceAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
-    modelName === DEEP_CORO_MACE_MODEL_NAME &&
+    DEEP_CORO_MACE_MODEL_NAMES.some(name => name === modelName) &&
     DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
   resolve: ({ result }) => {
     const payload = parseDeepCoroMaceResultPayload(result);

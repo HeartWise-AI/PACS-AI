@@ -224,8 +224,15 @@ describe('model result renderer registry', () => {
     });
   });
 
-  test('selects DeepCORO-CLIP only for the exact supported model and version', () => {
+  test('selects DeepCORO-CLIP for the canonical model identity', () => {
     expect(resolveModelResultRenderer(deepCoroResult())).toEqual({
+      kind: 'deepcoro-clip',
+      payload: deepCoroClipResultFixtures.validV1,
+    });
+  });
+
+  test('selects DeepCORO-CLIP for the deployed display identity', () => {
+    expect(resolveModelResultRenderer(deepCoroResult({ modelName: 'DeepCORO-CLIP' }))).toEqual({
       kind: 'deepcoro-clip',
       payload: deepCoroClipResultFixtures.validV1,
     });
@@ -233,7 +240,6 @@ describe('model result renderer registry', () => {
 
   test.each([
     ['different capitalization', { modelName: 'deepcoro_clip_generic' }],
-    ['display name instead of canonical identity', { modelName: 'DeepCORO-CLIP' }],
     ['unsupported version', { modelVersion: '2.0.0' }],
     ['missing version', { modelVersion: null }],
   ])('keeps the generic renderer for DeepCORO-CLIP with %s', (_name, override) => {
@@ -359,8 +365,15 @@ describe('model result renderer registry', () => {
     });
   });
 
-  test('selects DeepCORO-MACE only for the exact supported model and version', () => {
+  test('selects DeepCORO-MACE for the canonical model identity', () => {
     expect(resolveModelResultRenderer(deepCoroMaceResult())).toEqual({
+      kind: 'deepcoro-mace',
+      payload: deepCoroMaceResultFixtures.parsedV1,
+    });
+  });
+
+  test('selects DeepCORO-MACE for the deployed display identity', () => {
+    expect(resolveModelResultRenderer(deepCoroMaceResult({ modelName: 'DeepCORO-MACE' }))).toEqual({
       kind: 'deepcoro-mace',
       payload: deepCoroMaceResultFixtures.parsedV1,
     });
@@ -368,7 +381,6 @@ describe('model result renderer registry', () => {
 
   test.each([
     ['different capitalization', { modelName: 'deepcoro_mace' }],
-    ['display name punctuation', { modelName: 'DeepCORO-MACE' }],
     ['unsupported version', { modelVersion: '2.0.0' }],
     ['missing version', { modelVersion: null }],
   ])('keeps the generic renderer for DeepCORO-MACE with %s', (_name, override) => {

@@ -268,7 +268,7 @@ describe('ModelExecutionResultDrawer', () => {
   test('selects the DeepCORO-CLIP renderer for an exact supported result', () => {
     const result = {
       ...modelExecutionResultFixtures.available,
-      modelName: 'DeepCoro_CLIP_generic',
+      modelName: 'DeepCORO-CLIP',
       modelVersion: '1.0.0',
       result: deepCoroClipResultFixtures.validV1,
     };
@@ -342,7 +342,7 @@ describe('ModelExecutionResultDrawer', () => {
   test('selects the DeepCORO-MACE renderer for an exact supported result', () => {
     const result = {
       ...modelExecutionResultFixtures.available,
-      modelName: 'DeepCORO_MACE',
+      modelName: 'DeepCORO-MACE',
       modelVersion: '1.0.0',
       result: deepCoroMaceResultFixtures.validV1,
     };

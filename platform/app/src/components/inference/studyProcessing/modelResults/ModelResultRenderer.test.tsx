@@ -92,7 +92,7 @@ describe('ModelResultRenderer', () => {
         <ModelResultRenderer
           result={{
             ...modelExecutionResultFixtures.available,
-            modelName: 'DeepCoro_CLIP_generic',
+            modelName: 'DeepCORO-CLIP',
             modelVersion: '1.0.0',
             result: deepCoroClipResultFixtures.validV1,
           }}
@@ -154,7 +154,7 @@ describe('ModelResultRenderer', () => {
         <ModelResultRenderer
           result={{
             ...modelExecutionResultFixtures.available,
-            modelName: 'DeepCORO_MACE',
+            modelName: 'DeepCORO-MACE',
             modelVersion: '1.0.0',
             result: deepCoroMaceResultFixtures.validV1,
           }}

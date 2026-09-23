@@ -1,4 +1,5 @@
 export const DEEP_CORO_MACE_MODEL_NAME = 'DeepCORO_MACE';
+export const DEEP_CORO_MACE_MODEL_NAMES = [DEEP_CORO_MACE_MODEL_NAME, 'DeepCORO-MACE'] as const;
 export const DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS = ['1.0.0'] as const;
 
 export const DEEP_CORO_MACE_PRIMARY_ENDPOINTS = [
