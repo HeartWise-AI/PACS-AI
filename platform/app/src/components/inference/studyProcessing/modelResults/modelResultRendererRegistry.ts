@@ -18,6 +18,12 @@ import {
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
 import {
+  DEEP_CORO_MACE_MODEL_NAME,
+  DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroMaceResultPayload,
+  parseDeepCoroMaceResultPayload,
+} from './deepCoroMaceContract';
+import {
   DEEP_RV_CLIP_MODEL_NAME,
   DEEP_RV_CLIP_SUPPORTED_MODEL_VERSIONS,
   type DeepRVClipResultPayload,
@@ -54,6 +60,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'deepcoro-clip';
       payload: DeepCoroClipResultPayload;
+    }
+  | {
+      kind: 'deepcoro-mace';
+      payload: DeepCoroMaceResultPayload;
     }
   | {
       kind: 'deeprv-clip';
@@ -114,6 +124,16 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const deepCoroMaceAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_MACE_MODEL_NAME &&
+    DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroMaceResultPayload(result);
+    return payload ? { kind: 'deepcoro-mace', payload } : null;
+  },
+};
+
 const deepRVClipAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
     modelName === DEEP_RV_CLIP_MODEL_NAME &&
@@ -148,6 +168,7 @@ const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
   cathEfClipAdapter,
   deepCoroClipAdapter,
+  deepCoroMaceAdapter,
   deepRVClipAdapter,
   panEchoAdapter,
   echoPrimeAdapter,
