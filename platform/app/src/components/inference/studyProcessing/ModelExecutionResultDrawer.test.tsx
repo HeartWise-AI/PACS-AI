@@ -18,6 +18,7 @@ import { cathEfClipResultFixtures } from './modelResults/cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './modelResults/deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './modelResults/deepCoroMaceFixtures';
 import { deepRVClipResultFixtures } from './modelResults/deepRVClipFixtures';
+import { deepRVResultFixtures } from './modelResults/deepRVFixtures';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -260,6 +261,30 @@ describe('ModelExecutionResultDrawer', () => {
     expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
       1
     );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('selects the DeepRV renderer for an exact supported result', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      modelName: 'DeepRV',
+      modelVersion: '1.0.0',
+      result: deepRVResultFixtures.validV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-result' })).toHaveLength(1);
     expect(
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);

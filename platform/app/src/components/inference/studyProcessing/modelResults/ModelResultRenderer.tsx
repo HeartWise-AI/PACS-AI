@@ -6,6 +6,7 @@ import { CathEfClipResult } from './CathEfClipResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
 import { DeepCoroMaceResult } from './DeepCoroMaceResult';
 import { DeepRVClipResult } from './DeepRVClipResult';
+import { DeepRVResult } from './DeepRVResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
@@ -81,6 +82,9 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
       break;
     case 'deeprv-clip':
       customResult = <DeepRVClipResult payload={resolved.payload} />;
+      break;
+    case 'deeprv':
+      customResult = <DeepRVResult payload={resolved.payload} />;
       break;
     case 'panecho':
       customResult = (

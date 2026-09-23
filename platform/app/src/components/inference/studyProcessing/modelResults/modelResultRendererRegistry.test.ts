@@ -4,6 +4,7 @@ import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
+import { deepRVResultFixtures } from './deepRVFixtures';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { parsePanEchoResultPayload } from './panEchoContract';
@@ -44,6 +45,17 @@ function deepCoroResult(
 }
 
 function deepRVResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepRV',
+    modelVersion: '1.0.0',
+    result: deepRVResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function deepRVClipResult(
   overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
 ) {
   return {
@@ -211,8 +223,46 @@ describe('model result renderer registry', () => {
     });
   });
 
-  test('selects DeepRV-CLIP only for the exact supported model and version', () => {
+  test('selects DeepRV only for the exact supported model and version', () => {
     expect(resolveModelResultRenderer(deepRVResult())).toEqual({
+      kind: 'deeprv',
+      payload: deepRVResultFixtures.validV1,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deeprv' }],
+    ['CLIP model identity', { modelName: 'DeepRV-CLIP' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepRV with %s', (_name, override) => {
+    const executionResult = deepRVResult(override);
+
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    ['empty predictions', { ...deepRVResultFixtures.validV1, predictions: {} }],
+    [
+      'invalid class',
+      {
+        ...deepRVResultFixtures.validV1,
+        predictions: { ...deepRVResultFixtures.validV1.predictions, class: 2 },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a DeepRV payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(deepRVResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepRV-CLIP only for the exact supported model and version', () => {
+    expect(resolveModelResultRenderer(deepRVClipResult())).toEqual({
       kind: 'deeprv-clip',
       payload: deepRVClipResultFixtures.validV1,
     });
@@ -224,7 +274,7 @@ describe('model result renderer registry', () => {
     ['unsupported version', { modelVersion: '2.0.0' }],
     ['missing version', { modelVersion: null }],
   ])('keeps the generic renderer for DeepRV-CLIP with %s', (_name, override) => {
-    const executionResult = deepRVResult(override);
+    const executionResult = deepRVClipResult(override);
 
     expect(resolveModelResultRenderer(executionResult)).toEqual({
       kind: 'generic',
@@ -248,7 +298,7 @@ describe('model result renderer registry', () => {
     ],
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a DeepRV-CLIP payload with %s', (_name, payload) => {
-    expect(resolveModelResultRenderer(deepRVResult({ result: payload }))).toEqual({
+    expect(resolveModelResultRenderer(deepRVClipResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });

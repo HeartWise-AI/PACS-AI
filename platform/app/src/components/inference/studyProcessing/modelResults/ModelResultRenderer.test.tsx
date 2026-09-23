@@ -6,6 +6,7 @@ import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
+import { deepRVResultFixtures } from './deepRVFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { panEchoResultFixtures } from './panEchoFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
@@ -81,6 +82,26 @@ describe('ModelResultRenderer', () => {
     expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
       1
     );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepRV payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepRV',
+            modelVersion: '1.0.0',
+            result: deepRVResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-result' })).toHaveLength(1);
     expect(
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);
