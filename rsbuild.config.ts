@@ -4,6 +4,7 @@ import { pluginNodePolyfill } from '@rsbuild/plugin-node-polyfill';
 import path from 'path';
 import writePluginImportsFile from './platform/app/.webpack/writePluginImportsFile';
 import fs from 'fs';
+const { frontendBuildMetadata } = require('./.webpack/frontendBuildVersion');
 
 const SRC_DIR = path.resolve(__dirname, './platform/app/src');
 const DIST_DIR = path.resolve(__dirname, './platform/app/dist');
@@ -40,6 +41,7 @@ export default defineConfig({
       'process.env.BUILD_NUM': JSON.stringify(BUILD_NUM),
       'process.env.VERSION_NUMBER': JSON.stringify(VERSION_NUMBER),
       'process.env.COMMIT_HASH': JSON.stringify(COMMIT_HASH),
+      'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
       'process.env.USE_LOCIZE': JSON.stringify(process.env.USE_LOCIZE || ''),
       'process.env.LOCIZE_PROJECTID': JSON.stringify(process.env.LOCIZE_PROJECTID || ''),
       'process.env.LOCIZE_API_KEY': JSON.stringify(process.env.LOCIZE_API_KEY || ''),
@@ -124,6 +126,11 @@ export default defineConfig({
       {
         from: path.resolve(PUBLIC_DIR, APP_CONFIG),
         to: 'app-config.js',
+      },
+      {
+        from: path.resolve(__dirname, 'version.json'),
+        to: 'version.json',
+        transform: () => Buffer.from(`${JSON.stringify(frontendBuildMetadata, null, 2)}\n`),
       },
       // Copy Dicom Microscopy Viewer files
       {
