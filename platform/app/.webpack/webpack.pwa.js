@@ -8,8 +8,8 @@ const webpackBase = require('./../../../.webpack/webpack.base.js');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { InjectManifest } = require('workbox-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { FrontendBuildVersionPlugin } = require('../../../.webpack/frontendBuildVersion');
 // ~~ Directories
 const SRC_DIR = path.join(__dirname, '../src');
 const DIST_DIR = path.join(__dirname, '../dist');
@@ -24,8 +24,6 @@ const PROXY_TARGET = process.env.PROXY_TARGET;
 const PROXY_DOMAIN = process.env.PROXY_DOMAIN;
 const PROXY_PATH_REWRITE_FROM = process.env.PROXY_PATH_REWRITE_FROM;
 const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
-const IS_COVERAGE = process.env.COVERAGE === 'true';
-
 const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const ENTRY_TARGET = process.env.ENTRY_TARGET || `${SRC_DIR}/index.js`;
 const Dotenv = require('dotenv-webpack');
@@ -143,19 +141,7 @@ module.exports = (env, argv) => {
           PUBLIC_URL: PUBLIC_URL,
         },
       }),
-      // Generate a service worker for fast local loads
-      ...(IS_COVERAGE
-        ? []
-        : [
-            new InjectManifest({
-              swDest: 'sw.js',
-              swSrc: path.join(SRC_DIR, 'service-worker.js'),
-              // Need to exclude the theme as it is updated independently
-              exclude: [/theme/],
-              // Cache large files for the manifests to avoid warning messages
-              maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
-            }),
-          ]),
+      new FrontendBuildVersionPlugin(),
     ],
     // https://webpack.js.org/configuration/dev-server/
     devServer: {
@@ -224,8 +210,8 @@ module.exports = (env, argv) => {
   if (isProdBuild) {
     mergedConfig.plugins.push(
       new MiniCssExtractPlugin({
-        filename: '[name].bundle.css',
-        chunkFilename: '[id].css',
+        filename: '[name].bundle.[contenthash].css',
+        chunkFilename: '[id].[contenthash].css',
       })
     );
   }

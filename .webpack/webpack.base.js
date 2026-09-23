@@ -32,6 +32,7 @@ const IS_COVERAGE = process.env.COVERAGE === 'true';
 const VERSION_NUMBER = fs.readFileSync(path.join(__dirname, '../version.txt'), 'utf8') || '';
 
 const COMMIT_HASH = fs.readFileSync(path.join(__dirname, '../commit.txt'), 'utf8') || '';
+const { frontendBuildMetadata } = require('./frontendBuildVersion');
 
 //
 dotenv.config();
@@ -45,6 +46,7 @@ const defineValues = {
   'process.env.BUILD_NUM': JSON.stringify(BUILD_NUM),
   'process.env.VERSION_NUMBER': JSON.stringify(VERSION_NUMBER),
   'process.env.COMMIT_HASH': JSON.stringify(COMMIT_HASH),
+  'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
   'process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED': JSON.stringify(
     process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED || 'true'
   ),
