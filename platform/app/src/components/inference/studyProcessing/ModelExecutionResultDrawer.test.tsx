@@ -14,6 +14,7 @@ import {
   ModelExecutionResultDrawer,
 } from './ModelExecutionResultDrawer';
 import { cardioSyntaxResultFixtures } from './modelResults/cardioSyntaxFixtures';
+import { cathEfClipResultFixtures } from './modelResults/cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './modelResults/deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './modelResults/deepCoroMaceFixtures';
 
@@ -185,6 +186,30 @@ describe('ModelExecutionResultDrawer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('selects the CathEF-CLIP renderer for an exact supported result', () => {
+    const result = {
+      ...modelExecutionResultFixtures.available,
+      modelName: 'CathEF-CLIP',
+      modelVersion: '1.0.0',
+      result: cathEfClipResultFixtures.reducedV1,
+    };
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelExecutionResultDrawer
+          state={queryState({ status: 'ready', result })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-clip-result' })).toHaveLength(1);
     expect(
       renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
     ).toHaveLength(0);

@@ -1,5 +1,6 @@
 import type { ModelExecutionResult } from '../types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
+import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
@@ -15,6 +16,17 @@ function result(
     modelName: 'CardioSyntax',
     modelVersion: '1.0.0',
     result: cardioSyntaxResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function cathEfClipResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'CathEF-CLIP',
+    modelVersion: '1.0.0',
+    result: cathEfClipResultFixtures.reducedV1,
     ...overrides,
   };
 }
@@ -78,6 +90,56 @@ describe('model result renderer registry', () => {
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a CardioSyntax payload with %s', (_name, payload) => {
     expect(resolveModelResultRenderer(result({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test.each([
+    ['reduced output', cathEfClipResultFixtures.reducedV1],
+    ['preserved output', cathEfClipResultFixtures.preservedV1],
+  ])('selects CathEF-CLIP for valid %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(cathEfClipResult({ result: payload }))).toEqual({
+      kind: 'cathef-clip',
+      payload,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'cathef-clip' }],
+    ['different model', { modelName: 'CathEF' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for CathEF-CLIP with %s', (_name, override) => {
+    const executionResult = cathEfClipResult(override);
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    [
+      'empty no-video result',
+      {
+        diagnosis: 'No video',
+        predictions: {},
+        modelRecommendations: { en: 'No video', fr: 'Aucune vidéo', presentable: false },
+      },
+    ],
+    [
+      'invalid LVEF',
+      {
+        ...cathEfClipResultFixtures.reducedV1,
+        predictions: {
+          ...cathEfClipResultFixtures.reducedV1.predictions,
+          LVEF: { value: 101, unit: '%' },
+        },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a CathEF-CLIP payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(cathEfClipResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });
