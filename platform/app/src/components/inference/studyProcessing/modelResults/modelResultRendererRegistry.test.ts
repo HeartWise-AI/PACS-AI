@@ -2,6 +2,8 @@ import type { ModelExecutionResult } from '../types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
+import { deepRVClipResultFixtures } from './deepRVClipFixtures';
 import { deepRVResultFixtures } from './deepRVFixtures';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
@@ -49,6 +51,28 @@ function deepRVResult(
     modelName: 'DeepRV',
     modelVersion: '1.0.0',
     result: deepRVResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function deepRVClipResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepRV-CLIP',
+    modelVersion: '1.0.0',
+    result: deepRVClipResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function deepCoroMaceResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepCORO_MACE',
+    modelVersion: '1.0.0',
+    result: deepCoroMaceResultFixtures.validV1,
     ...overrides,
   };
 }
@@ -232,6 +256,92 @@ describe('model result renderer registry', () => {
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a DeepRV payload with %s', (_name, payload) => {
     expect(resolveModelResultRenderer(deepRVResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepRV-CLIP only for the exact supported model and version', () => {
+    expect(resolveModelResultRenderer(deepRVClipResult())).toEqual({
+      kind: 'deeprv-clip',
+      payload: deepRVClipResultFixtures.validV1,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deeprv-clip' }],
+    ['legacy model identity', { modelName: 'DeepRV' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepRV-CLIP with %s', (_name, override) => {
+    const executionResult = deepRVClipResult(override);
+
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    ['empty predictions', { ...deepRVClipResultFixtures.validV1, predictions: {} }],
+    [
+      'out-of-range probability',
+      {
+        ...deepRVClipResultFixtures.validV1,
+        predictions: {
+          abnormalRV: {
+            ...deepRVClipResultFixtures.validV1.predictions.abnormalRV,
+            probability: 1.1,
+          },
+        },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a DeepRV-CLIP payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(deepRVClipResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepCORO-MACE only for the exact supported model and version', () => {
+    expect(resolveModelResultRenderer(deepCoroMaceResult())).toEqual({
+      kind: 'deepcoro-mace',
+      payload: deepCoroMaceResultFixtures.parsedV1,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deepcoro_mace' }],
+    ['display name punctuation', { modelName: 'DeepCORO-MACE' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepCORO-MACE with %s', (_name, override) => {
+    const executionResult = deepCoroMaceResult(override);
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    ['empty predictions', { ...deepCoroMaceResultFixtures.validV1, predictions: {} }],
+    [
+      'missing endpoint',
+      {
+        ...deepCoroMaceResultFixtures.validV1,
+        predictions: {
+          ...deepCoroMaceResultFixtures.validV1.predictions,
+          primary: {
+            ...deepCoroMaceResultFixtures.validV1.predictions.primary,
+            compositeMace: undefined,
+          },
+        },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a DeepCORO-MACE payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(deepCoroMaceResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });
