@@ -12,6 +12,12 @@ import {
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
 import {
+  DEEP_CORO_MACE_MODEL_NAME,
+  DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS,
+  type DeepCoroMaceResultPayload,
+  parseDeepCoroMaceResultPayload,
+} from './deepCoroMaceContract';
+import {
   ECHO_PRIME_MODEL_NAME,
   ECHO_PRIME_SUPPORTED_MODEL_VERSIONS,
   type EchoPrimeResultPayload,
@@ -38,6 +44,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'deepcoro-clip';
       payload: DeepCoroClipResultPayload;
+    }
+  | {
+      kind: 'deepcoro-mace';
+      payload: DeepCoroMaceResultPayload;
     }
   | {
       kind: 'panecho';
@@ -84,6 +94,16 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const deepCoroMaceAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_CORO_MACE_MODEL_NAME &&
+    DEEP_CORO_MACE_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepCoroMaceResultPayload(result);
+    return payload ? { kind: 'deepcoro-mace', payload } : null;
+  },
+};
+
 const panEchoAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
     modelName === PAN_ECHO_MODEL_NAME &&
@@ -107,6 +127,7 @@ const echoPrimeAdapter: ModelResultRendererAdapter = {
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
   deepCoroClipAdapter,
+  deepCoroMaceAdapter,
   panEchoAdapter,
   echoPrimeAdapter,
 ];
