@@ -2,6 +2,7 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { modelExecutionResultFixtures } from '../executionResultFixtures';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
+import { cathEfResultFixtures } from './cathEfFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { panEchoResultFixtures } from './panEchoFixtures';
@@ -39,6 +40,26 @@ describe('ModelResultRenderer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+  });
+
+  test('renders a valid CathEF payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'CathEF',
+            modelVersion: '1.6.0',
+            result: cathEfResultFixtures.withLvefV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-result' })).toHaveLength(1);
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
   });
 
   test('renders a valid DeepCORO-CLIP payload with the custom component', () => {
