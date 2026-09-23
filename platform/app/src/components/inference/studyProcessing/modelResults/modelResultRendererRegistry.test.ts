@@ -1,6 +1,7 @@
 import type { ModelExecutionResult } from '../types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepRVResultFixtures } from './deepRVFixtures';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { parsePanEchoResultPayload } from './panEchoContract';
@@ -25,6 +26,17 @@ function deepCoroResult(
     modelName: 'DeepCoro_CLIP_generic',
     modelVersion: '1.0.0',
     result: deepCoroClipResultFixtures.validV1,
+    ...overrides,
+  };
+}
+
+function deepRVResult(
+  overrides: Partial<Pick<ModelExecutionResult, 'modelName' | 'modelVersion' | 'result'>> = {}
+) {
+  return {
+    modelName: 'DeepRV',
+    modelVersion: '1.0.0',
+    result: deepRVResultFixtures.validV1,
     ...overrides,
   };
 }
@@ -120,6 +132,44 @@ describe('model result renderer registry', () => {
     ['scalar payload', 'future payload'],
   ])('keeps the generic renderer for a DeepCORO-CLIP payload with %s', (_name, payload) => {
     expect(resolveModelResultRenderer(deepCoroResult({ result: payload }))).toEqual({
+      kind: 'generic',
+      payload,
+    });
+  });
+
+  test('selects DeepRV only for the exact supported model and version', () => {
+    expect(resolveModelResultRenderer(deepRVResult())).toEqual({
+      kind: 'deeprv',
+      payload: deepRVResultFixtures.validV1,
+    });
+  });
+
+  test.each([
+    ['different capitalization', { modelName: 'deeprv' }],
+    ['CLIP model identity', { modelName: 'DeepRV-CLIP' }],
+    ['unsupported version', { modelVersion: '2.0.0' }],
+    ['missing version', { modelVersion: null }],
+  ])('keeps the generic renderer for DeepRV with %s', (_name, override) => {
+    const executionResult = deepRVResult(override);
+
+    expect(resolveModelResultRenderer(executionResult)).toEqual({
+      kind: 'generic',
+      payload: executionResult.result,
+    });
+  });
+
+  test.each([
+    ['empty predictions', { ...deepRVResultFixtures.validV1, predictions: {} }],
+    [
+      'invalid class',
+      {
+        ...deepRVResultFixtures.validV1,
+        predictions: { ...deepRVResultFixtures.validV1.predictions, class: 2 },
+      },
+    ],
+    ['scalar payload', 'future payload'],
+  ])('keeps the generic renderer for a DeepRV payload with %s', (_name, payload) => {
+    expect(resolveModelResultRenderer(deepRVResult({ result: payload }))).toEqual({
       kind: 'generic',
       payload,
     });

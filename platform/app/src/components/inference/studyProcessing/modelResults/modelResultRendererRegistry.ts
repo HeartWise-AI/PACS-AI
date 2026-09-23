@@ -12,6 +12,12 @@ import {
   parseDeepCoroClipResultPayload,
 } from './deepCoroClipContract';
 import {
+  DEEP_RV_MODEL_NAME,
+  DEEP_RV_SUPPORTED_MODEL_VERSIONS,
+  type DeepRVResultPayload,
+  parseDeepRVResultPayload,
+} from './deepRVContract';
+import {
   ECHO_PRIME_MODEL_NAME,
   ECHO_PRIME_SUPPORTED_MODEL_VERSIONS,
   type EchoPrimeResultPayload,
@@ -38,6 +44,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'deepcoro-clip';
       payload: DeepCoroClipResultPayload;
+    }
+  | {
+      kind: 'deeprv';
+      payload: DeepRVResultPayload;
     }
   | {
       kind: 'panecho';
@@ -84,6 +94,16 @@ const deepCoroClipAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const deepRVAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === DEEP_RV_MODEL_NAME &&
+    DEEP_RV_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseDeepRVResultPayload(result);
+    return payload ? { kind: 'deeprv', payload } : null;
+  },
+};
+
 const panEchoAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
     modelName === PAN_ECHO_MODEL_NAME &&
@@ -107,6 +127,7 @@ const echoPrimeAdapter: ModelResultRendererAdapter = {
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
   deepCoroClipAdapter,
+  deepRVAdapter,
   panEchoAdapter,
   echoPrimeAdapter,
 ];
