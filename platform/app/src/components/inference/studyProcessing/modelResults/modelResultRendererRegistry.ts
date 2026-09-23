@@ -6,6 +6,12 @@ import {
   parseCardioSyntaxResultPayload,
 } from './cardioSyntaxContract';
 import {
+  CATH_EF_CLIP_MODEL_NAME,
+  CATH_EF_CLIP_SUPPORTED_MODEL_VERSIONS,
+  type CathEfClipResultPayload,
+  parseCathEfClipResultPayload,
+} from './cathEfClipContract';
+import {
   DEEP_CORO_CLIP_MODEL_NAME,
   DEEP_CORO_CLIP_SUPPORTED_MODEL_VERSIONS,
   type DeepCoroClipResultPayload,
@@ -40,6 +46,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'cardiosyntax';
       payload: CardioSyntaxResultPayload;
+    }
+  | {
+      kind: 'cathef-clip';
+      payload: CathEfClipResultPayload;
     }
   | {
       kind: 'deepcoro-clip';
@@ -81,6 +91,16 @@ const cardioSyntaxAdapter: ModelResultRendererAdapter = {
   resolve: ({ result }) => {
     const payload = parseCardioSyntaxResultPayload(result);
     return payload ? { kind: 'cardiosyntax', payload } : null;
+  },
+};
+
+const cathEfClipAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === CATH_EF_CLIP_MODEL_NAME &&
+    CATH_EF_CLIP_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseCathEfClipResultPayload(result);
+    return payload ? { kind: 'cathef-clip', payload } : null;
   },
 };
 
@@ -126,6 +146,7 @@ const echoPrimeAdapter: ModelResultRendererAdapter = {
 
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
+  cathEfClipAdapter,
   deepCoroClipAdapter,
   deepRVAdapter,
   panEchoAdapter,

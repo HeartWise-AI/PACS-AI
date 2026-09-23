@@ -2,6 +2,7 @@ import React from 'react';
 import type { ModelExecutionResult } from '../types';
 import { GenericModelResult } from '../GenericModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
+import { CathEfClipResult } from './CathEfClipResult';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
 import { DeepRVResult } from './DeepRVResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
@@ -67,6 +68,9 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
   switch (resolved.kind) {
     case 'cardiosyntax':
       customResult = <CardioSyntaxResult payload={resolved.payload} />;
+      break;
+    case 'cathef-clip':
+      customResult = <CathEfClipResult payload={resolved.payload} />;
       break;
     case 'deepcoro-clip':
       customResult = <DeepCoroClipResult payload={resolved.payload} />;
