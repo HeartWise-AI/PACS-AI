@@ -4,6 +4,7 @@ import { modelExecutionResultFixtures } from '../executionResultFixtures';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
+import { deepCoroMaceResultFixtures } from './deepCoroMaceFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { panEchoResultFixtures } from './panEchoFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
@@ -77,6 +78,28 @@ describe('ModelResultRenderer', () => {
     });
 
     expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
+      1
+    );
+    expect(
+      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+    ).toHaveLength(0);
+  });
+
+  test('renders a valid DeepCORO-MACE payload with the custom component', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'DeepCORO_MACE',
+            modelVersion: '1.0.0',
+            result: deepCoroMaceResultFixtures.validV1,
+          }}
+        />
+      );
+    });
+
+    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-mace-result' })).toHaveLength(
       1
     );
     expect(
