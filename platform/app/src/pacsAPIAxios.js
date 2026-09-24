@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { handleAccountSuspendedError } from './service/accountAccessSession';
 import { handlePolicyAcceptanceRequiredError } from './service/policyAcceptanceSession';
+import { handleSessionExpiredError } from './service/sessionExpirySession';
 
 const pacsAPIAxios = () => {
   const apiUrl = process.env.APP_PUBLIC_API_URL;
@@ -31,6 +32,7 @@ const pacsAPIAxios = () => {
     error => {
       handleAccountSuspendedError(error);
       handlePolicyAcceptanceRequiredError(error);
+      handleSessionExpiredError(error);
       return Promise.reject(error);
     }
   );

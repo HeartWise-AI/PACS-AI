@@ -4,6 +4,7 @@ import type { UserResponse } from '../api/userDTO';
 import { clearAuthenticatedSession } from '../utils/authenticatedSession';
 import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
 import { getPolicyAcceptanceURL } from './policyAcceptanceSession';
+import { getPendingSessionExpiredLoginURL } from './sessionExpirySession';
 
 /**
  * Resolve where a freshly-authenticated user should land based on their onboarding
@@ -64,6 +65,12 @@ export const logoutUser = (navigate, tenantId, forcedLogout = true) => {
     // The API interceptor already initiated this redirect. Replacing with the same URL
     // prevents generic request handlers from overwriting the suspension reason.
     window.location.replace(suspendedLoginURL);
+    return;
+  }
+
+  const expiredSessionLoginURL = getPendingSessionExpiredLoginURL();
+  if (expiredSessionLoginURL) {
+    window.location.replace(expiredSessionLoginURL);
     return;
   }
 

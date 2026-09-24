@@ -2,6 +2,7 @@ import axios from 'axios';
 import pacsAPIAxios from './pacsAPIAxios';
 import { handleAccountSuspendedError } from './service/accountAccessSession';
 import { handlePolicyAcceptanceRequiredError } from './service/policyAcceptanceSession';
+import { handleSessionExpiredError } from './service/sessionExpirySession';
 
 jest.mock('axios');
 jest.mock('./service/accountAccessSession', () => ({
@@ -10,6 +11,9 @@ jest.mock('./service/accountAccessSession', () => ({
 jest.mock('./service/policyAcceptanceSession', () => ({
   handlePolicyAcceptanceRequiredError: jest.fn(),
 }));
+jest.mock('./service/sessionExpirySession', () => ({
+  handleSessionExpiredError: jest.fn(),
+}));
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedSuspendedHandler = handleAccountSuspendedError as jest.MockedFunction<
@@ -17,6 +21,9 @@ const mockedSuspendedHandler = handleAccountSuspendedError as jest.MockedFunctio
 >;
 const mockedPolicyHandler = handlePolicyAcceptanceRequiredError as jest.MockedFunction<
   typeof handlePolicyAcceptanceRequiredError
+>;
+const mockedSessionExpiredHandler = handleSessionExpiredError as jest.MockedFunction<
+  typeof handleSessionExpiredError
 >;
 
 describe('PACS API client interceptors', () => {
@@ -84,5 +91,6 @@ describe('PACS API client interceptors', () => {
     await expect(rejectionHandler(error)).rejects.toBe(error);
     expect(mockedSuspendedHandler).toHaveBeenCalledWith(error);
     expect(mockedPolicyHandler).toHaveBeenCalledWith(error);
+    expect(mockedSessionExpiredHandler).toHaveBeenCalledWith(error);
   });
 });
