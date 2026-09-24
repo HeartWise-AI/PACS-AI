@@ -15,6 +15,10 @@ import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '../../api/dto';
 import { logoutUser, navigateAfterAuth } from '../../service/userService';
 import { consumeAccountSuspendedRedirect } from '../../service/accountAccessSession';
+import {
+  consumeSessionExpiredRedirect,
+  getSessionExpiredReturnPath,
+} from '../../service/sessionExpirySession';
 import TurnstileWidget from '../../components/auth/TurnstileWidget';
 import type { LoginAPIError } from '../../api/loginAPIError';
 import { getLoginErrorMessage, requiresLoginChallenge } from './loginError';
@@ -68,6 +72,16 @@ const LoginPage = () => {
       'error'
     );
     navigate({ pathname: '/login', search: suspendedRedirect.nextSearch }, { replace: true });
+  }, [location.search, navigate, showAlert, t]);
+
+  useEffect(() => {
+    const expiredRedirect = consumeSessionExpiredRedirect(location.search);
+    if (!expiredRedirect.expired) {
+      return;
+    }
+
+    showAlert(t('Your session expired. Please sign in again.'), 'error');
+    navigate({ pathname: '/login', search: expiredRedirect.nextSearch }, { replace: true });
   }, [location.search, navigate, showAlert, t]);
 
   useEffect(() => {
@@ -235,7 +249,11 @@ const LoginPage = () => {
       }
       setPassword('');
       setChallengeRequired(false);
-      await navigateAfterAuth(navigate, currentUserResponse.data);
+      await navigateAfterAuth(
+        navigate,
+        currentUserResponse.data,
+        getSessionExpiredReturnPath(location.search)
+      );
       showAlert(response.message, 'success');
     } catch (failure) {
       const error = (failure || {}) as Partial<LoginAPIError>;

@@ -32,8 +32,10 @@ const accessKeys = [
   'Account access management is no longer available for this member.',
   'Unable to update account access.',
 ] as const;
-const suspendedLoginKey =
-  'Your account access has been suspended. Contact your workspace administrator.';
+const loginAccessKeys = [
+  'Your account access has been suspended. Contact your workspace administrator.',
+  'Your session expired. Please sign in again.',
+] as const;
 
 describe('member access translations', () => {
   test.each(membersLocales)(
@@ -52,8 +54,10 @@ describe('member access translations', () => {
     germanOnboarding,
     spanishOnboarding,
     arabicOnboarding,
-  ])('defines the suspended-login explanation in each supported namespace', locale => {
-    expect(locale[suspendedLoginKey]).toEqual(expect.any(String));
-    expect(locale[suspendedLoginKey].trim()).not.toBe('');
+  ])('defines each login-access explanation in every supported namespace', locale => {
+    loginAccessKeys.forEach(key => {
+      expect(locale[key]).toEqual(expect.any(String));
+      expect(locale[key].trim()).not.toBe('');
+    });
   });
 });

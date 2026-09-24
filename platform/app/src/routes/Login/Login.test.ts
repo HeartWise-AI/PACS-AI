@@ -11,6 +11,7 @@ const mockGetAPIInfo = jest.fn();
 const mockNavigateAfterAuth = jest.fn();
 const mockTurnstileProps = jest.fn();
 const testCredential = ['entered', 'value'].join('-');
+let mockLocationSearch = '?t=tenant-a&code=invite-code&email=invited%40example.org';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -20,7 +21,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock('react-router', () => ({
-  useLocation: () => ({ search: '?t=tenant-a&code=invite-code&email=invited%40example.org' }),
+  useLocation: () => ({ search: mockLocationSearch }),
   useNavigate: () => mockNavigate,
 }));
 
@@ -154,6 +155,7 @@ describe('LoginPage adaptive challenge', () => {
     mockGetPublicTenant.mockReset();
     mockLogin.mockReset();
     mockNavigateAfterAuth.mockReset();
+    mockLocationSearch = '?t=tenant-a&code=invite-code&email=invited%40example.org';
     localStorage.clear();
     mockGetPublicTenant.mockResolvedValue({
       data: { id: 'tenant-a', name: 'Tenant A', onboardingEnableRegistration: true },
@@ -237,7 +239,8 @@ describe('LoginPage adaptive challenge', () => {
     expect(localStorage.getItem('tenantId')).toBe('tenant-a');
     expect(mockNavigateAfterAuth).toHaveBeenCalledWith(
       mockNavigate,
-      expect.objectContaining({ id: 'user-a', tenantId: 'tenant-a' })
+      expect.objectContaining({ id: 'user-a', tenantId: 'tenant-a' }),
+      '/'
     );
     expect((container.querySelector('#password') as HTMLInputElement).value).toBe('');
   });
@@ -397,6 +400,50 @@ describe('LoginPage adaptive challenge', () => {
     expect(mockShowAlert).toHaveBeenCalledWith(
       'Login is temporarily unavailable. Please try again later.',
       'error'
+    );
+  });
+
+  it('explains an expired session and returns to the previous safe route after login', async () => {
+    act(() => root.unmount());
+    mockLocationSearch =
+      '?t=tenant-a&reason=session_expired&returnTo=%2Fviewer%3FStudyInstanceUIDs%3D1.2.3';
+    root = createRoot(container);
+
+    await act(async () => {
+      root.render(React.createElement(LoginPage));
+    });
+    await flushPromises();
+
+    expect(mockShowAlert).toHaveBeenCalledWith(
+      'Your session expired. Please sign in again.',
+      'error'
+    );
+    expect(mockNavigate).toHaveBeenCalledWith(
+      {
+        pathname: '/login',
+        search: '?t=tenant-a&returnTo=%2Fviewer%3FStudyInstanceUIDs%3D1.2.3',
+      },
+      { replace: true }
+    );
+
+    fillCredentials();
+    mockLogin.mockResolvedValueOnce({
+      success: true,
+      message: 'Signed in.',
+      data: { sessionToken: 'renewed-session-token' },
+    });
+    mockGetCurrentUser.mockResolvedValueOnce({
+      success: true,
+      data: { id: 'user-a', tenantId: 'tenant-a' },
+    });
+
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+
+    expect(mockNavigateAfterAuth).toHaveBeenCalledWith(
+      mockNavigate,
+      expect.objectContaining({ id: 'user-a', tenantId: 'tenant-a' }),
+      '/viewer?StudyInstanceUIDs=1.2.3'
     );
   });
 });
