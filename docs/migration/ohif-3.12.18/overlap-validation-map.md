@@ -73,7 +73,7 @@ is still used separately to predict actual conflicts.
 | 33 | `platform/app/src/App.tsx` | BROWSER: provider composition, Router future flags, authentication lifecycle, and startup |
 | 34 | `platform/app/src/components/ViewportGrid.tsx` | BROWSER + VISUAL: viewport layout, resize, and rendering matrix |
 | 35 | `platform/app/src/index.js` | BUILD + BROWSER: application bootstrap and dynamic-config trust policy |
-| 36 | `platform/app/src/routes/WorkList/WorkList.tsx` | Existing PACS WorkList unit tests + official `tests/Worklist.spec.ts`; add integrated mode-visibility assertions |
+| 36 | `platform/app/src/routes/WorkList/WorkList.tsx` | PACS-KEEP: retain the custom Orthanc/AI worklist; validate its existing unit tests and authenticated browser workflows |
 | 37 | `platform/app/src/routes/index.tsx` | PACS-UNIT: PACS route registration and suppressed route-error notifications; add wildcard-route assertion after integration |
 | 38 | `platform/cli/package.json` | BUILD: CLI workspace installation and command smoke |
 | 39 | `platform/core/src/services/DicomMetadataStore/DicomMetadataStore.ts` | OHIF-UNIT + BROWSER: metadata ingestion through viewer/Study Browser flows |
@@ -131,6 +131,26 @@ is still used separately to predict actual conflicts.
 | 91 | `platform/docs/versioned_docs/version-3.10/platform/environment-variables.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
 | 92 | `platform/i18n/src/locales/ar/SegmentationTable.json` | I18N: verify the PACS translation survives OHIF's `SegmentationPanel.json` replacement |
 
+## Approved WorkList disposition
+
+The custom PACS Orthanc worklist replaces OHIF's generic mode-driven worklist. The migration keeps
+the PACS implementation unchanged because it contains the product's Orthanc search and
+synchronization, AI processing status, run history, result viewing, reprocessing, authentication,
+and tenant workflows.
+
+The following `v3.12.18` generic-worklist changes are therefore **not applicable** to PACS-AI:
+
+- hiding registered modes with `mode.hide`;
+- hiding registered modes when `isValidMode(...).valid` is `null`;
+- changing generic mode-launch buttons to `ButtonEnums.size.smallTall`; and
+- forwarding `dicomUploadComponent.containerClassName` to the generic upload modal.
+
+Those paths do not exist in the PACS worklist: it exposes its own Basic Viewer and Segmentation
+actions and uses an Orthanc synchronization modal instead of OHIF's generic DICOM upload modal.
+Adopting the OHIF mode registry or upload component would be a separate product redesign, not part
+of this version migration. The official target suite remains the evidence for the untouched OHIF
+implementation; PACS validation will cover the retained Orthanc worklist.
+
 ## Explicit missing assertions to add during integration
 
 The following OHIF 3.12 contracts are material and do not have sufficiently direct official unit
@@ -138,10 +158,8 @@ coverage in the untouched tag. They must be added as focused integrated tests wh
 groups are resolved:
 
 1. DICOMweb metadata requests omit transfer-syntax negotiation while pixel-data requests retain it.
-2. WorkList hides `mode.hide` entries and entries whose `isValidMode` result is `null`.
-3. WorkList retains the 3.12 button size and upload-container contract.
-4. `formatDate` strictly parses compact and dotted DICOM dates and applies the active locale.
-5. The wildcard not-found route uses the React Router 6 path contract.
-6. PACS custom providers/routes remain registered with the 3.12 Router future flags.
+2. `formatDate` strictly parses compact and dotted DICOM dates and applies the active locale.
+3. The wildcard not-found route uses the React Router 6 path contract.
+4. PACS custom providers/routes remain registered with the 3.12 Router future flags.
 
 These tests should preserve stable behavior rather than assert private implementation details.
