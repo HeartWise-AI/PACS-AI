@@ -9,13 +9,14 @@ import { Input } from '../Input';
 import { useSegmentationTableContext } from './contexts';
 
 export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const { t } = useTranslation('SegmentationTable.AppearanceSettings');
+  const { t } = useTranslation('SegmentationPanel');
   const {
     renderFill,
     renderOutline,
     setRenderFill,
+    setRenderFillInactive,
     setRenderOutline,
-    activeRepresentation,
+    setRenderOutlineInactive,
     fillAlpha,
     fillAlphaInactive,
     outlineWidth,
@@ -24,6 +25,7 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
     setOutlineWidth,
     renderInactiveSegmentations,
     toggleRenderInactiveSegmentations,
+    segmentationRepresentationTypes,
     data,
   } = useSegmentationTableContext('SegmentationTableConfig');
 
@@ -48,15 +50,22 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
             renderFill && renderOutline ? 'fill-and-outline' : renderOutline ? 'outline' : 'fill'
           }
           onValueChange={value => {
+            const type = segmentationRepresentationTypes?.[0];
             if (value === 'fill-and-outline') {
-              setRenderFill({ type: activeRepresentation.type }, true);
-              setRenderOutline({ type: activeRepresentation.type }, true);
+              setRenderFill({ type }, true);
+              setRenderOutline({ type }, true);
+              setRenderFillInactive({ type }, true);
+              setRenderOutlineInactive({ type }, true);
             } else if (value === 'outline') {
-              setRenderFill({ type: activeRepresentation.type }, false);
-              setRenderOutline({ type: activeRepresentation.type }, true);
+              setRenderFill({ type }, false);
+              setRenderOutline({ type }, true);
+              setRenderFillInactive({ type }, false);
+              setRenderOutlineInactive({ type }, true);
             } else {
-              setRenderFill({ type: activeRepresentation.type }, true);
-              setRenderOutline({ type: activeRepresentation.type }, false);
+              setRenderFill({ type }, true);
+              setRenderOutline({ type }, false);
+              setRenderFillInactive({ type }, true);
+              setRenderOutlineInactive({ type }, false);
             }
           }}
         >
@@ -77,11 +86,15 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
       <div className="space-y-2">
         <div className="my-2 flex items-center">
           {/* NOTE: This is a PACS changes */}
-          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">Opacity</Label>
+          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">
+            {t('Opacity')}
+          </Label>
           <Slider
             className="mx-1 flex-1"
             value={[fillAlpha]}
-            onValueChange={([value]) => setFillAlpha({ type: activeRepresentation.type }, value)}
+            onValueChange={([value]) =>
+              setFillAlpha({ type: segmentationRepresentationTypes?.[0] }, value)
+            }
             max={1}
             min={0}
             step={0.1}
@@ -90,7 +103,7 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
             className="mx-1 w-10 flex-none"
             value={fillAlpha}
             onChange={e =>
-              setFillAlpha({ type: activeRepresentation.type }, Number(e.target.value))
+              setFillAlpha({ type: segmentationRepresentationTypes?.[0] }, Number(e.target.value))
             }
           />
         </div>
@@ -102,7 +115,9 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
           </Label>
           <Slider
             value={[outlineWidth]}
-            onValueChange={([value]) => setOutlineWidth({ type: activeRepresentation.type }, value)}
+            onValueChange={([value]) =>
+              setOutlineWidth({ type: segmentationRepresentationTypes?.[0] }, value)
+            }
             max={10}
             min={0}
             step={0.1}
@@ -111,7 +126,10 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
           <Input
             value={outlineWidth}
             onChange={e =>
-              setOutlineWidth({ type: activeRepresentation.type }, Number(e.target.value))
+              setOutlineWidth(
+                { type: segmentationRepresentationTypes?.[0] },
+                Number(e.target.value)
+              )
             }
             className="mx-1 w-10 flex-none text-center"
           />
@@ -132,13 +150,13 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
       {renderInactiveSegmentations && (
         <div className="my-2 flex items-center">
           {/* NOTE: This is a PACS changes */}
-          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">Opacity</Label>
+          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">
+            {t('Opacity')}
+          </Label>
           <Slider
             className="mx-1 flex-1"
             value={[fillAlphaInactive]}
-            onValueChange={([value]) =>
-              setFillAlphaInactive({ type: activeRepresentation.type }, value)
-            }
+            onValueChange={([value]) => setFillAlphaInactive({}, value)}
             max={1}
             min={0}
             step={0.1}
@@ -146,9 +164,7 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
           <Input
             className="mx-1 w-10 flex-none"
             value={fillAlphaInactive}
-            onChange={e =>
-              setFillAlphaInactive({ type: activeRepresentation.type }, Number(e.target.value))
-            }
+            onChange={e => setFillAlphaInactive({}, Number(e.target.value))}
           />
         </div>
       )}
