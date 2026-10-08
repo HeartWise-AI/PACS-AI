@@ -9,8 +9,9 @@ import ErrorBoundary from './ErrorBoundary.json';
 import Header from './Header.json';
 import HotkeysValidators from './HotkeysValidators.json';
 import MeasurementTable from './MeasurementTable.json';
+import DataRow from './DataRow.json';
 import Modes from './Modes.json';
-import SegmentationTable from './SegmentationTable.json';
+import SegmentationPanel from './SegmentationPanel.json';
 import Settings from './Settings.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
@@ -26,6 +27,16 @@ import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 import TopNavigation from './TopNavigation.json';
+import CaptureViewportModal from './CaptureViewportModal.json';
+import Hps from './Hps.json';
+import ToolbarLayoutSelector from './ToolbarLayoutSelector.json';
+import Tools from './Tools.json';
+import Onboarding from './Onboarding.json';
+import Colormaps from './Colormaps.json';
+import PanelSUV from './PanelSUV.json';
+import ROIThresholdConfiguration from './ROIThresholdConfiguration.json';
+import USAnnotationPanel from './USAnnotationPanel.json';
+import EncapsulatedDocument from './EncapsulatedDocument.json';
 
 export default {
   'en-US': {
@@ -40,8 +51,9 @@ export default {
     Header,
     HotkeysValidators,
     MeasurementTable,
+    DataRow,
     Modes,
-    SegmentationTable,
+    SegmentationPanel,
     Settings,
     SidePanel,
     StudyBrowser,
@@ -57,5 +69,15 @@ export default {
     Messages,
     WindowLevelActionMenu,
     TopNavigation,
+    CaptureViewportModal,
+    Hps,
+    ToolbarLayoutSelector,
+    Tools,
+    Onboarding,
+    Colormaps,
+    PanelSUV,
+    ROIThresholdConfiguration,
+    USAnnotationPanel,
+    EncapsulatedDocument,
   },
 };
