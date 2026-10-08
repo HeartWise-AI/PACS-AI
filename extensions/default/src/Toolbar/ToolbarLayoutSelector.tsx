@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { CommandsManager } from '@ohif/core';
 
 import { LayoutSelector } from '@ohif/ui-next';
+import { useTranslation } from 'react-i18next';
 
 function ToolbarLayoutSelectorWithServices({
   commandsManager,
@@ -13,6 +14,7 @@ function ToolbarLayoutSelectorWithServices({
   ...props
 }) {
   const { customizationService } = servicesManager.services;
+  const { t } = useTranslation('ToolbarLayoutSelector');
 
   // Get the presets from the customization service
   const commonPresets = customizationService?.getCustomization('layoutSelector.commonPresets') || [
@@ -135,7 +137,7 @@ function ToolbarLayoutSelectorWithServices({
         onSelectionChange={handleSelectionChange}
         {...props}
       >
-        <LayoutSelector.Trigger tooltip="Change layout" />
+        <LayoutSelector.Trigger tooltip={t('Change layout')} />
         <LayoutSelector.Content>
           {/* Left side - Presets */}
           {(commonPresets.length > 0 || advancedPresets.length > 0) && (
@@ -143,7 +145,7 @@ function ToolbarLayoutSelectorWithServices({
             <div className="flex flex-col gap-2.5 rounded-l-lg bg-[#4C504B] p-2">
               {commonPresets.length > 0 && (
                 <>
-                  <LayoutSelector.PresetSection title="Common">
+                  <LayoutSelector.PresetSection title={t('Common')}>
                     {commonPresets.map((preset, index) => (
                       <LayoutSelector.Preset
                         key={`common-preset-${index}`}
@@ -158,7 +160,7 @@ function ToolbarLayoutSelectorWithServices({
               )}
 
               {advancedPresets.length > 0 && (
-                <LayoutSelector.PresetSection title="Advanced">
+                <LayoutSelector.PresetSection title={t('Advanced')}>
                   {advancedPresets.map((preset, index) => (
                     <LayoutSelector.Preset
                       key={`advanced-preset-${index}`}
@@ -178,14 +180,15 @@ function ToolbarLayoutSelectorWithServices({
           {/* NOTE: This is a PACS changes */}
           <div className="flex flex-col gap-2.5 rounded-r-lg border-l-2 border-white/10 bg-[#4C504B] p-2">
             {/* NOTE: This is a PACS changes */}
-            <div className="text-foreground/80 text-xs">Custom</div>
+            <div className="text-foreground/80 text-xs">{t('Custom')}</div>
             <LayoutSelector.GridSelector
               rows={rows}
               columns={columns}
             />
             <LayoutSelector.HelpText>
-              Hover to select <br />
-              rows and columns <br /> Click to apply
+              {t('Hover to select')} <br />
+              {t('rows and columns')} <br />
+              {t('Click to apply')}
             </LayoutSelector.HelpText>
           </div>
         </LayoutSelector.Content>
