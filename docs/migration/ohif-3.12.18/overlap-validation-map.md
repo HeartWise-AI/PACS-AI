@@ -10,6 +10,7 @@ This map covers every file changed by both PACS-AI and official OHIF between the
 - PACS characterization commit: `6937b4571` (`test: characterize PACS contracts before OHIF 3.12`).
 - PACS test result: 141/141 suites and 979/979 tests passed.
 - Official target: `v3.12.18` / `f9599110d4b0bdab27026eb49d1c2daeb5284a94`.
+- Path-accurate overlap: 92 paths; rename-aware explicit-base conflicts: 41 paths.
 - Official target build: passed with Webpack 5.105.0.
 - Official target unit result: 69/69 suites and 869/869 tests passed.
 - Official Playwright discovery: 78 tests in 60 files listed successfully with `OHIF_OPEN=false`.
@@ -29,7 +30,11 @@ No OHIF 3.12 application source had been integrated when these results were capt
 `BROWSER`, `VISUAL`, and authenticated workflow checks are intentionally deferred to the relevant
 stories #459-#463. They are not represented as unit coverage.
 
-## All 85 overlapping files
+## All 92 overlapping paths
+
+The comparison uses `--no-renames` for path accounting. This prevents Git from hiding an old path
+when one side modifies it and the other side renames or deletes it. Rename-aware merge simulation
+is still used separately to predict actual conflicts.
 
 | # | Overlapping file | Primary validation |
 |---:|---|---|
@@ -118,6 +123,13 @@ stories #459-#463. They are not represented as unit coverage.
 | 83 | `version.json` | REVIEW: accept/regenerate official target version metadata |
 | 84 | `version.txt` | REVIEW: accept/regenerate official target version metadata |
 | 85 | `yarn.lock` | BUILD: regenerate from resolved manifests and verify frozen installation |
+| 86 | `.github/workflows/playwright.yml` | REVIEW + BUILD: PACS renamed this workflow to `playwright.yml.disabled`; transplant applicable OHIF CI changes deliberately |
+| 87 | `platform/docs/versioned_docs/version-3.10/configuration/configurationFiles.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
+| 88 | `platform/docs/versioned_docs/version-3.10/deployment/docker/docker.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
+| 89 | `platform/docs/versioned_docs/version-3.10/faq/technical.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
+| 90 | `platform/docs/versioned_docs/version-3.10/migration-guide/from-v2.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
+| 91 | `platform/docs/versioned_docs/version-3.10/platform/environment-variables.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
+| 92 | `platform/i18n/src/locales/ar/SegmentationTable.json` | I18N: verify the PACS translation survives OHIF's `SegmentationPanel.json` replacement |
 
 ## Explicit missing assertions to add during integration
 
