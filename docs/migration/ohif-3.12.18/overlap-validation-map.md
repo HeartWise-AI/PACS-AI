@@ -131,6 +131,27 @@ is still used separately to predict actual conflicts.
 | 91 | `platform/docs/versioned_docs/version-3.10/platform/environment-variables.md` | REVIEW: OHIF moves/removes the 3.10 snapshot; confirm PACS edits survive in the 3.11 destination before accepting deletion |
 | 92 | `platform/i18n/src/locales/ar/SegmentationTable.json` | I18N: verify the PACS translation survives OHIF's `SegmentationPanel.json` replacement |
 
+## Final disposition audit
+
+The post-integration tree was checked path-by-path against both the frozen PACS source and the
+official target. Of the 92 overlapping paths:
+
+- 14 now match the official `v3.12.18` content exactly, including the removal of the unused
+  `DicomUpload.css` and the retired version-3.10 documentation files;
+- 75 contain a deliberate combined or regenerated result; and
+- 3 retain the PACS disposition intentionally.
+
+The three PACS-exact paths are:
+
+- `.netlify/build-deploy-preview.sh`: remains deleted. PACS no longer uses this Netlify preview
+  build script, so OHIF's frozen-install edit to that retired script is not applicable. The active
+  documentation deployment is handled by the GitHub workflow.
+- `platform/app/src/routes/WorkList/WorkList.tsx`: retains the approved PACS Orthanc/AI worklist
+  described below.
+- `.github/workflows/playwright.yml`: remains absent because PACS intentionally renamed it to
+  `playwright.yml.disabled`. Applicable OHIF 3.12 runner and artifact changes were transplanted
+  into the disabled file without re-enabling the workflow.
+
 ## Approved WorkList disposition
 
 The custom PACS Orthanc worklist replaces OHIF's generic mode-driven worklist. The migration keeps
