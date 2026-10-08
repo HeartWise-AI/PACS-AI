@@ -3,7 +3,7 @@ import React, { useEffect, useState, createContext } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, type BrowserRouterProps } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import Compose from './routes/Mode/Compose';
 import {
@@ -57,6 +57,11 @@ let commandsManager: CommandsManager,
 // NOTE: This is a PACS changes
 const frontendVersion = 'v0.58.0-beta';
 const queryClient = new QueryClient();
+
+const routerFutureFlags: BrowserRouterProps['future'] = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+};
 
 // NOTE: This is a PACS changes
 const FrontendVersionProvider = ({ value, children }) => (
@@ -196,7 +201,10 @@ function App({
         {/* NOTE: This is a PACS changes */}
         <GlobalStateProvider>
           <CombinedProviders>
-            <BrowserRouter basename={routerBasename}>
+            <BrowserRouter
+              basename={routerBasename}
+              future={routerFutureFlags}
+            >
               <StudyProcessingProvider>
                 <InferenceProcessingProvider>
                   {authRoutes}

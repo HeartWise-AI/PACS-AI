@@ -110,7 +110,7 @@ const bakedInRoutes = [
 ];
 
 // NOT FOUND (404)
-const notFoundRoute = { component: NotFound };
+const notFoundRoute = { path: '*', children: NotFound };
 
 const createRoutes = ({
   modes,

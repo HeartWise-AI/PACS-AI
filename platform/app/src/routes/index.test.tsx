@@ -17,11 +17,7 @@ jest.mock('@ohif/ui-next', () => {
   const React = require('react');
   return {
     ErrorBoundary: ({ children, showNotification }) =>
-      React.createElement(
-        'div',
-        { 'data-show-notification': String(showNotification) },
-        children
-      ),
+      React.createElement('div', { 'data-show-notification': String(showNotification) }, children),
   };
 });
 
@@ -47,7 +43,12 @@ jest.mock('./Settings', () => () => null);
 jest.mock('./TenantNotFound', () => () => null);
 jest.mock('./WorkspaceSettings', () => () => null);
 jest.mock('./buildModeRoutes', () => jest.fn(() => []));
-jest.mock('./PrivateRoute', () => ({ children }) => children);
+jest.mock(
+  './PrivateRoute',
+  () =>
+    ({ children }) =>
+      children
+);
 jest.mock('../utils/publicUrl', () => ({ routerBasename: '/' }));
 jest.mock('../utils/history', () => ({ history: {} }));
 
@@ -118,5 +119,6 @@ describe('PACS-AI route registration contract', () => {
     expect(container.querySelectorAll('[data-show-notification="false"]').length).toBeGreaterThan(
       0
     );
+    expect(registeredPaths).toContain('*');
   });
 });
