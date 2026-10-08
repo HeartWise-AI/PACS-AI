@@ -19,6 +19,12 @@ import Modals from './Modals.json';
 import Local from './Local.json';
 import ErrorBoundary from './ErrorBoundary.json';
 import StoreFileButton from './StoreFileButton.json';
+import DataRow from './DataRow.json';
+import WindowLevelActionMenu from './WindowLevelActionMenu.json';
+import CaptureViewportModal from './CaptureViewportModal.json';
+import Hps from './Hps.json';
+import ToolbarLayoutSelector from './ToolbarLayoutSelector.json';
+import Tools from './Tools.json';
 
 export default {
   zh: {
@@ -43,5 +49,11 @@ export default {
     Local,
     ErrorBoundary,
     StoreFileButton,
+    DataRow,
+    WindowLevelActionMenu,
+    CaptureViewportModal,
+    Hps,
+    ToolbarLayoutSelector,
+    Tools,
   },
 };

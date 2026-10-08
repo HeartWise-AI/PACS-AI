@@ -20,6 +20,7 @@ import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import TopNavigation from './TopNavigation.json';
+import DataRow from './DataRow.json';
 
 export default {
   de: {
@@ -45,5 +46,6 @@ export default {
     UserPreferencesModal,
     ViewportDownloadForm,
     TopNavigation,
+    DataRow,
   },
 };

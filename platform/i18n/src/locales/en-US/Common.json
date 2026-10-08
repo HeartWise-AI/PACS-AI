@@ -41,5 +41,11 @@
   "Target AET": "Target AET",
   "Update modality information.": "Update modality information.",
   "User Onboarding": "User Onboarding",
-  "View More": "View More"
+  "View More": "View More",
+  "Cancel": "Cancel",
+  "localDateFormat": "DD-MMM-YYYY",
+  "Back": "Back",
+  "Foreground": "Foreground",
+  "SELECT A FOREGROUND": "SELECT A FOREGROUND",
+  "SELECT A SEGMENTATION": "SELECT A SEGMENTATION"
 }

@@ -22,6 +22,25 @@ import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import TopNavigation from './TopNavigation.json';
+import DataRow from './DataRow.json';
+import Modes from './Modes.json';
+import PatientInfo from './PatientInfo.json';
+import Notification from './Notification.json';
+import ContextMenu from './ContextMenu.json';
+import Dialog from './Dialog.json';
+import Modals from './Modals.json';
+import Local from './Local.json';
+import ErrorBoundary from './ErrorBoundary.json';
+import Hps from './Hps.json';
+import ToolbarLayoutSelector from './ToolbarLayoutSelector.json';
+import WindowLevelActionMenu from './WindowLevelActionMenu.json';
+import CaptureViewportModal from './CaptureViewportModal.json';
+import Tools from './Tools.json';
+import SegmentationPanel from './SegmentationPanel.json';
+import Colormaps from './Colormaps.json';
+import PanelSUV from './PanelSUV.json';
+import ROIThresholdConfiguration from './ROIThresholdConfiguration.json';
+import USAnnotationPanel from './USAnnotationPanel.json';
 
 export default {
   fr: {
@@ -49,5 +68,24 @@ export default {
     StudyList,
     ViewportDownloadForm,
     TopNavigation,
+    DataRow,
+    Modes,
+    PatientInfo,
+    Notification,
+    ContextMenu,
+    Dialog,
+    Modals,
+    Local,
+    ErrorBoundary,
+    Hps,
+    ToolbarLayoutSelector,
+    WindowLevelActionMenu,
+    CaptureViewportModal,
+    Tools,
+    SegmentationPanel,
+    Colormaps,
+    PanelSUV,
+    ROIThresholdConfiguration,
+    USAnnotationPanel,
   },
 };
