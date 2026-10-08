@@ -84,7 +84,7 @@ window.config = {
       ],
     },
   ],
-  defaultDataSourceName: 'dicomweb',
+  defaultDataSourceName: 'ohif',
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
   //   enabled: true,
@@ -98,7 +98,7 @@ window.config = {
   dataSources: [
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
-      sourceName: 'dicomweb',
+      sourceName: 'ohif',
       configuration: {
         friendlyName: 'AWS S3 Static wado server',
         name: 'aws',
@@ -247,6 +247,12 @@ window.config = {
       configuration: {
         friendlyName: 'dicomweb delegating proxy',
         name: 'dicomwebproxy',
+        // Security controls for runtime ?url=... datasource loading:
+        // In authenticated environments, runtime ?url origins must be allowlisted:
+        // dangerouslyAllowedOriginsForAuthenticatedEnvironments: [
+        //   'https://config.example.com',
+        //   'http://localhost:5000',
+        // ],
       },
     },
     {
@@ -255,6 +261,12 @@ window.config = {
       configuration: {
         friendlyName: 'dicom json',
         name: 'json',
+        // Security controls for runtime ?url=... datasource loading:
+        // In authenticated environments, runtime ?url origins must be allowlisted:
+        // dangerouslyAllowedOriginsForAuthenticatedEnvironments: [
+        //   'https://config.example.com',
+        //   'http://localhost:5000',
+        // ],
       },
     },
     {
