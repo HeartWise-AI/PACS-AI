@@ -7,25 +7,27 @@ import { WindowLevel } from './WindowLevel';
 import { VolumeRenderingPresets } from './VolumeRenderingPresets';
 import { VolumeRenderingOptions } from './VolumeRenderingOptions';
 import { useViewportRendering } from '../../hooks/useViewportRendering';
+import i18n from 'i18next';
 
 export type WindowLevelActionMenuProps = {
   viewportId: string;
-  element?: HTMLElement;
   align?: 'start' | 'end' | 'center';
   side?: 'top' | 'bottom' | 'left' | 'right';
+  onVisibilityChange?: (isVisible: boolean) => void;
 };
 
 export function WindowLevelActionMenu({
   viewportId,
-  element,
   align,
   side,
+  onVisibilityChange,
 }: WindowLevelActionMenuProps): ReactElement {
   return (
     <WindowLevelActionMenuContent
       viewportId={viewportId}
       align={align}
       side={side}
+      onVisibilityChange={onVisibilityChange}
     />
   );
 }
@@ -34,10 +36,12 @@ export function WindowLevelActionMenuContent({
   viewportId,
   align,
   side,
+  onVisibilityChange,
 }: {
   viewportId: string;
   align?: string;
   side?: string;
+  onVisibilityChange?: (isVisible: boolean) => void;
 }): ReactElement {
   const { t } = useTranslation('WindowLevelActionMenu');
   // Use a stable key for the menu to avoid infinite re-renders
@@ -58,6 +62,8 @@ export function WindowLevelActionMenuContent({
       isVisible={true}
       align={align}
       side={side}
+      backLabel={i18n.t('WindowLevelActionMenu:Back to Display Options')}
+      onVisibilityChange={onVisibilityChange}
     >
       <AllInOneMenu.ItemPanel>
         {!is3DVolume && <Colorbar viewportId={viewportId} />}
@@ -65,7 +71,7 @@ export function WindowLevelActionMenuContent({
         {colorbarProperties?.colormaps && !is3DVolume && (
           <AllInOneMenu.SubMenu
             key="colorLUTPresets"
-            itemLabel="Color LUT"
+            itemLabel={t('Color LUT')}
             itemIcon="icon-color-lut"
             className="flex h-[calc(100%-32px)] flex-col"
           >
@@ -86,7 +92,7 @@ export function WindowLevelActionMenuContent({
         {volumeRenderingPresets && is3DVolume && <VolumeRenderingPresets viewportId={viewportId} />}
 
         {volumeRenderingQualityRange && is3DVolume && (
-          <AllInOneMenu.SubMenu itemLabel="Rendering Options">
+          <AllInOneMenu.SubMenu itemLabel={t('Rendering Options')}>
             <VolumeRenderingOptions viewportId={viewportId} />
           </AllInOneMenu.SubMenu>
         )}
