@@ -68,7 +68,7 @@ provided by the <a href="https://ohif.org/">Open Health Imaging Foundation (OHIF
 ## About
 
 The OHIF Viewer can retrieve
-and load images from most sources and formats; render sets in 2D, 3D, and
+and load images from most sources and formats, render sets in 2D, 3D, and
 reconstructed representations; allows for the manipulation, annotation, and
 serialization of observations; supports internationalization, OpenID Connect,
 offline use, hotkeys, and many more features.
@@ -91,7 +91,7 @@ contributions of individuals, research groups, and commercial organizations.
 After more than 8-years of integrating with many companies and organizations,
 The OHIF Viewer has been rebuilt from the ground up to better address the
 varying workflow and configuration needs of its many users. All of the Viewer's
-core features are built using it's own extension system. The same extensibility
+core features are built using its own extension system. The same extensibility
 that allows us to offer:
 
 - 2D and 3D medical image viewing
@@ -150,7 +150,7 @@ Here is a schematic representation of our development workflow:
 ### Requirements
 
 - [Yarn 1.20.0+](https://yarnpkg.com/en/docs/install)
-- [Node 18+](https://nodejs.org/en/)
+- [Node 20.19+](https://nodejs.org/en/)
 - Yarn Workspaces should be enabled on your machine:
   - `yarn config set workspaces-experimental true`
 
@@ -159,8 +159,10 @@ Here is a schematic representation of our development workflow:
 1. Clone the repository
    - `git clone https://github.com/OHIF/Viewers.git`
 2. Navigate to the cloned project's directory
-3. `yarn install` to restore dependencies and link projects
+3. `yarn install --frozen-lockfile` to restore dependencies and link projects
 4. `yarn dev` to start the development server
+
+Use the frozen lockfile for reproducible installs and to prevent unreviewed dependency changes.
 
 #### To Develop
 
@@ -171,7 +173,7 @@ _From this repository's root directory:_
 yarn config set workspaces-experimental true
 
 # Restore dependencies
-yarn install
+yarn install --frozen-lockfile
 ```
 
 ## Commands

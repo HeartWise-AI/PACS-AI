@@ -109,7 +109,7 @@ far more capable than servers. Read more about dataSources [here](../platform/ex
 - The cornerstoneExtensionConfig property has been removed, you should use `customizationService` instead (you can read more [here](../platform/services/customization-service/customizationService.md))
 - The maxConcurrentMetadataRequests property has been removed in favor of `maxNumRequests`
 - The hotkeys array has been updated with different command names and options, and some keys have been removed.
-- New properties have been added, including `maxNumberOfWebWorkers`, `omitQuotationForMultipartRequest`, `showWarningMessageForCrossOrigin`, `showCPUFallbackMessage`, `showLoadingIndicator`, `strictZSpacingForVolumeViewport`.
+- New properties have been added, including `maxNumberOfWebWorkers`, `omitQuotationForMultipartRequest`, `showCPUFallbackMessage`, `showLoadingIndicator`, `strictZSpacingForVolumeViewport`.
 - you should see if `supportsWildcard` is supported in your server, some servers don't support it and you need to make it false.
 
 ## Modes

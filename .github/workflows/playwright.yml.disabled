@@ -9,8 +9,8 @@ concurrency:
 
 jobs:
   playwright-tests:
-    timeout-minutes: 60
-    runs-on: self-hosted
+    timeout-minutes: 120
+    runs-on: [self-hosted, nashua]
     strategy:
       fail-fast: false
       matrix:
@@ -23,20 +23,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Playwright browsers
-        run: npx playwright install
+        # Only Chromium is configured in playwright.config.ts.
+        run: npx playwright install chromium
       - name: Run Playwright tests
         run: |
           export NODE_OPTIONS="--max_old_space_size=10192"
-          bun run test:e2e:coverage
+          bash .scripts/ci/with-nashua-lock.sh bun run test:e2e:coverage
       - name: Create directory of test results
         if: ${{ !cancelled() }}
         run: |
           mkdir -p packaged-test-results
           cp -r ./tests/test-results packaged-test-results/ || true
-          cp ./tests/playwright-report.json packaged-test-results/ || true
+          cp -r ./tests/playwright-report packaged-test-results/ || true
       - name: Upload directory of test results artifact
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
