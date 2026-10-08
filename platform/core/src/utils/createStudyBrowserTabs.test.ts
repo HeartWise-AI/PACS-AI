@@ -7,23 +7,35 @@ jest.mock('../contextProviders/SystemProvider', () => ({
 
 const mockedUseSystem = useSystem as jest.Mock;
 
+function mockStudyBrowserServices(activeDisplaySets) {
+  const displaySetService = {
+    activeDisplaySets,
+    getDisplaySetByUID: jest.fn(displaySetInstanceUID =>
+      activeDisplaySets.find(
+        displaySet => displaySet.displaySetInstanceUID === displaySetInstanceUID
+      )
+    ),
+  };
+  const customizationService = {
+    getCustomization: jest.fn(() => () => 0),
+  };
+  mockedUseSystem.mockReturnValue({
+    servicesManager: { services: { displaySetService, customizationService } },
+  });
+}
+
 describe('createStudyBrowserTabs PACS-AI contract', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('adds the active SeriesInstanceUID to matching thumbnail display sets', () => {
-    const displaySetService = {
-      activeDisplaySets: [
-        {
-          displaySetInstanceUID: 'display-set-1',
-          SeriesInstanceUID: 'series-1',
-        },
-      ],
-    };
-    mockedUseSystem.mockReturnValue({
-      servicesManager: { services: { displaySetService } },
-    });
+    mockStudyBrowserServices([
+      {
+        displaySetInstanceUID: 'display-set-1',
+        SeriesInstanceUID: 'series-1',
+      },
+    ]);
 
     const thumbnailDisplaySet = {
       displaySetInstanceUID: 'display-set-1',
@@ -44,17 +56,12 @@ describe('createStudyBrowserTabs PACS-AI contract', () => {
   });
 
   it('leaves display sets unchanged when there is no matching active display set', () => {
-    const displaySetService = {
-      activeDisplaySets: [
-        {
-          displaySetInstanceUID: 'another-display-set',
-          SeriesInstanceUID: 'another-series',
-        },
-      ],
-    };
-    mockedUseSystem.mockReturnValue({
-      servicesManager: { services: { displaySetService } },
-    });
+    mockStudyBrowserServices([
+      {
+        displaySetInstanceUID: 'another-display-set',
+        SeriesInstanceUID: 'another-series',
+      },
+    ]);
 
     const thumbnailDisplaySet = {
       displaySetInstanceUID: 'display-set-1',

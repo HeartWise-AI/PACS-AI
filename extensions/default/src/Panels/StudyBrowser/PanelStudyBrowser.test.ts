@@ -111,12 +111,12 @@ describe('PanelStudyBrowser PACS-AI contract', () => {
 
     await act(async () => {
       root.render(
-        <PanelStudyBrowser
-          getImageSrc={jest.fn()}
-          getStudiesForPatientByMRN={jest.fn().mockResolvedValue(discoveredStudies)}
-          requestDisplaySetCreationForStudy={requestDisplaySetCreationForStudy}
-          dataSource={dataSource}
-        />
+        React.createElement(PanelStudyBrowser, {
+          getImageSrc: jest.fn(),
+          getStudiesForPatientByMRN: jest.fn().mockResolvedValue(discoveredStudies),
+          requestDisplaySetCreationForStudy,
+          dataSource,
+        })
       );
       await Promise.resolve();
       await Promise.resolve();

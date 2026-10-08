@@ -14,6 +14,7 @@ function PanelStudyBrowserHeader({
   actionIcons: actionIcon[];
   updateActionIconValue: (actionIcon: actionIcon) => void;
 }) {
+  // Button order: Settings button then List view mode (thumbnails vs. list)
   return (
     <>
       {/* NOTE: This is a PACS changes */}

@@ -1,4 +1,6 @@
 import { api } from 'dicomweb-client';
+import { utils } from '@ohif/core';
+import { retrieveStudyMetadata } from './retrieveStudyMetadata.js';
 import { createDicomWebApi } from './index';
 
 jest.mock('dicomweb-client', () => ({
@@ -50,6 +52,7 @@ jest.mock('@ohif/core', () => ({
 }));
 
 const DICOMwebClient = api.DICOMwebClient as jest.Mock;
+const mockedRetrieveStudyMetadata = retrieveStudyMetadata as jest.Mock;
 
 function initializeDataSource(authenticationHeader = { Authorization: 'Bearer ohif-token' }) {
   const dataSource = createDicomWebApi(
@@ -75,6 +78,9 @@ describe('DICOMweb PACS-AI authentication contract', () => {
   beforeEach(() => {
     localStorage.clear();
     DICOMwebClient.mockClear();
+    mockedRetrieveStudyMetadata.mockReset();
+    mockedRetrieveStudyMetadata.mockResolvedValue([]);
+    (utils.generateAcceptHeader as jest.Mock).mockClear();
   });
 
   it('uses the PACS session token for both QIDO and WADO clients', () => {
@@ -101,5 +107,16 @@ describe('DICOMweb PACS-AI authentication contract', () => {
     expect(DICOMwebClient.mock.calls[1][0].headers).toEqual({
       Authorization: 'Bearer ohif-token',
     });
+  });
+
+  it('omits transfer-syntax negotiation from metadata requests without dropping PACS auth', async () => {
+    localStorage.setItem('sessionToken', 'pacs-session-token');
+    const dataSource = initializeDataSource();
+
+    await dataSource.retrieve.series.metadata({ StudyInstanceUID: 'study-1' });
+
+    const wadoClient = DICOMwebClient.mock.results[1].value;
+    expect(wadoClient.headers).toEqual({ Authorization: 'Bearer pacs-session-token' });
+    expect(utils.generateAcceptHeader).not.toHaveBeenCalled();
   });
 });
