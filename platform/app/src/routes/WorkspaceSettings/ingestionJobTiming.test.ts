@@ -15,6 +15,7 @@ describe('ingestion job timing returned by the backend', () => {
     expect(getIngestionJobTimingMinutes({})).toBeUndefined();
     expect(getIngestionJobTimingMinutes({ stabilityMinutes: NaN })).toBeUndefined();
     expect(getIngestionJobTimingMinutes({ stabilityMinutes: -1 })).toBeUndefined();
-    expect(getIngestionJobTimingMinutes({ stabilityMinutes: 0 })).toBe(0);
+    expect(getIngestionJobTimingMinutes({ stabilityMinutes: 0 })).toBeUndefined();
+    expect(getIngestionJobTimingMinutes({ intervalInMinutes: 4 })).toBeUndefined();
   });
 });
