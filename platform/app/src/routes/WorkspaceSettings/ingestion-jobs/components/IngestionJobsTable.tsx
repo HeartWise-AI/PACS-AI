@@ -10,6 +10,7 @@ import { getIngestionJobHeaders, InferenceContainerStatus } from '../../constant
 import { getContainerStatusColor } from '../../utils';
 import IngestionJobActionButton from './IngestionJobActionButton';
 import ModalityBadges from './ModalityBadges';
+import { getIngestionJobTimingMinutes } from '../../ingestionJobTiming';
 
 type IngestionJobsTableProps = {
   jobs: GetInferenceIngestionJobsResponse[];
@@ -91,7 +92,12 @@ const IngestionJobsTable = ({
           );
         }
         if (header.value === 'interval') {
-          return <div className="w-[80px] text-white">{row.intervalInMinutes} minutes</div>;
+          const minutes = getIngestionJobTimingMinutes(row);
+          return (
+            <div className="w-[100px] text-white">
+              {minutes === undefined ? '—' : `${minutes} ${t('minutes')}`}
+            </div>
+          );
         }
         if (header.value === 'schedule') {
           const hasRange = row.scheduleStartTimestamp || row.scheduleEndTimestamp;

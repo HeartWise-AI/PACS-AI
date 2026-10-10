@@ -146,7 +146,7 @@ export const getIngestionJobHeaders = (t: TranslateFn): TableHeader[] => [
   { text: t('Model'), value: 'model', align: 'left' },
   { text: t('DICOM Modality'), value: 'dicomModality', align: 'left' },
   { text: t('Modalities'), value: 'modalities', align: 'left' },
-  { text: t('Interval'), value: 'interval', align: 'left' },
+  { text: t('Stability period'), value: 'interval', align: 'left' },
   { text: t('Schedule'), value: 'schedule', align: 'left' },
   { text: t('Status'), value: 'status', align: 'left' },
   { text: t('Action'), value: 'action', align: 'center' },
