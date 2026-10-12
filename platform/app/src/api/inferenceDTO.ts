@@ -39,18 +39,25 @@ export interface DeleteInferenceIngestionJobRequest {
   id: string;
 }
 
+export enum InferenceModelLifecycle {
+  STARTING = 'starting',
+  RUNNING = 'running',
+  PAUSED = 'paused',
+  STOPPING = 'stopping',
+  STOPPED = 'stopped',
+  DEGRADED = 'degraded',
+  UNKNOWN = 'unknown',
+}
+
 export interface GetInferenceModelResponse {
   id: string;
   tenantId: string;
   container: {
     id: string;
     name: string;
-    status: string;
-    running: boolean;
+    lifecycle: InferenceModelLifecycle;
     startedAt: number;
     finishedAt: number;
-    cpuPercentUsage: number;
-    memoryInBytes: number;
   };
   name: string;
   dockerImage: string;
