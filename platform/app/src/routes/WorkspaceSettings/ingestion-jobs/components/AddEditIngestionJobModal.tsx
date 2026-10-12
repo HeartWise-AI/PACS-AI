@@ -243,7 +243,7 @@ const AddEditIngestionJobModal = ({
       <div className="relative">
         <Input
           id="jobInterval"
-          placeholder={`Interval (minimum of ${minIngestionJobIntervalMinutes} minutes)`}
+          placeholder={`Stability period (minimum of ${minIngestionJobIntervalMinutes} minutes)`}
           className="w-full pr-20"
           type="number"
           min={minIngestionJobIntervalMinutes}
