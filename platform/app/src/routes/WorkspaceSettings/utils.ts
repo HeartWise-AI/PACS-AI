@@ -13,37 +13,22 @@ import {
 import type { DICOMModalities, InferenceModelView, StatusColorClasses } from './types';
 
 type ShowAlert = (message: string, variant: string) => void;
-type CompatibleInferenceModelContainer = Omit<
+type InferenceModelContainerResponse = Omit<
   GetInferenceModelResponse['container'],
   'lifecycle'
 > & {
-  lifecycle?: InferenceModelLifecycle;
-  status?: string;
-};
-
-const legacyContainerStatusLifecycles: Record<string, InferenceModelLifecycle> = {
-  created: InferenceModelLifecycle.STARTING,
-  restarting: InferenceModelLifecycle.STARTING,
-  running: InferenceModelLifecycle.RUNNING,
-  paused: InferenceModelLifecycle.PAUSED,
-  removing: InferenceModelLifecycle.STOPPING,
-  exited: InferenceModelLifecycle.STOPPED,
-  stopped: InferenceModelLifecycle.STOPPED,
-  dead: InferenceModelLifecycle.DEGRADED,
+  lifecycle?: string;
 };
 
 export function resolveInferenceModelLifecycle(
-  container: CompatibleInferenceModelContainer
+  container: InferenceModelContainerResponse
 ): InferenceModelLifecycle {
-  const lifecycle = container.lifecycle;
+  const lifecycle = container.lifecycle as InferenceModelLifecycle | undefined;
   if (lifecycle && Object.values(InferenceModelLifecycle).includes(lifecycle)) {
     return lifecycle;
   }
 
-  return (
-    legacyContainerStatusLifecycles[container.status?.toLowerCase() || ''] ||
-    InferenceModelLifecycle.UNKNOWN
-  );
+  return InferenceModelLifecycle.UNKNOWN;
 }
 
 export function handleUnauthorizedAccess(

@@ -15,18 +15,18 @@ describe('inference model lifecycle compatibility', () => {
     expect(resolveInferenceModelLifecycle(container)).toBe(InferenceModelLifecycle.RUNNING);
   });
 
-  it('normalizes a legacy Docker status during a rolling deployment', () => {
-    const legacyContainer = { ...container, lifecycle: undefined, status: 'restarting' };
-
-    expect(resolveInferenceModelLifecycle(legacyContainer)).toBe(InferenceModelLifecycle.STARTING);
-  });
-
-  it('uses unknown and default colors when neither contract supplies a known state', () => {
+  it('uses unknown when lifecycle is missing', () => {
     const unavailableContainer = { ...container, lifecycle: undefined };
 
     expect(resolveInferenceModelLifecycle(unavailableContainer)).toBe(
       InferenceModelLifecycle.UNKNOWN
     );
+  });
+
+  it('uses unknown and default colors for an invalid lifecycle', () => {
+    const invalidContainer = { ...container, lifecycle: 'invalid' };
+
+    expect(resolveInferenceModelLifecycle(invalidContainer)).toBe(InferenceModelLifecycle.UNKNOWN);
     expect(getLifecycleColor(undefined)).toBe(DEFAULT_CONTAINER_STATUS_COLORS);
   });
 });
