@@ -346,35 +346,18 @@ const AddEditInferenceModelModal = ({
                 variant="body"
                 className="text-white text-opacity-70"
               >
-                {t('Status')}
+                {t('Lifecycle')}
               </Typography>
               <div className="flex min-w-[100px] items-center gap-2">
                 <div
                   className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}
                 >
                   <span className="text-sm capitalize">
-                    {model.container.status}
+                    {model.container.lifecycle}
                   </span>
                   <div
                     className={`h-1 w-1 rounded-full ${statusColor.dot}`}
                   ></div>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Typography
-                variant="body"
-                className="text-white text-opacity-70"
-              >
-                {t('CPU%')}
-              </Typography>
-              <div className="flex min-w-[100px] items-center gap-2">
-                <div
-                  className={`inline-flex h-[24px] items-center justify-center gap-1 rounded-full bg-[#323631] bg-opacity-10 px-2`}
-                >
-                  <span className="text-sm text-white">
-                    {model.container.cpuPercentUsage.toFixed(3)}%
-                  </span>
                 </div>
               </div>
             </div>

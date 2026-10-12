@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import dotsVertical from '../../../../assets/pacs/icons/dots-vertical-inactive.png';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
-import { InferenceContainerStatus } from '../../constants';
+import { InferenceModelLifecycle } from '../../constants';
 import type { InferenceModelView } from '../../types';
 
 type InferenceModelActionButtonProps = {
@@ -98,7 +98,7 @@ const InferenceModelActionButton = ({
                   {t('View Instance')}
                 </button>
               </li>
-              {row.container.status === InferenceContainerStatus.RUNNING && (
+              {row.container.lifecycle === InferenceModelLifecycle.RUNNING && (
                 <li>
                   <button
                     className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"

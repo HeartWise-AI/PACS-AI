@@ -7,6 +7,8 @@ import {
   containerStatusColors,
   DEFAULT_CONTAINER_STATUS_COLORS,
   InferenceContainerStatus,
+  InferenceModelLifecycle,
+  lifecycleColors,
 } from './constants';
 import type { DICOMModalities, InferenceModelView, StatusColorClasses } from './types';
 
@@ -73,6 +75,13 @@ export function transformInferenceModels(
 
 export function formatEnvsForApi(envs: { key: string; value: string }[]): string[] {
   return envs.map(env => `${env.key}=${env.value}`);
+}
+
+export function getLifecycleColor(lifecycle: string): StatusColorClasses {
+  return (
+    lifecycleColors[lifecycle.toLowerCase() as InferenceModelLifecycle] ||
+    DEFAULT_CONTAINER_STATUS_COLORS
+  );
 }
 
 export function getContainerStatusColor(status: string): StatusColorClasses {

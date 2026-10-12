@@ -1,9 +1,12 @@
+import { InferenceModelLifecycle } from '../../api/inferenceDTO';
 import type {
   InferenceModelView,
   ModalityFormState,
   StatusColorClasses,
   TableHeader,
 } from './types';
+
+export { InferenceModelLifecycle };
 
 export enum InferenceContainerStatus {
   CREATED = 'created',
@@ -67,6 +70,51 @@ export const containerStatusColors: Record<InferenceContainerStatus, StatusColor
   },
 };
 
+export const lifecycleColors: Record<InferenceModelLifecycle, StatusColorClasses> = {
+  [InferenceModelLifecycle.STARTING]: {
+    bg: 'bg-blue-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-blue-300',
+    dot: 'bg-blue-300',
+  },
+  [InferenceModelLifecycle.RUNNING]: {
+    bg: 'bg-[#6ED47C]',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-[#6ED47C]',
+    dot: 'bg-[#6ED47C]',
+  },
+  [InferenceModelLifecycle.PAUSED]: {
+    bg: 'bg-yellow-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-yellow-300',
+    dot: 'bg-yellow-300',
+  },
+  [InferenceModelLifecycle.STOPPING]: {
+    bg: 'bg-orange-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-orange-300',
+    dot: 'bg-orange-300',
+  },
+  [InferenceModelLifecycle.STOPPED]: {
+    bg: 'bg-red-300',
+    bgOpacity: 'bg-opacity-10',
+    text: 'text-red-500',
+    dot: 'bg-red-500',
+  },
+  [InferenceModelLifecycle.DEGRADED]: {
+    bg: 'bg-red-500',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-red-500',
+    dot: 'bg-red-500',
+  },
+  [InferenceModelLifecycle.UNKNOWN]: {
+    bg: 'bg-gray-300',
+    bgOpacity: 'bg-opacity-20',
+    text: 'text-gray-300',
+    dot: 'bg-gray-300',
+  },
+};
+
 export const DEFAULT_CONTAINER_STATUS_COLORS: StatusColorClasses = {
   bg: 'bg-gray-300',
   bgOpacity: 'bg-opacity-20',
@@ -107,12 +155,9 @@ export const EMPTY_INFERENCE_MODEL: InferenceModelView = {
   container: {
     id: '',
     name: '',
-    status: '',
-    running: false,
+    lifecycle: InferenceModelLifecycle.UNKNOWN,
     startedAt: 0,
     finishedAt: 0,
-    cpuPercentUsage: 0,
-    memoryInBytes: 0,
   },
   disallowedDICOMTags: [],
 };
@@ -136,8 +181,7 @@ export const getInferenceModelHeaders = (t: TranslateFn): TableHeader[] => [
   { text: t('Name'), value: 'name', align: 'left' },
   { text: t('Version'), value: 'version', align: 'left' },
   { text: t('Image'), value: 'dockerImage', align: 'left' },
-  { text: t('Status'), value: 'status', align: 'left' },
-  { text: t('CPU %'), value: 'cpu', align: 'left' },
+  { text: t('Lifecycle'), value: 'lifecycle', align: 'left' },
   { text: t('Action'), value: 'action', align: 'center' },
 ];
 

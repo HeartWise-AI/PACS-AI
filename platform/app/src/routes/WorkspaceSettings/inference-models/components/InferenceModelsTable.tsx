@@ -4,9 +4,9 @@ import Table from '../../../../components/Table';
 import playIcon from '../../../../assets/pacs/icons/play.png';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import stopIcon from '../../../../assets/pacs/icons/stop.png';
-import { getInferenceModelHeaders, InferenceContainerStatus } from '../../constants';
+import { getInferenceModelHeaders, InferenceModelLifecycle } from '../../constants';
 import type { InferenceModelView } from '../../types';
-import { getContainerStatusColor, getDockerImageVersion } from '../../utils';
+import { getDockerImageVersion, getLifecycleColor } from '../../utils';
 import InferenceModelActionButton from './InferenceModelActionButton';
 
 type InferenceModelsTableProps = {
@@ -88,28 +88,21 @@ const InferenceModelsTable = ({
         if (header.value === 'dockerImage') {
           return <div className="w-[200px] text-white">{cell}</div>;
         }
-        if (header.value === 'status') {
-          const statusColor = getContainerStatusColor(row.container.status);
+        if (header.value === 'lifecycle') {
+          const lifecycleColor = getLifecycleColor(row.container.lifecycle);
           return (
             <div className="flex min-w-[100px] items-center gap-2">
               <div
-                className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${statusColor.bg} ${statusColor.bgOpacity} ${statusColor.text}`}
+                className={`inline-flex h-[27px] items-center justify-center gap-1 rounded-full px-2 ${lifecycleColor.bg} ${lifecycleColor.bgOpacity} ${lifecycleColor.text}`}
               >
-                <span className="capitalize">{row.container.status}</span>
-                <div className={`h-1 w-1 rounded-full ${statusColor.dot}`}></div>
+                <span className="capitalize">{row.container.lifecycle}</span>
+                <div className={`h-1 w-1 rounded-full ${lifecycleColor.dot}`}></div>
               </div>
             </div>
           );
         }
-        if (header.value === 'cpu') {
-          return (
-            <div className="w-[200px] text-white">
-              {row.container.cpuPercentUsage ? `${row.container.cpuPercentUsage.toFixed(3)}%` : '-'}
-            </div>
-          );
-        }
         if (header.value === 'action') {
-          const running = row.container.status === InferenceContainerStatus.RUNNING;
+          const running = row.container.lifecycle === InferenceModelLifecycle.RUNNING;
           return (
             <div
               className="flex items-center justify-center gap-2"

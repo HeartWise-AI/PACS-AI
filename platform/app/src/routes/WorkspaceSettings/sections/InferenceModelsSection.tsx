@@ -4,7 +4,7 @@ import { Button } from '@ohif/ui';
 import ModelFactsModal from '../../../components/ModelFactsModal';
 import refreshIcon from '../../../assets/pacs/icons/refresh.png';
 import type { UseInferenceModelsResult } from '../hooks/useInferenceModels';
-import { getContainerStatusColor } from '../utils';
+import { getLifecycleColor } from '../utils';
 import AddEditInferenceModelModal from '../inference-models/components/AddEditInferenceModelModal';
 import InferenceModelsTable from '../inference-models/components/InferenceModelsTable';
 import RemoveInferenceModelModal from '../inference-models/components/RemoveInferenceModelModal';
@@ -15,8 +15,8 @@ type InferenceModelsSectionProps = {
 
 const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
   const { t } = useTranslation('Common');
-  const statusColor = getContainerStatusColor(
-    inference.selectedInferenceModel.container?.status || ''
+  const lifecycleColor = getLifecycleColor(
+    inference.selectedInferenceModel.container?.lifecycle || ''
   );
 
   return (
@@ -78,7 +78,7 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
         envValue={inference.environmentalVariableValue}
         isAdding={inference.isAddingInferenceModel}
         isUpdating={inference.isUpdatingInferenceModel}
-        statusColor={statusColor}
+        statusColor={lifecycleColor}
         onClose={inference.closeAddEditModelModal}
         onChangeSelected={inference.setSelectedInferenceModel}
         onChangeEnvKey={inference.setEnvironmentalVariableKey}
