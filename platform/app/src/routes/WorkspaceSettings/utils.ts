@@ -13,6 +13,38 @@ import {
 import type { DICOMModalities, InferenceModelView, StatusColorClasses } from './types';
 
 type ShowAlert = (message: string, variant: string) => void;
+type CompatibleInferenceModelContainer = Omit<
+  GetInferenceModelResponse['container'],
+  'lifecycle'
+> & {
+  lifecycle?: InferenceModelLifecycle;
+  status?: string;
+};
+
+const legacyContainerStatusLifecycles: Record<string, InferenceModelLifecycle> = {
+  created: InferenceModelLifecycle.STARTING,
+  restarting: InferenceModelLifecycle.STARTING,
+  running: InferenceModelLifecycle.RUNNING,
+  paused: InferenceModelLifecycle.PAUSED,
+  removing: InferenceModelLifecycle.STOPPING,
+  exited: InferenceModelLifecycle.STOPPED,
+  stopped: InferenceModelLifecycle.STOPPED,
+  dead: InferenceModelLifecycle.DEGRADED,
+};
+
+export function resolveInferenceModelLifecycle(
+  container: CompatibleInferenceModelContainer
+): InferenceModelLifecycle {
+  const lifecycle = container.lifecycle;
+  if (lifecycle && Object.values(InferenceModelLifecycle).includes(lifecycle)) {
+    return lifecycle;
+  }
+
+  return (
+    legacyContainerStatusLifecycles[container.status?.toLowerCase() || ''] ||
+    InferenceModelLifecycle.UNKNOWN
+  );
+}
 
 export function handleUnauthorizedAccess(
   error: { errorCode?: string; message?: string },
@@ -62,6 +94,10 @@ export function transformInferenceModels(
   return models
     .map(model => ({
       ...model,
+      container: {
+        ...model.container,
+        lifecycle: resolveInferenceModelLifecycle(model.container),
+      },
       envs: (model.envs as string[]).map(env => ({
         key: env.split('=')[0],
         value: env.split('=')[1],
@@ -77,9 +113,9 @@ export function formatEnvsForApi(envs: { key: string; value: string }[]): string
   return envs.map(env => `${env.key}=${env.value}`);
 }
 
-export function getLifecycleColor(lifecycle: string): StatusColorClasses {
+export function getLifecycleColor(lifecycle?: string): StatusColorClasses {
   return (
-    lifecycleColors[lifecycle.toLowerCase() as InferenceModelLifecycle] ||
+    lifecycleColors[lifecycle?.toLowerCase() as InferenceModelLifecycle] ||
     DEFAULT_CONTAINER_STATUS_COLORS
   );
 }
