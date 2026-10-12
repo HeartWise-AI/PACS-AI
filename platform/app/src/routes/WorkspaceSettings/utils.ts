@@ -7,10 +7,29 @@ import {
   containerStatusColors,
   DEFAULT_CONTAINER_STATUS_COLORS,
   InferenceContainerStatus,
+  InferenceModelLifecycle,
+  lifecycleColors,
 } from './constants';
 import type { DICOMModalities, InferenceModelView, StatusColorClasses } from './types';
 
 type ShowAlert = (message: string, variant: string) => void;
+type InferenceModelContainerResponse = Omit<
+  GetInferenceModelResponse['container'],
+  'lifecycle'
+> & {
+  lifecycle?: string;
+};
+
+export function resolveInferenceModelLifecycle(
+  container: InferenceModelContainerResponse
+): InferenceModelLifecycle {
+  const lifecycle = container.lifecycle as InferenceModelLifecycle | undefined;
+  if (lifecycle && Object.values(InferenceModelLifecycle).includes(lifecycle)) {
+    return lifecycle;
+  }
+
+  return InferenceModelLifecycle.UNKNOWN;
+}
 
 export function handleUnauthorizedAccess(
   error: { errorCode?: string; message?: string },
@@ -60,6 +79,10 @@ export function transformInferenceModels(
   return models
     .map(model => ({
       ...model,
+      container: {
+        ...model.container,
+        lifecycle: resolveInferenceModelLifecycle(model.container),
+      },
       envs: (model.envs as string[]).map(env => ({
         key: env.split('=')[0],
         value: env.split('=')[1],
@@ -73,6 +96,13 @@ export function transformInferenceModels(
 
 export function formatEnvsForApi(envs: { key: string; value: string }[]): string[] {
   return envs.map(env => `${env.key}=${env.value}`);
+}
+
+export function getLifecycleColor(lifecycle?: string): StatusColorClasses {
+  return (
+    lifecycleColors[lifecycle?.toLowerCase() as InferenceModelLifecycle] ||
+    DEFAULT_CONTAINER_STATUS_COLORS
+  );
 }
 
 export function getContainerStatusColor(status: string): StatusColorClasses {
