@@ -1,23 +1,19 @@
 name: PACS-AI self-hosted unit tests
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_call:
 
 permissions:
   contents: read
-
-concurrency:
-  group: pacs-self-hosted-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
 
 jobs:
   unit-tests:
     name: Unit tests
     if: github.event.pull_request.draft == false
     environment: pacs-self-hosted
-    runs-on: [self-hosted, linux, x64, sd4health, pacs-ai, cpu]
+    runs-on:
+      group: pacs-approved
+      labels: [self-hosted, linux, x64, sd4health, pacs-ai, cpu]
     timeout-minutes: 60
 
     steps:
