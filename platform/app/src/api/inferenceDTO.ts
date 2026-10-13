@@ -68,6 +68,43 @@ export interface GetInferenceModelResponse {
   updatedAt: number;
 }
 
+export interface InferenceModelProvenance {
+  sourceRepository: string;
+  sourceRevision: string;
+  modelRepository: string;
+  modelRevision: string;
+  weightsPath: string;
+  weightsSha256: string;
+}
+
+export type InferenceModelVersionStatus = 'AVAILABLE' | 'REVOKED';
+
+export interface GetInferenceModelVersionResponse {
+  id: string;
+  modelId: string;
+  version: string;
+  imageReference: string;
+  imageDigest: string;
+  provenance: InferenceModelProvenance;
+  status: InferenceModelVersionStatus;
+  publishedAt: number;
+  active: boolean;
+}
+
+export interface DeployInferenceModelVersionResponse {
+  previous: {
+    containerId: string;
+    catalogVersionId?: string;
+    modelVersion?: string;
+  };
+  active: {
+    containerId: string;
+    catalogVersionId: string;
+    modelVersion: string;
+  };
+  containerName: string;
+}
+
 export interface GetInferenceModelInfoRequest {
   containerID: string;
 }

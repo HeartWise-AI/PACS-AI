@@ -20,6 +20,7 @@ type InferenceModelsTableProps = {
   onEdit: (row: InferenceModelView) => void;
   onView: (row: InferenceModelView) => void;
   onViewFacts: (containerId: string) => void;
+  onManageVersions: (row: InferenceModelView) => void;
   onDelete: (modelId: string) => void;
 };
 
@@ -34,6 +35,7 @@ const InferenceModelsTable = ({
   onEdit,
   onView,
   onViewFacts,
+  onManageVersions,
   onDelete,
 }: InferenceModelsTableProps) => {
   const { t } = useTranslation('Common');
@@ -129,6 +131,7 @@ const InferenceModelsTable = ({
                 onEdit={onEdit}
                 onView={onView}
                 onViewFacts={onViewFacts}
+                onManageVersions={onManageVersions}
                 onDelete={onDelete}
               />
             </div>

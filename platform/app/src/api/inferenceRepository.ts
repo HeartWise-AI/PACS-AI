@@ -17,6 +17,8 @@ import {
   GetInferenceModelInfoRequest,
   GetInferenceModelInfoResponse,
   GetInferenceModelResponse,
+  GetInferenceModelVersionResponse,
+  DeployInferenceModelVersionResponse,
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
   GetOnboardingModelQuestionnaireAnswersRequest,
@@ -144,6 +146,35 @@ const inferenceRepository = {
     return Api()
       .get(`/v1/inference/model/list`)
       .then((response: AxiosResponse<APIResponse<GetInferenceModelResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  async GetInferenceModelVersions(
+    modelId: string
+  ): Promise<APIResponse<GetInferenceModelVersionResponse[]>> {
+    return Api()
+      .get(`/v1/inference/model/${modelId}/versions`)
+      .then((response: AxiosResponse<APIResponse<GetInferenceModelVersionResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  async DeployInferenceModelVersion(
+    modelId: string,
+    versionId: string
+  ): Promise<APIResponse<DeployInferenceModelVersionResponse>> {
+    return Api()
+      .post(`/v1/inference/model/${modelId}/versions/${versionId}/deploy`)
+      .then((response: AxiosResponse<APIResponse<DeployInferenceModelVersionResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -286,12 +317,10 @@ const inferenceRepository = {
   ): Promise<APIResponse<GetInferenceIngestionCandidatesResponse[]>> {
     return Api()
       .get(`/v1/inference/ingestion/candidates`, { params: request })
-      .then(
-        (response: AxiosResponse<APIResponse<GetInferenceIngestionCandidatesResponse[]>>) => {
-          const { data } = response;
-          return data;
-        }
-      )
+      .then((response: AxiosResponse<APIResponse<GetInferenceIngestionCandidatesResponse[]>>) => {
+        const { data } = response;
+        return data;
+      })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

@@ -12,6 +12,7 @@ type InferenceModelActionButtonProps = {
   onEdit: (row: InferenceModelView) => void;
   onView: (row: InferenceModelView) => void;
   onViewFacts: (containerId: string) => void;
+  onManageVersions: (row: InferenceModelView) => void;
   onDelete: (modelId: string) => void;
 };
 
@@ -21,6 +22,7 @@ const InferenceModelActionButton = ({
   onEdit,
   onView,
   onViewFacts,
+  onManageVersions,
   onDelete,
 }: InferenceModelActionButtonProps) => {
   const { t } = useTranslation('Common');
@@ -110,6 +112,17 @@ const InferenceModelActionButton = ({
                   </button>
                 </li>
               )}
+              <li>
+                <button
+                  className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"
+                  onClick={() => {
+                    onManageVersions(row);
+                    setIsOpen(false);
+                  }}
+                >
+                  {t('Versions')}
+                </button>
+              </li>
               <li>
                 {deleting ? (
                   <img

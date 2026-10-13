@@ -5,9 +5,11 @@ import inferenceRepository from '../../../api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
   GetInferenceModelInfoResponse,
+  GetInferenceModelVersionResponse,
 } from '../../../api/inferenceDTO';
 import { ModelDetails } from '../../../api/tenantDTO';
 import { EMPTY_INFERENCE_MODEL, POLLING_INTERVAL_MS } from '../constants';
+import { getDefaultDeployableVersionId } from '../inference-models/modelVersions';
 import type { InferenceModelView } from '../types';
 import { formatEnvsForApi, handleUnauthorizedAccess, transformInferenceModels } from '../utils';
 
@@ -17,9 +19,7 @@ export function useInferenceModels() {
   const tenantId = localStorage.getItem('tenantId') || '';
 
   const [models, setModels] = useState<InferenceModelView[]>([]);
-  const [availableModels, setAvailableModels] = useState<GetInferenceAvailableModelsResponse[]>(
-    []
-  );
+  const [availableModels, setAvailableModels] = useState<GetInferenceAvailableModelsResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAIModel, setSelectedAIModel] = useState<ModelDetails>();
   const [selectedInferenceModelToRemove, setSelectedInferenceModelToRemove] = useState('');
@@ -41,6 +41,12 @@ export function useInferenceModels() {
   const [stoppingInferenceModelContainer, setStoppingInferenceModelContainer] = useState(false);
   const [deletingInferenceModel, setDeletingInferenceModel] = useState(false);
   const [selectedContainerToStartStop, setSelectedContainerToStartStop] = useState('');
+  const [isOpenModelVersionsModal, setIsOpenModelVersionsModal] = useState(false);
+  const [versionModel, setVersionModel] = useState<InferenceModelView | null>(null);
+  const [modelVersions, setModelVersions] = useState<GetInferenceModelVersionResponse[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState('');
+  const [fetchingModelVersions, setFetchingModelVersions] = useState(false);
+  const [deployingModelVersion, setDeployingModelVersion] = useState(false);
 
   const clearSelectedInferenceModel = useCallback(() => {
     setSelectedInferenceModel(EMPTY_INFERENCE_MODEL);
@@ -219,6 +225,64 @@ export function useInferenceModels() {
     }
   };
 
+  const fetchModelVersions = async (modelId: string) => {
+    setFetchingModelVersions(true);
+    try {
+      const response = await inferenceRepository.GetInferenceModelVersions(modelId);
+      setModelVersions(response.data);
+      setSelectedVersionId(getDefaultDeployableVersionId(response.data));
+    } catch (error) {
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
+      console.error('Error fetching inference model versions:', error);
+      showAlert(error.message, 'error');
+      setModelVersions([]);
+      setSelectedVersionId('');
+    }
+    setFetchingModelVersions(false);
+  };
+
+  const openModelVersionsModal = (row: InferenceModelView) => {
+    setVersionModel(row);
+    setModelVersions([]);
+    setSelectedVersionId('');
+    setIsOpenModelVersionsModal(true);
+    fetchModelVersions(row.id);
+  };
+
+  const closeModelVersionsModal = () => {
+    if (deployingModelVersion) {
+      return;
+    }
+    setIsOpenModelVersionsModal(false);
+    setVersionModel(null);
+    setModelVersions([]);
+    setSelectedVersionId('');
+  };
+
+  const deployModelVersion = async () => {
+    if (!versionModel || !selectedVersionId) {
+      return;
+    }
+    setDeployingModelVersion(true);
+    try {
+      const response = await inferenceRepository.DeployInferenceModelVersion(
+        versionModel.id,
+        selectedVersionId
+      );
+      showAlert(response.message, 'success');
+      await fetchInferenceModels();
+      setIsOpenModelVersionsModal(false);
+      setVersionModel(null);
+      setModelVersions([]);
+      setSelectedVersionId('');
+    } catch (error) {
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
+      console.error('Error deploying inference model version:', error);
+      showAlert(error.message, 'error');
+    }
+    setDeployingModelVersion(false);
+  };
+
   const openAddModelModal = () => {
     setIsOpenAddEditInferenceModelModal(true);
   };
@@ -292,11 +356,21 @@ export function useInferenceModels() {
     stoppingInferenceModelContainer,
     deletingInferenceModel,
     selectedContainerToStartStop,
+    isOpenModelVersionsModal,
+    versionModel,
+    modelVersions,
+    selectedVersionId,
+    setSelectedVersionId,
+    fetchingModelVersions,
+    deployingModelVersion,
     refreshInferenceModels,
     addInferenceModel,
     updateInferenceModel,
     deleteInferenceModel,
     handleViewModelFacts,
+    openModelVersionsModal,
+    closeModelVersionsModal,
+    deployModelVersion,
     openAddModelModal,
     openEditModelModal,
     openViewModelModal,
