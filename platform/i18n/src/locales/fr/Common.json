@@ -42,5 +42,12 @@
   "Update modality information.": "Mettre à jour les informations de la modalité.",
   "User Onboarding": "Intégration des utilisateurs",
   "View More": "Voir plus",
-  "Yes": "Oui"
+  "Yes": "Oui",
+  "Model Versions": "Versions du modèle",
+  "No model versions available": "Aucune version du modèle disponible",
+  "Current": "Actuelle",
+  "Revoked": "Révoquée",
+  "Deploying": "Déploiement...",
+  "Deploy": "Déployer",
+  "Versions": "Versions"
 }

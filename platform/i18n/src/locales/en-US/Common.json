@@ -42,5 +42,12 @@
   "Target AET": "Target AET",
   "Update modality information.": "Update modality information.",
   "User Onboarding": "User Onboarding",
-  "View More": "View More"
+  "View More": "View More",
+  "Model Versions": "Model Versions",
+  "No model versions available": "No model versions available",
+  "Current": "Current",
+  "Revoked": "Revoked",
+  "Deploying": "Deploying...",
+  "Deploy": "Deploy",
+  "Versions": "Versions"
 }

@@ -8,6 +8,7 @@ import { getLifecycleColor } from '../utils';
 import AddEditInferenceModelModal from '../inference-models/components/AddEditInferenceModelModal';
 import InferenceModelsTable from '../inference-models/components/InferenceModelsTable';
 import RemoveInferenceModelModal from '../inference-models/components/RemoveInferenceModelModal';
+import InferenceModelVersionsModal from '../inference-models/components/InferenceModelVersionsModal';
 
 type InferenceModelsSectionProps = {
   inference: UseInferenceModelsResult;
@@ -36,9 +37,7 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
                 alt="Refresh icon"
                 className={`${inference.loading ? 'animate-spin' : ''} h-4 w-4`}
               />
-              <span
-                className={`text-white ${inference.loading ? 'opacity-40' : ''} text-[14px]`}
-              >
+              <span className={`text-white ${inference.loading ? 'opacity-40' : ''} text-[14px]`}>
                 {t('Refresh')}
               </span>
             </button>
@@ -63,6 +62,7 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
           onEdit={inference.openEditModelModal}
           onView={inference.openViewModelModal}
           onViewFacts={inference.handleViewModelFacts}
+          onManageVersions={inference.openModelVersionsModal}
           onDelete={inference.openRemoveModelModal}
         />
       </div>
@@ -99,9 +99,19 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
         isOpen={inference.isOpenRemoveInferenceModelModal}
         isDeleting={inference.deletingInferenceModel}
         onClose={inference.closeRemoveModelModal}
-        onConfirm={() =>
-          inference.deleteInferenceModel(inference.selectedInferenceModelToRemove)
-        }
+        onConfirm={() => inference.deleteInferenceModel(inference.selectedInferenceModelToRemove)}
+      />
+
+      <InferenceModelVersionsModal
+        isOpen={inference.isOpenModelVersionsModal}
+        model={inference.versionModel}
+        versions={inference.modelVersions}
+        selectedVersionId={inference.selectedVersionId}
+        loading={inference.fetchingModelVersions}
+        deploying={inference.deployingModelVersion}
+        onClose={inference.closeModelVersionsModal}
+        onSelect={inference.setSelectedVersionId}
+        onDeploy={inference.deployModelVersion}
       />
     </>
   );
