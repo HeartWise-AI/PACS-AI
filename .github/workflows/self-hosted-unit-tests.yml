@@ -32,6 +32,11 @@ jobs:
         with:
           node-version: 20.18.1
 
+      - name: Set up Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
@@ -41,6 +46,7 @@ jobs:
         run: |
           hostname
           node --version
+          yarn --version
           bun --version
           nproc
 
