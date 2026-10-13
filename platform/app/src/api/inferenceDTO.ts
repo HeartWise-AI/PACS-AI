@@ -223,7 +223,8 @@ export interface GetInferenceIngestionJobsResponse {
   tenantId: string;
   containerId: string;
   dicomModality: string;
-  intervalInMinutes: number;
+  stabilityMinutes?: number;
+  intervalInMinutes?: number;
   modelId: string;
   modelName: string;
   modelVersion: string;

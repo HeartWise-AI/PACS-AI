@@ -14,6 +14,7 @@ import {
   POLLING_INTERVAL_MS,
 } from '../constants';
 import type { IngestionScheduleType, SelectOption } from '../types';
+import { getIngestionJobTimingMinutes } from '../ingestionJobTiming';
 import { buildTimestampFromDateAndTime, handleUnauthorizedAccess, isCSVFile } from '../utils';
 
 type UseIngestionJobsOptions = {
@@ -189,7 +190,7 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
       parsedInterval < minIngestionJobIntervalMinutes
     ) {
       showAlert(
-        `Interval is required and must be at least ${minIngestionJobIntervalMinutes} minutes`,
+        `Stability period is required and must be at least ${minIngestionJobIntervalMinutes} minutes`,
         'error'
       );
       return;
@@ -280,14 +281,8 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
     );
     setNewJobDicomModality(row.dicomModality || '');
     setNewJobModalities(row.modalities.map(m => ({ value: m, label: m })));
-    const existingInterval = Number(row.intervalInMinutes);
-    setNewJobInterval(
-      String(
-        !Number.isFinite(existingInterval) || existingInterval <= 0
-          ? minIngestionJobIntervalMinutes
-          : existingInterval
-      )
-    );
+    const existingInterval = getIngestionJobTimingMinutes(row);
+    setNewJobInterval(existingInterval === undefined ? '' : String(existingInterval));
     if (!row.scheduleStartTimestamp && !row.scheduleEndTimestamp) {
       setNewJobScheduleType('always');
       setNewJobStartDate(null);
