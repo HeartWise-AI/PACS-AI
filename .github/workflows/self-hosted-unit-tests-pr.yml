@@ -3,7 +3,16 @@ name: PACS-AI self-hosted unit tests
 on:
   pull_request:
     branches: [main]
-    types: [opened, reopened, synchronize, ready_for_review]
+    types:
+      [
+        opened,
+        reopened,
+        synchronize,
+        ready_for_review,
+        edited,
+        closed,
+        converted_to_draft,
+      ]
 
 permissions:
   contents: read
@@ -15,5 +24,8 @@ concurrency:
 jobs:
   unit-tests:
     name: Unit tests
-    if: github.event.pull_request.draft == false
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.action != 'converted_to_draft' &&
+      github.event.pull_request.draft == false
     uses: HeartWise-AI/PACS-AI/.github/workflows/self-hosted-unit-tests.yml@main
