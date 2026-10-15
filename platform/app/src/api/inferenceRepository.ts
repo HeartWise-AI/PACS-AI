@@ -19,6 +19,7 @@ import {
   GetInferenceModelResponse,
   GetInferenceModelVersionResponse,
   DeployInferenceModelVersionResponse,
+  GetInferenceModelDeploymentOperationResponse,
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
   GetOnboardingModelQuestionnaireAnswersRequest,
@@ -178,6 +179,21 @@ const inferenceRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  async GetInferenceModelDeploymentOperation(
+    modelId: string,
+    deploymentId: string
+  ): Promise<APIResponse<GetInferenceModelDeploymentOperationResponse>> {
+    return Api()
+      .get(`/v1/inference/model/${modelId}/deployments/${deploymentId}`)
+      .then(
+        (response: AxiosResponse<APIResponse<GetInferenceModelDeploymentOperationResponse>>) =>
+          response.data
+      )
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

@@ -49,5 +49,22 @@
   "Revoked": "Révoquée",
   "Deploying": "Déploiement...",
   "Deploy": "Déployer",
-  "Versions": "Versions"
+  "Versions": "Versions",
+  "Resolving active deployment": "Résolution du déploiement actif",
+  "Resolving selected version": "Résolution de la version sélectionnée",
+  "Pulling image": "Téléchargement de l’image",
+  "Creating candidate": "Création du candidat",
+  "Validating candidate": "Validation du candidat",
+  "Draining active inference": "Finalisation des inférences actives",
+  "Preparing candidate": "Préparation du candidat",
+  "Activating candidate": "Activation du candidat",
+  "Pending": "En attente",
+  "Running": "En cours",
+  "Completed": "Terminé",
+  "Failed": "Échec",
+  "Rolled back": "Retour arrière effectué",
+  "Interrupted": "Interrompu",
+  "Elapsed": "Temps écoulé",
+  "Live updates": "Mises à jour en direct",
+  "Reconnecting": "Reconnexion"
 }

@@ -106,6 +106,7 @@ describe('server-sent event parser', () => {
     const frames = parser.push(encodedEvent);
 
     expect(frames).toHaveLength(1);
+    expect(frames[0].id).toBe('ignored-by-this-ephemeral-stream');
     expect(parseWorklistStudyStatusEvent(frames[0])).toEqual(eventPayload);
   });
 

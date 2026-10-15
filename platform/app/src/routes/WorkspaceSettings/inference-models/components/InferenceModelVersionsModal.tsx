@@ -5,6 +5,8 @@ import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import type { GetInferenceModelVersionResponse } from '../../../../api/inferenceDTO';
 import Modal from '../../../../components/Modal';
 import type { InferenceModelView } from '../../types';
+import type { TrackedModelDeployment } from '../modelDeployment';
+import ModelDeploymentProgressPanel from './ModelDeploymentProgressPanel';
 
 type InferenceModelVersionsModalProps = {
   isOpen: boolean;
@@ -13,6 +15,7 @@ type InferenceModelVersionsModalProps = {
   selectedVersionId: string;
   loading: boolean;
   deploying: boolean;
+  deployment?: TrackedModelDeployment;
   onClose: () => void;
   onSelect: (versionId: string) => void;
   onDeploy: () => void;
@@ -25,6 +28,7 @@ const InferenceModelVersionsModal = ({
   selectedVersionId,
   loading,
   deploying,
+  deployment,
   onClose,
   onSelect,
   onDeploy,
@@ -36,7 +40,7 @@ const InferenceModelVersionsModal = ({
     <Modal
       isOpen={isOpen}
       size="w-[600px] max-w-[calc(100vw-32px)]"
-      isCloseable={!deploying}
+      isCloseable
       onClose={onClose}
     >
       <div className="relative">
@@ -53,7 +57,13 @@ const InferenceModelVersionsModal = ({
           {model?.name}
         </Typography>
 
-        <div className="mt-5 max-h-[420px] overflow-y-auto border-y border-white border-opacity-10">
+        {deployment && <ModelDeploymentProgressPanel deployment={deployment} />}
+
+        <div
+          className={`max-h-[360px] overflow-y-auto border-y border-white border-opacity-10 ${
+            deployment ? 'mt-4' : 'mt-5'
+          }`}
+        >
           {loading ? (
             <div className="flex h-28 items-center justify-center">
               <img
@@ -121,7 +131,7 @@ const InferenceModelVersionsModal = ({
             className="h-[41px] rounded-lg bg-white bg-opacity-10 px-4 text-white"
             onClick={onClose}
           >
-            {t('Cancel')}
+            {deploying ? t('Close') : t('Cancel')}
           </Button>
           <Button
             disabled={!selected || selected.active || selected.status !== 'AVAILABLE' || deploying}
