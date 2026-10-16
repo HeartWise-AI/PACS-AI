@@ -35,6 +35,7 @@ const InferenceModelVersionsModal = ({
 }: InferenceModelVersionsModalProps) => {
   const { t } = useTranslation('Common');
   const selected = versions.find(version => version.id === selectedVersionId);
+  const deploymentFinished = Boolean(deployment?.progress.terminal);
 
   return (
     <Modal
@@ -126,20 +127,33 @@ const InferenceModelVersionsModal = ({
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
-          <Button
-            disabled={deploying}
-            className="h-[41px] rounded-lg bg-white bg-opacity-10 px-4 text-white"
-            onClick={onClose}
-          >
-            {deploying ? t('Close') : t('Cancel')}
-          </Button>
-          <Button
-            disabled={!selected || selected.active || selected.status !== 'AVAILABLE' || deploying}
-            className="h-[41px] min-w-[110px] rounded-lg"
-            onClick={onDeploy}
-          >
-            {deploying ? t('Deploying') : t('Deploy')}
-          </Button>
+          {deploymentFinished ? (
+            <Button
+              className="h-[41px] min-w-[110px] rounded-lg"
+              onClick={onClose}
+            >
+              {t('OK')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                disabled={deploying}
+                className="h-[41px] rounded-lg bg-white bg-opacity-10 px-4 text-white"
+                onClick={onClose}
+              >
+                {deploying ? t('Close') : t('Cancel')}
+              </Button>
+              <Button
+                disabled={
+                  !selected || selected.active || selected.status !== 'AVAILABLE' || deploying
+                }
+                className="h-[41px] min-w-[110px] rounded-lg"
+                onClick={onDeploy}
+              >
+                {deploying ? t('Deploying') : t('Deploy')}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </Modal>
