@@ -109,6 +109,7 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
         selectedVersionId={inference.selectedVersionId}
         loading={inference.fetchingModelVersions}
         deploying={inference.deployingModelVersion}
+        deployment={inference.modelDeployment}
         onClose={inference.closeModelVersionsModal}
         onSelect={inference.setSelectedVersionId}
         onDeploy={inference.deployModelVersion}

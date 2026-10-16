@@ -6,6 +6,7 @@ export const WORKLIST_STUDY_STATUS_EVENT = 'study_status.updated';
 export interface ServerSentEventFrame {
   event: string;
   data: string;
+  id?: string;
 }
 
 export interface ServerSentEventParser {
@@ -17,6 +18,7 @@ export interface ServerSentEventParser {
 export function createServerSentEventParser(): ServerSentEventParser {
   let bufferedText = '';
   let eventName = '';
+  let eventID: string | undefined;
   let dataLines: string[] = [];
 
   function dispatch(): ServerSentEventFrame[] {
@@ -28,8 +30,10 @@ export function createServerSentEventParser(): ServerSentEventParser {
     const frame = {
       event: eventName || 'message',
       data: dataLines.join('\n'),
+      id: eventID,
     };
     eventName = '';
+    eventID = undefined;
     dataLines = [];
     return [frame];
   }
@@ -54,6 +58,8 @@ export function createServerSentEventParser(): ServerSentEventParser {
 
     if (field === 'event') {
       eventName = value;
+    } else if (field === 'id') {
+      eventID = value;
     } else if (field === 'data') {
       dataLines.push(value);
     }
@@ -86,6 +92,7 @@ export function createServerSentEventParser(): ServerSentEventParser {
   function reset() {
     bufferedText = '';
     eventName = '';
+    eventID = undefined;
     dataLines = [];
   }
 

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertContext } from '../../../AlertProvider';
 import inferenceRepository from '../../../api/inferenceRepository';
@@ -12,6 +12,7 @@ import { EMPTY_INFERENCE_MODEL, POLLING_INTERVAL_MS } from '../constants';
 import { getDefaultDeployableVersionId } from '../inference-models/modelVersions';
 import type { InferenceModelView } from '../types';
 import { formatEnvsForApi, handleUnauthorizedAccess, transformInferenceModels } from '../utils';
+import { useModelDeploymentProgress } from './useModelDeploymentProgress';
 
 export function useInferenceModels() {
   const showAlert = useContext(AlertContext);
@@ -46,7 +47,7 @@ export function useInferenceModels() {
   const [modelVersions, setModelVersions] = useState<GetInferenceModelVersionResponse[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState('');
   const [fetchingModelVersions, setFetchingModelVersions] = useState(false);
-  const [deployingModelVersion, setDeployingModelVersion] = useState(false);
+  const restoredDeploymentModalRef = useRef(false);
 
   const clearSelectedInferenceModel = useCallback(() => {
     setSelectedInferenceModel(EMPTY_INFERENCE_MODEL);
@@ -242,6 +243,7 @@ export function useInferenceModels() {
   };
 
   const openModelVersionsModal = (row: InferenceModelView) => {
+    restoredDeploymentModalRef.current = true;
     setVersionModel(row);
     setModelVersions([]);
     setSelectedVersionId('');
@@ -250,37 +252,66 @@ export function useInferenceModels() {
   };
 
   const closeModelVersionsModal = () => {
-    if (deployingModelVersion) {
-      return;
-    }
+    restoredDeploymentModalRef.current = true;
     setIsOpenModelVersionsModal(false);
     setVersionModel(null);
     setModelVersions([]);
     setSelectedVersionId('');
   };
 
+  const modelDeploymentProgress = useModelDeploymentProgress({
+    tenantId,
+    onTerminal: (modelId, progress) => {
+      if (progress.status === 'COMPLETED') {
+        showAlert('Model deployment completed.', 'success');
+        void fetchInferenceModels();
+        if (versionModel?.id === modelId) {
+          void fetchModelVersions(modelId);
+        }
+        return;
+      }
+      showAlert(
+        progress.rollbackError || progress.errorMessage || 'The model deployment did not complete.',
+        'error'
+      );
+    },
+  });
+
+  useEffect(() => {
+    if (restoredDeploymentModalRef.current || isOpenModelVersionsModal) {
+      return;
+    }
+    const activeDeployment = Object.values(modelDeploymentProgress.deployments).find(
+      deployment => !deployment.progress.terminal
+    );
+    const model = activeDeployment
+      ? models.find(candidate => candidate.id === activeDeployment.modelId)
+      : undefined;
+    if (!model) {
+      return;
+    }
+    restoredDeploymentModalRef.current = true;
+    setVersionModel(model);
+    setModelVersions([]);
+    setSelectedVersionId('');
+    setIsOpenModelVersionsModal(true);
+    void fetchModelVersions(model.id);
+    // fetchModelVersions intentionally follows the restored model identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpenModelVersionsModal, modelDeploymentProgress.deployments, models]);
+
   const deployModelVersion = async () => {
     if (!versionModel || !selectedVersionId) {
       return;
     }
-    setDeployingModelVersion(true);
     try {
-      const response = await inferenceRepository.DeployInferenceModelVersion(
-        versionModel.id,
-        selectedVersionId
-      );
-      showAlert(response.message, 'success');
-      await fetchInferenceModels();
-      setIsOpenModelVersionsModal(false);
-      setVersionModel(null);
-      setModelVersions([]);
-      setSelectedVersionId('');
+      await modelDeploymentProgress.deploy(versionModel.id, selectedVersionId);
+      showAlert('Model deployment accepted.', 'success');
     } catch (error) {
       handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error deploying inference model version:', error);
       showAlert(error.message, 'error');
     }
-    setDeployingModelVersion(false);
   };
 
   const openAddModelModal = () => {
@@ -362,7 +393,10 @@ export function useInferenceModels() {
     selectedVersionId,
     setSelectedVersionId,
     fetchingModelVersions,
-    deployingModelVersion,
+    deployingModelVersion: modelDeploymentProgress.isDeploying(versionModel?.id),
+    modelDeployment: versionModel
+      ? modelDeploymentProgress.deployments[versionModel.id]
+      : undefined,
     refreshInferenceModels,
     addInferenceModel,
     updateInferenceModel,

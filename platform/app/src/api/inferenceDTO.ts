@@ -92,17 +92,61 @@ export interface GetInferenceModelVersionResponse {
 }
 
 export interface DeployInferenceModelVersionResponse {
-  previous: {
-    containerId: string;
-    catalogVersionId?: string;
-    modelVersion?: string;
-  };
-  active: {
-    containerId: string;
-    catalogVersionId: string;
-    modelVersion: string;
-  };
-  containerName: string;
+  deploymentId: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+}
+
+export type InferenceModelDeploymentStatus =
+  | 'PENDING'
+  | 'RUNNING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'ROLLED_BACK'
+  | 'INTERRUPTED';
+
+export type InferenceModelDeploymentStage =
+  | 'resolve_active'
+  | 'resolve_version'
+  | 'pull'
+  | 'create_candidate'
+  | 'validate_candidate'
+  | 'drain_active'
+  | 'prepare_candidate'
+  | 'activate_candidate';
+
+export interface InferenceModelDeploymentOperation {
+  id: string;
+  modelId: string;
+  catalogVersionId: string;
+  requestedVersion: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+  sequence: number;
+  errorCode?: string;
+  errorMessage?: string;
+  rollbackError?: string;
+  createdAt: number;
+  startedAt?: number;
+  updatedAt: number;
+  finishedAt?: number;
+}
+
+export interface GetInferenceModelDeploymentOperationResponse {
+  deployment: InferenceModelDeploymentOperation;
+}
+
+export interface InferenceModelDeploymentEvent {
+  deploymentId: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+  sequence: number;
+  timestamp: number;
+  elapsedMilliseconds: number;
+  terminal: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+  rollbackError?: string;
 }
 
 export interface GetInferenceModelInfoRequest {
