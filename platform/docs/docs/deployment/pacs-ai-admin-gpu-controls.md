@@ -4,7 +4,7 @@ Open **Workspace Settings → Inference Models** as an owner or administrator. T
 
 Device memory usage, total memory, free memory, and utilization come from telemetry. Scheduler reservations and capacity are shown separately: reservations include conservative inference headroom and are not measured device allocations. Missing telemetry is displayed as unavailable, never as zero. A failed refresh marks the inventory stale and disables placement changes.
 
-The panel refreshes every five seconds after a completed request while its tab and browser document are visible. It cancels requests and releases timers when hidden or unmounted. Access is checked before GPU requests; the backend remains responsible for enforcing owner/admin permissions and tenant scope.
+The panel refreshes every five seconds after a completed request while its tab and browser document are visible. It cancels requests and releases timers when hidden or unmounted. Tenant changes and session-token rotation clear inventory, authorization, selections, confirmation, and deployment state; late responses from the previous session cannot restore them. A late accepted deployment remains durable on the server but cannot restart a UI monitor after unmount or attach to another session. Access is checked before GPU requests; the backend remains responsible for enforcing owner/admin permissions and tenant scope.
 
 ## Change GPU placement
 

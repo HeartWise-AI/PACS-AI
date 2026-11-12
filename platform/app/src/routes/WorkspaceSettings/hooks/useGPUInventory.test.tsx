@@ -2,10 +2,11 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import inferenceRepository from '../../../api/inferenceRepository';
 import { useGPUInventory } from './useGPUInventory';
+import { getAuthenticatedScope } from './authenticatedScope';
 jest.mock('../../../api/inferenceRepository');
 let result: ReturnType<typeof useGPUInventory>;
-function Consumer({ enabled }: { enabled: boolean }) {
-  result = useGPUInventory(enabled);
+function Consumer({ enabled, scopeKey = '' }: { enabled: boolean; scopeKey?: string }) {
+  result = useGPUInventory(enabled, '', scopeKey);
   return null;
 }
 const fetch = inferenceRepository.GetInferenceGPUs as jest.Mock;
@@ -104,5 +105,58 @@ describe('GPU inventory polling', () => {
       renderer.update(<Consumer enabled={false} />);
     });
     expect(result.inventory).toBeNull();
+  });
+  test('scope rotation clears cached data, aborts old requests and rejects their late results', async () => {
+    localStorage.setItem('tenantId', 'tenant-a');
+    localStorage.setItem('sessionToken', 'token-a');
+    const firstScope = getAuthenticatedScope().key;
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <Consumer
+          enabled
+          scopeKey={firstScope}
+        />
+      );
+    });
+    expect(result.inventory).toEqual(sample);
+    let finishOld!: (value: any) => void;
+    let finishNew!: (value: any) => void;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise(done => {
+          finishOld = done;
+        })
+    );
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+    const oldSignal = fetch.mock.calls[1][0] as AbortSignal;
+    fetch.mockImplementationOnce(
+      () =>
+        new Promise(done => {
+          finishNew = done;
+        })
+    );
+    localStorage.setItem('tenantId', 'tenant-b');
+    localStorage.setItem('sessionToken', 'token-b');
+    await act(async () => {
+      renderer.update(
+        <Consumer
+          enabled
+          scopeKey={getAuthenticatedScope().key}
+        />
+      );
+    });
+    expect(oldSignal.aborted).toBe(true);
+    expect(result.inventory).toBeNull();
+    await act(async () => {
+      finishOld({ data: sample });
+    });
+    expect(result.inventory).toBeNull();
+    const nextSample = { ...sample, sampledAt: 'new-session' };
+    await act(async () => {
+      finishNew({ data: nextSample });
+    });
+    expect(result.inventory).toEqual(nextSample);
   });
 });

@@ -19,8 +19,16 @@ const mockedCreateMonitor = createModelDeploymentMonitor as jest.MockedFunction<
 
 let hookValue: ReturnType<typeof useModelDeploymentProgress>;
 
-function Consumer({ onTerminal }: { onTerminal: jest.Mock }) {
-  hookValue = useModelDeploymentProgress({ tenantId: 'tenant-a', onTerminal });
+function Consumer({
+  onTerminal,
+  tenantId = 'tenant-a',
+  sessionScope,
+}: {
+  onTerminal: jest.Mock;
+  tenantId?: string;
+  sessionScope?: string;
+}) {
+  hookValue = useModelDeploymentProgress({ tenantId, sessionScope, onTerminal });
   return null;
 }
 
@@ -160,5 +168,116 @@ describe('useModelDeploymentProgress', () => {
       });
       await firstDeployment;
     });
+  });
+  test('a pending GPU acceptance cannot start a monitor after unmount', async () => {
+    let resolve!: (value: any) => void;
+    mockedRepository.SetInferenceModelGPUPlacement.mockImplementation(
+      () =>
+        new Promise(done => {
+          resolve = done;
+        })
+    );
+    act(() => {
+      renderer = TestRenderer.create(
+        <Consumer
+          onTerminal={jest.fn()}
+          sessionScope="session-a"
+        />
+      );
+    });
+    let pending!: ReturnType<typeof hookValue.moveGPU>;
+    act(() => {
+      pending = hookValue.moveGPU('model-1', 'GPU-a', 'old');
+    });
+    act(() => renderer.unmount());
+    await act(async () => {
+      resolve({ data: { deploymentId: 'late', status: 'PENDING', stage: 'resolve_active' } });
+      await pending;
+    });
+    expect(mockedCreateMonitor).not.toHaveBeenCalled();
+    expect(loadStoredModelDeployments('tenant-a')).toEqual([]);
+  });
+
+  test('a pending acceptance from an old tenant/session cannot enter the new scope', async () => {
+    let resolve!: (value: any) => void;
+    mockedRepository.SetInferenceModelGPUPlacement.mockImplementation(
+      () =>
+        new Promise(done => {
+          resolve = done;
+        })
+    );
+    const onTerminal = jest.fn();
+    act(() => {
+      renderer = TestRenderer.create(
+        <Consumer
+          onTerminal={onTerminal}
+          sessionScope="session-a"
+        />
+      );
+    });
+    let pending!: ReturnType<typeof hookValue.moveGPU>;
+    act(() => {
+      pending = hookValue.moveGPU('model-1', 'GPU-a', 'old');
+    });
+    act(() =>
+      renderer.update(
+        <Consumer
+          onTerminal={onTerminal}
+          tenantId="tenant-b"
+          sessionScope="session-b"
+        />
+      )
+    );
+    expect(hookValue.deployments).toEqual({});
+    expect(hookValue.isDeploying('model-1')).toBe(false);
+    await act(async () => {
+      resolve({ data: { deploymentId: 'late', status: 'PENDING', stage: 'resolve_active' } });
+      await pending;
+    });
+    expect(mockedCreateMonitor).not.toHaveBeenCalled();
+    expect(loadStoredModelDeployments('tenant-a')).toEqual([]);
+    expect(loadStoredModelDeployments('tenant-b')).toEqual([]);
+  });
+
+  test('session rotation clears visible progress and ignores stopped monitor callbacks', async () => {
+    mockedRepository.DeployInferenceModelVersion.mockResolvedValue({
+      success: true,
+      message: 'accepted',
+      data: { deploymentId: 'old-operation', status: 'PENDING', stage: 'resolve_active' },
+    });
+    const onTerminal = jest.fn();
+    act(() => {
+      renderer = TestRenderer.create(
+        <Consumer
+          onTerminal={onTerminal}
+          sessionScope="session-a"
+        />
+      );
+    });
+    await act(async () => {
+      await hookValue.deploy('model-1', 'version-1');
+    });
+    const oldCallbacks = callbacks;
+    act(() =>
+      renderer.update(
+        <Consumer
+          onTerminal={onTerminal}
+          sessionScope="session-b"
+        />
+      )
+    );
+    expect(stop).toHaveBeenCalled();
+    expect(hookValue.deployments).toEqual({});
+    expect(loadStoredModelDeployments('tenant-a')).toEqual([]);
+    act(() =>
+      oldCallbacks.onTerminal({
+        deploymentId: 'old-operation',
+        status: 'COMPLETED',
+        stage: 'activate_candidate',
+        terminal: true,
+      } as InferenceModelDeploymentEvent)
+    );
+    expect(onTerminal).not.toHaveBeenCalled();
+    expect(hookValue.deployments).toEqual({});
   });
 });

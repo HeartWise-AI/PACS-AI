@@ -55,6 +55,8 @@ describe('GPUManagementPanel', () => {
   let inference: UseInferenceModelsResult;
   beforeEach(() => {
     jest.clearAllMocks();
+    localStorage.setItem('tenantId', 'tenant-a');
+    localStorage.setItem('sessionToken', 'token-a');
     moveGPU = jest.fn().mockResolvedValue(undefined);
     inference = {
       models: [{ id: 'm1', name: 'JEPA' }],
@@ -62,7 +64,9 @@ describe('GPUManagementPanel', () => {
       isModelDeploying: () => false,
       moveGPU,
     } as unknown as UseInferenceModelsResult;
-    (userRepository.GetCurrentUser as jest.Mock).mockResolvedValue({ data: { role: 'ADMIN' } });
+    (userRepository.GetCurrentUser as jest.Mock).mockResolvedValue({
+      data: { role: 'ADMIN', tenantId: 'tenant-a' },
+    });
     (useGPUInventory as jest.Mock).mockReturnValue({
       inventory,
       stale: false,
@@ -137,6 +141,48 @@ describe('GPUManagementPanel', () => {
         />
       )
     );
+    expect(renderer.toJSON()).toBeNull();
+  });
+  test('rotating the session clears an open confirmation and selected target before reauthorization', async () => {
+    await mount();
+    act(() => renderer.root.findByType('select').props.onChange({ target: { value: 'GPU-b' } }));
+    act(() =>
+      renderer.root
+        .findAllByType('button')
+        .find(node => node.children.includes('Move to GPU'))!
+        .props.onClick()
+    );
+    expect(renderer.root.findAllByProps({ 'aria-label': 'Confirm GPU change' })).toHaveLength(1);
+    await act(async () => {
+      localStorage.setItem('sessionToken', 'token-b');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'sessionToken' }));
+    });
+    expect(renderer.root.findAllByProps({ 'aria-label': 'Confirm GPU change' })).toHaveLength(0);
+    expect(renderer.root.findByType('select').props.value).toBe('GPU-a');
+    expect(moveGPU).not.toHaveBeenCalled();
+  });
+
+  test('an old tenant role response cannot authorize the replacement session', async () => {
+    let finishOld!: (value: any) => void;
+    (userRepository.GetCurrentUser as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise(done => {
+          finishOld = done;
+        })
+    );
+    await mount();
+    expect(renderer.toJSON()).toBeNull();
+    (userRepository.GetCurrentUser as jest.Mock).mockResolvedValue({
+      data: { role: 'USER', tenantId: 'tenant-b' },
+    });
+    await act(async () => {
+      localStorage.setItem('tenantId', 'tenant-b');
+      localStorage.setItem('sessionToken', 'token-b');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'tenantId' }));
+    });
+    await act(async () => {
+      finishOld({ data: { role: 'ADMIN', tenantId: 'tenant-a' } });
+    });
     expect(renderer.toJSON()).toBeNull();
   });
 });

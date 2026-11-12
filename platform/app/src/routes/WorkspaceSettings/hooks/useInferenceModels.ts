@@ -13,11 +13,13 @@ import { getDefaultDeployableVersionId } from '../inference-models/modelVersions
 import type { InferenceModelView } from '../types';
 import { formatEnvsForApi, handleUnauthorizedAccess, transformInferenceModels } from '../utils';
 import { useModelDeploymentProgress } from './useModelDeploymentProgress';
+import { useAuthenticatedScope, getAuthenticatedScope } from './authenticatedScope';
 
 export function useInferenceModels() {
   const showAlert = useContext(AlertContext);
   const navigate = useNavigate();
-  const tenantId = localStorage.getItem('tenantId') || '';
+  const authScope = useAuthenticatedScope();
+  const tenantId = authScope.tenantId;
 
   const [models, setModels] = useState<InferenceModelView[]>([]);
   const [availableModels, setAvailableModels] = useState<GetInferenceAvailableModelsResponse[]>([]);
@@ -261,6 +263,8 @@ export function useInferenceModels() {
 
   const modelDeploymentProgress = useModelDeploymentProgress({
     tenantId,
+    sessionScope: authScope.key,
+    scopeIsCurrent: () => authScope.authenticated && getAuthenticatedScope().key === authScope.key,
     onTerminal: (modelId, progress) => {
       if (progress.status === 'COMPLETED') {
         showAlert('Model deployment completed.', 'success');

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAuthenticatedScope, getAuthenticatedScope } from '../../hooks/authenticatedScope';
 import userRepository from '../../../../api/userRepository';
 import { UserRole } from '../../../../api/userDTO';
 import type { InferenceGPUModel } from '../../../../api/inferenceDTO';
@@ -14,7 +15,11 @@ const memory = (value: number | null | undefined) =>
 type Props = { active: boolean; inference: UseInferenceModelsResult };
 
 export default function GPUManagementPanel({ active, inference }: Props) {
-  const [authorized, setAuthorized] = useState(false);
+  const scope = useAuthenticatedScope();
+  const scopeIsCurrent = () => scope.authenticated && getAuthenticatedScope().key === scope.key;
+  const [authorization, setAuthorization] = useState({ scopeKey: '', allowed: false });
+  const authorized = authorization.scopeKey === scope.key && authorization.allowed;
+  const mountedRef = useRef(false);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [confirmation, setConfirmation] = useState<{
     model: InferenceGPUModel;
@@ -23,33 +28,51 @@ export default function GPUManagementPanel({ active, inference }: Props) {
   const [submitError, setSubmitError] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    setAuthorized(false);
-    if (active) {
+    mountedRef.current = true;
+    setAuthorization({ scopeKey: scope.key, allowed: false });
+    setSelections({});
+    setConfirmation(null);
+    setSubmitError(false);
+    if (active && scope.authenticated) {
       userRepository
         .GetCurrentUser()
         .then(response => {
-          if (!cancelled)
-            setAuthorized(
-              response.data.role === UserRole.OWNER || response.data.role === UserRole.ADMIN
-            );
+          if (!cancelled && scopeIsCurrent())
+            setAuthorization({
+              scopeKey: scope.key,
+              allowed:
+                response.data.tenantId === scope.tenantId &&
+                (response.data.role === UserRole.OWNER || response.data.role === UserRole.ADMIN),
+            });
         })
         .catch(() => {});
     }
     return () => {
       cancelled = true;
+      mountedRef.current = false;
     };
-  }, [active]);
+  }, [active, scope.key]);
   const refreshKey = Object.values(inference.gpuDeployments || {})
     .map(item => `${item.modelId}:${item.progress.status}`)
     .join('|');
-  const { inventory, stale, loading, error } = useGPUInventory(active && authorized, refreshKey);
+  const { inventory, stale, loading, error } = useGPUInventory(
+    active && authorized,
+    refreshKey,
+    scope.key
+  );
   useEffect(() => {
     setConfirmation(null);
   }, [active]);
   if (!active || !authorized) return null;
   const canMove = Boolean(inventory?.managerEnabled && inventory?.managerReady && !stale && !error);
   const confirmMove = async () => {
-    if (!confirmation || !canMove || inference.isModelDeploying(confirmation.model.modelId)) return;
+    if (
+      !confirmation ||
+      !canMove ||
+      !scopeIsCurrent() ||
+      inference.isModelDeploying(confirmation.model.modelId)
+    )
+      return;
     setSubmitError(false);
     try {
       await inference.moveGPU(
@@ -57,9 +80,9 @@ export default function GPUManagementPanel({ active, inference }: Props) {
         confirmation.gpuUuid,
         confirmation.model.containerId
       );
-      setConfirmation(null);
+      if (mountedRef.current && scopeIsCurrent()) setConfirmation(null);
     } catch (_error) {
-      setSubmitError(true);
+      if (mountedRef.current && scopeIsCurrent()) setSubmitError(true);
     }
   };
   return (
