@@ -98,6 +98,37 @@ describe('useModelDeploymentProgress', () => {
     expect(hookValue.isDeploying('model-1')).toBe(true);
   });
 
+  test('GPU moves reuse durable progress and prevent concurrent version deployment', async () => {
+    mockedRepository.SetInferenceModelGPUPlacement.mockResolvedValue({
+      success: true,
+      message: 'accepted',
+      data: { deploymentId: 'gpu-operation', status: 'PENDING', stage: 'resolve_active' },
+    });
+    act(() => {
+      renderer = TestRenderer.create(<Consumer onTerminal={jest.fn()} />);
+    });
+    await act(async () => {
+      await hookValue.moveGPU('model-1', 'GPU-a', 'old-container');
+    });
+    await act(async () => {
+      await hookValue.deploy('model-1', 'same-version');
+    });
+    expect(mockedRepository.SetInferenceModelGPUPlacement).toHaveBeenCalledWith(
+      'model-1',
+      'GPU-a',
+      'old-container'
+    );
+    expect(mockedRepository.DeployInferenceModelVersion).not.toHaveBeenCalled();
+    expect(loadStoredModelDeployments('tenant-a')).toEqual([
+      { modelId: 'model-1', deploymentId: 'gpu-operation' },
+    ]);
+    expect(mockedCreateMonitor).toHaveBeenCalledWith(
+      'model-1',
+      'gpu-operation',
+      expect.any(Object)
+    );
+  });
+
   test('prevents duplicate submissions while the acceptance request is pending', async () => {
     let resolveDeployment!: (
       value: Awaited<ReturnType<typeof inferenceRepository.DeployInferenceModelVersion>>

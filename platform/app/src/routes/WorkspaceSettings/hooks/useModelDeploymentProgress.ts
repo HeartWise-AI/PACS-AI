@@ -99,15 +99,18 @@ export function useModelDeploymentProgress({
     };
   }, [startMonitor, tenantId]);
 
-  const deploy = useCallback(
-    async (modelId: string, versionId: string) => {
+  const submitDeployment = useCallback(
+    async (
+      modelId: string,
+      submit: () => ReturnType<typeof inferenceRepository.DeployInferenceModelVersion>
+    ) => {
       if (startingModelsRef.current.has(modelId) || isActiveModelDeployment(deployments[modelId])) {
         return deployments[modelId];
       }
       startingModelsRef.current.add(modelId);
       setStartingModels(current => ({ ...current, [modelId]: true }));
       try {
-        const response = await inferenceRepository.DeployInferenceModelVersion(modelId, versionId);
+        const response = await submit();
         const progress = acceptedDeploymentProgress(response.data);
         startMonitor(modelId, response.data.deploymentId, progress);
         return { modelId, progress, connectionMode: 'connecting' } as TrackedModelDeployment;
@@ -119,6 +122,22 @@ export function useModelDeploymentProgress({
     [deployments, startMonitor]
   );
 
+  const deploy = useCallback(
+    (modelId: string, versionId: string) =>
+      submitDeployment(modelId, () =>
+        inferenceRepository.DeployInferenceModelVersion(modelId, versionId)
+      ),
+    [submitDeployment]
+  );
+
+  const moveGPU = useCallback(
+    (modelId: string, gpuUuid: string, expectedContainerId: string) =>
+      submitDeployment(modelId, () =>
+        inferenceRepository.SetInferenceModelGPUPlacement(modelId, gpuUuid, expectedContainerId)
+      ),
+    [submitDeployment]
+  );
+
   const isDeploying = useCallback(
     (modelId?: string) =>
       Boolean(
@@ -127,5 +146,5 @@ export function useModelDeploymentProgress({
     [deployments, startingModels]
   );
 
-  return { deployments, deploy, isDeploying };
+  return { deployments, deploy, moveGPU, isDeploying };
 }

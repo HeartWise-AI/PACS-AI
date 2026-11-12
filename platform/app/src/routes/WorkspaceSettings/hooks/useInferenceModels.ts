@@ -393,6 +393,9 @@ export function useInferenceModels() {
     selectedVersionId,
     setSelectedVersionId,
     fetchingModelVersions,
+    gpuDeployments: modelDeploymentProgress.deployments,
+    moveGPU: modelDeploymentProgress.moveGPU,
+    isModelDeploying: modelDeploymentProgress.isDeploying,
     deployingModelVersion: modelDeploymentProgress.isDeploying(versionModel?.id),
     modelDeployment: versionModel
       ? modelDeploymentProgress.deployments[versionModel.id]
