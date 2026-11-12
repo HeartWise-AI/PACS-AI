@@ -47,7 +47,7 @@ const WorkspaceSettingsPage = () => {
               <DicomModalitiesSection dicom={dicom} />
             </div>
             <div {...panelProps('models')}>
-              <InferenceModelsSection inference={inference} />
+              <InferenceModelsSection inference={inference} active={activeTab === 'models'} />
             </div>
             <div {...panelProps('ingestion')}>
               <IngestionJobsSection
