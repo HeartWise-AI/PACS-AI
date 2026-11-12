@@ -11,6 +11,7 @@ import { useGlobalStateData } from '../../GlobalStateProvider';
 import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
 import { AlertContext } from '../../AlertProvider';
 import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
+import { isInferenceSeriesEligible } from './isInferenceSeriesEligible';
 
 // Add interface for initialSeriesSelection
 interface InitialSeriesSelection {
@@ -45,8 +46,8 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
-  const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
-  const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
+  const [selectedSeries, setSelectedSeries] = useState<string[]>(initialSeriesSelection?.selectedSeries || []);
+  const [studyInstanceUID, setStudyInstanceUID] = useState<string>(initialSeriesSelection?.studyInstanceUID || '');
   const [firstSeriesCount, setFirstSeriesCount] = useState('');
   const { selectedModalities } = useGlobalStateData();
   const alertContext = useContext(AlertContext);
@@ -126,17 +127,33 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   // Keep bulk selection and the rendered list in the same order, with one row
   // per series even when a series has multiple display sets.
   const seenSeries = new Set<string>();
-  const selectableDisplaySets = Object.values(selectedModalities)
+  const availableDisplaySets = Object.values(selectedModalities)
     .filter(value => isSupportedModality(value?.modality))
     .flatMap(value => value.displaySets || [])
     .filter(displaySet => {
       const uid = displaySet.SeriesInstanceUID;
-      if (!uid || !isSupportedModality(displaySet.modality) || seenSeries.has(uid)) {
+      if (!uid || !isInferenceSeriesEligible(displaySet) || !isSupportedModality(displaySet.modality) || seenSeries.has(uid)) {
         return false;
       }
       seenSeries.add(uid);
       return true;
     });
+  const exams = Array.from(new Map(availableDisplaySets.map(displaySet => [
+    displaySet.StudyInstanceUID, displaySet,
+  ])).values());
+  const activeStudyUID = exams.some(exam => exam.StudyInstanceUID === studyInstanceUID)
+    ? studyInstanceUID : exams[0]?.StudyInstanceUID || '';
+  const selectableDisplaySets = availableDisplaySets.filter(
+    displaySet => displaySet.StudyInstanceUID === activeStudyUID
+  );
+  const seriesKey = selectableDisplaySets.map(displaySet => displaySet.SeriesInstanceUID).join('|');
+  useEffect(() => {
+    setSelectedSeries(previous => previous.filter(uid => selectableDisplaySets.some(
+      displaySet => displaySet.SeriesInstanceUID === uid
+    )));
+    setStepper(1);
+  }, [activeStudyUID, seriesKey]);
+
   const selectableSeries = selectableDisplaySets.map(displaySet => displaySet.SeriesInstanceUID);
   const modelMaximum = selectedInferenceModel?.dicomUploadMax;
   const hasModelMaximum = Number.isInteger(modelMaximum) && modelMaximum >= 0;
@@ -158,7 +175,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const selectFirstSeries = (count: number) => {
     const selection = selectableSeries.slice(0, Math.min(count, selectionLimit));
     setSelectedSeries(selection);
-    setStudyInstanceUID(selection.length ? selectableDisplaySets[0].StudyInstanceUID : '');
+    setStudyInstanceUID(activeStudyUID);
   };
 
   const toggleSeriesSelection = (seriesInstanceUID: string, studyUID: string) => {
@@ -200,6 +217,12 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
 
   // step 1 handler
   function stepOneHandler() {
+    if (!activeStudyUID || !selectedSeries.length || selectedSeries.some(uid =>
+      !selectableDisplaySets.some(displaySet => displaySet.SeriesInstanceUID === uid)
+    )) {
+      showAlert('Please select series from the chosen exam', 'error');
+      return;
+    }
     if (selectedSeries.length < selectedInferenceModel?.dicomUploadMin) {
       showAlert(
         'Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue',
@@ -222,7 +245,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
       applyPredictInferenceModel(
         selectedInferenceModel.containerId,
         selectedSeries,
-        studyInstanceUID,
+        activeStudyUID,
         additionalDetails,
         selectedInferenceModel.outputMode
       );
@@ -307,6 +330,23 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                 <div>
                   {stepper === 1 && (
                     <div>
+                      <label htmlFor="ai-exam-selection" className="block text-white">Exam</label>
+                      <select
+                        id="ai-exam-selection"
+                        className="mt-2 w-full rounded bg-[#1F221F] p-2 text-white"
+                        value={activeStudyUID}
+                        onChange={event => {
+                          setStudyInstanceUID(event.target.value);
+                          setSelectedSeries([]);
+                          setStepper(1);
+                        }}
+                      >
+                        {exams.map((exam, index) => (
+                          <option key={exam.StudyInstanceUID} value={exam.StudyInstanceUID}>
+                            {`Exam ${index + 1}${exam.studyDate ? ` · ${exam.studyDate}` : ''}${exam.studyDescription ? ` · ${exam.studyDescription}` : ''}`}
+                          </option>
+                        ))}
+                      </select>
                       {/* header */}
                       <div className="align-center mt-4 flex flex-row justify-between text-[14px]">
                         <h1 className="text-white">Select Series</h1>
@@ -317,7 +357,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                           onClick={() => {
                             if (maximumSelected) {
                               setSelectedSeries([]);
-                              setStudyInstanceUID('');
                             } else {
                               selectFirstSeries(selectionLimit);
                             }
@@ -557,7 +596,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                               applyPredictInferenceModel(
                                 selectedInferenceModel.containerId,
                                 selectedSeries,
-                                studyInstanceUID,
+                                activeStudyUID,
                                 additionalDetails,
                                 selectedInferenceModel.outputMode
                               );

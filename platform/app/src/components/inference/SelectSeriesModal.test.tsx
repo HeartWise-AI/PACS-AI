@@ -129,6 +129,55 @@ describe('SelectSeriesModal series count selection', () => {
     expect(predict.mock.calls[0][1]).toEqual(['third', 'second']);
   });
 
+  test('switches between exams without mixing series or retaining the previous selection', () => {
+    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+      exam1: { modality: 'XA', displaySets: [series('old-series')] },
+      exam2: { modality: 'XA', displaySets: [{ ...series('new-series'), StudyInstanceUID: 'study-2', studyDate: '2026-11-12' }] },
+    } });
+    mount();
+    chooseCount('1');
+    const examPicker = () => renderer.root.findByProps({ id: 'ai-exam-selection' });
+    expect(examPicker().findAllByType('option')).toHaveLength(2);
+    act(() => examPicker().props.onChange({ target: { value: 'study-2' } }));
+    expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
+    expect(renderer.root.findAllByType('h4').some(node => node.children.includes('old-series'))).toBe(false);
+    chooseCount('1');
+    act(() => button('Apply').props.onClick());
+    expect(predict).toHaveBeenCalledWith('model-container', ['new-series'], 'study-2', {}, 'HTML');
+  });
+
+  test('preserves the chosen exam when bulk selection is cleared', () => {
+    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+      XA: { modality: 'XA', displaySets: [series('old'), { ...series('new'), StudyInstanceUID: 'study-2' }] },
+    } });
+    mount({ initialSeriesSelection: { selectedSeries: ['new'], studyInstanceUID: 'study-2' } });
+    expect(status()).toBe('1 selected · Maximum: 2 · 1 available');
+    const bulk = renderer.root.findAllByType('button').find(node =>
+      node.findAllByType('span').some(span => span.children.includes('Select all')))!;
+    act(() => bulk.props.onClick());
+    expect(renderer.root.findByProps({ id: 'ai-exam-selection' }).props.value).toBe('study-2');
+    expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
+    act(() => bulk.props.onClick());
+    act(() => button('Apply').props.onClick());
+    expect(predict.mock.calls[0][2]).toBe('study-2');
+  });
+
+  test('skips report, PDF and still-image series in displayed rows and bulk requests', () => {
+    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+      XA: { modality: 'XA', displaySets: [
+        { ...series('rapport'), description: 'RAPPORT', numImageFrames: 20 },
+        { ...series('pdf'), SOPClassUID: '1.2.840.10008.5.1.4.1.1.104.1' },
+        { ...series('still'), numImageFrames: 1 },
+        { ...series('cine'), numInstances: 1, numImageFrames: 40, isMultiFrame: true },
+      ] },
+    } });
+    mount();
+    expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
+    chooseCount('2');
+    act(() => button('Apply').props.onClick());
+    expect(predict).toHaveBeenCalledWith('model-container', ['cine'], 'study-1', {}, 'HTML');
+  });
+
   test('disables invalid counts and caps selection to available series', () => {
     mount({ selectedInferenceModel: { ...model, dicomUploadMax: 10 } });
     expect(countInput().props.max).toBe(3);
