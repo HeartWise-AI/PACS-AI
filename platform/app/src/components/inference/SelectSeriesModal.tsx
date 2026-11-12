@@ -47,7 +47,7 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   const [stepper, setStepper] = useState(1);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [studyInstanceUID, setStudyInstanceUID] = useState<string>('');
-  const [applyToStudy, setApplyToStudy] = useState(false);
+  const [firstSeriesCount, setFirstSeriesCount] = useState('');
   const { selectedModalities } = useGlobalStateData();
   const alertContext = useContext(AlertContext);
   const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
@@ -79,35 +79,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
       setStudyInstanceUID(initialSeriesSelection.studyInstanceUID || '');
     }
   }, [initialSeriesSelection]);
-
-  // Keep applyToStudy in sync if initial selection already includes all selectable series
-  useEffect(() => {
-    if (initialSeriesSelection) {
-      const selectable = Array.from(
-        new Set(
-          Object.entries(selectedModalities)
-            .filter(([_, value]) => {
-              const modality = value?.modality || '';
-              if (
-                !selectedInferenceModel?.supportedDicomModalities ||
-                selectedInferenceModel.supportedDicomModalities.length === 0
-              ) {
-                return true;
-              }
-              return selectedInferenceModel.supportedDicomModalities.some(
-                s => modality.includes(s) || s.includes(modality)
-              );
-            })
-            .flatMap(([_, value]) => (value.displaySets || []).map(ds => ds.SeriesInstanceUID))
-        )
-      );
-
-      const sel = initialSeriesSelection.selectedSeries || [];
-      const selSet = new Set(sel);
-      const allSelected = selectable.length > 0 && selectable.every(uid => selSet.has(uid));
-      setApplyToStudy(allSelected);
-    }
-  }, [initialSeriesSelection, selectedModalities, selectedInferenceModel]);
 
   useEffect(() => {
     // set default values when component mounts
@@ -152,34 +123,55 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
     );
   };
 
-  const getSelectableDisplaySets = () =>
-    Object.entries(selectedModalities)
-      .filter(([_, value]) => isSupportedModality(value?.modality))
-      .flatMap(([_, value]) =>
-        (value.displaySets || []).filter(ds => isSupportedModality(ds.modality))
-      );
-
-  const getSelectableSeriesUIDs = () =>
-    Array.from(new Set(getSelectableDisplaySets().map(ds => ds.SeriesInstanceUID)));
-
-  // toggle series selection and sync applyToStudy
-  const toggleSeriesSelection = (SeriesInstanceUID: string) => {
-    setSelectedSeries(prev => {
-      const nextSet = new Set(prev);
-      if (nextSet.has(SeriesInstanceUID)) {
-        nextSet.delete(SeriesInstanceUID);
-      } else {
-        nextSet.add(SeriesInstanceUID);
+  // Keep bulk selection and the rendered list in the same order, with one row
+  // per series even when a series has multiple display sets.
+  const seenSeries = new Set<string>();
+  const selectableDisplaySets = Object.values(selectedModalities)
+    .filter(value => isSupportedModality(value?.modality))
+    .flatMap(value => value.displaySets || [])
+    .filter(displaySet => {
+      const uid = displaySet.SeriesInstanceUID;
+      if (!uid || !isSupportedModality(displaySet.modality) || seenSeries.has(uid)) {
+        return false;
       }
-
-      const next = Array.from(nextSet);
-
-      const selectable = getSelectableSeriesUIDs();
-      const allSelected = selectable.length > 0 && selectable.every(uid => nextSet.has(uid));
-      setApplyToStudy(allSelected);
-
-      return next;
+      seenSeries.add(uid);
+      return true;
     });
+  const selectableSeries = selectableDisplaySets.map(displaySet => displaySet.SeriesInstanceUID);
+  const modelMaximum = selectedInferenceModel?.dicomUploadMax;
+  const hasModelMaximum = Number.isInteger(modelMaximum) && modelMaximum >= 0;
+  const selectionLimit = hasModelMaximum
+    ? Math.min(selectableSeries.length, modelMaximum)
+    : selectableSeries.length;
+  const maximumSelection = selectableSeries.slice(0, selectionLimit);
+  const maximumSelected =
+    maximumSelection.length > 0 &&
+    selectedSeries.length === maximumSelection.length &&
+    maximumSelection.every(uid => selectedSeries.includes(uid));
+  const requestedCount = Number(firstSeriesCount);
+  const validFirstCount = Number.isInteger(requestedCount) && requestedCount > 0;
+
+  useEffect(() => {
+    setFirstSeriesCount(String(selectionLimit));
+  }, [isOpen, selectedInferenceModel?.containerId, selectionLimit]);
+
+  const selectFirstSeries = (count: number) => {
+    const selection = selectableSeries.slice(0, Math.min(count, selectionLimit));
+    setSelectedSeries(selection);
+    setStudyInstanceUID(selection.length ? selectableDisplaySets[0].StudyInstanceUID : '');
+  };
+
+  const toggleSeriesSelection = (seriesInstanceUID: string, studyUID: string) => {
+    if (!selectedSeries.includes(seriesInstanceUID) && selectedSeries.length >= selectionLimit) {
+      showAlert(`Please select no more than ${selectionLimit} series`, 'error');
+      return;
+    }
+    setStudyInstanceUID(studyUID);
+    setSelectedSeries(prev =>
+      prev.includes(seriesInstanceUID)
+        ? prev.filter(uid => uid !== seriesInstanceUID)
+        : [...prev, seriesInstanceUID]
+    );
   };
 
   // handle additional details change
@@ -318,156 +310,136 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
                       {/* header */}
                       <div className="align-center mt-4 flex flex-row justify-between text-[14px]">
                         <h1 className="text-white">Select Series</h1>
-                        <div
-                          className="flex cursor-pointer items-center gap-2"
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-white disabled:opacity-50"
+                          disabled={selectionLimit === 0}
                           onClick={() => {
-                            if (!applyToStudy) {
-                              const selectable = getSelectableSeriesUIDs();
-                              setSelectedSeries(selectable);
-                              setStudyInstanceUID(
-                                getSelectableDisplaySets()[0]?.StudyInstanceUID || ''
-                              );
-                              setApplyToStudy(selectable.length > 0);
-                            } else {
-                              // deselect all series
+                            if (maximumSelected) {
                               setSelectedSeries([]);
                               setStudyInstanceUID('');
-                              setApplyToStudy(false);
+                            } else {
+                              selectFirstSeries(selectionLimit);
                             }
                           }}
                         >
-                          <h2 className="text-[14px] text-white">Apply to Study</h2>
+                          <span>
+                            {selectionLimit < selectableSeries.length
+                              ? 'Select maximum'
+                              : 'Select all'}
+                          </span>
                           <img
-                            src={applyToStudy ? checkIcon : uncheckIcon}
-                            alt={applyToStudy ? 'check' : 'uncheck'}
+                            src={maximumSelected ? checkIcon : uncheckIcon}
+                            alt={maximumSelected ? 'check' : 'uncheck'}
                             className="h-[18px] w-[18px]"
                           />
-                        </div>
+                        </button>
                       </div>
+                      <p
+                        className="mt-2 text-[14px] text-white"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {selectedSeries.length} selected · Maximum:{' '}
+                        {hasModelMaximum ? modelMaximum : 'No limit'}
+                        {' · '}
+                        {selectableSeries.length} available
+                      </p>
+                      <div className="mt-3 flex items-center gap-2 text-[14px] text-white">
+                        <label htmlFor="first-series-count">Select first</label>
+                        <input
+                          id="first-series-count"
+                          type="number"
+                          min={1}
+                          max={selectionLimit}
+                          step={1}
+                          value={firstSeriesCount}
+                          disabled={selectionLimit === 0}
+                          onChange={event => setFirstSeriesCount(event.target.value)}
+                          className="w-20 rounded-lg bg-[#323631] px-3 py-2 text-white"
+                        />
+                        <span>series</span>
+                        <button
+                          type="button"
+                          disabled={!validFirstCount || selectionLimit === 0}
+                          onClick={() => selectFirstSeries(requestedCount)}
+                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-3 py-2 disabled:opacity-50"
+                        >
+                          Select
+                        </button>
+                      </div>
+                      <p className="mt-1 text-[12px] text-white opacity-70">
+                        Uses the order shown below, up to the model maximum.
+                      </p>
 
                       {/* list of series */}
                       <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
-                        {Object.entries(selectedModalities)
-                          .filter(([_, value]) => {
-                            const modality = value.modality;
-                            // If supportedDicomModalities is empty or undefined, allow all modalities
-                            if (
-                              !selectedInferenceModel.supportedDicomModalities ||
-                              selectedInferenceModel.supportedDicomModalities.length === 0
-                            ) {
-                              return true;
-                            }
-                            return selectedInferenceModel.supportedDicomModalities?.some(
-                              supportedModality =>
-                                modality.includes(supportedModality) ||
-                                supportedModality.includes(modality)
-                            );
-                          })
-                          .every(
-                            ([_, value]) => !value.displaySets || value.displaySets.length === 0
-                          ) ? (
+                        {selectableDisplaySets.length === 0 ? (
                           <div className="flex h-[200px] items-center justify-center">
                             <p className="text-white opacity-70">No data found</p>
                           </div>
                         ) : (
-                          <>
-                            {Object.entries(selectedModalities)
-                              .filter(([_, value]) => {
-                                const modality = value.modality;
-                                // If supportedDicomModalities is empty or undefined, allow all modalities
-                                if (
-                                  !selectedInferenceModel.supportedDicomModalities ||
-                                  selectedInferenceModel.supportedDicomModalities.length === 0
-                                ) {
-                                  return true;
-                                }
-                                return selectedInferenceModel.supportedDicomModalities?.some(
-                                  supportedModality =>
-                                    modality.includes(supportedModality) ||
-                                    supportedModality.includes(modality)
+                          selectableDisplaySets.map(displaySet => (
+                            <div
+                              key={displaySet.SeriesInstanceUID}
+                              className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                              onClick={() => {
+                                toggleSeriesSelection(
+                                  displaySet.SeriesInstanceUID,
+                                  displaySet.StudyInstanceUID
                                 );
-                              })
-                              .flatMap(([_, value]) =>
-                                value.displaySets
-                                  .filter(displaySet => {
-                                    // If supportedDicomModalities is empty or undefined, allow all modalities
-                                    if (
-                                      !selectedInferenceModel.supportedDicomModalities ||
-                                      selectedInferenceModel.supportedDicomModalities.length === 0
-                                    ) {
-                                      return true;
-                                    }
-                                    return selectedInferenceModel.supportedDicomModalities?.some(
-                                      supportedModality =>
-                                        displaySet.modality &&
-                                        (displaySet.modality.includes(supportedModality) ||
-                                          supportedModality.includes(displaySet.modality))
-                                    );
-                                  })
-                                  .map((displaySet, index) => (
-                                    <div
-                                      key={index + '-' + displaySet.SeriesInstanceUID}
-                                      className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
-                                      onClick={() => {
-                                        toggleSeriesSelection(displaySet.SeriesInstanceUID);
-                                        setStudyInstanceUID(displaySet.StudyInstanceUID);
-                                      }}
-                                    >
-                                      <div className="flex items-center gap-4">
-                                        <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
-                                          {displaySet.imageSrc ? (
-                                            <img
-                                              src={displaySet.imageSrc}
-                                              alt="series"
-                                              className="h-full w-full rounded-lg object-cover"
-                                            />
-                                          ) : (
-                                            <p className="mt-3 text-center text-xs text-white opacity-70">
-                                              No image available
-                                            </p>
-                                          )}
-                                        </div>
-                                        <div className="text-[14px]">
-                                          <h1 className="inline text-[#C8F469]">Series: </h1>
-                                          <h2 className="mr-2 inline text-white">
-                                            {displaySet.seriesNumber}
-                                          </h2>
-                                          <img
-                                            src={copyWhiteIcon}
-                                            alt="copy"
-                                            className="ml-1 inline h-[16px] w-[16px]"
-                                          />
-                                          <h3 className="inline text-white">
-                                            {' '}
-                                            {displaySet.numInstances}
-                                          </h3>
-                                          <h4 className="block text-white opacity-70">
-                                            {displaySet.description}
-                                          </h4>
-                                          <h4 className="mt-1 block text-[12px] text-white opacity-70">
-                                            {displaySet.SeriesInstanceUID}
-                                          </h4>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <img
-                                          src={
-                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                              ? checkIcon
-                                              : uncheckIcon
-                                          }
-                                          alt={
-                                            selectedSeries.includes(displaySet.SeriesInstanceUID)
-                                              ? 'check'
-                                              : 'uncheck'
-                                          }
-                                          className="h-[18px] min-w-[18px]"
-                                        />
-                                      </div>
-                                    </div>
-                                  ))
-                              )}
-                          </>
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
+                                  {displaySet.imageSrc ? (
+                                    <img
+                                      src={displaySet.imageSrc}
+                                      alt="series"
+                                      className="h-full w-full rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <p className="mt-3 text-center text-xs text-white opacity-70">
+                                      No image available
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-[14px]">
+                                  <h1 className="inline text-[#C8F469]">Series: </h1>
+                                  <h2 className="mr-2 inline text-white">
+                                    {displaySet.seriesNumber}
+                                  </h2>
+                                  <img
+                                    src={copyWhiteIcon}
+                                    alt="copy"
+                                    className="ml-1 inline h-[16px] w-[16px]"
+                                  />
+                                  <h3 className="inline text-white"> {displaySet.numInstances}</h3>
+                                  <h4 className="block text-white opacity-70">
+                                    {displaySet.description}
+                                  </h4>
+                                  <h4 className="mt-1 block text-[12px] text-white opacity-70">
+                                    {displaySet.SeriesInstanceUID}
+                                  </h4>
+                                </div>
+                              </div>
+                              <div>
+                                <img
+                                  src={
+                                    selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                      ? checkIcon
+                                      : uncheckIcon
+                                  }
+                                  alt={
+                                    selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                      ? 'check'
+                                      : 'uncheck'
+                                  }
+                                  className="h-[18px] min-w-[18px]"
+                                />
+                              </div>
+                            </div>
+                          ))
                         )}
                       </div>
                       {/* actions */}
