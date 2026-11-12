@@ -21,15 +21,30 @@ type DeploymentMap = Record<string, TrackedModelDeployment>;
 
 type UseModelDeploymentProgressOptions = {
   tenantId: string;
+  sessionScope?: string;
+  scopeIsCurrent?: () => boolean;
   onTerminal(modelId: string, event: InferenceModelDeploymentEvent): void;
 };
 
 export function useModelDeploymentProgress({
   tenantId,
+  sessionScope = tenantId,
+  scopeIsCurrent = () => true,
   onTerminal,
 }: UseModelDeploymentProgressOptions) {
-  const [deployments, setDeployments] = useState<DeploymentMap>({});
-  const [startingModels, setStartingModels] = useState<Record<string, boolean>>({});
+  const scopeKey = `${tenantId}:${sessionScope}`;
+  const [stateScope, setStateScope] = useState(scopeKey);
+  const [storedDeployments, setDeployments] = useState<DeploymentMap>({});
+  const [storedStartingModels, setStartingModels] = useState<Record<string, boolean>>({});
+  const deployments = stateScope === scopeKey ? storedDeployments : {};
+  const startingModels = stateScope === scopeKey ? storedStartingModels : {};
+  const lifecycleRef = useRef({ scopeKey, mounted: false });
+  if (lifecycleRef.current.scopeKey !== scopeKey) {
+    lifecycleRef.current.mounted = false;
+    lifecycleRef.current = { scopeKey, mounted: false };
+  }
+  const scopeIsCurrentRef = useRef(scopeIsCurrent);
+  scopeIsCurrentRef.current = scopeIsCurrent;
   const monitorsRef = useRef(new Map<string, ModelDeploymentMonitor>());
   const startingModelsRef = useRef(new Set<string>());
   const onTerminalRef = useRef(onTerminal);
@@ -47,6 +62,10 @@ export function useModelDeploymentProgress({
 
   const startMonitor = useCallback(
     (modelId: string, deploymentId: string, initialProgress?: InferenceModelDeploymentEvent) => {
+      const lifecycle = lifecycleRef.current;
+      const valid = () =>
+        lifecycle === lifecycleRef.current && lifecycle.mounted && scopeIsCurrentRef.current();
+      if (!valid()) return;
       monitorsRef.current.get(modelId)?.stop();
       storeModelDeployment(tenantId, { modelId, deploymentId });
       const progress =
@@ -67,6 +86,7 @@ export function useModelDeploymentProgress({
 
       const monitor = createModelDeploymentMonitor(modelId, deploymentId, {
         onProgress: nextProgress => {
+          if (!valid()) return;
           setDeployments(current => ({
             ...current,
             [modelId]: {
@@ -76,8 +96,11 @@ export function useModelDeploymentProgress({
             },
           }));
         },
-        onConnectionMode: mode => updateConnectionMode(modelId, mode),
+        onConnectionMode: mode => {
+          if (valid()) updateConnectionMode(modelId, mode);
+        },
         onTerminal: terminalProgress => {
+          if (!valid()) return;
           removeStoredModelDeployment(tenantId, modelId);
           monitorsRef.current.delete(modelId);
           onTerminalRef.current(modelId, terminalProgress);
@@ -86,37 +109,78 @@ export function useModelDeploymentProgress({
       monitorsRef.current.set(modelId, monitor);
       monitor.start();
     },
-    [tenantId, updateConnectionMode]
+    [tenantId, scopeKey, updateConnectionMode]
   );
 
   useEffect(() => {
-    const restored = loadStoredModelDeployments(tenantId);
+    // A fresh ownership object also invalidates work across effect teardown
+    // and reactivation of the same session (including Strict Mode cleanup).
+    const lifecycle = { scopeKey, mounted: true };
+    lifecycleRef.current = lifecycle;
+    setDeployments({});
+    setStartingModels({});
+    setStateScope(scopeKey);
+    startingModelsRef.current.clear();
+    const restored = scopeIsCurrentRef.current() ? loadStoredModelDeployments(tenantId) : [];
     restored.forEach(({ modelId, deploymentId }) => startMonitor(modelId, deploymentId));
     const monitors = monitorsRef.current;
     return () => {
-      monitors.forEach(monitor => monitor.stop());
+      lifecycle.mounted = false;
+      const sessionChanged = lifecycle !== lifecycleRef.current || !scopeIsCurrentRef.current();
+      monitors.forEach((monitor, modelId) => {
+        monitor.stop();
+        if (sessionChanged) removeStoredModelDeployment(tenantId, modelId);
+      });
       monitors.clear();
     };
-  }, [startMonitor, tenantId]);
+  }, [startMonitor, tenantId, scopeKey]);
 
-  const deploy = useCallback(
-    async (modelId: string, versionId: string) => {
+  const submitDeployment = useCallback(
+    async (
+      modelId: string,
+      submit: () => ReturnType<typeof inferenceRepository.DeployInferenceModelVersion>
+    ) => {
+      const lifecycle = lifecycleRef.current;
+      const valid = () =>
+        lifecycle === lifecycleRef.current && lifecycle.mounted && scopeIsCurrentRef.current();
+      if (!valid()) return undefined;
       if (startingModelsRef.current.has(modelId) || isActiveModelDeployment(deployments[modelId])) {
         return deployments[modelId];
       }
       startingModelsRef.current.add(modelId);
       setStartingModels(current => ({ ...current, [modelId]: true }));
       try {
-        const response = await inferenceRepository.DeployInferenceModelVersion(modelId, versionId);
+        const response = await submit();
+        // The server operation is durable. A late acceptance must not revive a
+        // monitor or write recovery state after navigation or a session switch.
+        if (!valid()) return undefined;
         const progress = acceptedDeploymentProgress(response.data);
         startMonitor(modelId, response.data.deploymentId, progress);
         return { modelId, progress, connectionMode: 'connecting' } as TrackedModelDeployment;
       } finally {
-        startingModelsRef.current.delete(modelId);
-        setStartingModels(current => ({ ...current, [modelId]: false }));
+        if (valid()) {
+          startingModelsRef.current.delete(modelId);
+          setStartingModels(current => ({ ...current, [modelId]: false }));
+        }
       }
     },
     [deployments, startMonitor]
+  );
+
+  const deploy = useCallback(
+    (modelId: string, versionId: string) =>
+      submitDeployment(modelId, () =>
+        inferenceRepository.DeployInferenceModelVersion(modelId, versionId)
+      ),
+    [submitDeployment]
+  );
+
+  const moveGPU = useCallback(
+    (modelId: string, gpuUuid: string, expectedContainerId: string) =>
+      submitDeployment(modelId, () =>
+        inferenceRepository.SetInferenceModelGPUPlacement(modelId, gpuUuid, expectedContainerId)
+      ),
+    [submitDeployment]
   );
 
   const isDeploying = useCallback(
@@ -127,5 +191,5 @@ export function useModelDeploymentProgress({
     [deployments, startingModels]
   );
 
-  return { deployments, deploy, isDeploying };
+  return { deployments, deploy, moveGPU, isDeploying };
 }
