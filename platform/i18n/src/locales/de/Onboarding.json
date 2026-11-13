@@ -104,5 +104,9 @@
   "The policies have changed. Please review the current versions.": "Die Richtlinien wurden geändert. Bitte prüfen Sie die aktuellen Versionen.",
   "Unable to record policy acceptance. Please try again.": "Die Zustimmung zu den Richtlinien konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
   "Saving…": "Wird gespeichert…",
-  "Agree and continue": "Zustimmen und fortfahren"
+  "Agree and continue": "Zustimmen und fortfahren",
+  "Can't reach the PACS-AI server right now.": "Der PACS-AI-Server ist derzeit nicht erreichbar.",
+  "The PACS-AI server couldn't load this workspace right now.": "Der PACS-AI-Server konnte diesen Arbeitsbereich derzeit nicht laden.",
+  "This workspace could not be found. Check the link and try again.": "Dieser Arbeitsbereich wurde nicht gefunden. Überprüfen Sie den Link und versuchen Sie es erneut.",
+  "Try again": "Erneut versuchen"
 }
