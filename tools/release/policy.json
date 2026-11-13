@@ -34,6 +34,7 @@
       "tools/release/release.py"
     ],
     "prerequisites": [
+      "Confirm intended production branch and serving runtime mapping before activation",
       "Reviewed isolated staging deployment adapter with synthetic E2E and digest attestations",
       "Per-candidate staging resources and credentials isolated from production",
       "Human-approved production environment with self-approval and admin bypass disabled",

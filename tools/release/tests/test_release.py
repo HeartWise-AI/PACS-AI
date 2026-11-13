@@ -28,7 +28,9 @@ class ReleaseCLI(unittest.TestCase):
         self.policy = copy.deepcopy(release.local_policy())
         # Synthetic repositories, actors and policy. Never a real staged deployment.
         self.policy['components'] = {
-            'frontend': {'repository': 'fixture/frontend', 'production_branch': 'main', 'images': ['frontend']},
+            'frontend': {'repository': 'fixture/frontend',
+                         'production_branch': 'production' if self._testMethodName == 'test_production_branch_name_supported' else 'main',
+                         'images': ['frontend']},
             'backend': {'repository': 'fixture/backend', 'production_branch': 'master', 'images': ['api']}}
         self.policy['staging']['enabled'] = True
         self.policy['staging']['actors'] = ['human']
@@ -191,6 +193,12 @@ class ReleaseCLI(unittest.TestCase):
         git(data['path'], 'add', '.')
         git(data['path'], 'commit', '-qm', 'later production change')
         self.check('promote', ok=False)
+
+    def test_production_branch_name_supported(self):
+        self.prepare()
+        self.candidate()
+        manifest = json.loads(self.manifest_path.read_text())
+        self.assertEqual(manifest['components']['frontend']['production_branch'], 'production')
 
     def test_candidate_idempotency_and_packaging_only(self):
         self.prepare()

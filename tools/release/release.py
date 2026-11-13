@@ -121,7 +121,7 @@ def local_policy():
     require(set(policy['components']) == {'frontend', 'backend'}, 'Expected FE and BE policy')
     for component in policy['components'].values():
         endpoint(component['repository'], '')
-        require(component['production_branch'] in ('main', 'master'), 'Invalid production branch')
+        require(component['production_branch'] in ('main', 'master', 'production'), 'Invalid production branch')
     return policy
 
 

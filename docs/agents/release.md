@@ -19,6 +19,12 @@ local policy overrides. Keep broader inventory, credentials and clinical data ou
 this repository. This tool never merges, approves, enables auto-merge or dispatches a
 deployment. Do not invoke existing production deployment scripts as a shortcut.
 
+The policy currently proposes the repository default branches as promotion targets.
+Each repository also has an older `production` branch. The serving runtime was not
+audited, so these targets are not evidence of the branch currently deployed. Confirm
+and review the intended branch mapping before activation; the CLI also supports an
+explicitly configured `production` target.
+
 ## Prepare and package
 
 Open the application change PRs against the production branches in the policy.
