@@ -53,4 +53,13 @@ describe('MessageBubble Markdown rendering', () => {
 
     expect(container.querySelector('img')).toBeNull();
   });
+
+  it('does not load images from Markdown URLs', () => {
+    const { container } = renderAssistantMessage(
+      '![External result](https://untrusted.example/result.png)'
+    );
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(container.textContent).toContain('[Image: External result]');
+  });
 });

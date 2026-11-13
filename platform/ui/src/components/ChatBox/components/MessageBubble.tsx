@@ -37,6 +37,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback,
                     rel="noopener noreferrer"
                   />
                 ),
+                img: ({ node: _node, alt }) => (
+                  <span>{alt ? `[Image: ${alt}]` : '[Image omitted]'}</span>
+                ),
                 table: ({ node: _node, ...props }) => (
                   <div
                     className="markdown-table-wrapper"
