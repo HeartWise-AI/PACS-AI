@@ -1,6 +1,7 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Message } from '../types';
-import { parseMarkdown } from '../utils/markdown';
 import { ThinkingIndicator } from './ThinkingIndicator';
 
 interface MessageBubbleProps {
@@ -26,12 +27,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback,
           {message.isThinking ? (
             <ThinkingIndicator />
           ) : (
-            <div
+            <ReactMarkdown
               className="markdown-content"
-              dangerouslySetInnerHTML={{
-                __html: parseMarkdown(message.text?.trim() || ''),
+              components={{
+                a: ({ node: _node, ...props }) => (
+                  <a
+                    {...props}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
               }}
-            />
+              remarkPlugins={[remarkGfm]}
+            >
+              {message.text?.trim() || ''}
+            </ReactMarkdown>
           )}
         </div>
         <div className="mt-1 flex items-center justify-between">
