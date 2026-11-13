@@ -1,0 +1,11 @@
+{
+  "images": {
+    "frontend": {
+      "context": ".",
+      "dockerfile": "Dockerfile",
+      "args": {
+        "APP_BUILD_ID": "candidate-build-only"
+      }
+    }
+  }
+}
