@@ -9,8 +9,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: staging-frontend-${{ github.event.pull_request.number }}
-  cancel-in-progress: ${{ github.event.action != 'edited' || github.event.changes.base != null }}
+  # Metadata-only edits need a separate group: even cancel-in-progress=false
+  # would replace an eligible run that is still pending in the same group.
+  group: >-
+    staging-frontend-${{ github.event.pull_request.number }}-${{
+      github.event.action == 'edited' && github.event.changes.base == null &&
+      github.run_id || 'candidate'
+    }}
+  cancel-in-progress: true
 
 jobs:
   unit-tests:
