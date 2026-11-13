@@ -10,12 +10,14 @@ permissions:
 
 concurrency:
   group: staging-frontend-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event.action != 'edited' || github.event.changes.base != null }}
 
 jobs:
   unit-tests:
     # Draft staging PRs run without self-hosted runner access or deployment secrets.
-    if: github.event.pull_request.state == 'open'
+    if: >-
+      github.event.pull_request.state == 'open' &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
