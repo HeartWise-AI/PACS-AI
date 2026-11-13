@@ -21,5 +21,4 @@ export { ThinkingIndicator } from './components/ThinkingIndicator';
 export { EmptyState } from './components/EmptyState';
 
 // Utilities
-export { parseMarkdown } from './utils/markdown';
 export { formatSeriesInfo } from './utils/formatSeriesInfo';
