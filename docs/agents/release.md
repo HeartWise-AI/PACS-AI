@@ -80,7 +80,7 @@ python3 tools/release/release.py promote --manifest candidate.json --evidence ev
 
 A successful verification reads live GitHub data and outputs only identifiers and digests.
 Promotion rechecks both components before creating each **draft** PR into its own true
-production branch (`main` or `master`). It never merges. Existing identical draft PRs
+configured production branch. It never merges. Existing identical draft PRs
 are reused; a PR already handed to a human is not changed. A failure does not roll back
 previously created candidate refs or draft PRs. Review their state before retrying.
 
