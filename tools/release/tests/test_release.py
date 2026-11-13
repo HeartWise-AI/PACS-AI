@@ -108,7 +108,8 @@ class ReleaseCLI(unittest.TestCase):
                    'head_branch': 'staging-release-rc1', 'run_attempt': 1, 'repository': {'full_name': repo},
                    'head_repository': {'full_name': repo}, 'actor': {'login': 'human'},
                    'triggering_actor': {'login': 'human'}, 'updated_at': date}
-            images = {'frontend' if repo.endswith('frontend') else 'api': 'sha256:' + 'a' * 64}
+            images = {name: 'sha256:' + 'a' * 64 for c in self.policy['components'].values()
+                      if c['repository'] == repo for name in c['images']}
             payload = {'manifest_sha256': release.digest(manifest), 'run_id': 42, 'run_attempt': 1, 'images': images}
             data['attestation'] = copy.deepcopy(payload)
             stream = io.BytesIO()
@@ -144,6 +145,52 @@ class ReleaseCLI(unittest.TestCase):
             self.assertTrue(data['promotion_prs'][0]['draft'])
             self.assertEqual(git(data['path'], 'rev-parse', 'main' if data['path'].endswith('frontend') else 'master'), data['base'])
         self.assertFalse(any('/dispatches' in c['url'] or '/merge' in c['url'] for c in self.state['calls']))
+
+    def test_monorepo_paired_components(self):
+        data = self.state['repos']['fixture/frontend']
+        self.state['repos'].pop('fixture/backend')
+        self.policy['components']['backend'].update(repository='fixture/frontend', production_branch='main')
+        (self.root / 'policy.json').write_text(json.dumps(self.policy))
+        git(data['path'], 'checkout', '-q', 'main')
+        (Path(data['path']) / 'tools/release/policy.json').write_text(json.dumps(self.policy))
+        git(data['path'], 'add', '.')
+        git(data['path'], 'commit', '-qm', 'monorepo policy')
+        data['base'] = git(data['path'], 'rev-parse', 'HEAD')
+        git(data['path'], 'rebase', 'main', 'feature')
+        data['pulls']['1']['head']['sha'] = git(data['path'], 'rev-parse', 'HEAD')
+        self.save()
+        self.ready()
+        self.check()
+        result = json.loads(self.check('promote').stdout)
+        self.assertEqual(len(result['draft_pull_requests']), 1)
+        self.manifest_path.unlink()
+        self.state['repos']['fixture/frontend']['pulls']['2'] = copy.deepcopy(data['pulls']['1'])
+        self.save()
+        self.cli('prepare', '--id', 'bad-pair', '--frontend-pr', '1', '--backend-pr', '2',
+                 '--output', str(self.manifest_path), ok=False)
+
+    def test_first_paired_merge_allows_second_with_exact_tree_and_review(self):
+        self.ready()
+        self.check('promote')
+        data = self.state['repos']['fixture/frontend']
+        candidate = git(data['path'], 'rev-parse', 'staging-release-rc1')
+        tree = git(data['path'], 'rev-parse', candidate + '^{tree}')
+        merge = git(data['path'], 'commit-tree', tree, '-p', data['base'], '-p', candidate, input='human merge\n')
+        git(data['path'], 'update-ref', 'refs/heads/main', merge)
+        git(data['path'], 'update-ref', '-d', 'refs/heads/staging-release-rc1')
+        data['promotion_prs'][0].update(state='closed', merged_at=release.now().isoformat(), merge_commit_sha=merge)
+        data['pulls']['1'].update(state='closed', merged=True)
+        data['reviews'] = [{'state': 'APPROVED', 'commit_id': candidate, 'user': {'type': 'User', 'login': 'reviewer'}}]
+        self.save()
+        result = json.loads(self.check('promote').stdout)
+        self.assertEqual(result['already_merged_repositories'], ['fixture/frontend'])
+        self.assertEqual(len(result['draft_pull_requests']), 1)
+        # Any further production change is drift, not the permitted transition.
+        git(data['path'], 'checkout', '-q', 'main')
+        (Path(data['path']) / 'later-fix').write_text('later production change')
+        git(data['path'], 'add', '.')
+        git(data['path'], 'commit', '-qm', 'later production change')
+        self.check('promote', ok=False)
 
     def test_candidate_idempotency_and_packaging_only(self):
         self.prepare()
@@ -219,6 +266,18 @@ class ReleaseCLI(unittest.TestCase):
         data = self.state['repos']['fixture/backend']
         git(data['path'], 'update-ref', 'refs/heads/master', data['pulls']['1']['head']['sha'])
         self.check(ok=False)
+
+    def test_tampered_base_cannot_bypass_ancestry(self):
+        self.prepare()
+        data = self.state['repos']['fixture/frontend']
+        git(data['path'], 'checkout', '-q', 'main')
+        (Path(data['path']) / 'production-fix').write_text('new production fix')
+        git(data['path'], 'add', '.')
+        git(data['path'], 'commit', '-qm', 'production fix')
+        manifest = json.loads(self.manifest_path.read_text())
+        manifest['components']['frontend']['base_sha'] = git(data['path'], 'rev-parse', 'HEAD')
+        self.manifest_path.write_text(json.dumps(manifest))
+        self.assertIn('include current production base', self.candidate(ok=False).stderr)
 
     def test_manifest_tampering(self):
         self.ready()

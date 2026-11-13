@@ -139,10 +139,11 @@ def policies(api, policy):
     return snapshots
 
 
-def source(api, repo, number, production):
+def source(api, repo, number, production, allow_merged=False):
     require(type(number) is int and number > 0, 'Invalid PR number')
     pr = api.call(endpoint(repo, f'pulls/{number}'))
-    require(pr['state'] == 'open', 'Source PR must remain open')
+    require(pr['state'] == 'open' or (allow_merged and pr.get('merged') is True),
+            'Source PR must remain open or be covered by its verified merged promotion')
     require(pr['head']['repo']['full_name'] == repo and pr['base']['repo']['full_name'] == repo,
             'Fork PRs are not release candidates')
     require(pr['base']['ref'] == production, 'Source PR targets the wrong production branch')
@@ -180,6 +181,33 @@ def prepare(api, policy, release_id, frontend_pr, backend_pr, output):
     return manifest
 
 
+def promoted_head(api, repo, item, manifest, production_head):
+    """Recognize only an exact human-reviewed promotion, never arbitrary base drift."""
+    query = urllib.parse.urlencode({'state': 'closed', 'head': repo.split('/')[0] + ':' + branch(manifest),
+                                    'base': item['production_branch']})
+    matches = api.pages(endpoint(repo, 'pulls?' + query))
+    matches = [p for p in matches if p.get('merged_at') and p.get('merge_commit_sha') == production_head]
+    require(len(matches) == 1, 'Production branch drift; prepare a new candidate')
+    pr = matches[0]
+    require(pr['head']['repo']['full_name'] == repo and pr['base']['repo']['full_name'] == repo and
+            pr['base']['ref'] == item['production_branch'], 'Merged promotion identity mismatch')
+    head = pr['head']['sha']
+    require(match(SHA, head), 'Invalid merged promotion head')
+    package_integrity(api, repo, item, manifest, head)
+    merged = api.call(endpoint(repo, 'git/commits/' + production_head))
+    packaged = api.call(endpoint(repo, 'git/commits/' + head))
+    require(merged['tree']['sha'] == packaged['tree']['sha'], 'Merged result differs from tested candidate')
+    reviews = api.pages(endpoint(repo, f"pulls/{pr['number']}/reviews"))
+    latest = {}
+    for review in reviews:
+        if review['state'] in ('APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'):
+            latest[review['user']['login']] = review
+    require(any(r['state'] == 'APPROVED' and r['commit_id'] == head and
+                r['user']['type'] == 'User' and r['user']['login'] != pr['user']['login']
+                for r in latest.values()), 'Merged promotion lacks independent exact-head human review')
+    return head
+
+
 def validate(api, policy, manifest):
     require(set(manifest) == {'schema', 'id', 'product', 'environment', 'policy_sha256', 'components'},
             'Unexpected manifest fields')
@@ -194,9 +222,13 @@ def validate(api, policy, manifest):
         cfg = policy['components'][role]
         require(item['repository'] == cfg['repository'] and item['production_branch'] == cfg['production_branch'],
                 'Component not allowlisted')
-        require(item['base_sha'] == bases[item['repository']], 'Production branch drift; prepare a new candidate')
-        current = source(api, item['repository'], item['pr'], item['production_branch'])
+        promoted = item['base_sha'] != bases[item['repository']]
+        if promoted:
+            promoted_head(api, item['repository'], item, manifest, bases[item['repository']])
+        current = source(api, item['repository'], item['pr'], item['production_branch'], allow_merged=promoted)
         require(item == dict(current, base_sha=item['base_sha']), 'Source changed; prepare a new candidate')
+        ancestry = api.call(endpoint(item['repository'], f"compare/{item['base_sha']}...{item['sha']}"))
+        require(ancestry['behind_by'] == 0, 'Source PR must include current production base')
         repo = item['repository']
         require(repo not in seen or seen[repo] == item, 'Monorepo components differ')
         seen[repo] = item
@@ -235,8 +267,12 @@ def candidates(api, policy, manifest, create=False):
         try:
             sha = ref_sha(api, repo, branch(manifest))
         except FileNotFoundError:
-            require(create, 'Candidate branch missing: ' + repo)
-            missing.append(repo)
+            production_head = ref_sha(api, repo, item['production_branch'])
+            if production_head != item['base_sha']:
+                result[repo] = promoted_head(api, repo, item, manifest, production_head)
+            else:
+                require(create, 'Candidate branch missing: ' + repo)
+                missing.append(repo)
         else:
             result[repo] = package_integrity(api, repo, item, manifest, sha)
     for repo in missing:
@@ -375,10 +411,16 @@ def verify(api, policy, manifest, evidence):
 def promote(api, policy, manifest, evidence):
     verified = verify(api, policy, manifest, evidence)
     urls = []
+    already_merged = []
     for repo in verified['repositories']:
         # Each PR creation rechecks both components, not just the current repository.
         verify(api, policy, manifest, evidence)
         item = next(c for c in manifest['components'].values() if c['repository'] == repo)
+        production_head = ref_sha(api, repo, item['production_branch'])
+        if production_head != item['base_sha']:
+            promoted_head(api, repo, item, manifest, production_head)
+            already_merged.append(repo)
+            continue
         query = urllib.parse.urlencode({'state': 'open', 'head': repo.split('/')[0] + ':' + branch(manifest),
                                         'base': item['production_branch']})
         existing = api.pages(endpoint(repo, 'pulls?' + query))
@@ -396,7 +438,7 @@ def promote(api, policy, manifest, evidence):
                     'Use the tested image digests recorded below. No rebuild or floating tags.\n\n'
                     '```json\n' + json.dumps(verified, indent=2) + '\n```'})
         urls.append(result['html_url'])
-    return {'draft_pull_requests': urls}
+    return {'draft_pull_requests': urls, 'already_merged_repositories': already_merged}
 
 
 def main():

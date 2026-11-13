@@ -21,31 +21,31 @@ deployment. Do not invoke existing production deployment scripts as a shortcut.
 
 ## Prepare and package
 
-1. Open the application change PRs against the production branches in the policy.
-   Bring each source PR up to date with its production base. Same-repository components
-   must use the same PR. Fork source PRs are rejected.
-2. Snapshot both source commits using a new lowercase candidate ID:
+Open the application change PRs against the production branches in the policy.
+Bring each source PR up to date with its production base. Same-repository components
+must use the same PR. Fork source PRs are rejected.
+Snapshot both source commits using a new lowercase candidate ID:
 
-   ```sh
-   python3 tools/release/release.py prepare --id rc-20261113-1 \
-     --frontend-pr 123 --backend-pr 456 --output candidate.json
-   python3 tools/release/release.py candidate --manifest candidate.json
-   ```
+```sh
+python3 tools/release/release.py prepare --id rc-20261113-1 \
+  --frontend-pr 123 --backend-pr 456 --output candidate.json
+python3 tools/release/release.py candidate --manifest candidate.json
+```
 
-   `candidate.json` is local input. Keep it outside the clean checkout used for builds.
-   The CLI creates `staging-release-rc-20261113-1` in each paired repository with a
-   single packaging commit. That commit adds `.release/candidate.json`; application
-   content comes unchanged from the source commit. Repeat calls reuse identical refs
-   and reject divergent refs. Partial cross-repository creation can be retried. No
-   existing ref is updated or deleted. Keep source PRs open until promotion is complete.
-3. After a human approves the build run, manually run **Agent candidate build only**
-   on the candidate branch in each repository. This does not deploy. It uses native
-   Dockerfiles on GitHub-hosted runners with no registry publication or secrets.
-   Images are exported with image IDs, archive checksums, source SHA and run identity.
-   Inspect `tools/release/build.json` for covered images and outstanding prerequisites.
-   These synthetic build settings are not production configuration.
+`candidate.json` is local input. Keep it outside the clean checkout used for builds.
+The CLI creates `staging-release-rc-20261113-1` in each paired repository with a
+single packaging commit. That commit adds `.release/candidate.json`; application
+content comes unchanged from the source commit. Repeat calls reuse identical refs
+and reject divergent refs. Partial cross-repository creation can be retried. No
+existing ref is updated or deleted. Keep source PRs open until their promotion is merged.
+After a human approves the build run, manually run **Agent candidate build only**
+on the candidate branch in each repository. This does not deploy. It uses native
+Dockerfiles on GitHub-hosted runners with no registry publication or secrets.
+Images are exported with image IDs, archive checksums, source SHA and run identity.
+Inspect `tools/release/build.json` for covered images and outstanding prerequisites.
+These synthetic build settings are not production configuration.
 
-Any source change, production-base movement or policy change requires a **new ID** and
+Any source change, unrelated production-base movement or policy change requires a **new ID** and
 new builds/tests. Never force-update a candidate. Packaging SHAs and application SHAs
 are different; the manifest records the latter. Production must eventually consume
 verified image digests, not rebuild from the packaging commit or use `latest`.
@@ -77,6 +77,13 @@ Promotion rechecks both components before creating each **draft** PR into its ow
 production branch (`main` or `master`). It never merges. Existing identical draft PRs
 are reused; a PR already handed to a human is not changed. A failure does not roll back
 previously created candidate refs or draft PRs. Review their state before retrying.
+
+For paired repositories, one human-reviewed promotion may merge before the other. The
+gate accepts that transition only when the current production SHA is exactly the merged
+promotion result, its tree equals the tested candidate, and an independent human approved
+that exact head. It can resolve a candidate branch deleted automatically after merge from
+that verified PR. The source PR may then be marked merged. Any later production commit,
+changed merge tree or missing approval blocks the remaining promotion.
 
 ## Activation prerequisites for maintainers
 

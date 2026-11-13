@@ -38,7 +38,7 @@ def package():
         archive = Path(scratch) / 'source.tar'
         with archive.open('wb') as handle:
             subprocess.run(['git', 'archive', '--format=tar', source_sha], stdout=handle, check=True)
-        source = Path(scratch) / 'source'
+        source = (Path(scratch) / 'source').resolve()
         source.mkdir()
         subprocess.run(['tar', '-xf', str(archive), '-C', str(source)], check=True)
         for name, recipe in recipes['images'].items():

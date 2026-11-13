@@ -85,17 +85,21 @@ def main():
             print('HTTP 422', file=sys.stderr)
             return 1
         result = {'object': {'sha': body['sha']}}
+    elif suffix.startswith('pulls/') and suffix.endswith('/reviews'):
+        result = data.get('reviews', [])
     elif suffix.startswith('pulls/'):
         number = suffix.split('/')[-1]
         result = data['pulls'][number]
     elif suffix == 'pulls':
         if body:
             result = {'html_url': 'https://github.com/' + repo + '/pull/99', 'draft': body['draft'],
-                      'head': {'sha': git(path, 'rev-parse', body['head'])}}
+                      'number': 99, 'state': 'open', 'user': {'login': 'author'},
+                      'head': {'sha': git(path, 'rev-parse', body['head']), 'repo': {'full_name': repo}},
+                      'base': {'ref': body['base'], 'repo': {'full_name': repo}}}
             data.setdefault('promotion_prs', []).append(result)
             state_path.write_text(json.dumps(state))
         else:
-            result = data.get('promotion_prs', [])
+            result = [p for p in data.get('promotion_prs', []) if p['state'] == query.get('state', ['open'])[0]]
     elif suffix == 'environments/production':
         result = {'can_admins_bypass': False, 'protection_rules': [
             {'type': 'required_reviewers', 'prevent_self_review': True, 'reviewers': [{'reviewer': {'login': 'human'}}]}]}
