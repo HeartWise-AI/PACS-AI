@@ -424,3 +424,35 @@ export interface GetInferenceIngestionCandidatesResponse {
   ingestionJobId: string;
   updatedAt: number;
 }
+
+export interface InferenceGPUDevice {
+  uuid: string;
+  index: number | null;
+  name: string | null;
+  totalMemoryMiB: number | null;
+  usedMemoryMiB: number | null;
+  freeMemoryMiB: number | null;
+  utilizationPercent: number | null;
+  telemetryStatus: 'available' | 'unavailable';
+  telemetrySampledAt: string | null;
+  managerCapacityMiB: number;
+  managerReservedMiB: number;
+  managerAvailableMiB: number;
+}
+
+export interface InferenceGPUModel {
+  modelId: string;
+  containerId: string;
+  gpuUuid: string | null;
+  desiredGpuUuid: string | null;
+  placementSupported: boolean;
+  reason?: string;
+}
+
+export interface GetInferenceGPUsResponse {
+  sampledAt: string;
+  managerEnabled: boolean;
+  managerReady: boolean;
+  devices: InferenceGPUDevice[];
+  models: InferenceGPUModel[];
+}

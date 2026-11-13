@@ -17,6 +17,7 @@ import {
   GetInferenceModelInfoRequest,
   GetInferenceModelInfoResponse,
   GetInferenceModelResponse,
+  GetInferenceGPUsResponse,
   GetInferenceModelVersionResponse,
   DeployInferenceModelVersionResponse,
   GetInferenceModelDeploymentOperationResponse,
@@ -167,6 +168,31 @@ const inferenceRepository = {
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  async GetInferenceGPUs(signal?: AbortSignal): Promise<APIResponse<GetInferenceGPUsResponse>> {
+    return Api()
+      .get('/v1/inference/gpus', { signal })
+      .then((response: AxiosResponse<APIResponse<GetInferenceGPUsResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        throw {
+          ...(error.response?.data || { message: error.message }),
+          status: error.response?.status,
+        };
+      });
+  },
+  async SetInferenceModelGPUPlacement(
+    modelId: string,
+    gpuUuid: string,
+    expectedContainerId: string
+  ): Promise<APIResponse<DeployInferenceModelVersionResponse>> {
+    return Api()
+      .post(`/v1/inference/model/${modelId}/gpu-placement`, { gpuUuid, expectedContainerId })
+      .then(
+        (response: AxiosResponse<APIResponse<DeployInferenceModelVersionResponse>>) => response.data
+      )
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        throw error.response?.data || error;
       });
   },
   async DeployInferenceModelVersion(

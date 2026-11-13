@@ -7652,7 +7652,7 @@ cssnano-utils@^3.1.0:
   resolved "https://registry.yarnpkg.com/cssnano-utils/-/cssnano-utils-3.1.0.tgz#95684d08c91511edfc70d2636338ca37ef3a6861"
   integrity sha512-JQNR19/YZhz4psLX/rQ9M83e3z2Wf/HdJbryzte4a3NSuafyp9w/I4U+hx5C2S9g41qlstH7DEWnZaaj83OuEA==
 
-cssnano@^5.0.2:
+cssnano@5.1.15, cssnano@^5.0.2:
   version "5.1.15"
   resolved "https://registry.yarnpkg.com/cssnano/-/cssnano-5.1.15.tgz#ded66b5480d5127fcb44dac12ea5a983755136bf"
   integrity sha512-j+BKgDcLDQA+eDifLx0EO4XSA56b7uut3BQFH+wbSaSTuGLuiyTa/wbRYthUXX8LC9mLg+WWKe8h+qJuwTAbHw==
@@ -16804,14 +16804,6 @@ react-router@6.30.1:
   integrity sha512-X1m21aEmxGXqENEPG3T6u0Th7g0aS4ZmoNynhbs+Cn+q+QGTLt+d5IQ2bHAXKzKcxGJjxACpVbnYQSCRcfxHlQ==
   dependencies:
     "@remix-run/router" "1.23.0"
-
-react-router@7.18.3:
-  version "7.18.3"
-  resolved "https://registry.yarnpkg.com/react-router/-/react-router-7.18.3.tgz#2a3257aa7c5edd5a71f878063e4c7f3fcfc4b76a"
-  integrity sha512-gyXgtdr5uACJ5b1Q4udzjVV+tb/rlHIMJKuJ0e89R4Kzgz47z/rgP0dIKxktqIEUhDHluGTPJJH/wRha7CyqsA==
-  dependencies:
-    cookie "^1.0.1"
-    set-cookie-parser "^2.6.0"
 
 react-select@5.7.4:
   version "5.7.4"

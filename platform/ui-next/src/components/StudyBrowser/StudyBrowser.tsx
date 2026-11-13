@@ -1,3 +1,4 @@
+import { buildInferenceStudyModalities } from '@ohif/app/src/components/inference/buildInferenceStudyModalities';
 import React, { useEffect, useRef, useContext } from 'react'; // NOTE: This is a PACS changes ({ useEffect, useRef, useContext })
 import PropTypes from 'prop-types';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider'; // NOTE: This is a PACS changes
@@ -22,6 +23,7 @@ const StudyBrowser = ({
   onDoubleClickThumbnail = noop,
   onClickUntrack = noop,
   activeDisplaySetInstanceUIDs,
+  inferenceDisplaySetInstanceUIDs = activeDisplaySetInstanceUIDs,
   servicesManager,
   showSettings,
   viewPresets,
@@ -58,23 +60,21 @@ const StudyBrowser = ({
 
   // NOTE: This is a PACS changes
   useEffect(() => {
-    const tabData = tabs.find(tab => tab.name === activeTabName);
-    if (!tabData) {
-      return;
-    }
-
-    const selectedModalitiesMap = tabData.studies.reduce((acc, { modalities, displaySets }) => {
-      if (modalities) {
-        acc[modalities] = {
-          modality: modalities,
-          displaySets,
-        };
-      }
-      return acc;
-    }, {});
+    // Include loaded comparison exams, independent of the selected browser tab.
+    const tabData = tabs.find(tab => tab.name === 'all') || tabs.find(tab => tab.name === activeTabName);
+    const primaryStudies = tabs.find(tab => tab.name === 'primary')?.studies || [];
+    const primaryUIDs = new Set(primaryStudies.map(study => study.studyInstanceUid));
+    const comparisonStudies = (tabData?.studies || []).filter(study =>
+      !primaryUIDs.has(study.studyInstanceUid) && study.displaySets?.some(displaySet =>
+        inferenceDisplaySetInstanceUIDs?.includes(displaySet.displaySetInstanceUID)
+      )
+    );
+    const selectedModalitiesMap = buildInferenceStudyModalities([
+      ...primaryStudies, ...comparisonStudies,
+    ]);
 
     setSelectedModalities(selectedModalitiesMap);
-  }, [tabs, activeTabName, setSelectedModalities]);
+  }, [tabs, activeTabName, inferenceDisplaySetInstanceUIDs, setSelectedModalities]);
 
   const getTabContent = () => {
     const tabData = tabs.find(tab => tab.name === activeTabName);

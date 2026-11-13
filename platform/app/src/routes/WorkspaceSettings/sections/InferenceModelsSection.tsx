@@ -1,4 +1,5 @@
 import React from 'react';
+import GPUManagementPanel from '../inference-models/components/GPUManagementPanel';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@ohif/ui';
 import ModelFactsModal from '../../../components/ModelFactsModal';
@@ -12,9 +13,10 @@ import InferenceModelVersionsModal from '../inference-models/components/Inferenc
 
 type InferenceModelsSectionProps = {
   inference: UseInferenceModelsResult;
+  active?: boolean;
 };
 
-const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
+const InferenceModelsSection = ({ inference, active = true }: InferenceModelsSectionProps) => {
   const { t } = useTranslation('Common');
   const lifecycleColor = getLifecycleColor(
     inference.selectedInferenceModel.container?.lifecycle || ''
@@ -50,6 +52,10 @@ const InferenceModelsSection = ({ inference }: InferenceModelsSectionProps) => {
           </div>
         </div>
       </div>
+      <GPUManagementPanel
+        active={active}
+        inference={inference}
+      />
       <div className="bg-transparent py-5">
         <InferenceModelsTable
           models={inference.models}

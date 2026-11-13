@@ -437,6 +437,9 @@ function PanelStudyBrowser({
         onClickThumbnail={() => {}}
         onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
         activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
+        inferenceDisplaySetInstanceUIDs={Array.from(viewports.values()).flatMap(
+          viewport => viewport.displaySetInstanceUIDs || []
+        )}
         showSettings={actionIcons.find(icon => icon.id === 'settings')?.value}
         viewPresets={viewPresets}
         ThumbnailMenuItems={MoreDropdownMenu({
@@ -499,6 +502,11 @@ function _mapDisplaySets(displaySets, displaySetLoadingState, thumbnailImageSrcM
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
         numInstances: ds.numImageFrames,
+        // Inference eligibility needs frame count, not DICOM instance count.
+        numImageFrames: ds.numImageFrames,
+        isMultiFrame: ds.isMultiFrame,
+        SOPClassUID: ds.SOPClassUID,
+        sopClassUids: ds.sopClassUids,
         loadingProgress,
         countIcon: ds.countIcon,
         messages: ds.messages,
