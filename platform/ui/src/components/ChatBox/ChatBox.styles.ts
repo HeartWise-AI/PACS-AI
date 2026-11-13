@@ -223,16 +223,22 @@ export const chatBoxStyles = `
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     margin: 0.5rem 0;
   }
+  .markdown-table-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-bottom: 0.5rem;
+  }
   .markdown-content table {
     border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 0.5rem;
+    width: max-content;
+    min-width: 100%;
   }
   .markdown-content th,
   .markdown-content td {
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0.25rem;
     text-align: left;
+    white-space: nowrap;
   }
   .markdown-content th {
     background-color: rgba(0, 0, 0, 0.2);

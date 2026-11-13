@@ -37,6 +37,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback,
                     rel="noopener noreferrer"
                   />
                 ),
+                table: ({ node: _node, ...props }) => (
+                  <div
+                    className="markdown-table-wrapper"
+                    role="region"
+                    aria-label="Scrollable table"
+                    tabIndex={0}
+                  >
+                    <table {...props} />
+                  </div>
+                ),
               }}
               remarkPlugins={[remarkGfm]}
             >

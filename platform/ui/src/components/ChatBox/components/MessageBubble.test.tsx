@@ -26,6 +26,8 @@ describe('MessageBubble Markdown rendering', () => {
 
     const table = container.querySelector('table');
     expect(table).not.toBeNull();
+    expect(table?.parentElement?.classList.contains('markdown-table-wrapper')).toBe(true);
+    expect(table?.parentElement?.getAttribute('tabindex')).toBe('0');
     expect(table?.querySelectorAll('th')).toHaveLength(6);
     expect(table?.querySelectorAll('td')).toHaveLength(6);
     expect(table?.textContent).toContain('Left Main Branch');
