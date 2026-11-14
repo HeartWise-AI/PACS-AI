@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
 import type { Message, ModalityData } from '../types';
+import { openStudyMetadata } from '../utils/getOpenStudyContext';
+import type { OpenStudyContext } from '../utils/getOpenStudyContext';
 
 interface SendMessageResponse {
   message_id?: string;
@@ -28,7 +30,8 @@ interface UseChatBoxReturn {
   sendMessage: (
     threadId: string,
     message: string,
-    selectedSeries: string[]
+    selectedSeries: string[],
+    studyContext?: Record<string, string>
   ) => Promise<SendMessageResponse>;
   uploadDicomPayload: (
     threadId: string,
@@ -41,7 +44,36 @@ interface UseChatBoxReturn {
   resetThread: () => void;
 }
 
-export function useChatBox(isOpen: boolean, messagesLength: number): UseChatBoxReturn {
+/**
+ * Attach the viewer's open study to a new thread: its StudyInstanceUID goes in the
+ * thread metadata, and a DICOM payload is uploaded so agents that only read
+ * /dicom payloads also see it. Best effort: a failed upload never blocks chat.
+ */
+async function attachOpenStudy(threadId: string, openStudy: OpenStudyContext | null) {
+  if (!openStudy || openStudy.seriesInstanceUIDs.length === 0) {
+    return;
+  }
+  try {
+    await orchestratorRepository.UploadDicomPayload({
+      threadId,
+      studyInstanceUID: openStudy.studyInstanceUID,
+      seriesInstanceUIDs: openStudy.seriesInstanceUIDs,
+      additionalMetadata: {
+        modality: openStudy.modality || undefined,
+        seriesCount: openStudy.seriesInstanceUIDs.length,
+        source: 'viewer-open-study',
+      },
+    });
+  } catch (error) {
+    console.warn('Could not attach the open study to the chat thread:', error);
+  }
+}
+
+export function useChatBox(
+  isOpen: boolean,
+  messagesLength: number,
+  getOpenStudy?: () => OpenStudyContext | null
+): UseChatBoxReturn {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [threadCreationPending, setThreadCreationPending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,13 +91,16 @@ export function useChatBox(isOpen: boolean, messagesLength: number): UseChatBoxR
       setErrorDetails('');
       console.log('Creating thread...');
 
-      const response = await orchestratorRepository.CreateThread();
+      const openStudy = getOpenStudy?.() ?? null;
+      const metadata = openStudyMetadata(openStudy);
+      const response = await orchestratorRepository.CreateThread(metadata ? { metadata } : {});
 
       if (response.success && response.data) {
         const newThreadId = response.data.thread_id;
 
         if (newThreadId) {
           console.log('Thread created with ID:', newThreadId);
+          await attachOpenStudy(newThreadId, openStudy);
           setThreadId(newThreadId);
           setErrorDetails('');
         } else {
@@ -105,14 +140,15 @@ export function useChatBox(isOpen: boolean, messagesLength: number): UseChatBoxR
     } finally {
       setIsLoading(false);
     }
-  }, [threadCreationPending]);
+  }, [threadCreationPending, getOpenStudy]);
 
   // Function to send a message to the backend
   const sendMessage = useCallback(
     async (
       currentThreadId: string,
       message: string,
-      selectedSeries: string[]
+      selectedSeries: string[],
+      studyContext?: Record<string, string>
     ): Promise<SendMessageResponse> => {
       try {
         setIsLoading(true);
@@ -123,6 +159,7 @@ export function useChatBox(isOpen: boolean, messagesLength: number): UseChatBoxR
           message,
           metadata: {
             selectedSeries: selectedSeries,
+            ...(studyContext || openStudyMetadata(getOpenStudy?.() ?? null) || {}),
           },
         });
 
@@ -152,7 +189,7 @@ export function useChatBox(isOpen: boolean, messagesLength: number): UseChatBoxR
         setIsProcessing(false);
       }
     },
-    []
+    [getOpenStudy]
   );
 
   // Function to upload DICOM payload
