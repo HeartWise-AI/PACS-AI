@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
 import { logoutUser } from '@ohif/app/src/service/userService';
+import { markTourShown, shouldShowTour } from '@ohif/app/src/service/viewerTourService';
 import { Error } from '@ohif/app/src/api/dto';
 import {
   Onboarding,
@@ -287,7 +288,11 @@ function ViewerLayout({
           </main>
         </ViewerModelResultsProvider>
       </AvailableModelsContext.Provider>
-      <Onboarding tours={customizationService.getCustomization('ohif.tours')} />
+      <Onboarding
+        tours={customizationService.getCustomization('ohif.tours')}
+        shouldShowTour={shouldShowTour}
+        onTourShown={markTourShown}
+      />
     </div>
   );
 }

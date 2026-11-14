@@ -20,6 +20,7 @@ import { logoutUser } from '../../service/userService';
 import { resetTutorialAndNotify } from '../../service/tutorialService';
 import { FrontendVersionContext } from '../../App';
 import { getProfileCredentialDetails } from './profileCredentialDetails';
+import ViewerTourPreference from './ViewerTourPreference';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -320,6 +321,10 @@ const SettingsPage = () => {
               </div>
             </div>
           </div>
+          <ViewerTourPreference
+            t={t}
+            showAlert={showAlert}
+          />
         </div>
         <div className="pt-5">
           <h1 className="text-lg font-normal text-white">{t('Tutorial')}</h1>

@@ -37,6 +37,7 @@ export interface GetDoctorSpecialtiesResponse {
 export interface GetUserMetadataResponse {
   userId: string;
   metadata: { [key: string]: string | number };
+  viewerTourCompletedAt?: number | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -144,6 +145,12 @@ export interface UpdateTenantUserRequest {
   name: string;
   licenseNo: string;
   specialty: string;
+}
+
+/** Viewer onboarding tour state of the authenticated user (unix seconds or null). */
+export interface UserViewerTourResponse {
+  userId: string;
+  viewerTourCompletedAt: number | null;
 }
 
 export interface UpdateUserMetadataRequest {
