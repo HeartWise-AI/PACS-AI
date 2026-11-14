@@ -25,14 +25,23 @@ function newest(results: ViewerModelResult[]): ViewerModelResult | null {
 }
 
 /**
- * Finds the latest stored result for an available model: by registered model
- * id first, then by model name and version, then by model name alone.
+ * Finds the latest stored result for an available model: by container id,
+ * then by the model's id against the result's model-info or registration id,
+ * then by model name and version, then by model name alone.
  */
 export function findLatestResultForModel(
   model: ViewerResultModelIdentity,
   results: ViewerModelResult[]
 ): ViewerModelResult | null {
-  const byId = results.filter(result => sameText(model.modelId, result.modelId));
+  const byContainer = results.filter(result => sameText(model.containerId, result.containerId));
+  if (byContainer.length) {
+    return newest(byContainer);
+  }
+
+  const byId = results.filter(
+    result =>
+      sameText(model.modelId, result.artifactModelId) || sameText(model.modelId, result.modelId)
+  );
   if (byId.length) {
     return newest(byId);
   }
@@ -43,7 +52,11 @@ export function findLatestResultForModel(
 }
 
 export function viewerModelKey(model: ViewerResultModelIdentity): string {
-  return model.modelId?.trim() || `${model.modelName}@${model.version ?? ''}`;
+  return (
+    model.containerId?.trim() ||
+    model.modelId?.trim() ||
+    `${model.modelName}@${model.version ?? ''}`
+  );
 }
 
 export function viewerResultKey(result: ViewerModelResult): string {
@@ -60,7 +73,8 @@ export function viewerResultKey(result: ViewerModelResult): string {
 /**
  * True when `result` is the outcome of the pending run: it carries the run or
  * execution id returned by the run request, or (when the backend omits them)
- * it completed after the result that was current when the run was requested.
+ * it completed after the result that was current when the run was requested
+ * (also used when the run was already active and its ids are unknown).
  */
 export function isResultForPendingRun(
   result: ViewerModelResult,
@@ -68,12 +82,12 @@ export function isResultForPendingRun(
 ): boolean {
   if (
     (pending.executionId && result.executionId === pending.executionId) ||
-    result.runId === pending.runId
+    (pending.runId && result.runId === pending.runId)
   ) {
     return true;
   }
 
-  if (result.runId) {
+  if (result.runId && pending.runId) {
     return false;
   }
 

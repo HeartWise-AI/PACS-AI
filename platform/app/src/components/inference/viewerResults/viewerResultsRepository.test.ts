@@ -24,6 +24,7 @@ const latestRow = {
   modelVersion: '1.3.0',
   modality: 'angiogram',
   modelId: 'model-1',
+  artifactModelId: 'deepcoro-jepa',
   containerId: 'container-1',
   runId: 'run-1',
   executionId: 'execution-1',
@@ -59,6 +60,7 @@ describe('viewer results repository', () => {
         modelVersion: '1.3.0',
         modality: 'angiogram',
         modelId: 'model-1',
+        artifactModelId: 'deepcoro-jepa',
         containerId: 'container-1',
         runId: 'run-1',
         executionId: 'execution-1',
@@ -116,7 +118,7 @@ describe('viewer results repository', () => {
     expect(mapSelectedViews(undefined)).toBeNull();
   });
 
-  test.each([404, 501])(
+  test.each([404, 405, 501])(
     'reports a missing endpoint (%s) so callers keep the old behaviour',
     async status => {
       const http = client();
@@ -128,6 +130,24 @@ describe('viewer results repository', () => {
       expect(isViewerResultsEndpointMissing(await request.catch(error => error))).toBe(true);
     }
   );
+
+  test('does not treat a coded 404 from the new endpoint as a missing route', async () => {
+    const http = client();
+    http.post.mockRejectedValue({
+      response: { status: 404, data: { errorCode: 'MISSING_RECORD', message: 'Not found.' } },
+    });
+
+    const error = await createViewerResultsRepository(http)
+      .runModel({ studyInstanceUID: '1.2.3', modelRef: 'container-1' })
+      .catch(caught => caught);
+
+    expect(error).toMatchObject({
+      status: 404,
+      errorCode: 'MISSING_RECORD',
+      serverMessage: 'Not found.',
+    });
+    expect(isViewerResultsEndpointMissing(error)).toBe(false);
+  });
 
   test('does not treat other failures as a missing endpoint', async () => {
     const http = client();
@@ -200,13 +220,13 @@ describe('viewer results repository', () => {
 
     const run = await createViewerResultsRepository(http).runModel({
       studyInstanceUID: '1.2.3',
-      modelId: 'model-1',
-      seriesInstanceUIDs: ['series-1'],
+      modelRef: 'container-1',
+      modality: 'XA',
     });
 
     expect(http.post).toHaveBeenCalledWith(
-      '/v1/inference/worklist/studies/1.2.3/models/model-1/run',
-      { seriesInstanceUIDs: ['series-1'] }
+      '/v1/inference/worklist/studies/1.2.3/models/container-1/run',
+      { modality: 'XA' }
     );
     expect(run).toEqual({
       runId: 'run-2',
@@ -223,7 +243,7 @@ describe('viewer results repository', () => {
     http.post.mockRejectedValue(httpError(409, 'RUN_ALREADY_ACTIVE'));
 
     const error = await createViewerResultsRepository(http)
-      .runModel({ studyInstanceUID: '1.2.3', modelId: 'model-1' })
+      .runModel({ studyInstanceUID: '1.2.3', modelRef: 'model-1' })
       .catch(caught => caught);
 
     expect(error).toMatchObject({ status: 409, errorCode: 'RUN_ALREADY_ACTIVE' });

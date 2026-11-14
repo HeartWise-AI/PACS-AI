@@ -33,5 +33,11 @@
   "ViewerSelectedViewsLegend": "{{modelName}}: ausgewählte Ansichten ({{count}})",
   "ViewerShowReport": "Bericht anzeigen",
   "ViewerClearSelectedViews": "Zurücksetzen",
-  "ViewerSelectedViewBadge": "{{modelName}} ausgewählte Ansicht {{number}}: {{viewLabel}}"
+  "ViewerSelectedViewBadge": "{{modelName}} ausgewählte Ansicht {{number}}: {{viewLabel}}",
+  "ViewerRunConfirm": "Stellt dieses Modell für die Studie in die Warteschlange. Verbraucht Kontingent.",
+  "ViewerRunConfirmAction": "Ausführen",
+  "ViewerStudyNotAvailableLocally": "Die Studie ist auf diesem PACS-AI-Server nicht verfügbar.",
+  "ViewerRunQuotaExceeded": "Inferenzkontingent erschöpft oder zu viele aktive Ausführungen. Bitte später erneut versuchen.",
+  "ViewerResultTriggerAutoLegacy": "Automatisch (Altbestand)",
+  "ViewerReportFallbackNote": "Der Bericht konnte nicht erstellt werden; das gespeicherte Ergebnis wird angezeigt."
 }

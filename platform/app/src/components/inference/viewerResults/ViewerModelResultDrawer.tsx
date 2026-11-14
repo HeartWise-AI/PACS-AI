@@ -32,6 +32,11 @@ const TRIGGER_LABELS: Record<string, { key: string; defaultValue: string }> = {
   LEGACY_IMPORT: { key: 'ViewerResultTriggerLegacy', defaultValue: 'Imported' },
 };
 
+const LEGACY_TRIGGER_LABEL = {
+  key: 'ViewerResultTriggerAutoLegacy',
+  defaultValue: 'Automatic (legacy)',
+};
+
 function canLoadReport(result: ViewerModelResult): boolean {
   return (
     result.reportAvailable && (!!(result.runId && result.executionId) || !!result.studyServiceJobId)
@@ -101,7 +106,8 @@ export function ViewerModelResultDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showStructured, resultKey, openStructured]);
 
-  const trigger = result.trigger ? TRIGGER_LABELS[result.trigger] : undefined;
+  // A null trigger means study-service ran the model without an api-pacs run.
+  const trigger = result.trigger ? TRIGGER_LABELS[result.trigger] : LEGACY_TRIGGER_LABEL;
   const selectedViews = useMemo(() => result.selectedViews, [result.selectedViews]);
   const structuredState = structured.state;
   const failurePresentation = getModelExecutionResultFailurePresentation(structuredState.failure);
@@ -135,8 +141,7 @@ export function ViewerModelResultDrawer({
           </h2>
           <p className="mt-1 text-sm text-[#c5cbc5]">
             {result.completedAt && new Date(result.completedAt).toLocaleString()}
-            {result.trigger &&
-              ` · ${trigger ? t(trigger.key, { defaultValue: trigger.defaultValue }) : result.trigger}`}
+            {` · ${trigger ? t(trigger.key, { defaultValue: trigger.defaultValue }) : result.trigger}`}
           </p>
         </div>
         <button
@@ -240,6 +245,16 @@ export function ViewerModelResultDrawer({
         )}
         {showStructured && hasExecution && (
           <div className="px-5 py-5">
+            {report.status === 'error' && (
+              <p
+                className="mb-4 text-xs text-[#c5cbc5]"
+                data-testid="viewer-model-result-report-fallback"
+              >
+                {t('ViewerReportFallbackNote', {
+                  defaultValue: 'The report could not be rendered; showing the stored result.',
+                })}
+              </p>
+            )}
             {structuredState.status === 'ready' &&
               structuredState.result &&
               !isEmptyModelExecutionResult(structuredState.result.result) && (

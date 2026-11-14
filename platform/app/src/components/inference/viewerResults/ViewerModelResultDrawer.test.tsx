@@ -43,6 +43,7 @@ function result(overrides: Partial<ViewerModelResult> = {}): ViewerModelResult {
     modelVersion: '1.3.0',
     modality: 'angiogram',
     modelId: 'model-1',
+    artifactModelId: null,
     containerId: null,
     runId: 'run-1',
     executionId: 'execution-1',
@@ -168,6 +169,15 @@ describe('ViewerModelResultDrawer', () => {
 
     expect(loadReport).toHaveBeenCalled();
     expect(mockOpen).toHaveBeenCalled();
+    expect(
+      renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-report-fallback' })
+    ).toBeTruthy();
+  });
+
+  test('labels results without an api-pacs run as legacy automatic', async () => {
+    await render(result({ trigger: null, reportAvailable: false }), repository(jest.fn()));
+
+    expect(text(renderer!)).toContain('Automatic (legacy)');
   });
 
   test('explains when a legacy row has neither a report nor execution ids', async () => {

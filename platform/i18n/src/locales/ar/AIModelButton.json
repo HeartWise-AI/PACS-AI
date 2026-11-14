@@ -33,5 +33,11 @@
   "ViewerSelectedViewsLegend": "{{modelName}}: المناظر المحددة ({{count}})",
   "ViewerShowReport": "عرض التقرير",
   "ViewerClearSelectedViews": "مسح",
-  "ViewerSelectedViewBadge": "{{modelName}} المنظر المحدد {{number}}: {{viewLabel}}"
+  "ViewerSelectedViewBadge": "{{modelName}} المنظر المحدد {{number}}: {{viewLabel}}",
+  "ViewerRunConfirm": "يضع هذا النموذج في قائمة الانتظار للدراسة. يستهلك الحصة.",
+  "ViewerRunConfirmAction": "تشغيل",
+  "ViewerStudyNotAvailableLocally": "الدراسة غير متاحة على خادم PACS-AI هذا.",
+  "ViewerRunQuotaExceeded": "تم استنفاد حصة الاستدلال أو هناك عدد كبير من عمليات التشغيل النشطة. حاول لاحقًا.",
+  "ViewerResultTriggerAutoLegacy": "تلقائي (قديم)",
+  "ViewerReportFallbackNote": "تعذر إنشاء التقرير؛ يتم عرض النتيجة المخزنة."
 }

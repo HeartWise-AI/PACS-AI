@@ -33,5 +33,11 @@
   "ViewerSelectedViewsLegend": "{{modelName}}: vistas seleccionadas ({{count}})",
   "ViewerShowReport": "Mostrar informe",
   "ViewerClearSelectedViews": "Borrar",
-  "ViewerSelectedViewBadge": "{{modelName}} vista seleccionada {{number}}: {{viewLabel}}"
+  "ViewerSelectedViewBadge": "{{modelName}} vista seleccionada {{number}}: {{viewLabel}}",
+  "ViewerRunConfirm": "Pone este modelo en cola para el estudio. Consume cuota.",
+  "ViewerRunConfirmAction": "Ejecutar",
+  "ViewerStudyNotAvailableLocally": "El estudio no está disponible en este servidor PACS-AI.",
+  "ViewerRunQuotaExceeded": "Cuota de inferencia agotada o demasiadas ejecuciones activas. Inténtelo más tarde.",
+  "ViewerResultTriggerAutoLegacy": "Automático (heredado)",
+  "ViewerReportFallbackNote": "No se pudo generar el informe; se muestra el resultado almacenado."
 }

@@ -33,5 +33,11 @@
   "ViewerSelectedViewsLegend": "{{modelName}}: selected views ({{count}})",
   "ViewerShowReport": "Show report",
   "ViewerClearSelectedViews": "Clear",
-  "ViewerSelectedViewBadge": "{{modelName}} selected view {{number}}: {{viewLabel}}"
+  "ViewerSelectedViewBadge": "{{modelName}} selected view {{number}}: {{viewLabel}}",
+  "ViewerRunConfirm": "Queues this model for the study. Uses quota.",
+  "ViewerRunConfirmAction": "Run",
+  "ViewerStudyNotAvailableLocally": "Study isn't available on this PACS-AI server.",
+  "ViewerRunQuotaExceeded": "Inference allowance exhausted or too many runs active. Try again later.",
+  "ViewerResultTriggerAutoLegacy": "Automatic (legacy)",
+  "ViewerReportFallbackNote": "The report could not be rendered; showing the stored result."
 }

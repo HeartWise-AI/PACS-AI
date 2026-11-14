@@ -13,6 +13,7 @@ function result(overrides: Partial<ViewerModelResult>): ViewerModelResult {
     modelVersion: '1.3.0',
     modality: 'angiogram',
     modelId: null,
+    artifactModelId: null,
     containerId: null,
     runId: null,
     executionId: null,
@@ -38,6 +39,22 @@ function view(overrides: Partial<SelectedView>): SelectedView {
 }
 
 describe('findLatestResultForModel', () => {
+  test('matches by container id, then by the model-info id', () => {
+    const byContainer = result({ containerId: 'container-1', runId: 'container' });
+    const byArtifact = result({ artifactModelId: 'deepcoro-jepa', runId: 'artifact' });
+    const model = {
+      modelId: 'deepcoro-jepa',
+      containerId: 'container-1',
+      modelName: 'DeepCORO-JEPA',
+      version: '1.3.0',
+    };
+
+    expect(findLatestResultForModel(model, [byArtifact, byContainer])).toBe(byContainer);
+    expect(findLatestResultForModel({ ...model, containerId: 'other' }, [byArtifact])).toBe(
+      byArtifact
+    );
+  });
+
   const byId = result({ modelId: 'model-1', modelVersion: '1.2.0', runId: 'by-id' });
   const byNameAndVersion = result({ runId: 'name-version' });
   const byNameOnly = result({ modelVersion: '0.9.0', runId: 'name-only' });
@@ -70,6 +87,7 @@ describe('isResultForPendingRun', () => {
     key: 'model-1',
     studyInstanceUID: '1.2.3',
     modelId: 'model-1',
+    containerId: 'container-1',
     modelName: 'DeepCORO-JEPA',
     modelVersion: '1.3.0',
     runId: 'run-2',
@@ -87,6 +105,17 @@ describe('isResultForPendingRun', () => {
         pending
       )
     ).toBe(false);
+  });
+
+  test('recognizes any newer result for an already active run with unknown ids', () => {
+    const unknownRun = { ...pending, runId: null, executionId: null };
+    expect(
+      isResultForPendingRun(
+        result({ runId: 'run-9', completedAt: '2026-11-13T11:00:00Z' }),
+        unknownRun
+      )
+    ).toBe(true);
+    expect(isResultForPendingRun(result({ runId: 'run-1' }), unknownRun)).toBe(false);
   });
 
   test('uses completion time for rows without run identifiers', () => {

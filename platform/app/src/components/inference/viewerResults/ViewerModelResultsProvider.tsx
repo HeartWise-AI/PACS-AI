@@ -40,8 +40,8 @@ export type ManagedRunOutcome = 'queued' | 'fallback';
 
 export interface StartManagedRunRequest {
   model: ViewerResultModelIdentity;
-  studyInstanceUID: string;
-  seriesInstanceUIDs: string[];
+  // DICOM modality, only for models that support several.
+  modality?: string | null;
 }
 
 export interface OpenViewerModelResult {
@@ -178,34 +178,29 @@ export function ViewerModelResultsProvider({
   );
 
   const startManagedRun = useCallback(
-    async ({
-      model,
-      studyInstanceUID: runStudyInstanceUID,
-      seriesInstanceUIDs,
-    }: StartManagedRunRequest): Promise<ManagedRunOutcome> => {
-      const modelId = model.modelId?.trim();
-      if (!canRunManaged || !modelId) {
+    async ({ model, modality }: StartManagedRunRequest): Promise<ManagedRunOutcome> => {
+      const modelRef = model.containerId?.trim() || model.modelId?.trim();
+      const runStudyInstanceUID = studyInstanceUID?.trim();
+      if (!canRunManaged || !modelRef || !runStudyInstanceUID) {
         return 'fallback';
       }
 
-      try {
-        const run = await repository.runModel({
-          studyInstanceUID: runStudyInstanceUID,
-          modelId,
-          seriesInstanceUIDs,
-        });
-        const baseline =
-          runStudyInstanceUID === studyInstanceUID
-            ? findLatestResultForModel(model, latestResultsRef.current)
-            : null;
+      const queue = (
+        runId: string | null,
+        executionId: string | null,
+        name?: string | null,
+        version?: string | null
+      ) => {
+        const baseline = findLatestResultForModel(model, latestResultsRef.current);
         const pending: PendingViewerModelRun = {
           key: viewerModelKey(model),
           studyInstanceUID: runStudyInstanceUID,
-          modelId,
-          modelName: run.modelName ?? model.modelName,
-          modelVersion: run.modelVersion ?? model.version ?? null,
-          runId: run.runId,
-          executionId: run.executionId,
+          modelId: model.modelId?.trim() || null,
+          containerId: model.containerId?.trim() || null,
+          modelName: name ?? model.modelName,
+          modelVersion: version ?? model.version ?? null,
+          runId,
+          executionId,
           requestedAt: Date.now(),
           baselineCompletedAt: baseline?.completedAt ?? null,
         };
@@ -216,26 +211,44 @@ export function ViewerModelResultsProvider({
           ),
           pending,
         ]);
+        return pending;
+      };
+
+      try {
+        const run = await repository.runModel({
+          studyInstanceUID: runStudyInstanceUID,
+          modelRef,
+          modality,
+        });
+        const pending = queue(run.runId, run.executionId, run.modelName, run.modelVersion);
         alert(t('ViewerRunQueued', { modelName: pending.modelName }), 'info');
         return 'queued';
       } catch (error: unknown) {
         if (isViewerResultsEndpointMissing(error)) {
           return 'fallback';
         }
-        if (
-          error instanceof ViewerResultsRequestError &&
-          (error.errorCode === VIEWER_RESULTS_ERROR_CODES.runAlreadyActive || error.status === 409)
-        ) {
+        const requestError = error instanceof ViewerResultsRequestError ? error : null;
+        const errorCode = requestError?.errorCode ?? null;
+        const status = requestError?.status ?? null;
+        if (errorCode === VIEWER_RESULTS_ERROR_CODES.runAlreadyActive) {
+          // Track the run that is already active so its result is offered too.
+          queue(null, null);
+          throw new ViewerResultsRequestError(t('ViewerRunAlreadyActive'), status, errorCode);
+        }
+        if (errorCode === VIEWER_RESULTS_ERROR_CODES.studyNotAvailableLocally) {
           throw new ViewerResultsRequestError(
-            t('ViewerRunAlreadyActive'),
-            error.status,
-            error.errorCode
+            t('ViewerStudyNotAvailableLocally'),
+            status,
+            errorCode
           );
         }
+        if (status === 429) {
+          throw new ViewerResultsRequestError(t('ViewerRunQuotaExceeded'), status, errorCode);
+        }
         throw new ViewerResultsRequestError(
-          t('ViewerRunFailed'),
-          error instanceof ViewerResultsRequestError ? error.status : null,
-          error instanceof ViewerResultsRequestError ? error.errorCode : null
+          requestError?.serverMessage ?? t('ViewerRunFailed'),
+          status,
+          errorCode
         );
       }
     },
@@ -275,7 +288,12 @@ export function ViewerModelResultsProvider({
     const timedOut: PendingViewerModelRun[] = [];
     const stillPending = pending.filter(run => {
       const result = findLatestResultForModel(
-        { modelId: run.modelId, modelName: run.modelName, version: run.modelVersion },
+        {
+          modelId: run.modelId,
+          containerId: run.containerId,
+          modelName: run.modelName,
+          version: run.modelVersion,
+        },
         resultsByStudy.get(run.studyInstanceUID) ?? []
       );
       if (result && isResultForPendingRun(result, run)) {

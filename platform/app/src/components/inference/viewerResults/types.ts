@@ -16,7 +16,10 @@ export interface ViewerModelResult {
   modelName: string;
   modelVersion: string | null;
   modality: string | null;
+  // Firestore registration id of the tenant's model, when one matches.
   modelId: string | null;
+  // model-info modelId (what /model/proxy/available returns as modelId).
+  artifactModelId: string | null;
   containerId: string | null;
   runId: string | null;
   executionId: string | null;
@@ -41,7 +44,9 @@ export interface ViewerModelRun {
 // The subset of an available-model entry used for matching; kept structural
 // so this module does not depend on the full inference DTO.
 export interface ViewerResultModelIdentity {
+  // /model/proxy/available returns the model-info id here, not the Firestore id.
   modelId?: string | null;
+  containerId?: string | null;
   modelName: string;
   version?: string | null;
 }
@@ -54,10 +59,12 @@ export interface SelectedViewBadge {
 export interface PendingViewerModelRun {
   key: string;
   studyInstanceUID: string;
-  modelId: string;
+  modelId: string | null;
+  containerId: string | null;
   modelName: string;
   modelVersion: string | null;
-  runId: string;
+  // null when the run was already active (409) and its ids are unknown.
+  runId: string | null;
   executionId: string | null;
   requestedAt: number;
   // The newest result known for the model when the run was requested, used

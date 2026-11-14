@@ -32,7 +32,12 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-const model = { modelId: 'model-1', modelName: 'DeepCORO-JEPA', version: '1.3.0' };
+const model = {
+  modelId: 'deepcoro-jepa',
+  containerId: 'container-1',
+  modelName: 'DeepCORO-JEPA',
+  version: '1.3.0',
+};
 
 function result(overrides: Partial<ViewerModelResult> = {}): ViewerModelResult {
   return {
@@ -41,7 +46,8 @@ function result(overrides: Partial<ViewerModelResult> = {}): ViewerModelResult {
     modelVersion: '1.3.0',
     modality: 'angiogram',
     modelId: 'model-1',
-    containerId: null,
+    artifactModelId: 'deepcoro-jepa',
+    containerId: 'container-1',
     runId: 'run-1',
     executionId: 'execution-1',
     studyServiceJobId: 'job-1',
@@ -201,11 +207,7 @@ describe('ViewerModelResultsProvider', () => {
 
     let outcome: string | undefined;
     await act(async () => {
-      outcome = await context!.startManagedRun({
-        model,
-        studyInstanceUID: '1.2.3',
-        seriesInstanceUIDs: ['series-1'],
-      });
+      outcome = await context!.startManagedRun({ model, modality: 'XA' });
     });
 
     expect(outcome).toBe('fallback');
@@ -217,13 +219,11 @@ describe('ViewerModelResultsProvider', () => {
     const repo = repository();
     await render(repo);
 
-    await expect(
-      context!.startManagedRun({ model, studyInstanceUID: '1.2.3', seriesInstanceUIDs: [] })
-    ).resolves.toBe('fallback');
+    await expect(context!.startManagedRun({ model })).resolves.toBe('fallback');
     expect(repo.runModel).not.toHaveBeenCalled();
   });
 
-  test('reports an already active run', async () => {
+  test('reports an already active run and tracks it as in progress', async () => {
     const repo = repository({
       runModel: jest
         .fn()
@@ -231,9 +231,28 @@ describe('ViewerModelResultsProvider', () => {
     });
     await render(repo);
 
-    await expect(
-      context!.startManagedRun({ model, studyInstanceUID: '1.2.3', seriesInstanceUIDs: [] })
-    ).rejects.toMatchObject({ message: 'ViewerRunAlreadyActive' });
+    await act(async () => {
+      await expect(context!.startManagedRun({ model })).rejects.toMatchObject({
+        message: 'ViewerRunAlreadyActive',
+      });
+    });
+    expect(context!.getPendingRun(model)).toMatchObject({ runId: null, executionId: null });
+  });
+
+  test.each([
+    [
+      new ViewerResultsRequestError('x', 409, 'STUDY_NOT_AVAILABLE_LOCALLY'),
+      'ViewerStudyNotAvailableLocally',
+    ],
+    [new ViewerResultsRequestError('x', 429, 'INFERENCE_QUOTA_EXCEEDED'), 'ViewerRunQuotaExceeded'],
+    [new ViewerResultsRequestError('x', 404, 'MISSING_RECORD', 'Not found.'), 'Not found.'],
+    [new ViewerResultsRequestError('x', 503, null), 'ViewerRunFailed'],
+  ])('does not fall back on coded run errors (%#)', async (error, message) => {
+    const repo = repository({ runModel: jest.fn().mockRejectedValue(error) });
+    await render(repo);
+
+    await expect(context!.startManagedRun({ model })).rejects.toMatchObject({ message });
+    expect(context!.getPendingRun(model)).toBeNull();
   });
 
   test('queues a managed run and offers the newer result once it completes', async () => {
@@ -255,18 +274,14 @@ describe('ViewerModelResultsProvider', () => {
 
     let outcome: string | undefined;
     await act(async () => {
-      outcome = await context!.startManagedRun({
-        model,
-        studyInstanceUID: '1.2.3',
-        seriesInstanceUIDs: ['series-1'],
-      });
+      outcome = await context!.startManagedRun({ model, modality: 'XA' });
     });
 
     expect(outcome).toBe('queued');
     expect(repo.runModel).toHaveBeenCalledWith({
       studyInstanceUID: '1.2.3',
-      modelId: 'model-1',
-      seriesInstanceUIDs: ['series-1'],
+      modelRef: 'container-1',
+      modality: 'XA',
     });
     expect(showAlert).toHaveBeenCalledWith('ViewerRunQueued:DeepCORO-JEPA', 'info');
     expect(context!.getPendingRun(model)?.runId).toBe('run-2');

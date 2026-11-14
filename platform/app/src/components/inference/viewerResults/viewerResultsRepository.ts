@@ -17,8 +17,11 @@ export interface ViewerModelReport {
 
 export interface RunViewerModelRequest {
   studyInstanceUID: string;
-  modelId: string;
-  seriesInstanceUIDs?: string[];
+  // Registration id, container id or model-info modelId; the viewer sends the
+  // container id because /model/proxy/available has no registration id.
+  modelRef: string;
+  // DICOM modality, only for models that support several.
+  modality?: string | null;
 }
 
 export interface ViewerResultsRepository {
@@ -30,25 +33,39 @@ export interface ViewerResultsRepository {
 export class ViewerResultsRequestError extends Error {
   readonly status: number | null;
   readonly errorCode: string | null;
+  // api-pacs `message` of a coded error response, when present.
+  readonly serverMessage: string | null;
 
-  constructor(message: string, status: number | null, errorCode: string | null = null) {
+  constructor(
+    message: string,
+    status: number | null,
+    errorCode: string | null = null,
+    serverMessage: string | null = null
+  ) {
     super(message);
     this.name = 'ViewerResultsRequestError';
     this.status = status;
     this.errorCode = errorCode;
+    this.serverMessage = serverMessage;
   }
 }
 
 export const VIEWER_RESULTS_ERROR_CODES = {
   reportNotAvailable: 'REPORT_NOT_AVAILABLE',
+  reportRenderRejected: 'REPORT_RENDER_REJECTED',
+  reportRenderFailed: 'REPORT_RENDER_FAILED',
   runAlreadyActive: 'RUN_ALREADY_ACTIVE',
+  studyNotAvailableLocally: 'STUDY_NOT_AVAILABLE_LOCALLY',
 } as const;
 
-// A backend that predates the contract answers 404 (no route) or 501. The
-// viewer then keeps its previous behaviour instead of surfacing an error.
+// An api-pacs that predates the contract has no route: 404/405/501 without a
+// JSON errorCode. The viewer then keeps its previous behaviour. A coded error
+// (e.g. 404 MISSING_RECORD) comes from the new endpoint and is not a fallback.
 export function isViewerResultsEndpointMissing(error: unknown): boolean {
   return (
-    error instanceof ViewerResultsRequestError && (error.status === 404 || error.status === 501)
+    error instanceof ViewerResultsRequestError &&
+    !error.errorCode &&
+    (error.status === 404 || error.status === 405 || error.status === 501)
   );
 }
 
@@ -77,7 +94,12 @@ function requestError(error: unknown, fallbackMessage: string): ViewerResultsReq
   const status = typeof response?.status === 'number' ? response.status : null;
   const body = isRecord(response?.data) ? response.data : null;
   const errorCode = optionalString(body?.errorCode);
-  return new ViewerResultsRequestError(fallbackMessage, status, errorCode);
+  return new ViewerResultsRequestError(
+    fallbackMessage,
+    status,
+    errorCode,
+    errorCode ? optionalString(body?.message) : null
+  );
 }
 
 // api-pacs wraps most payloads as {success, message, data}; accept both the
@@ -88,7 +110,8 @@ function unwrap(body: unknown): unknown {
       throw new ViewerResultsRequestError(
         optionalString(body.message) ?? 'The request failed.',
         null,
-        optionalString(body.errorCode)
+        optionalString(body.errorCode),
+        optionalString(body.message)
       );
     }
     return body.data;
@@ -134,6 +157,7 @@ export function mapViewerModelResult(
     modelVersion: optionalString(value.modelVersion),
     modality: optionalString(value.modality),
     modelId: optionalString(value.modelId),
+    artifactModelId: optionalString(value.artifactModelId),
     containerId: optionalString(value.containerId),
     runId: optionalString(value.runId),
     executionId: optionalString(value.executionId),
@@ -217,14 +241,12 @@ export function createViewerResultsRepository(
       const path = `/v1/inference/worklist/studies/${encodedIdentifier(
         request.studyInstanceUID,
         'Study Instance UID'
-      )}/models/${encodedIdentifier(request.modelId, 'Model ID')}/run`;
-      const seriesInstanceUIDs = request.seriesInstanceUIDs?.filter(Boolean) ?? [];
+      )}/models/${encodedIdentifier(request.modelRef, 'Model ID')}/run`;
+      // study-service selects the series itself, so none are sent.
+      const modality = request.modality?.trim();
 
       try {
-        const response = await client.post<unknown>(
-          path,
-          seriesInstanceUIDs.length ? { seriesInstanceUIDs } : {}
-        );
+        const response = await client.post<unknown>(path, modality ? { modality } : {});
         return mapViewerModelRun(unwrap(response.data));
       } catch (error: unknown) {
         throw requestError(error, 'Unable to start the model run.');
