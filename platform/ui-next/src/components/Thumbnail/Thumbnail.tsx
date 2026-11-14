@@ -33,6 +33,7 @@ const Thumbnail = ({
   onReject = () => {},
   onClickUntrack = () => {},
   ThumbnailMenuItems = () => {},
+  selectedViewBadge = null, // NOTE: This is a PACS changes
 }: withAppTypes): React.ReactNode => {
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
@@ -57,6 +58,22 @@ const Thumbnail = ({
     }
     setLastTap(currentTime);
   };
+
+  // NOTE: This is a PACS changes (AI result "selected view" marker)
+  const renderSelectedViewBadge = (sizeClassName: string) =>
+    selectedViewBadge ? (
+      <span
+        className={classnames(
+          'flex shrink-0 items-center justify-center rounded-full bg-[#3ef1d1] font-bold text-black',
+          sizeClassName
+        )}
+        title={selectedViewBadge.label}
+        aria-label={selectedViewBadge.label}
+        data-cy="thumbnail-selected-view-badge"
+      >
+        {selectedViewBadge.number}
+      </span>
+    ) : null;
 
   const renderThumbnailPreset = () => {
     return (
@@ -93,6 +110,13 @@ const Thumbnail = ({
               ></div>
               <div className="text-[11px] font-semibold text-white">{modality}</div>
             </div>
+
+            {/* top left (NOTE: This is a PACS changes) */}
+            {selectedViewBadge && (
+              <div className="absolute top-[4px] left-[4px]">
+                {renderSelectedViewBadge('h-[18px] w-[18px] text-[11px]')}
+              </div>
+            )}
 
             {/* top right */}
             <div className="absolute top-0 right-0 flex items-center gap-[4px]">
@@ -187,6 +211,7 @@ const Thumbnail = ({
           ></div>
           <div className="flex h-full w-[calc(100%-12px)] flex-col justify-start">
             <div className="flex items-center gap-[7px]">
+              {renderSelectedViewBadge('h-[16px] w-[16px] text-[10px]')}
               {/* NOTE: This is a PACS changes */}
               <div className="text-[13px] font-semibold text-white/80">{modality}</div>
               <Tooltip>
@@ -267,6 +292,7 @@ const Thumbnail = ({
         // NOTE: This is a PACS changes
         'group flex cursor-pointer select-none flex-col rounded bg-white/10 outline-none hover:bg-white/30',
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
+        selectedViewBadge && 'ring-1 ring-[#3ef1d1]',
         viewPreset === 'list' && 'h-[40px] w-full'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
@@ -323,6 +349,11 @@ Thumbnail.propTypes = {
   onClickUntrack: PropTypes.func,
   countIcon: PropTypes.string,
   thumbnailType: PropTypes.oneOf(['thumbnail', 'thumbnailTracked', 'thumbnailNoImage']),
+  // NOTE: This is a PACS changes
+  selectedViewBadge: PropTypes.shape({
+    number: PropTypes.number.isRequired,
+    label: PropTypes.string,
+  }),
 };
 
 export { Thumbnail };

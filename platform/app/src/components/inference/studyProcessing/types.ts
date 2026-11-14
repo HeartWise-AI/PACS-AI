@@ -23,7 +23,12 @@ export const PROCESSING_RUN_OUTCOMES = [
 
 export type ProcessingRunOutcome = (typeof PROCESSING_RUN_OUTCOMES)[number];
 
-export const PROCESSING_RUN_TRIGGERS = ['AUTO', 'MANUAL_REPROCESS', 'LEGACY_IMPORT'] as const;
+export const PROCESSING_RUN_TRIGGERS = [
+  'AUTO',
+  'MANUAL_REPROCESS',
+  'LEGACY_IMPORT',
+  'VIEWER_REQUEST',
+] as const;
 
 export type ProcessingRunTrigger = (typeof PROCESSING_RUN_TRIGGERS)[number];
 

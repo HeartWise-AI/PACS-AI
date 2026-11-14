@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useImageViewer } from '@ohif/ui-next';
 import { useSystem, utils } from '@ohif/core';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,9 @@ import { PanelStudyBrowserHeader } from './PanelStudyBrowserHeader';
 import { defaultActionIcons } from './constants';
 import MoreDropdownMenu from '../../Components/MoreDropdownMenu';
 import { CallbackCustomization } from 'platform/core/src/types';
+import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider'; // NOTE: This is a PACS changes
+import { SelectedViewsLegend } from '@ohif/app/src/components/inference/viewerResults/SelectedViewsLegend'; // NOTE: This is a PACS changes
+import { buildSelectedViewBadges } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel'; // NOTE: This is a PACS changes
 
 const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
 
@@ -355,7 +359,39 @@ function PanelStudyBrowser({
     customMapDisplaySets,
   ]);
 
-  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, displaySets);
+  // NOTE: This is a PACS changes
+  // Mark the clips the open AI result actually used ("selected views").
+  const { t } = useTranslation('AIModelButton');
+  const openedModelResult = useViewerModelResults()?.openedResult?.result ?? null;
+  const badgedDisplaySets = useMemo(() => {
+    if (!openedModelResult?.selectedViews?.length) {
+      return displaySets;
+    }
+    const badges = buildSelectedViewBadges(
+      openedModelResult.selectedViews,
+      displaySets
+        .map(ds => displaySetService.getDisplaySetByUID(ds.displaySetInstanceUID))
+        .filter(Boolean)
+    );
+    return displaySets.map(ds => {
+      const badge = badges[ds.displaySetInstanceUID];
+      return badge
+        ? {
+            ...ds,
+            selectedViewBadge: {
+              number: badge.number,
+              label: t('ViewerSelectedViewBadge', {
+                number: badge.number,
+                viewLabel: badge.viewLabel ?? t('ViewerUnknownView'),
+                modelName: openedModelResult.modelName,
+              }),
+            },
+          }
+        : ds;
+    });
+  }, [displaySets, displaySetService, openedModelResult, t]);
+
+  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, badgedDisplaySets);
 
   // TODO: Should not fire this on "close"
   function _handleStudyClick(StudyInstanceUID) {
@@ -424,6 +460,8 @@ function PanelStudyBrowser({
         />
       </>
 
+      {/* NOTE: This is a PACS changes */}
+      <SelectedViewsLegend />
       <StudyBrowser
         tabs={tabs}
         servicesManager={servicesManager}

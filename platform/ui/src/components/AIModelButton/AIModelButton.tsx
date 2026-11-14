@@ -24,6 +24,8 @@ import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesMo
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { addSegmentationFromLabelmap } from '../../../../../extensions/cornerstone/src/utils/addSegmentation';
+import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
+import { viewerModelKey } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -57,6 +59,10 @@ const AIModelButton = ({
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
   const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');
+  // Previous results / managed runs (absent outside the viewer provider).
+  const viewerResults = useViewerModelResults();
+  const [confirmRunModelKey, setConfirmRunModelKey] = useState<string | null>(null);
+  const [startingManagedRun, setStartingManagedRun] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,6 +87,10 @@ const AIModelButton = ({
 
   // handle button click
   const handleButtonClick = e => {
+    if (!isOpen) {
+      setConfirmRunModelKey(null);
+      void viewerResults?.refreshLatestResults();
+    }
     setIsOpen(!isOpen);
     const buttonRect = e.currentTarget.getBoundingClientRect();
     setDropdownPosition({
@@ -160,6 +170,86 @@ const AIModelButton = ({
       setIsLoading(false);
     }
   };
+
+  const openRunFlow = (model: GetInferenceAvailableModelsResponse) => {
+    setOutputModeTitle(`${model.modelName} (${model.version}-${model.outputMode})`);
+    setIsOpen(false);
+    setConfirmRunModelKey(null);
+    setContainerName(model.containerName);
+    setSelectedInferenceModel(model);
+    setOpenSelectSeriesModal(true);
+  };
+
+  // Managed (queued, recorded in run history) runs: study-service selects the
+  // series, so no series selection. Models that need additional metadata keep
+  // the interactive predict path because a managed run cannot carry it.
+  const canQueueModel = (model: GetInferenceAvailableModelsResponse) =>
+    !!viewerResults?.canRunManaged &&
+    !!(model.containerId?.trim() || model.modelId?.trim()) &&
+    !model.supportedAdditionalMetadata?.length;
+
+  const managedRunModality = (model: GetInferenceAvailableModelsResponse) =>
+    (model.supportedDicomModalities?.length ?? 0) > 1
+      ? (model.supportedDicomModalities.find(modality =>
+          Object.keys(selectedModalities).some(selected => selected.includes(modality))
+        ) ?? null)
+      : null;
+
+  const confirmRun = async (model: GetInferenceAvailableModelsResponse) => {
+    if (!canQueueModel(model)) {
+      openRunFlow(model);
+      return;
+    }
+
+    setStartingManagedRun(true);
+    try {
+      const outcome = await viewerResults.startManagedRun({
+        model,
+        modality: managedRunModality(model),
+      });
+      if (outcome === 'fallback') {
+        // Older api-pacs without managed runs: interactive predict.
+        openRunFlow(model);
+        return;
+      }
+      setConfirmRunModelKey(null);
+      setIsOpen(false);
+    } catch (error) {
+      setConfirmRunModelKey(null);
+      showAlert(error.message, 'error');
+    } finally {
+      setStartingManagedRun(false);
+    }
+  };
+
+  const renderRunConfirmation = (model: GetInferenceAvailableModelsResponse, isRerun: boolean) => (
+    <div className="flex flex-col gap-1 rounded bg-black/20 p-2 text-xs">
+      <p>{t(isRerun ? 'ViewerRerunConfirm' : 'ViewerRunConfirm')}</p>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          className="rounded px-2 py-1 hover:bg-white/10"
+          onClick={() => setConfirmRunModelKey(null)}
+          disabled={startingManagedRun}
+        >
+          {t('ViewerRerunCancel')}
+        </button>
+        <button
+          type="button"
+          className={`rounded px-2 py-1 font-semibold ${backgroundClass} ${
+            startingManagedRun ? 'opacity-50' : ''
+          }`}
+          onClick={() => void confirmRun(model)}
+          disabled={startingManagedRun}
+        >
+          {t(isRerun ? 'ViewerRerunConfirmAction' : 'ViewerRunConfirmAction')}
+        </button>
+      </div>
+    </div>
+  );
+
+  const formatResultDate = (completedAt: string | null) =>
+    completedAt ? new Date(completedAt).toLocaleDateString() : '';
 
   // add segmentation
   const addSegmentation = async data => {
@@ -275,36 +365,101 @@ const AIModelButton = ({
                       )
                     )
                   )
-                  .map((model, index) => (
-                    <li
-                      key={index}
-                      className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-                      onClick={() => {
-                        setOutputModeTitle(
-                          `${model.modelName} (${model.version}-${model.outputMode})`
-                        );
-                        setIsOpen(false);
-                        setContainerName(model.containerName);
-                        setSelectedInferenceModel(model);
-                        setOpenSelectSeriesModal(true);
-                        return;
-                      }}
-                    >
-                      <img
-                        src={playerPlayIcon}
-                        alt="Player play icon"
-                        className="w-5"
-                      />
-                      <h1 className="whitespace-nowrap text-sm">
-                        Apply {t(model.modelName)} ({model.version}-{model.outputMode})
-                      </h1>
-                      <img
-                        src={helpInactive}
-                        alt="Player play icon"
-                        className="mr-2 w-5"
-                      />
-                    </li>
-                  ))}
+                  .map((model, index) => {
+                    const latestResult = viewerResults?.getLatestResult(model) ?? null;
+                    const pendingRun = viewerResults?.getPendingRun(model) ?? null;
+                    const modelKey = viewerModelKey(model);
+                    const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
+
+                    if (!latestResult && !pendingRun && confirmRunModelKey === modelKey) {
+                      return (
+                        <li
+                          key={index}
+                          className="flex flex-col gap-1 p-1"
+                        >
+                          <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
+                          {renderRunConfirmation(model, false)}
+                        </li>
+                      );
+                    }
+
+                    if (!latestResult && !pendingRun) {
+                      return (
+                        <li
+                          key={index}
+                          className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+                          onClick={() =>
+                            canQueueModel(model)
+                              ? setConfirmRunModelKey(modelKey)
+                              : openRunFlow(model)
+                          }
+                        >
+                          <img
+                            src={playerPlayIcon}
+                            alt="Player play icon"
+                            className="w-5"
+                          />
+                          <h1 className="whitespace-nowrap text-sm">Apply {modelLabel}</h1>
+                          <img
+                            src={helpInactive}
+                            alt="Player play icon"
+                            className="mr-2 w-5"
+                          />
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li
+                        key={index}
+                        className="flex flex-col gap-1 p-1"
+                        data-testid="ai-model-previous-result"
+                      >
+                        <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
+                        {confirmRunModelKey === modelKey ? (
+                          renderRunConfirmation(model, true)
+                        ) : (
+                          <div className="flex items-center gap-2 px-1">
+                            {latestResult && (
+                              <button
+                                type="button"
+                                className="hover:bg-primary-dark whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                                onClick={() => {
+                                  setIsOpen(false);
+                                  viewerResults?.openResult(latestResult);
+                                }}
+                              >
+                                {t('ViewerViewResult', {
+                                  date: formatResultDate(latestResult.completedAt),
+                                })}
+                              </button>
+                            )}
+                            {pendingRun ? (
+                              <span
+                                className="whitespace-nowrap px-2 py-1 text-xs opacity-70"
+                                role="status"
+                              >
+                                {t('ViewerRunInProgress')}
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="hover:bg-primary-dark flex items-center gap-1 whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                                onClick={() => setConfirmRunModelKey(modelKey)}
+                              >
+                                <img
+                                  src={playerPlayIcon}
+                                  alt=""
+                                  className="w-4"
+                                />
+                                {t('ViewerRerun')}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
               </ul>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
