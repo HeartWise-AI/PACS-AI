@@ -188,4 +188,25 @@ describe('SelectSeriesModal series count selection', () => {
     chooseCount('10');
     expect(status()).toBe('3 selected · Maximum: 10 · 3 available');
   });
+
+  test('shows the default loading text without a dismiss button', () => {
+    mount({ loading: true });
+
+    expect(status()).toBe('Applying inference and generating results...');
+    expect(renderer.root.findAllByType('button')).toHaveLength(0);
+  });
+
+  test('shows a custom loading message that can be dismissed', () => {
+    const dismiss = jest.fn();
+    mount({
+      loading: true,
+      loadingMessage: 'Running JEPA…',
+      onDismissLoading: dismiss,
+      dismissLoadingLabel: 'Continue in background',
+    });
+
+    expect(status()).toBe('Running JEPA…');
+    act(() => button('Continue in background').props.onClick());
+    expect(dismiss).toHaveBeenCalledTimes(1);
+  });
 });

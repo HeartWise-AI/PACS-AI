@@ -1,5 +1,10 @@
 import Api from '../../../pacsAPIAxios';
-import type { SelectedView, ViewerModelResult, ViewerModelRun } from './types';
+import type {
+  SelectedView,
+  ViewerModelResult,
+  ViewerModelRun,
+  ViewerModelRunStatus,
+} from './types';
 
 interface HTTPResponse<T> {
   data: T;
@@ -22,12 +27,15 @@ export interface RunViewerModelRequest {
   modelRef: string;
   // DICOM modality, only for models that support several.
   modality?: string | null;
+  // Series chosen in the viewer; study-service selects them itself when absent.
+  seriesInstanceUIDs?: string[];
 }
 
 export interface ViewerResultsRepository {
   loadLatestResults(studyInstanceUID: string): Promise<ViewerModelResult[]>;
   loadReport(result: ViewerModelResult): Promise<ViewerModelReport>;
   runModel(request: RunViewerModelRequest): Promise<ViewerModelRun>;
+  loadRunStatus(runId: string): Promise<ViewerModelRunStatus>;
 }
 
 export class ViewerResultsRequestError extends Error {
@@ -242,15 +250,43 @@ export function createViewerResultsRepository(
         request.studyInstanceUID,
         'Study Instance UID'
       )}/models/${encodedIdentifier(request.modelRef, 'Model ID')}/run`;
-      // study-service selects the series itself, so none are sent.
+      // Without series study-service selects them itself, so the key is omitted.
       const modality = request.modality?.trim();
+      const seriesInstanceUIDs = (request.seriesInstanceUIDs ?? [])
+        .map(uid => uid?.trim())
+        .filter(Boolean);
+      const body = {
+        ...(modality ? { modality } : {}),
+        ...(seriesInstanceUIDs.length ? { seriesInstanceUIDs } : {}),
+      };
 
       try {
-        const response = await client.post<unknown>(path, modality ? { modality } : {});
+        const response = await client.post<unknown>(path, body);
         return mapViewerModelRun(unwrap(response.data));
       } catch (error: unknown) {
         throw requestError(error, 'Unable to start the model run.');
       }
+    },
+
+    async loadRunStatus(runId: string): Promise<ViewerModelRunStatus> {
+      const path = `/v1/inference/processing/runs/${encodedIdentifier(runId, 'Processing run ID')}`;
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>(path);
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load the model run status.');
+      }
+
+      const executions = isRecord(body) && Array.isArray(body.executions) ? body.executions : [];
+      return {
+        phase: isRecord(body) ? optionalString(body.phase) : null,
+        outcome: isRecord(body) ? optionalString(body.outcome) : null,
+        executions: executions.filter(isRecord).map(execution => ({
+          executionId: optionalString(execution.executionId),
+          status: optionalString(execution.status),
+        })),
+      };
     },
   };
 }

@@ -4,7 +4,9 @@ import { AlertContext } from '../../../AlertProvider';
 import {
   useViewerModelResults,
   ViewerModelResultsProvider,
+  type ForegroundRunOutcome,
   type ViewerModelResultsContextValue,
+  type ViewerModelResultsProviderProps,
 } from './ViewerModelResultsProvider';
 import { ViewerResultsRequestError, type ViewerResultsRepository } from './viewerResultsRepository';
 import type { ViewerModelResult } from './types';
@@ -73,6 +75,9 @@ function repository(overrides: Partial<ViewerResultsRepository> = {}) {
     loadLatestResults: jest.fn().mockResolvedValue([result()]),
     loadReport: jest.fn(),
     runModel: jest.fn(),
+    loadRunStatus: jest
+      .fn()
+      .mockResolvedValue({ phase: 'PROCESSING', outcome: null, executions: [] }),
     ...overrides,
   } as jest.Mocked<ViewerResultsRepository>;
 }
@@ -127,7 +132,8 @@ describe('ViewerModelResultsProvider', () => {
 
   async function render(
     repo: ViewerResultsRepository,
-    servicesManager = services().servicesManager
+    servicesManager = services().servicesManager,
+    props: Partial<ViewerModelResultsProviderProps> = {}
   ) {
     await act(async () => {
       renderer = TestRenderer.create(
@@ -137,6 +143,7 @@ describe('ViewerModelResultsProvider', () => {
             servicesManager={servicesManager}
             repository={repo}
             pollIntervalMs={1000}
+            {...props}
           >
             <Probe />
           </ViewerModelResultsProvider>
@@ -355,5 +362,257 @@ describe('ViewerModelResultsProvider', () => {
     });
     expect(missing).toBe(false);
     expect(showAlert).toHaveBeenCalledWith('ViewerSelectedViewNotLoaded', 'info');
+  });
+
+  describe('foreground runs', () => {
+    const startedRun = {
+      runId: 'run-2',
+      runNumber: 2,
+      trigger: 'VIEWER_REQUEST',
+      executionId: 'execution-2',
+      modelName: 'DeepCORO-JEPA',
+      modelVersion: '1.3.0',
+    };
+    const newer = result({
+      runId: 'run-2',
+      executionId: 'execution-2',
+      completedAt: '2026-11-13T10:00:00Z',
+      trigger: 'VIEWER_REQUEST',
+    });
+    const readyNotices = () =>
+      renderer!.root.findAllByProps({ 'data-testid': 'viewer-model-result-ready-view' });
+    const tick = async (milliseconds: number) => {
+      await act(async () => {
+        jest.advanceTimersByTime(milliseconds);
+      });
+      await flush();
+      await flush();
+    };
+
+    async function start(
+      repo: ViewerResultsRepository,
+      props: Partial<ViewerModelResultsProviderProps> = {}
+    ) {
+      jest.useFakeTimers();
+      await render(repo, undefined, props);
+      await act(async () => {
+        await context!.refreshLatestResults();
+      });
+      let outcome: ForegroundRunOutcome | undefined;
+      await act(async () => {
+        void context!
+          .startForegroundRun({
+            model,
+            modality: 'XA',
+            seriesInstanceUIDs: ['series-1', 'series-2'],
+            studyInstanceUID: '1.2.3',
+          })
+          .then(settled => {
+            outcome = settled;
+          });
+      });
+      return () => outcome;
+    }
+
+    test('sends the selected series, waits without a toast and opens the result when ready', async () => {
+      const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+      const outcome = await start(repo);
+
+      expect(repo.runModel).toHaveBeenCalledWith({
+        studyInstanceUID: '1.2.3',
+        modelRef: 'container-1',
+        modality: 'XA',
+        seriesInstanceUIDs: ['series-1', 'series-2'],
+      });
+      expect(showAlert).not.toHaveBeenCalled();
+      expect(context!.getPendingRun(model)?.runId).toBe('run-2');
+
+      await tick(1000);
+      expect(outcome()).toBeUndefined();
+      expect(repo.loadRunStatus).toHaveBeenCalledWith('run-2');
+
+      repo.loadLatestResults.mockResolvedValue([newer]);
+      await tick(1000);
+
+      expect(outcome()).toEqual({ status: 'completed', result: newer });
+      expect(context!.getPendingRun(model)).toBeNull();
+      expect(context!.openedResult).toEqual({ result: newer, minimized: false });
+      expect(renderer!.root.findAllByProps({ 'data-testid': 'drawer' })).toHaveLength(1);
+      expect(readyNotices()).toHaveLength(0);
+      expect(showAlert).not.toHaveBeenCalled();
+    });
+
+    test('runs the study chosen in the series pop-up', async () => {
+      const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+      jest.useFakeTimers();
+      await render(repo);
+      await act(async () => {
+        void context!.startForegroundRun({ model, studyInstanceUID: '9.9.9' });
+      });
+
+      expect(repo.runModel).toHaveBeenCalledWith({
+        studyInstanceUID: '9.9.9',
+        modelRef: 'container-1',
+        modality: undefined,
+      });
+      await tick(1000);
+      expect(repo.loadLatestResults).toHaveBeenCalledWith('9.9.9');
+    });
+
+    test('polls faster while a foreground run is active', async () => {
+      const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+      await start(repo, { pollIntervalMs: 10_000 });
+      repo.loadLatestResults.mockClear();
+
+      await tick(3000);
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(1);
+
+      act(() => context!.dismissForegroundRun());
+      await tick(3000);
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(1);
+      await tick(7000);
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(2);
+    });
+
+    test('keeps a dismissed run tracked and offers its result through the notice', async () => {
+      const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+      const outcome = await start(repo);
+
+      await act(async () => {
+        context!.dismissForegroundRun();
+      });
+      expect(outcome()).toEqual({ status: 'dismissed' });
+      expect(context!.getPendingRun(model)?.runId).toBe('run-2');
+
+      repo.loadLatestResults.mockResolvedValue([newer]);
+      await tick(1000);
+
+      expect(context!.getPendingRun(model)).toBeNull();
+      expect(context!.openedResult).toBeNull();
+      expect(readyNotices()).toHaveLength(1);
+    });
+
+    test('does not wait on a run dismissed before its start request returned', async () => {
+      let resolveRun: (run: typeof startedRun) => void = () => {};
+      const repo = repository({
+        runModel: jest.fn().mockReturnValue(
+          new Promise(resolve => {
+            resolveRun = resolve;
+          })
+        ),
+      });
+      const outcome = await start(repo);
+
+      act(() => context!.dismissForegroundRun());
+      await act(async () => {
+        resolveRun(startedRun);
+      });
+
+      expect(outcome()).toEqual({ status: 'dismissed' });
+      expect(context!.getPendingRun(model)?.runId).toBe('run-2');
+    });
+
+    test.each([
+      ['failed', 'ViewerRunEndedFailed:DeepCORO-JEPA'],
+      ['skipped', 'ViewerRunEndedSkipped:DeepCORO-JEPA'],
+    ])('stops waiting when the run ends %s', async (status, message) => {
+      const repo = repository({
+        runModel: jest.fn().mockResolvedValue(startedRun),
+        loadRunStatus: jest.fn().mockResolvedValue({
+          phase: 'TERMINAL',
+          outcome: 'FAILED',
+          executions: [{ executionId: 'execution-2', status }],
+        }),
+      });
+      const outcome = await start(repo);
+
+      await tick(1000);
+
+      expect(outcome()).toEqual({ status: 'failed' });
+      expect(showAlert).toHaveBeenCalledWith(message, 'error');
+      expect(context!.getPendingRun(model)).toBeNull();
+      expect(context!.openedResult).toBeNull();
+      expect(readyNotices()).toHaveLength(0);
+    });
+
+    test('keeps waiting when the run status cannot be loaded', async () => {
+      const repo = repository({
+        runModel: jest.fn().mockResolvedValue(startedRun),
+        loadRunStatus: jest.fn().mockRejectedValue(new ViewerResultsRequestError('x', 404)),
+      });
+      const outcome = await start(repo);
+
+      await tick(1000);
+
+      expect(outcome()).toBeUndefined();
+      expect(context!.getPendingRun(model)?.runId).toBe('run-2');
+    });
+
+    test('stops waiting when the run exceeds the maximum pending time', async () => {
+      const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+      const outcome = await start(repo, { maxPendingMs: 1500 });
+
+      await tick(1000);
+      expect(outcome()).toBeUndefined();
+      await tick(1000);
+
+      expect(outcome()).toEqual({ status: 'timedOut' });
+      expect(showAlert).toHaveBeenCalledWith('ViewerRunStillRunning:DeepCORO-JEPA', 'info');
+      expect(context!.getPendingRun(model)).toBeNull();
+    });
+
+    test('reports a failed background run as well', async () => {
+      const repo = repository({
+        runModel: jest.fn().mockResolvedValue(startedRun),
+        loadRunStatus: jest.fn().mockResolvedValue({
+          phase: 'TERMINAL',
+          outcome: 'FAILED',
+          executions: [{ executionId: 'execution-2', status: 'failed' }],
+        }),
+      });
+      jest.useFakeTimers();
+      await render(repo);
+      await act(async () => {
+        await context!.startManagedRun({ model });
+      });
+
+      await tick(1000);
+
+      expect(showAlert).toHaveBeenCalledWith('ViewerRunEndedFailed:DeepCORO-JEPA', 'error');
+      expect(context!.getPendingRun(model)).toBeNull();
+    });
+
+    test('rejects with the start error and falls back like a queued run', async () => {
+      const repo = repository({
+        runModel: jest
+          .fn()
+          .mockRejectedValueOnce(
+            new ViewerResultsRequestError('x', 429, 'INFERENCE_QUOTA_EXCEEDED')
+          )
+          .mockRejectedValueOnce(new ViewerResultsRequestError('x', 409, 'RUN_ALREADY_ACTIVE'))
+          .mockRejectedValueOnce(new ViewerResultsRequestError('x', 501)),
+      });
+      await render(repo);
+
+      await act(async () => {
+        await expect(context!.startForegroundRun({ model })).rejects.toMatchObject({
+          message: 'ViewerRunQuotaExceeded',
+        });
+      });
+      expect(context!.getPendingRun(model)).toBeNull();
+
+      await act(async () => {
+        await expect(context!.startForegroundRun({ model })).rejects.toMatchObject({
+          message: 'ViewerRunAlreadyActive',
+        });
+      });
+      expect(context!.getPendingRun(model)).toMatchObject({ runId: null });
+
+      await act(async () => {
+        await expect(context!.startForegroundRun({ model })).resolves.toEqual({
+          status: 'fallback',
+        });
+      });
+    });
   });
 });

@@ -62,7 +62,8 @@ const AIModelButton = ({
   // Previous results / managed runs (absent outside the viewer provider).
   const viewerResults = useViewerModelResults();
   const [confirmRunModelKey, setConfirmRunModelKey] = useState<string | null>(null);
-  const [startingManagedRun, setStartingManagedRun] = useState(false);
+  // Name of the model whose managed run the series pop-up is waiting on.
+  const [foregroundRunModelName, setForegroundRunModelName] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -180,9 +181,9 @@ const AIModelButton = ({
     setOpenSelectSeriesModal(true);
   };
 
-  // Managed (queued, recorded in run history) runs: study-service selects the
-  // series, so no series selection. Models that need additional metadata keep
-  // the interactive predict path because a managed run cannot carry it.
+  // Managed runs are recorded in run history and stored as the study's
+  // result. Models that need additional metadata keep the direct predict
+  // path because a managed run cannot carry it.
   const canQueueModel = (model: GetInferenceAvailableModelsResponse) =>
     !!viewerResults?.canRunManaged &&
     !!(model.containerId?.trim() || model.modelId?.trim()) &&
@@ -195,54 +196,78 @@ const AIModelButton = ({
         ) ?? null)
       : null;
 
-  const confirmRun = async (model: GetInferenceAvailableModelsResponse) => {
-    if (!canQueueModel(model)) {
-      openRunFlow(model);
-      return;
+  // Confirmed series selection: a managed run the pop-up waits on when the
+  // model supports it, the direct predict call otherwise.
+  const applySelectedSeries = async (
+    containerId: string,
+    seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
+    additionalMetadata: { [key: string]: string | null },
+    outputMode: string
+  ) => {
+    const model = selectedInferenceModel;
+    const applyPredict = () =>
+      applyPredictInferenceModel(
+        containerId,
+        seriesInstanceUIDs,
+        studyInstanceUID,
+        additionalMetadata,
+        outputMode
+      );
+    if (!model || !canQueueModel(model)) {
+      return applyPredict();
     }
 
-    setStartingManagedRun(true);
+    setIsOpen(false);
+    setForegroundRunModelName(t(model.modelName));
     try {
-      const outcome = await viewerResults.startManagedRun({
+      const outcome = await viewerResults.startForegroundRun({
         model,
         modality: managedRunModality(model),
+        seriesInstanceUIDs,
+        studyInstanceUID,
       });
-      if (outcome === 'fallback') {
-        // Older api-pacs without managed runs: interactive predict.
-        openRunFlow(model);
-        return;
+      if (outcome.status === 'fallback') {
+        // Older api-pacs without managed runs: direct predict.
+        setForegroundRunModelName(null);
+        return applyPredict();
       }
-      setConfirmRunModelKey(null);
-      setIsOpen(false);
+      if (outcome.status === 'completed') {
+        // The provider has opened the result.
+        setOpenSelectSeriesModal(false);
+      }
+      // Failed or timed out: the provider has reported it and the pop-up
+      // stays usable. Dismissed: the pop-up is already closed.
     } catch (error) {
-      setConfirmRunModelKey(null);
       showAlert(error.message, 'error');
     } finally {
-      setStartingManagedRun(false);
+      setForegroundRunModelName(null);
     }
   };
 
-  const renderRunConfirmation = (model: GetInferenceAvailableModelsResponse, isRerun: boolean) => (
+  const dismissForegroundRun = () => {
+    // The run continues; its result is offered through the ready notice.
+    viewerResults?.dismissForegroundRun();
+    setOpenSelectSeriesModal(false);
+  };
+
+  const renderRerunConfirmation = (model: GetInferenceAvailableModelsResponse) => (
     <div className="flex flex-col gap-1 rounded bg-black/20 p-2 text-xs">
-      <p>{t(isRerun ? 'ViewerRerunConfirm' : 'ViewerRunConfirm')}</p>
+      <p>{t('ViewerRerunConfirm')}</p>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           className="rounded px-2 py-1 hover:bg-white/10"
           onClick={() => setConfirmRunModelKey(null)}
-          disabled={startingManagedRun}
         >
           {t('ViewerRerunCancel')}
         </button>
         <button
           type="button"
-          className={`rounded px-2 py-1 font-semibold ${backgroundClass} ${
-            startingManagedRun ? 'opacity-50' : ''
-          }`}
-          onClick={() => void confirmRun(model)}
-          disabled={startingManagedRun}
+          className={`rounded px-2 py-1 font-semibold ${backgroundClass}`}
+          onClick={() => openRunFlow(model)}
         >
-          {t(isRerun ? 'ViewerRerunConfirmAction' : 'ViewerRunConfirmAction')}
+          {t('ViewerRerunConfirmAction')}
         </button>
       </div>
     </div>
@@ -371,28 +396,12 @@ const AIModelButton = ({
                     const modelKey = viewerModelKey(model);
                     const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
 
-                    if (!latestResult && !pendingRun && confirmRunModelKey === modelKey) {
-                      return (
-                        <li
-                          key={index}
-                          className="flex flex-col gap-1 p-1"
-                        >
-                          <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
-                          {renderRunConfirmation(model, false)}
-                        </li>
-                      );
-                    }
-
                     if (!latestResult && !pendingRun) {
                       return (
                         <li
                           key={index}
                           className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-                          onClick={() =>
-                            canQueueModel(model)
-                              ? setConfirmRunModelKey(modelKey)
-                              : openRunFlow(model)
-                          }
+                          onClick={() => openRunFlow(model)}
                         >
                           <img
                             src={playerPlayIcon}
@@ -417,7 +426,7 @@ const AIModelButton = ({
                       >
                         <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
                         {confirmRunModelKey === modelKey ? (
-                          renderRunConfirmation(model, true)
+                          renderRerunConfirmation(model)
                         ) : (
                           <div className="flex items-center gap-2 px-1">
                             {latestResult && (
@@ -528,9 +537,16 @@ const AIModelButton = ({
           onClose={() => {
             setOpenSelectSeriesModal(false);
           }}
-          applyPredictInferenceModel={applyPredictInferenceModel}
+          applyPredictInferenceModel={applySelectedSeries}
           title={outputModeTitle}
-          loading={isLoading}
+          loading={isLoading || !!foregroundRunModelName}
+          loadingMessage={
+            foregroundRunModelName
+              ? t('ViewerRunForeground', { modelName: foregroundRunModelName })
+              : undefined
+          }
+          onDismissLoading={foregroundRunModelName ? dismissForegroundRun : undefined}
+          dismissLoadingLabel={t('ViewerRunForegroundDismiss')}
           selectedInferenceModel={selectedInferenceModel}
         />
       )}

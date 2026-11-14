@@ -32,6 +32,16 @@ export interface ViewerModelResult {
   reportAvailable: boolean;
 }
 
+// The part of a processing run's detail used to notice that a pending run
+// ended without producing a result.
+export interface ViewerModelRunStatus {
+  phase: string | null;
+  outcome: string | null;
+  executions: Array<{ executionId: string | null; status: string | null }>;
+}
+
+export type PendingRunFailure = 'failed' | 'skipped';
+
 export interface ViewerModelRun {
   runId: string;
   runNumber: number | null;

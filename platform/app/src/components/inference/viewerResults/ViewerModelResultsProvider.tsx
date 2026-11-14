@@ -21,11 +21,13 @@ import {
 import {
   findDisplaySetsForSelectedView,
   findLatestResultForModel,
+  findPendingRunFailure,
   isResultForPendingRun,
   viewerModelKey,
   viewerResultKey,
 } from './viewerResultsModel';
 import type {
+  PendingRunFailure,
   PendingViewerModelRun,
   SelectedView,
   ViewerModelResult,
@@ -42,7 +44,21 @@ export interface StartManagedRunRequest {
   model: ViewerResultModelIdentity;
   // DICOM modality, only for models that support several.
   modality?: string | null;
+  // Series chosen in the series pop-up; study-service selects when absent.
+  seriesInstanceUIDs?: string[];
+  // Study chosen in the series pop-up; defaults to the viewer's study.
+  studyInstanceUID?: string | null;
 }
+
+// How a run the user is waiting on ended. 'completed' means the provider
+// has opened the result; 'dismissed' means the run continues in the
+// background and its result is offered through the ready notice.
+export type ForegroundRunOutcome =
+  | { status: 'fallback' }
+  | { status: 'completed'; result: ViewerModelResult }
+  | { status: 'failed' }
+  | { status: 'timedOut' }
+  | { status: 'dismissed' };
 
 export interface OpenViewerModelResult {
   result: ViewerModelResult;
@@ -57,6 +73,11 @@ export interface ViewerModelResultsContextValue {
   getLatestResult: (model: ViewerResultModelIdentity) => ViewerModelResult | null;
   getPendingRun: (model: ViewerResultModelIdentity) => PendingViewerModelRun | null;
   startManagedRun: (request: StartManagedRunRequest) => Promise<ManagedRunOutcome>;
+  // Starts a managed run and resolves when it ends or is dismissed. Rejects
+  // like startManagedRun when the run cannot be started.
+  startForegroundRun: (request: StartManagedRunRequest) => Promise<ForegroundRunOutcome>;
+  // Stops waiting on the foreground run; the run itself keeps going.
+  dismissForegroundRun: () => void;
   openResult: (result: ViewerModelResult) => void;
   closeResult: () => void;
   setResultMinimized: (minimized: boolean) => void;
@@ -73,6 +94,8 @@ export function useViewerModelResults(): ViewerModelResultsContextValue | null {
 }
 
 export const VIEWER_RESULTS_POLL_INTERVAL_MS = 10_000;
+// While the user is waiting on a run in the series pop-up.
+export const VIEWER_RESULTS_FOREGROUND_POLL_INTERVAL_MS = 3_000;
 export const VIEWER_RESULTS_MAX_PENDING_MS = 30 * 60_000;
 
 export interface ViewerModelResultsProviderProps {
@@ -83,6 +106,7 @@ export interface ViewerModelResultsProviderProps {
   appConfig?: unknown;
   repository?: ViewerResultsRepository;
   pollIntervalMs?: number;
+  foregroundPollIntervalMs?: number;
   maxPendingMs?: number;
 }
 
@@ -94,6 +118,7 @@ export function ViewerModelResultsProvider({
   appConfig,
   repository: providedRepository,
   pollIntervalMs = VIEWER_RESULTS_POLL_INTERVAL_MS,
+  foregroundPollIntervalMs = VIEWER_RESULTS_FOREGROUND_POLL_INTERVAL_MS,
   maxPendingMs = VIEWER_RESULTS_MAX_PENDING_MS,
 }: ViewerModelResultsProviderProps) {
   const { t } = useTranslation('AIModelButton');
@@ -117,6 +142,16 @@ export function ViewerModelResultsProvider({
   const latestResultsRef = useRef<ViewerModelResult[]>([]);
   const pendingRunsRef = useRef<PendingViewerModelRun[]>([]);
   const refreshGeneration = useRef(0);
+  // The run the user is waiting on in the series pop-up, if any.
+  const foregroundRunRef = useRef<{
+    run: PendingViewerModelRun;
+    resolve: (outcome: ForegroundRunOutcome) => void;
+  } | null>(null);
+  const [foregroundRunActive, setForegroundRunActive] = useState(false);
+  // A foreground run whose start request has not returned yet, and whether
+  // the user stopped waiting in the meantime.
+  const foregroundRunStarting = useRef<{ dismissed: boolean } | null>(null);
+  const pollInFlight = useRef(false);
 
   latestResultsRef.current = latestResults;
   pendingRunsRef.current = pendingRuns;
@@ -177,12 +212,41 @@ export function ViewerModelResultsProvider({
     [pendingRuns, studyInstanceUID]
   );
 
-  const startManagedRun = useCallback(
-    async ({ model, modality }: StartManagedRunRequest): Promise<ManagedRunOutcome> => {
+  // Resolves the foreground wait when `run` is the run being waited on.
+  const settleForegroundRun = useCallback(
+    (run: PendingViewerModelRun | null, outcome: ForegroundRunOutcome): boolean => {
+      const foreground = foregroundRunRef.current;
+      if (!foreground || (run && foreground.run !== run)) {
+        return false;
+      }
+      foregroundRunRef.current = null;
+      setForegroundRunActive(false);
+      foreground.resolve(outcome);
+      return true;
+    },
+    []
+  );
+
+  const dismissForegroundRun = useCallback(() => {
+    if (foregroundRunStarting.current) {
+      foregroundRunStarting.current.dismissed = true;
+    }
+    settleForegroundRun(null, { status: 'dismissed' });
+  }, [settleForegroundRun]);
+
+  // Starts the run and tracks it as pending; null when the viewer has to
+  // fall back to interactive predict.
+  const beginManagedRun = useCallback(
+    async ({
+      model,
+      modality,
+      seriesInstanceUIDs,
+      studyInstanceUID: requestedStudyInstanceUID,
+    }: StartManagedRunRequest): Promise<PendingViewerModelRun | null> => {
       const modelRef = model.containerId?.trim() || model.modelId?.trim();
-      const runStudyInstanceUID = studyInstanceUID?.trim();
+      const runStudyInstanceUID = requestedStudyInstanceUID?.trim() || studyInstanceUID?.trim();
       if (!canRunManaged || !modelRef || !runStudyInstanceUID) {
-        return 'fallback';
+        return null;
       }
 
       const queue = (
@@ -191,7 +255,10 @@ export function ViewerModelResultsProvider({
         name?: string | null,
         version?: string | null
       ) => {
-        const baseline = findLatestResultForModel(model, latestResultsRef.current);
+        const baseline = findLatestResultForModel(
+          model,
+          latestResultsRef.current.filter(result => result.studyInstanceUID === runStudyInstanceUID)
+        );
         const pending: PendingViewerModelRun = {
           key: viewerModelKey(model),
           studyInstanceUID: runStudyInstanceUID,
@@ -219,13 +286,12 @@ export function ViewerModelResultsProvider({
           studyInstanceUID: runStudyInstanceUID,
           modelRef,
           modality,
+          ...(seriesInstanceUIDs?.length ? { seriesInstanceUIDs } : {}),
         });
-        const pending = queue(run.runId, run.executionId, run.modelName, run.modelVersion);
-        alert(t('ViewerRunQueued', { modelName: pending.modelName }), 'info');
-        return 'queued';
+        return queue(run.runId, run.executionId, run.modelName, run.modelVersion);
       } catch (error: unknown) {
         if (isViewerResultsEndpointMissing(error)) {
-          return 'fallback';
+          return null;
         }
         const requestError = error instanceof ViewerResultsRequestError ? error : null;
         const errorCode = requestError?.errorCode ?? null;
@@ -252,80 +318,172 @@ export function ViewerModelResultsProvider({
         );
       }
     },
-    [alert, canRunManaged, repository, studyInstanceUID, t]
+    [canRunManaged, repository, studyInstanceUID, t]
+  );
+
+  const startManagedRun = useCallback(
+    async (request: StartManagedRunRequest): Promise<ManagedRunOutcome> => {
+      const pending = await beginManagedRun(request);
+      if (!pending) {
+        return 'fallback';
+      }
+      alert(t('ViewerRunQueued', { modelName: pending.modelName }), 'info');
+      return 'queued';
+    },
+    [alert, beginManagedRun, t]
+  );
+
+  const startForegroundRun = useCallback(
+    async (request: StartManagedRunRequest): Promise<ForegroundRunOutcome> => {
+      const starting = { dismissed: false };
+      foregroundRunStarting.current = starting;
+      let pending: PendingViewerModelRun | null;
+      try {
+        pending = await beginManagedRun(request);
+      } finally {
+        if (foregroundRunStarting.current === starting) {
+          foregroundRunStarting.current = null;
+        }
+      }
+      if (!pending) {
+        return { status: 'fallback' };
+      }
+      if (starting.dismissed) {
+        return { status: 'dismissed' };
+      }
+      // Only one run is waited on at a time.
+      settleForegroundRun(null, { status: 'dismissed' });
+      return new Promise<ForegroundRunOutcome>(resolve => {
+        foregroundRunRef.current = { run: pending, resolve };
+        setForegroundRunActive(true);
+      });
+    },
+    [beginManagedRun, settleForegroundRun]
   );
 
   const pollPendingRuns = useCallback(async () => {
     const pending = pendingRunsRef.current;
-    if (!pending.length) {
+    if (!pending.length || pollInFlight.current) {
       return;
     }
 
-    const studies = [...new Set(pending.map(run => run.studyInstanceUID))];
-    const resultsByStudy = new Map<string, ViewerModelResult[]>();
-    await Promise.all(
-      studies.map(uid =>
-        repository.loadLatestResults(uid).then(
-          results => {
-            resultsByStudy.set(uid, results);
-          },
-          () => {
-            // Transient failures are retried on the next tick.
-          }
+    pollInFlight.current = true;
+    try {
+      const studies = [...new Set(pending.map(run => run.studyInstanceUID))];
+      const resultsByStudy = new Map<string, ViewerModelResult[]>();
+      await Promise.all(
+        studies.map(uid =>
+          repository.loadLatestResults(uid).then(
+            results => {
+              resultsByStudy.set(uid, results);
+            },
+            () => {
+              // Transient failures are retried on the next tick.
+            }
+          )
         )
-      )
-    );
-
-    const primaryResults = studyInstanceUID ? resultsByStudy.get(studyInstanceUID) : undefined;
-    if (primaryResults && canViewResults) {
-      refreshGeneration.current += 1;
-      setLatestResults(primaryResults);
-      setLatestResultsStatus('ready');
-    }
-
-    const now = Date.now();
-    const completed: ViewerModelResult[] = [];
-    const timedOut: PendingViewerModelRun[] = [];
-    const stillPending = pending.filter(run => {
-      const result = findLatestResultForModel(
-        {
-          modelId: run.modelId,
-          containerId: run.containerId,
-          modelName: run.modelName,
-          version: run.modelVersion,
-        },
-        resultsByStudy.get(run.studyInstanceUID) ?? []
       );
-      if (result && isResultForPendingRun(result, run)) {
-        completed.push(result);
-        return false;
-      }
-      if (now - run.requestedAt > maxPendingMs) {
-        timedOut.push(run);
-        return false;
-      }
-      return true;
-    });
 
-    if (stillPending.length === pending.length) {
-      return;
-    }
+      const primaryResults = studyInstanceUID ? resultsByStudy.get(studyInstanceUID) : undefined;
+      if (primaryResults && canViewResults) {
+        refreshGeneration.current += 1;
+        setLatestResults(primaryResults);
+        setLatestResultsStatus('ready');
+      }
 
-    setPendingRuns(current =>
-      current.filter(run => stillPending.includes(run) || !pending.includes(run))
-    );
-    if (completed.length) {
-      setReadyResults(current => [
-        ...current.filter(
-          item => !completed.some(result => viewerResultKey(result) === viewerResultKey(item))
-        ),
-        ...completed,
-      ]);
+      const now = Date.now();
+      const completed = new Map<PendingViewerModelRun, ViewerModelResult>();
+      const timedOut: PendingViewerModelRun[] = [];
+      const unresolved = pending.filter(run => {
+        const result = findLatestResultForModel(
+          {
+            modelId: run.modelId,
+            containerId: run.containerId,
+            modelName: run.modelName,
+            version: run.modelVersion,
+          },
+          resultsByStudy.get(run.studyInstanceUID) ?? []
+        );
+        if (result && isResultForPendingRun(result, run)) {
+          completed.set(run, result);
+          return false;
+        }
+        if (now - run.requestedAt > maxPendingMs) {
+          timedOut.push(run);
+          return false;
+        }
+        return true;
+      });
+
+      // The latest results only list completed runs, so a run that failed or
+      // was skipped is recognized from its run detail (known run id only).
+      const failed = new Map<PendingViewerModelRun, PendingRunFailure>();
+      await Promise.all(
+        unresolved
+          .filter(run => run.runId)
+          .map(run =>
+            repository.loadRunStatus(run.runId as string).then(
+              status => {
+                const failure = findPendingRunFailure(status, run);
+                if (failure) {
+                  failed.set(run, failure);
+                }
+              },
+              () => {
+                // Without the run detail the run is tracked until it times out.
+              }
+            )
+          )
+      );
+      const stillPending = unresolved.filter(run => !failed.has(run));
+
+      if (stillPending.length === pending.length) {
+        return;
+      }
+
+      setPendingRuns(current =>
+        current.filter(run => stillPending.includes(run) || !pending.includes(run))
+      );
+
+      const ready: ViewerModelResult[] = [];
+      completed.forEach((result, run) => {
+        if (settleForegroundRun(run, { status: 'completed', result })) {
+          // The user is waiting on this run: show its result right away.
+          setOpenedResult({ result, minimized: false });
+        } else {
+          ready.push(result);
+        }
+      });
+      if (ready.length) {
+        setReadyResults(current => [
+          ...current.filter(
+            item => !ready.some(result => viewerResultKey(result) === viewerResultKey(item))
+          ),
+          ...ready,
+        ]);
+      }
+      failed.forEach((failure, run) => {
+        settleForegroundRun(run, { status: 'failed' });
+        alert(
+          t(failure === 'skipped' ? 'ViewerRunEndedSkipped' : 'ViewerRunEndedFailed', {
+            modelName: run.modelName,
+          }),
+          'error'
+        );
+      });
+      timedOut.forEach(run => {
+        settleForegroundRun(run, { status: 'timedOut' });
+        alert(t('ViewerRunStillRunning', { modelName: run.modelName }), 'info');
+      });
+    } finally {
+      pollInFlight.current = false;
     }
-    timedOut.forEach(run =>
-      alert(t('ViewerRunStillRunning', { modelName: run.modelName }), 'info')
-    );
-  }, [alert, canViewResults, maxPendingMs, repository, studyInstanceUID, t]);
+  }, [alert, canViewResults, maxPendingMs, repository, settleForegroundRun, studyInstanceUID, t]);
+
+  // Poll faster while the user is waiting on a run in the series pop-up.
+  const activePollIntervalMs = foregroundRunActive
+    ? Math.min(pollIntervalMs, foregroundPollIntervalMs)
+    : pollIntervalMs;
 
   useEffect(() => {
     if (!pendingRuns.length) {
@@ -333,9 +491,9 @@ export function ViewerModelResultsProvider({
     }
     const interval = window.setInterval(() => {
       void pollPendingRuns();
-    }, pollIntervalMs);
+    }, activePollIntervalMs);
     return () => window.clearInterval(interval);
-  }, [pendingRuns.length, pollIntervalMs, pollPendingRuns]);
+  }, [pendingRuns.length, activePollIntervalMs, pollPendingRuns]);
 
   const openResult = useCallback(
     (result: ViewerModelResult) => {
@@ -404,6 +562,8 @@ export function ViewerModelResultsProvider({
       getLatestResult,
       getPendingRun,
       startManagedRun,
+      startForegroundRun,
+      dismissForegroundRun,
       openResult,
       closeResult,
       setResultMinimized,
@@ -418,6 +578,8 @@ export function ViewerModelResultsProvider({
       getLatestResult,
       getPendingRun,
       startManagedRun,
+      startForegroundRun,
+      dismissForegroundRun,
       openResult,
       closeResult,
       setResultMinimized,

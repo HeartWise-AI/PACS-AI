@@ -74,7 +74,12 @@ function result(overrides: Partial<ViewerModelResult> = {}): ViewerModelResult {
 }
 
 function repository(loadReport: ViewerResultsRepository['loadReport']): ViewerResultsRepository {
-  return { loadLatestResults: jest.fn(), runModel: jest.fn(), loadReport };
+  return {
+    loadLatestResults: jest.fn(),
+    runModel: jest.fn(),
+    loadRunStatus: jest.fn(),
+    loadReport,
+  };
 }
 
 const text = (renderer: ReactTestRenderer) => JSON.stringify(renderer.toJSON());

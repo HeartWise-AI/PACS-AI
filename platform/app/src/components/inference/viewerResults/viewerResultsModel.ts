@@ -1,8 +1,10 @@
 import type {
+  PendingRunFailure,
   PendingViewerModelRun,
   SelectedView,
   SelectedViewBadge,
   ViewerModelResult,
+  ViewerModelRunStatus,
   ViewerResultModelIdentity,
 } from './types';
 
@@ -97,6 +99,42 @@ export function isResultForPendingRun(
     completed > 0 &&
     (Number.isNaN(baseline) ? completed >= pending.requestedAt : completed > baseline)
   );
+}
+
+const FAILED_RUN_OUTCOMES = ['FAILED', 'CANCELLED', 'NO_RESULT'];
+
+/**
+ * Why the pending run will never produce a result, or null while it may
+ * still do so. The run's own execution decides when it can be identified;
+ * otherwise only a terminal run without a result counts.
+ */
+export function findPendingRunFailure(
+  status: ViewerModelRunStatus,
+  pending: PendingViewerModelRun
+): PendingRunFailure | null {
+  const execution = pending.executionId
+    ? status.executions.find(item => item.executionId === pending.executionId)
+    : status.executions.length === 1
+      ? status.executions[0]
+      : undefined;
+
+  switch (execution?.status?.toLowerCase()) {
+    case 'skipped':
+      return 'skipped';
+    case 'failed':
+    case 'cancelled':
+      return 'failed';
+    case 'completed':
+      // The stored result follows shortly.
+      return null;
+    default:
+      break;
+  }
+
+  return status.phase?.toUpperCase() === 'TERMINAL' &&
+    FAILED_RUN_OUTCOMES.includes(status.outcome?.toUpperCase() ?? '')
+    ? 'failed'
+    : null;
 }
 
 interface SelectedViewDisplaySet {

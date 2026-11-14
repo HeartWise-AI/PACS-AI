@@ -2,6 +2,7 @@ import {
   buildSelectedViewBadges,
   findDisplaySetsForSelectedView,
   findLatestResultForModel,
+  findPendingRunFailure,
   isResultForPendingRun,
 } from './viewerResultsModel';
 import type { PendingViewerModelRun, SelectedView, ViewerModelResult } from './types';
@@ -125,6 +126,56 @@ describe('isResultForPendingRun', () => {
     expect(isResultForPendingRun(result({ completedAt: '2026-11-13T10:05:00Z' }), pending)).toBe(
       true
     );
+  });
+});
+
+describe('findPendingRunFailure', () => {
+  const pending = {
+    runId: 'run-2',
+    executionId: 'execution-2',
+  } as PendingViewerModelRun;
+  const status = (
+    executionStatus: string | null,
+    phase = 'PROCESSING',
+    outcome: string | null = null
+  ) => ({
+    phase,
+    outcome,
+    executions: [
+      { executionId: 'execution-1', status: 'completed' },
+      ...(executionStatus ? [{ executionId: 'execution-2', status: executionStatus }] : []),
+    ],
+  });
+
+  test('reports the failed, cancelled or skipped execution of the run', () => {
+    expect(findPendingRunFailure(status('failed'), pending)).toBe('failed');
+    expect(findPendingRunFailure(status('cancelled'), pending)).toBe('failed');
+    expect(findPendingRunFailure(status('skipped'), pending)).toBe('skipped');
+  });
+
+  test('keeps waiting while the execution is active or its result is being stored', () => {
+    expect(findPendingRunFailure(status('queued'), pending)).toBeNull();
+    expect(findPendingRunFailure(status('running'), pending)).toBeNull();
+    expect(findPendingRunFailure(status('completed', 'TERMINAL', 'NO_RESULT'), pending)).toBeNull();
+  });
+
+  test('uses the terminal run outcome when the execution is not identified', () => {
+    expect(findPendingRunFailure(status(null, 'TERMINAL', 'FAILED'), pending)).toBe('failed');
+    expect(findPendingRunFailure(status(null, 'TERMINAL', 'SUCCESS'), pending)).toBeNull();
+    expect(findPendingRunFailure(status(null, 'PROCESSING', null), pending)).toBeNull();
+  });
+
+  test('uses the only execution when the run request returned no execution id', () => {
+    expect(
+      findPendingRunFailure(
+        {
+          phase: 'TERMINAL',
+          outcome: 'FAILED',
+          executions: [{ executionId: 'x', status: 'skipped' }],
+        },
+        { ...pending, executionId: null }
+      )
+    ).toBe('skipped');
   });
 });
 

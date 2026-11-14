@@ -33,6 +33,11 @@ interface SelectSeriesModalProps {
   title: string;
   selectedInferenceModel: GetInferenceAvailableModelsResponse;
   initialSeriesSelection?: InitialSeriesSelection;
+  // Shown instead of the default text while loading.
+  loadingMessage?: string;
+  // When set, the loading state offers a button that calls it.
+  onDismissLoading?: () => void;
+  dismissLoadingLabel?: string;
 }
 
 const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
@@ -43,6 +48,9 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   title = '',
   selectedInferenceModel,
   initialSeriesSelection,
+  loadingMessage,
+  onDismissLoading,
+  dismissLoadingLabel,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [stepper, setStepper] = useState(1);
@@ -320,9 +328,21 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
               <div className="flex h-[270px] items-center justify-center">
                 <div>
                   <div className="mx-auto h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
-                  <h1 className="max-w-[270px] text-center text-[14px] text-white">
-                    Applying inference and generating results...
+                  <h1
+                    className="max-w-[270px] text-center text-[14px] text-white"
+                    role="status"
+                  >
+                    {loadingMessage || 'Applying inference and generating results...'}
                   </h1>
+                  {onDismissLoading && (
+                    <button
+                      type="button"
+                      className="mx-auto mt-4 block rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-[14px] text-white"
+                      onClick={onDismissLoading}
+                    >
+                      {dismissLoadingLabel || 'Close'}
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (

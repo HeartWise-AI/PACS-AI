@@ -201,7 +201,7 @@ describe('viewer results repository', () => {
     expect(error).toMatchObject({ status: 404, errorCode: 'REPORT_NOT_AVAILABLE' });
   });
 
-  test('starts a managed run with the selected series', async () => {
+  test('starts a managed run without series when none are selected', async () => {
     const http = client();
     http.post.mockResolvedValue({
       data: {
@@ -251,5 +251,73 @@ describe('viewer results repository', () => {
       '/v1/inference/worklist/studies/1.2.3/models/model-1/run',
       {}
     );
+  });
+
+  test('sends the selected series in the run request and omits an empty list', async () => {
+    const http = client();
+    http.post.mockResolvedValue({
+      data: { success: true, message: 'created', data: { runId: 'r' } },
+    });
+    const repo = createViewerResultsRepository(http);
+
+    await repo.runModel({
+      studyInstanceUID: '1.2.3',
+      modelRef: 'container-1',
+      modality: 'XA',
+      seriesInstanceUIDs: ['series-1', ' series-2 '],
+    });
+    expect(http.post).toHaveBeenLastCalledWith(
+      '/v1/inference/worklist/studies/1.2.3/models/container-1/run',
+      { modality: 'XA', seriesInstanceUIDs: ['series-1', 'series-2'] }
+    );
+
+    await repo.runModel({
+      studyInstanceUID: '1.2.3',
+      modelRef: 'container-1',
+      seriesInstanceUIDs: [],
+    });
+    expect(http.post).toHaveBeenLastCalledWith(
+      '/v1/inference/worklist/studies/1.2.3/models/container-1/run',
+      {}
+    );
+  });
+
+  test('loads the status of a run and its executions', async () => {
+    const http = client();
+    http.get.mockResolvedValue({
+      data: {
+        success: true,
+        message: 'ok',
+        data: {
+          runId: 'run 2',
+          phase: 'TERMINAL',
+          outcome: 'FAILED',
+          executions: [
+            { executionId: 'execution-2', status: 'failed', errorMessage: 'boom' },
+            null,
+          ],
+        },
+      },
+    });
+
+    const status = await createViewerResultsRepository(http).loadRunStatus('run 2');
+
+    expect(http.get).toHaveBeenCalledWith('/v1/inference/processing/runs/run%202');
+    expect(status).toEqual({
+      phase: 'TERMINAL',
+      outcome: 'FAILED',
+      executions: [{ executionId: 'execution-2', status: 'failed' }],
+    });
+  });
+
+  test('reports run status request failures with their status', async () => {
+    const http = client();
+    http.get.mockRejectedValue(httpError(404, 'MISSING_RECORD'));
+
+    const error = await createViewerResultsRepository(http)
+      .loadRunStatus('run-2')
+      .catch(caught => caught);
+
+    expect(error).toMatchObject({ status: 404, errorCode: 'MISSING_RECORD' });
   });
 });
