@@ -9,6 +9,7 @@ import { useChatBox } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
 import { useResizable } from './hooks/useResizable';
+import { getOpenStudyContext, openStudyMetadata } from './utils/getOpenStudyContext';
 
 // Components
 import { ChatHeader } from './components/ChatHeader';
@@ -34,8 +35,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // State for message feedback (thumbs up/down)
   const [messageFeedback, setMessageFeedback] = useState<Record<string, 'up' | 'down' | null>>({});
 
+  // Study open in the viewer, read fresh at thread creation and on every message.
+  const getOpenStudy = useCallback(() => getOpenStudyContext(servicesManager), [servicesManager]);
+
   // Custom hooks
-  const chat = useChatBox(isOpen, messages.length);
+  const chat = useChatBox(isOpen, messages.length, getOpenStudy);
   const series = useSeriesSelection();
   const drag = useDraggable(isOpen);
   const resize = useResizable(isOpen, {
@@ -116,11 +120,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       onMessagesChange(messagesWithThinking);
 
       try {
+        // Explicitly selected series define the study; otherwise the open study.
+        const studyContext =
+          series.selectedSeries.length > 0 && series.currentStudyInstanceUID
+            ? { studyInstanceUID: series.currentStudyInstanceUID }
+            : openStudyMetadata(getOpenStudy());
+
         // Send the message to the backend
         const responseData = await chat.sendMessage(
           chat.threadId,
           savedInput,
-          series.selectedSeries
+          series.selectedSeries,
+          studyContext
         );
 
         // Remove thinking message and add the assistant's response
@@ -177,7 +188,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         onMessagesChange(updatedMessages);
       }
     },
-    [chat, messages, onMessagesChange, series.selectedSeries]
+    [
+      chat,
+      messages,
+      onMessagesChange,
+      series.selectedSeries,
+      series.currentStudyInstanceUID,
+      getOpenStudy,
+    ]
   );
 
   // Handle clear chat
