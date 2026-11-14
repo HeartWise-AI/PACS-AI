@@ -447,3 +447,163 @@ describe('LoginPage adaptive challenge', () => {
     );
   });
 });
+
+describe('LoginPage tenant lookup failures', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  const originalDefaultTenant = process.env.APP_PUBLIC_DEFAULT_TENANT;
+  const originalLocation = window.location;
+  const mockReload = jest.fn();
+
+  beforeAll(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload: mockReload },
+    });
+  });
+
+  afterAll(() => {
+    delete (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetAPIInfo.mockReset();
+    mockGetCurrentUser.mockReset();
+    mockGetPublicTenant.mockReset();
+    mockGetAPIInfo.mockResolvedValue({ data: { version: 'test-api' } });
+    mockGetCurrentUser.mockResolvedValue({ success: false });
+    process.env.APP_PUBLIC_DEFAULT_TENANT = 'default-tenant';
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    localStorage.clear();
+    jest.restoreAllMocks();
+    if (originalDefaultTenant === undefined) {
+      delete process.env.APP_PUBLIC_DEFAULT_TENANT;
+    } else {
+      process.env.APP_PUBLIC_DEFAULT_TENANT = originalDefaultTenant;
+    }
+  });
+
+  const renderLogin = async () => {
+    await act(async () => {
+      root.render(React.createElement(LoginPage));
+    });
+    await flushPromises();
+  };
+
+  const findButton = (label: string) =>
+    Array.from(container.querySelectorAll('button')).find(
+      button => button.textContent === label
+    ) as HTMLButtonElement | undefined;
+
+  it('shows an inline error without reloading when the API is unreachable, and retries on demand', async () => {
+    mockLocationSearch = '?t=tenant-a';
+    mockGetPublicTenant.mockRejectedValueOnce({
+      success: false,
+      message: 'Workspace lookup failed.',
+      status: 502,
+    });
+
+    await renderLogin();
+
+    expect(mockGetPublicTenant).toHaveBeenCalledTimes(1);
+    expect(mockReload).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "Can't reach the PACS-AI server right now."
+    );
+    expect(container.querySelector('form')).not.toBeNull();
+
+    mockGetPublicTenant.mockResolvedValueOnce({
+      data: { id: 'tenant-a', name: 'Tenant A', onboardingEnableRegistration: false },
+    });
+    const retry = findButton('Try again');
+    expect(retry).toBeDefined();
+    await act(async () => {
+      retry?.click();
+    });
+    await flushPromises();
+
+    expect(mockGetPublicTenant).toHaveBeenCalledTimes(2);
+    expect(mockGetPublicTenant).toHaveBeenLastCalledWith({ tenantId: 'tenant-a' });
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    expect(container.textContent).toContain('Tenant A (tenant-a)');
+    expect(mockReload).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('treats network failures without a status as unreachable', async () => {
+    mockLocationSearch = '?t=tenant-a';
+    mockGetPublicTenant.mockRejectedValueOnce({
+      success: false,
+      message: 'Workspace lookup failed.',
+    });
+
+    await renderLogin();
+
+    expect(mockReload).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Can't reach the PACS-AI server right now.");
+  });
+
+  it('redirects once to a different default tenant when the tenant does not exist', async () => {
+    mockLocationSearch = '?t=unknown-tenant';
+    mockGetPublicTenant.mockRejectedValue({
+      success: false,
+      message: 'No records found.',
+      errorCode: 'MISSING_RECORD',
+      status: 404,
+    });
+
+    await renderLogin();
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith(
+      { pathname: '/login', search: '?t=default-tenant' },
+      { replace: true }
+    );
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+
+  it('shows an error instead of navigating when the default tenant itself does not exist', async () => {
+    mockLocationSearch = '?t=default-tenant';
+    mockGetPublicTenant.mockRejectedValue({
+      success: false,
+      message: 'No records found.',
+      errorCode: 'MISSING_RECORD',
+      status: 404,
+    });
+
+    await renderLogin();
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockReload).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      'This workspace could not be found.'
+    );
+  });
+
+  it('redirects a login link without a tenant to the default tenant without a lookup', async () => {
+    mockLocationSearch = '';
+
+    await renderLogin();
+
+    expect(mockGetPublicTenant).not.toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith(
+      { pathname: '/login', search: '?t=default-tenant' },
+      { replace: true }
+    );
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+});
