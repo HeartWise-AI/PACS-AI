@@ -17,6 +17,7 @@ import {
   PolicyStatus,
   GetTenantUserEmailInvitesResponse,
   GetUserMetadataResponse,
+  UserViewerTourResponse,
   InviteTenantUserRequest,
   LoginRequest,
   LoginResponse,
@@ -295,6 +296,48 @@ const userRepository = {
 
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Get the authenticated user's viewer onboarding tour state
+   *
+   * @return  {Promise<APIResponse><UserViewerTourResponse>}
+   */
+  async GetViewerTour(): Promise<APIResponse<UserViewerTourResponse>> {
+    return Api()
+      .get(`/v1/user/viewer-tour`)
+      .then((response: AxiosResponse<APIResponse<UserViewerTourResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Record that the authenticated user completed or skipped the viewer tour
+   *
+   * @return  {Promise<APIResponse><UserViewerTourResponse>}
+   */
+  async CompleteViewerTour(): Promise<APIResponse<UserViewerTourResponse>> {
+    return Api()
+      .put(`/v1/user/viewer-tour/complete`)
+      .then((response: AxiosResponse<APIResponse<UserViewerTourResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Clear the authenticated user's viewer tour completion so it shows again
+   *
+   * @return  {Promise<APIResponse><UserViewerTourResponse>}
+   */
+  async ResetViewerTour(): Promise<APIResponse<UserViewerTourResponse>> {
+    return Api()
+      .post(`/v1/user/viewer-tour/reset`)
+      .then((response: AxiosResponse<APIResponse<UserViewerTourResponse>>) => response.data)
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;
