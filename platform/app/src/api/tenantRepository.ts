@@ -2,6 +2,7 @@ import type { AxiosResponse, AxiosError } from 'axios';
 import { object } from 'prop-types';
 import { APIResponse, ErrorAPIResponse } from './dto';
 import Api from '../pacsAPIAxios';
+import { createTenantLookupAPIError } from './tenantLookupAPIError';
 import {
   AddOnboardingQuestionnaireAnswersRequest,
   GetOnboardingQuestionnaireAnswersRequest,
@@ -47,8 +48,8 @@ const tenantRepository = {
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
-        const { response } = error;
-        throw response?.data !== undefined ? response.data : object;
+        // Keep the HTTP status so callers can tell "tenant missing" from "API unreachable".
+        throw createTenantLookupAPIError(error);
       });
   },
   /**

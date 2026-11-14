@@ -104,5 +104,9 @@
   "The policies have changed. Please review the current versions.": "The policies have changed. Please review the current versions.",
   "Unable to record policy acceptance. Please try again.": "Unable to record policy acceptance. Please try again.",
   "Saving…": "Saving…",
-  "Agree and continue": "Agree and continue"
+  "Agree and continue": "Agree and continue",
+  "Can't reach the PACS-AI server right now.": "Can't reach the PACS-AI server right now.",
+  "The PACS-AI server couldn't load this workspace right now.": "The PACS-AI server couldn't load this workspace right now.",
+  "This workspace could not be found. Check the link and try again.": "This workspace could not be found. Check the link and try again.",
+  "Try again": "Try again"
 }

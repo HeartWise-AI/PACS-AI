@@ -8,6 +8,7 @@ import tenantRepository from '../../api/tenantRepository';
 import repository from '../../api/repository';
 import { GetAPIInfoResponse } from '../../api/dto';
 import { GetPublicTenantByIDResponse } from '../../api/tenantDTO';
+import { isTenantNotFoundError } from '../../api/tenantLookupAPIError';
 import { FrontendVersionContext } from '../../App';
 import { AlertContext } from '../../AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
@@ -26,6 +27,12 @@ import { createLoginRequest } from './loginRequest';
 
 const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
 
+type TenantLoadStatus = 'loading' | 'ready' | 'not-found' | 'server-error' | 'unreachable';
+
+// 502/503/504 come from the reverse proxy when the API itself is down or unreachable.
+const isUnreachableStatus = (status?: number) =>
+  !status || status === 502 || status === 503 || status === 504;
+
 const LoginPage = () => {
   const { t } = useTranslation('Onboarding');
   const [email, setEmail] = useState('');
@@ -38,6 +45,10 @@ const LoginPage = () => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetPublicTenantByIDResponse>>({});
+  const [tenantLoadStatus, setTenantLoadStatus] = useState<TenantLoadStatus>('loading');
+  const [tenantLoadAttempt, setTenantLoadAttempt] = useState(0);
+  // Redirect to the default tenant at most once per page mount so a missing default can't loop.
+  const defaultTenantRedirectedRef = useRef(false);
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -85,17 +96,68 @@ const LoginPage = () => {
   }, [location.search, navigate, showAlert, t]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Only an unknown/missing tenant falls back to the default tenant, and only when that differs
+    // from the current one. Transient failures (5xx, proxy errors, network) keep the page and show
+    // an inline error with a manual retry instead of reloading.
+    const redirectToDefaultTenant = () => {
+      if (!defaultTenant || defaultTenant === tenantId || defaultTenantRedirectedRef.current) {
+        return false;
+      }
+      defaultTenantRedirectedRef.current = true;
+      navigate(
+        { pathname: '/login', search: `?t=${encodeURIComponent(defaultTenant)}` },
+        {
+          replace: true,
+        }
+      );
+      return true;
+    };
+
     const fetchTenantInfo = async () => {
+      setTenantLoadStatus('loading');
+      if (!tenantId) {
+        if (!redirectToDefaultTenant()) {
+          setTenantInfo({});
+          setTenantLoadStatus('not-found');
+        }
+        return;
+      }
+
       try {
         const response = await tenantRepository.GetPublicTenantByID({
           tenantId,
         });
+        if (cancelled) {
+          return;
+        }
         setTenantInfo(response.data || {});
+        setTenantLoadStatus('ready');
       } catch (error) {
-        navigate(`/login?t=${defaultTenant}`, { replace: true });
-        window.location.reload();
+        if (cancelled) {
+          return;
+        }
+        console.warn('Public tenant lookup failed on login page', error);
+        setTenantInfo({});
+        if (isTenantNotFoundError(error)) {
+          if (!redirectToDefaultTenant()) {
+            setTenantLoadStatus('not-found');
+          }
+          return;
+        }
+        const status = (error as { status?: number } | undefined)?.status;
+        setTenantLoadStatus(isUnreachableStatus(status) ? 'unreachable' : 'server-error');
       }
     };
+
+    void fetchTenantInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [defaultTenant, navigate, tenantId, tenantLoadAttempt]);
+
+  useEffect(() => {
     const fetchAPIInfo = async () => {
       try {
         const response = await repository.GetAPIInfo();
@@ -117,10 +179,9 @@ const LoginPage = () => {
       }
     };
 
-    void fetchTenantInfo();
     void getCurrentUser();
     void fetchAPIInfo();
-  }, [defaultTenant, navigate, tenantId]);
+  }, [navigate, tenantId]);
 
   useEffect(() => {
     if (verificationCooldown <= 0) {
@@ -158,6 +219,52 @@ const LoginPage = () => {
       challengePromptRef.current?.focus();
     }
   }, [challengeRequired]);
+
+  const retryTenantLookup = () => {
+    setTenantLoadAttempt(value => value + 1);
+  };
+
+  const tenantLoadErrorMessage = () => {
+    switch (tenantLoadStatus) {
+      case 'unreachable':
+        return t("Can't reach the PACS-AI server right now.");
+      case 'server-error':
+        return t("The PACS-AI server couldn't load this workspace right now.");
+      case 'not-found':
+        return t('This workspace could not be found. Check the link and try again.');
+      default:
+        return null;
+    }
+  };
+
+  const tenantLoadError = () => {
+    const message = tenantLoadErrorMessage();
+    if (!message) {
+      return null;
+    }
+    return (
+      <div
+        role="alert"
+        className="mb-5 rounded-lg bg-white bg-opacity-10 p-4 text-white"
+      >
+        <Typography
+          variant="body"
+          component="p"
+          className="text-sm text-white text-opacity-80"
+        >
+          {message}
+        </Typography>
+        {tenantId && (
+          <Button
+            className="mt-3 h-[42px] w-full rounded-lg !px-0"
+            onClick={retryTenantLookup}
+          >
+            {t('Try again')}
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   const handleForgotPasswordClick = () => {
     setShowLoginForm(false);
@@ -355,6 +462,7 @@ const LoginPage = () => {
               >
                 {t('Enter your email and password to sign in.')}
               </Typography>
+              {tenantLoadError()}
               <form onSubmit={onLogin}>
                 <label
                   className="sr-only"
