@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "product": "pacs",
+  "components": {
+    "frontend": {
+      "repository": "HeartWise-AI/PACS-AI",
+      "production_branch": "main",
+      "images": [
+        "frontend"
+      ]
+    },
+    "backend": {
+      "repository": "HeartWise-AI/pacs-ai-backend",
+      "production_branch": "master",
+      "images": [
+        "api"
+      ]
+    }
+  },
+  "staging": {
+    "enabled": false,
+    "workflow": ".github/workflows/agent-staging-deploy.yml",
+    "jobs": [
+      "Build immutable images",
+      "Deploy isolated candidate",
+      "Synthetic staging E2E"
+    ],
+    "actors": [
+      "robertavram-md"
+    ],
+    "max_age_hours": 24,
+    "trusted_paths": [
+      "tools/release/policy.json",
+      "tools/release/release.py"
+    ],
+    "prerequisites": [
+      "Confirm intended production branch and serving runtime mapping before activation",
+      "Reviewed isolated staging deployment adapter with synthetic E2E and digest attestations",
+      "Per-candidate staging resources and credentials isolated from production",
+      "Human-approved production environment with self-approval and admin bypass disabled",
+      "Strict required promotion gate with paired repository read access and independent PR review",
+      "Production adapter consumes the tested image digests without rebuilding"
+    ]
+  }
+}
