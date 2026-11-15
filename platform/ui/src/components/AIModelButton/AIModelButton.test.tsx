@@ -283,4 +283,37 @@ describe('AIModelButton runs', () => {
 
     expectDirectPredict();
   });
+
+  test.each([
+    ['a subset run', { kind: 'subset', used: 4, total: 12, series: [] }, 1],
+    ['a full-study run', { kind: 'all', series: [] }, 0],
+    ['a run of unknown total', { kind: 'count', used: 4, series: [] }, 0],
+    ['an unknown scope', null, 0],
+  ])('marks the latest result of %s', (_name, scope, markers) => {
+    const getResultSeriesScope = jest.fn().mockReturnValue(scope);
+    mount(
+      viewerResults({
+        getLatestResult: jest.fn().mockReturnValue(storedResult),
+        getResultSeriesScope,
+      })
+    );
+
+    expect(getResultSeriesScope).toHaveBeenCalledWith(storedResult);
+    const found = renderer.root.findAllByProps({ 'data-testid': 'ai-model-result-subset' });
+    expect(found).toHaveLength(markers);
+    if (markers) {
+      expect(found[0].children.join('')).toBe(' · ViewerResultSeriesCount');
+    }
+  });
+
+  test('shows stored results from a provider without series scope support', () => {
+    mount(viewerResults({ getLatestResult: jest.fn().mockReturnValue(storedResult) }));
+
+    expect(renderer.root.findAllByProps({ 'data-testid': 'ai-model-result-subset' })).toHaveLength(
+      0
+    );
+    expect(
+      renderer.root.findAllByProps({ 'data-testid': 'ai-model-previous-result' })
+    ).toHaveLength(1);
+  });
 });

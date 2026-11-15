@@ -8,6 +8,29 @@ export interface SeriesInfo {
   modality?: string;
 }
 
+// One tool call or delegation the assistant made for a request. `label` is the
+// backend's English label; `key` (+ `model`) selects a translated template.
+export interface ChatActivityStep {
+  id: number;
+  key: string;
+  kind?: string;
+  label: string;
+  model?: string | null;
+  status: 'running' | 'done' | 'failed' | string;
+  started_at?: string;
+  ended_at?: string | null;
+  duration_ms?: number | null;
+}
+
+// What the assistant used for one request: live while thinking, final on the answer.
+export interface ChatActivity {
+  status?: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  elapsed_ms?: number;
+  steps: ChatActivityStep[];
+}
+
 // Chat message type
 export interface Message {
   id: string;
@@ -16,6 +39,8 @@ export interface Message {
   timestamp: Date;
   isThinking?: boolean;
   status?: 'sending' | 'sent' | 'error';
+  // Completed steps of the request that produced this assistant message.
+  activity?: ChatActivity;
 }
 
 // Interface for the initial series selection prop for the modal

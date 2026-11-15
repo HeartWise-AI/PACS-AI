@@ -48,6 +48,45 @@ export interface ToolResultResponse {
   result: any;
 }
 
+// One tool call or delegation of a chat request, as reported by the chat service.
+// Labels are built server-side from safe data only (tool + validated model name).
+export interface ChatActivityStepResponse {
+  id: number;
+  key: string;
+  kind?: 'tool' | 'delegation' | string;
+  label: string;
+  model?: string | null;
+  status: 'running' | 'done' | 'failed' | string;
+  started_at?: string;
+  ended_at?: string | null;
+  duration_ms?: number | null;
+}
+
+export interface ChatActivityResponse {
+  status?: 'idle' | 'running' | 'done' | 'failed' | string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  elapsed_ms?: number;
+  steps: ChatActivityStepResponse[];
+}
+
+export interface GetChatProgressRequest {
+  threadId: string;
+}
+
+export interface ChatProgressResponse extends ChatActivityResponse {
+  thread_id: string;
+  active: boolean;
+}
+
+// Thrown by GetChatProgress: the HTTP status tells "not supported by this
+// backend" (404/405) apart from a transient failure.
+export interface ChatProgressError {
+  status?: number;
+  errorCode?: string;
+  message?: string;
+}
+
 export interface MessageResponse {
   // Main response fields from Go API
   thread_id: string;
@@ -59,6 +98,8 @@ export interface MessageResponse {
   };
   status: string;
   error?: string;
+  // What the assistant used to answer; absent with an older backend.
+  activity?: ChatActivityResponse | null;
 
   // Legacy fields for backward compatibility
   message_id?: string;

@@ -1,6 +1,7 @@
 import AboutModal from './AboutModal.json';
 import AIModelButton from './AIModelButton.json';
 import Buttons from './Buttons.json';
+import ChatBox from './ChatBox.json';
 import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
@@ -32,6 +33,7 @@ export default {
     AboutModal,
     AIModelButton,
     Buttons,
+    ChatBox,
     CineDialog,
     Common,
     DataSourceConfiguration,

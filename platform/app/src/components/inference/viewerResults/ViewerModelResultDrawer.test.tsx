@@ -3,7 +3,7 @@ import { TextDecoder } from 'util';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import { ViewerModelResultDrawer } from './ViewerModelResultDrawer';
 import { ViewerResultsRequestError, type ViewerResultsRepository } from './viewerResultsRepository';
-import type { ViewerModelResult } from './types';
+import type { ResultSeriesScope, ViewerModelResult } from './types';
 
 // jsdom does not provide TextDecoder, which the report decoder uses.
 Object.assign(globalThis, { TextDecoder: globalThis.TextDecoder ?? TextDecoder });
@@ -88,11 +88,16 @@ describe('ViewerModelResultDrawer', () => {
   let renderer: ReactTestRenderer | null = null;
   const onSelectView = jest.fn(() => true);
 
-  async function render(viewerResult: ViewerModelResult, repo: ViewerResultsRepository) {
+  async function render(
+    viewerResult: ViewerModelResult,
+    repo: ViewerResultsRepository,
+    seriesScope?: ResultSeriesScope | null
+  ) {
     await act(async () => {
       renderer = TestRenderer.create(
         <ViewerModelResultDrawer
           result={viewerResult}
+          seriesScope={seriesScope}
           repository={repo}
           onClose={jest.fn()}
           onMinimize={jest.fn()}
@@ -200,5 +205,66 @@ describe('ViewerModelResultDrawer', () => {
       renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-no-details' })
     ).toBeTruthy();
     expect(mockOpen).not.toHaveBeenCalled();
+  });
+
+  describe('series scope', () => {
+    const plain = { reportAvailable: false };
+    const scopeNode = () =>
+      renderer!.root.findAllByProps({ 'data-testid': 'viewer-model-result-series-scope' });
+    const flat = (node: { children: unknown[] }): string =>
+      node.children
+        .map(child => (typeof child === 'string' ? child : flat(child as { children: unknown[] })))
+        .join('');
+
+    test('shows nothing when the scope is not known', async () => {
+      await render(result(plain), repository(jest.fn()));
+
+      expect(scopeNode()).toHaveLength(0);
+      expect(text(renderer!)).not.toContain('All series');
+    });
+
+    test('labels a full-study run without an accent', async () => {
+      await render(result(plain), repository(jest.fn()), { kind: 'all', series: [] });
+
+      const [scope] = scopeNode();
+      expect(flat(scope)).toBe('All series');
+      expect(scope.props['data-series-scope']).toBe('all');
+      expect(scope.props.tabIndex).toBeUndefined();
+      expect(JSON.stringify(renderer!.toJSON())).not.toContain('border-[#3ef1d1]/60');
+    });
+
+    test('marks a subset run and lists its series on hover or focus', async () => {
+      await render(result(plain), repository(jest.fn()), {
+        kind: 'subset',
+        used: 3,
+        total: 12,
+        series: [
+          { seriesInstanceUID: 'series-2', seriesNumber: '2', description: 'LAO cranial' },
+          { seriesInstanceUID: 'series-4', seriesNumber: '4', description: null },
+          { seriesInstanceUID: 'series-5', seriesNumber: null, description: null },
+        ],
+      });
+
+      const [scope] = scopeNode();
+      expect(scope.props['data-series-scope']).toBe('subset');
+      expect(scope.props.tabIndex).toBe(0);
+      const [badge, list] = scope.children as Array<{ props: { className: string } }>;
+      expect(flat(badge as never)).toBe('3 of 12 series');
+      expect(badge.props.className).toContain('border-[#3ef1d1]/60');
+      expect(list.props.className).toContain('hidden');
+      expect(list.props.className).toContain('group-hover:block');
+      expect(list.props.className).toContain('group-focus:block');
+      expect(scope.props['aria-describedby']).toBe((list.props as never as { id: string }).id);
+      // The series without a number or description is left out.
+      expect(flat(list as never)).toBe('Series used by this run2 · LAO cranial4');
+    });
+
+    test('reports only the count when the total is unknown', async () => {
+      await render(result(plain), repository(jest.fn()), { kind: 'count', used: 4, series: [] });
+
+      const [scope] = scopeNode();
+      expect(flat(scope)).toBe('4 series');
+      expect(renderer!.root.findAllByProps({ role: 'tooltip' })).toHaveLength(0);
+    });
   });
 });

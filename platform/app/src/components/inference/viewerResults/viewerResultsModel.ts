@@ -1,6 +1,9 @@
+import { isInferenceSeriesEligible } from '../isInferenceSeriesEligible';
 import type {
   PendingRunFailure,
   PendingViewerModelRun,
+  ResultSeriesInfo,
+  ResultSeriesScope,
   SelectedView,
   SelectedViewBadge,
   ViewerModelResult,
@@ -191,4 +194,103 @@ export function buildSelectedViewBadges(
     });
   });
   return badges;
+}
+
+interface SeriesScopeDisplaySet {
+  StudyInstanceUID?: string;
+  SeriesInstanceUID?: string;
+  Modality?: string;
+  modality?: string;
+  SeriesNumber?: number | string | null;
+  SeriesDescription?: string | null;
+  description?: string | null;
+  excludeFromThumbnailBrowser?: boolean;
+}
+
+interface LoadedSeries {
+  modality: string;
+  eligible: boolean;
+  seriesNumber: string | null;
+  description: string | null;
+}
+
+function textOrNull(value: unknown): string | null {
+  if (typeof value === 'number') {
+    return String(value);
+  }
+  return (typeof value === 'string' && value.trim()) || null;
+}
+
+/**
+ * Which series a stored result covers. The backend records the dispatched
+ * series for every run requested from the viewer, picked or not, so a subset
+ * is recognized by comparing that list with the study's series loaded in the
+ * viewer: the series of the same DICOM modalities as the used ones that the
+ * series pop-up would offer. Returns null when the backend does not report
+ * the dispatched series.
+ */
+export function resolveResultSeriesScope(
+  result: Pick<ViewerModelResult, 'studyInstanceUID' | 'dispatchSeriesInstanceUIDs'>,
+  displaySets: SeriesScopeDisplaySet[]
+): ResultSeriesScope | null {
+  const used = result.dispatchSeriesInstanceUIDs;
+  if (used === undefined) {
+    return null;
+  }
+  if (used === null || used.length === 0) {
+    return { kind: 'all', series: [] };
+  }
+
+  // One entry per series: a series can have several display sets.
+  const loaded = new Map<string, LoadedSeries>();
+  displaySets.forEach(displaySet => {
+    const uid = displaySet?.SeriesInstanceUID;
+    if (!uid || displaySet.StudyInstanceUID !== result.studyInstanceUID) {
+      return;
+    }
+    const current = loaded.get(uid);
+    loaded.set(uid, {
+      modality:
+        current?.modality || (displaySet.Modality || displaySet.modality || '').toUpperCase(),
+      eligible:
+        !!current?.eligible ||
+        (!displaySet.excludeFromThumbnailBrowser && isInferenceSeriesEligible(displaySet)),
+      seriesNumber: current?.seriesNumber ?? textOrNull(displaySet.SeriesNumber),
+      description:
+        current?.description ??
+        textOrNull(displaySet.SeriesDescription) ??
+        textOrNull(displaySet.description),
+    });
+  });
+
+  const usedSet = new Set(used);
+  const series: ResultSeriesInfo[] = [];
+  const modalities = new Set<string>();
+  used.forEach(uid => {
+    const entry = loaded.get(uid);
+    if (!entry) {
+      return;
+    }
+    series.push({
+      seriesInstanceUID: uid,
+      seriesNumber: entry.seriesNumber,
+      description: entry.description,
+    });
+    if (entry.modality) {
+      modalities.add(entry.modality);
+    }
+  });
+  if (!modalities.size) {
+    return { kind: 'count', used: used.length, series };
+  }
+
+  let unused = 0;
+  loaded.forEach((entry, uid) => {
+    if (!usedSet.has(uid) && entry.eligible && modalities.has(entry.modality)) {
+      unused += 1;
+    }
+  });
+  return unused
+    ? { kind: 'subset', used: used.length, total: used.length + unused, series }
+    : { kind: 'all', series };
 }

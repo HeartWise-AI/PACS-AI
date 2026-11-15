@@ -14,6 +14,9 @@ import {
   StudyData,
   SubmitFeedbackRequest,
   FeedbackResponse,
+  GetChatProgressRequest,
+  ChatProgressResponse,
+  ChatProgressError,
 } from './orchestratorDTO';
 
 const orchestratorRepository = {
@@ -79,6 +82,35 @@ const orchestratorRepository = {
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * Steps so far of the chat request in flight for a thread. Polled while
+   * CreateMessage is pending. Rejects with a ChatProgressError carrying the
+   * HTTP status, so callers can tell an older backend (404) from an outage.
+   *
+   * @param   {GetChatProgressRequest}  request
+   *
+   * @return  {Promise<APIResponse<ChatProgressResponse>>}
+   */
+  async GetChatProgress(
+    request: GetChatProgressRequest
+  ): Promise<APIResponse<ChatProgressResponse>> {
+    return Api()
+      .get(`/v1/orchestrator/threads/${encodeURIComponent(request.threadId)}/chat/progress`)
+      .then((response: AxiosResponse<APIResponse<ChatProgressResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const body: any = error.response?.data;
+        const failure: ChatProgressError = {
+          status: error.response?.status,
+          errorCode: body && typeof body === 'object' ? body.errorCode : undefined,
+          message: body && typeof body === 'object' ? body.message : undefined,
+        };
+        throw failure;
       });
   },
 

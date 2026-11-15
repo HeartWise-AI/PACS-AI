@@ -146,6 +146,22 @@ export function mapSelectedViews(value: unknown): SelectedView[] | null {
     .sort((left, right) => left.order - right.order);
 }
 
+// A list of UIDs, null ("every series"), or undefined when the backend does
+// not report the field (or sends something else).
+export function mapDispatchSeriesInstanceUIDs(value: unknown): string[] | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const uids = value
+    .filter((uid): uid is string => typeof uid === 'string')
+    .map(uid => uid.trim())
+    .filter(Boolean);
+  return uids.length ? [...new Set(uids)] : null;
+}
+
 export function mapViewerModelResult(
   value: unknown,
   studyInstanceUID: string
@@ -174,6 +190,7 @@ export function mapViewerModelResult(
     trigger: optionalString(value.trigger),
     selectedViews: mapSelectedViews(value.selectedViews),
     reportAvailable: value.reportAvailable === true,
+    dispatchSeriesInstanceUIDs: mapDispatchSeriesInstanceUIDs(value.dispatchSeriesInstanceUIDs),
   };
 }
 

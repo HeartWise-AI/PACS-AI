@@ -30,7 +30,26 @@ export interface ViewerModelResult {
   // without a selection step); [] means it recorded an empty selection.
   selectedViews: SelectedView[] | null;
   reportAvailable: boolean;
+  // Series the run was dispatched with. A run requested from the viewer
+  // records its list whether or not series were picked; null means no list
+  // was recorded and the run used every series of the modality; undefined
+  // means the backend does not report it.
+  dispatchSeriesInstanceUIDs?: string[] | null;
 }
+
+export interface ResultSeriesInfo {
+  seriesInstanceUID: string;
+  seriesNumber: string | null;
+  description: string | null;
+}
+
+// Which series a stored result covers, compared with the series loaded in the
+// viewer. `series` lists the used series the viewer knows, for display.
+export type ResultSeriesScope =
+  | { kind: 'all'; series: ResultSeriesInfo[] }
+  | { kind: 'subset'; used: number; total: number; series: ResultSeriesInfo[] }
+  // The viewer has none of the used series loaded, so the total is unknown.
+  | { kind: 'count'; used: number; series: ResultSeriesInfo[] };
 
 // The part of a processing run's detail used to notice that a pending run
 // ended without producing a result.

@@ -43,5 +43,9 @@
   "ViewerStudyNotAvailableLocally": "Study isn't available on this PACS-AI server.",
   "ViewerRunQuotaExceeded": "Inference allowance exhausted or too many runs active. Try again later.",
   "ViewerResultTriggerAutoLegacy": "Automatic (legacy)",
-  "ViewerReportFallbackNote": "The report could not be rendered; showing the stored result."
+  "ViewerReportFallbackNote": "The report could not be rendered; showing the stored result.",
+  "ViewerResultSeriesAll": "All series",
+  "ViewerResultSeriesSubset": "{{used}} of {{total}} series",
+  "ViewerResultSeriesCount": "{{used}} series",
+  "ViewerResultSeriesListTitle": "Series used by this run"
 }
