@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
-import type { Message, ModalityData } from '../types';
+import type { ChatActivity, ModalityData } from '../types';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';
 import type { OpenStudyContext } from '../utils/getOpenStudyContext';
 
@@ -17,6 +17,28 @@ interface SendMessageResponse {
   status?: string;
   error?: string;
   tool_results?: any[];
+  activity?: ChatActivity;
+}
+
+// Live progress is polled about once a second while a message is in flight.
+export const PROGRESS_POLL_INTERVAL_MS = 1000;
+// Consecutive failed polls after which polling stops for the current message.
+const PROGRESS_MAX_FAILURES = 3;
+
+/** A usable activity object, or undefined for anything else the server sent. */
+function toActivity(value: any): ChatActivity | undefined {
+  if (!value || !Array.isArray(value.steps)) {
+    return undefined;
+  }
+  return {
+    status: value.status,
+    started_at: value.started_at,
+    ended_at: value.ended_at,
+    elapsed_ms: value.elapsed_ms,
+    steps: value.steps.filter(
+      (step: any) => step && typeof step.label === 'string' && typeof step.key === 'string'
+    ),
+  };
 }
 
 interface UseChatBoxReturn {
@@ -25,6 +47,9 @@ interface UseChatBoxReturn {
   isProcessing: boolean;
   errorDetails: string;
   thinkingMessageId: string | null;
+  // Steps so far of the message in flight; null when none is known (no request,
+  // older backend, or the progress endpoint failing): show the plain indicator.
+  progress: ChatActivity | null;
   threadCreationPending: boolean;
   createThread: () => Promise<void>;
   sendMessage: (
@@ -80,6 +105,84 @@ export function useChatBox(
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [thinkingMessageId, setThinkingMessageId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ChatActivity | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Set once the backend answers that it has no progress endpoint.
+  const progressUnsupported = useRef(false);
+  const isMounted = useRef(true);
+
+  const stopProgressPolling = useCallback(() => {
+    if (progressTimer.current !== null) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+  }, []);
+
+  const startProgressPolling = useCallback(
+    (currentThreadId: string) => {
+      stopProgressPolling();
+      if (
+        progressUnsupported.current ||
+        typeof orchestratorRepository.GetChatProgress !== 'function'
+      ) {
+        return;
+      }
+      let failures = 0;
+      let pollInFlight = false;
+      const timer = setInterval(async () => {
+        if (pollInFlight) {
+          return;
+        }
+        pollInFlight = true;
+        try {
+          const response = await orchestratorRepository.GetChatProgress({
+            threadId: currentThreadId,
+          });
+          if (progressTimer.current !== timer || !isMounted.current) {
+            return; // the message completed (or the chat closed) meanwhile
+          }
+          failures = 0;
+          const activity =
+            response?.success && response.data?.active ? toActivity(response.data) : undefined;
+          if (activity) {
+            setProgress(activity);
+          }
+        } catch (error: any) {
+          if (progressTimer.current !== timer) {
+            return;
+          }
+          failures += 1;
+          const unsupported =
+            error?.status === 404 ||
+            error?.status === 405 ||
+            error?.errorCode === 'chat_progress_unsupported';
+          if (unsupported) {
+            progressUnsupported.current = true;
+          }
+          if (unsupported || failures >= PROGRESS_MAX_FAILURES) {
+            // Fall back silently to the plain thinking indicator.
+            stopProgressPolling();
+            if (isMounted.current) {
+              setProgress(null);
+            }
+          }
+        } finally {
+          pollInFlight = false;
+        }
+      }, PROGRESS_POLL_INTERVAL_MS);
+      progressTimer.current = timer;
+    },
+    [stopProgressPolling]
+  );
+
+  // Stop polling when the chat unmounts.
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      stopProgressPolling();
+    };
+  }, [stopProgressPolling]);
 
   // Function to create a new thread
   const createThread = useCallback(async () => {
@@ -153,6 +256,8 @@ export function useChatBox(
       try {
         setIsLoading(true);
         setIsProcessing(true);
+        setProgress(null);
+        startProgressPolling(currentThreadId);
 
         const response = await orchestratorRepository.CreateMessage({
           threadId: currentThreadId,
@@ -180,16 +285,21 @@ export function useChatBox(
             status: responseData.status,
             error: responseData.error,
             tool_results: responseData.message?.tool_results || [],
+            activity: toActivity(responseData.activity),
           };
         } else {
           throw new Error(response.message || 'Failed to send message');
         }
       } finally {
-        setIsLoading(false);
-        setIsProcessing(false);
+        stopProgressPolling();
+        if (isMounted.current) {
+          setProgress(null);
+          setIsLoading(false);
+          setIsProcessing(false);
+        }
       }
     },
-    [getOpenStudy]
+    [getOpenStudy, startProgressPolling, stopProgressPolling]
   );
 
   // Function to upload DICOM payload
@@ -319,6 +429,7 @@ export function useChatBox(
     isProcessing,
     errorDetails,
     thinkingMessageId,
+    progress,
     threadCreationPending,
     createThread,
     sendMessage,

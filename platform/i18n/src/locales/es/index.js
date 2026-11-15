@@ -1,5 +1,6 @@
 import AboutModal from './AboutModal.json';
 import Buttons from './Buttons.json';
+import ChatBox from './ChatBox.json';
 import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
@@ -25,6 +26,7 @@ export default {
   es: {
     AboutModal,
     Buttons,
+    ChatBox,
     CineDialog,
     Common,
     DataSourceConfiguration,

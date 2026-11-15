@@ -141,6 +141,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             text: responseData.content.trim(),
             sender: 'assistant',
             timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
+            ...(responseData.activity?.steps?.length ? { activity: responseData.activity } : {}),
           };
 
           // Filter out the thinking message and add the real response
@@ -354,6 +355,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             messages={messages}
             isLoading={chat.isLoading}
             errorDetails={chat.errorDetails}
+            progress={chat.progress}
             onRetry={chat.handleRetryThreadCreation}
             messageFeedback={messageFeedback}
             onFeedback={handleFeedback}

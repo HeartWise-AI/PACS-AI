@@ -1,16 +1,24 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { Message } from '../types';
+import type { ChatActivity, Message } from '../types';
 import { ThinkingIndicator } from './ThinkingIndicator';
+import { ActivitySummary } from './ActivitySummary';
 
 interface MessageBubbleProps {
   message: Message;
+  // Live steps while this message is the thinking placeholder.
+  progress?: ChatActivity | null;
   feedback?: 'up' | 'down' | null;
   onFeedback?: (messageId: string, type: 'up' | 'down') => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback, onFeedback }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({
+  message,
+  progress = null,
+  feedback,
+  onFeedback,
+}) => {
   const isUser = message.sender === 'user';
   const isAssistant = message.sender === 'assistant';
 
@@ -25,7 +33,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback,
       >
         <div className="whitespace-pre-wrap text-sm">
           {message.isThinking ? (
-            <ThinkingIndicator />
+            <ThinkingIndicator
+              activity={progress}
+              startedAt={message.timestamp}
+            />
           ) : (
             <ReactMarkdown
               className="markdown-content"
@@ -57,6 +68,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, feedback,
             </ReactMarkdown>
           )}
         </div>
+        {isAssistant && !message.isThinking && message.activity && (
+          <ActivitySummary activity={message.activity} />
+        )}
         <div className="mt-1 flex items-center justify-between">
           <span className="text-xs opacity-70">
             {message.timestamp.toLocaleTimeString([], {
