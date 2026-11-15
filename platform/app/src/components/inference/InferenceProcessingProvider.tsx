@@ -62,6 +62,12 @@ export function useInferenceProcessing() {
   return context;
 }
 
+// For surfaces (such as the viewer) that must keep working when rendered
+// outside the provider: returns null instead of throwing.
+export function useOptionalInferenceProcessing() {
+  return useContext(InferenceProcessingContext);
+}
+
 function InferenceProcessingProvider({ children }) {
   const { t } = useTranslation('StudyList');
   const { show } = useNotification();

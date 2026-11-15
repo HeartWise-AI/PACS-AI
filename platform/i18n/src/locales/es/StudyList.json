@@ -30,5 +30,6 @@
   "Segmentation": "Segmentación",
   "Searching for data": "Buscando datos",
   "searchStudyListInfo": "No se encontraron datos. Por favor, busque por nombre del paciente, MRN, rango de fechas, descripción, modalidad o número de acceso.",
-  "Tools": "Herramientas"
+  "Tools": "Herramientas",
+  "ProcessingViewerRun": "Manual · ejecutado desde el visor"
 }

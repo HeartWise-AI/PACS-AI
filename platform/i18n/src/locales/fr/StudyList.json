@@ -54,6 +54,7 @@
   "ProcessingLiveConnection": "Direct · SSE connecté",
   "ProcessingLogout": "Déconnexion",
   "ProcessingManualRun": "Manuel · relance opérateur",
+  "ProcessingViewerRun": "Manuel · lancé depuis la visionneuse",
   "ProcessingAutomaticRun": "Auto · arrivée de l'étude",
   "ProcessingLegacyRun": "Reconstruit depuis l'archive",
   "ProcessingLegacyHistoryUnavailable": "L'historique des modèles n'a pas été enregistré pour cet import historique et ne peut pas être reconstruit.",

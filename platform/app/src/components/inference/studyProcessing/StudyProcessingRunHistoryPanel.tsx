@@ -369,11 +369,13 @@ export function StudyProcessingRunHistoryPanel({
                     <span className="text-xs text-[#c0c7c0]">
                       {run.trigger === 'MANUAL_REPROCESS'
                         ? t('ProcessingManualRun', { defaultValue: 'Manual · operator re-run' })
-                        : run.trigger === 'LEGACY_IMPORT'
-                          ? t('ProcessingLegacyRun', {
-                              defaultValue: 'Reconstructed from archive',
-                            })
-                          : t('ProcessingAutomaticRun', { defaultValue: 'Auto · study arrival' })}
+                        : run.trigger === 'VIEWER_REQUEST'
+                          ? t('ProcessingViewerRun', { defaultValue: 'Manual · run from viewer' })
+                          : run.trigger === 'LEGACY_IMPORT'
+                            ? t('ProcessingLegacyRun', {
+                                defaultValue: 'Reconstructed from archive',
+                              })
+                            : t('ProcessingAutomaticRun', { defaultValue: 'Auto · study arrival' })}
                     </span>
                     <span className="text-xs text-[#c0c7c0]">
                       {run.completedModels} / {run.expectedModels}{' '}

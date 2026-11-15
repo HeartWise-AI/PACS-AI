@@ -10,6 +10,7 @@ import { StoreFileButton } from '@ohif/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
 import AddModelFeedback from './AddModelFeedback';
+import { decodeBase64HTML, HTML_REPORT_IFRAME_SANDBOX } from './htmlReport';
 
 interface HTMLOutputModeModalProps {
   isOpen: boolean;
@@ -61,11 +62,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   useEffect(() => {
     if (data?.htmlBase64) {
       try {
-        // Decode base64 to binary string, then convert to Uint8Array more efficiently
-        const binaryString = atob(data.htmlBase64);
-        const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
-        const decodedHTML = new TextDecoder('utf-8').decode(bytes);
-        setParsedHTML(decodedHTML);
+        setParsedHTML(decodeBase64HTML(data.htmlBase64));
       } catch (error) {
         console.error('Error decoding base64 HTML:', error);
         setParsedHTML('<div>Error: Unable to decode HTML content</div>');
@@ -153,7 +150,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                   srcDoc={parsedHTML}
                   className="h-full w-full bg-white"
                   title="HTML Content"
-                  sandbox="allow-same-origin allow-scripts"
+                  sandbox={HTML_REPORT_IFRAME_SANDBOX}
                 />
               )}
             </div>

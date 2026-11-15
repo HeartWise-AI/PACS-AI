@@ -58,6 +58,7 @@
   "ProcessingLiveConnection": "Live · SSE connected",
   "ProcessingLogout": "Logout",
   "ProcessingManualRun": "Manual · operator re-run",
+  "ProcessingViewerRun": "Manual · run from viewer",
   "ProcessingAutomaticRun": "Auto · study arrival",
   "ProcessingLegacyRun": "Reconstructed from archive",
   "ProcessingLegacyHistoryUnavailable": "Model-level history was not recorded for this legacy import and cannot be reconstructed.",

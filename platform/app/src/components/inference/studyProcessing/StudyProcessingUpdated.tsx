@@ -2,6 +2,27 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStudyProcessing } from './StudyProcessingProvider';
 
+// i18n can report a language that is not a valid BCP 47 tag (seen:
+// "en-US@POSIX"), which makes Intl and toLocaleString throw a RangeError.
+// Such a tag falls back to the runtime's default locale.
+export function resolveStudyProcessingLocale(locale: string | undefined): string | undefined {
+  if (!locale) {
+    return undefined;
+  }
+  try {
+    return Intl.getCanonicalLocales(locale)[0];
+  } catch {
+    return undefined;
+  }
+}
+
+export function formatStudyProcessingTimestamp(
+  updatedAt: string,
+  locale: string | undefined
+): string {
+  return new Date(updatedAt).toLocaleString(resolveStudyProcessingLocale(locale));
+}
+
 export function formatStudyProcessingRelativeTime(
   updatedAt: string,
   locale: string | undefined,
@@ -13,7 +34,9 @@ export function formatStudyProcessingRelativeTime(
   }
 
   const differenceMinutes = Math.round((updatedAtMilliseconds - now) / 60000);
-  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const formatter = new Intl.RelativeTimeFormat(resolveStudyProcessingLocale(locale), {
+    numeric: 'auto',
+  });
 
   if (differenceMinutes === 0) {
     return formatter.format(0, 'second');
@@ -45,7 +68,7 @@ export function StudyProcessingUpdated({ studyInstanceUID }: StudyProcessingUpda
     return <span className="text-xs text-white/35">—</span>;
   }
 
-  const exactTimestamp = new Date(summary.updatedAt).toLocaleString(i18n.language);
+  const exactTimestamp = formatStudyProcessingTimestamp(summary.updatedAt, i18n.language);
   const accessibleLabel =
     summary.version === null
       ? t('ProcessingUpdatedAt', {
