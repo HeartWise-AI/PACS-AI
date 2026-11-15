@@ -4,6 +4,7 @@ import {
   findLatestResultForModel,
   findPendingRunFailure,
   isResultForPendingRun,
+  resolveResultSeriesScope,
 } from './viewerResultsModel';
 import type { PendingViewerModelRun, SelectedView, ViewerModelResult } from './types';
 
@@ -233,5 +234,74 @@ describe('selected view badges', () => {
       'ds-1': { number: 2, viewLabel: null },
     });
     expect(buildSelectedViewBadges(null, displaySets)).toEqual({});
+  });
+});
+
+describe('resolveResultSeriesScope', () => {
+  const cine = (series: string, number: number, extra: Record<string, unknown> = {}) => ({
+    StudyInstanceUID: '1.2.3',
+    SeriesInstanceUID: series,
+    Modality: 'XA',
+    SeriesNumber: number,
+    SeriesDescription: `Run ${number}`,
+    numImageFrames: 60,
+    isMultiFrame: true,
+    ...extra,
+  });
+  const loaded = [
+    cine('series-1', 1),
+    // A second display set of the same series counts once.
+    cine('series-1', 1),
+    cine('series-2', 2),
+    cine('series-3', 3),
+    cine('series-4', 4, { SeriesDescription: '' }),
+    // Not counted: another modality, a report, a still, another study.
+    cine('ecg-1', 9, { Modality: 'ECG' }),
+    cine('report-1', 10, { SeriesDescription: 'Rapport final' }),
+    cine('still-1', 11, { numImageFrames: 1, isMultiFrame: false }),
+    cine('other-study', 12, { StudyInstanceUID: '9.9.9' }),
+  ];
+  const scope = (dispatchSeriesInstanceUIDs: string[] | null | undefined, displaySets = loaded) =>
+    resolveResultSeriesScope(
+      { studyInstanceUID: '1.2.3', dispatchSeriesInstanceUIDs },
+      displaySets
+    );
+
+  test('is unknown when the backend does not report the dispatched series', () => {
+    expect(scope(undefined)).toBeNull();
+  });
+
+  test('a run without a recorded list covers all series', () => {
+    expect(scope(null)).toEqual({ kind: 'all', series: [] });
+    expect(scope([])).toEqual({ kind: 'all', series: [] });
+  });
+
+  test('a run on fewer series than the viewer offers is a subset', () => {
+    expect(scope(['series-2', 'series-4'])).toEqual({
+      kind: 'subset',
+      used: 2,
+      total: 4,
+      series: [
+        { seriesInstanceUID: 'series-2', seriesNumber: '2', description: 'Run 2' },
+        { seriesInstanceUID: 'series-4', seriesNumber: '4', description: null },
+      ],
+    });
+  });
+
+  test('a run requested from the viewer on every series is not a subset', () => {
+    // study-service also dispatches series the pop-up would not offer.
+    const all = scope(['series-1', 'series-2', 'series-3', 'series-4', 'still-1', 'report-1']);
+    expect(all?.kind).toBe('all');
+    expect(all?.series).toHaveLength(6);
+    expect(scope(['series-1', 'series-2', 'series-3', 'series-4'])?.kind).toBe('all');
+  });
+
+  test('counts used series the viewer has not loaded in the total', () => {
+    expect(scope(['series-1', 'not-loaded'])).toMatchObject({ kind: 'subset', used: 2, total: 5 });
+  });
+
+  test('only reports the count when none of the used series is loaded', () => {
+    expect(scope(['a', 'b'])).toEqual({ kind: 'count', used: 2, series: [] });
+    expect(scope(['series-1'], [])).toEqual({ kind: 'count', used: 1, series: [] });
   });
 });

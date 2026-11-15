@@ -112,6 +112,35 @@ describe('viewer results repository', () => {
     });
   });
 
+  test('maps the dispatched series and keeps "all" distinct from "not reported"', async () => {
+    const http = client();
+    const row = (dispatchSeriesInstanceUIDs?: unknown) => ({
+      modelName: 'CathEF',
+      ...(dispatchSeriesInstanceUIDs === undefined ? {} : { dispatchSeriesInstanceUIDs }),
+    });
+    http.get.mockResolvedValue({
+      data: {
+        results: [
+          row([' 1.2.3.4 ', '1.2.3.6', '1.2.3.4', 7, '']),
+          row(null),
+          row(),
+          row('x'),
+          row([]),
+        ],
+      },
+    });
+
+    const results = await createViewerResultsRepository(http).loadLatestResults('1.2.3');
+
+    expect(results.map(result => result.dispatchSeriesInstanceUIDs)).toEqual([
+      ['1.2.3.4', '1.2.3.6'],
+      null,
+      undefined,
+      undefined,
+      null,
+    ]);
+  });
+
   test('keeps a recorded empty selection distinct from an unrecorded one', () => {
     expect(mapSelectedViews([])).toEqual([]);
     expect(mapSelectedViews(null)).toBeNull();

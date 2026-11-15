@@ -23,12 +23,14 @@ import {
   findLatestResultForModel,
   findPendingRunFailure,
   isResultForPendingRun,
+  resolveResultSeriesScope,
   viewerModelKey,
   viewerResultKey,
 } from './viewerResultsModel';
 import type {
   PendingRunFailure,
   PendingViewerModelRun,
+  ResultSeriesScope,
   SelectedView,
   ViewerModelResult,
   ViewerResultModelIdentity,
@@ -71,6 +73,9 @@ export interface ViewerModelResultsContextValue {
   latestResultsStatus: LatestResultsStatus;
   refreshLatestResults: () => Promise<void>;
   getLatestResult: (model: ViewerResultModelIdentity) => ViewerModelResult | null;
+  // Which of the study's loaded series the result's run used; null when the
+  // backend does not report it.
+  getResultSeriesScope: (result: ViewerModelResult) => ResultSeriesScope | null;
   getPendingRun: (model: ViewerResultModelIdentity) => PendingViewerModelRun | null;
   startManagedRun: (request: StartManagedRunRequest) => Promise<ManagedRunOutcome>;
   // Starts a managed run and resolves when it ends or is dismissed. Rejects
@@ -516,6 +521,31 @@ export function ViewerModelResultsProvider({
     []
   );
 
+  const getResultSeriesScope = useCallback(
+    (result: ViewerModelResult): ResultSeriesScope | null =>
+      resolveResultSeriesScope(
+        result,
+        servicesManager.services.displaySetService?.getActiveDisplaySets?.() ?? []
+      ),
+    [servicesManager]
+  );
+
+  // The scope shown in the open drawer depends on the loaded display sets,
+  // which can still be arriving when a result is opened.
+  const [, setDisplaySetsVersion] = useState(0);
+  const resultIsOpen = !!openedResult && !openedResult.minimized;
+  useEffect(() => {
+    const displaySetService = servicesManager.services.displaySetService;
+    const event = displaySetService?.EVENTS?.DISPLAY_SETS_ADDED;
+    if (!resultIsOpen || !event || typeof displaySetService.subscribe !== 'function') {
+      return undefined;
+    }
+    const subscription = displaySetService.subscribe(event, () =>
+      setDisplaySetsVersion(version => version + 1)
+    );
+    return () => subscription?.unsubscribe?.();
+  }, [resultIsOpen, servicesManager]);
+
   const loadSelectedView = useCallback(
     (view: SelectedView): boolean => {
       const { displaySetService, viewportGridService, customizationService } =
@@ -560,6 +590,7 @@ export function ViewerModelResultsProvider({
       latestResultsStatus,
       refreshLatestResults,
       getLatestResult,
+      getResultSeriesScope,
       getPendingRun,
       startManagedRun,
       startForegroundRun,
@@ -576,6 +607,7 @@ export function ViewerModelResultsProvider({
       latestResultsStatus,
       refreshLatestResults,
       getLatestResult,
+      getResultSeriesScope,
       getPendingRun,
       startManagedRun,
       startForegroundRun,
@@ -594,6 +626,7 @@ export function ViewerModelResultsProvider({
       {openedResult && !openedResult.minimized && (
         <ViewerModelResultDrawer
           result={openedResult.result}
+          seriesScope={getResultSeriesScope(openedResult.result)}
           repository={repository}
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}

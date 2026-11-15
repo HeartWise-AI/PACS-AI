@@ -43,5 +43,9 @@
   "ViewerStudyNotAvailableLocally": "El estudio no está disponible en este servidor PACS-AI.",
   "ViewerRunQuotaExceeded": "Cuota de inferencia agotada o demasiadas ejecuciones activas. Inténtelo más tarde.",
   "ViewerResultTriggerAutoLegacy": "Automático (heredado)",
-  "ViewerReportFallbackNote": "No se pudo generar el informe; se muestra el resultado almacenado."
+  "ViewerReportFallbackNote": "No se pudo generar el informe; se muestra el resultado almacenado.",
+  "ViewerResultSeriesAll": "Todas las series",
+  "ViewerResultSeriesSubset": "{{used}} de {{total}} series",
+  "ViewerResultSeriesCount": "{{used}} serie(s)",
+  "ViewerResultSeriesListTitle": "Series utilizadas en esta ejecución"
 }

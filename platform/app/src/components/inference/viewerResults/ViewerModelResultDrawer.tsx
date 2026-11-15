@@ -9,10 +9,12 @@ import {
 } from '../studyProcessing/modelExecutionResultPresentation';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
 import { viewerResultKey } from './viewerResultsModel';
-import type { SelectedView, ViewerModelResult } from './types';
+import type { ResultSeriesScope, SelectedView, ViewerModelResult } from './types';
 
 export interface ViewerModelResultDrawerProps {
   result: ViewerModelResult;
+  // Which series the run used; absent or null when it is not known.
+  seriesScope?: ResultSeriesScope | null;
   repository: ViewerResultsRepository;
   onClose: () => void;
   onMinimize: () => void;
@@ -45,6 +47,7 @@ function canLoadReport(result: ViewerModelResult): boolean {
 
 export function ViewerModelResultDrawer({
   result,
+  seriesScope = null,
   repository,
   onClose,
   onMinimize,
@@ -110,6 +113,23 @@ export function ViewerModelResultDrawer({
   const trigger = result.trigger ? TRIGGER_LABELS[result.trigger] : LEGACY_TRIGGER_LABEL;
   const selectedViews = useMemo(() => result.selectedViews, [result.selectedViews]);
   const structuredState = structured.state;
+  const seriesScopeLabel =
+    seriesScope?.kind === 'subset'
+      ? t('ViewerResultSeriesSubset', {
+          used: seriesScope.used,
+          total: seriesScope.total,
+          defaultValue: `${seriesScope.used} of ${seriesScope.total} series`,
+        })
+      : seriesScope?.kind === 'count'
+        ? t('ViewerResultSeriesCount', {
+            used: seriesScope.used,
+            defaultValue: `${seriesScope.used} series`,
+          })
+        : t('ViewerResultSeriesAll', { defaultValue: 'All series' });
+  // Only series the viewer can describe are worth listing.
+  const describedSeries = (seriesScope?.series ?? []).filter(
+    series => series.seriesNumber || series.description
+  );
   const failurePresentation = getModelExecutionResultFailurePresentation(structuredState.failure);
 
   return (
@@ -142,6 +162,52 @@ export function ViewerModelResultDrawer({
           <p className="mt-1 text-sm text-[#c5cbc5]">
             {result.completedAt && new Date(result.completedAt).toLocaleString()}
             {` · ${trigger ? t(trigger.key, { defaultValue: trigger.defaultValue }) : result.trigger}`}
+            {seriesScope && (
+              <>
+                {' · '}
+                <span
+                  className="group relative inline-block focus:outline-none"
+                  tabIndex={describedSeries.length ? 0 : undefined}
+                  aria-describedby={
+                    describedSeries.length ? 'viewer-model-result-series-list' : undefined
+                  }
+                  data-testid="viewer-model-result-series-scope"
+                  data-series-scope={seriesScope.kind}
+                >
+                  <span
+                    className={
+                      seriesScope.kind === 'subset'
+                        ? 'rounded border border-[#3ef1d1]/60 px-1.5 py-0.5 text-xs font-semibold text-[#3ef1d1] group-focus:border-[#3ef1d1]'
+                        : 'group-focus:underline'
+                    }
+                  >
+                    {seriesScopeLabel}
+                  </span>
+                  {describedSeries.length > 0 && (
+                    <span
+                      id="viewer-model-result-series-list"
+                      role="tooltip"
+                      className="ohif-scrollbar border-white/15 absolute left-0 top-full z-10 mt-1 hidden max-h-64 w-max max-w-xs overflow-y-auto rounded-md border bg-[#232823] px-3 py-2 text-xs text-white shadow-lg group-hover:block group-focus:block"
+                      data-testid="viewer-model-result-series-list"
+                    >
+                      <span className="mb-1 block font-semibold">
+                        {t('ViewerResultSeriesListTitle', {
+                          defaultValue: 'Series used by this run',
+                        })}
+                      </span>
+                      {describedSeries.map(series => (
+                        <span
+                          key={series.seriesInstanceUID}
+                          className="block truncate"
+                        >
+                          {[series.seriesNumber, series.description].filter(Boolean).join(' · ')}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              </>
+            )}
           </p>
         </div>
         <button

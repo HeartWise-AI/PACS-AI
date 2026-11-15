@@ -22,8 +22,13 @@ jest.mock('../InferenceProcessingProvider', () => ({
 
 jest.mock('./ViewerModelResultDrawer', () => ({
   __esModule: true,
-  default: ({ result }: { result: ViewerModelResult }) => (
-    <div data-testid="drawer">{result.modelName}</div>
+  default: ({ result, seriesScope }: { result: ViewerModelResult; seriesScope?: unknown }) => (
+    <div
+      data-testid="drawer"
+      data-series-scope={seriesScope}
+    >
+      {result.modelName}
+    </div>
   ),
 }));
 
@@ -335,6 +340,54 @@ describe('ViewerModelResultsProvider', () => {
 
     act(() => context!.closeResult());
     expect(context!.openedResult).toBeNull();
+  });
+
+  test('resolves the series scope of a result from the loaded display sets', async () => {
+    const listeners: Array<() => void> = [];
+    const unsubscribe = jest.fn();
+    const displaySets = ['series-1', 'series-2'].map(uid => ({
+      StudyInstanceUID: '1.2.3',
+      SeriesInstanceUID: uid,
+      Modality: 'XA',
+      isMultiFrame: true,
+    }));
+    const servicesManager = {
+      services: {
+        displaySetService: {
+          EVENTS: { DISPLAY_SETS_ADDED: 'added' },
+          getActiveDisplaySets: () => displaySets,
+          subscribe: jest.fn((_event: string, listener: () => void) => {
+            listeners.push(listener);
+            return { unsubscribe };
+          }),
+        },
+      },
+    } as unknown as AppTypes.ServicesManager;
+    await render(repository(), servicesManager);
+    const subset = result({ dispatchSeriesInstanceUIDs: ['series-1'] });
+
+    expect(context!.getResultSeriesScope(result())).toBeNull();
+    expect(context!.getResultSeriesScope(result({ dispatchSeriesInstanceUIDs: null }))).toEqual({
+      kind: 'all',
+      series: [],
+    });
+    expect(context!.getResultSeriesScope(subset)).toMatchObject({
+      kind: 'subset',
+      used: 1,
+      total: 2,
+    });
+
+    act(() => context!.openResult(subset));
+    const drawer = () => renderer!.root.findByProps({ 'data-testid': 'drawer' });
+    expect(drawer().props['data-series-scope']).toMatchObject({ kind: 'subset', total: 2 });
+
+    // Series that finish loading while the drawer is open update the scope.
+    displaySets.push({ ...displaySets[0], SeriesInstanceUID: 'series-3' });
+    act(() => listeners.forEach(listener => listener()));
+    expect(drawer().props['data-series-scope']).toMatchObject({ kind: 'subset', total: 3 });
+
+    act(() => context!.closeResult());
+    expect(unsubscribe).toHaveBeenCalled();
   });
 
   test('loads a selected view through the thumbnail double-click behaviour', async () => {

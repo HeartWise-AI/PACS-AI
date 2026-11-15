@@ -393,6 +393,9 @@ const AIModelButton = ({
                   .map((model, index) => {
                     const latestResult = viewerResults?.getLatestResult(model) ?? null;
                     const pendingRun = viewerResults?.getPendingRun(model) ?? null;
+                    const latestScope = latestResult
+                      ? (viewerResults?.getResultSeriesScope?.(latestResult) ?? null)
+                      : null;
                     const modelKey = viewerModelKey(model);
                     const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
 
@@ -441,6 +444,14 @@ const AIModelButton = ({
                                 {t('ViewerViewResult', {
                                   date: formatResultDate(latestResult.completedAt),
                                 })}
+                                {latestScope?.kind === 'subset' && (
+                                  <span
+                                    className="font-semibold"
+                                    data-testid="ai-model-result-subset"
+                                  >
+                                    {` · ${t('ViewerResultSeriesCount', { used: latestScope.used })}`}
+                                  </span>
+                                )}
                               </button>
                             )}
                             {pendingRun ? (

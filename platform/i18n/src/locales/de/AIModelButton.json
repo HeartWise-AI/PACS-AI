@@ -43,5 +43,9 @@
   "ViewerStudyNotAvailableLocally": "Die Studie ist auf diesem PACS-AI-Server nicht verfügbar.",
   "ViewerRunQuotaExceeded": "Inferenzkontingent erschöpft oder zu viele aktive Ausführungen. Bitte später erneut versuchen.",
   "ViewerResultTriggerAutoLegacy": "Automatisch (Altbestand)",
-  "ViewerReportFallbackNote": "Der Bericht konnte nicht erstellt werden; das gespeicherte Ergebnis wird angezeigt."
+  "ViewerReportFallbackNote": "Der Bericht konnte nicht erstellt werden; das gespeicherte Ergebnis wird angezeigt.",
+  "ViewerResultSeriesAll": "Alle Serien",
+  "ViewerResultSeriesSubset": "{{used}} von {{total}} Serien",
+  "ViewerResultSeriesCount": "{{used}} Serie(n)",
+  "ViewerResultSeriesListTitle": "Für diesen Lauf verwendete Serien"
 }
