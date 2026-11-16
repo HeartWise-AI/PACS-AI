@@ -28,15 +28,18 @@ import {
   viewerResultKey,
 } from './viewerResultsModel';
 import type {
+  EndedViewerModelRun,
   PendingRunFailure,
   PendingViewerModelRun,
   ResultSeriesScope,
   SelectedView,
   ViewerModelResult,
+  ViewerModelRunStatus,
   ViewerResultModelIdentity,
 } from './types';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
+import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
 
 export type LatestResultsStatus = 'idle' | 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -102,6 +105,8 @@ export const VIEWER_RESULTS_POLL_INTERVAL_MS = 10_000;
 // While the user is waiting on a run in the series pop-up.
 export const VIEWER_RESULTS_FOREGROUND_POLL_INTERVAL_MS = 3_000;
 export const VIEWER_RESULTS_MAX_PENDING_MS = 30 * 60_000;
+// Ended runs kept for the running-jobs indicator.
+const ENDED_RUNS_LIMIT = 10;
 
 export interface ViewerModelResultsProviderProps {
   children: React.ReactNode;
@@ -143,6 +148,12 @@ export function ViewerModelResultsProvider({
   const [latestResults, setLatestResults] = useState<ViewerModelResult[]>([]);
   const [pendingRuns, setPendingRuns] = useState<PendingViewerModelRun[]>([]);
   const [readyResults, setReadyResults] = useState<ViewerModelResult[]>([]);
+  // For the running-jobs indicator only: the last polled detail of each
+  // pending run, and the runs that ended recently.
+  const [pendingRunStatuses, setPendingRunStatuses] = useState<
+    ReadonlyMap<PendingViewerModelRun, ViewerModelRunStatus>
+  >(() => new Map());
+  const [endedRuns, setEndedRuns] = useState<EndedViewerModelRun[]>([]);
   const [openedResult, setOpenedResult] = useState<OpenViewerModelResult | null>(null);
   const latestResultsRef = useRef<ViewerModelResult[]>([]);
   const pendingRunsRef = useRef<PendingViewerModelRun[]>([]);
@@ -423,12 +434,14 @@ export function ViewerModelResultsProvider({
       // The latest results only list completed runs, so a run that failed or
       // was skipped is recognized from its run detail (known run id only).
       const failed = new Map<PendingViewerModelRun, PendingRunFailure>();
+      const statuses = new Map<PendingViewerModelRun, ViewerModelRunStatus>();
       await Promise.all(
         unresolved
           .filter(run => run.runId)
           .map(run =>
             repository.loadRunStatus(run.runId as string).then(
               status => {
+                statuses.set(run, status);
                 const failure = findPendingRunFailure(status, run);
                 if (failure) {
                   failed.set(run, failure);
@@ -441,6 +454,17 @@ export function ViewerModelResultsProvider({
           )
       );
       const stillPending = unresolved.filter(run => !failed.has(run));
+      // A run whose detail could not be loaded this time keeps its last one.
+      setPendingRunStatuses(current => {
+        const next = new Map<PendingViewerModelRun, ViewerModelRunStatus>();
+        stillPending.forEach(run => {
+          const status = statuses.get(run) ?? current.get(run);
+          if (status) {
+            next.set(run, status);
+          }
+        });
+        return next;
+      });
 
       if (stillPending.length === pending.length) {
         return;
@@ -451,13 +475,16 @@ export function ViewerModelResultsProvider({
       );
 
       const ready: ViewerModelResult[] = [];
+      const ended: EndedViewerModelRun[] = [];
       completed.forEach((result, run) => {
-        if (settleForegroundRun(run, { status: 'completed', result })) {
+        const foreground = settleForegroundRun(run, { status: 'completed', result });
+        if (foreground) {
           // The user is waiting on this run: show its result right away.
           setOpenedResult({ result, minimized: false });
         } else {
           ready.push(result);
         }
+        ended.push({ run, outcome: 'completed', result, endedAt: now, foreground });
       });
       if (ready.length) {
         setReadyResults(current => [
@@ -468,7 +495,8 @@ export function ViewerModelResultsProvider({
         ]);
       }
       failed.forEach((failure, run) => {
-        settleForegroundRun(run, { status: 'failed' });
+        const foreground = settleForegroundRun(run, { status: 'failed' });
+        ended.push({ run, outcome: failure, result: null, endedAt: now, foreground });
         alert(
           t(failure === 'skipped' ? 'ViewerRunEndedSkipped' : 'ViewerRunEndedFailed', {
             modelName: run.modelName,
@@ -480,6 +508,9 @@ export function ViewerModelResultsProvider({
         settleForegroundRun(run, { status: 'timedOut' });
         alert(t('ViewerRunStillRunning', { modelName: run.modelName }), 'info');
       });
+      if (ended.length) {
+        setEndedRuns(current => [...current, ...ended].slice(-ENDED_RUNS_LIMIT));
+      }
     } finally {
       pollInFlight.current = false;
     }
@@ -644,6 +675,15 @@ export function ViewerModelResultsProvider({
           }
         />
       )}
+      <ViewerRunningJobsIndicator
+        studyInstanceUID={studyInstanceUID}
+        pendingRuns={pendingRuns}
+        pendingRunStatuses={pendingRunStatuses}
+        endedRuns={endedRuns}
+        foregroundRun={foregroundRunActive ? (foregroundRunRef.current?.run ?? null) : null}
+        onOpenResult={openResult}
+        besideReadyNotice={canViewResults && readyResults.length > 0}
+      />
     </ViewerModelResultsContext.Provider>
   );
 }

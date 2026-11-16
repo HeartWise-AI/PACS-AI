@@ -635,6 +635,90 @@ describe('ViewerModelResultsProvider', () => {
       expect(context!.getPendingRun(model)).toBeNull();
     });
 
+    describe('running jobs indicator', () => {
+      const jobRows = () => renderer!.root.findAllByProps({ 'data-testid': 'running-jobs-row' });
+      const jobStates = () => jobRows().map(row => row.props['data-state']);
+
+      test('is hidden while the pop-up waits on the run and shows it once dismissed', async () => {
+        const repo = repository({
+          runModel: jest.fn().mockResolvedValue(startedRun),
+          loadRunStatus: jest.fn().mockResolvedValue({
+            phase: 'PROCESSING',
+            outcome: null,
+            executions: [{ executionId: 'execution-2', status: 'running' }],
+          }),
+        });
+        await start(repo);
+        expect(jobRows()).toHaveLength(0);
+        await tick(1000);
+        expect(jobRows()).toHaveLength(0);
+
+        await act(async () => {
+          context!.dismissForegroundRun();
+        });
+        expect(jobStates()).toEqual(['running']);
+
+        repo.loadLatestResults.mockResolvedValue([newer]);
+        await tick(1000);
+        expect(jobStates()).toEqual(['done']);
+        expect(readyNotices()).toHaveLength(1);
+
+        // The finished row opens the result like the ready notice does.
+        await act(async () => {
+          renderer!.root.findByProps({ 'data-testid': 'running-jobs-open-result' }).props.onClick();
+        });
+        expect(context!.openedResult?.result.runId).toBe('run-2');
+        expect(readyNotices()).toHaveLength(0);
+
+        await tick(6000);
+        expect(jobRows()).toHaveLength(0);
+      });
+
+      test('does not repeat a result the pop-up opened itself', async () => {
+        const repo = repository({ runModel: jest.fn().mockResolvedValue(startedRun) });
+        const outcome = await start(repo);
+        repo.loadLatestResults.mockResolvedValue([newer]);
+        await tick(1000);
+
+        expect(outcome()).toMatchObject({ status: 'completed' });
+        expect(jobRows()).toHaveLength(0);
+      });
+
+      test('shows a background run from queued to failed', async () => {
+        const repo = repository({
+          runModel: jest.fn().mockResolvedValue(startedRun),
+          loadRunStatus: jest.fn().mockResolvedValue({
+            phase: 'QUEUED',
+            outcome: null,
+            executions: [{ executionId: 'execution-2', status: 'queued' }],
+          }),
+        });
+        jest.useFakeTimers();
+        await render(repo);
+        await act(async () => {
+          await context!.startManagedRun({ model });
+        });
+        expect(jobStates()).toEqual(['queued']);
+
+        repo.loadRunStatus.mockResolvedValue({
+          phase: 'PROCESSING',
+          outcome: null,
+          executions: [{ executionId: 'execution-2', status: 'running' }],
+        });
+        await tick(1000);
+        expect(jobStates()).toEqual(['running']);
+
+        repo.loadRunStatus.mockResolvedValue({
+          phase: 'TERMINAL',
+          outcome: 'FAILED',
+          executions: [{ executionId: 'execution-2', status: 'failed' }],
+        });
+        await tick(1000);
+        expect(jobStates()).toEqual(['failed']);
+        expect(showAlert).toHaveBeenCalledWith('ViewerRunEndedFailed:DeepCORO-JEPA', 'error');
+      });
+    });
+
     test('rejects with the start error and falls back like a queued run', async () => {
       const repo = repository({
         runModel: jest
