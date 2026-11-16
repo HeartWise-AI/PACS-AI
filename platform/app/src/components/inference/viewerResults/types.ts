@@ -100,3 +100,14 @@ export interface PendingViewerModelRun {
   // to recognize the run's result when the backend omits run identifiers.
   baselineCompletedAt: string | null;
 }
+
+// How a run requested from the viewer ended, kept briefly for the running-jobs
+// indicator. `foreground` is true when the user was waiting on the run in the
+// series pop-up, which then reported the end itself.
+export interface EndedViewerModelRun {
+  run: PendingViewerModelRun;
+  outcome: 'completed' | PendingRunFailure;
+  result: ViewerModelResult | null;
+  endedAt: number;
+  foreground: boolean;
+}
