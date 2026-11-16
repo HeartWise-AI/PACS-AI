@@ -293,7 +293,7 @@ Configuration by environment only: `PACS_AI_E2E_BASE_URL`, `PACS_AI_E2E_USER`, `
 
 **Test environment (set by the owner, 2026-11-15):**
 
-- Base URL: the MHI server, `https://sgbmavram01.icm.local` (self-signed certificate: `ignoreHTTPSErrors`). This is the live server. Tests may read, open studies, open stored results and use the chat. They must not reprocess studies, start model runs on patient studies, change members, settings or the model catalog, or upload files, unless the owner says so for a named study. `run-model.spec.ts` therefore checks the picker and the series-selection modal and stops before "Run" by default.
+- Base URL: the MHI server, `https://sgbmavram01.icm.local` (self-signed certificate: `ignoreHTTPSErrors`). This is the live server. Tests may read, open studies, open stored results and use the chat. The owner authorised model runs from the viewer on the reference studies (2026-11-15): `run-model.spec.ts` runs every model on each of them and compares the output with the reference (see "AI reference outputs" below). Tests must still not use the work list's "Reprocess study", change members, settings or the model catalog, or upload files.
 - Credentials: `~/.config/pacs-ai/viewer.env` on that host (mode 600, keys `EMAIL` and `PASSWORD`). Load as environment variables for the browser process only; never print, copy or commit them.
 - Studies: the three coronary angiography (XA) studies of 2026-11-14 (accessions ending 958701, 958801, 958901; each has stored results for DeepCORO-JEPA 2.1.0, CathEF-CLIP, DeepRV-CLIP, MACE, CTO, SYNTAX) and one echo (US) study. Their UIDs are in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/studies.env` on the host, not in the repository.
 - CT: the server's Orthanc holds no CT (XA 21 studies, US 191 on 2026-11-15). CT studies are visible only through the hospital PACS query in the work list, and the TotalSegmentator model is not installed. The CT/TotalSegmentator check is blocked until the owner names a CT to retrieve and the model is deployed; record it as blocked, do not retrieve one on your own.
@@ -301,13 +301,26 @@ Configuration by environment only: `PACS_AI_E2E_BASE_URL`, `PACS_AI_E2E_USER`, `
 
 **Baseline (taken 2026-11-15 on build `chat-activity-d24465d-20261114`, OHIF 3.11.1, identical to main):** 43 screenshots at 1600×900 in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/` on the host (mode 700; they contain patient data and must never enter the repository or a PR). The capture scripts are in its `scripts/` folder; `visual.spec.ts` should reproduce the same screens: login, register, reset password, work list (empty default, searched, expanded row, French), user menu, settings (English and French), AI models, members, workspace settings (four tabs), Kibana logs, unknown URL, XA viewer for each study, AI menu, result drawer (DeepRV-CLIP, DeepCORO-JEPA, CathEF, SYNTAX), chat, layout menu, US viewer and its AI menu. Visual comparison runs on the host against that folder; only masked or synthetic images may be committed.
 
+**AI reference outputs (owner's requirement: AI results must replicate 1:1).** On 2026-11-16 every model was run from the viewer on the three XA studies: Rerun (or Apply) → "Select first N series" with N = min(model maximum, available) → Apply. All 24 runs completed (8 models × 3 studies: DeepRV-CLIP 1.0.1, CathEF-CLIP 1.0.1, DeepCoro_CLIP_generic 1.0.1, DeepCORO-MACE 1.0.1, DeepCORO-CTO 2.0.1, DeepCORO-SYNTAX 6.0.0, DeepCORO-SCAD 1.0.0, DeepCORO-JEPA 2.1.0). On the host, under the baseline folder:
+
+- `golden/<study>__<model>.txt` and `.png`: the rendered result of each run (report frame text, or the result-data panel for the generic model), plus `golden/<study>__latest-results.json` (the API payload) and `golden/index.json` (run time and "N of M series" per run).
+- `ai-runs/<study>__<model>.net.json`: the request each run sent (`seriesInstanceUIDs`) and the run-status responses; `ai-runs/*__1-selection.png` and `__2-result.png`.
+
+`run-model.spec.ts` must, for each study and model: perform the same clicks, assert that the request carries the same `seriesInstanceUIDs` in the same order, wait for the run to finish, and assert that the rendered result text equals the reference after removing the run timestamp. A model's numbers do not depend on the viewer, so any difference means the viewer sent different input or renders the result differently; both are migration defects. Before relying on exact equality, run the suite twice on the current build to confirm the outputs are identical run to run; if a model shows numeric jitter, record the tolerance for that model in `STATUS.md` instead of loosening the comparison globally.
+
+Known behaviour of the environment that the spec must handle (not viewer defects):
+
+- The model gateway keeps a model resident for 10 minutes and the RTX 3090 fits about three at a time; a fourth distinct model can wait up to about 8 minutes and occasionally fails once before a retry succeeds. Allow 12 minutes per run, run models sequentially, and pause about 11 minutes after every three 3090 models. If runs stay in "Processing" with nothing loaded on the GPU, stop and tell the owner (stale GPU reservations; cleared on 2026-11-16 by restarting `api-pacs`).
+- `DeepCoro_CLIP_ProcedureViewClassifier` is offered by the viewer ("Apply …") but every run fails with "Model … is not configured" in study-service. Assert that the menu entry exists; do not expect a result.
+- PanEcho 1.0.1 is registered for US studies and offered in the viewer, but runs are refused until study-service pins 1.0.1 (cardio-agent PR #508, not yet deployed). Until then assert the menu entry and the series dialog only.
+
 | Spec | Checks |
 |---|---|
 | `auth.spec.ts` | login, wrong password, tenant lookup failure does not reload, logout, 401 redirects to login, policy acceptance gate |
 | `worklist.spec.ts` | list loads, search by name/ID/date, search restored after opening a study and returning, expanded row, processing status column, upload button present |
 | `viewer-shell.spec.ts` | top navigation, study browser thumbnails, document title, no upstream header chrome |
 | `viewer-behaviour.spec.ts` | XA autoplays cine; arrow keys change series, page keys change image; current series shown in action bar |
-| `run-model.spec.ts` | model picker lists models; series selection modal with first-N and maximum; run completes; result modal opens (HTML/PDF) |
+| `run-model.spec.ts` | model picker lists models; series selection modal with first-N and maximum; each model runs on each reference study; request and rendered result equal the reference 1:1 |
 | `stored-results.spec.ts` | previous-results drawer lists runs; opening a result shows the report; selected-view badges on thumbnails; which series a result used |
 | `study-processing.spec.ts` | status updates; run history; notifications bell; reprocess is offered to operators |
 | `chat.spec.ts` | chat opens, answer streams, tool-activity steps shown live and on the answer, drag |
