@@ -29,5 +29,16 @@
   "StepWebRead": "Reading a source",
   "StepReadReference": "Reading the model documentation",
   "StepPlan": "Planning the answer",
-  "StepTool": "Using a tool"
+  "StepTool": "Using a tool",
+  "CitationSource": "Source {{index}}: {{name}}",
+  "CitationSourcePlain": "Source {{index}}",
+  "CitationModelResult": "AI model result",
+  "CitationWebSource": "Published source",
+  "CitationCompletedAt": "Completed {{date}}",
+  "CitationOpenResult": "Open result",
+  "CitationRawResult": "Raw result",
+  "CitationResultUnavailable": "This result is not available in the viewer",
+  "CitationRawLoading": "Loading result…",
+  "CitationRawError": "The raw result could not be loaded.",
+  "CitationClose": "Close"
 }

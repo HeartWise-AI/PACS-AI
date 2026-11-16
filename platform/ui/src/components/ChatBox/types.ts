@@ -31,6 +31,33 @@ export interface ChatActivity {
   steps: ChatActivityStep[];
 }
 
+// What a numeric marker "[index]" of an answer refers to (chat backend
+// contract, "Citations"): a stored AI model result...
+export interface ChatModelResultCitation {
+  index: number;
+  kind: 'model_result';
+  modelName: string;
+  modelVersion?: string | null;
+  completedAt?: string | null;
+  studyInstanceUID?: string | null;
+  // The study-service job that produced the result.
+  studyServiceJobId?: string | null;
+  title?: string | null;
+  // One line of what the result contributed to the answer.
+  summary?: string | null;
+  outputMode?: string | null;
+}
+
+// ...or a published source.
+export interface ChatWebSourceCitation {
+  index: number;
+  kind: 'web_source';
+  title?: string | null;
+  url?: string | null;
+}
+
+export type ChatCitation = ChatModelResultCitation | ChatWebSourceCitation;
+
 // Chat message type
 export interface Message {
   id: string;
@@ -41,6 +68,9 @@ export interface Message {
   status?: 'sending' | 'sent' | 'error';
   // Completed steps of the request that produced this assistant message.
   activity?: ChatActivity;
+  // What the "[n]" markers of this assistant message refer to. Not stored with
+  // the conversation: a reloaded message has none and shows plain markers.
+  citations?: ChatCitation[];
 }
 
 // Interface for the initial series selection prop for the modal

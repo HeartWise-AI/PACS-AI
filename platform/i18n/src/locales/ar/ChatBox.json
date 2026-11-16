@@ -29,5 +29,16 @@
   "StepWebRead": "قراءة مصدر",
   "StepReadReference": "قراءة وثائق النموذج",
   "StepPlan": "تحضير الإجابة",
-  "StepTool": "استخدام أداة"
+  "StepTool": "استخدام أداة",
+  "CitationSource": "المصدر {{index}}: {{name}}",
+  "CitationSourcePlain": "المصدر {{index}}",
+  "CitationModelResult": "نتيجة نموذج ذكاء اصطناعي",
+  "CitationWebSource": "مصدر منشور",
+  "CitationCompletedAt": "اكتمل في {{date}}",
+  "CitationOpenResult": "فتح النتيجة",
+  "CitationRawResult": "النتيجة الخام",
+  "CitationResultUnavailable": "هذه النتيجة غير متاحة في العارض",
+  "CitationRawLoading": "جارٍ تحميل النتيجة…",
+  "CitationRawError": "تعذر تحميل النتيجة الخام.",
+  "CitationClose": "إغلاق"
 }

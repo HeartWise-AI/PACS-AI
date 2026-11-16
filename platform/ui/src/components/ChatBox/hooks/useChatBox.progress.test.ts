@@ -173,6 +173,35 @@ describe('useChatBox live progress', () => {
 
     expect(response.content).toBe('summary');
     expect(response.activity).toBeUndefined();
+    expect(response.citations).toBeUndefined();
+  });
+
+  it('returns the citations of the answer with it', async () => {
+    const { result } = renderChat();
+    const sent = send(result);
+    const citations = [
+      {
+        index: 1,
+        kind: 'model_result',
+        modelName: 'DeepCORO-JEPA',
+        modelVersion: '2.0.0',
+        completedAt: '2026-11-13 09:00:00',
+        studyInstanceUID: '2.25.9',
+        studyServiceJobId: 'job-1',
+        title: 'DeepCORO-JEPA',
+        summary: 'Coronary reading',
+        outputMode: null,
+      },
+      { index: 2, kind: 'web_source', title: '2024 ESC Guidelines', url: 'https://example.org/g' },
+    ];
+
+    let response: any;
+    await act(async () => {
+      pending.resolve(chatAnswer({ citations: [...citations, { index: 3, kind: 'unknown' }] }));
+      response = await sent;
+    });
+
+    expect(response.citations).toEqual(citations);
   });
 
   it('stops polling when the message fails', async () => {

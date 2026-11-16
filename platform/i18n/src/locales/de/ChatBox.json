@@ -29,5 +29,16 @@
   "StepWebRead": "Eine Quelle wird gelesen",
   "StepReadReference": "Modelldokumentation wird gelesen",
   "StepPlan": "Antwort wird geplant",
-  "StepTool": "Ein Werkzeug wird verwendet"
+  "StepTool": "Ein Werkzeug wird verwendet",
+  "CitationSource": "Quelle {{index}}: {{name}}",
+  "CitationSourcePlain": "Quelle {{index}}",
+  "CitationModelResult": "KI-Modellergebnis",
+  "CitationWebSource": "Veröffentlichte Quelle",
+  "CitationCompletedAt": "Abgeschlossen {{date}}",
+  "CitationOpenResult": "Ergebnis öffnen",
+  "CitationRawResult": "Rohergebnis",
+  "CitationResultUnavailable": "Dieses Ergebnis ist im Viewer nicht verfügbar",
+  "CitationRawLoading": "Ergebnis wird geladen…",
+  "CitationRawError": "Das Rohergebnis konnte nicht geladen werden.",
+  "CitationClose": "Schließen"
 }

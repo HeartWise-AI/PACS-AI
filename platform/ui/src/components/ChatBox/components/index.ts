@@ -7,3 +7,4 @@ export { SeriesCarousel } from './SeriesCarousel';
 export { ThinkingIndicator } from './ThinkingIndicator';
 export { ActivitySteps } from './ActivitySteps';
 export { ActivitySummary } from './ActivitySummary';
+export { CitationChip } from './CitationChip';
