@@ -281,6 +281,8 @@
   "ProcessingNotificationTitle.UNKNOWN": "Test Inference processing finished",
   "ProcessingNotificationUnknownModality": "Test Modality unavailable",
   "ProcessingNotificationUnknownStudy": "Test Study processing update",
+  "ProcessingNotificationAccession": "Test Accession {{accession}}",
+  "ProcessingNotificationStudyReference": "Test Study …{{suffix}}",
   "ProcessingNotificationStudyNotFound": "Test Study unavailable in current worklist",
   "ProcessingNotificationsAriaLabel": "Test Processing notifications",
   "ProcessingNotificationsCount": "Test {{count}} notification",

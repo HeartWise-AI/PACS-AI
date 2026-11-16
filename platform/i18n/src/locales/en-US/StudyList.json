@@ -288,6 +288,8 @@
   "ProcessingNotificationTitle.UNKNOWN": "Inference processing finished",
   "ProcessingNotificationUnknownModality": "Modality unavailable",
   "ProcessingNotificationUnknownStudy": "Study processing update",
+  "ProcessingNotificationAccession": "Accession {{accession}}",
+  "ProcessingNotificationStudyReference": "Study …{{suffix}}",
   "ProcessingNotificationStudyNotFound": "This study is no longer available in the current worklist.",
   "ProcessingNotificationsAriaLabel": "Processing notifications",
   "ProcessingNotificationsCount": "{{count}} notification",

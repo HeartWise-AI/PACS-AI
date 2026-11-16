@@ -21,7 +21,8 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options: Record<string, unknown> = {}) =>
+      [key, ...Object.values(options)].join('|'),
   }),
 }));
 
@@ -74,7 +75,9 @@ describe('InferenceNotificationsBell', () => {
     act(() => notificationButton?.props.onClick());
 
     expect(mockNavigate).toHaveBeenCalledWith('/viewer?StudyInstanceUIDs=study-1');
-    expect(buildProcessingNotificationViewerPath('1.2.840/a b')).toBe('/viewer?StudyInstanceUIDs=1.2.840%2Fa%20b');
+    expect(buildProcessingNotificationViewerPath('1.2.840/a b')).toBe(
+      '/viewer?StudyInstanceUIDs=1.2.840%2Fa%20b'
+    );
     expect(mockInferenceProcessingContext.setBellOpen).toHaveBeenCalledWith(false);
   });
 
@@ -91,5 +94,30 @@ describe('InferenceNotificationsBell', () => {
 
     expect(mockInferenceProcessingContext.markAllRead).toHaveBeenCalledTimes(1);
     expect(mockInferenceProcessingContext.setBellOpen).toHaveBeenCalledWith(true);
+  });
+
+  it('identifies a study that could not be resolved instead of a missing modality', () => {
+    mockInferenceProcessingContext.notifications = [
+      {
+        ...notification,
+        patientName: null,
+        modalitiesInStudy: null,
+        studyInstanceUID: '1.2.826.0.1.3680043.8.498.12345678',
+      },
+    ];
+    act(() => {
+      renderer.update(<InferenceNotificationsBell />);
+    });
+
+    const text = JSON.stringify(renderer.toJSON());
+    expect(text).toContain('ProcessingNotificationUnknownStudy');
+    expect(text).toContain('ProcessingNotificationStudyReference|12345678');
+    expect(text).not.toContain('ProcessingNotificationUnknownModality');
+  });
+
+  it('shows the patient and modalities once they are known', () => {
+    const text = JSON.stringify(renderer.toJSON());
+    expect(text).toContain('Visible patient');
+    expect(text).toContain('XA');
   });
 });

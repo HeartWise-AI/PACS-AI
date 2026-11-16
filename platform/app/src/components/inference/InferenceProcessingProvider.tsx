@@ -22,15 +22,25 @@ import { studyProcessingRolloutTelemetry } from './studyProcessing/rolloutTeleme
 import type { StudyProcessingNotificationTransition } from './studyProcessing';
 import {
   addRecentInferenceNotification,
+  applyStudyNotificationMetadata,
   createCandidatePollInferenceNotification,
   createStudyEventInferenceNotification,
+  getInferenceNotificationLabels,
   getInferenceNotificationPresentation,
   markAllInferenceNotificationsRead,
+  mergeStudyNotificationMetadata,
+  needsStudyNotificationMetadata,
   type InferenceNotification,
   type StudyNotificationWorklistMetadata,
 } from './inferenceNotifications';
+import { createStudyNotificationMetadataResolver } from './studyNotificationMetadata';
+import { fetchStudyNotificationMetadata } from './studyNotificationMetadataRepository';
 
 const RECENT_LIMIT = 20;
+// A toast stays up for five seconds. A lookup answered within this window
+// rewrites the toast still on screen; a later answer only updates the bell, so
+// a toast the user already saw go away is never brought back.
+const TOAST_METADATA_UPDATE_WINDOW_MS = 3000;
 
 type InferenceProcessingContextValue = {
   notifications: InferenceNotification[];
@@ -84,6 +94,11 @@ function InferenceProcessingProvider({ children }) {
   const notificationDeduplicationKeysRef = useRef(new Set<string>());
   const visibleStudyMetadataRef = useRef(new Map<string, StudyNotificationWorklistMetadata>());
   const candidateFallbackActiveRef = useRef(false);
+  const studyMetadataResolverRef = useRef(
+    createStudyNotificationMetadataResolver({
+      fetchStudy: studyInstanceUID => fetchStudyNotificationMetadata(studyInstanceUID),
+    })
+  );
   const { clearStudyProcessingState } = useStudyProcessing();
 
   isBellOpenRef.current = isBellOpen;
@@ -91,6 +106,8 @@ function InferenceProcessingProvider({ children }) {
   const clearNotificationState = useCallback(() => {
     notificationDeduplicationKeysRef.current = new Set();
     visibleStudyMetadataRef.current = new Map();
+    // Labels resolved for one signed-in identity must not outlive it.
+    studyMetadataResolverRef.current.clear();
     setNotifications([]);
     setBellOpen(false);
   }, []);
@@ -105,23 +122,31 @@ function InferenceProcessingProvider({ children }) {
   );
 
   const addNotification = useCallback(
-    (notification: InferenceNotification) => {
-      if (notificationDeduplicationKeysRef.current.has(notification.deduplicationKey)) {
+    (incoming: InferenceNotification) => {
+      if (notificationDeduplicationKeysRef.current.has(incoming.deduplicationKey)) {
         return;
       }
 
-      notificationDeduplicationKeysRef.current.add(notification.deduplicationKey);
+      notificationDeduplicationKeysRef.current.add(incoming.deduplicationKey);
+      const resolver = studyMetadataResolverRef.current;
+      // A study resolved earlier in the session is labelled straight away.
+      const notification = mergeStudyNotificationMetadata(
+        incoming,
+        resolver.peek(incoming.studyInstanceUID)
+      );
       const presentation = getInferenceNotificationPresentation(notification);
-      const patientLabel = notification.patientName ?? t('ProcessingNotificationUnknownStudy');
-      const modalityLabel =
-        notification.modalitiesInStudy ?? t('ProcessingNotificationUnknownModality');
+      const showToast = (shown: InferenceNotification) => {
+        const labels = getInferenceNotificationLabels(shown, t);
+        show({
+          type: presentation.tone,
+          title: t(presentation.titleKey),
+          message: `${labels.primary} · ${labels.secondary}`,
+          id: shown.deduplicationKey,
+        });
+      };
 
-      show({
-        type: presentation.tone,
-        title: t(presentation.titleKey),
-        message: `${patientLabel} · ${modalityLabel}`,
-        id: notification.deduplicationKey,
-      });
+      showToast(notification);
+      const shownAt = Date.now();
 
       setNotifications(previousNotifications => {
         const nextNotifications = addRecentInferenceNotification(
@@ -133,6 +158,31 @@ function InferenceProcessingProvider({ children }) {
           nextNotifications.map(item => item.deduplicationKey)
         );
         return nextNotifications;
+      });
+
+      if (!needsStudyNotificationMetadata(notification)) {
+        return;
+      }
+
+      // The notification is already shown; the lookup only improves its labels.
+      void resolver.resolve(notification.studyInstanceUID).then(metadata => {
+        if (!metadata) {
+          return;
+        }
+        const resolved = mergeStudyNotificationMetadata(notification, metadata);
+        if (resolved === notification) {
+          return;
+        }
+
+        setNotifications(previousNotifications =>
+          applyStudyNotificationMetadata(previousNotifications, metadata)
+        );
+        if (
+          Date.now() - shownAt <= TOAST_METADATA_UPDATE_WINDOW_MS &&
+          notificationDeduplicationKeysRef.current.has(notification.deduplicationKey)
+        ) {
+          showToast(resolved);
+        }
       });
     },
     [show, t]
@@ -170,7 +220,8 @@ function InferenceProcessingProvider({ children }) {
           setCanViewProcessing(true);
           setCanMutateProcessing(role === UserRole.ADMIN || role === UserRole.OWNER);
         }
-      } catch {
+        // A named binding: the test Babel setup cannot compile `catch {}` in async code.
+      } catch (error: unknown) {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
           setStudyProcessingAuthIdentity(null);

@@ -4,6 +4,7 @@ import type {
   StudyProcessingNotificationTransition,
 } from './studyProcessing/notificationTransitions';
 import type { ProcessingAttentionReason, ProcessingRunOutcome } from './studyProcessing/types';
+import type { ResolvedStudyNotificationMetadata } from './studyNotificationMetadata';
 
 export interface StudyNotificationWorklistMetadata {
   patientName: string | null;
@@ -12,12 +13,15 @@ export interface StudyNotificationWorklistMetadata {
 }
 
 export interface InferenceNotification {
+  // Only known once the study was looked up on the server.
+  accessionNumber?: string | null;
   attentionReasons: ProcessingAttentionReason[];
   deduplicationKey: string;
   kind: StudyProcessingNotificationKind;
   modalitiesInStudy: string | null;
   occurredAt: string;
   outcome: ProcessingRunOutcome | null;
+  patientId?: string | null;
   patientName: string | null;
   read: boolean;
   runId: string | null;
@@ -171,4 +175,84 @@ export function getInferenceNotificationPresentation(
         titleKey: 'ProcessingNotificationTitle.UNKNOWN',
         tone: 'info',
       };
+}
+
+export function needsStudyNotificationMetadata(notification: InferenceNotification): boolean {
+  return !notification.patientName || !notification.modalitiesInStudy;
+}
+
+/** Fills the labels a notification is missing; what it already shows is kept. */
+export function mergeStudyNotificationMetadata(
+  notification: InferenceNotification,
+  metadata: ResolvedStudyNotificationMetadata | null | undefined
+): InferenceNotification {
+  if (!metadata || metadata.studyInstanceUID !== notification.studyInstanceUID) {
+    return notification;
+  }
+
+  const merged: InferenceNotification = {
+    ...notification,
+    accessionNumber: notification.accessionNumber || metadata.accessionNumber,
+    modalitiesInStudy: notification.modalitiesInStudy || metadata.modalitiesInStudy,
+    patientId: notification.patientId || metadata.patientId,
+    patientName: notification.patientName || metadata.patientName,
+  };
+  const changed =
+    (merged.accessionNumber ?? null) !== (notification.accessionNumber ?? null) ||
+    merged.modalitiesInStudy !== notification.modalitiesInStudy ||
+    (merged.patientId ?? null) !== (notification.patientId ?? null) ||
+    merged.patientName !== notification.patientName;
+
+  return changed ? merged : notification;
+}
+
+/** Updates, in place in the list, every notification of the resolved study. */
+export function applyStudyNotificationMetadata(
+  notifications: InferenceNotification[],
+  metadata: ResolvedStudyNotificationMetadata
+): InferenceNotification[] {
+  let changed = false;
+  const next = notifications.map(notification => {
+    const merged = mergeStudyNotificationMetadata(notification, metadata);
+    changed = changed || merged !== notification;
+    return merged;
+  });
+  return changed ? next : notifications;
+}
+
+const STUDY_UID_SUFFIX_LENGTH = 8;
+
+export interface InferenceNotificationLabels {
+  primary: string;
+  secondary: string;
+}
+
+type TranslateNotificationLabel = (key: string, options?: Record<string, unknown>) => string;
+
+/**
+ * The two text lines of a notification. Without a patient the study is still
+ * identified, by its accession number or else the end of its study UID.
+ */
+export function getInferenceNotificationLabels(
+  notification: InferenceNotification,
+  t: TranslateNotificationLabel
+): InferenceNotificationLabels {
+  const patient = notification.patientName || notification.patientId || null;
+  const modalities = notification.modalitiesInStudy || null;
+  const uid = notification.studyInstanceUID?.trim() ?? '';
+  const reference = notification.accessionNumber
+    ? t('ProcessingNotificationAccession', { accession: notification.accessionNumber })
+    : uid
+      ? t('ProcessingNotificationStudyReference', {
+          suffix: uid.slice(-STUDY_UID_SUFFIX_LENGTH),
+        })
+      : null;
+  // An identified patient needs no further reference when modalities are known.
+  const secondaryParts = patient ? [modalities ?? reference] : [modalities, reference];
+
+  return {
+    primary: patient ?? t('ProcessingNotificationUnknownStudy'),
+    secondary:
+      secondaryParts.filter(Boolean).join(' · ') || t('ProcessingNotificationUnknownModality'),
+  };
 }
