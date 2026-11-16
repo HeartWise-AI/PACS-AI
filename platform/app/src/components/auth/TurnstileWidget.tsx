@@ -72,7 +72,7 @@ const loadTurnstile = (): Promise<TurnstileApi> => {
   return turnstileLoadPromise;
 };
 
-type VerificationStatus = 'loading' | 'ready' | 'failed' | 'expired' | 'unavailable';
+export type VerificationStatus = 'loading' | 'ready' | 'failed' | 'expired' | 'unavailable';
 
 export interface TurnstileWidgetCopy {
   ariaLabel: string;
@@ -89,6 +89,8 @@ interface TurnstileWidgetProps {
   copy: TurnstileWidgetCopy;
   resetKey: number;
   onTokenChange: (token: string | null) => void;
+  /** Lets the caller fall back when verification cannot be shown or completed. */
+  onStatusChange?: (status: VerificationStatus) => void;
 }
 
 const TurnstileWidget = ({
@@ -97,16 +99,26 @@ const TurnstileWidget = ({
   copy,
   resetKey,
   onTokenChange,
+  onStatusChange,
 }: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenChangeRef = useRef(onTokenChange);
   const apiRef = useRef<TurnstileApi | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [status, setStatus] = useState<VerificationStatus>('loading');
+  const onStatusChangeRef = useRef(onStatusChange);
 
   useEffect(() => {
     onTokenChangeRef.current = onTokenChange;
   }, [onTokenChange]);
+
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
+
+  useEffect(() => {
+    onStatusChangeRef.current?.(status);
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;

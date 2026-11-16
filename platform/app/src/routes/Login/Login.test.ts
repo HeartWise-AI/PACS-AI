@@ -12,11 +12,20 @@ const mockNavigateAfterAuth = jest.fn();
 const mockTurnstileProps = jest.fn();
 const testCredential = ['entered', 'value'].join('-');
 let mockLocationSearch = '?t=tenant-a&code=invite-code&email=invited%40example.org';
+let mockTurnstileStatus: string | null = null;
+const originalTurnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY;
+const restoreTurnstileSiteKey = () => {
+  if (originalTurnstileSiteKey === undefined) {
+    delete process.env.APP_PUBLIC_TURNSTILE_SITE_KEY;
+  } else {
+    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY = originalTurnstileSiteKey;
+  }
+};
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, values: Record<string, unknown> = {}) =>
-      key.replace('{{seconds}}', String(values.seconds ?? '')),
+      key.replace(/{{(\w+)}}/g, (_, name: string) => String(values[name] ?? '')),
   }),
 }));
 
@@ -99,8 +108,14 @@ jest.mock('../../components/auth/TurnstileWidget', () => {
   const React = require('react');
   return {
     __esModule: true,
-    default: props => {
+    default: function MockTurnstileWidget(props) {
       mockTurnstileProps(props);
+      const { onStatusChange, resetKey } = props;
+      React.useEffect(() => {
+        if (mockTurnstileStatus) {
+          onStatusChange?.(mockTurnstileStatus);
+        }
+      }, [onStatusChange, resetKey]);
       return React.createElement(
         'button',
         {
@@ -156,6 +171,8 @@ describe('LoginPage adaptive challenge', () => {
     mockLogin.mockReset();
     mockNavigateAfterAuth.mockReset();
     mockLocationSearch = '?t=tenant-a&code=invite-code&email=invited%40example.org';
+    mockTurnstileStatus = null;
+    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY = 'test-site-key';
     localStorage.clear();
     mockGetPublicTenant.mockResolvedValue({
       data: { id: 'tenant-a', name: 'Tenant A', onboardingEnableRegistration: true },
@@ -178,6 +195,7 @@ describe('LoginPage adaptive challenge', () => {
     container.remove();
     localStorage.clear();
     jest.useRealTimers();
+    restoreTurnstileSiteKey();
   });
 
   const fillCredentials = () => {
@@ -289,8 +307,9 @@ describe('LoginPage adaptive challenge', () => {
       '[data-testid="login-turnstile"]'
     ) as HTMLButtonElement;
     expect(challenge).not.toBeNull();
+    expect(container.querySelector('[data-testid="login-cooldown-notice"]')).toBeNull();
     expect(mockTurnstileProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ action: 'login', resetKey: 0 })
+      expect.objectContaining({ action: 'login', siteKey: 'test-site-key', resetKey: 0 })
     );
     expect((container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(
       true
@@ -346,7 +365,8 @@ describe('LoginPage adaptive challenge', () => {
     expect((container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(
       true
     );
-    expect(container.textContent).toContain('Try again in 2 seconds.');
+    expect(container.textContent).toContain('Try again in 2 s.');
+    expect(container.querySelector('[data-testid="login-cooldown-notice"]')).toBeNull();
 
     submit(form);
     expect(mockLogin).toHaveBeenCalledTimes(1);
@@ -445,6 +465,182 @@ describe('LoginPage adaptive challenge', () => {
       expect.objectContaining({ id: 'user-a', tenantId: 'tenant-a' }),
       '/viewer?StudyInstanceUIDs=1.2.3'
     );
+  });
+});
+
+describe('LoginPage when the login challenge cannot be used', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeAll(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  });
+
+  afterAll(() => {
+    delete (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
+  });
+
+  const renderLogin = async () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+      root.render(React.createElement(LoginPage));
+    });
+    await flushPromises();
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetAPIInfo.mockReset();
+    mockGetCurrentUser.mockReset();
+    mockGetPublicTenant.mockReset();
+    mockLogin.mockReset();
+    mockLocationSearch = '?t=tenant-a';
+    mockTurnstileStatus = null;
+    delete process.env.APP_PUBLIC_TURNSTILE_SITE_KEY;
+    localStorage.clear();
+    mockGetPublicTenant.mockResolvedValue({ data: { id: 'tenant-a', name: 'Tenant A' } });
+    mockGetAPIInfo.mockResolvedValue({ data: { version: 'test-api' } });
+    mockGetCurrentUser.mockResolvedValue({ success: false });
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    localStorage.clear();
+    jest.useRealTimers();
+    restoreTurnstileSiteKey();
+  });
+
+  const fillCredentials = () => {
+    setInputValue(container.querySelector('#email') as HTMLInputElement, 'visitor@example.org');
+    setInputValue(container.querySelector('#password') as HTMLInputElement, testCredential);
+  };
+  const submitButton = () => container.querySelector('button[type="submit"]') as HTMLButtonElement;
+  const notice = () => container.querySelector('[data-testid="login-cooldown-notice"]');
+
+  it('hints that attempts are limited after the first rejected password', async () => {
+    await renderLogin();
+    fillCredentials();
+    expect(container.querySelector('[data-testid="login-attempt-limit-hint"]')).toBeNull();
+    mockLogin.mockRejectedValueOnce({
+      success: false,
+      status: 401,
+      errorCode: 'UNAUTHORIZED_ACCESS',
+      challengeRequired: false,
+    });
+
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+
+    expect(mockShowAlert).toHaveBeenLastCalledWith('Invalid email or password', 'error');
+    expect(container.querySelector('[data-testid="login-attempt-limit-hint"]')?.textContent).toBe(
+      'For security, the number of sign-in attempts is limited.'
+    );
+    expect(container.textContent).not.toMatch(/\d+ (attempts?|tentatives?) remaining/);
+    expect(submitButton().disabled).toBe(false);
+  });
+
+  it('explains the pause instead of a dead verification widget when no site key is built in', async () => {
+    await renderLogin();
+    fillCredentials();
+    mockLogin.mockRejectedValue({
+      success: false,
+      status: 403,
+      errorCode: 'LOGIN_CHALLENGE_REQUIRED',
+      challengeRequired: true,
+    });
+
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+
+    expect(container.querySelector('[data-testid="login-turnstile"]')).toBeNull();
+    expect(container.textContent).not.toContain('Login verification is unavailable');
+    expect(notice()?.textContent).toContain('Too many failed sign-in attempts.');
+    expect(notice()?.textContent).toContain('Wait a few minutes, then try again.');
+    expect(mockShowAlert).toHaveBeenLastCalledWith(
+      'Too many failed sign-in attempts. Please wait a few minutes before trying again.',
+      'error'
+    );
+    expect(submitButton().disabled).toBe(false);
+
+    // A later attempt is sent (without a token) so the server decides when the window ended.
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+    expect(mockLogin).toHaveBeenCalledTimes(2);
+    expect(mockLogin).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ turnstileToken: expect.anything() })
+    );
+
+    const forgot = Array.from(notice()?.querySelectorAll('button') || []).find(button =>
+      button.textContent?.includes('Forgot your password?')
+    ) as HTMLButtonElement;
+    act(() => forgot.click());
+    expect(container.textContent).toContain('To reset your password');
+  });
+
+  it('counts a 429 Retry-After down in minutes and re-enables sign-in afterwards', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-11-16T09:00:00Z'));
+    await renderLogin();
+    fillCredentials();
+    mockLogin.mockRejectedValueOnce({
+      success: false,
+      status: 429,
+      errorCode: 'LOGIN_RATE_LIMITED',
+      challengeRequired: true,
+      retryAfterSeconds: 580,
+    });
+
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+
+    expect(notice()?.textContent).toContain('Try again in about 10 min.');
+    expect(container.textContent).toContain(
+      'Login is temporarily limited. Try again in 9 min 40 s.'
+    );
+    expect(mockShowAlert).toHaveBeenLastCalledWith(
+      'Too many login attempts. Please wait 9 min 40 s before trying again.',
+      'error'
+    );
+    expect(submitButton().disabled).toBe(true);
+    submit(container.querySelector('form') as HTMLFormElement);
+    expect(mockLogin).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      jest.advanceTimersByTime(530_000);
+    });
+    expect(container.textContent).toContain('Try again in 50 s.');
+    expect(notice()?.textContent).toContain('Try again in less than a minute.');
+
+    await act(async () => {
+      jest.advanceTimersByTime(51_000);
+    });
+    expect(notice()).toBeNull();
+    expect(container.querySelector('[data-testid="login-turnstile"]')).toBeNull();
+    expect(submitButton().disabled).toBe(false);
+  });
+
+  it('falls back when the configured widget cannot load', async () => {
+    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY = 'test-site-key';
+    mockTurnstileStatus = 'unavailable';
+    await renderLogin();
+    fillCredentials();
+    mockLogin.mockRejectedValueOnce({
+      success: false,
+      status: 401,
+      errorCode: 'UNAUTHORIZED_ACCESS',
+      challengeRequired: true,
+    });
+
+    submit(container.querySelector('form') as HTMLFormElement);
+    await flushPromises();
+
+    expect(notice()?.textContent).toContain('Too many failed sign-in attempts.');
+    expect(submitButton().disabled).toBe(false);
+    const widgetGroup = container.querySelector('[role="group"]') as HTMLElement;
+    expect(widgetGroup.hidden).toBe(true);
   });
 });
 

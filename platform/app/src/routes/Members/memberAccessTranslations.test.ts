@@ -35,6 +35,18 @@ const accessKeys = [
 const loginAccessKeys = [
   'Your account access has been suspended. Contact your workspace administrator.',
   'Your session expired. Please sign in again.',
+  'Login is temporarily limited. Try again in {{duration}}.',
+  'Too many login attempts. Please wait {{duration}} before trying again.',
+  '{{seconds}} s',
+  '{{minutes}} min',
+  '{{minutes}} min {{seconds}} s',
+  'Too many failed sign-in attempts.',
+  'For your security, sign-in is paused. Try again in about {{minutes}} min.',
+  'For your security, sign-in is paused. Try again in less than a minute.',
+  'For your security, sign-in is paused for a few minutes after repeated failed attempts. Wait a few minutes, then try again.',
+  'Forgot your password? Reset it instead of waiting.',
+  'For security, the number of sign-in attempts is limited.',
+  'Too many failed sign-in attempts. Please wait a few minutes before trying again.',
 ] as const;
 
 describe('member access translations', () => {
