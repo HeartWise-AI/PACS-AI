@@ -1,17 +1,17 @@
-# PLAN: move PACS-AI from OHIF 3.11.1 to OHIF 3.14 as a modular fork
+# PLAN: move PACS-AI from OHIF 3.11.1 to OHIF 3.13.14 as a modular fork
 
-Audience: an orchestrating agent (Claude Opus 5.5, medium effort) that delegates work packages to subagents and integrates their results. Read this file completely before starting. `README.md` in this directory holds the analysis this plan is based on.
+Audience: an orchestrating agent (Claude Fable 5.2, model ID `claude-fable-5-2`) that delegates work packages to subagents and integrates their results. Read this file completely before starting. `README.md` in this directory holds the analysis this plan is based on.
 
-Written 2026-11-15. Owner and only source of authorization: the repository owner (the user). Analysis by four research agents; nothing has been built or run on OHIF 3.13 or 3.14 yet.
+Written 2026-11-15. Owner and only source of authorization: the repository owner (the user). Analysis by four research agents; nothing has been built or run on OHIF 3.13 or 3.14 yet. Target changed from 3.14 to 3.13.14 by the owner on 2026-11-15: 3.14 is still beta and adds little for PACS-AI.
 
 ---
 
 ## 1. Mission
 
-1. Bring PACS-AI (the `HeartWise-AI/PACS-AI` viewer, a fork of OHIF 3.11.1) onto OHIF 3.14.
+1. Bring PACS-AI (the `HeartWise-AI/PACS-AI` viewer, a fork of OHIF 3.11.1) onto OHIF 3.13.14, the latest stable release.
 2. Keep every PACS-AI feature working (section 5 lists them; section 8 defines the tests that prove it).
-3. Take every upstream fix and feature between 3.11.1 and 3.14.
-4. Restructure PACS-AI code into packages we own, attached through OHIF's extension points, so that the next upgrade is `git merge <tag>` plus a short checklist. Target: at most 15 edited OHIF files, each listed in a ledger and enforced by CI.
+3. Take every upstream fix and feature between 3.11.1 and 3.13.14.
+4. Restructure PACS-AI code into packages we own, attached through OHIF's extension points, so that the next upgrade (3.14, once released) is `git merge <tag>` plus a short checklist. Choices in this plan must not make the 3.14 step harder (section 3.5). Target: at most 15 edited OHIF files, each listed in a ledger and enforced by CI.
 
 Done means: section 11 "Definition of done" is satisfied.
 
@@ -41,8 +41,8 @@ These override anything else in this plan.
 | Our code today | `origin/main` | `abe08101a` | 2026-11-14 |
 | Baseline tag (same commit) | `baseline/ohif-3.11.1-pre-3.13-upgrade` | `abe08101a` | |
 | OHIF base of the fork | `v3.11.1` | `3c2b027e8bc7a238ffe46ecb5f57c6c913069c3e` | 2025-10-28 |
-| OHIF latest stable | `v3.13.14` | `e4cd86153a1aaa429ef749330eaeefd4df96a88a` | 2026-11-03 |
-| **Target pin** | `v3.14.0-beta.91` | `d493d1cb7676d7259761f9669b4f38d3fefe38bd` | 2026-11-13 |
+| **Target pin** (latest stable) | `v3.13.14` | `e4cd86153a1aaa429ef749330eaeefd4df96a88a` | 2026-11-03 |
+| Next release, beta only (look-ahead, not a target) | `v3.14.0-beta.91` | `d493d1cb7676d7259761f9669b4f38d3fefe38bd` | 2026-11-13 |
 
 Upstream repository: `https://github.com/OHIF/Viewers.git`. Fetch tags without polluting our tag namespace:
 
@@ -53,11 +53,7 @@ git fetch --no-tags https://github.com/OHIF/Viewers.git \
   refs/tags/v3.14.0-beta.91:refs/upstream/v3.14.0-beta.91
 ```
 
-**3.14 is not released.** It exists only as betas; there is no `release/3.14` branch. The user chose 3.14 as the target knowing this. Consequences:
-
-- Pin `v3.14.0-beta.91`. Do not follow `master`.
-- Phases 1 and 2 do not depend on the pin. Before starting phase 3, check for a newer 3.14 tag (`git ls-remote --tags https://github.com/OHIF/Viewers.git 'v3.14*'`). If `v3.14.0` (no `-beta`) exists, use it. Otherwise use the newest beta and record the choice in `STATUS.md`.
-- After phase 3, re-merging a later beta or the final `v3.14.0` is one run of the phase 4 procedure. Production must not move to a beta without the user saying so (R2 already covers this).
+**The target is `v3.13.14`.** The `release/3.13` branch receives security patch releases (3.13.1 to 3.13.14 so far). Before starting phase 3, check for a newer 3.13 patch (`git ls-remote --tags https://github.com/OHIF/Viewers.git 'v3.13.*'`); if one exists, use the newest `v3.13.x` without `-beta` and record it in `STATUS.md`. Do not target 3.14 in this plan: it exists only as betas, with no release branch. It is handled as the first run of the phase 4 procedure after its stable release.
 
 The fork has **no shared git history** with OHIF (it was imported as files). Work package P1.4 fixes that.
 
@@ -65,9 +61,9 @@ The fork has **no shared git history** with OHIF (it was imported as files). Wor
 
 Fork against 3.11.1: 629 files added, 299 OHIF files modified, 7 OHIF files deleted.
 
-Upstream 3.11.1 → 3.14.0-beta.91: 2179 files changed, about 920 commits.
+Upstream 3.11.1 → 3.13.14: 1824 files changed (939 added, 463 deleted, 785 modified), 733 commits (28 features, 197 fixes).
 
-Simulated three-way merge (base 3.11.1, ours main, theirs beta.91): 125 conflicted paths — 93 textual, 10 add/add, 22 modify/delete. By area: platform/ui-next 37, platform/i18n 22, platform/app 19, extensions/default 8, root files about 30.
+Simulated three-way merge (base 3.11.1, ours main, theirs 3.13.14): 107 conflicted paths — 76 textual (152 hunks), 9 add/add (all translation files), 19 where we modified and upstream deleted, 3 where we deleted and upstream modified. By area: platform/ui-next 32 files, platform/i18n 22, platform/app 12, extensions/default 6, root files 9. Per-file hunk counts: see `README.md`.
 
 What our 299 modifications are:
 
@@ -80,40 +76,53 @@ What our 299 modifications are:
 | Behaviour changes | 16 | Extension point or ledger patch (section 7) |
 | Hook-ins | 12 | Extension points (P2.3 to P2.5) |
 
-### 3.3 What changes upstream (3.11.1 → 3.14)
+### 3.3 What changes upstream (3.11.1 → 3.13.14)
 
 Breaking for us:
 
 | Area | Change |
 |---|---|
-| Package manager | yarn 1 + lerna + nx → pnpm 12.8.1 workspaces (`pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.npmrc`, `workspace:*`). `yarn.lock`, `bun.lock`, `lerna.json`, `nx.json`, `addOns/` are gone. |
+| Package manager | yarn 1 + lerna + nx → pnpm 12.8.1 workspaces (`pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.npmrc`, `workspace:*`, `nodeLinker: hoisted`). `yarn.lock`, `bun.lock`, `lerna.json`, `nx.json`, `addOns/` are gone. Resolutions move to `overrides` in `pnpm-workspace.yaml`; postinstall scripts must be allow-listed under `allowBuilds`. |
 | Node | ≥ 24 (`.node-version` 24.22.2) |
-| Bundler | webpack 5 → rspack 2 (3.13) → rsbuild 2.1.6 for the production build (3.14: `rsbuild build --config ../../rsbuild.config.ts`; rspack path kept as `build:legacy`) |
-| React | 18.3.1 → 19.2.7, with the React Compiler on every `src/` under `platform/app`, `platform/core`, `platform/i18n`, `platform/ui-next`, `extensions/*`, `modes/*`. Scope is set in `react-compiler.scope.cjs`; budgets in `.react-compiler-budget.json` and `.react-compiler-lint-budget.json`. |
-| JSX and lint | `"jsx": "react-jsx"`; ESLint 10 flat config (`eslint.config.mjs`) |
-| Cornerstone3D | 4.5.13 → 5.18.3 (major), new `@cornerstonejs/metadata` and `@cornerstonejs/utils`; vtk.js 32 → 36; dcmjs 0.43 → 0.52 |
-| Display sets | Stored in the Cornerstone metadata cache; `getDisplaySetCache()` returns a copy and is deprecated; `DisplaySetService` constructor takes `{ servicesManager }` |
-| Viewport refs | `useViewportRef`/`useViewportRefs` removed → `useViewportElement`, `useViewportElementRegistration` |
-| Customization | Read with the `useCustomization` hook during render; `getCustomization()` in render can go stale under the compiler. Phased config (`requires`/`bootstrap`/`global`/`mode`). Typed registry `AppTypes.Customizations`. |
-| Work list | New ui-next study list at `/`. Old one is `routes/LegacyWorkList/LegacyWorkList.tsx` behind `workList.variant: 'legacy'`, deprecated. `DataSourceWrapper` issues one query with `queryLimit` (default 101) and pages client-side. |
-| Old `@ohif/ui` | Frozen, excluded from the compiler, used only by `LegacyWorkList`. Will be removed with it. |
+| Bundler | webpack 5 → rspack 2. File names `.webpack/webpack.*.js` are kept but now `require('@rspack/core')`. Production build: `rspack build --config .webpack/webpack.pwa.js` (asks for a 24 GB heap). `dev:fast` uses rsbuild 1.7.3. `dotenv-webpack` and `workbox-webpack-plugin` are dropped. |
+| React | Stays 18.3.1. TypeScript 5.5.4, jest 29.7, Playwright 1.56.1 unchanged. |
+| Cornerstone3D | 4.5.13 → 5.6.8 (major), new `@cornerstonejs/metadata`; vtk.js 32 → 36; dcmjs 0.43 → 0.52 |
+| Customization | Phased config (`requires`/`bootstrap`/`global`/`mode`); `customizationService.init()` moved into `appInit.js`; `?customization=` URL loader (off unless `customizationUrlPrefixes` is set) |
+| App init | Order is now: mode customizations, bootstrap customizations, `registerExtensions`, `customizationService.init`, global customizations, mode commands, `modeFactory`. `App.tsx` inserts `serviceProvidersManager` providers ahead of `DialogProvider`. |
+| Work list | New ui-next study list at `/`. Old one moved to `routes/LegacyWorkList/LegacyWorkList.tsx` behind `workList.variant: 'legacy'`. `routes/WorkList/filtersMeta.js` and `index.js` moved with it. `DataSourceWrapper` issues one query with `queryLimit` (default 101) and pages client-side. |
+| Old `@ohif/ui` | Legacy; storybook removed; its only importer outside itself is `LegacyWorkList` |
 | Onboarding | `react-shepherd` removed; `shepherd.js` 15 used directly |
-| DICOMweb data source | QIDO and WADO clients merged into one `dicomWebClient`; `stowRoot` added; `qidoSupportsIncludeField` removed; `bulkDataURI.transform` now also applies to absolute URIs |
-| Modes | New `modes/basic`; longitudinal, segmentation, tmtv inherit from it. `initToolGroups` takes one options object. |
-| Toolbar | `segmentationToolbox` split into four sections |
-| Hanging protocols | `greaterThan`/`lessThan` are strict; first applicable stage opens |
-| Dates | `formatDICOMDate(date, { strFormat })`; `metadataProvider` no longer formats names and dates |
-| Other library moves | i18next 17 → 19; date-fns 3 → 4; react-day-picker 8 → 9; `@tanstack/react-table` 9; `@testing-library/react` 13 → 16; `react-test-renderer`, `prop-types`, `framer-motion` removed upstream |
-| Security | Dynamic config URL hardening; same-origin logout redirect; report-only CSP |
+| Modes | New `modes/basic` (`@ohif/mode-basic`); longitudinal, segmentation, tmtv inherit from it; their own `toolbarButtons.ts` deleted. `initToolGroups` takes one options object. `enableSegmentationEdit` replaced by `modeCustomizations`. |
+| Toolbar | `segmentationToolbox` split into `labelMapSegmentationToolbox`, `contourSegmentationToolbox`, `labelMapSegmentationUtilities`, `contourSegmentationUtilities` |
+| Services | `removeSegmentationRepresentations` → `removeRepresentationsFromViewport`; `esc` bound to `cancelActiveOperation` |
+| DICOM video | `@ohif/extension-dicom-video.viewportModule.dicom-video` removed; video goes through the cornerstone viewport |
+| Dates | `formatDICOMDate(date, { strFormat })`; `metadataProvider` no longer formats patient name and dates |
+| Colours | Legacy tailwind colours map to ui-next tokens (`primary-light` → `highlight`, `primary-dark` → `muted`, `secondary-dark` → `popover`, `primary-active` → `primary`); `bg-black` → `bg-background` |
+| Default config | `config/default.js` locked down: one data source, no multimonitor, dynamic config off; `maxNumRequests.thumbnail` lowered |
+| Other library moves | i18next 17 → 19 (at 3.13.14); date-fns 3 → 4; react-day-picker 8 → 9; `@tanstack/react-table` 8.21 added |
+| Security | Dynamic config URL hardening (`utils/secureConfigFetch.js`); `/logout?redirect_uri` same-origin only; report-only CSP; nginx recipes drop wildcard CORS |
 
 Useful to us:
 
-- Theme system: `platform/ui-next/src/themes/*`, `ActiveThemeProvider`, `ohif.appearanceModal`.
-- Customization keys: `routes.customRoutes`, `ohif.menuContent`, `ohif.tours`, `ohif.hotkeyBindings`, `ohif.headerRightSide` (3.14), `studyBrowser.thumbnailDetails` (3.14), `studyBrowser.thumbnailMenuItems`, `workList.*`.
+- Theme system: `platform/ui-next/src/themes/*` (six presets plus `themes.css`), `ActiveThemeProvider`, the opt-in `@ohif/extension-default.customizationModule.theme`, `ohif.appearanceModal`. Docs: `platform/docs/docs/platform/services/customization-service/appearance-theming.md`.
+- Customization keys: `routes.customRoutes`, `ohif.menuContent`, `ohif.aboutModal`, `ohif.tours`, `ohif.hotkeyBindings`, `studyBrowser.thumbnailMenuItems`, `studyBrowser.thumbnailDoubleClickCallback`, `workList.*`.
 - `serviceProvidersManager.registerProvider` for app-wide React providers.
 - `userAuthenticationService.setServiceImplementation` for auth headers.
-- Mode panels and toolbars as mode-scope customizations (`$set`, `$push`, `$spliceById`).
-- Upstream migration guides: `platform/docs/docs/migration-guide/3p11-to-3p12/`, `3p12-to-3p13/` (15 pages), `3p13-to-3p14/` (16 pages) in the target ref. **Every subagent working on phase 3 must read the pages relevant to its package.**
+- Mode `leftPanels`/`rightPanels` and toolbars as mode-scope customizations (`$set`, `$push`).
+- `ExtensionManager.registerCommandsModule()`; modes may export `getCommandsModule` and a `customizations` map.
+- Upstream migration guides in the target ref: `platform/docs/docs/migration-guide/3p11-to-3p12/index.md` and `3p12-to-3p13/` (15 pages). **Every subagent working on phase 3 must read the pages relevant to its package.** The guides say pnpm 11 and "no preinstall"; the tree has pnpm 12.8.1 and still runs `preinstall.js` — trust the tree.
+
+### 3.5 What 3.14 will change later (do not implement now; do not make it harder)
+
+From `v3.14.0-beta.91`: React 19.2.7 with the React Compiler on every `src/` under `platform/`, `extensions/*`, `modes/*`; production build on rsbuild 2; ESLint 10 flat config; Cornerstone3D 5.18; display sets in the Cornerstone metadata cache (`getDisplaySetCache()` returns a copy); `useViewportRef` removed; `useCustomization` hook required for render-time reads; `LegacyWorkList` and `@ohif/ui` deprecated; DICOMweb QIDO and WADO clients merged; new keys `ohif.headerRightSide` and `studyBrowser.thumbnailDetails`; `bulkDataURI.transform` applied to absolute URIs. 108 of the 299 OHIF files the fork edits today change again.
+
+Rules that follow, cheap now and expensive later:
+
+- Our code never imports `@ohif/ui`, `LegacyWorkList`, or `react-test-renderer`.
+- No `propTypes`, no `defaultProps` on function components, every `useRef` has an argument.
+- Render-time customization reads, display-set access and viewport element access go through `ohifCompat` (6.4).
+- No writes to `getDisplaySetCache()`.
+- No edits to ui-next component files; wrap or customize instead.
 
 ### 3.4 Problems inside the fork
 
@@ -133,7 +142,7 @@ Useful to us:
 |---|---|---|
 | `main` | Production line. Do not push. | |
 | `integration/modular-3.11` | Phases 1 and 2: modular fork still on OHIF 3.11.1. Deployable. | P1.4 result |
-| `integration/ohif-3.14` | Phase 3: the upgrade. | `integration/modular-3.11` after phase 2 |
+| `integration/ohif-3.13` | Phase 3: the upgrade. | `integration/modular-3.11` after phase 2 |
 | `wp/<id>-<slug>` | One per work package, PR into its integration branch. | the integration branch |
 
 Create the two integration branches yourself (pushing new non-main branches is allowed). Merging work-package PRs **into the integration branches** is allowed once the package's exit checks pass; merging an integration branch into `main` is not (R1).
@@ -143,7 +152,7 @@ Use one git worktree per active work package under `/home/ravram/pacs-ai-wp/<id>
 Builds and tests run in Docker so the host needs no Node:
 
 - Phases 0 to 2 (OHIF 3.11.1): `node:20.18.1-slim`, yarn 1.22.22.
-- Phase 3 (OHIF 3.14): `node:24.22.2-slim`, `npm i -g pnpm@12.8.1`.
+- Phase 3 (OHIF 3.13.14): `node:24.22.2-slim`, `npm i -g pnpm@12.8.1`.
 - Playwright: `mcr.microsoft.com/playwright:v1.56.1-noble` (already on the host).
 
 Keep a running log in `docs/ohif-upgrade/STATUS.md` on the integration branch: one line per work package with state (todo, running, done, blocked), PR number, and for blocked items what was tried.
@@ -209,7 +218,7 @@ docs/ohif-upgrade/     this plan, README.md, STATUS.md
 | `pacs-ai-shell` | F2 to F4 pages as `routes.customRoutes`; F10 work list page; F11 top navigation; viewer layout template (`getLayoutTemplateModule`) built from our current `ViewerLayout` and `ViewerHeader`; F9 tour gating | core, ui, theme, `@ohif/core`, `@ohif/ui-next`, `@ohif/extension-default` public API |
 | `pacs-ai-inference` | F5 to F7: `components/inference/**` (197 files), AIModelButton, `addSegmentation`, study browser panel module wrapping upstream's, result renderers | core, ui, `@ohif/core`, `@ohif/ui-next`, `@ohif/extension-cornerstone` public API |
 | `pacs-ai-chat` | F8 | core, ui |
-| `modes/pacs-ai` | Mode extending `@ohif/mode-basic` (on 3.11.1: extending longitudinal's definition): our layout template, panels, toolbar additions, hotkeys, cine autoplay | all of the above |
+| `modes/pacs-ai` | Mode extending `@ohif/mode-basic` in phase 3 (in phase 2, on 3.11.1: built from longitudinal's definition): our layout template, panels, toolbar additions, hotkeys, cine autoplay | all of the above |
 
 ### 6.2 Rules enforced by tooling
 
@@ -217,7 +226,7 @@ docs/ohif-upgrade/     this plan, README.md, STATUS.md
 2. **Drift guard.** `pacs-ai/scripts/check-upstream-drift.sh`:
    - reads `pacs-ai/UPSTREAM_REF`;
    - lists files that differ between that ref and `HEAD` outside "ours" (`git diff --name-only <ref> HEAD -- . ':(exclude)extensions/pacs-ai-*' ...`);
-   - allows the files named in `UPSTREAM_PATCHES.md`, plus generated or expected ones (`pnpm-lock.yaml`/`yarn.lock`, root and app `package.json`, `platform/app/pluginConfig.json`, `pnpm-workspace.yaml`, `react-compiler.scope.cjs`, `.github/workflows/*`, `version.json`, `version.txt`, `commit.txt`);
+   - allows the files named in `UPSTREAM_PATCHES.md`, plus generated or expected ones (`pnpm-lock.yaml`/`yarn.lock`, root and app `package.json`, `platform/app/pluginConfig.json`, `pnpm-workspace.yaml`, `.github/workflows/*`, `version.json`, `version.txt`, `commit.txt`);
    - fails on anything else, and fails if the ledger has more than 15 rows;
    - `--report` mode prints counts without failing (used until P2.7).
 3. **Ledger.** `UPSTREAM_PATCHES.md` is a table: file, feature (F-number), why no extension point works, patch file under `pacs-ai/patches/`, upstreamable yes/no. `apply-patches.sh` re-applies them with `git apply --3way` after an upstream merge.
@@ -230,16 +239,16 @@ docs/ohif-upgrade/     this plan, README.md, STATUS.md
 | 12 routes added in `routes/index.tsx` | `routes.customRoutes` customization from `pacs-ai-shell` (`extensions/default/src/customizations/customRoutesCustomization.ts`) | yes |
 | Providers in `App.tsx` | `serviceProvidersManager.registerProvider` in `pacs-ai-core` `preRegistration`. Check ordering: providers land ahead of the dialog/modal providers. If a provider needs the router, mount it inside our route elements and layout template instead. | yes (verify in P2.3) |
 | Bearer token in `DicomWebDataSource/index.ts` and `initWADOImageLoader.js` | `userAuthenticationService.setServiceImplementation({ getAuthorizationHeader })` in `pacs-ai-core` `preRegistration` | yes |
-| `StaticWadoClient.ts` bulk data URI rewrite | Data source config `bulkDataURI: { enabled, transform }` in `pacs-ai.js` (3.14 applies it to absolute URIs). On 3.11.1 keep a ledger patch. | partly |
+| `StaticWadoClient.ts` bulk data URI rewrite | Ledger patch. (3.14 applies the data source `bulkDataURI.transform` config to absolute URIs, which should retire it then.) | no |
 | `ViewerLayout/index.tsx`, `ViewerHeader.tsx`, ui-next `Header.tsx` | Our own layout template in `pacs-ai-shell`; the mode's `layoutTemplate` points to it. Restore the three upstream files. | yes |
-| `PanelStudyBrowser.tsx`, `StudyBrowser.tsx`, `StudyItem.tsx`, `Thumbnail.tsx` | Our panel module in `pacs-ai-inference` that composes upstream's exported study browser pieces. Display-set and modality data flow through `pacsAiStudyContextService` fed by `displaySetService` events. Badges: on 3.14 try `studyBrowser.thumbnailDetails`; otherwise render through `Thumbnail`'s `children`. | panel module yes |
+| `PanelStudyBrowser.tsx`, `StudyBrowser.tsx`, `StudyItem.tsx`, `Thumbnail.tsx` | Our panel module in `pacs-ai-inference` that composes upstream's exported study browser pieces. Display-set and modality data flow through `pacsAiStudyContextService` fed by `displaySetService` events. Badges: render through the `children` prop 3.13 adds to `Thumbnail` (verify); on 3.11.1 keep a ledger patch for `Thumbnail.tsx`. (3.14 adds `studyBrowser.thumbnailDetails`.) | panel module yes |
 | `Onboarding.tsx` tour gating | `ohif.tours` customization produced by `pacs-ai-shell` after asking the server; ledger patch only if the start-once guard cannot be done from outside | key exists |
 | `hotkeyBindings.ts` swap | `ohif.hotkeyBindings` customization / mode `hotkeys` | yes |
 | `CinePlayer.tsx` autoplay | `autoPlayCine` app config, plus the `cornerstoneViewportService`/cine service from our mode's `onModeEnter` for US and XA; position via theme CSS | partly |
 | `WorkList.tsx` | Our own page in `pacs-ai-shell`, mounted at `/` with `routes.customRoutes`. It must not import from `routes/WorkList`, `routes/LegacyWorkList` or `@ohif/ui`. | yes |
 | `default.js` and 22 other config files | `pacs-ai/config/pacs-ai.js`, selected with `APP_CONFIG` | yes |
 | Translations in 47 OHIF locale files | Our namespaces in `pacs-ai-core/src/locales`, registered with `i18n.addLocales`. Changed OHIF keys (`Common`, `StudyList`) become overrides in our namespace, or added the same way. | yes |
-| 99 colour swaps | 3.14: a theme in `pacs-ai-theme` registered with the theme customization. On 3.11.1 the theme system does not exist: keep the edits as they are through phase 2 (counted separately by the drift guard as "theme debt"), remove them in P3.4. | 3.13+ only |
+| 99 colour swaps | On 3.13.14: a theme in `pacs-ai-theme` registered with the theme customization. On 3.11.1 the theme system does not exist: keep the edits as they are through phase 2 (counted separately by the drift guard as "theme debt"), remove them in P3.4. | 3.13+ only |
 | `webpack.base.js`, `webpack.pwa.js`, `rsbuild.config.ts`, `Dockerfile`, nginx templates | `pacs-ai/build/` plugin and `pacs-ai/docker/Dockerfile.pacs-ai`. The build config needs a small hook: one ledger patch that loads `pacs-ai/build/extend.(c)js` if present. | n/a |
 | `index.html`, `init-service-worker.js`, `sw.js` | Ledger patch for `index.html` only if app config/white-labeling cannot do it; service-worker kill switch shipped from `pacs-ai/build` as a copied public asset | n/a |
 
@@ -247,9 +256,9 @@ docs/ohif-upgrade/     this plan, README.md, STATUS.md
 
 `pacs-ai-core/src/ohifCompat/` is the only place our code touches OHIF APIs that this plan knows will change:
 
-- `useSafeCustomization(key)` — wraps `customizationService.getCustomization` now; switches to `useCustomization` in P3.3.
+- `useSafeCustomization(key)` — wraps `customizationService.getCustomization`; switches to upstream's `useCustomization` at the 3.14 step.
 - `displaySets.ts` — read access to display sets; no writes to `getDisplaySetCache()`.
-- `viewportElement.ts` — wraps `useViewportRef` now, `useViewportElement` in 3.14.
+- `viewportElement.ts` — wraps `useViewportRef`; becomes `useViewportElement` at the 3.14 step.
 - `dates.ts` — wraps `formatDICOMDate` and patient-name formatting.
 - `dicomweb.ts` — anything we need from the data source client.
 
@@ -265,7 +274,7 @@ Rule: our packages import these, never the underlying OHIF API directly. A yearl
 | `extensions/default/src/ViewerLayout/index.tsx` | Shell, contexts, tour | Our layout template; upstream restored |
 | `extensions/default/src/Panels/StudyBrowser/PanelStudyBrowser.tsx` | Eager display sets, badges, legend | Our panel module; upstream restored |
 | `extensions/default/src/DicomWebDataSource/index.ts` | Bearer token | `userAuthenticationService`; upstream restored |
-| `extensions/default/src/DicomWebDataSource/utils/StaticWadoClient.ts` | Proxy URI rewrite | Config `bulkDataURI.transform` on 3.14; ledger until then |
+| `extensions/default/src/DicomWebDataSource/utils/StaticWadoClient.ts` | Proxy URI rewrite | Ledger (retire at the 3.14 step with `bulkDataURI.transform`) |
 | `extensions/cornerstone/src/initWADOImageLoader.js` | Bearer token | `userAuthenticationService`; upstream restored |
 | `extensions/cornerstone/src/components/CinePlayer/CinePlayer.tsx` | Autoplay US/XA, CineRate, position | Config plus mode `onModeEnter`; ledger only for what remains |
 | `platform/core/src/defaults/hotkeyBindings.ts` | Key swap | Customization; upstream restored |
@@ -325,7 +334,7 @@ git merge -s ours origin/main -m "Join PACS-AI history to the OHIF 3.11.1 base"
 git diff --quiet origin/main HEAD               # must print nothing: trees identical
 echo v3.11.1 > pacs-ai/UPSTREAM_REF
 ```
-- Exit: `git merge-base HEAD refs/upstream/v3.14.0-beta.91` prints a commit; tree equals `origin/main` before the `UPSTREAM_REF` commit.
+- Exit: `git merge-base HEAD refs/upstream/v3.13.14` prints a commit; tree equals `origin/main` before the `UPSTREAM_REF` commit.
 
 **P1.1 — Revert formatting-only edits** · P1.4 · P1.2, P1.3
 - For each OHIF file where `git diff -w --ignore-blank-lines refs/upstream/v3.11.1 HEAD -- <file>` is empty, or the diff is only quotes/wrapping/EOL (the inventory counted 59; recompute, do not trust the number), `git checkout refs/upstream/v3.11.1 -- <file>`.
@@ -393,18 +402,18 @@ Order matters: P2.1 → P2.2 → P2.3 → (P2.4 ∥ P2.5) → P2.6 → P2.7. Wit
 - Exit: `viewer-behaviour.spec.ts` passes; gates G1–G5.
 
 **P2.7 — Close phase 2**
-- Hygiene for React 19 in our packages: remove `propTypes`, `defaultProps` on function components, `react-test-renderer`; give every `useRef` an argument; no `forwardRef` in new code.
+- Hygiene that keeps the later 3.14 step cheap (section 3.5), in our packages: remove `propTypes`, `defaultProps` on function components, `react-test-renderer`; give every `useRef` an argument; no `forwardRef` in new code.
 - Add ESLint `no-restricted-imports` rules (6.2). Switch the drift guard from report to enforce, with theme debt as the only allowed non-ledger differences (listed in `pacs-ai/THEME_DEBT.txt`).
 - Run the whole acceptance suite.
 - Exit: ledger ≤ 15 rows; no inverted imports; all acceptance specs pass; all unit tests pass; `STATUS.md` updated. **Stop and report to the user**: `integration/modular-3.11` is ready to be deployed to staging/production on OHIF 3.11.1 if they want an intermediate release. Do not wait for the answer to start phase 3.
 
-### Phase 3 — upgrade (branch `integration/ohif-3.14` from `integration/modular-3.11`)
+### Phase 3 — upgrade (branch `integration/ohif-3.13` from `integration/modular-3.11`)
 
-**P3.0 — Choose the pin** — see 3.1. Fetch it to `refs/upstream/<tag>`.
+**P3.0 — Choose the pin** — see 3.1 (newest `v3.13.x` stable; today `v3.13.14`). Fetch it to `refs/upstream/<tag>`.
 
 **P3.1 — Merge upstream**
 ```bash
-git checkout -b integration/ohif-3.14 integration/modular-3.11
+git checkout -b integration/ohif-3.13 integration/modular-3.11
 git merge --no-commit refs/upstream/<tag>
 ```
 Resolution rules, in order:
@@ -413,50 +422,51 @@ Resolution rules, in order:
 3. Path in `THEME_DEBT.txt` → take upstream (the theme comes back in P3.4).
 4. `package.json` (root, app) and `pluginConfig.json` → take upstream, then re-add our packages and our dependencies.
 5. Lockfiles → take upstream's `pnpm-lock.yaml`; delete `yarn.lock`/`bun.lock`; regenerate with `pnpm install --no-frozen-lockfile` in the Node 24 container.
-6. Files we deleted that upstream modified (`service-worker.js`, `.env`, `.netlify/*`) → take upstream's version (they are upstream-owned; our kill switch lives in `pacs-ai/build`).
-7. Anything else → take upstream and write down what was lost in `STATUS.md`.
+6. Files we deleted that upstream modified (`platform/app/src/service-worker.js`, `platform/app/.env`, `.netlify/build-deploy-preview.sh`) → take upstream's version (they are upstream-owned; our kill switch lives in `pacs-ai/build`).
+7. Files we modified that upstream deleted (`nx.json`, `addOns/externals/devDependencies/package.json`, `DicomUpload.css`, docs showcase pages, `versioned_docs/version-3.10/*`) → accept the deletion. The `addOns` bumps (moment, postcss, webpack-dev-server) become pnpm `overrides` only if still needed.
+8. Anything else → take upstream and write down what was lost in `STATUS.md`.
 - Update `pacs-ai/UPSTREAM_REF`. Commit the merge even if the build is red; the following packages fix it.
 - Exit: merge committed; drift guard passes (ledger and "ours" only).
 
 **P3.2 — Tooling** · after P3.1
-- Add our packages to `pnpm-workspace.yaml`; convert their manifests to `workspace:*`; declare every imported dependency (`pnpm install`, then fix each "cannot resolve"). Known extra dependencies: `dicom-data-dictionary`, `html2canvas`, `jspdf`, `react-d3-speedometer`, `cssnano`, `firebase`, `react-query`, `dotenv`, `react-markdown`, `moment` (8 of our files; prefer replacing with date-fns 4, already upstream), `react-dates` (replace with ui-next date picker if small, else declare).
-- Check each third-party dependency's React peer range; the workspace override forces React 19 silently. List any that stop at 18 and either upgrade or replace them (`react-query` v3 → `@tanstack/react-query` v5 is the likely one; `react-dates` and `react-d3-speedometer` need checking).
-- Port `pacs-ai/build` to rsbuild (production) and keep the rspack variant for `build:legacy`: version.json emission, env-config generation, defines (`APP_BUILD_ID`, our `process.env.*` values), COOP/COEP headers, service-worker kill switch asset. Update the one-hook ledger patch for `rsbuild.config.ts`.
-- `Dockerfile.pacs-ai`: start from upstream's `Dockerfile` at the pin (Node 24.22.2, pnpm 12, nginx 1.30), re-add CA-certificate hook (also `pnpm config set cafile`), build args, `APP_CONFIG=config/pacs-ai.js`.
+- Add our packages to `pnpm-workspace.yaml`; convert their manifests to `workspace:*`; declare every imported dependency (`pnpm install`, then fix each "cannot resolve"). Known extra dependencies: `dicom-data-dictionary`, `html2canvas`, `jspdf`, `react-d3-speedometer`, `cssnano`, `firebase`, `react-query`, `dotenv`, `react-markdown`, `moment` (8 of our files; prefer date-fns 4, already upstream), `react-dates` (replace with the ui-next date picker if small, else declare).
+- For each third-party dependency we add, note whether it supports React 19 (needed at the 3.14 step). Do not upgrade React now. Record the list in `STATUS.md`; `react-query` v3, `react-dates` and `react-d3-speedometer` are the ones to check.
+- Port `pacs-ai/build` to rspack 2: version.json emission (check the plugin against rspack's compiler hooks), env-config generation, defines (`APP_BUILD_ID`, our `process.env.*` values — upstream dropped `dotenv-webpack`, so load dotenv in `extend.js`), COOP/COEP headers, content-hashed CSS names, service-worker kill switch asset replacing upstream's service-worker manifest plugin output. Keep the `rsbuild.config.ts` hook for `dev:fast`. Update the one-hook ledger patches for `.webpack/webpack.base.js`, `platform/app/.webpack/webpack.pwa.js`, `rsbuild.config.ts`.
+- `Dockerfile.pacs-ai`: start from upstream's root `Dockerfile` at the pin (`node:24.22.2-slim`, `npm i -g pnpm@12`, `nginxinc/nginx-unprivileged:1.27-alpine`), re-add the CA-certificate hook (also `pnpm config set cafile`), build args, `APP_CONFIG=config/pacs-ai.js`. Give the build enough heap (upstream asks for 24 GB; check host memory first and lower `--max_old_space_size` if the build still passes).
 - Workflows: `pacs-ai-*.yml` to pnpm and Node 24; note in `STATUS.md` that self-hosted runners need Node 24.
-- Add our package directories to `excluded` in `react-compiler.scope.cjs` (allowed drift file) so the compiler does not touch our code yet.
+- `playwright.config.ts`: keep our base-URL override as a ledger patch or move it fully into `tests/pacs-ai/playwright.pacs-ai.config.ts` (preferred).
 - Exit: `pnpm install --frozen-lockfile` and `pnpm run build` succeed in the Node 24 container; image builds.
 
 **P3.3 — API migration of our packages** · after P3.2 · split by package, in parallel: core, shell, inference, chat+ui
-Each subagent reads the three migration guides and fixes its package:
-- React 19: `npx types-react-codemod preset-19`; `@testing-library/react` 16; JSX runtime; `ref` handling.
-- `ohifCompat`: `useSafeCustomization` → `useCustomization`; viewport element hooks; display set access; `formatDICOMDate` signature; DICOMweb client changes.
-- Customization config in `pacs-ai.js` to the phased form.
-- Mode: extend `@ohif/mode-basic` (`modeInstance`, `initToolGroups` options object, `modeCustomizations`); toolbar section renames.
-- Layout template: rebase on the 3.14 `ViewerLayout`; adopt `ohif.headerRightSide` if it removes custom code.
-- Work list page: `DataSourceWrapper` data shape and `queryLimit` (set per data source in `pacs-ai.js`; choose a value that covers today's list size, record it); no `moment`.
-- Tour: `shepherd.js` 15 without `react-shepherd`; `TutorialProgressOverlay`.
-- Translations: i18next 19; union the colliding namespaces (`Onboarding`, `StudyList`, `AboutModal`, `StudyBrowser`, `ViewportDownloadForm`, `DatePicker`, `MeasurementTable`, `SidePanel`): our values win where both define a key, except the three where ours is a strict subset.
-- `StaticWadoClient` patch → `bulkDataURI.transform` in config; remove the ledger row if it works.
-- Study browser badges → `studyBrowser.thumbnailDetails` if sufficient; remove wrapper code if so.
-- Exit per package: type check and unit tests of that package pass; no import of removed APIs (`useViewportRef`, `react-shepherd`, `prop-types`, `@ohif/ui`, `getDisplaySetCache` writes).
+Each subagent reads the two migration guides and fixes its package:
+- `ohifCompat`: `formatDICOMDate` signature; patient name and date formatting now done by us; anything the DICOMweb data source changed (`queryLimit`, `generateWadoHeader(options)`, split-out retrieve helpers).
+- Customization config in `pacs-ai.js` to the phased form; start from upstream's locked-down `default.js` and add only what we need (data source from `window._env_.APP_PUBLIC_API_URL`, `autoPlayCine`, our customizations).
+- Mode: extend `@ohif/mode-basic` (`modeInstance`, `basicLayout`, `basicRoute`, `initToolGroups` options object, `modeCustomizations`); toolbar section renames.
+- Layout template: rebase ours on the 3.13.14 `ViewerLayout`; providers that upstream now inserts through `serviceProvidersManager` ahead of `DialogProvider` — recheck ordering.
+- Routes: `routes/index.tsx` now has a `path: '*'` not-found route and selects the work list by `workList.variant`; make sure our `/` route from `routes.customRoutes` wins, else ledger.
+- Work list page: `DataSourceWrapper` data shape and `queryLimit` (set per data source in `pacs-ai.js`; choose a value that covers today's list size, record it); no imports from `routes/WorkList` or `routes/LegacyWorkList`; no `moment`.
+- Tour: `shepherd.js` 15 without `react-shepherd` in our layout, `TutorialProgressOverlay` and the `Onboarding` patch.
+- Translations: i18next 19; union the nine colliding namespaces (`en-US/Onboarding`, `fr/Onboarding`, `fr/StudyList`, `fr/AboutModal`, `fr/StudyBrowser`, `fr/ViewportDownloadForm`, `fr/DatePicker`, `fr/MeasurementTable`, `fr/SidePanel`): our values win where both define a key, except the last three where ours is a strict subset (take upstream).
+- Study browser: upstream refactored `Thumbnail` (new `children` prop and drag wrapper) and `PanelStudyBrowser`; rebase our panel module; drop the `Thumbnail.tsx` ledger patch if `children` carries the badge.
+- Segmentation service rename and DICOM-video viewport removal, if we reference either.
+- Logout: our redirect must be same-origin.
+- Exit per package: type check and unit tests of that package pass; no import of removed APIs (`react-shepherd`, `removeSegmentationRepresentations`, `@ohif/ui`, `routes/WorkList/filtersMeta`).
 
 **P3.4 — Theme** · after P3.2 · parallel with P3.3
-- Build the PACS-AI theme in `pacs-ai-theme` as a token set (start from upstream's dark preset in `platform/ui-next/src/themes/`; map lime `#c8f469` to `primary`/`highlight`, `#151815` to `background`, `#4C504B` and the translucent whites to `muted`/`popover`/`border`; use the 3p12-to-3p13 `colors.md` table).
+- Build the PACS-AI theme in `pacs-ai-theme` as a token set (start from upstream's dark preset in `platform/ui-next/src/themes/`; map lime `#c8f469` to `primary`/`highlight`, `#151815` to `background`, `#4C504B` and the translucent whites to `muted`/`popover`/`border`; use the `3p12-to-3p13/colors.md` table).
 - Register through the theme customization and make it the default in `pacs-ai.js`; keep or hide the appearance dialog per decision D5.
-- Compare `visual.spec.ts` against the phase 0 baseline. For each remaining gap prefer CSS variables or a scoped stylesheet in the theme package over a ledger patch.
+- Compare `visual.spec.ts` against the phase 0 baseline. For each remaining gap (likely `NavBar`, `SidePanel` rounded and translucent chrome, `PanelSection`, the twelve recoloured icons) prefer CSS variables or a scoped stylesheet in the theme package over a ledger patch.
 - Delete `THEME_DEBT.txt`; the drift guard now allows ledger and "ours" only.
 - Exit: visual spec within tolerance or differences listed with screenshots in the PR for the user to accept.
 
 **P3.5 — Rendering and data checks** · after P3.3
-- With Cornerstone3D 5.18: XA and US cine playback and autoplay; frame rate; stack scrolling; hotkeys; `addSegmentation` labelmap import; measurements; DICOM encapsulated PDF report display; thumbnails; overlays drawn by model results (stenosis and lesion drawings); multi-frame XA loading through our proxy with auth.
+- With Cornerstone3D 5.6.8: XA and US cine playback and autoplay; frame rate; stack scrolling; hotkeys (including the new `esc` binding not clashing with ours); `addSegmentation` labelmap import; measurements; DICOM encapsulated PDF report display with authentication; thumbnails (lower `maxNumRequests.thumbnail`); overlays drawn by model results (stenosis and lesion drawings); multi-frame XA loading through our proxy with auth.
 - Run on the three reference studies named by the user through `PACS_AI_E2E_STUDY_UIDS`.
 - Exit: `viewer-behaviour`, `run-model`, `stored-results` specs pass; a short written comparison of load time for one XA study before and after.
 
 **P3.6 — Full gate and report**
 - Gates G1–G7. Update `README.md` numbers (modified upstream files, ledger rows), `STATUS.md`.
-- Opt our packages into the React Compiler one at a time only if all tests stay green; otherwise leave excluded and record it.
-- Open the PR `integration/ohif-3.14` → `main` as a draft with: what changed for users (new upstream features now visible, e.g. appearance dialog, new scrollbar, 404 page), ledger contents, test results, known gaps. **Stop. Do not merge or deploy (R1, R2).**
+- Open the PR `integration/ohif-3.13` → `main` as a draft with: what changed for users (new upstream features now visible, e.g. the scrollbar with slice progress, 404 page, contour tools, ECG waveform display), ledger contents, test results, known gaps. **Stop. Do not merge or deploy (R1, R2).**
 
 ### Phase 4 — make it repeatable
 
@@ -466,7 +476,9 @@ Each subagent reads the three migration guides and fixes its package:
 
 **P4.3 — Runbook** `docs/ohif-upgrade/RUNBOOK.md`: the yearly checklist (read the migration guide; run the script; fix `ohifCompat`; theme check; acceptance suite; staging; production with rollback image), and the rules of section 6.2.
 
-**P4.4 — Upstream contributions** (optional, needs the user's go-ahead before opening PRs on OHIF): tour gating props, series in the viewport action bar, any other ledger row marked upstreamable.
+**P4.4 — Dry run toward 3.14 (report only)**: run `upgrade-ohif.sh` on the newest 3.14 tag on a throwaway branch; do not fix anything. Write `docs/ohif-upgrade/NEXT-3.14.md` with conflict counts, build errors, the React 19 dependency list from P3.2, and an effort estimate. The real 3.14 upgrade waits for its stable release and the user's go-ahead.
+
+**P4.5 — Upstream contributions** (optional, needs the user's go-ahead before opening PRs on OHIF): tour gating props, series in the viewport action bar, any other ledger row marked upstreamable.
 
 ### 9.6 Gates
 
@@ -489,7 +501,7 @@ Record the baseline numbers (type errors, unit test count, bundle size) in `STAT
 ```
 P1.4 → { P0.1, P1.1, P1.2, P1.3 } → P2.1 → P2.2 → P2.3 → { P2.4, P2.5 } → P2.6 → P2.7
      → P3.0 → P3.1 → P3.2 → { P3.3 core | shell | inference | chat+ui , P3.4 } → P3.5 → P3.6
-     → { P4.1, P4.3 } → P4.2
+     → { P4.1, P4.3 } → P4.2 → P4.4
 ```
 
 - At most 4 subagents at once (builds are heavy on disk and memory). Packages that touch the same files never run together; the braces above are the safe sets.
@@ -523,18 +535,17 @@ Report: what you changed (file list by commit), the verification output, anythin
 - An acceptance spec cannot pass because the feature cannot be rebuilt without more than 15 ledger rows.
 - A PACS-AI feature would have to change visibly (layout, wording, workflow) to fit an extension point.
 - Credentials or a test environment are missing (phase 0).
-- A third-party dependency has no React 19 path and replacing it changes a screen.
-- Upstream publishes `v3.14.0` during phase 3 (ask whether to re-pin now or after P3.6; default: finish, then run P4.1 on the release).
+- Upstream publishes `v3.14.0` during the work (default: finish on 3.13.x; tell the user; 3.14 follows as its own upgrade).
 
 Otherwise decide, record the decision in `STATUS.md`, and continue.
 
 ## 11. Definition of done
 
-1. `integration/ohif-3.14` builds with pnpm 12 and Node 24 and produces a working image from `pacs-ai/docker/Dockerfile.pacs-ai`.
+1. `integration/ohif-3.13` is on OHIF 3.13.14 (or a newer 3.13 patch), builds with pnpm 12 and Node 24 and produces a working image from `pacs-ai/docker/Dockerfile.pacs-ai`.
 2. Every acceptance spec passes on that image; unit tests pass; type errors not above baseline.
 3. `check-upstream-drift.sh` passes in enforce mode with at most 15 ledger rows, each with a patch file and a reason.
 4. No file outside "ours" imports from "ours"; no "ours" file imports `@ohif/ui` or `@ohif/app/src`.
-5. `upgrade-ohif.sh` exists and has been run once successfully (against a newer beta or as a no-op on the pin).
+5. `upgrade-ohif.sh` exists and has been run once (the P4.4 dry run toward 3.14), with its report in `NEXT-3.14.md`.
 6. `RUNBOOK.md`, updated `README.md` and `STATUS.md` are in the branch.
 7. A draft PR to `main` describes user-visible changes, the ledger, test evidence and open risks. Nothing is merged to `main` or deployed.
 
@@ -542,27 +553,26 @@ Otherwise decide, record the decision in `STATUS.md`, and continue.
 
 | # | Decision | Default the orchestrator uses | Status |
 |---|---|---|---|
-| D1 | Target version | OHIF 3.14, pinned to the newest 3.14 tag at P3.0 | Decided by the user |
+| D1 | Target version | OHIF 3.13.14 (newest stable 3.13 patch at P3.0). 3.14 later, as the first yearly run. | Decided by the user |
 | D2 | Modularize before or during the upgrade | Before (phases 1–2 on 3.11.1) | Plan default |
 | D3 | Stock features the fork dropped (`showWarningMessageForCrossOrigin`, `groupEnabledModesFirst`, `experimentalStudyBrowserSort`, `InvestigationalUseDialog`) | Restoring upstream files brings the three flags back as upstream code; leave them off in `pacs-ai.js`. Keep the investigational-use dialog hidden as today (our layout template does not render it) and flag it to the user as a possible regulatory question. | Ask once, proceed on default |
 | D4 | Work list | Keep ours as a custom route, free of `LegacyWorkList` and `@ohif/ui`. Moving to the ui-next study list is a later project. | Plan default |
 | D5 | Upstream appearance (theme) dialog | Hidden; PACS-AI theme fixed | Plan default |
 | D6 | New upstream viewport backend (`useNextViewports`) | Off (upstream default) | Plan default |
-| D7 | React Compiler on our packages | Excluded at first; opt in per package only if green | Plan default |
-| D8 | Production on a beta | No. Production moves when the user says so. | Rule R2 |
+| D7 | Orchestrator | Claude Fable 5.2; subagents on the same model unless the user sets another | Decided by the user |
 
 ## 13. Risks
 
 | Risk | Mitigation |
 |---|---|
-| 3.14 is a moving beta; APIs may change before release | Pin a tag; `ohifCompat` adapter; P4.1 re-merge is cheap by design |
 | Cornerstone3D 4 → 5 changes rendering or the segmentation import | P3.5 on reference studies; `addSegmentation` isolated in `pacs-ai-inference` |
-| `routes.customRoutes` lacks the wrapping our pages need | Verified first in P2.3; fallback is one ledger patch |
+| `routes.customRoutes` lacks the wrapping our pages need, or cannot override `/` | Verified first in P2.3 and again in P3.3; fallback is one ledger patch |
 | Theme tokens cannot reproduce the look | Scoped CSS in the theme package; user accepts listed differences |
 | pnpm strictness exposes many undeclared dependencies | P3.2 does this before any API work |
-| A dependency has no React 19 version | Listed in P3.2; replace or ask the user |
-| Compiler freezes render-time reads of mutable state | Packages excluded at first (D7); `useSafeCustomization` |
-| Acceptance suite needs a backend and credentials | Ask the user at phase 0; unit tests and build gates cover P1 meanwhile |
+| Our build plugin does not port to rspack | Isolated in `pacs-ai/build`; fallback is a post-build script that writes `version.json` |
+| Production build needs more memory than the host allows | Check before building; lower the heap; build on another machine if needed (ask the user) |
+| 3.14 lands soon and changes React and many ui-next files again | Section 3.5 rules; P4.4 dry run gives the cost early |
+| Acceptance suite needs a backend and credentials | Ask the user at phase 0; unit tests and build gates cover phase 1 meanwhile |
 | Disk fills during builds (it happened on 2026-11-14) | R8 |
 | Hidden behaviour change during a "move" | Pure-move commits (R7), independent review on the risky packages |
 
@@ -571,8 +581,10 @@ Otherwise decide, record the decision in `STATUS.md`, and continue.
 - Nothing has been built or run on 3.13/3.14.
 - `routes.customRoutes` wrapping (private route, data source).
 - `serviceProvidersManager` provider ordering relative to the router in 3.11.1.
-- Whether `studyBrowser.thumbnailDetails` or `Thumbnail` `children` can carry our badges.
-- Whether `bulkDataURI.transform` replaces the `StaticWadoClient` patch.
-- React 19 compatibility of `react-query` v3, `react-dates`, `react-d3-speedometer`, `react-markdown`, `firebase`.
+- Whether the `children` prop of the 3.13 `Thumbnail` can carry our badges.
+- Whether our build-version plugin works under rspack's compiler hooks.
+- Whether `moment` and the 14 cross-package imports resolve under pnpm.
+- Cornerstone3D 4 → 5 API breaks beyond OHIF's own migration guides (read the Cornerstone3D migration docs in P3.5).
+- React 19 compatibility of `react-query` v3, `react-dates`, `react-d3-speedometer`, `react-markdown`, `firebase` (matters at the 3.14 step only).
 - `platform/app/public/oidc-client.min.js` differs from upstream beyond whitespace and has not been read; diff it in P1.1 and restore unless there is a reason.
 - The count of formatting-only files (59) and colour-swap files (99) are per-file judgments by an analysis agent; recompute in P1.1 and P1.2.
