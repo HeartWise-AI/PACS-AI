@@ -20,3 +20,8 @@ export function findProcessingNotificationStudyPage(
 
   return Math.floor(studyIndex / itemsPerPage) + 1;
 }
+
+/** Viewer deep link for the study a processing notification is about. */
+export function buildProcessingNotificationViewerPath(studyInstanceUID: string): string {
+  return `/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUID)}`;
+}
