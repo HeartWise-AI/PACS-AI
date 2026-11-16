@@ -11,6 +11,7 @@ import { CallbackCustomization } from 'platform/core/src/types';
 import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider'; // NOTE: This is a PACS changes
 import { SelectedViewsLegend } from '@ohif/app/src/components/inference/viewerResults/SelectedViewsLegend'; // NOTE: This is a PACS changes
 import { buildSelectedViewBadges } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel'; // NOTE: This is a PACS changes
+import { ViewerStudyRefresh } from '@ohif/app/src/components/inference/studyRefresh/ViewerStudyRefresh'; // NOTE: This is a PACS changes
 
 const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
 
@@ -452,6 +453,13 @@ function PanelStudyBrowser({
           updateViewPresetValue={updateViewPresetValue}
           actionIcons={actionIcons}
           updateActionIconValue={updateActionIconValue}
+          // NOTE: This is a PACS changes
+          extraActions={
+            <ViewerStudyRefresh
+              studyInstanceUID={StudyInstanceUIDs[0]}
+              dataSource={dataSource}
+            />
+          }
         />
         <Separator
           orientation="horizontal"

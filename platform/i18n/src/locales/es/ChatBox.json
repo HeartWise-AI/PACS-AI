@@ -29,5 +29,16 @@
   "StepWebRead": "Leyendo una fuente",
   "StepReadReference": "Leyendo la documentación del modelo",
   "StepPlan": "Preparando la respuesta",
-  "StepTool": "Usando una herramienta"
+  "StepTool": "Usando una herramienta",
+  "CitationSource": "Fuente {{index}}: {{name}}",
+  "CitationSourcePlain": "Fuente {{index}}",
+  "CitationModelResult": "Resultado de modelo de IA",
+  "CitationWebSource": "Fuente publicada",
+  "CitationCompletedAt": "Completado {{date}}",
+  "CitationOpenResult": "Abrir resultado",
+  "CitationRawResult": "Resultado sin procesar",
+  "CitationResultUnavailable": "Este resultado no está disponible en el visor",
+  "CitationRawLoading": "Cargando resultado…",
+  "CitationRawError": "No se pudo cargar el resultado sin procesar.",
+  "CitationClose": "Cerrar"
 }

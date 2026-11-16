@@ -2,6 +2,7 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import english from '../../../../../i18n/src/locales/en-US/AIModelButton.json';
 import type { StudyProcessingSummary } from '../studyProcessing/types';
+import { isStudyGrowing } from '../studyRefresh/studyGrowingStore';
 import { RUNNING_JOBS_COLLAPSED_STORAGE_KEY } from './useRunningJobsCardState';
 import { pendingRun, processingRun, STUDY_UID, viewerResult } from './testSupport';
 import {
@@ -233,5 +234,30 @@ describe('ViewerRunningJobsIndicator', () => {
       ],
     });
     expect(byTestId('running-jobs-row')).toHaveLength(2);
+  });
+
+  it('tells the study refresh button while the study is still growing', async () => {
+    const repository = processingRepository([activeSummary()]);
+    repository.loadProcessingRunDetail.mockResolvedValue(
+      processingRun({ phase: 'QUEUED', waitingReason: 'study_growing' })
+    );
+    expect(isStudyGrowing(STUDY_UID)).toBe(false);
+
+    await render({ processingRepository: repository });
+    expect(isStudyGrowing(STUDY_UID)).toBe(true);
+
+    // The study is stable: the run starts computing.
+    repository.loadProcessingRunDetail.mockResolvedValue(processingRun({ phase: 'PROCESSING' }));
+    await advance(5_000);
+    expect(isStudyGrowing(STUDY_UID)).toBe(false);
+
+    repository.loadProcessingRunDetail.mockResolvedValue(
+      processingRun({ phase: 'QUEUED', waitingReason: 'study_growing' })
+    );
+    await advance(5_000);
+    expect(isStudyGrowing(STUDY_UID)).toBe(true);
+    act(() => renderer?.unmount());
+    renderer = null;
+    expect(isStudyGrowing(STUDY_UID)).toBe(false);
   });
 });

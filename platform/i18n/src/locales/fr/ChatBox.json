@@ -29,5 +29,16 @@
   "StepWebRead": "Lecture d'une source",
   "StepReadReference": "Lecture de la documentation du modèle",
   "StepPlan": "Préparation de la réponse",
-  "StepTool": "Utilisation d'un outil"
+  "StepTool": "Utilisation d'un outil",
+  "CitationSource": "Source {{index}} : {{name}}",
+  "CitationSourcePlain": "Source {{index}}",
+  "CitationModelResult": "Résultat de modèle d'IA",
+  "CitationWebSource": "Source publiée",
+  "CitationCompletedAt": "Terminé le {{date}}",
+  "CitationOpenResult": "Ouvrir le résultat",
+  "CitationRawResult": "Résultat brut",
+  "CitationResultUnavailable": "Ce résultat n'est pas disponible dans la visionneuse",
+  "CitationRawLoading": "Chargement du résultat…",
+  "CitationRawError": "Le résultat brut n'a pas pu être chargé.",
+  "CitationClose": "Fermer"
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
-import type { ChatActivity, ModalityData } from '../types';
+import type { ChatActivity, ChatCitation, ModalityData } from '../types';
+import { toCitations } from '../utils/citations';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';
 import type { OpenStudyContext } from '../utils/getOpenStudyContext';
 
@@ -18,6 +19,8 @@ interface SendMessageResponse {
   error?: string;
   tool_results?: any[];
   activity?: ChatActivity;
+  // What the "[n]" markers of the answer refer to; absent when it has none.
+  citations?: ChatCitation[];
 }
 
 // Live progress is polled about once a second while a message is in flight.
@@ -286,6 +289,7 @@ export function useChatBox(
             error: responseData.error,
             tool_results: responseData.message?.tool_results || [],
             activity: toActivity(responseData.activity),
+            citations: toCitations(responseData.citations),
           };
         } else {
           throw new Error(response.message || 'Failed to send message');

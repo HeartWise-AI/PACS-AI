@@ -3,7 +3,19 @@ export { default } from './ChatBox';
 export { default as ChatBox } from './ChatBox';
 
 // Types
-export type { Message, SeriesInfo, ChatBoxProps, InitialSeriesSelection } from './types';
+export type {
+  Message,
+  SeriesInfo,
+  ChatBoxProps,
+  InitialSeriesSelection,
+  ChatCitation,
+  ChatModelResultCitation,
+  ChatWebSourceCitation,
+} from './types';
+
+// What the host application can do with a cited model result
+export { ChatCitationHostContext } from './citations/ChatCitationHost';
+export type { ChatCitationHost, ChatCitationResultActions } from './citations/ChatCitationHost';
 
 // Hooks (for advanced usage)
 export { useChatBox } from './hooks/useChatBox';

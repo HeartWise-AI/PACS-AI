@@ -37,6 +37,15 @@ import type {
   ViewerModelRunStatus,
   ViewerResultModelIdentity,
 } from './types';
+import {
+  ChatCitationHostContext,
+  type ChatCitationHost,
+} from '@ohif/ui/src/components/ChatBox/citations/ChatCitationHost';
+import {
+  createModelExecutionResultClient,
+  type ModelExecutionResultClient,
+} from '../studyProcessing/executionResultClient';
+import { resolveCitationResultActions } from './chatCitations';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
@@ -639,6 +648,35 @@ export function ViewerModelResultsProvider({
     );
   }, []);
 
+  // The chat's citation chips ("[1]") open the cited result through this.
+  const executionResultClientRef = useRef<ModelExecutionResultClient | null>(null);
+  const citationHost = useMemo<ChatCitationHost>(() => {
+    const results = [...latestResults, ...readyResults];
+    return {
+      resolveModelResult: citation =>
+        resolveCitationResultActions(citation, {
+          canViewResults,
+          results,
+          resultsLoading: latestResultsStatus === 'idle' || latestResultsStatus === 'loading',
+          openResult,
+          loadExecutionResult: async request => {
+            executionResultClientRef.current ??= createModelExecutionResultClient();
+            const loaded = await executionResultClientRef.current.loadExecutionResult(request);
+            return loaded.result;
+          },
+        }),
+      // The cited result may be newer than the results loaded so far.
+      onModelResultShown: () => void refreshLatestResults(),
+    };
+  }, [
+    canViewResults,
+    latestResults,
+    readyResults,
+    latestResultsStatus,
+    openResult,
+    refreshLatestResults,
+  ]);
+
   const value = useMemo<ViewerModelResultsContextValue>(
     () => ({
       canViewResults,
@@ -678,7 +716,9 @@ export function ViewerModelResultsProvider({
 
   return (
     <ViewerModelResultsContext.Provider value={value}>
-      {children}
+      <ChatCitationHostContext.Provider value={citationHost}>
+        {children}
+      </ChatCitationHostContext.Provider>
       {openedResult && !openedResult.minimized && (
         <ViewerModelResultDrawer
           result={openedResult.result}

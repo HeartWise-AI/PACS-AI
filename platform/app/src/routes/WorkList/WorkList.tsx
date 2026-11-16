@@ -10,6 +10,8 @@ import { Button } from '@ohif/ui';
 import { Input } from '@ohif/ui-next';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';
+import { summarizeRetrieveJobs } from '../../components/inference/studyRefresh/retrieveJobs';
+import { rememberStudySourceModality } from '../../components/inference/studyRefresh/sourceModality';
 import Modal from '../../components/Modal';
 import { JobState } from '../../api/orthancDTO';
 import { Error } from '../../api/dto';
@@ -643,6 +645,9 @@ function WorkList() {
 
     const searchParams = createSearchParams(viewStudyParams);
 
+    // the viewer's "Refresh study from PACS" retrieves from the same modality
+    rememberStudySourceModality(studyInstanceUID, selectedDICOMModality?.value);
+
     try {
       // retrieve modality study
       const modalityStudyResponse = await orthancRepository.RetrieveModalityStudy({
@@ -659,13 +664,9 @@ function WorkList() {
           jobIds: jobIds,
         });
 
-        // calculate overall progress based on completed jobs
-        // total number of jobs in the response */
-        const totalJobs = jobInfoResponse.data.length;
-        // number of jobs that have completed (progress is 100%) */
-        const completedJobs = jobInfoResponse.data.filter(job => job.progress === 100).length;
-        // overall progress percentage, rounded down to nearest integer */
-        const overallProgress = Math.floor((completedJobs / totalJobs) * 100);
+        // overall progress: share of the jobs that have completed (progress
+        // is 100%), rounded down to nearest integer
+        const { overallProgress } = summarizeRetrieveJobs(jobInfoResponse.data);
 
         setSyncingStudyProgress(overallProgress);
 

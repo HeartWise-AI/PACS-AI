@@ -8,11 +8,13 @@ function PanelStudyBrowserHeader({
   updateViewPresetValue,
   actionIcons,
   updateActionIconValue,
+  extraActions, // NOTE: This is a PACS changes
 }: {
   viewPresets: viewPreset[];
   updateViewPresetValue: (viewPreset: viewPreset) => void;
   actionIcons: actionIcon[];
   updateActionIconValue: (actionIcon: actionIcon) => void;
+  extraActions?: React.ReactNode; // NOTE: This is a PACS changes
 }) {
   return (
     <>
@@ -31,6 +33,8 @@ function PanelStudyBrowserHeader({
                 )}
               </div>
             </div>
+            {/* NOTE: This is a PACS changes */}
+            {extraActions}
             <div className="ml-auto flex h-full items-center justify-center">
               <ToggleGroup
                 type="single"

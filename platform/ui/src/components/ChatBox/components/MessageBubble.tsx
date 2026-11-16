@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { ChatActivity, Message } from '../types';
+import type { ChatActivity, ChatCitation, Message } from '../types';
+import { CITATION_INDEX_ATTRIBUTE, remarkCitationMarkers } from '../utils/citations';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ActivitySummary } from './ActivitySummary';
+import { CitationChip } from './CitationChip';
 
 interface MessageBubbleProps {
   message: Message;
@@ -11,6 +13,48 @@ interface MessageBubbleProps {
   progress?: ChatActivity | null;
   feedback?: 'up' | 'down' | null;
   onFeedback?: (messageId: string, type: 'up' | 'down') => void;
+}
+
+const NO_CITATIONS: ChatCitation[] = [];
+
+// Built once per set of citations: react-markdown mounts these as component
+// types, so a new function on every render would remount the chips and close
+// an open citation popover.
+function useMarkdownRendering(citations: ChatCitation[]) {
+  return useMemo(() => {
+    const byIndex = new Map(citations.map(citation => [citation.index, citation]));
+    return {
+      remarkPlugins: [
+        remarkGfm,
+        [remarkCitationMarkers, { indexes: Array.from(byIndex.keys()) }],
+      ] as React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'],
+      components: {
+        a: ({ node: _node, ...props }) => (
+          <a
+            {...props}
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        ),
+        img: ({ node: _node, alt }) => <span>{alt ? `[Image: ${alt}]` : '[Image omitted]'}</span>,
+        table: ({ node: _node, ...props }) => (
+          <div
+            className="markdown-table-wrapper"
+            role="region"
+            aria-label="Scrollable table"
+            tabIndex={0}
+          >
+            <table {...props} />
+          </div>
+        ),
+        // A "[n]" marker with a citation (see remarkCitationMarkers).
+        sup: ({ node: _node, children, ...props }) => {
+          const citation = byIndex.get(Number(props[CITATION_INDEX_ATTRIBUTE]));
+          return citation ? <CitationChip citation={citation} /> : <sup {...props}>{children}</sup>;
+        },
+      } as React.ComponentProps<typeof ReactMarkdown>['components'],
+    };
+  }, [citations]);
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -21,6 +65,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const isUser = message.sender === 'user';
   const isAssistant = message.sender === 'assistant';
+  const markdown = useMarkdownRendering((isAssistant && message.citations) || NO_CITATIONS);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -40,29 +85,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           ) : (
             <ReactMarkdown
               className="markdown-content"
-              components={{
-                a: ({ node: _node, ...props }) => (
-                  <a
-                    {...props}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                ),
-                img: ({ node: _node, alt }) => (
-                  <span>{alt ? `[Image: ${alt}]` : '[Image omitted]'}</span>
-                ),
-                table: ({ node: _node, ...props }) => (
-                  <div
-                    className="markdown-table-wrapper"
-                    role="region"
-                    aria-label="Scrollable table"
-                    tabIndex={0}
-                  >
-                    <table {...props} />
-                  </div>
-                ),
-              }}
-              remarkPlugins={[remarkGfm]}
+              components={markdown.components}
+              remarkPlugins={markdown.remarkPlugins}
             >
               {message.text?.trim() || ''}
             </ReactMarkdown>
