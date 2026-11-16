@@ -57,6 +57,9 @@ export interface ViewerModelRunStatus {
   phase: string | null;
   outcome: string | null;
   executions: Array<{ executionId: string | null; status: string | null }>;
+  // True while the run can still be cancelled; absent when the backend does
+  // not report it.
+  cancellable?: boolean;
 }
 
 export type PendingRunFailure = 'failed' | 'skipped';
@@ -106,7 +109,8 @@ export interface PendingViewerModelRun {
 // series pop-up, which then reported the end itself.
 export interface EndedViewerModelRun {
   run: PendingViewerModelRun;
-  outcome: 'completed' | PendingRunFailure;
+  // 'cancelled': the user cancelled the run from the running-jobs indicator.
+  outcome: 'completed' | PendingRunFailure | 'cancelled';
   result: ViewerModelResult | null;
   endedAt: number;
   foreground: boolean;

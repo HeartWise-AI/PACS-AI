@@ -4,7 +4,13 @@ import type {
   ViewerModelRunStatus,
 } from '../viewerResults/types';
 import type { ProcessingRun } from '../studyProcessing/types';
-import type { RunningJobRow, RunningJobState, RunningJobsSummary } from './types';
+import type {
+  RunningJobRow,
+  RunningJobState,
+  RunningJobWaiting,
+  RunningJobsCounts,
+  RunningJobsSummary,
+} from './types';
 
 // How long a finished row stays visible.
 export const RUNNING_JOBS_LINGER_MS = 6_000;
@@ -23,6 +29,29 @@ export function formatElapsed(elapsedMs: number): string {
   const seconds = totalSeconds % 60;
   const pad = (value: number) => String(value).padStart(2, '0');
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
+}
+
+/** Local wall-clock time, HH:MM (24 h). Invalid times read --:--. */
+export function formatClockTime(timeMs: number): string {
+  const date = new Date(timeMs);
+  if (Number.isNaN(date.getTime())) {
+    return '--:--';
+  }
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** Active rows split into those computing (or about to) and those only waiting. */
+export function countRunningJobs(
+  rows: Pick<RunningJobRow, 'active' | 'waiting'>[]
+): RunningJobsCounts {
+  const active = rows.filter(row => row.active);
+  const waiting = active.filter(row => !!row.waiting);
+  return {
+    running: active.length - waiting.length,
+    waiting: waiting.length,
+    stale: waiting.filter(row => row.waiting === 'stale').length,
+  };
 }
 
 export function rowElapsedMs(row: Pick<RunningJobRow, 'startedAt' | 'endedAt'>, now: number) {
@@ -83,7 +112,8 @@ type ProcessingRunCounts = Pick<
   | 'failedModels'
   | 'skippedModels'
   | 'cancelledModels'
->;
+> &
+  Pick<ProcessingRun, 'cancelledAt' | 'waitingReason'>;
 
 function count(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
@@ -101,6 +131,10 @@ export function processingRunEndedModels(run: ProcessingRunCounts): number {
 
 export function processingRunState(run: ProcessingRunCounts): RunningJobState {
   if (run.phase === 'TERMINAL') {
+    if (run.cancelledAt) {
+      // Cancelled by a user, whatever the models that had already finished.
+      return 'cancelled';
+    }
     switch (run.outcome) {
       case 'FAILED':
       case 'CANCELLED':
@@ -121,6 +155,24 @@ export function processingRunState(run: ProcessingRunCounts): RunningJobState {
   return expected > 0 && waiting === 0 && processingRunEndedModels(run) >= expected
     ? 'finishing'
     : 'running';
+}
+
+/**
+ * Why an active run is not computing, when the backend says so. A run with a
+ * model running is never waiting, whatever is reported.
+ */
+export function processingRunWaiting(run: ProcessingRunCounts): RunningJobWaiting | undefined {
+  if (run.phase === 'TERMINAL' || count(run.runningModels) > 0) {
+    return undefined;
+  }
+  switch (run.waitingReason) {
+    case 'study_growing':
+      return 'exam';
+    case 'stale':
+      return 'stale';
+    default:
+      return undefined;
+  }
 }
 
 /** "N of M" for a run of several models; null when the backend gives no total. */
@@ -153,7 +205,7 @@ export interface SelectRunningJobsInput {
   lingerMs?: number;
 }
 
-function pendingRunRowId(run: PendingViewerModelRun): string {
+export function pendingRunRowId(run: PendingViewerModelRun): string {
   return `model:${run.runId ?? 'active'}:${run.key}:${run.requestedAt}`;
 }
 
@@ -203,7 +255,9 @@ export function selectRunningJobs({
             ? 'done'
             : ended.outcome === 'skipped'
               ? 'skipped'
-              : 'failed',
+              : ended.outcome === 'cancelled'
+                ? 'cancelled'
+                : 'failed',
         active: false,
         startedAt: ended.run.requestedAt,
         endedAt: ended.endedAt,
@@ -217,18 +271,24 @@ export function selectRunningJobs({
     // The foreground pop-up is already showing this run.
     .filter(run => run !== foregroundRun)
     .forEach(run => {
+      const status = pendingRunStatuses?.get(run);
+      const state = pendingRunState(run, status);
       rows.push({
         id: pendingRunRowId(run),
         kind: 'model',
         modelName: run.modelName,
         trigger: 'VIEWER_REQUEST',
-        state: pendingRunState(run, pendingRunStatuses?.get(run)),
+        state,
         active: true,
         startedAt: run.requestedAt,
         endedAt: null,
         progress: null,
         runningModelNames: [],
         result: null,
+        // Never offered once the model is computing, whatever is reported.
+        ...(run.runId && state === 'queued' && status?.cancellable === true
+          ? { cancelRunId: run.runId }
+          : {}),
       });
     });
 
@@ -258,6 +318,7 @@ export function selectRunningJobs({
         now;
       const executions = processingRun.modelExecutions ?? [];
       const single = processingRun.expectedModels === 1 && executions.length === 1;
+      const waiting = active ? processingRunWaiting(processingRun) : undefined;
       rows.push({
         id: `processing:${processingRun.id}`,
         kind: 'processing',
@@ -274,6 +335,8 @@ export function selectRunningJobs({
               .filter(execution => execution.status === 'running')
               .map(execution => execution.modelName),
         result: null,
+        ...(waiting ? { waiting } : {}),
+        ...(active && processingRun.cancellable === true ? { cancelRunId: processingRun.id } : {}),
       });
     }
   }

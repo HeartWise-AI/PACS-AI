@@ -67,6 +67,10 @@ export interface StudyProcessingRESTRepository {
   ): Promise<StudyProcessingRunHistoryResult>;
   loadProcessingRunDetail(runId: string): Promise<ProcessingRun>;
   reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun>;
+  // Cancels the models of the run that have not started computing and
+  // returns the run as it then is. Rejects with status 409 when every
+  // remaining model is already computing.
+  cancelProcessingRun(runId: string): Promise<ProcessingRun>;
 }
 
 export class StudyProcessingRESTError extends Error {
@@ -189,6 +193,27 @@ function safeReprocessRESTError(error: unknown): StudyReprocessRESTError {
   );
 }
 
+function safeCancelRESTError(error: unknown): StudyProcessingRESTError {
+  if (error instanceof StudyProcessingRESTError) {
+    return error;
+  }
+
+  const status = responseStatus(error);
+  const messageByStatus: Record<number, string> = {
+    401: 'Authentication is required to cancel this analysis.',
+    403: 'You do not have permission to cancel this analysis.',
+    404: 'The analysis was not found.',
+    409: 'The analysis is already computing and can no longer be cancelled.',
+    500: 'The processing service could not cancel the analysis.',
+    503: 'The processing service is temporarily unavailable.',
+  };
+
+  return new StudyProcessingRESTError(
+    (status && messageByStatus[status]) || 'Unable to cancel this analysis.',
+    status
+  );
+}
+
 async function getResponseData<T>(
   client: StudyProcessingHTTPClient,
   path: string,
@@ -266,6 +291,21 @@ export function createStudyProcessingRESTRepository(
         `/v1/inference/processing/runs/${encodedRunId}`
       );
       return mapProcessingRun(run);
+    },
+
+    async cancelProcessingRun(runId: string): Promise<ProcessingRun> {
+      const encodedRunId = requiredPathIdentifier(runId, 'Processing run ID');
+      try {
+        const response = await client.post<WorklistAPIResponse<ProcessingRunDetailDTO>>(
+          `/v1/inference/processing/runs/${encodedRunId}/cancel`
+        );
+        if (!response.data.success) {
+          throw new StudyProcessingRESTError('Unable to cancel this analysis.', null);
+        }
+        return mapProcessingRun(response.data.data);
+      } catch (error: unknown) {
+        throw safeCancelRESTError(error);
+      }
     },
 
     async reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun> {

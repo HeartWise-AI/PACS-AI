@@ -237,4 +237,129 @@ describe('study processing REST repository', () => {
 
     await expect(repository.reprocessStudy('1.2.3')).rejects.toMatchObject({ status, message });
   });
+
+  describe('run cancellation', () => {
+    test('posts to the run cancel endpoint and maps the returned run', async () => {
+      const { client, post } = createClient();
+      post.mockResolvedValue({
+        data: {
+          success: true,
+          message: 'ok',
+          data: {
+            ...processingRun('run 7'),
+            outcome: 'PARTIAL_SUCCESS',
+            cancelledModels: 3,
+            cancellable: false,
+            cancelledAt: '2026-11-16T10:00:00Z',
+          },
+        },
+      });
+      const repository = createStudyProcessingRESTRepository(client);
+
+      const run = await repository.cancelProcessingRun(' run 7 ');
+
+      expect(post).toHaveBeenCalledTimes(1);
+      // No body: the tenant and the user come from the session.
+      expect(post.mock.calls[0]).toEqual(['/v1/inference/processing/runs/run%207/cancel']);
+      expect(run).toMatchObject({
+        id: 'run 7',
+        phase: 'TERMINAL',
+        outcome: 'PARTIAL_SUCCESS',
+        cancelledModels: 3,
+        cancellable: false,
+        cancelledAt: '2026-11-16T10:00:00Z',
+      });
+    });
+
+    test('rejects an empty run identifier without a request', async () => {
+      const { client, post } = createClient();
+      const repository = createStudyProcessingRESTRepository(client);
+
+      await expect(repository.cancelProcessingRun('  ')).rejects.toMatchObject({ status: 400 });
+      expect(post).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      [404, 'The analysis was not found.'],
+      [409, 'The analysis is already computing and can no longer be cancelled.'],
+      [503, 'The processing service is temporarily unavailable.'],
+      [418, 'Unable to cancel this analysis.'],
+    ])('reports status %s with a safe message', async (status, message) => {
+      const { client, post } = createClient();
+      post.mockRejectedValue({
+        response: { status, data: { message: 'tenant-b run-9 internal detail' } },
+      });
+      const repository = createStudyProcessingRESTRepository(client);
+
+      const error = await repository.cancelProcessingRun('run-9').catch(caught => caught);
+
+      expect(error).toBeInstanceOf(StudyProcessingRESTError);
+      expect(error).toMatchObject({ status, message });
+      expect(error.message).not.toContain('tenant-b');
+    });
+
+    test('treats an unsuccessful envelope as a failure', async () => {
+      const { client, post } = createClient();
+      post.mockResolvedValue({ data: { success: false, message: 'no', data: null } });
+      const repository = createStudyProcessingRESTRepository(client);
+
+      await expect(repository.cancelProcessingRun('run-9')).rejects.toMatchObject({
+        status: null,
+        message: 'Unable to cancel this analysis.',
+      });
+    });
+  });
+
+  describe('run detail waiting fields', () => {
+    async function loadDetail(extra: Record<string, unknown>) {
+      const { client, get } = createClient();
+      get.mockResolvedValue({
+        data: { success: true, message: 'ok', data: { ...processingRun('run-1'), ...extra } },
+      });
+      return createStudyProcessingRESTRepository(client).loadProcessingRunDetail('run-1');
+    }
+
+    test('maps why a run waits and whether it can be cancelled', async () => {
+      const run = await loadDetail({
+        phase: 'QUEUED',
+        outcome: null,
+        cancellable: true,
+        waitingReason: 'study_growing',
+        stableAfter: '2026-11-16T10:20:00Z',
+      });
+
+      expect(run).toMatchObject({
+        cancellable: true,
+        waitingReason: 'study_growing',
+        stableAfter: '2026-11-16T10:20:00Z',
+      });
+      expect(run).not.toHaveProperty('cancelledAt');
+
+      expect(await loadDetail({ cancellable: false, waitingReason: 'stale' })).toMatchObject({
+        cancellable: false,
+        waitingReason: 'stale',
+      });
+    });
+
+    test('a backend that does not send the fields maps to the run as before', async () => {
+      const run = await loadDetail({});
+
+      ['cancellable', 'cancelledAt', 'waitingReason', 'stableAfter'].forEach(field => {
+        expect(run).not.toHaveProperty(field);
+      });
+    });
+
+    test('ignores values it does not know', async () => {
+      const run = await loadDetail({
+        cancellable: 'yes',
+        cancelledAt: null,
+        waitingReason: 'waiting_for_godot',
+        stableAfter: '2026-11-16T10:20:00Z',
+      });
+
+      ['cancellable', 'cancelledAt', 'waitingReason', 'stableAfter'].forEach(field => {
+        expect(run).not.toHaveProperty(field);
+      });
+    });
+  });
 });

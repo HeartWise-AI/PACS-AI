@@ -339,6 +339,29 @@ describe('viewer results repository', () => {
     });
   });
 
+  test('reports whether a run can still be cancelled only when the backend says so', async () => {
+    const http = client();
+    const respond = (data: Record<string, unknown>) =>
+      http.get.mockResolvedValue({ data: { success: true, message: 'ok', data } });
+    const queued = { phase: 'QUEUED', outcome: null, executions: [] };
+
+    respond({ ...queued, cancellable: true });
+    expect(await createViewerResultsRepository(http).loadRunStatus('run-2')).toEqual({
+      ...queued,
+      cancellable: true,
+    });
+
+    respond({ ...queued, cancellable: false });
+    expect((await createViewerResultsRepository(http).loadRunStatus('run-2')).cancellable).toBe(
+      false
+    );
+
+    respond({ ...queued, cancellable: 'true' });
+    expect(await createViewerResultsRepository(http).loadRunStatus('run-2')).not.toHaveProperty(
+      'cancellable'
+    );
+  });
+
   test('reports run status request failures with their status', async () => {
     const http = client();
     http.get.mockRejectedValue(httpError(404, 'MISSING_RECORD'));

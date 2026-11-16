@@ -171,6 +171,9 @@ export function ViewerModelResultsProvider({
 
   latestResultsRef.current = latestResults;
   pendingRunsRef.current = pendingRuns;
+  // Runs the user cancelled from the running-jobs indicator: a poll that was
+  // already in flight must not report them as failed.
+  const cancelledRunsRef = useRef(new WeakSet<PendingViewerModelRun>());
 
   const alert = useCallback(
     (message: string, variant: 'error' | 'success' | 'info') => {
@@ -495,6 +498,9 @@ export function ViewerModelResultsProvider({
         ]);
       }
       failed.forEach((failure, run) => {
+        if (cancelledRunsRef.current.has(run)) {
+          return;
+        }
         const foreground = settleForegroundRun(run, { status: 'failed' });
         ended.push({ run, outcome: failure, result: null, endedAt: now, foreground });
         alert(
@@ -614,6 +620,25 @@ export function ViewerModelResultsProvider({
     [alert, appConfig, commandsManager, servicesManager, t]
   );
 
+  // The indicator cancelled a pending run: stop tracking it, without the
+  // "run failed" alert, and let its row end as cancelled.
+  const handleRunCancelled = useCallback((run: PendingViewerModelRun) => {
+    cancelledRunsRef.current.add(run);
+    setPendingRuns(current => current.filter(item => item !== run));
+    setEndedRuns(current =>
+      [
+        ...current,
+        {
+          run,
+          outcome: 'cancelled' as const,
+          result: null,
+          endedAt: Date.now(),
+          foreground: false,
+        },
+      ].slice(-ENDED_RUNS_LIMIT)
+    );
+  }, []);
+
   const value = useMemo<ViewerModelResultsContextValue>(
     () => ({
       canViewResults,
@@ -682,6 +707,7 @@ export function ViewerModelResultsProvider({
         endedRuns={endedRuns}
         foregroundRun={foregroundRunActive ? (foregroundRunRef.current?.run ?? null) : null}
         onOpenResult={openResult}
+        onRunCancelled={handleRunCancelled}
         besideReadyNotice={canViewResults && readyResults.length > 0}
       />
     </ViewerModelResultsContext.Provider>
