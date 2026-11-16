@@ -20,12 +20,26 @@ import {
   consumeSessionExpiredRedirect,
   getSessionExpiredReturnPath,
 } from '../../service/sessionExpirySession';
-import TurnstileWidget from '../../components/auth/TurnstileWidget';
+import TurnstileWidget, { type VerificationStatus } from '../../components/auth/TurnstileWidget';
 import type { LoginAPIError } from '../../api/loginAPIError';
-import { getLoginErrorMessage, requiresLoginChallenge } from './loginError';
+import {
+  formatLoginWait,
+  getLoginErrorMessage,
+  isLoginRateLimited,
+  loginWaitMinutes,
+  requiresLoginChallenge,
+} from './loginError';
 import { createLoginRequest } from './loginRequest';
 
-const turnstileSiteKey = process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
+// Read at render time (webpack substitutes the expression at build time) so a
+// build without a site key and tests with one both see the right value.
+const getTurnstileSiteKey = () => process.env.APP_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '';
+
+// Without a site key, or when the widget cannot load or complete (internal
+// hostnames, workstations that cannot reach Cloudflare), a challenge can never be
+// solved: fall back to waiting out the server's failure window instead.
+const isChallengeUnusable = (siteKey: string, status: VerificationStatus | null) =>
+  !siteKey || status === 'unavailable' || status === 'failed';
 
 type TenantLoadStatus = 'loading' | 'ready' | 'not-found' | 'server-error' | 'unreachable';
 
@@ -59,9 +73,16 @@ const LoginPage = () => {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [loginCooldown, setLoginCooldown] = useState(0);
+  const [turnstileStatus, setTurnstileStatus] = useState<VerificationStatus | null>(null);
+  const [showAttemptLimitHint, setShowAttemptLimitHint] = useState(false);
   const isLoggingInRef = useRef(false);
   const loginCooldownUntilRef = useRef(0);
+  const loginCooldownActiveRef = useRef(false);
   const challengePromptRef = useRef<HTMLDivElement>(null);
+  const cooldownNoticeRef = useRef<HTMLDivElement>(null);
+  const turnstileSiteKey = getTurnstileSiteKey();
+  const challengeFallback =
+    challengeRequired && isChallengeUnusable(turnstileSiteKey, turnstileStatus);
   const location = useLocation();
   const tenantId = new URLSearchParams(location.search).get('t');
   const frontendVersion = useContext(FrontendVersionContext);
@@ -215,10 +236,31 @@ const LoginPage = () => {
   }, [loginCooldown]);
 
   useEffect(() => {
-    if (challengeRequired) {
-      challengePromptRef.current?.focus();
+    if (!challengeRequired) {
+      setTurnstileStatus(null);
     }
   }, [challengeRequired]);
+
+  useEffect(() => {
+    if (challengeFallback) {
+      cooldownNoticeRef.current?.focus();
+    } else if (challengeRequired) {
+      challengePromptRef.current?.focus();
+    }
+  }, [challengeFallback, challengeRequired]);
+
+  // When the challenge cannot be shown, the server-advertised cooldown is the only
+  // gate: once it ends, drop the unusable challenge so the user can sign in again.
+  // With a working widget the existing challenge flow is left as is.
+  useEffect(() => {
+    if (loginCooldown > 0 || !loginCooldownActiveRef.current) {
+      return;
+    }
+    loginCooldownActiveRef.current = false;
+    if (challengeFallback) {
+      setChallengeRequired(false);
+    }
+  }, [challengeFallback, loginCooldown]);
 
   const retryTenantLookup = () => {
     setTenantLoadAttempt(value => value + 1);
@@ -315,13 +357,14 @@ const LoginPage = () => {
       showAlert(t('Unable to determine the workspace. Reload the page and try again.'), 'error');
       return;
     }
-    if (challengeRequired && !turnstileToken) {
+    if (challengeRequired && !challengeFallback && !turnstileToken) {
       showAlert(t('Complete the login verification to continue.'), 'error');
       challengePromptRef.current?.focus();
       return;
     }
 
-    const submittedTurnstileToken = challengeRequired ? turnstileToken || undefined : undefined;
+    const submittedTurnstileToken =
+      challengeRequired && !challengeFallback ? turnstileToken || undefined : undefined;
     isLoggingInRef.current = true;
     setIsLoggingIn(true);
 
@@ -364,18 +407,33 @@ const LoginPage = () => {
       showAlert(response.message, 'success');
     } catch (failure) {
       const error = (failure || {}) as Partial<LoginAPIError>;
-      if (requiresLoginChallenge(error)) {
+      const challenged = requiresLoginChallenge(error);
+      if (challenged) {
         setChallengeRequired(true);
       }
       if (error.retryAfterSeconds && error.retryAfterSeconds > 0) {
         loginCooldownUntilRef.current = Date.now() + error.retryAfterSeconds * 1000;
+        loginCooldownActiveRef.current = true;
         setLoginCooldown(error.retryAfterSeconds);
+      }
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setShowAttemptLimitHint(true);
       }
       if (error.errorCode === Error.FIREBASE_AUTH_EMAIL_NOT_VERIFIED) {
         localStorage.removeItem('sessionToken');
         setVerificationEmail(email.trim().toLowerCase());
       }
-      showAlert(getLoginErrorMessage(error, t), 'error');
+      const verificationUnusable =
+        challenged &&
+        !isLoginRateLimited(error) &&
+        error.errorCode !== Error.UNAUTHORIZED_ACCESS &&
+        isChallengeUnusable(turnstileSiteKey, turnstileStatus);
+      showAlert(
+        verificationUnusable
+          ? t('Too many failed sign-in attempts. Please wait a few minutes before trying again.')
+          : getLoginErrorMessage(error, t),
+        'error'
+      );
     } finally {
       if (submittedTurnstileToken) {
         setTurnstileToken(null);
@@ -507,10 +565,46 @@ const LoginPage = () => {
                     {t('Forgot Password')}?
                   </button>
                 </div>
-                {challengeRequired && (
+                {challengeFallback && (
+                  <div
+                    ref={cooldownNoticeRef}
+                    tabIndex={-1}
+                    role="status"
+                    aria-live="polite"
+                    data-testid="login-cooldown-notice"
+                    className="focus:ring-primary-light mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
+                  >
+                    <p className="text-sm font-medium text-amber-200">
+                      {t('Too many failed sign-in attempts.')}
+                    </p>
+                    <p className="mt-1 text-sm text-white text-opacity-80">
+                      {loginCooldown >= 60
+                        ? t(
+                            'For your security, sign-in is paused. Try again in about {{minutes}} min.',
+                            { minutes: loginWaitMinutes(loginCooldown) }
+                          )
+                        : loginCooldown > 0
+                          ? t(
+                              'For your security, sign-in is paused. Try again in less than a minute.'
+                            )
+                          : t(
+                              'For your security, sign-in is paused for a few minutes after repeated failed attempts. Wait a few minutes, then try again.'
+                            )}
+                    </p>
+                    <button
+                      type="button"
+                      className="focus:ring-primary mt-2 rounded bg-transparent p-0 text-sm text-white underline underline-offset-2 focus:outline-none focus:ring-2"
+                      onClick={handleForgotPasswordClick}
+                    >
+                      {t('Forgot your password? Reset it instead of waiting.')}
+                    </button>
+                  </div>
+                )}
+                {challengeRequired && turnstileSiteKey && (
                   <div
                     ref={challengePromptRef}
                     tabIndex={-1}
+                    hidden={turnstileStatus === 'unavailable'}
                     role="group"
                     aria-labelledby="login-verification-heading"
                     className="focus:ring-primary-light mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
@@ -538,6 +632,7 @@ const LoginPage = () => {
                       }}
                       resetKey={turnstileResetKey}
                       onTokenChange={setTurnstileToken}
+                      onStatusChange={setTurnstileStatus}
                     />
                   </div>
                 )}
@@ -547,15 +642,25 @@ const LoginPage = () => {
                     role="status"
                     aria-live="polite"
                   >
-                    {t('Login is temporarily limited. Try again in {{seconds}} seconds.', {
-                      seconds: loginCooldown,
+                    {t('Login is temporarily limited. Try again in {{duration}}.', {
+                      duration: formatLoginWait(loginCooldown, t),
                     })}
+                  </p>
+                )}
+                {showAttemptLimitHint && !challengeFallback && (
+                  <p
+                    className="mb-4 text-xs text-white text-opacity-50"
+                    data-testid="login-attempt-limit-hint"
+                  >
+                    {t('For security, the number of sign-in attempts is limited.')}
                   </p>
                 )}
                 <Button
                   type="submit"
                   disabled={
-                    isLoggingIn || loginCooldown > 0 || (challengeRequired && !turnstileToken)
+                    isLoggingIn ||
+                    loginCooldown > 0 ||
+                    (challengeRequired && !challengeFallback && !turnstileToken)
                   }
                   className="h-[51px] w-full rounded-lg !px-0"
                 >

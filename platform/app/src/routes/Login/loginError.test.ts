@@ -1,7 +1,13 @@
-import { getLoginErrorMessage, requiresLoginChallenge } from './loginError';
+import {
+  formatLoginWait,
+  getLoginErrorMessage,
+  isLoginRateLimited,
+  loginWaitMinutes,
+  requiresLoginChallenge,
+} from './loginError';
 
 const t = (key: string, values: Record<string, unknown> = {}) =>
-  key.replace('{{seconds}}', String(values.seconds ?? ''));
+  key.replace(/{{(\w+)}}/g, (_, name: string) => String(values[name] ?? ''));
 
 describe('login errors', () => {
   it('enters challenge mode from either the stable code or response data', () => {
@@ -37,7 +43,7 @@ describe('login errors', () => {
       t
     );
 
-    expect(message).toBe('Too many login attempts. Please wait 73 seconds before trying again.');
+    expect(message).toBe('Too many login attempts. Please wait 1 min 13 s before trying again.');
     expect(message).not.toContain('account');
   });
 
@@ -48,5 +54,21 @@ describe('login errors', () => {
     expect(getLoginErrorMessage({}, t)).toBe(
       'Unable to reach the login service. Check your connection and try again.'
     );
+  });
+
+  it('formats long waits in minutes and seconds', () => {
+    expect(formatLoginWait(1, t)).toBe('1 s');
+    expect(formatLoginWait(59, t)).toBe('59 s');
+    expect(formatLoginWait(60, t)).toBe('1 min');
+    expect(formatLoginWait(580, t)).toBe('9 min 40 s');
+    expect(formatLoginWait(600, t)).toBe('10 min');
+    expect(loginWaitMinutes(580)).toBe(10);
+    expect(loginWaitMinutes(20)).toBe(1);
+  });
+
+  it('recognises rate limits by code or status', () => {
+    expect(isLoginRateLimited({ errorCode: 'LOGIN_RATE_LIMITED' })).toBe(true);
+    expect(isLoginRateLimited({ status: 429 })).toBe(true);
+    expect(isLoginRateLimited({ errorCode: 'LOGIN_CHALLENGE_REQUIRED', status: 403 })).toBe(false);
   });
 });

@@ -176,6 +176,28 @@ describe('TurnstileWidget', () => {
     );
   });
 
+  it('reports its status so callers can fall back when verification is unusable', async () => {
+    const onStatusChange = jest.fn();
+
+    await act(async () => {
+      root.render(
+        React.createElement(
+          TurnstileWidget,
+          widgetProps(jest.fn(), { siteKey: '', onStatusChange })
+        )
+      );
+    });
+    expect(onStatusChange).toHaveBeenLastCalledWith('unavailable');
+
+    await act(async () => {
+      root.render(React.createElement(TurnstileWidget, widgetProps(jest.fn(), { onStatusChange })));
+    });
+    act(() => {
+      (renderOptions['error-callback'] as () => boolean)();
+    });
+    expect(onStatusChange).toHaveBeenLastCalledWith('failed');
+  });
+
   it('removes a failed script so a later mount can load a fresh copy', async () => {
     delete window.turnstile;
     const onTokenChange = jest.fn();

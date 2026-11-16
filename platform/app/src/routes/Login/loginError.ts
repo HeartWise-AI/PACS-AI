@@ -10,6 +10,32 @@ const challengeErrorCodes = new Set<string>([
   Error.CLOUDFLARE_API_ERROR,
 ]);
 
+/**
+ * Formats a login wait as "45 s", "10 min" or "9 min 40 s" so long cooldowns are
+ * not shown as hundreds of seconds.
+ */
+export const formatLoginWait = (totalSeconds: number, t: Translate): string => {
+  const seconds = Math.max(Math.ceil(totalSeconds), 0);
+  if (seconds < 60) {
+    return t('{{seconds}} s', { seconds });
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  if (remainder === 0) {
+    return t('{{minutes}} min', { minutes });
+  }
+  return t('{{minutes}} min {{seconds}} s', { minutes, seconds: remainder });
+};
+
+/** Whole minutes, rounded up, for "about N min" wording. */
+export const loginWaitMinutes = (totalSeconds: number): number =>
+  Math.max(Math.ceil(totalSeconds / 60), 1);
+
+export const isLoginRateLimited = (failure: unknown): boolean => {
+  const error = (failure || {}) as Partial<LoginAPIError>;
+  return error.errorCode === Error.LOGIN_RATE_LIMITED || error.status === 429;
+};
+
 export const requiresLoginChallenge = (failure: unknown): boolean => {
   const error = (failure || {}) as Partial<LoginAPIError>;
   return error.challengeRequired === true || challengeErrorCodes.has(error.errorCode || '');
@@ -19,12 +45,9 @@ export const getLoginErrorMessage = (failure: unknown, t: Translate): string => 
   const error = (failure || {}) as Partial<LoginAPIError>;
 
   if (error.errorCode === Error.LOGIN_RATE_LIMITED || error.status === 429) {
-    if (error.retryAfterSeconds === 1) {
-      return t('Too many login attempts. Please wait 1 second before trying again.');
-    }
-    if (error.retryAfterSeconds && error.retryAfterSeconds > 1) {
-      return t('Too many login attempts. Please wait {{seconds}} seconds before trying again.', {
-        seconds: error.retryAfterSeconds,
+    if (error.retryAfterSeconds && error.retryAfterSeconds > 0) {
+      return t('Too many login attempts. Please wait {{duration}} before trying again.', {
+        duration: formatLoginWait(error.retryAfterSeconds, t),
       });
     }
     return t('Too many login attempts. Please try again later.');
