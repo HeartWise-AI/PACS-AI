@@ -572,12 +572,12 @@ const LoginPage = () => {
                     role="status"
                     aria-live="polite"
                     data-testid="login-cooldown-notice"
-                    className="focus:ring-primary-light mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
+                    className="mb-4 rounded-lg border border-[#F3C988] bg-[#2a2620] p-3 outline-none"
                   >
-                    <p className="text-sm font-medium text-amber-200">
+                    <p className="text-sm font-semibold text-[#F3C988]">
                       {t('Too many failed sign-in attempts.')}
                     </p>
-                    <p className="mt-1 text-sm text-white text-opacity-80">
+                    <p className="mt-1 text-sm text-[#E8ECE6]">
                       {loginCooldown >= 60
                         ? t(
                             'For your security, sign-in is paused. Try again in about {{minutes}} min.',
@@ -638,7 +638,7 @@ const LoginPage = () => {
                 )}
                 {loginCooldown > 0 && (
                   <p
-                    className="mb-4 text-sm text-amber-200"
+                    className="mb-4 text-sm font-medium text-[#F3C988]"
                     role="status"
                     aria-live="polite"
                   >
