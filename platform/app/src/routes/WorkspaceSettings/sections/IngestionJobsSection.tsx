@@ -78,6 +78,9 @@ const IngestionJobsSection = ({
           selectedJobToStartStop={ingestion.selectedIngestionJobToStartStop}
           onStartStop={ingestion.handleStartStop}
           onEdit={ingestion.openEditJobModal}
+          usersById={ingestion.usersById}
+          togglingNotificationsJobId={ingestion.togglingNotificationsJobId}
+          onToggleNotifications={ingestion.setIngestionJobNotifications}
           onDelete={ingestion.openRemoveJobModal}
         />
       </div>
