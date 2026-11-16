@@ -2,6 +2,10 @@ import { studyProcessingSummaryFixtures } from './studyProcessing/fixtures';
 import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
 import {
   addRecentInferenceNotification,
+  applyStudyNotificationMetadata,
+  getInferenceNotificationLabels,
+  mergeStudyNotificationMetadata,
+  needsStudyNotificationMetadata,
   createCandidatePollInferenceNotification,
   createStudyEventInferenceNotification,
   getInferenceNotificationPresentation,
@@ -171,5 +175,97 @@ describe('inference notifications', () => {
         deduplicationKey: 'candidate:candidate-1:100',
       })
     );
+  });
+
+  describe('study metadata resolved from the server', () => {
+    const t = (key: string, options: Record<string, unknown> = {}) =>
+      [key, ...Object.values(options)].join('|');
+    const resolved = {
+      accessionNumber: 'SYN-ACC-42',
+      modalitiesInStudy: 'US',
+      patientId: 'SYN-0001',
+      patientName: 'SYNTHETIC^PATIENT',
+      studyInstanceUID: 'study-1',
+    };
+    const unresolved = createStudyEventInferenceNotification(
+      terminalTransition,
+      undefined,
+      1000,
+      false
+    );
+
+    it('fills the missing labels of the matching notifications in place', () => {
+      const other = { ...unresolved, deduplicationKey: 'other', studyInstanceUID: 'study-2' };
+      const notifications = [unresolved, other];
+
+      const next = applyStudyNotificationMetadata(notifications, resolved);
+
+      expect(needsStudyNotificationMetadata(unresolved)).toBe(true);
+      expect(next[0]).toEqual(
+        expect.objectContaining({
+          deduplicationKey: unresolved.deduplicationKey,
+          patientName: 'SYNTHETIC^PATIENT',
+          patientId: 'SYN-0001',
+          accessionNumber: 'SYN-ACC-42',
+          modalitiesInStudy: 'US',
+          read: false,
+        })
+      );
+      expect(needsStudyNotificationMetadata(next[0])).toBe(false);
+      expect(next[1]).toBe(other);
+      expect(applyStudyNotificationMetadata(next, resolved)).toBe(next);
+    });
+
+    it('keeps what the work list already supplied', () => {
+      const fromWorklist = { ...unresolved, patientName: 'Visible patient' };
+
+      expect(mergeStudyNotificationMetadata(fromWorklist, resolved)).toEqual(
+        expect.objectContaining({ patientName: 'Visible patient', modalitiesInStudy: 'US' })
+      );
+      expect(mergeStudyNotificationMetadata(fromWorklist, null)).toBe(fromWorklist);
+    });
+
+    it('labels a resolved study with its patient and modalities', () => {
+      expect(
+        getInferenceNotificationLabels(mergeStudyNotificationMetadata(unresolved, resolved), t)
+      ).toEqual({ primary: 'SYNTHETIC^PATIENT', secondary: 'US' });
+    });
+
+    it('falls back to the MRN when the study has no patient name', () => {
+      expect(
+        getInferenceNotificationLabels(
+          mergeStudyNotificationMetadata(unresolved, { ...resolved, patientName: null }),
+          t
+        )
+      ).toEqual({ primary: 'SYN-0001', secondary: 'US' });
+    });
+
+    it('identifies an unresolved study by its accession number', () => {
+      expect(
+        getInferenceNotificationLabels({ ...unresolved, accessionNumber: 'SYN-ACC-42' }, t)
+      ).toEqual({
+        primary: 'ProcessingNotificationUnknownStudy',
+        secondary: 'ProcessingNotificationAccession|SYN-ACC-42',
+      });
+    });
+
+    it('identifies an unresolved study by the end of its study UID', () => {
+      expect(
+        getInferenceNotificationLabels(
+          { ...unresolved, studyInstanceUID: '1.2.826.0.1.3680043.8.498.12345678' },
+          t
+        )
+      ).toEqual({
+        primary: 'ProcessingNotificationUnknownStudy',
+        secondary: 'ProcessingNotificationStudyReference|12345678',
+      });
+    });
+
+    it('keeps the generic wording only when there is nothing to show', () => {
+      expect(getInferenceNotificationLabels({ ...unresolved, studyInstanceUID: '' }, t)).toEqual({
+        primary: 'ProcessingNotificationUnknownStudy',
+        secondary: 'ProcessingNotificationUnknownModality',
+      });
+    });
   });
 });

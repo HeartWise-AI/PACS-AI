@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GenericModelResult } from '../GenericModelResult';
+import { ReadableModelResult } from '../ReadableModelResult';
+import { buildReadableResult } from '../readableResult';
 
 export interface UnsupportedModelResultProps {
   modelName: string;
@@ -16,6 +18,8 @@ export function UnsupportedModelResult({
   reason,
 }: UnsupportedModelResultProps) {
   const { t } = useTranslation('StudyList');
+  // Flat output stays readable without the model-specific template.
+  const readable = useMemo(() => buildReadableResult(payload), [payload]);
   const message =
     reason === 'version'
       ? t('ProcessingEchoUnsupportedVersion', {
@@ -29,16 +33,34 @@ export function UnsupportedModelResult({
 
   return (
     <section data-testid="unsupported-model-result">
-      <div
-        className="rounded-lg border border-[#f8d84a]/40 bg-[#3b351d] px-4 py-4 text-sm text-[#fff0a6]"
-        role="alert"
-      >
-        <p className="font-bold">
-          {modelName}
-          {modelVersion ? ` · v${modelVersion}` : ''}
-        </p>
-        <p className="mt-2 leading-5">{message}</p>
-      </div>
+      {readable ? (
+        <>
+          <p
+            className="mb-4 text-xs leading-5 text-[#c5cbc5]"
+            role="note"
+            data-testid="unsupported-model-result-note"
+          >
+            <span className="font-bold">
+              {modelName}
+              {modelVersion ? ` · v${modelVersion}` : ''}
+            </span>
+            {' · '}
+            {message}
+          </p>
+          <ReadableModelResult readable={readable} />
+        </>
+      ) : (
+        <div
+          className="rounded-lg border border-[#f8d84a]/40 bg-[#3b351d] px-4 py-4 text-sm text-[#fff0a6]"
+          role="alert"
+        >
+          <p className="font-bold">
+            {modelName}
+            {modelVersion ? ` · v${modelVersion}` : ''}
+          </p>
+          <p className="mt-2 leading-5">{message}</p>
+        </div>
+      )}
       <details
         className="mt-4"
         data-testid="unsupported-model-result-raw"

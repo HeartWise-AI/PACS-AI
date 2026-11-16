@@ -2,7 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useInferenceProcessing } from './InferenceProcessingProvider';
-import { getInferenceNotificationPresentation } from './inferenceNotifications';
+import {
+  getInferenceNotificationLabels,
+  getInferenceNotificationPresentation,
+} from './inferenceNotifications';
 import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
 
 function formatRelativeTime(timestamp: string) {
@@ -146,35 +149,34 @@ export default function InferenceNotificationsBell() {
               </div>
             )}
 
-            {notifications.map(notification => (
-              <button
-                key={notification.deduplicationKey}
-                type="button"
-                onClick={() => handleItemClick(notification.studyInstanceUID)}
-                className="block w-full border-b border-gray-600 px-4 py-3 text-left transition-colors hover:bg-gray-700"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">
-                      {notification.patientName ?? t('ProcessingNotificationUnknownStudy')}
-                    </p>
-                    <p className="mt-0.5 text-xs text-white/60">
-                      {notification.modalitiesInStudy ?? t('ProcessingNotificationUnknownModality')}
-                    </p>
-                    <p className="mt-1 text-xs text-white/40">
-                      {formatRelativeTime(notification.occurredAt)}
-                    </p>
+            {notifications.map(notification => {
+              const labels = getInferenceNotificationLabels(notification, t);
+              return (
+                <button
+                  key={notification.deduplicationKey}
+                  type="button"
+                  onClick={() => handleItemClick(notification.studyInstanceUID)}
+                  className="block w-full border-b border-gray-600 px-4 py-3 text-left transition-colors hover:bg-gray-700"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">{labels.primary}</p>
+                      <p className="mt-0.5 truncate text-xs text-white/60">{labels.secondary}</p>
+                      <p className="mt-1 text-xs text-white/40">
+                        {formatRelativeTime(notification.occurredAt)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 text-xs font-medium ${statusClassName(
+                        getInferenceNotificationPresentation(notification).tone
+                      )}`}
+                    >
+                      {t(getInferenceNotificationPresentation(notification).labelKey)}
+                    </span>
                   </div>
-                  <span
-                    className={`shrink-0 text-xs font-medium ${statusClassName(
-                      getInferenceNotificationPresentation(notification).tone
-                    )}`}
-                  >
-                    {t(getInferenceNotificationPresentation(notification).labelKey)}
-                  </span>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
