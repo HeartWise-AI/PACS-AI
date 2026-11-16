@@ -114,6 +114,11 @@ export interface ProcessingRunExecutionDTO {
 
 export interface ProcessingRunDetailDTO extends ProcessingRunSummaryDTO {
   executions: ProcessingRunExecutionDTO[];
+  // Added with run cancellation; an older backend omits them.
+  cancellable?: boolean;
+  cancelledAt?: string | null;
+  waitingReason?: string | null;
+  stableAfter?: string | null;
 }
 
 // The shared transport treats result as opaque JSON and does not define any

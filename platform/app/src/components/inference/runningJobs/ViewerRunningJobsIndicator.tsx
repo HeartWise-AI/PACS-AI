@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useOptionalInferenceProcessing } from '../InferenceProcessingProvider';
 import type {
   EndedViewerModelRun,
@@ -6,8 +6,18 @@ import type {
   ViewerModelResult,
   ViewerModelRunStatus,
 } from '../viewerResults/types';
+import {
+  createStudyProcessingRESTRepository,
+  type StudyProcessingRESTRepository,
+} from '../studyProcessing/restRepository';
 import { RunningJobsIndicator } from './RunningJobsIndicator';
-import { selectRunningJobs } from './runningJobsModel';
+import { pendingRunRowId, selectRunningJobs } from './runningJobsModel';
+import type { RunningJobRow } from './types';
+import {
+  applyRunningJobCancelStates,
+  useRunningJobsCancel,
+  type RunningJobCancelOutcome,
+} from './useRunningJobsCancel';
 import { useRunningJobsCardState } from './useRunningJobsCardState';
 import {
   useStudyProcessingRunPoll,
@@ -22,7 +32,10 @@ export interface ViewerRunningJobsIndicatorProps {
   foregroundRun?: PendingViewerModelRun | null;
   onOpenResult?: (result: ViewerModelResult) => void;
   besideReadyNotice?: boolean;
-  processingRepository?: StudyProcessingRunPollRepository;
+  // A run requested from the viewer was cancelled from the card.
+  onRunCancelled?: (run: PendingViewerModelRun) => void;
+  processingRepository?: StudyProcessingRunPollRepository &
+    Partial<Pick<StudyProcessingRESTRepository, 'cancelProcessingRun'>>;
   processingPollIntervalMs?: number;
   lingerMs?: number;
 }
@@ -52,12 +65,14 @@ export function ViewerRunningJobsIndicator({
   endedRuns,
   foregroundRun,
   onOpenResult,
+  onRunCancelled,
   besideReadyNotice,
   processingRepository,
   processingPollIntervalMs,
   lingerMs,
 }: ViewerRunningJobsIndicatorProps) {
   const inferenceProcessing = useOptionalInferenceProcessing();
+  const [cancelAttempts, setCancelAttempts] = useState(0);
   const processing = useStudyProcessingRunPoll({
     studyInstanceUID,
     enabled:
@@ -65,8 +80,9 @@ export function ViewerRunningJobsIndicator({
       !!inferenceProcessing?.canUseStudyProcessingREST,
     repository: processingRepository,
     pollIntervalMs: processingPollIntervalMs,
-    // A run that was "already active" when requested is worth looking up.
-    refreshKey: pendingRuns.filter(run => !run.runId).length,
+    // A run that was "already active" when requested is worth looking up,
+    // and so is the study's run after a cancellation was attempted.
+    refreshKey: `${pendingRuns.filter(run => !run.runId).length}:${cancelAttempts}`,
   });
 
   const now = Date.now();
@@ -82,6 +98,43 @@ export function ViewerRunningJobsIndicator({
     now,
     lingerMs,
   });
+  const pendingRunsRef = useRef(pendingRuns);
+  pendingRunsRef.current = pendingRuns;
+  const onRunCancelledRef = useRef(onRunCancelled);
+  onRunCancelledRef.current = onRunCancelled;
+  const defaultCancelRepository = useRef<Pick<
+    StudyProcessingRESTRepository,
+    'cancelProcessingRun'
+  > | null>(null);
+  const cancelRow = useCallback(
+    async (row: RunningJobRow): Promise<RunningJobCancelOutcome> => {
+      if (!row.cancelRunId) {
+        throw new Error('This run cannot be cancelled.');
+      }
+      const cancelProcessingRun =
+        processingRepository?.cancelProcessingRun ??
+        (defaultCancelRepository.current ??= createStudyProcessingRESTRepository())
+          .cancelProcessingRun;
+      try {
+        const run = await cancelProcessingRun(row.cancelRunId);
+        const ended = run.phase === 'TERMINAL';
+        if (ended && row.kind === 'model') {
+          const pending = pendingRunsRef.current.find(item => pendingRunRowId(item) === row.id);
+          if (pending) {
+            onRunCancelledRef.current?.(pending);
+          }
+        }
+        return ended ? 'ended' : 'stillRunning';
+      } finally {
+        // Whatever happened, the run is worth another look.
+        setCancelAttempts(attempts => attempts + 1);
+      }
+    },
+    [processingRepository]
+  );
+  const cancel = useRunningJobsCancel({ cancel: cancelRow });
+  const shownRows = applyRunningJobCancelStates(rows, cancel.states);
+
   const card = useRunningJobsCardState(rows);
   useSecondTick(rows.length > 0);
 
@@ -91,7 +144,11 @@ export function ViewerRunningJobsIndicator({
 
   return (
     <RunningJobsIndicator
-      rows={rows}
+      rows={shownRows}
+      cancelStates={cancel.states}
+      onRequestCancel={cancel.request}
+      onConfirmCancel={cancel.confirm}
+      onAbortCancel={cancel.abort}
       now={now}
       collapsed={card.collapsed}
       onToggleCollapsed={card.toggleCollapsed}

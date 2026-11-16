@@ -65,5 +65,18 @@
   "RunningJobsViewResult": "View result",
   "RunningJobsCollapse": "Collapse",
   "RunningJobsExpand": "Show AI analysis status",
-  "RunningJobsClose": "Hide until a new run starts"
+  "RunningJobsClose": "Hide until a new run starts",
+  "RunningJobsCountWaiting": "{{total}} waiting",
+  "RunningJobsStateCancelled": "Cancelled",
+  "RunningJobsStateWaitingExam": "Waiting for the exam to finish",
+  "RunningJobsStateStale": "Stuck — not started",
+  "RunningJobsWaitingSince": "since {{time}}",
+  "RunningJobsCancel": "Cancel analysis",
+  "RunningJobsCancelConfirm": "Cancel this analysis?",
+  "RunningJobsCancelConfirmYes": "Yes, cancel",
+  "RunningJobsCancelConfirmNo": "No",
+  "RunningJobsCancelling": "Cancelling…",
+  "RunningJobsCancelKeepsResults": "Models already finished keep their results.",
+  "RunningJobsCancelError": "Could not cancel. Try again.",
+  "RunningJobsCancelTooLate": "Already computing: it can no longer be cancelled."
 }

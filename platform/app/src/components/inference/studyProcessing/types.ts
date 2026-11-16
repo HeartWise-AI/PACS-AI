@@ -173,6 +173,11 @@ export interface ModelExecutionResultFailure {
   message: string;
 }
 
+// Why an active run is not computing, as reported by the run detail.
+export const PROCESSING_RUN_WAITING_REASONS = ['study_growing', 'stale'] as const;
+
+export type ProcessingRunWaitingReason = (typeof PROCESSING_RUN_WAITING_REASONS)[number];
+
 export interface ProcessingRun extends ProcessingModelCounts {
   id: string;
   studyInstanceUID: string;
@@ -188,6 +193,14 @@ export interface ProcessingRun extends ProcessingModelCounts {
   createdAt: string;
   updatedAt: string;
   modelExecutions: ModelExecution[];
+  // The fields below are absent when the backend does not report them.
+  // True while at least one model of the run can still be cancelled.
+  cancellable?: boolean;
+  // When a user cancelled the run's waiting models.
+  cancelledAt?: string;
+  waitingReason?: ProcessingRunWaitingReason;
+  // With `study_growing`: when the study is stable if no more images arrive.
+  stableAfter?: string;
 }
 
 export interface StudyProcessingRunHistory {

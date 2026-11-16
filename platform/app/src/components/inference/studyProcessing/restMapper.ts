@@ -7,6 +7,7 @@ import type {
   StudyProcessingRunHistory,
   StudyProcessingSummary,
 } from './types';
+import { PROCESSING_RUN_WAITING_REASONS } from './types';
 import type {
   CreateStudyProcessingRunResponseDTO,
   ProcessingAttentionReasonDTO,
@@ -163,6 +164,24 @@ export function mapProcessingRun(run: ProcessingRunDetailDTO): ProcessingRun {
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
     modelExecutions: run.executions.map(mapProcessingRunExecution),
+    ...mapProcessingRunWaiting(run),
+  };
+}
+
+// Only what the backend reports, so a run from an older backend is unchanged.
+function mapProcessingRunWaiting(
+  run: ProcessingRunDetailDTO
+): Pick<ProcessingRun, 'cancellable' | 'cancelledAt' | 'waitingReason' | 'stableAfter'> {
+  const waitingReason = PROCESSING_RUN_WAITING_REASONS.find(reason => reason === run.waitingReason);
+  return {
+    ...(typeof run.cancellable === 'boolean' ? { cancellable: run.cancellable } : {}),
+    ...(typeof run.cancelledAt === 'string' && run.cancelledAt
+      ? { cancelledAt: run.cancelledAt }
+      : {}),
+    ...(waitingReason ? { waitingReason } : {}),
+    ...(waitingReason === 'study_growing' && typeof run.stableAfter === 'string' && run.stableAfter
+      ? { stableAfter: run.stableAfter }
+      : {}),
   };
 }
 

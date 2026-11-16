@@ -1,7 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatElapsed, rowElapsedMs } from './runningJobsModel';
-import type { RunningJobRow, RunningJobState } from './types';
+import { countRunningJobs, formatClockTime, formatElapsed, rowElapsedMs } from './runningJobsModel';
+import type {
+  RunningJobCancelState,
+  RunningJobRow,
+  RunningJobState,
+  RunningJobWaiting,
+} from './types';
 
 export interface RunningJobsIndicatorProps {
   rows: RunningJobRow[];
@@ -13,6 +18,11 @@ export interface RunningJobsIndicatorProps {
   onOpenResult?: (row: RunningJobRow) => void;
   // Moves the card aside while the "result ready" notice uses the corner.
   besideReadyNotice?: boolean;
+  // Inline cancellation, by row id. Without `onRequestCancel` no row offers it.
+  cancelStates?: Readonly<Record<string, RunningJobCancelState>>;
+  onRequestCancel?: (row: RunningJobRow) => void;
+  onConfirmCancel?: (row: RunningJobRow) => void;
+  onAbortCancel?: (row: RunningJobRow) => void;
 }
 
 const STATE_LABEL_KEYS: Record<RunningJobState, string> = {
@@ -22,6 +32,18 @@ const STATE_LABEL_KEYS: Record<RunningJobState, string> = {
   done: 'RunningJobsStateDone',
   failed: 'RunningJobsStateFailed',
   skipped: 'RunningJobsStateSkipped',
+  cancelled: 'RunningJobsStateCancelled',
+};
+
+// What an active row says instead of its state while it only waits.
+const WAITING_LABEL_KEYS: Record<RunningJobWaiting, string> = {
+  exam: 'RunningJobsStateWaitingExam',
+  stale: 'RunningJobsStateStale',
+};
+
+const WAITING_TEXT_CLASSES: Record<RunningJobWaiting, string> = {
+  exam: 'text-white/70',
+  stale: 'text-amber-300',
 };
 
 const STATE_TEXT_CLASSES: Record<RunningJobState, string> = {
@@ -31,6 +53,7 @@ const STATE_TEXT_CLASSES: Record<RunningJobState, string> = {
   done: 'text-[#c8f469]',
   failed: 'text-red-400',
   skipped: 'text-amber-300',
+  cancelled: 'text-white/60',
 };
 
 const PROCESSING_TITLE_KEYS: Record<string, string> = {
@@ -45,6 +68,42 @@ function Spinner() {
       data-testid="running-jobs-spinner"
       className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-white/20 border-t-[#c8f469] motion-reduce:animate-none"
     />
+  );
+}
+
+// A run that only waits: a still ring, amber when it is stuck. No spinner,
+// so the card does not suggest that something is being computed.
+function WaitingMark({ waiting }: { waiting: RunningJobWaiting }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-testid="running-jobs-waiting-mark"
+      data-waiting={waiting}
+      className={`inline-block h-3.5 w-3.5 shrink-0 rounded-full border-2 ${
+        waiting === 'stale' ? 'border-amber-300/80' : 'border-white/30'
+      }`}
+    />
+  );
+}
+
+function CancelIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className="h-3.5 w-3.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    >
+      <circle
+        cx="8"
+        cy="8"
+        r="6.25"
+      />
+      <path d="M3.6 3.6l8.8 8.8" />
+    </svg>
   );
 }
 
@@ -76,7 +135,9 @@ function ProgressBar({ row }: { row: RunningJobRow }) {
         data-testid="running-jobs-progress"
       >
         <div
-          className="h-full rounded-full bg-[#c8f469] transition-[width] duration-500 motion-reduce:transition-none"
+          className={`h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none ${
+            row.waiting ? 'bg-white/40' : 'bg-[#c8f469]'
+          }`}
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
@@ -111,6 +172,10 @@ export function RunningJobsIndicator({
   onClose,
   onOpenResult,
   besideReadyNotice = false,
+  cancelStates,
+  onRequestCancel,
+  onConfirmCancel,
+  onAbortCancel,
 }: RunningJobsIndicatorProps) {
   const { t } = useTranslation('AIModelButton');
 
@@ -118,10 +183,22 @@ export function RunningJobsIndicator({
     return null;
   }
 
-  const activeCount = rows.filter(row => row.active).length;
-  const summary = activeCount
-    ? t('RunningJobsCountRunning', { total: activeCount })
-    : t('RunningJobsAllFinished');
+  // A run that only waits for the exam to finish is not "running".
+  const counts = countRunningJobs(rows);
+  const summary =
+    [
+      counts.running ? t('RunningJobsCountRunning', { total: counts.running }) : null,
+      counts.waiting ? t('RunningJobsCountWaiting', { total: counts.waiting }) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || t('RunningJobsAllFinished');
+  const headerMark = counts.running ? (
+    <Spinner />
+  ) : counts.waiting ? (
+    <WaitingMark waiting={counts.stale ? 'stale' : 'exam'} />
+  ) : (
+    <EndMark state="done" />
+  );
   // z-30: above the viewports, below the top navigation (z-40), dialogs and
   // menus (z-50), the result drawer and its ready notice (z-[9999]).
   const position = `fixed z-30 ${
@@ -147,7 +224,7 @@ export function RunningJobsIndicator({
           aria-label={`${t('RunningJobsExpand')} (${summary})`}
           data-testid="running-jobs-pill"
         >
-          {activeCount ? <Spinner /> : <EndMark state="done" />}
+          {headerMark}
           <span>{summary}</span>
         </button>
       </div>
@@ -162,7 +239,7 @@ export function RunningJobsIndicator({
       data-testid="running-jobs-indicator"
     >
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-1.5">
-        {activeCount ? <Spinner /> : <EndMark state="done" />}
+        {headerMark}
         <p className="min-w-0 grow truncate text-xs font-semibold">
           {t('RunningJobsTitle')}
           <span className="font-normal text-white/60"> · {summary}</span>
@@ -194,23 +271,60 @@ export function RunningJobsIndicator({
           const title = rowTitle(row);
           const elapsed = formatElapsed(rowElapsedMs(row, now));
           const canOpen = !!onOpenResult && row.state === 'done' && !!row.result;
+          const waiting = row.active ? row.waiting : undefined;
+          const cancelState = cancelStates?.[row.id];
+          const confirming =
+            cancelState?.phase === 'confirming' || cancelState?.phase === 'submitting';
+          const submitting = cancelState?.phase === 'submitting';
+          const canCancel = row.active && !!row.cancelRunId && !!onRequestCancel;
           const content = (
             <>
               <div className="flex items-center gap-2">
-                {row.active ? <Spinner /> : <EndMark state={row.state} />}
+                {waiting ? (
+                  <WaitingMark waiting={waiting} />
+                ) : row.active ? (
+                  <Spinner />
+                ) : (
+                  <EndMark state={row.state} />
+                )}
                 <span className="min-w-0 grow truncate text-xs font-medium">{title}</span>
-                <span
-                  role="timer"
-                  aria-label={t('RunningJobsElapsed', { time: elapsed })}
-                  className="shrink-0 text-[11px] tabular-nums text-white/60"
-                  data-testid="running-jobs-elapsed"
-                >
-                  {elapsed}
-                </span>
+                {waiting ? (
+                  // A wait is not a computation running late: no ticking timer.
+                  <span
+                    className="shrink-0 text-[11px] tabular-nums text-white/40"
+                    data-testid="running-jobs-since"
+                  >
+                    {t('RunningJobsWaitingSince', { time: formatClockTime(row.startedAt) })}
+                  </span>
+                ) : (
+                  <span
+                    role="timer"
+                    aria-label={t('RunningJobsElapsed', { time: elapsed })}
+                    className="shrink-0 text-[11px] tabular-nums text-white/60"
+                    data-testid="running-jobs-elapsed"
+                  >
+                    {elapsed}
+                  </span>
+                )}
+                {canCancel && !confirming && (
+                  <button
+                    type="button"
+                    className="-mr-1 shrink-0 rounded p-0.5 text-white/50 hover:bg-white/10 hover:text-white"
+                    onClick={() => onRequestCancel(row)}
+                    aria-label={`${t('RunningJobsCancel')}: ${title}`}
+                    title={t('RunningJobsCancel')}
+                    data-testid="running-jobs-cancel"
+                  >
+                    <CancelIcon />
+                  </button>
+                )}
               </div>
-              <div className="mt-0.5 flex items-center justify-between gap-2 pl-[22px] text-[11px]">
-                <span className={STATE_TEXT_CLASSES[row.state]}>
-                  {t(STATE_LABEL_KEYS[row.state])}
+              <div className="mt-0.5 flex items-start justify-between gap-2 pl-[22px] text-[11px]">
+                <span
+                  className={`min-w-0 ${waiting ? WAITING_TEXT_CLASSES[waiting] : STATE_TEXT_CLASSES[row.state]}`}
+                  data-testid="running-jobs-state"
+                >
+                  {t(waiting ? WAITING_LABEL_KEYS[waiting] : STATE_LABEL_KEYS[row.state])}
                   {canOpen && (
                     <span className="text-white/60"> · {t('RunningJobsViewResult')}</span>
                   )}
@@ -233,6 +347,52 @@ export function RunningJobsIndicator({
                 </p>
               )}
               <ProgressBar row={row} />
+              {canCancel && confirming && (
+                <div
+                  role="group"
+                  aria-label={t('RunningJobsCancelConfirm')}
+                  className="mt-1.5 pl-[22px] text-[11px]"
+                  data-testid="running-jobs-cancel-confirm"
+                >
+                  <p className="text-white/80">{t('RunningJobsCancelConfirm')}</p>
+                  {row.kind === 'processing' && !!row.progress?.done && (
+                    <p className="text-white/50">{t('RunningJobsCancelKeepsResults')}</p>
+                  )}
+                  <div className="mt-1 flex gap-2">
+                    <button
+                      type="button"
+                      className="rounded border border-red-400/60 px-2 py-0.5 text-red-300 hover:bg-red-400/10 disabled:opacity-60"
+                      onClick={() => onConfirmCancel?.(row)}
+                      disabled={submitting}
+                      data-testid="running-jobs-cancel-yes"
+                    >
+                      {t(submitting ? 'RunningJobsCancelling' : 'RunningJobsCancelConfirmYes')}
+                    </button>
+                    <button
+                      type="button"
+                      className="border-white/15 rounded border px-2 py-0.5 text-white/70 hover:bg-white/10 disabled:opacity-60"
+                      onClick={() => onAbortCancel?.(row)}
+                      disabled={submitting}
+                      data-testid="running-jobs-cancel-no"
+                    >
+                      {t('RunningJobsCancelConfirmNo')}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {row.active && cancelState?.phase === 'error' && (
+                <p
+                  role="alert"
+                  className="mt-1 pl-[22px] text-[11px] text-red-400"
+                  data-testid="running-jobs-cancel-error"
+                >
+                  {t(
+                    cancelState.error === 'tooLate'
+                      ? 'RunningJobsCancelTooLate'
+                      : 'RunningJobsCancelError'
+                  )}
+                </p>
+              )}
             </>
           );
 
@@ -242,6 +402,7 @@ export function RunningJobsIndicator({
               className="border-b border-white/5 last:border-b-0"
               data-testid="running-jobs-row"
               data-state={row.state}
+              data-waiting={waiting}
             >
               {canOpen ? (
                 <button

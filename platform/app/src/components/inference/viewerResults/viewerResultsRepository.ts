@@ -303,6 +303,9 @@ export function createViewerResultsRepository(
           executionId: optionalString(execution.executionId),
           status: optionalString(execution.status),
         })),
+        ...(isRecord(body) && typeof body.cancellable === 'boolean'
+          ? { cancellable: body.cancellable }
+          : {}),
       };
     },
   };
