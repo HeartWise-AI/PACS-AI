@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useInferenceProcessing } from './InferenceProcessingProvider';
 import { getInferenceNotificationPresentation } from './inferenceNotifications';
-import { buildProcessingNotificationWorklistPath } from './processingNotificationNavigation';
+import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
 
 function formatRelativeTime(timestamp: string) {
   const then = Date.parse(timestamp);
@@ -105,7 +105,8 @@ export default function InferenceNotificationsBell() {
 
   const handleItemClick = (studyInstanceUID: string) => {
     setBellOpen(false);
-    navigate(buildProcessingNotificationWorklistPath(studyInstanceUID));
+    // Open the exam itself. The worklist deep link left the search filtered to one study.
+    navigate(buildProcessingNotificationViewerPath(studyInstanceUID));
   };
 
   return (

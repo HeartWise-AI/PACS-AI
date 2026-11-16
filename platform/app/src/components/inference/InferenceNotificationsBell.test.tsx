@@ -2,7 +2,7 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import InferenceNotificationsBell from './InferenceNotificationsBell';
 import type { InferenceNotification } from './inferenceNotifications';
-import { buildProcessingNotificationWorklistPath } from './processingNotificationNavigation';
+import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
 
 const mockNavigate = jest.fn();
 let mockInferenceProcessingContext: {
@@ -66,14 +66,15 @@ describe('InferenceNotificationsBell', () => {
     act(() => renderer.unmount());
   });
 
-  it('navigates to the exact study worklist deep link instead of the viewer', () => {
+  it('opens the study in the viewer', () => {
     const notificationButton = renderer.root
       .findAllByType('button')
       .find(button => button.props.className.includes('block w-full'));
 
     act(() => notificationButton?.props.onClick());
 
-    expect(mockNavigate).toHaveBeenCalledWith(buildProcessingNotificationWorklistPath('study-1'));
+    expect(mockNavigate).toHaveBeenCalledWith('/viewer?StudyInstanceUIDs=study-1');
+    expect(buildProcessingNotificationViewerPath('1.2.840/a b')).toBe('/viewer?StudyInstanceUIDs=1.2.840%2Fa%20b');
     expect(mockInferenceProcessingContext.setBellOpen).toHaveBeenCalledWith(false);
   });
 
