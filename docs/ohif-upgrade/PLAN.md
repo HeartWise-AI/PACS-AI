@@ -22,7 +22,7 @@ These override anything else in this plan.
 | # | Rule |
 |---|---|
 | R1 | Never push to `main`, merge a pull request, or deploy to any server without the user's explicit go-ahead for that specific action. Open pull requests as drafts against the integration branches named in section 4. |
-| R2 | Never deploy to the MHI production server (`sgbmavram01.icm.local`). Production rollout is a separate, user-run step after this plan. |
+| R2 | Never deploy to the MHI server (`sgbmavram01.icm.local`). It is also the test environment (section 8): read-only use is allowed, changes are not. Rollout is a separate, user-run step after this plan. To test a new build, run it as a separate container on another port against the same backend; do not replace the running `pacs-ai` container. |
 | R3 | No patient data, hospital hostnames, certificates, tokens or credentials in the repository, in commit messages, in PR text or in subagent prompts. Viewer test credentials are read from environment variables only. |
 | R4 | Outside the paths listed in section 6.1 ("ours"), a file must be byte-identical to the pinned upstream ref unless it has a row in `pacs-ai/UPSTREAM_PATCHES.md`. If a task seems to need a new upstream edit, first look for an extension point (section 6.3); if none exists, add the ledger row in the same commit and say so in the PR. |
 | R5 | Do not delete or weaken a test to make it pass. A test may be changed only when the behaviour it checks was deliberately changed, with the reason in the commit message. |
@@ -289,7 +289,17 @@ Rule: our packages import these, never the underlying OHIF API directly. A yearl
 
 Location: `tests/pacs-ai/`. Playwright, run against a deployed build with a real backend.
 
-Configuration by environment only: `PACS_AI_E2E_BASE_URL`, `PACS_AI_E2E_USER`, `PACS_AI_E2E_PASSWORD`, `PACS_AI_E2E_TENANT`, `PACS_AI_E2E_STUDY_UIDS` (comma-separated). Never commit values (R3). The user will say which environment and which credential file to use; until then write the suite and run it against a locally built image pointed at the staging backend only if the user confirms that is allowed. If no environment is available, mark phase 0 as blocked on the user and continue with P1.1 to P1.3, which are checked by unit tests and the build.
+Configuration by environment only: `PACS_AI_E2E_BASE_URL`, `PACS_AI_E2E_USER`, `PACS_AI_E2E_PASSWORD`, `PACS_AI_E2E_TENANT`, `PACS_AI_E2E_STUDY_UIDS` (comma-separated). Never commit values (R3).
+
+**Test environment (set by the owner, 2026-11-15):**
+
+- Base URL: the MHI server, `https://sgbmavram01.icm.local` (self-signed certificate: `ignoreHTTPSErrors`). This is the live server. Tests may read, open studies, open stored results and use the chat. They must not reprocess studies, start model runs on patient studies, change members, settings or the model catalog, or upload files, unless the owner says so for a named study. `run-model.spec.ts` therefore checks the picker and the series-selection modal and stops before "Run" by default.
+- Credentials: `~/.config/pacs-ai/viewer.env` on that host (mode 600, keys `EMAIL` and `PASSWORD`). Load as environment variables for the browser process only; never print, copy or commit them.
+- Studies: the three coronary angiography (XA) studies of 2026-11-14 (accessions ending 958701, 958801, 958901; each has stored results for DeepCORO-JEPA 2.1.0, CathEF-CLIP, DeepRV-CLIP, MACE, CTO, SYNTAX) and one echo (US) study. Their UIDs are in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/studies.env` on the host, not in the repository.
+- CT: the server's Orthanc holds no CT (XA 21 studies, US 191 on 2026-11-15). CT studies are visible only through the hospital PACS query in the work list, and the TotalSegmentator model is not installed. The CT/TotalSegmentator check is blocked until the owner names a CT to retrieve and the model is deployed; record it as blocked, do not retrieve one on your own.
+- The work list opens on today's date and is empty on days without studies; tests must set the date range (2026-11-13 to 2026-11-15 shows the reference studies).
+
+**Baseline (taken 2026-11-15 on build `chat-activity-d24465d-20261114`, OHIF 3.11.1, identical to main):** 43 screenshots at 1600×900 in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/` on the host (mode 700; they contain patient data and must never enter the repository or a PR). The capture scripts are in its `scripts/` folder; `visual.spec.ts` should reproduce the same screens: login, register, reset password, work list (empty default, searched, expanded row, French), user menu, settings (English and French), AI models, members, workspace settings (four tabs), Kibana logs, unknown URL, XA viewer for each study, AI menu, result drawer (DeepRV-CLIP, DeepCORO-JEPA, CathEF, SYNTAX), chat, layout menu, US viewer and its AI menu. Visual comparison runs on the host against that folder; only masked or synthetic images may be committed.
 
 | Spec | Checks |
 |---|---|
@@ -318,7 +328,7 @@ Format: **ID — title** · depends on · can run in parallel with. Each has tas
 **P0.1 — Acceptance suite** · none · P0.2, P1.1–P1.3
 - Write `tests/pacs-ai/` per section 8 with a `playwright.pacs-ai.config.ts` at `tests/pacs-ai/`.
 - Add `.github/workflows/pacs-ai-acceptance.yml` (manual trigger).
-- Exit: every spec passes against a build of `baseline/ohif-3.11.1-pre-3.13-upgrade`; visual baselines committed (screens must contain no patient data: use the anonymised test studies the user names, or mask image and name regions).
+- Exit: every spec passes against the live build (identical to `baseline/ohif-3.11.1-pre-3.13-upgrade`); visual comparison matches the host baseline folder. No screenshot with patient data is committed.
 
 **P0.2 — Decisions** · none
 - Record defaults from section 12 in `STATUS.md`; raise D3 with the user once, and proceed on the default.
