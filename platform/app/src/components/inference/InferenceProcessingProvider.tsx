@@ -35,12 +35,32 @@ import {
 } from './inferenceNotifications';
 import { createStudyNotificationMetadataResolver } from './studyNotificationMetadata';
 import { fetchStudyNotificationMetadata } from './studyNotificationMetadataRepository';
+import {
+  DEFAULT_NOTIFICATION_AUDIENCE_VIEWER,
+  shouldRaiseCandidatePollNotification,
+  shouldRaiseStudyProcessingNotification,
+  type NotificationAudienceViewer,
+} from './notificationAudience';
+import {
+  loadNotifyAutomaticRuns,
+  NOTIFICATION_PREFERENCES_CHANGED_EVENT,
+  type NotificationPreferencesChangedDetail,
+} from './notificationPreferences';
 
 const RECENT_LIMIT = 20;
 // A toast stays up for five seconds. A lookup answered within this window
 // rewrites the toast still on screen; a later answer only updates the bell, so
 // a toast the user already saw go away is never brought back.
 const TOAST_METADATA_UPDATE_WINDOW_MS = 3000;
+// Notifications of one study arriving within this window of each other share
+// one toast (the latest replaces it); the bell still lists each of them.
+export const TOAST_BURST_WINDOW_MS = 4000;
+
+type ToastBurst = {
+  toastId: string;
+  lastShownAt: number;
+  latestDeduplicationKey: string;
+};
 
 type InferenceProcessingContextValue = {
   notifications: InferenceNotification[];
@@ -94,6 +114,11 @@ function InferenceProcessingProvider({ children }) {
   const notificationDeduplicationKeysRef = useRef(new Set<string>());
   const visibleStudyMetadataRef = useRef(new Map<string, StudyNotificationWorklistMetadata>());
   const candidateFallbackActiveRef = useRef(false);
+  const toastBurstsRef = useRef(new Map<string, ToastBurst>());
+  const audienceViewerRef = useRef<NotificationAudienceViewer>(
+    DEFAULT_NOTIFICATION_AUDIENCE_VIEWER
+  );
+  const preferencesIdentityRef = useRef<string | null>(null);
   const studyMetadataResolverRef = useRef(
     createStudyNotificationMetadataResolver({
       fetchStudy: studyInstanceUID => fetchStudyNotificationMetadata(studyInstanceUID),
@@ -106,6 +131,7 @@ function InferenceProcessingProvider({ children }) {
   const clearNotificationState = useCallback(() => {
     notificationDeduplicationKeysRef.current = new Set();
     visibleStudyMetadataRef.current = new Map();
+    toastBurstsRef.current = new Map();
     // Labels resolved for one signed-in identity must not outlive it.
     studyMetadataResolverRef.current.clear();
     setNotifications([]);
@@ -135,18 +161,32 @@ function InferenceProcessingProvider({ children }) {
         resolver.peek(incoming.studyInstanceUID)
       );
       const presentation = getInferenceNotificationPresentation(notification);
+      const shownAt = Date.now();
+      // Several notifications of one study within a few seconds share a toast.
+      const burst = toastBurstsRef.current.get(notification.studyInstanceUID);
+      const toastId =
+        burst && shownAt - burst.lastShownAt <= TOAST_BURST_WINDOW_MS
+          ? burst.toastId
+          : notification.deduplicationKey;
+      toastBurstsRef.current.set(notification.studyInstanceUID, {
+        toastId,
+        lastShownAt: shownAt,
+        latestDeduplicationKey: notification.deduplicationKey,
+      });
+      const ownsToast = () =>
+        toastBurstsRef.current.get(notification.studyInstanceUID)?.latestDeduplicationKey ===
+        notification.deduplicationKey;
       const showToast = (shown: InferenceNotification) => {
         const labels = getInferenceNotificationLabels(shown, t);
         show({
           type: presentation.tone,
           title: t(presentation.titleKey),
           message: `${labels.primary} · ${labels.secondary}`,
-          id: shown.deduplicationKey,
+          id: toastId,
         });
       };
 
       showToast(notification);
-      const shownAt = Date.now();
 
       setNotifications(previousNotifications => {
         const nextNotifications = addRecentInferenceNotification(
@@ -177,9 +217,11 @@ function InferenceProcessingProvider({ children }) {
         setNotifications(previousNotifications =>
           applyStudyNotificationMetadata(previousNotifications, metadata)
         );
+        // A later notification of the same study now owns the shared toast.
         if (
           Date.now() - shownAt <= TOAST_METADATA_UPDATE_WINDOW_MS &&
-          notificationDeduplicationKeysRef.current.has(notification.deduplicationKey)
+          notificationDeduplicationKeysRef.current.has(notification.deduplicationKey) &&
+          ownsToast()
         ) {
           showToast(resolved);
         }
@@ -196,6 +238,8 @@ function InferenceProcessingProvider({ children }) {
       if (!token) {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
+          preferencesIdentityRef.current = null;
+          audienceViewerRef.current = DEFAULT_NOTIFICATION_AUDIENCE_VIEWER;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
           setCanViewProcessing(false);
@@ -217,13 +261,26 @@ function InferenceProcessingProvider({ children }) {
           setStudyProcessingAuthIdentity(nextIdentity);
 
           const role = response.data.role;
+          const isAdmin = role === UserRole.ADMIN || role === UserRole.OWNER;
+          audienceViewerRef.current = { ...audienceViewerRef.current, isAdmin };
           setCanViewProcessing(true);
-          setCanMutateProcessing(role === UserRole.ADMIN || role === UserRole.OWNER);
+          setCanMutateProcessing(isAdmin);
+        }
+        // The personal preference is read once per signed-in identity.
+        const identity = authenticatedIdentityRef.current;
+        if (!cancelled && identity && preferencesIdentityRef.current !== identity) {
+          preferencesIdentityRef.current = identity;
+          const notifyAutomaticRuns = await loadNotifyAutomaticRuns();
+          if (!cancelled && authenticatedIdentityRef.current === identity) {
+            audienceViewerRef.current = { ...audienceViewerRef.current, notifyAutomaticRuns };
+          }
         }
         // A named binding: the test Babel setup cannot compile `catch {}` in async code.
       } catch (error: unknown) {
         if (!cancelled) {
           authenticatedIdentityRef.current = null;
+          preferencesIdentityRef.current = null;
+          audienceViewerRef.current = DEFAULT_NOTIFICATION_AUDIENCE_VIEWER;
           setStudyProcessingAuthIdentity(null);
           clearStudyProcessingState();
           setCanViewProcessing(false);
@@ -240,8 +297,27 @@ function InferenceProcessingProvider({ children }) {
     };
   }, [clearNotificationState, clearStudyProcessingState, location.pathname]);
 
+  useEffect(() => {
+    // The Settings toggle applies to this browser at once.
+    const handlePreferencesChanged = (event: Event) => {
+      const detail = (event as CustomEvent<NotificationPreferencesChangedDetail>).detail;
+      if (typeof detail?.notifyAutomaticRuns === 'boolean') {
+        audienceViewerRef.current = {
+          ...audienceViewerRef.current,
+          notifyAutomaticRuns: detail.notifyAutomaticRuns,
+        };
+      }
+    };
+    window.addEventListener(NOTIFICATION_PREFERENCES_CHANGED_EVENT, handlePreferencesChanged);
+    return () =>
+      window.removeEventListener(NOTIFICATION_PREFERENCES_CHANGED_EVENT, handlePreferencesChanged);
+  }, []);
+
   const handleTransition = useCallback(
     (event: ProcessingTransitionEvent) => {
+      if (!shouldRaiseCandidatePollNotification(audienceViewerRef.current)) {
+        return;
+      }
       addNotification(
         createCandidatePollInferenceNotification(event, Date.now(), isBellOpenRef.current)
       );
@@ -251,6 +327,10 @@ function InferenceProcessingProvider({ children }) {
 
   const handleStudyProcessingNotificationTransition = useCallback(
     (transition: StudyProcessingNotificationTransition) => {
+      // Only the notification is filtered: the status was already applied.
+      if (!shouldRaiseStudyProcessingNotification(transition, audienceViewerRef.current)) {
+        return;
+      }
       addNotification(
         createStudyEventInferenceNotification(
           transition,

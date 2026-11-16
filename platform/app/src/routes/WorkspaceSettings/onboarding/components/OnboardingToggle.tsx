@@ -5,6 +5,8 @@ type OnboardingToggleProps = {
   onToggle: (next: boolean) => void;
   id: string;
   disabled?: boolean;
+  ariaLabel?: string;
+  testId?: string;
 };
 
 const OnboardingToggle = ({
@@ -12,12 +14,16 @@ const OnboardingToggle = ({
   onToggle,
   id,
   disabled = false,
+  ariaLabel,
+  testId,
 }: OnboardingToggleProps) => (
   <button
     type="button"
     role="switch"
     aria-checked={checked}
     aria-busy={disabled}
+    aria-label={ariaLabel}
+    data-testid={testId}
     id={id}
     disabled={disabled}
     onClick={() => {

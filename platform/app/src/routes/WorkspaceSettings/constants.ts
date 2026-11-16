@@ -173,6 +173,8 @@ export const getDicomHeaders = (t: TranslateFn): TableHeader[] => [
   { text: t('C-Move'), value: 'targetCMoveEnabled', align: 'left' },
   { text: t('C-Store'), value: 'targetCStoreEnabled', align: 'left' },
   { text: t('Status'), value: 'status', align: 'left' },
+  { text: t('Created by'), value: 'createdBy', align: 'left' },
+  { text: t('Notifications'), value: 'notifications', align: 'center' },
   { text: t('Action'), value: 'action', align: 'center' },
 ];
 
@@ -193,6 +195,8 @@ export const getIngestionJobHeaders = (t: TranslateFn): TableHeader[] => [
   { text: t('Stability period'), value: 'interval', align: 'left' },
   { text: t('Schedule'), value: 'schedule', align: 'left' },
   { text: t('Status'), value: 'status', align: 'left' },
+  { text: t('Created by'), value: 'createdBy', align: 'left' },
+  { text: t('Notifications'), value: 'notifications', align: 'center' },
   { text: t('Action'), value: 'action', align: 'center' },
 ];
 

@@ -78,6 +78,14 @@ export interface WorklistStudyStatusEventDTO extends ProcessingRunCountsDTO {
   startedAt: string | null;
   completedAt: string | null;
   updatedAt: string;
+  /**
+   * Whether this signed-in user should get a bell entry / toast for the event.
+   * Absent from gateways older than the notification audience policy, which
+   * means true. The status itself is applied whatever its value.
+   */
+  notify?: boolean;
+  /** True when this signed-in user cancelled the run. */
+  cancelledByYou?: boolean;
 }
 
 export interface ProcessingRunSummaryDTO extends ProcessingRunCountsDTO {

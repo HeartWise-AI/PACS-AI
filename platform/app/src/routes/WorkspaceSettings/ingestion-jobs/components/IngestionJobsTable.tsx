@@ -11,6 +11,12 @@ import { getContainerStatusColor } from '../../utils';
 import IngestionJobActionButton from './IngestionJobActionButton';
 import ModalityBadges from './ModalityBadges';
 import { getIngestionJobTimingMinutes } from '../../ingestionJobTiming';
+import {
+  formatIngestionJobCreator,
+  isIngestionJobNotificationsEnabled,
+} from '../../ingestionJobNotifications';
+import OnboardingToggle from '../../onboarding/components/OnboardingToggle';
+import type { UserResponse } from '../../../../api/userDTO';
 
 type IngestionJobsTableProps = {
   jobs: GetInferenceIngestionJobsResponse[];
@@ -21,7 +27,12 @@ type IngestionJobsTableProps = {
   onStartStop: (jobId: string, running: boolean) => void;
   onEdit: (row: GetInferenceIngestionJobsResponse) => void;
   onDelete: (jobId: string) => void;
+  usersById?: ReadonlyMap<string, Pick<UserResponse, 'name' | 'email'>>;
+  togglingNotificationsJobId?: string;
+  onToggleNotifications?: (row: GetInferenceIngestionJobsResponse, enabled: boolean) => void;
 };
+
+const NO_USERS: ReadonlyMap<string, Pick<UserResponse, 'name' | 'email'>> = new Map();
 
 const IngestionJobsTable = ({
   jobs,
@@ -32,6 +43,9 @@ const IngestionJobsTable = ({
   onStartStop,
   onEdit,
   onDelete,
+  usersById = NO_USERS,
+  togglingNotificationsJobId = '',
+  onToggleNotifications,
 }: IngestionJobsTableProps) => {
   const { t } = useTranslation('Common');
   const headers = getIngestionJobHeaders(t);
@@ -126,6 +140,34 @@ const IngestionJobsTable = ({
                 <span className="capitalize">{row.status?.toLowerCase() || '-'}</span>
                 <div className={`h-1 w-1 rounded-full ${statusColor.dot}`}></div>
               </div>
+            </div>
+          );
+        }
+        if (header.value === 'createdBy') {
+          return (
+            <div
+              className="w-[160px] truncate text-sm text-white"
+              data-testid={`ingestion-job-creator-${row.id}`}
+            >
+              {formatIngestionJobCreator(row, usersById)}
+            </div>
+          );
+        }
+        if (header.value === 'notifications') {
+          const enabled = isIngestionJobNotificationsEnabled(row);
+          return (
+            <div
+              className="flex min-w-[90px] items-center justify-center"
+              onClick={e => e.stopPropagation()}
+            >
+              <OnboardingToggle
+                id={`ingestion-job-notifications-${row.id}`}
+                testId={`ingestion-job-notifications-${row.id}`}
+                ariaLabel={t('Notifications')}
+                checked={enabled}
+                disabled={!onToggleNotifications || togglingNotificationsJobId === row.id}
+                onToggle={next => onToggleNotifications?.(row, next)}
+              />
             </div>
           );
         }

@@ -115,6 +115,10 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
+function isOptionalBoolean(value: unknown): boolean {
+  return value === undefined || typeof value === 'boolean';
+}
+
 function isAttentionReason(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -155,7 +159,9 @@ function isWorklistStudyStatusEventDTO(value: unknown): value is WorklistStudySt
     isPositiveInteger(value.version) &&
     isNullableString(value.startedAt) &&
     isNullableString(value.completedAt) &&
-    typeof value.updatedAt === 'string'
+    typeof value.updatedAt === 'string' &&
+    isOptionalBoolean(value.notify) &&
+    isOptionalBoolean(value.cancelledByYou)
   );
 }
 

@@ -276,8 +276,16 @@ export interface GetInferenceIngestionJobsResponse {
   status: string;
   scheduleEndTimestamp: number;
   scheduleStartTimestamp: number;
+  recentWindowMinutes?: number;
+  missingPollsThreshold?: number;
+  studyTimeStart?: string;
+  studyTimeEnd?: string;
   createdAt: number;
   updatedAt: number;
+  /** Null for jobs created before the creator was recorded; absent on older gateways. */
+  createdByUserId?: string | null;
+  /** Whether runs started by this job notify its creator and admins; absent on older gateways. */
+  notificationsEnabled?: boolean;
 }
 
 export interface ModelDetails {
@@ -398,6 +406,12 @@ export interface UpdateInferenceIngestionJobRequest {
   intervalInMinutes: number;
   scheduleStartTimestamp: number;
   scheduleEndTimestamp: number;
+  recentWindowMinutes?: number;
+  missingPollsThreshold?: number;
+  studyTimeStart?: string;
+  studyTimeEnd?: string;
+  /** Omit to keep the stored value. */
+  notificationsEnabled?: boolean;
 }
 
 export type CandidateProcessingStatus =

@@ -3,6 +3,8 @@ import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { AlertContext } from '../../../AlertProvider';
 import inferenceRepository from '../../../api/inferenceRepository';
+import userRepository from '../../../api/userRepository';
+import type { UserResponse } from '../../../api/userDTO';
 import {
   GetInferenceAvailableModelsResponse,
   GetInferenceIngestionJobsResponse,
@@ -16,6 +18,7 @@ import {
 import type { IngestionScheduleType, SelectOption } from '../types';
 import { getIngestionJobTimingMinutes } from '../ingestionJobTiming';
 import { buildTimestampFromDateAndTime, handleUnauthorizedAccess, isCSVFile } from '../utils';
+import { buildIngestionJobNotificationsUpdate } from '../ingestionJobNotifications';
 
 type UseIngestionJobsOptions = {
   availableModels: GetInferenceAvailableModelsResponse[];
@@ -51,6 +54,8 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
   const [isDeletingIngestionJob, setIsDeletingIngestionJob] = useState(false);
   const [isImportingIngestionJobs, setIsImportingIngestionJobs] = useState(false);
   const ingestionJobsCsvInputRef = useRef<HTMLInputElement>(null);
+  const [usersById, setUsersById] = useState<ReadonlyMap<string, UserResponse>>(new Map());
+  const [togglingNotificationsJobId, setTogglingNotificationsJobId] = useState('');
 
   const resetIngestionJobForm = useCallback(() => {
     setNewJobModel(null);
@@ -88,6 +93,55 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
       clearInterval(interval);
     };
   }, [fetchIngestionJobs]);
+
+  useEffect(() => {
+    // Resolves "Created by"; without it the column shows a dash.
+    let cancelled = false;
+    userRepository
+      .GetAllTenantUsers()
+      .then(response => {
+        if (!cancelled) {
+          setUsersById(new Map((response.data ?? []).map(user => [user.id, user])));
+        }
+      })
+      .catch(error => {
+        console.debug('Could not load workspace members for ingestion job creators', error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const setIngestionJobNotifications = async (
+    row: GetInferenceIngestionJobsResponse,
+    notificationsEnabled: boolean
+  ) => {
+    const request = buildIngestionJobNotificationsUpdate(row, notificationsEnabled);
+    if (!request) {
+      showAlert('Edit the job to set its stability period first.', 'error');
+      return;
+    }
+    setTogglingNotificationsJobId(row.id);
+    setJobs(previous =>
+      previous.map(job => (job.id === row.id ? { ...job, notificationsEnabled } : job))
+    );
+    try {
+      const response = await inferenceRepository.UpdateInferenceIngestionJob(request);
+      showAlert(response.message, 'success');
+      fetchIngestionJobs();
+    } catch (error) {
+      setJobs(previous =>
+        previous.map(job =>
+          job.id === row.id ? { ...job, notificationsEnabled: row.notificationsEnabled } : job
+        )
+      );
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
+      console.error(`Error updating ingestion job notifications: ${error}`);
+      showAlert(error.message, 'error');
+    } finally {
+      setTogglingNotificationsJobId('');
+    }
+  };
 
   const refreshIngestionJobs = () => {
     setLoading(true);
@@ -378,6 +432,9 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
     closeAddEditJobModal,
     closeRemoveJobModal,
     handleStartStop,
+    usersById,
+    togglingNotificationsJobId,
+    setIngestionJobNotifications,
   };
 }
 

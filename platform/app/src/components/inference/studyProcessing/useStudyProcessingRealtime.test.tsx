@@ -214,6 +214,45 @@ describe('useStudyProcessingRealtime', () => {
     expect(contextValue.getStudySummary(processing.studyInstanceUID)).toEqual(terminal);
   });
 
+  test('updates the work-list status of events outside the notification audience', () => {
+    const doubles = createRealtimeDoubles();
+    const onNotificationTransition = jest.fn();
+
+    act(() => {
+      renderHarness({
+        enabled: true,
+        authenticatedIdentity: '["tenant-1","user-1"]',
+        refreshVisibleStudySnapshot: jest.fn(),
+        onNotificationTransition,
+        connectionFactory: doubles.connectionFactory,
+        reconnectControllerFactory: doubles.reconnectControllerFactory,
+        recoveryFactory: doubles.recoveryFactory,
+        telemetry: doubles.telemetry,
+      });
+    });
+
+    const processing = studyProcessingSummaryFixtures.processing;
+    const silentTerminal = {
+      ...processing,
+      lifecycle: 'TERMINAL' as const,
+      phase: 'TERMINAL' as const,
+      outcome: 'SUCCESS' as const,
+      version: (processing.version ?? 0) + 1,
+      notify: false,
+    };
+
+    act(() => {
+      doubles.connectionOptions().onEvent(processing);
+      doubles.connectionOptions().onEvent(silentTerminal);
+    });
+
+    // The status always lands; the provider decides about the notification.
+    expect(contextValue.getStudySummary(processing.studyInstanceUID)).toEqual(silentTerminal);
+    expect(onNotificationTransition).toHaveBeenCalledWith(
+      expect.objectContaining({ summary: silentTerminal })
+    );
+  });
+
   test('never derives notifications from authoritative recovery snapshots', () => {
     const doubles = createRealtimeDoubles();
     const onNotificationTransition = jest.fn();

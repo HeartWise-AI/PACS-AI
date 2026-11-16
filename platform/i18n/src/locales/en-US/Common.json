@@ -66,5 +66,7 @@
   "Interrupted": "Interrupted",
   "Elapsed": "Elapsed",
   "Live updates": "Live updates",
-  "Reconnecting": "Reconnecting"
+  "Reconnecting": "Reconnecting",
+  "Created by": "Created by",
+  "Notifications": "Notifications"
 }

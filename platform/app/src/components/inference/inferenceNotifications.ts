@@ -3,7 +3,11 @@ import type {
   StudyProcessingNotificationKind,
   StudyProcessingNotificationTransition,
 } from './studyProcessing/notificationTransitions';
-import type { ProcessingAttentionReason, ProcessingRunOutcome } from './studyProcessing/types';
+import type {
+  ProcessingAttentionReason,
+  ProcessingRunOutcome,
+  ProcessingRunTrigger,
+} from './studyProcessing/types';
 import type { ResolvedStudyNotificationMetadata } from './studyNotificationMetadata';
 
 export interface StudyNotificationWorklistMetadata {
@@ -29,6 +33,8 @@ export interface InferenceNotification {
   seenAt: number;
   source: 'study-event' | 'candidate-poll';
   studyInstanceUID: string;
+  /** What started the run; automatic runs are labelled as such in the bell. */
+  trigger: ProcessingRunTrigger | null;
   version: number | null;
 }
 
@@ -93,6 +99,7 @@ export function createStudyEventInferenceNotification(
     seenAt,
     source: 'study-event',
     studyInstanceUID: summary.studyInstanceUID,
+    trigger: summary.trigger,
     version: summary.version,
   };
 }
@@ -131,6 +138,8 @@ export function createCandidatePollInferenceNotification(
     seenAt,
     source: 'candidate-poll',
     studyInstanceUID: event.studyInstanceUID,
+    // The candidate poll only sees automatic ingestion.
+    trigger: 'AUTO',
     version: null,
   };
 }

@@ -7,6 +7,7 @@ import {
   getInferenceNotificationPresentation,
 } from './inferenceNotifications';
 import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
+import { isAutomaticProcessingTrigger } from './notificationAudience';
 
 function formatRelativeTime(timestamp: string) {
   const then = Date.parse(timestamp);
@@ -164,6 +165,14 @@ export default function InferenceNotificationsBell() {
                       <p className="mt-0.5 truncate text-xs text-white/60">{labels.secondary}</p>
                       <p className="mt-1 text-xs text-white/40">
                         {formatRelativeTime(notification.occurredAt)}
+                        {isAutomaticProcessingTrigger(notification.trigger) && (
+                          <span
+                            data-testid="processing-notification-automatic"
+                            className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/60"
+                          >
+                            {t('ProcessingNotificationAutomatic')}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <span

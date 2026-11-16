@@ -36,7 +36,7 @@ export interface GetDoctorSpecialtiesResponse {
 
 export interface GetUserMetadataResponse {
   userId: string;
-  metadata: { [key: string]: string | number };
+  metadata: { [key: string]: string | number | boolean };
   viewerTourCompletedAt?: number | null;
   createdAt: number;
   updatedAt: number;
@@ -154,7 +154,7 @@ export interface UserViewerTourResponse {
 }
 
 export interface UpdateUserMetadataRequest {
-  metadata: { [key: string]: string | number | null };
+  metadata: { [key: string]: string | number | boolean | null };
 }
 
 export interface VerifyEmailRequest {
