@@ -96,7 +96,12 @@ export function mapWorklistStudyStatusEvent(
     retrievalError: null,
   };
 
-  return mapWorklistStudyStatus(eventStatus);
+  return {
+    ...mapWorklistStudyStatus(eventStatus),
+    // An older gateway sends no audience: keep notifying as before.
+    notify: event.notify !== false,
+    cancelledByYou: event.cancelledByYou === true,
+  };
 }
 
 export function mapWorklistStudyStatusPage(page: WorklistStudyStatusPageDTO): {

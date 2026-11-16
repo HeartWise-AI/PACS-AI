@@ -274,6 +274,7 @@
   "ProcessingNotificationTitle.UNKNOWN": "Traitement d'inférence terminé",
   "ProcessingNotificationUnknownModality": "Modalité indisponible",
   "ProcessingNotificationUnknownStudy": "Mise à jour du traitement d'une étude",
+  "ProcessingNotificationAutomatic": "Automatique",
   "ProcessingNotificationAccession": "N° d'accession {{accession}}",
   "ProcessingNotificationStudyReference": "Étude …{{suffix}}",
   "ProcessingNotificationStudyNotFound": "Cette étude n'est plus disponible dans la liste de travail actuelle.",

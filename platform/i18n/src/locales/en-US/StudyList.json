@@ -300,6 +300,7 @@
   "ProcessingNotificationTitle.UNKNOWN": "Inference processing finished",
   "ProcessingNotificationUnknownModality": "Modality unavailable",
   "ProcessingNotificationUnknownStudy": "Study processing update",
+  "ProcessingNotificationAutomatic": "Automatic",
   "ProcessingNotificationAccession": "Accession {{accession}}",
   "ProcessingNotificationStudyReference": "Study …{{suffix}}",
   "ProcessingNotificationStudyNotFound": "This study is no longer available in the current worklist.",

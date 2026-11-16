@@ -44,6 +44,7 @@ const notification: InferenceNotification = {
   seenAt: 1000,
   source: 'study-event',
   studyInstanceUID: 'study-1',
+  trigger: 'MANUAL_REPROCESS',
   version: 7,
 };
 
@@ -113,6 +114,29 @@ describe('InferenceNotificationsBell', () => {
     expect(text).toContain('ProcessingNotificationUnknownStudy');
     expect(text).toContain('ProcessingNotificationStudyReference|12345678');
     expect(text).not.toContain('ProcessingNotificationUnknownModality');
+  });
+
+  it('labels automatic analyses only', () => {
+    expect(
+      renderer.root.findAll(
+        node => node.props['data-testid'] === 'processing-notification-automatic'
+      )
+    ).toHaveLength(0);
+
+    mockInferenceProcessingContext.notifications = [
+      notification,
+      { ...notification, deduplicationKey: 'study-2:run-2:3:terminal', trigger: 'AUTO' },
+    ];
+    act(() => {
+      renderer.update(<InferenceNotificationsBell />);
+    });
+
+    const labels = renderer.root.findAll(
+      node =>
+        node.type === 'span' && node.props['data-testid'] === 'processing-notification-automatic'
+    );
+    expect(labels).toHaveLength(1);
+    expect(labels[0].children).toEqual(['ProcessingNotificationAutomatic']);
   });
 
   it('shows the patient and modalities once they are known', () => {

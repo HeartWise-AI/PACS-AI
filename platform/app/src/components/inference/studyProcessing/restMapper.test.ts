@@ -338,4 +338,16 @@ describe('study processing REST mapper', () => {
       message: 'A future operator-facing skip explanation.',
     });
   });
+
+  test('carries the notification audience of a live event, defaulting to notify', () => {
+    expect(mapWorklistStudyStatusEvent(liveStatusEvent())).toMatchObject({
+      notify: true,
+      cancelledByYou: false,
+    });
+    expect(
+      mapWorklistStudyStatusEvent(liveStatusEvent({ notify: false, cancelledByYou: true }))
+    ).toMatchObject({ notify: false, cancelledByYou: true });
+    // Snapshots carry no audience.
+    expect(mapWorklistStudyStatus(retrievalStatus())).not.toHaveProperty('notify');
+  });
 });

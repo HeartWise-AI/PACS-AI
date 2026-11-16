@@ -116,6 +116,13 @@ export interface StudyProcessingSummary extends ProcessingModelCounts {
   startedAt: string | null;
   completedAt: string | null;
   updatedAt: string;
+  /**
+   * Live events only: whether the signed-in user is in the notification
+   * audience of this event. Snapshots leave it unset. Never filters status.
+   */
+  notify?: boolean;
+  /** Live events only: the signed-in user cancelled this run. */
+  cancelledByYou?: boolean;
 }
 
 export interface ModelSkipReason {

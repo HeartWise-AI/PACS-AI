@@ -163,4 +163,17 @@ describe('server-sent event parser', () => {
     expect(parser.finish()).toEqual([]);
     expect(parser.push(encodeEvent())).toHaveLength(1);
   });
+
+  it('accepts the notification audience fields and an older gateway without them', () => {
+    const frame = (payload: unknown) => ({
+      event: WORKLIST_STUDY_STATUS_EVENT,
+      data: JSON.stringify(payload),
+    });
+
+    expect(parseWorklistStudyStatusEvent(frame(eventPayload))).toEqual(eventPayload);
+    const withAudience = { ...eventPayload, notify: false, cancelledByYou: true };
+    expect(parseWorklistStudyStatusEvent(frame(withAudience))).toEqual(withAudience);
+    expect(parseWorklistStudyStatusEvent(frame({ ...eventPayload, notify: 'yes' }))).toBeNull();
+    expect(parseWorklistStudyStatusEvent(frame({ ...eventPayload, cancelledByYou: 1 }))).toBeNull();
+  });
 });
