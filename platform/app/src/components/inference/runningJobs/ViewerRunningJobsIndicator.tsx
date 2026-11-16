@@ -10,6 +10,7 @@ import {
   createStudyProcessingRESTRepository,
   type StudyProcessingRESTRepository,
 } from '../studyProcessing/restRepository';
+import { publishStudyGrowing } from '../studyRefresh/studyGrowingStore';
 import { RunningJobsIndicator } from './RunningJobsIndicator';
 import { pendingRunRowId, selectRunningJobs } from './runningJobsModel';
 import type { RunningJobRow } from './types';
@@ -84,6 +85,18 @@ export function ViewerRunningJobsIndicator({
     // and so is the study's run after a cancellation was attempted.
     refreshKey: `${pendingRuns.filter(run => !run.runId).length}:${cancelAttempts}`,
   });
+
+  // The study browser's refresh button hints that images may still be
+  // arriving; it reads this instead of polling anything itself.
+  const studyGrowing =
+    !!processing.run &&
+    !processing.endedAt &&
+    (processing.run.phase === 'QUEUED' || processing.run.phase === 'PROCESSING') &&
+    processing.run.waitingReason === 'study_growing';
+  useEffect(() => {
+    publishStudyGrowing(studyInstanceUID, studyGrowing);
+    return () => publishStudyGrowing(studyInstanceUID, false);
+  }, [studyInstanceUID, studyGrowing]);
 
   const now = Date.now();
   const { rows } = selectRunningJobs({
