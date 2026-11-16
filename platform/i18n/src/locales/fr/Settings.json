@@ -26,5 +26,8 @@
   "Replay the viewer walkthrough the next time you open a study": "Revoir la visite guidée de la visionneuse à la prochaine ouverture d'une étude",
   "Show the viewer tour again": "Revoir la visite guidée",
   "The viewer tour will show the next time you open a study": "La visite guidée s'affichera à la prochaine ouverture d'une étude",
-  "Failed to reset the viewer tour": "Échec de la réinitialisation de la visite guidée"
+  "Failed to reset the viewer tour": "Échec de la réinitialisation de la visite guidée",
+  "Notify me about automatic analyses": "M'avertir des analyses automatiques",
+  "Bell and pop-up notifications when an automatic analysis finishes": "Notifications (cloche et fenêtre contextuelle) à la fin d'une analyse automatique",
+  "Failed to save the notification preference": "Échec de l'enregistrement de la préférence de notification"
 }

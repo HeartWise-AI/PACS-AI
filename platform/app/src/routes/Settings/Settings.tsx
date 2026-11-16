@@ -21,6 +21,7 @@ import { resetTutorialAndNotify } from '../../service/tutorialService';
 import { FrontendVersionContext } from '../../App';
 import { getProfileCredentialDetails } from './profileCredentialDetails';
 import ViewerTourPreference from './ViewerTourPreference';
+import AutomaticRunNotificationsPreference from './AutomaticRunNotificationsPreference';
 
 const SettingsPage = () => {
   const { t } = useTranslation('Settings');
@@ -322,6 +323,10 @@ const SettingsPage = () => {
             </div>
           </div>
           <ViewerTourPreference
+            t={t}
+            showAlert={showAlert}
+          />
+          <AutomaticRunNotificationsPreference
             t={t}
             showAlert={showAlert}
           />

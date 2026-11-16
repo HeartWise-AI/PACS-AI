@@ -26,5 +26,8 @@
   "Replay the viewer walkthrough the next time you open a study": "Replay the viewer walkthrough the next time you open a study",
   "Show the viewer tour again": "Show the viewer tour again",
   "The viewer tour will show the next time you open a study": "The viewer tour will show the next time you open a study",
-  "Failed to reset the viewer tour": "Failed to reset the viewer tour"
+  "Failed to reset the viewer tour": "Failed to reset the viewer tour",
+  "Notify me about automatic analyses": "Notify me about automatic analyses",
+  "Bell and pop-up notifications when an automatic analysis finishes": "Bell and pop-up notifications when an automatic analysis finishes",
+  "Failed to save the notification preference": "Failed to save the notification preference"
 }
