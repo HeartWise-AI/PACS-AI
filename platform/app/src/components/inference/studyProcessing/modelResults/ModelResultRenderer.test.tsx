@@ -12,6 +12,7 @@ import { deepRVClipResultFixtures } from './deepRVClipFixtures';
 import { deepRVResultFixtures } from './deepRVFixtures';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { panEchoResultFixtures } from './panEchoFixtures';
+import { readableResultFixtures } from '../readableResultFixtures';
 import { ModelResultRenderer, ModelResultRendererBoundary } from './ModelResultRenderer';
 
 jest.mock('react-i18next', () => ({
@@ -263,6 +264,71 @@ describe('ModelResultRenderer', () => {
       expect(JSON.stringify(renderer!.toJSON())).toContain('View raw result');
     }
   );
+
+  test('renders a serialised interpretation of a version without a template as a readable table', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'PanEcho',
+            modelVersion: '1.0.3',
+            result: readableResultFixtures.serialisedDiagnosis,
+          }}
+        />
+      );
+    });
+
+    const root = renderer!.root;
+    expect(root.findAllByProps({ 'data-testid': 'panecho-result' })).toHaveLength(0);
+    expect(root.findAllByProps({ 'data-testid': 'readable-model-result' })).toHaveLength(1);
+    expect(root.findAllByProps({ 'data-testid': 'readable-model-result-row' })).toHaveLength(16);
+    // No alarm for a result that can be read; the raw result stays one click away.
+    expect(root.findAllByProps({ role: 'alert' })).toHaveLength(0);
+    expect(root.findAllByProps({ 'data-testid': 'unsupported-model-result-raw' })).toHaveLength(1);
+    expect(
+      root.findAllByProps({ 'data-testid': 'generic-model-result-collection' }).length
+    ).toBeGreaterThan(0);
+  });
+
+  test('renders a flat result of a model without a template as a readable table', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'Synthetic model',
+            modelVersion: '0.1.0',
+            result: readableResultFixtures.serialisedDiagnosis,
+          }}
+        />
+      );
+    });
+
+    const root = renderer!.root;
+    expect(root.findAllByProps({ 'data-testid': 'readable-model-result' })).toHaveLength(1);
+    expect(root.findAllByProps({ 'data-testid': 'readable-model-result-raw' })).toHaveLength(1);
+  });
+
+  test('keeps the alert for an unsupported result that cannot be tabulated', () => {
+    act(() => {
+      renderer = TestRenderer.create(
+        <ModelResultRenderer
+          result={{
+            ...modelExecutionResultFixtures.available,
+            modelName: 'PanEcho',
+            modelVersion: '1.0.3',
+            result: { predictions: { 'LV size': [0.9, 0.1] } },
+          }}
+        />
+      );
+    });
+
+    const root = renderer!.root;
+    expect(root.findAllByProps({ role: 'alert' })).toHaveLength(1);
+    expect(root.findAllByProps({ 'data-testid': 'readable-model-result' })).toHaveLength(0);
+    expect(root.findAllByProps({ 'data-testid': 'unsupported-model-result-raw' })).toHaveLength(1);
+  });
 
   test('renders unsupported and malformed payload content as generic text', () => {
     const payload = {

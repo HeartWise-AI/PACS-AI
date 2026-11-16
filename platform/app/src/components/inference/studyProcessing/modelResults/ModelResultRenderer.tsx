@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ModelExecutionResult } from '../types';
-import { GenericModelResult } from '../GenericModelResult';
+import { ReadableOrGenericModelResult } from '../ReadableModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { CathEfClipResult } from './CathEfClipResult';
 import { CathEfResult } from './CathEfResult';
@@ -52,7 +52,8 @@ export interface ModelResultRendererProps {
 
 export function ModelResultRenderer({ result }: ModelResultRendererProps) {
   const resolved = resolveModelResultRenderer(result);
-  const genericFallback = <GenericModelResult value={result.result} />;
+  // Flat data is shown as readable tables; the generic tree stays available.
+  const genericFallback = <ReadableOrGenericModelResult value={result.result} />;
 
   if (resolved.kind === 'generic') {
     return genericFallback;
