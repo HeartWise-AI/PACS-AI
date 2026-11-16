@@ -1,6 +1,6 @@
 # OHIF upgrade plan: 3.11.1 → 3.13.14, built to repeat yearly
 
-Status: proposal, 2026-11-15. Baseline tag: `baseline/ohif-3.11.1-pre-3.13-upgrade` (main at `abe08101`, identical to the frontend running at MHI).
+Status: analysis, 2026-11-15. **The target is now OHIF 3.14 (owner's decision); the executable plan is [PLAN.md](PLAN.md).** This file keeps the analysis and the earlier 3.13.14-first outline. Baseline tag: `baseline/ohif-3.11.1-pre-3.13-upgrade` (main at `abe08101`, identical to the frontend running at MHI).
 
 ## Summary
 
