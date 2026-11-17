@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
-import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
+import SelectSeriesModal from '../seriesSelection/SelectSeriesModal';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 
 // Hooks
