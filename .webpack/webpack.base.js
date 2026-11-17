@@ -32,7 +32,7 @@ const IS_COVERAGE = process.env.COVERAGE === 'true';
 const VERSION_NUMBER = fs.readFileSync(path.join(__dirname, '../version.txt'), 'utf8') || '';
 
 const COMMIT_HASH = fs.readFileSync(path.join(__dirname, '../commit.txt'), 'utf8') || '';
-const { frontendBuildMetadata } = require('./frontendBuildVersion');
+const { frontendBuildMetadata } = require('../pacs-ai/build/frontendBuildVersion');
 
 //
 dotenv.config();

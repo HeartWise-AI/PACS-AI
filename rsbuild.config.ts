@@ -4,7 +4,7 @@ import { pluginNodePolyfill } from '@rsbuild/plugin-node-polyfill';
 import path from 'path';
 import writePluginImportsFile from './platform/app/.webpack/writePluginImportsFile';
 import fs from 'fs';
-const { frontendBuildMetadata } = require('./.webpack/frontendBuildVersion');
+const { frontendBuildMetadata } = require('./pacs-ai/build/frontendBuildVersion');
 
 const SRC_DIR = path.resolve(__dirname, './platform/app/src');
 const DIST_DIR = path.resolve(__dirname, './platform/app/dist');

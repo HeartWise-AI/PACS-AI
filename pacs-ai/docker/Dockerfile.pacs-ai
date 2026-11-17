@@ -87,6 +87,7 @@ ENV PORT=${PORT}
 RUN rm /etc/nginx/conf.d/default.conf
 USER nginx
 COPY --chown=nginx:nginx .docker/Viewer-v3.x /usr/src
+COPY --chown=nginx:nginx pacs-ai/docker/nginx/ /usr/src/
 RUN chmod 777 /usr/src/entrypoint.sh
 COPY --from=builder /usr/src/app/platform/app/dist /usr/share/nginx/html${PUBLIC_URL}
 # Copy paths that are renamed/redirected generally
