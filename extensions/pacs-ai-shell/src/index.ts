@@ -6,6 +6,8 @@ import './styles/pacs-ai-shell.css';
 
 import { id } from './id';
 import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
+import getLayoutTemplateModule from './layout/getLayoutTemplateModule';
+import { replaceDefaultViewerLayout } from './layout/replaceDefaultViewerLayout';
 import PacsAiShellProviders from './providers/PacsAiShellProviders';
 import { getPacsAiRoutes } from './routes/pacsAiRoutes';
 
@@ -17,15 +19,33 @@ export const PACS_AI_SHELL_PROVIDER = 'pacsAiShell';
  * routes.customRoutes, the work list, top navigation, the viewer layout
  * template and the viewer tour gating. Registered in
  * platform/app/pluginConfig.json after @pacs-ai/extension-core (its
- * providers wrap ours).
+ * providers wrap ours) and after @ohif/extension-default (its layout
+ * template is replaced in preRegistration).
  */
 const pacsAiShellExtension = {
   id,
 
-  preRegistration({ serviceProvidersManager }) {
+  preRegistration({
+    servicesManager,
+    serviceProvidersManager,
+    extensionManager,
+    commandsManager,
+    hotkeysManager,
+  }) {
     stopRouteErrorNotifications();
     serviceProvidersManager.registerProvider(PACS_AI_SHELL_PROVIDER, PacsAiShellProviders);
+
+    // Until modes/pacs-ai exists (P2.6), the stock modes render our layout.
+    const [viewerLayout] = getLayoutTemplateModule({
+      servicesManager,
+      extensionManager,
+      commandsManager,
+      hotkeysManager,
+    });
+    replaceDefaultViewerLayout(extensionManager, viewerLayout.component);
   },
+
+  getLayoutTemplateModule,
 
   getCustomizationModule() {
     return [

@@ -1,27 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { LoadingIndicatorProgress } from '@ohif/ui';
+
+import { InvestigationalUseDialog } from '@ohif/ui-next';
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
-import TopNavigation from '@pacs-ai/extension-shell/src/components/TopNavigation';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
-import { useTranslation } from 'react-i18next';
-import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
-import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
-import { markTourShown, shouldShowTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
-import { Error } from '@pacs-ai/extension-core/src/api/dto';
-import {
-  Onboarding,
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-  useImageViewer,
-} from '@ohif/ui-next';
-import { ViewerModelResultsProvider } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider'; // NOTE: This is a PACS changes
-import useResizablePanels from './ResizablePanelsHook'; // NOTE: This is a PACS changes
-const resizableHandleClassName = 'mt-[1px] bg-white/10'; // NOTE: This is a PACS changes
+import { Onboarding, ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@ohif/ui-next';
+import useResizablePanels from './ResizablePanelsHook';
+
+const resizableHandleClassName = 'mt-[1px] bg-black';
 
 function ViewerLayout({
   // From Extension Module Params
@@ -42,10 +30,6 @@ function ViewerLayout({
   rightPanelMinimumExpandedWidth,
 }: withAppTypes): React.FunctionComponent {
   const [appConfig] = useAppConfig();
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const tenantId = localStorage.getItem('tenantId') || ''; // NOTE: This is a PACS changes
-  const { StudyInstanceUIDs = [] } = useImageViewer() || {}; // NOTE: This is a PACS changes
 
   const { panelService, hangingProtocolService, customizationService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
@@ -59,10 +43,6 @@ function ViewerLayout({
   const [hasLeftPanels, setHasLeftPanels] = useState(hasPanels('left'));
   const [leftPanelClosedState, setLeftPanelClosed] = useState(leftPanelClosed);
   const [rightPanelClosedState, setRightPanelClosed] = useState(rightPanelClosed);
-  // Set page title
-  useEffect(() => {
-    document.title = 'Viewer - PACS AI';
-  }, []);
 
   const [
     leftPanelProps,
@@ -137,27 +117,6 @@ function ViewerLayout({
     };
   }, [hangingProtocolService]);
 
-  useEffect(() => {
-    // NOTE: This is a PACS changes (models for the viewer, read with useAvailableModels)
-    const fetchInferenceAvailableModels = async () => {
-      try {
-        await pacsAiModelsService.loadAvailableModels();
-      } catch (error) {
-        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-          showAlert(error.message, 'error');
-
-          setTimeout(() => {
-            logoutUser(navigate, tenantId);
-          }, 3000);
-        }
-
-        console.error('Error fetching available inference models:', error);
-      }
-    };
-
-    fetchInferenceAvailableModels();
-  }, []);
-
   const getViewportComponentData = viewportComponent => {
     const { entry } = getComponent(viewportComponent.namespace);
 
@@ -191,99 +150,84 @@ function ViewerLayout({
   const viewportComponents = viewports.map(getViewportComponentData);
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#151815]">
-      <TopNavigation title="Viewer" />
-      <>
-        {/* NOTE: This is a PACS changes */}
-        <ViewerModelResultsProvider
-          studyInstanceUID={StudyInstanceUIDs[0] ?? null}
-          servicesManager={servicesManager}
-          commandsManager={commandsManager}
-          appConfig={appConfig}
-        >
-          <main className="flex min-h-0 grow flex-col overflow-hidden px-2 pb-2 sm:px-4 sm:pb-4">
-            <ViewerHeader
-              hotkeysManager={hotkeysManager}
-              extensionManager={extensionManager}
-              servicesManager={servicesManager}
-              appConfig={appConfig}
-            />
-            {/* NOTE: This is a PACS changes */}
-            <div className="relative flex min-h-0 w-full grow flex-row flex-nowrap items-stretch gap-2 overflow-hidden rounded-lg bg-transparent">
-              <React.Fragment>
-                {showLoadingIndicator && (
-                  <LoadingIndicatorProgress className="h-full w-full bg-white bg-opacity-[5%]" /> // NOTE: This is a PACS changes
-                )}
-                <ResizablePanelGroup {...resizablePanelGroupProps}>
-                  {/* LEFT SIDEPANELS */}
-                  {hasLeftPanels ? (
-                    <>
-                      <ResizablePanel {...resizableLeftPanelProps}>
-                        <SidePanelWithServices
-                          side="left"
-                          isExpanded={!leftPanelClosedState}
-                          servicesManager={servicesManager}
-                          {...leftPanelProps}
-                        />
-                      </ResizablePanel>
-                      <ResizableHandle
-                        onDragging={onHandleDragging}
-                        disabled={!leftPanelResizable}
-                        className={resizableHandleClassName}
-                      />
-                    </>
-                  ) : null}
-                  {/* TOOLBAR + GRID */}
-                  <ResizablePanel {...resizableViewportGridPanelProps}>
-                    <div className="flex h-full flex-1 flex-col">
-                      {/* NOTE: This is a PACS changes */}
-                      <div
-                        className="relative flex h-full flex-1 items-center justify-center overflow-hidden rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] backdrop-blur-lg"
-                        onMouseEnter={handleMouseEnter}
-                      >
-                        <ViewportGridComp
-                          servicesManager={servicesManager}
-                          viewportComponents={viewportComponents}
-                          commandsManager={commandsManager}
-                        />
-                      </div>
-                    </div>
-                  </ResizablePanel>
-                  {hasRightPanels ? (
-                    <>
-                      <ResizableHandle
-                        onDragging={onHandleDragging}
-                        disabled={!rightPanelResizable}
-                        className={resizableHandleClassName}
-                      />
-                      <ResizablePanel {...resizableRightPanelProps}>
-                        <SidePanelWithServices
-                          side="right"
-                          isExpanded={!rightPanelClosedState}
-                          servicesManager={servicesManager}
-                          {...rightPanelProps}
-                        />
-                      </ResizablePanel>
-                    </>
-                  ) : null}
-                </ResizablePanelGroup>
-              </React.Fragment>
-            </div>
-          </main>
-        </ViewerModelResultsProvider>
-      </>
-      <Onboarding
-        tours={customizationService.getCustomization('ohif.tours')}
-        shouldShowTour={shouldShowTour}
-        onTourShown={markTourShown}
+    <div>
+      <ViewerHeader
+        hotkeysManager={hotkeysManager}
+        extensionManager={extensionManager}
+        servicesManager={servicesManager}
+        appConfig={appConfig}
       />
+      <div
+        className="relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden bg-black"
+        style={{ height: 'calc(100vh - 52px' }}
+      >
+        <React.Fragment>
+          {showLoadingIndicator && <LoadingIndicatorProgress className="h-full w-full bg-black" />}
+          <ResizablePanelGroup {...resizablePanelGroupProps}>
+            {/* LEFT SIDEPANELS */}
+            {hasLeftPanels ? (
+              <>
+                <ResizablePanel {...resizableLeftPanelProps}>
+                  <SidePanelWithServices
+                    side="left"
+                    isExpanded={!leftPanelClosedState}
+                    servicesManager={servicesManager}
+                    {...leftPanelProps}
+                  />
+                </ResizablePanel>
+                <ResizableHandle
+                  onDragging={onHandleDragging}
+                  disabled={!leftPanelResizable}
+                  className={resizableHandleClassName}
+                />
+              </>
+            ) : null}
+            {/* TOOLBAR + GRID */}
+            <ResizablePanel {...resizableViewportGridPanelProps}>
+              <div className="flex h-full flex-1 flex-col">
+                <div
+                  className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black"
+                  onMouseEnter={handleMouseEnter}
+                >
+                  <ViewportGridComp
+                    servicesManager={servicesManager}
+                    viewportComponents={viewportComponents}
+                    commandsManager={commandsManager}
+                  />
+                </div>
+              </div>
+            </ResizablePanel>
+            {hasRightPanels ? (
+              <>
+                <ResizableHandle
+                  onDragging={onHandleDragging}
+                  disabled={!rightPanelResizable}
+                  className={resizableHandleClassName}
+                />
+                <ResizablePanel {...resizableRightPanelProps}>
+                  <SidePanelWithServices
+                    side="right"
+                    isExpanded={!rightPanelClosedState}
+                    servicesManager={servicesManager}
+                    {...rightPanelProps}
+                  />
+                </ResizablePanel>
+              </>
+            ) : null}
+          </ResizablePanelGroup>
+        </React.Fragment>
+      </div>
+      <Onboarding tours={customizationService.getCustomization('ohif.tours')} />
+      <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} />
     </div>
   );
 }
 
 ViewerLayout.propTypes = {
   // From extension module params
-  extensionManager: PropTypes.shape({ getModuleEntry: PropTypes.func.isRequired }).isRequired,
+  extensionManager: PropTypes.shape({
+    getModuleEntry: PropTypes.func.isRequired,
+  }).isRequired,
   commandsManager: PropTypes.instanceOf(CommandsManager),
   servicesManager: PropTypes.object.isRequired,
   // From modes
