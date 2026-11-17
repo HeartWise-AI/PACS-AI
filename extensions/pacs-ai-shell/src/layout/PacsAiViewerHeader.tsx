@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 
 import AIModelButton from '@pacs-ai/ui/src/legacy/AIModelButton';
-import ChatButton from '@pacs-ai/ui/src/legacy/ChatButton/ChatButton';
 import { IconPresentationProvider, ToolButton } from '@ohif/ui-next';
 import { useSystem } from '@ohif/core';
 import { Toolbar, usePatientInfo } from '@ohif/extension-default';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels';
+
+/**
+ * Toolbar section of the chat button, filled by @pacs-ai/extension-chat on
+ * every mode entry (its CHAT_BUTTON_SECTION; the shell does not import the
+ * chat package).
+ */
+const CHAT_BUTTON_SECTION = 'pacsAiChat';
 
 /**
  * The viewer header bar: the mode's primary toolbar, the run-model menu and
@@ -52,7 +58,7 @@ function PacsAiViewerHeader() {
                   loading={fetchingAvailableModels}
                 />
                 <div className="ml-2">
-                  <ChatButton servicesManager={servicesManager} />
+                  <Toolbar buttonSection={CHAT_BUTTON_SECTION} />
                 </div>
               </div>
             </div>

@@ -40,7 +40,7 @@ import type {
 import {
   ChatCitationHostContext,
   type ChatCitationHost,
-} from '@pacs-ai/ui/src/legacy/ChatBox/citations/ChatCitationHost';
+} from '@pacs-ai/extension-chat/citations';
 import {
   createModelExecutionResultClient,
   type ModelExecutionResultClient,
