@@ -8,11 +8,15 @@ jest.mock('@ohif/ui-next', () => ({
   TooltipContent: ({ children }) => children,
 }));
 
+// jsdom drops CSS gradients from inline styles, so the theme token is replaced
+// by a plain colour to check that the button background comes from it.
+jest.mock('@pacs-ai/theme', () => ({ primaryGradient: 'rgb(200, 244, 105)' }));
+
 describe('Button', () => {
   it('renders the PACS-AI gradient primary button', () => {
     render(<Button onClick={() => {}}>Save</Button>);
     const button = screen.getByRole('button', { name: 'Save' });
-    expect(button.getAttribute('style')).toContain('linear-gradient(98.05deg');
+    expect(button.style.background).toBe('rgb(200, 244, 105)');
     expect(button.className).toContain('bg-gray-300');
     expect(button.className).toContain('text-black');
     expect(button.className).toContain('h-[32px]');
