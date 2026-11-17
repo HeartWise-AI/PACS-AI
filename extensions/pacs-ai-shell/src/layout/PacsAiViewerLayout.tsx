@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HangingProtocolService } from '@ohif/core';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle, useImageViewer } from '@ohif/ui-next';
 import { useAppConfig } from '@state';
-import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
-import { Error } from '@pacs-ai/extension-core/src/api/dto';
 // Moves to @pacs-ai/extension-inference in P2.4.
 import { ViewerModelResultsProvider } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 import TopNavigation from '../components/TopNavigation';
+import { AlertContext } from '../alerts';
+import { loadViewerModels } from './loadViewerModels';
 import ViewerTour from '../tour/ViewerTour';
 import PacsAiViewerHeader from './PacsAiViewerHeader';
 import { SidePanelWithServices, useResizablePanels } from './upstreamLayoutPieces';
@@ -44,6 +44,7 @@ function PacsAiViewerLayout({
   const [appConfig] = useAppConfig();
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
+  const showAlert = useContext(AlertContext);
   const { StudyInstanceUIDs = [] } = useImageViewer() || {};
 
   const { panelService, hangingProtocolService, customizationService } = servicesManager.services;
@@ -137,24 +138,9 @@ function PacsAiViewerLayout({
   }, [hangingProtocolService]);
 
   useEffect(() => {
-    // Models for the viewer, read with useAvailableModels
-    const fetchInferenceAvailableModels = async () => {
-      try {
-        await pacsAiModelsService.loadAvailableModels();
-      } catch (error) {
-        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
-          showAlert(error.message, 'error');
-
-          setTimeout(() => {
-            logoutUser(navigate, tenantId);
-          }, 3000);
-        }
-
-        console.error('Error fetching available inference models:', error);
-      }
-    };
-
-    fetchInferenceAvailableModels();
+    loadViewerModels({ showAlert, logout: () => logoutUser(navigate, tenantId) });
+    // Once per layout mount, as before.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getViewportComponentData = viewportComponent => {
