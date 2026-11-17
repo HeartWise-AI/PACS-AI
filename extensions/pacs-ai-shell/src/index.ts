@@ -1,3 +1,9 @@
+// The work list's date range picker (react-dates) and our page styles. These
+// were imported by platform/app/src/index.js and App.css before P2.3.
+import 'react-dates/initialize';
+import 'react-dates/lib/css/_datepicker.css';
+import './styles/pacs-ai-shell.css';
+
 import { id } from './id';
 import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
 import { getPacsAiRoutes } from './routes/pacsAiRoutes';

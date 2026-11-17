@@ -8,7 +8,7 @@ import moment from 'moment';
 import { sortBy } from 'lodash';
 import { Button } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
-import filtersMeta from '@ohif/app/src/routes/WorkList/filtersMeta.js';
+import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { summarizeRetrieveJobs } from '@ohif/app/src/components/inference/studyRefresh/retrieveJobs';
 import { rememberStudySourceModality } from '@ohif/app/src/components/inference/studyRefresh/sourceModality';
@@ -171,7 +171,7 @@ function WorkList() {
       ? restoredFilters.modalitiesInStudy.split('\\')
       : [];
     setSelectedModalities(
-      filtersMeta[4].inputProps.options.filter(option => restoredModalities.includes(option.value))
+      studyModalityFilterOptions.filter(option => restoredModalities.includes(option.value))
     );
 
     if (restoredFilters.modalityId) {
@@ -937,7 +937,7 @@ function WorkList() {
                 isMulti
                 placeholder={t('Modality')}
                 value={selectedModalities}
-                options={filtersMeta[4].inputProps.options}
+                options={studyModalityFilterOptions}
                 onChange={handleModalitiesChange}
                 styles={selectCustomStyles}
                 className="w-full bg-transparent md:w-[180px]"
