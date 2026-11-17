@@ -67,6 +67,10 @@
       "version": "3.0.0"
     },
     {
+      "packageName": "@pacs-ai/extension-core",
+      "version": "1.0.0"
+    },
+    {
       "packageName": "@pacs-ai/theme",
       "version": "1.0.0"
     },
