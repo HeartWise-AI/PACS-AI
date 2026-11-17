@@ -7,6 +7,7 @@ jest.mock('./providers/PacsAiShellProviders', () => function MockShellProviders(
   return null;
 });
 jest.mock('./layout/PacsAiViewerLayout', () => jest.fn(() => null));
+jest.mock('@ohif/ui-next', () => ({ ErrorBoundary: () => null }));
 jest.mock('./errors/routeErrorNotifications', () => ({
   stopRouteErrorNotifications: jest.fn(),
 }));
@@ -42,8 +43,10 @@ describe('@pacs-ai/extension-shell', () => {
       expect.any(Function)
     );
 
-    (defaultEntry.component as any)({ viewports: [] });
-    expect(PacsAiViewerLayout).toHaveBeenCalledWith(
+    const element = (defaultEntry.component as any)({ viewports: [] });
+    expect(element.props.context).toBe('Viewer layout');
+    expect(element.props.children.type).toBe(PacsAiViewerLayout);
+    expect(element.props.children.props).toEqual(
       expect.objectContaining({
         servicesManager: managers.servicesManager,
         extensionManager: managers.extensionManager,
