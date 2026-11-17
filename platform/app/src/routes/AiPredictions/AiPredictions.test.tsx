@@ -417,6 +417,8 @@ describe('AI Predictions page', () => {
               startedAt: null,
               completedAt: null,
               runCreatedAt: '2026-08-14T09:00:00Z',
+              // Touched by reconciliation after a restart: not activity.
+              updatedAt: '2026-11-16T22:17:00Z',
             }),
           ],
         }),
@@ -445,6 +447,10 @@ describe('AI Predictions page', () => {
       'No result. It never ran.'
     );
     expect(within(cathEF).queryByRole('button', { name: 'Cancel' })).toBeNull();
+    const timeOf = (value: string) =>
+      new Date(value).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    expect(cathEF.textContent).toContain(timeOf('2026-08-14T09:00:00Z'));
+    expect(cathEF.textContent).not.toContain(timeOf('2026-11-16T22:17:00Z'));
     fireEvent.click(within(cathEF).getByRole('button', { name: 'Close' }));
     const confirm = within(cathEF).getByRole('group', { name: 'Confirm closing' });
     expect(confirm.textContent).toContain(
