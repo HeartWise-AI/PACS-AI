@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@ohif/ui';
+import { Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
 
 type RemoveIngestionJobModalProps = {

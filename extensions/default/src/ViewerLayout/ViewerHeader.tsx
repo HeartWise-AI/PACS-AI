@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { AIModelButton } from '@ohif/ui';
+import AIModelButton from '@pacs-ai/ui/src/legacy/AIModelButton';
 import { AvailableModelsContext } from '../ViewerLayout/index';
 import { Button, Header, Icons, useModal } from '@ohif/ui-next';
 import { useSystem } from '@ohif/core';
@@ -10,7 +10,7 @@ import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
-import ChatButton from '@ohif/ui/src/components/ChatButton/ChatButton';
+import ChatButton from '@pacs-ai/ui/src/legacy/ChatButton/ChatButton';
 import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { Types } from '@ohif/core';

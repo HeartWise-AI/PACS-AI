@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@ohif/ui-next';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
 import type { ModalityFormState } from '../../types';
 

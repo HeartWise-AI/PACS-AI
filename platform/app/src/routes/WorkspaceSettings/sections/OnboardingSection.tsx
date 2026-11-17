@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@ohif/ui';
+import { Typography } from '@pacs-ai/ui';
 import type { UseTenantOnboardingResult } from '../hooks/useTenantOnboarding';
 import OnboardingToggle from '../onboarding/components/OnboardingToggle';
 

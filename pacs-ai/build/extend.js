@@ -19,6 +19,13 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 const APP_DIR = path.join(REPO_ROOT, 'platform/app');
 const PUBLIC_DIR = path.join(APP_DIR, 'public');
 const PACS_AI_DIR = path.resolve(__dirname, '..');
+// Files that replace upstream ones at the same URL (favicons). OHIF copies an
+// extension's public/ folder into the build (writePluginImportsFile.js).
+const THEME_PUBLIC_DIR = path.join(REPO_ROOT, 'extensions/pacs-ai-theme/public');
+const isThemePublicPattern = pattern =>
+  pattern &&
+  typeof pattern.from === 'string' &&
+  /[\\/]@pacs-ai[\\/]theme[\\/]public[\\/]?$/.test(pattern.from);
 
 /** Build-time values the app reads as process.env.* (see webpack DefinePlugin). */
 function pacsAiDefineValues() {
@@ -88,6 +95,13 @@ function extendWebpackPwa(config) {
         // The one not from webpack.base.js is upstream's `new Dotenv()`.
         return [baseDefinePlugins.has(plugin) ? plugin : createDotenvPlugin()];
       case 'CopyPlugin': {
+        // Our favicons have the same names as upstream's in platform/app/public.
+        // CopyPlugin keeps whichever copy finishes first unless a pattern is
+        // forced; a higher priority is written later, so ours always win.
+        plugin.patterns.filter(isThemePublicPattern).forEach(p => {
+          p.force = true;
+          p.priority = 1;
+        });
         const ours = pacsAiAppConfigPath();
         if (ours) {
           plugin.patterns
@@ -155,6 +169,12 @@ function extendRsbuild(config) {
         p.from = ours;
       });
   }
+  copy.push({
+    from: THEME_PUBLIC_DIR,
+    to: '.',
+    force: true,
+    priority: 1,
+  });
   copy.push({
     from: path.join(REPO_ROOT, 'version.json'),
     to: 'version.json',

@@ -127,7 +127,6 @@ export * from './AllInOneMenu';
 export { default as LineChart } from './LineChart';
 export { default as InvestigationalUseDialog } from './InvestigationalUseDialog';
 export { default as LabellingFlow } from './Labelling';
-export { default as AIModelButton } from './AIModelButton'; // NOTE: This is a PACS changes
 
 // Segmentation Context Exports
 export { useSegmentationTableContext, useSegmentationExpanded, useSegmentStatistics };
@@ -270,5 +269,5 @@ export {
   ProgressLoadingBar,
   ViewportDialog,
   CinePlayer,
-  LayoutSelector,
+  LayoutSelector
 };

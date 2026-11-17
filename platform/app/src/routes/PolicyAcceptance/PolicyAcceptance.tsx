@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Button, Logo, Typography } from '@ohif/ui';
+import { Button, Logo, Typography } from '@pacs-ai/ui';
 import { AlertContext } from '../../AlertProvider';
 import { Error } from '../../api/dto';
 import type { ErrorAPIResponse } from '../../api/dto';
