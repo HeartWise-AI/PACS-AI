@@ -10,7 +10,7 @@ import { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
 import { GetPublicTenantByIDResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import { isTenantNotFoundError } from '@pacs-ai/extension-core/src/api/tenantLookupAPIError';
 import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import loginBG from '../../assets/pacs/bg/login-bg.png';
 import chevronLeft from '../../assets/pacs/icons/chevron-left-gradient.png';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';

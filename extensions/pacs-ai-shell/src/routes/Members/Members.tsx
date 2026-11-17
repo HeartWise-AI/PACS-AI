@@ -9,7 +9,7 @@ import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import { GetTenantUserEmailInvitesResponse, UserResponse, UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import Modal from '../../components/Modal';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import chevronDown from '../../assets/pacs/icons/chevron-down.png';
 import chevronLeft from '../../assets/pacs/icons/chevron-left.png';

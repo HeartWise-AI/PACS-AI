@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../../../alerts';
 import copyIcon from '../../../../assets/pacs/icons/copy-gradient.png';
 
 type CopyToClipboardButtonProps = {

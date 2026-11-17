@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../../alerts';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { EMPTY_MODALITY_FORM } from '../constants';
 import type { DICOMModalities, ModalityFormState } from '../types';

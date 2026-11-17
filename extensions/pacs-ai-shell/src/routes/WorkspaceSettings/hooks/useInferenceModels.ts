@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../../alerts';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,

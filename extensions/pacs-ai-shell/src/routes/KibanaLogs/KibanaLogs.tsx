@@ -10,7 +10,7 @@ import Table from '../../components/Table';
 import { LogsType } from '@pacs-ai/extension-core/src/api/ecsDTO';
 import ecsRepository from '@pacs-ai/extension-core/src/api/ecsRepository';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import chevronDownIcon from '../../assets/pacs/icons/chevron-down.png';
 import downloadIcon from '../../assets/pacs/icons/download-black.png';

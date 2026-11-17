@@ -7,7 +7,7 @@ import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../../alerts';
 
 /**
  * Apply placeholders to the consent link template

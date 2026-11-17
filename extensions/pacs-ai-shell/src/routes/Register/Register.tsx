@@ -7,7 +7,7 @@ import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { GetDoctorSpecialtiesResponse } from '@pacs-ai/extension-core/src/api/userDTO';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import loginBG from '../../assets/pacs/bg/login-bg.png';
 import chevronLeft from '../../assets/pacs/icons/chevron-left-gradient.png';
 import chevronDown from '../../assets/pacs/icons/chevron-down.png';

@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@pacs-ai/ui';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import type { ErrorAPIResponse } from '@pacs-ai/extension-core/src/api/dto';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';

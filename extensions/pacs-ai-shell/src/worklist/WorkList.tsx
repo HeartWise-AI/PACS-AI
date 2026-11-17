@@ -15,7 +15,7 @@ import { rememberStudySourceModality } from '@ohif/app/src/components/inference/
 import Modal from '../components/Modal';
 import { JobState } from '@pacs-ai/extension-core/src/api/orthancDTO';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../alerts';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import circularLoading from '../assets/pacs/icons/circular-loading.png';
 import closeInactive from '@ohif/app/src/assets/pacs/icons/close-inactive.png';

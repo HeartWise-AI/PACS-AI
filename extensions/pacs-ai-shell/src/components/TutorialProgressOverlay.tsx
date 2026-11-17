@@ -27,7 +27,7 @@ import arrowShrink from '../assets/pacs/icons/arrow-shrink.png';
 import checkTick from '../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from '../assets/pacs/bg/tutorial-progress-header-bg.png';
 import { Typography } from '@pacs-ai/ui';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../alerts';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import {

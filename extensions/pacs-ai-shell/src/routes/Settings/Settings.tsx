@@ -13,7 +13,7 @@ import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 import { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import { Error, Languages } from '@pacs-ai/extension-core/src/api/dto';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import Modal from '../../components/Modal';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';

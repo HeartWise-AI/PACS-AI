@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../../alerts';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import type { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';

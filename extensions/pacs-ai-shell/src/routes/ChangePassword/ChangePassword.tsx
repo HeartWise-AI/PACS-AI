@@ -5,7 +5,7 @@ import { Button, Typography } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import loginBG from '../../assets/pacs/bg/login-bg.png';
-import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { AlertContext } from '../../alerts';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { logoutUser, navigateAfterAuth } from '@pacs-ai/extension-core/src/service/userService';
 
