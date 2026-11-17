@@ -20,7 +20,7 @@ Plan: `docs/ohif-upgrade/PLAN.md`. One line per work package. States: todo, runn
 |---|---|---|---|
 | P1.4 | done | `integration/modular-3.11` @ c814f5ea1 | Tree identical to `origin/main` 374c64929 before the `UPSTREAM_REF` commit; merge-base with v3.13.14 = 974ef29aa. Needed `--allow-unrelated-histories` (add to the plan's command). |
 | P0.2 | done | this file | |
-| P0.1 | running | | acceptance suite |
+| P0.1 | done (draft PR) | #509 (`wp/P0.1-acceptance-suite`) | 17 specs in `tests/pacs-ai`, manual workflow. Live run 2026-11-17: 50 passed, 6 failed, 15 skipped. Findings: the action bar "Series:" label is never rendered; AI Predictions "Compare with latest" cannot load expired runs; reference stored results expired. Server frontend redeployed mid-run (`seg-d3be9026a`), so it is not on the baseline build. On that build the run-model request order differs, and the requests were held back. |
 | P1.1 | running | | formatting-only reverts |
 | P1.2 | running | | drift guard and ledger |
 | P1.3 | todo | | after P1.1 (touches config/Docker files) |
