@@ -32,5 +32,8 @@
     "prop-types": "15.8.1",
     "react-markdown": "8.0.7",
     "remark-gfm": "3.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "13.4.0"
   }
 }
