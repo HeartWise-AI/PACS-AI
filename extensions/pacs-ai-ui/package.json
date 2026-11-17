@@ -1,0 +1,36 @@
+{
+  "name": "@pacs-ai/ui",
+  "version": "1.0.0",
+  "description": "PACS-AI UI primitives (Typography, Button, Logo, navigation, admin table) built on @ohif/ui-next",
+  "private": true,
+  "license": "MIT",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": [
+    "ohif-extension"
+  ],
+  "scripts": {
+    "test:unit": "jest --watchAll",
+    "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
+  },
+  "peerDependencies": {
+    "@ohif/app": "3.11.1",
+    "@ohif/core": "3.11.1",
+    "@ohif/i18n": "3.11.1",
+    "@ohif/ui-next": "3.11.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "12.3.1",
+    "react-router-dom": "6.30.1"
+  },
+  "dependencies": {
+    "@pacs-ai/theme": "1.0.0",
+    "classnames": "2.5.1",
+    "html2canvas": "1.4.1",
+    "jspdf": "^3.0.1",
+    "prop-types": "15.8.1",
+    "react-markdown": "8.0.7",
+    "remark-gfm": "3.0.1"
+  }
+}

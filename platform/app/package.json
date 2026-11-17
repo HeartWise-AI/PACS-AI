@@ -75,6 +75,8 @@
     "@ohif/mode-ultrasound-pleura-bline": "3.11.1",
     "@ohif/ui": "3.11.1",
     "@ohif/ui-next": "3.11.1",
+    "@pacs-ai/theme": "1.0.0",
+    "@pacs-ai/ui": "1.0.0",
     "@svgr/webpack": "8.1.0",
     "@types/react": "18.3.23",
     "classnames": "2.5.1",
