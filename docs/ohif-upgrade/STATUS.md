@@ -8,11 +8,17 @@ Plan: `docs/ohif-upgrade/PLAN.md`. One line per work package. States: todo, runn
 |---|---|---|---|
 | D1 | Target | OHIF 3.13.14 (`e4cd86153`); still the newest stable 3.13 tag on 2026-11-17 | user |
 | D2 | Modularize before the upgrade | yes (phases 1–2 on 3.11.1) | plan default |
-| D3 | Stock features the fork dropped | flags off in `pacs-ai.js`; investigational-use dialog stays hidden (possible regulatory question, raised to the user once) | plan default, awaiting user |
+| D3 | Stock features the fork dropped | flags off in `pacs-ai.js`; investigational-use dialog stays hidden (raised to the user 2026-11-17; the user delegated the decision) | plan default |
 | D4 | Work list | ours, as a custom route | plan default |
 | D5 | Upstream theme dialog | hidden | plan default |
 | D6 | `useNextViewports` | off | plan default |
 | D7 | Orchestrator | **Claude Opus 5.5** from 2026-11-17 (user: "start it with opus"); the plan was written with Fable 5.2, which is rate-limited until 2026-11-22 | user |
+
+## Authorization (user, 2026-11-17)
+
+"Nobody's using PACS-AI on their current computer, so you can hack it, you can rebuild the Docker images with the new ones. You can do all the tests with Playwright. I give you permission. The code base is yours."
+
+This relaxes R1 and R2 for this migration: the orchestrator may build and deploy migration builds of the viewer to the MHI server, run the Playwright suites there, and merge integration work when its gates pass. Still kept: deploy at idle moments, check login after every deploy, keep the previous image for rollback, never touch the model gateway, study-service or ingestion jobs as part of the migration (automatic AI runs on new exams continue), no patient data in the repository.
 
 ## Work packages
 
