@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { LoadingIndicatorProgress } from '@ohif/ui';
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
-import TopNavigation from '@ohif/app/src/components/TopNavigation';
+import TopNavigation from '@pacs-ai/extension-shell/src/components/TopNavigation';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';

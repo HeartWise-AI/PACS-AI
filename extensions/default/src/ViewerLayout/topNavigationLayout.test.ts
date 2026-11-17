@@ -5,7 +5,7 @@ describe('viewer top-navigation layout', () => {
   const source = readFileSync(resolve(__dirname, 'index.tsx'), 'utf8');
 
   test('uses the shared top bar without a dynamic application rail', () => {
-    expect(source).toContain("import TopNavigation from '@ohif/app/src/components/TopNavigation'");
+    expect(source).toContain("import TopNavigation from '@pacs-ai/extension-shell/src/components/TopNavigation'");
     expect(source).toContain('<TopNavigation title="Viewer" />');
     expect(source).not.toMatch(/components\/(Sidebar|HeaderPanel)/);
     expect(source).not.toContain('InvestigationalUseDialog');

@@ -36,7 +36,7 @@ import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 // NOTE: This is a PACS changes (tour overlay; needs the router; moves to pacs-ai-shell in P2.3)
-import TutorialProgressOverlay from './components/TutorialProgressOverlay';
+import TutorialProgressOverlay from '@pacs-ai/extension-shell/src/components/TutorialProgressOverlay';
 import './App.css';
 
 let commandsManager: CommandsManager,

@@ -1,1 +1,1 @@
-export { default } from './WorkList';
+export { default } from '@pacs-ai/extension-shell/src/worklist/WorkList';

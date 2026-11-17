@@ -1,0 +1,443 @@
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DateRangePicker } from 'react-dates';
+import { useNavigate } from 'react-router';
+import moment from 'moment';
+import { Button } from '@pacs-ai/ui';
+import { Input } from '@ohif/ui-next';
+import TopNavigation from '../../components/TopNavigation';
+import Table from '../../components/Table';
+import { LogsType } from '@pacs-ai/extension-core/src/api/ecsDTO';
+import ecsRepository from '@pacs-ai/extension-core/src/api/ecsRepository';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
+import chevronDownIcon from '../../assets/pacs/icons/chevron-down.png';
+import downloadIcon from '../../assets/pacs/icons/download-black.png';
+import closeInactive from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
+import chevronLefttIcon from '../../assets/pacs/icons/chevron-left.png';
+import chevronRightIcon from '../../assets/pacs/icons/chevron-right.png';
+import searchIcon from '../../assets/pacs/icons/search-black.png';
+
+const KibanaLogsPage = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [selectedIndexType, setSelectedIndexType] = useState<LogsType>(LogsType.LOGINS);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [columnHeaders, setColumnHeaders] = useState([]);
+  const [columnData, setColumnData] = useState([]);
+  const [focusedInput, setFocusedInput] = useState(null);
+  const tenantId = localStorage.getItem('tenantId') || '';
+  const showAlert = useContext(AlertContext);
+  const [isLogsDataLoading, setIsLogsDataLoading] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const totalPages = Math.ceil(columnData.length / itemsPerPage);
+  const currentItems = columnData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  // set default date range
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  const startMoment = moment(thirtyDaysAgo);
+  const endMoment = moment(today);
+  const [startDate, setStartDate] = useState(startMoment);
+  const [endDate, setEndDate] = useState(endMoment);
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Admin Kibana Logs - PACS AI';
+  }, []);
+
+  useEffect(() => {
+    getECSLogs();
+  }, [ecsRepository]);
+
+  useEffect(() => {
+    if (columnData.length > 0) {
+      setColumnHeaders(
+        Object.keys(columnData[0]).map(column => ({
+          text: column.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+          value: column as keyof [],
+          align: 'left',
+        }))
+      );
+    }
+  }, [columnData]);
+
+  // Get ECS logs
+  const getECSLogs = async () => {
+    if (!startDate || !endDate) {
+      showAlert('Please select a start date and end date.', 'error');
+      return;
+    }
+
+    setIsLogsDataLoading(true);
+    try {
+      const response = await ecsRepository.GetECSLogs({
+        index: selectedIndexType,
+        query: searchQuery ? searchQuery : tenantId,
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+      });
+
+      // check and convert timestamps in the response data
+      const formattedData = response.data.map(item => {
+        // use a type guard to check if `timestamp` exists and is a number
+        if (
+          typeof item === 'object' &&
+          item !== null &&
+          'timestamp' in item &&
+          typeof item.timestamp === 'number'
+        ) {
+          const date = new Date(item.timestamp * 1000);
+
+          // format the date to "MM DD, YYYY HH:MM"
+          const formattedDate = date.toLocaleString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false, // use 24-hour format. Set to `true` for 12-hour format with AM/PM
+          });
+
+          // replace the epoch timestamp with the formatted date
+          return { ...item, timestamp: formattedDate };
+        }
+        return item;
+      });
+
+      // if the response is empty, set column data to empty
+      if (formattedData.length === 0) {
+        setColumnData([]);
+      } else {
+        // update the state with the formatted data
+        setColumnData(formattedData);
+      }
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
+    }
+
+    setIsLogsDataLoading(false);
+  };
+
+  /**
+   * Download ECS logs
+   */
+  const downloadLogs = async () => {
+    try {
+      const csvData = await ecsRepository.GetECSLogs({
+        index: selectedIndexType,
+        query: searchQuery ? searchQuery : tenantId,
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+        export: true,
+      });
+
+      // create a Blob from the CSV data
+      const blob = new Blob([csvData], { type: 'text/csv' });
+
+      // Generate a URL for the Blob
+      const url = window.URL.createObjectURL(blob);
+
+      // download time
+      const downloadTime = new Date().toISOString().replace(/[:.]/g, '-');
+
+      // create an anchor element and trigger the download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ecs-logs-${downloadTime}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Revoke the Object URL after some time to free up memory
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+
+      showAlert(error.message, 'error');
+    }
+  };
+
+  // Table pagination actions
+  const TablePagination = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(i);
+    }
+    return (
+      <div className="pagination flex items-center justify-center gap-1">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          className={`h-5 w-5 bg-transparent ${currentPage === 1 ? 'invisible' : 'visible'}`}
+        >
+          <img
+            src={chevronLefttIcon}
+            alt="Chevron left icon"
+          />
+        </button>
+        {pageNumbers.map(number => (
+          <button
+            key={number}
+            onClick={() => handlePageChange(number)}
+            className={`h-7 w-7 rounded-md ${
+              number === currentPage ? 'text-black' : 'text-white text-opacity-70'
+            }`}
+            style={{
+              background:
+                number === currentPage
+                  ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                  : 'rgba(204, 204, 204, 0.1)',
+            }}
+          >
+            {number}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          className={`h-5 w-5 bg-transparent ${
+            currentPage === totalPages ? 'invisible' : 'visible'
+          }`}
+        >
+          <img
+            src={chevronRightIcon}
+            alt="Chevron right icon"
+          />
+        </button>
+      </div>
+    );
+  };
+
+  /**
+   * Debounce search
+   */
+  const debounceSearch = useCallback(
+    debounce(() => {
+      const oldSelectedIndexType = selectedIndexType;
+      getECSLogs();
+      setSelectedIndexType(oldSelectedIndexType);
+    }, 1000),
+    [selectedIndexType]
+  );
+
+  // Handle query search field
+  const handleQueryFieldChange = event => {
+    setSearchQuery(event.target.value);
+
+    if (!event.target.value) {
+      debounceSearch();
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = page => {
+    setCurrentPage(page);
+  };
+
+  /**
+   * Format cell value
+   */
+  const formatCellValue = value => {
+    if (value === null || value === undefined) {
+      return '-';
+    }
+
+    if (React.isValidElement(value)) {
+      return value;
+    }
+
+    const valueType = typeof value;
+    if (valueType === 'string' || valueType === 'number' || valueType === 'boolean') {
+      return String(value);
+    }
+
+    if (valueType === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return '[Unserializable value]';
+      }
+    }
+
+    return String(value);
+  };
+
+  /**
+   * Handle select for date range filter
+   *
+   * @param startDate
+   * @param endDate
+   */
+  const handleDateRangeChange = ({ startDate, endDate }) => {
+    setStartDate(startDate);
+    setEndDate(endDate);
+  };
+  /**
+   * Clear date range
+   */
+  const handleClearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  /**
+   * Debounce function implementation
+   *
+   * @param func
+   * @param wait
+   * @returns
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  return (
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <TopNavigation title="Kibana Logs" />
+      <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
+          {/* filter container */}
+          <div className="flex w-full justify-between gap-2 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            <div className="flex w-[45%] items-center gap-2">
+              <Input
+                placeholder={t('Search for ...')}
+                id="PatientName"
+                className="w-full"
+                type="text"
+                onChange={handleQueryFieldChange}
+              />
+            </div>
+            <div className="pacs-date-range relative w-[25%] min-w-[220px]">
+              <DateRangePicker
+                startDate={startDate}
+                startDateId="FilterStartDate"
+                endDate={endDate}
+                endDateId="FilterEndDate"
+                onDatesChange={handleDateRangeChange}
+                focusedInput={focusedInput}
+                onFocusChange={focusedInput => {
+                  setFocusedInput(focusedInput);
+                }}
+                isOutsideRange={() => false}
+              />
+              {(startDate || endDate) && (
+                <button onClick={handleClearDates}>
+                  <img
+                    src={closeInactive}
+                    alt="Close icon"
+                    className="absolute right-[10px] top-1/2 w-4 -translate-y-1/2"
+                  />
+                </button>
+              )}
+            </div>
+
+            <div className="flex w-[30%] items-center gap-2">
+              {/* select index type */}
+              <div className="relative w-full">
+                <select
+                  id="SelectAuditType"
+                  value={selectedIndexType}
+                  className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                  onChange={e => setSelectedIndexType(e.target.value as LogsType)}
+                >
+                  {Object.values(LogsType).map(indexType => (
+                    <option
+                      key={indexType}
+                      value={indexType}
+                      className="!cursor-pointer !bg-[#323631] !py-2"
+                    >
+                      {indexType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <img
+                    src={chevronDownIcon}
+                    alt="Chevron down icon"
+                    className="w-5"
+                  />
+                </div>
+              </div>
+              <Button
+                disabled={false}
+                className="h-[51px] min-w-[51px] rounded-lg !px-0"
+                onClick={getECSLogs}
+              >
+                <img
+                  src={searchIcon}
+                  className="w-5"
+                  alt="Search icon"
+                />
+              </Button>
+              <Button
+                disabled={false}
+                className="h-[51px] min-w-[51px] rounded-lg !px-0"
+                onClick={downloadLogs}
+              >
+                <img
+                  src={downloadIcon}
+                  alt="download icon"
+                  className="w-5"
+                />
+              </Button>
+            </div>
+          </div>
+          {/* table container */}
+          <div className="my-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+            {isLogsDataLoading ? (
+              <div className="flex items-center justify-center p-5 text-center text-white">
+                <span className="text-lg font-normal text-opacity-70">
+                  {t('Searching for data')} ...
+                </span>
+              </div>
+            ) : (
+              <div>
+                <div>
+                  {columnData.length > 0 ? (
+                    <Table
+                      headers={columnHeaders}
+                      data={currentItems}
+                      className={'min-w-[170px]'}
+                    >
+                      {cell => {
+                        return formatCellValue(cell);
+                      }}
+                    </Table>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <span className="text-lg font-normal text-white text-opacity-70">
+                        {t('No data found')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {totalPages > 1 && <TablePagination />}
+              </div>
+            )}
+          </div>
+      </main>
+    </div>
+  );
+};
+
+export default KibanaLogsPage;
