@@ -1,3 +1,5 @@
+import UserAuthenticationService from '@ohif/core/src/services/UserAuthenticationService/UserAuthenticationService';
+import { updateAuthServiceAndCleanUrl } from '@ohif/app/src/routes/Mode/updateAuthServiceAndCleanUrl';
 import PacsAiSessionService, { pacsAiSessionService } from './PacsAiSessionService';
 
 describe('pacsAiSessionService', () => {
@@ -28,6 +30,37 @@ describe('pacsAiSessionService', () => {
     expect(getAuthorizationHeader()).toBeUndefined();
     localStorage.setItem('sessionToken', 'later-token');
     expect(getAuthorizationHeader()).toEqual({ Authorization: 'Bearer later-token' });
+  });
+
+  test('keeps the session token authoritative over a ?token= viewer URL', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const userAuthenticationService = new UserAuthenticationService();
+    pacsAiSessionService.connectUserAuthenticationService(userAuthenticationService);
+    localStorage.setItem('sessionToken', 'session-token');
+
+    // What OHIF's Mode route does for /viewer?StudyInstanceUIDs=...&token=url-token
+    updateAuthServiceAndCleanUrl('url-token', { search: '?token=url-token' }, userAuthenticationService);
+
+    expect(userAuthenticationService.getAuthorizationHeader()).toEqual({
+      Authorization: 'Bearer session-token',
+    });
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  test('passes the other implementations through and connects once', () => {
+    const userAuthenticationService = new UserAuthenticationService();
+    pacsAiSessionService.connectUserAuthenticationService(userAuthenticationService);
+    pacsAiSessionService.connectUserAuthenticationService(userAuthenticationService);
+    localStorage.setItem('sessionToken', 'token');
+
+    const getUser = jest.fn(() => ({ name: 'user' }));
+    userAuthenticationService.setServiceImplementation({ getUser });
+
+    expect(userAuthenticationService.getUser()).toEqual({ name: 'user' });
+    expect(userAuthenticationService.getAuthorizationHeader()).toEqual({
+      Authorization: 'Bearer token',
+    });
   });
 
   test('clears the session token', () => {

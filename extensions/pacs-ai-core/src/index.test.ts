@@ -27,14 +27,14 @@ function createManagers() {
 describe('@pacs-ai/extension-core preRegistration', () => {
   test('registers the services, the auth header and the providers', () => {
     const { servicesManager, serviceProvidersManager } = createManagers();
+    const { setServiceImplementation } = servicesManager.services
+      .userAuthenticationService as { setServiceImplementation: jest.Mock };
 
     pacsAiCoreExtension.preRegistration({ servicesManager, serviceProvidersManager } as never);
 
     expect(servicesManager.services.pacsAiSessionService).toBe(pacsAiSessionService);
     expect(servicesManager.services.pacsAiModelsService).toBe(pacsAiModelsService);
     expect(servicesManager.services.pacsAiStudyContextService).toBe(pacsAiStudyContextService);
-    const { setServiceImplementation } = servicesManager.services
-      .userAuthenticationService as { setServiceImplementation: jest.Mock };
     expect(setServiceImplementation).toHaveBeenCalledWith({
       getAuthorizationHeader: expect.any(Function),
     });
