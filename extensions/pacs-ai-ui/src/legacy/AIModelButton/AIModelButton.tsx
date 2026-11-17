@@ -1,28 +1,28 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Error } from '@ohif/app/src/api/dto';
-import { logoutUser } from '@ohif/app/src/service/userService';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import aiModelsIcon from '../../assets/icons/ai-models-white.png';
 import playerPlayIcon from '../../assets/icons/player-play-gradient.png';
 import helpInactive from '../../assets/icons/help-inactive.png';
-import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelHTMLResponse,
   PredictInferenceModelJSONResponse,
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
-} from '@ohif/app/src/api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
 import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
 import HTMLOutputModeModal from '@ohif/app/src/components/inference/HTMLOutputModeModal';
 import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputModeModal';
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
-import { AlertContext } from '@ohif/app/src/AlertProvider';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
 import { addSegmentationFromLabelmap } from '../../../../cornerstone/src/utils/addSegmentation';
 import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 import { viewerModelKey } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel';

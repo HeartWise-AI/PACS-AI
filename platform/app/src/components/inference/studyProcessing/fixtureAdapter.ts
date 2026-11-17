@@ -1,5 +1,5 @@
-import { studyProcessingSummaryFixtures } from './fixtures';
-import type { StudyProcessingSummary } from './types';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 const fixtureSummaries = Object.values(studyProcessingSummaryFixtures);
 

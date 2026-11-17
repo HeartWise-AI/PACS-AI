@@ -1,4 +1,4 @@
-import Api from '../../../pacsAPIAxios';
+import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
 import {
   buildModelExecutionResultPath,
   KNOWN_MODEL_EXECUTION_RESULT_ERROR_CODES,
@@ -7,8 +7,8 @@ import {
 import type {
   ProcessingRunExecutionResultDTO,
   ProcessingRunExecutionResultResponseDTO,
-} from './restDTO';
-import type { ModelExecutionResult, ModelExecutionResultFailure } from './types';
+} from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
+import type { ModelExecutionResult, ModelExecutionResultFailure } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 interface HTTPResponse<T> {
   data: T;

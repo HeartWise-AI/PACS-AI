@@ -9,7 +9,7 @@ import type {
   ModelExecutionResult,
   ModelExecutionResultFailure,
   ModelExecutionStatus,
-} from './types';
+} from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export interface ModelExecutionResultSelection {
   studyInstanceUID: string;

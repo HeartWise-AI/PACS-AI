@@ -1,4 +1,4 @@
-import type { ModelExecutionResult, ModelExecutionResultFailure } from './types';
+import type { ModelExecutionResult, ModelExecutionResultFailure } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { MODEL_EXECUTION_RESULT_ERROR_CODES } from './executionResultContract';
 
 const BASE_RESULT = {

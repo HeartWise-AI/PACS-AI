@@ -1,4 +1,4 @@
-import { InferenceModelLifecycle } from '../../api/inferenceDTO';
+import { InferenceModelLifecycle } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { DEFAULT_CONTAINER_STATUS_COLORS } from './constants';
 import { getLifecycleColor, resolveInferenceModelLifecycle } from './utils';
 

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { StudyProcessingRESTError } from './restRepository';
+import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
 import {
   studyProcessingRolloutTelemetry,
   type StudyProcessingRolloutTelemetry,
-} from './rolloutTelemetry';
-import { useStudyProcessing } from './StudyProcessingProvider';
+} from '@pacs-ai/extension-core/src/studyProcessing/rolloutTelemetry';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
 
 export interface UseVisibleStudyProcessingSnapshotOptions {

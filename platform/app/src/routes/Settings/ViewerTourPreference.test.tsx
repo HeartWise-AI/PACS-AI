@@ -3,7 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 
 const mockResetViewerTour = jest.fn();
 
-jest.mock('../../service/viewerTourService', () => ({
+jest.mock('@pacs-ai/extension-core/src/service/viewerTourService', () => ({
   resetViewerTour: (...args: unknown[]) => mockResetViewerTour(...args),
 }));
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { UserRole } from '../../api/userDTO';
+import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 import TopNavigation from './TopNavigation';
 
 const mockGetCurrentUser = jest.fn();
@@ -19,22 +19,22 @@ jest.mock('../../App', () => {
   return { FrontendVersionContext: React.createContext('frontend-test') };
 });
 
-jest.mock('../../api/userRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/userRepository', () => ({
   __esModule: true,
   default: { GetCurrentUser: (...args) => mockGetCurrentUser(...args) },
 }));
 
-jest.mock('../../api/tenantRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/tenantRepository', () => ({
   __esModule: true,
   default: { GetTenantInfo: (...args) => mockGetTenantInfo(...args) },
 }));
 
-jest.mock('../../api/repository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/repository', () => ({
   __esModule: true,
   default: { GetAPIInfo: (...args) => mockGetAPIInfo(...args) },
 }));
 
-jest.mock('../../service/userService', () => ({
+jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({
   logoutUser: (...args) => mockLogoutUser(...args),
 }));
 

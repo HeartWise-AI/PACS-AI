@@ -4,7 +4,7 @@ import type {
   InferenceModelDeploymentOperation,
   InferenceModelDeploymentStage,
   InferenceModelDeploymentStatus,
-} from '../../../api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 export const MODEL_DEPLOYMENT_TERMINAL_STATUSES: InferenceModelDeploymentStatus[] = [
   'COMPLETED',

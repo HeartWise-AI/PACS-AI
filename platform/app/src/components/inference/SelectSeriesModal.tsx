@@ -7,10 +7,10 @@ import checkIcon from './../../assets/pacs/icons/check-active.png';
 import informationIcon from './../../assets/pacs/icons/information-circle.png';
 import copyWhiteIcon from './../../assets/pacs/icons/copy-white.png';
 import { Input } from '@ohif/ui-next';
-import { useGlobalStateData } from '../../GlobalStateProvider';
-import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
-import { AlertContext } from '../../AlertProvider';
-import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { InferenceAvailableAdditionalMetadata } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { isInferenceSeriesEligible } from './isInferenceSeriesEligible';
 
 // Add interface for initialSeriesSelection

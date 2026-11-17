@@ -1,4 +1,4 @@
-import { UserRole } from '../../api/userDTO';
+import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 import {
   getStudiesDestination,
   getTopNavigationItems,

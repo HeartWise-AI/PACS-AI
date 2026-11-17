@@ -4,7 +4,7 @@ import {
   StudyProcessingProvider,
   useStudyProcessing,
   type StudyProcessingContextValue,
-} from './StudyProcessingProvider';
+} from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import { StudyProcessingStatus } from './StudyProcessingStatus';
 
 jest.mock('react-i18next', () => ({

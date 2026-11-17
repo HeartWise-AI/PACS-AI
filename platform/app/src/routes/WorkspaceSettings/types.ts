@@ -1,4 +1,4 @@
-import { GetInferenceModelResponse } from '../../api/inferenceDTO';
+import { GetInferenceModelResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 export interface DICOMModalities {
   id: string;

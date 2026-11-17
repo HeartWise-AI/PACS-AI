@@ -2,7 +2,7 @@ import type {
   StudyProcessingSSEConnection,
   StudyProcessingSSEConnectionStateListener,
 } from './sseConnection';
-import { StudyProcessingRESTError } from './restRepository';
+import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
 
 export interface CreateStudyProcessingSSERecoveryOptions {
   connection: StudyProcessingSSEConnection;

@@ -1,4 +1,4 @@
-import Api from '../../pacsAPIAxios';
+import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
 import type {
   PredictionExam,
   PredictionExecution,

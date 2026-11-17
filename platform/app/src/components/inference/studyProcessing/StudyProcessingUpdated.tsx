@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 
 // i18n can report a language that is not a valid BCP 47 tag (seen:
 // "en-US@POSIX"), which makes Intl and toLocaleString throw a RangeError.

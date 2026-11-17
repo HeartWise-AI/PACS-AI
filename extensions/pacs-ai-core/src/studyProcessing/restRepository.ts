@@ -1,4 +1,4 @@
-import Api from '../../../pacsAPIAxios';
+import Api from '../pacsAPIAxios';
 import {
   mapCreatedStudyProcessingRun,
   mapProcessingRun,

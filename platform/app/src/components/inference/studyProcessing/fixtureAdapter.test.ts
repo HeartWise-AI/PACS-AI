@@ -1,5 +1,5 @@
 import { createVisibleStudyProcessingFixtureSnapshot } from './fixtureAdapter';
-import { studyProcessingSummaryFixtures } from './fixtures';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 
 describe('study processing fixture adapter', () => {
   it('joins fixture states to visible worklist studies by Study Instance UID', () => {

@@ -1,8 +1,8 @@
 import type {
   GetInferenceIngestionJobsResponse,
   UpdateInferenceIngestionJobRequest,
-} from '../../api/inferenceDTO';
-import type { UserResponse } from '../../api/userDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import type { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 import { getIngestionJobTimingMinutes } from './ingestionJobTiming';
 
 /** A job notifies unless the gateway says it does not (older gateways: on). */

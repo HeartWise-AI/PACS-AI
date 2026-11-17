@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@pacs-ai/ui';
 import refreshIcon from '../../../assets/pacs/icons/refresh.png';
-import { GetInferenceAvailableModelsResponse } from '../../../api/inferenceDTO';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import type { DICOMModalities } from '../types';
 import type { UseIngestionJobsResult } from '../hooks/useIngestionJobs';
 import AddEditIngestionJobModal from '../ingestion-jobs/components/AddEditIngestionJobModal';

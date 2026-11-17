@@ -1,8 +1,8 @@
-import type { APIResponse } from '../../api/dto';
+import type { APIResponse } from '@pacs-ai/extension-core/src/api/dto';
 import type {
   ChangeTenantUserAccessRequest,
   ChangeTenantUserAccessResponse,
-} from '../../api/userDTO';
+} from '@pacs-ai/extension-core/src/api/userDTO';
 import type { MemberAccessAction } from './MemberAccessConfirmationDialog';
 
 export const ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS = 'ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS';

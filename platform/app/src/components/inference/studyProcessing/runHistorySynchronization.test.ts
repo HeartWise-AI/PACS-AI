@@ -1,9 +1,9 @@
-import { studyProcessingRunHistoryFixture, studyProcessingSummaryFixtures } from './fixtures';
+import { studyProcessingRunHistoryFixture, studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   createRunHistorySynchronizationCoordinator,
   getRunHistorySynchronizationTarget,
 } from './runHistorySynchronization';
-import type { RunHistoryTransportResponse } from './runHistoryTransport';
+import type { RunHistoryTransportResponse } from '@pacs-ai/extension-core/src/studyProcessing/runHistoryTransport';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

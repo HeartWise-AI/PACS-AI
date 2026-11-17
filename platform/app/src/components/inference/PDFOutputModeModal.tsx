@@ -5,7 +5,7 @@ import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelPDFResponse,
-} from '../../api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import AddModelFeedback from './AddModelFeedback';
 
 interface PDFOutputModeModalProps {

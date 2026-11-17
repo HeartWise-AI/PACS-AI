@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuthenticatedScope, getAuthenticatedScope } from '../../hooks/authenticatedScope';
-import userRepository from '../../../../api/userRepository';
-import { UserRole } from '../../../../api/userDTO';
-import type { InferenceGPUModel } from '../../../../api/inferenceDTO';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
+import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import type { InferenceGPUModel } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { useGPUInventory } from '../../hooks/useGPUInventory';
 import type { UseInferenceModelsResult } from '../../hooks/useInferenceModels';
 import ModelDeploymentProgressPanel from './ModelDeploymentProgressPanel';

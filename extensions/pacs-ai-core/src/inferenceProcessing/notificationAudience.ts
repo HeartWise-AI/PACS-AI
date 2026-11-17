@@ -1,5 +1,5 @@
-import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
-import type { ProcessingRunTrigger } from './studyProcessing/types';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
+import type { ProcessingRunTrigger } from '../studyProcessing/types';
 
 /** Runs started by an automatic ingestion job rather than by a person. */
 export function isAutomaticProcessingTrigger(

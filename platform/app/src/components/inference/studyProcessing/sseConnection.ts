@@ -3,7 +3,7 @@ import {
   StudyProcessingSSEError,
   type StreamStudyProcessingEventsOptions,
 } from './sseTransport';
-import type { RealtimeConnectionStatus } from './reducer';
+import type { RealtimeConnectionStatus } from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 
 export type StudyProcessingSSEStream = (
   options: StreamStudyProcessingEventsOptions

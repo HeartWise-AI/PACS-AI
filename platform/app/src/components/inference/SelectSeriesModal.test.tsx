@@ -1,11 +1,11 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import SelectSeriesModal from './SelectSeriesModal';
-import { useGlobalStateData } from '../../GlobalStateProvider';
-import { AlertContext } from '../../AlertProvider';
-import type { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import type { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
-jest.mock('../../GlobalStateProvider', () => ({ useGlobalStateData: jest.fn() }));
+jest.mock('@pacs-ai/extension-core/src/providers/GlobalStateProvider', () => ({ useGlobalStateData: jest.fn() }));
 jest.mock('@ohif/ui-next', () => ({ Input: 'input' }));
 jest.mock('react-dom', () => ({ createPortal: children => children }));
 

@@ -5,10 +5,10 @@ import InferenceProcessingProvider, {
   useInferenceProcessing,
 } from './InferenceProcessingProvider';
 import { NOTIFICATION_PREFERENCES_CHANGED_EVENT } from './notificationPreferences';
-import { studyProcessingSummaryFixtures } from './studyProcessing/fixtures';
-import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
-import type { StudyProcessingSummary } from './studyProcessing/types';
-import { useCandidateProcessingPoll } from '../../hooks/useCandidateProcessingPoll';
+import { studyProcessingSummaryFixtures } from '../studyProcessing/fixtures';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
+import type { StudyProcessingSummary } from '../studyProcessing/types';
+import { useCandidateProcessingPoll } from '../hooks/useCandidateProcessingPoll';
 
 const mockShow = jest.fn();
 const mockGetCurrentUser = jest.fn();
@@ -27,7 +27,7 @@ jest.mock('@ohif/ui-next', () => ({
   useNotification: () => ({ show: mockShow }),
 }));
 
-jest.mock('../../api/userRepository', () => ({
+jest.mock('../api/userRepository', () => ({
   __esModule: true,
   default: {
     GetCurrentUser: () => mockGetCurrentUser(),
@@ -35,11 +35,11 @@ jest.mock('../../api/userRepository', () => ({
   },
 }));
 
-jest.mock('../../hooks/useCandidateProcessingPoll', () => ({
+jest.mock('../hooks/useCandidateProcessingPoll', () => ({
   useCandidateProcessingPoll: jest.fn(),
 }));
 
-jest.mock('./studyProcessing/StudyProcessingProvider', () => ({
+jest.mock('../studyProcessing/StudyProcessingProvider', () => ({
   useStudyProcessing: () => ({ clearStudyProcessingState: mockClearStudyProcessingState }),
 }));
 

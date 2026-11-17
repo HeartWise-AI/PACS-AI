@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
-import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
+import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 import { useChatBox, PROGRESS_POLL_INTERVAL_MS } from './useChatBox';
 
-jest.mock('@ohif/app/src/api/orchestratorRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/orchestratorRepository', () => ({
   __esModule: true,
   default: {
     CreateThread: jest.fn(),

@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import type { StudyProcessingSummary } from '../studyProcessing/types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { processingRun, STUDY_UID } from './testSupport';
 import {
   useStudyProcessingRunPoll,

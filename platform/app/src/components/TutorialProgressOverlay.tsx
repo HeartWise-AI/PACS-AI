@@ -7,15 +7,15 @@ import { useShepherd } from 'react-shepherd';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
 import { Button } from '@pacs-ai/ui';
-import userRepository from '@ohif/app/src/api/userRepository';
-import tenantRepository from '@ohif/app/src/api/tenantRepository';
-import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
-import { AddOnboardingQuestionnaireAnswersRequest, GetTenantInfoResponse } from '../api/tenantDTO';
-import { UserResponse } from '../api/userDTO';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import { AddOnboardingQuestionnaireAnswersRequest, GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
+import { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 import {
   AddOnboardingModelQuestionnaireAnswersRequest,
   GetInferenceAvailableModelsResponse,
-} from '@ohif/app/src/api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import closeIcon from './../assets/pacs/icons/close-inactive.png';
 import checkActive from './../assets/pacs/icons/check-active.png';
 import checkInactive from './../assets/pacs/icons/check-inactive.png';
@@ -27,15 +27,15 @@ import arrowShrink from './../assets/pacs/icons/arrow-shrink.png';
 import checkTick from './../assets/pacs/icons/check-tick-outline-primary.png';
 import tutorialProgressHeaderBG from './../assets/pacs/bg/tutorial-progress-header-bg.png';
 import { Typography } from '@pacs-ai/ui';
-import { AlertContext } from '../AlertProvider';
-import { Error } from '../api/dto';
-import { logoutUser } from '../service/userService';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import {
   resetTutorialAndNotify,
   submitBeforeTutorialReset,
   TutorialResetInProgressError,
   TUTORIAL_RESET_EVENT,
-} from '../service/tutorialService';
+} from '@pacs-ai/extension-core/src/service/tutorialService';
 import { useDraggableOverlay } from './hooks/useDraggableOverlay';
 import {
   hasConfiguredModelQuestionnaires,

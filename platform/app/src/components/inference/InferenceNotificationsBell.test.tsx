@@ -1,7 +1,7 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import InferenceNotificationsBell from './InferenceNotificationsBell';
-import type { InferenceNotification } from './inferenceNotifications';
+import type { InferenceNotification } from '@pacs-ai/extension-core/src/inferenceProcessing/inferenceNotifications';
 import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
 
 const mockNavigate = jest.fn();
@@ -26,7 +26,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('./InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useInferenceProcessing: () => mockInferenceProcessingContext,
 }));
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { studyProcessingSummaryFixtures } from './fixtures';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import { StudyProcessingStatusCell } from './StudyProcessingStatusCell';
 import { getStudyProcessingStatusPresentation } from './statusPresentation';
 

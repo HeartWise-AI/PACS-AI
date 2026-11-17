@@ -3,7 +3,7 @@ import OnboardingToggle from '../WorkspaceSettings/onboarding/components/Onboard
 import {
   loadNotifyAutomaticRuns,
   saveNotifyAutomaticRuns,
-} from '../../components/inference/notificationPreferences';
+} from '@pacs-ai/extension-core/src/inferenceProcessing/notificationPreferences';
 
 type Props = {
   t: (key: string) => string;

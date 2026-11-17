@@ -1,4 +1,4 @@
-import type { InferenceModelDeploymentEvent } from '../../../api/inferenceDTO';
+import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import {
   createServerSentEventParser,
   type ServerSentEventFrame,

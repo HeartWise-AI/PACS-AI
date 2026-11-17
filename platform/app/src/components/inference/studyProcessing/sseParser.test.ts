@@ -1,4 +1,4 @@
-import type { WorklistStudyStatusEventDTO } from './restDTO';
+import type { WorklistStudyStatusEventDTO } from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
 import {
   createServerSentEventParser,
   parseWorklistStudyStatusEvent,

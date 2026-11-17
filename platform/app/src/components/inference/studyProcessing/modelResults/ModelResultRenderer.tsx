@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ModelExecutionResult } from '../types';
+import type { ModelExecutionResult } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { ReadableOrGenericModelResult } from '../ReadableModelResult';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { CathEfClipResult } from './CathEfClipResult';

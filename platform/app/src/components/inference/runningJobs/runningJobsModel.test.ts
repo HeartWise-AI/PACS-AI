@@ -1,4 +1,4 @@
-import type { ModelExecution } from '../studyProcessing/types';
+import type { ModelExecution } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import {
   formatElapsed,
   pendingRunState,

@@ -1,5 +1,5 @@
 import type { ModelExecutionResultSelection } from './executionResultQuery';
-import type { ModelExecution, ProcessingRun } from './types';
+import type { ModelExecution, ProcessingRun } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export function createModelExecutionResultSelection(
   run: ProcessingRun,

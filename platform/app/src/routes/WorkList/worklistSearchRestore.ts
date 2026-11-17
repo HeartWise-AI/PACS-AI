@@ -3,7 +3,7 @@ import {
   createWorklistSearchFilters,
   WORKLIST_SEARCH_FILTER_KEYS,
   type WorklistSearchFilters,
-} from '../../utils/worklistSearchSession';
+} from '@pacs-ai/extension-core/src/utils/worklistSearchSession';
 
 export interface URLWorklistSearchRestore {
   filters: WorklistSearchFilters;

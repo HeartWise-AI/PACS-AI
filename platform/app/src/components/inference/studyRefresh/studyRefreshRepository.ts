@@ -1,5 +1,5 @@
-import orthancRepository from '../../../api/orthancRepository';
-import { Error as APIErrorCode } from '../../../api/dto';
+import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
+import { Error as APIErrorCode } from '@pacs-ai/extension-core/src/api/dto';
 import type { StudyRefreshRepository } from './useStudyRefresh';
 
 /**

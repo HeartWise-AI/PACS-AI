@@ -1,6 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { GetInferenceIngestionJobsResponse } from '../../../../api/inferenceDTO';
+import type { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),

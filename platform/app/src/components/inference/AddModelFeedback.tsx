@@ -13,11 +13,11 @@ import radioSelected from './../../assets/pacs/icons/radio-selected.png';
 import radioUnselect from './../../assets/pacs/icons/radio-unselect.png';
 import { Button } from '@pacs-ai/ui';
 import { useTranslation } from 'react-i18next';
-import inferenceRepository from '../../api/inferenceRepository';
-import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
-import { logoutUser } from '../../service/userService';
-import { Error } from '../../api/dto';
-import { AlertContext } from '../../AlertProvider';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 
 interface AddModelFeedbackProps {
   title: string;

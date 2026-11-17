@@ -1,5 +1,5 @@
-import { PROCESSING_RUN_OUTCOMES, PROCESSING_RUN_PHASES, PROCESSING_RUN_TRIGGERS } from './types';
-import type { WorklistStudyStatusEventDTO } from './restDTO';
+import { PROCESSING_RUN_OUTCOMES, PROCESSING_RUN_PHASES, PROCESSING_RUN_TRIGGERS } from '@pacs-ai/extension-core/src/studyProcessing/types';
+import type { WorklistStudyStatusEventDTO } from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
 
 export const WORKLIST_STUDY_STATUS_EVENT = 'study_status.updated';
 

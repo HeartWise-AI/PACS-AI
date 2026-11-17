@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StudyProcessingStatusCell } from './StudyProcessingStatusCell';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 
 export interface StudyProcessingStatusProps {
   studyInstanceUID: string;

@@ -14,7 +14,7 @@ const mockInferenceProcessing = {
 };
 const mockLoadExecutionResult = jest.fn();
 
-jest.mock('../InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useOptionalInferenceProcessing: () => mockInferenceProcessing,
 }));
 

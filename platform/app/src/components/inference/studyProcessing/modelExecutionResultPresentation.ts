@@ -1,4 +1,4 @@
-import type { ModelExecutionResultFailure } from './types';
+import type { ModelExecutionResultFailure } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export interface ModelExecutionResultFailurePresentation {
   key: string;

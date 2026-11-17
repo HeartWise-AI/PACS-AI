@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
+import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 import type { ChatActivity, ChatCitation, ModalityData } from '../types';
 import { toCitations } from '../utils/citations';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';

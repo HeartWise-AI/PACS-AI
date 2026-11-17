@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Error } from '../../api/dto';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import MemberAccessConfirmationDialog, {
   type MemberAccessAction,
 } from './MemberAccessConfirmationDialog';

@@ -1,4 +1,4 @@
-import type { StudyProcessingRunHistory, StudyProcessingSummary } from './types';
+import type { StudyProcessingRunHistory, StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export interface RunHistorySynchronizationTarget {
   runId: string;

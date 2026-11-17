@@ -1,4 +1,4 @@
-import { UserAccessState } from '../../api/userDTO';
+import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 
 export interface MemberAccessStatusPresentation {
   labelKey: 'Active' | 'Suspended' | 'Unknown';

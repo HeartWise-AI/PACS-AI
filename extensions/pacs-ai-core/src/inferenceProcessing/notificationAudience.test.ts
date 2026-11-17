@@ -4,9 +4,9 @@ import {
   shouldRaiseStudyProcessingNotification,
   type NotificationAudienceViewer,
 } from './notificationAudience';
-import { studyProcessingSummaryFixtures } from './studyProcessing/fixtures';
-import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
-import type { StudyProcessingSummary } from './studyProcessing/types';
+import { studyProcessingSummaryFixtures } from '../studyProcessing/fixtures';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
+import type { StudyProcessingSummary } from '../studyProcessing/types';
 
 const admin: NotificationAudienceViewer = { isAdmin: true, notifyAutomaticRuns: true };
 const member: NotificationAudienceViewer = { isAdmin: false, notifyAutomaticRuns: true };

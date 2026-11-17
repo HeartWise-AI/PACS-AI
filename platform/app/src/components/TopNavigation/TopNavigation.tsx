@@ -1,14 +1,14 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import userRepository from '../../api/userRepository';
-import tenantRepository from '../../api/tenantRepository';
-import repository from '../../api/repository';
-import type { UserResponse } from '../../api/userDTO';
-import type { GetTenantInfoResponse } from '../../api/tenantDTO';
-import type { GetAPIInfoResponse } from '../../api/dto';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import repository from '@pacs-ai/extension-core/src/api/repository';
+import type { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
+import type { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
+import type { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
 import { FrontendVersionContext } from '../../App';
-import { logoutUser } from '../../service/userService';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
 import InferenceNotificationsBell from '../inference/InferenceNotificationsBell';
 import {

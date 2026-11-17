@@ -5,7 +5,7 @@ import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelJSONResponse,
-} from '../../api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import ReactSpeedometer from 'react-d3-speedometer';
 import AddModelFeedback from './AddModelFeedback';
 

@@ -1,4 +1,4 @@
-import userRepository from '../../api/userRepository';
+import userRepository from '../api/userRepository';
 
 /** User metadata key of the personal automatic-run notification switch. */
 export const NOTIFY_AUTOMATIC_RUNS_METADATA_KEY = 'notifyAutomaticRuns';

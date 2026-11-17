@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button, Typography } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
-import userRepository from '../../api/userRepository';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
-import { AlertContext } from '../../AlertProvider';
-import { Error } from '../../api/dto';
-import { logoutUser, navigateAfterAuth } from '../../service/userService';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { logoutUser, navigateAfterAuth } from '@pacs-ai/extension-core/src/service/userService';
 
 const ChangePasswordPage = () => {
   const { t } = useTranslation();

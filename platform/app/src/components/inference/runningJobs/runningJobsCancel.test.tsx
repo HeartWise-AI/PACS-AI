@@ -2,8 +2,8 @@ import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import english from '../../../../../i18n/src/locales/en-US/AIModelButton.json';
 import french from '../../../../../i18n/src/locales/fr/AIModelButton.json';
-import { StudyProcessingRESTError } from '../studyProcessing/restRepository';
-import type { StudyProcessingSummary } from '../studyProcessing/types';
+import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { jobRow, pendingRun, processingRun, STUDY_UID } from './testSupport';
 import type { RunningJobRow } from './types';
 import {
@@ -22,7 +22,7 @@ const mockInferenceProcessing = {
 };
 let mockStrings: Record<string, string> = english;
 
-jest.mock('../InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useOptionalInferenceProcessing: () => mockInferenceProcessing,
 }));
 

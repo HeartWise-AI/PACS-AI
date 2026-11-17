@@ -1,5 +1,5 @@
-import { Error } from '../../api/dto';
-import type { LoginAPIError } from '../../api/loginAPIError';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import type { LoginAPIError } from '@pacs-ai/extension-core/src/api/loginAPIError';
 
 type Translate = (key: string, values?: Record<string, unknown>) => string;
 

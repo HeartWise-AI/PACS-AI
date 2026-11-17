@@ -1,13 +1,13 @@
-import type { ProcessingTransitionEvent } from '../../hooks/useCandidateProcessingPoll';
+import type { ProcessingTransitionEvent } from '../hooks/useCandidateProcessingPoll';
 import type {
   StudyProcessingNotificationKind,
   StudyProcessingNotificationTransition,
-} from './studyProcessing/notificationTransitions';
+} from '../studyProcessing/notificationTransitions';
 import type {
   ProcessingAttentionReason,
   ProcessingRunOutcome,
   ProcessingRunTrigger,
-} from './studyProcessing/types';
+} from '../studyProcessing/types';
 import type { ResolvedStudyNotificationMetadata } from './studyNotificationMetadata';
 
 export interface StudyNotificationWorklistMetadata {

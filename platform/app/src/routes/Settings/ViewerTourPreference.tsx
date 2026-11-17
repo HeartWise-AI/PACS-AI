@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { resetViewerTour } from '../../service/viewerTourService';
+import { resetViewerTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
 
 type Props = {
   t: (key: string) => string;

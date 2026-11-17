@@ -1,8 +1,8 @@
 import moment from 'moment';
 import { DataElementDictionary } from 'dicom-data-dictionary';
-import { Error } from '../../api/dto';
-import { GetInferenceModelResponse } from '../../api/inferenceDTO';
-import { logoutUser } from '../../service/userService';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { GetInferenceModelResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import {
   containerStatusColors,
   DEFAULT_CONTAINER_STATUS_COLORS,

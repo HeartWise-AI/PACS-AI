@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNotification } from '@ohif/ui-next';
-import { startFrontendVersionMonitor } from '../utils/frontendVersionMonitor';
+import { startFrontendVersionMonitor } from './frontendVersionMonitor';
 
 const UPDATE_NOTIFICATION_ID = 'frontend-update-available';
 

@@ -3,23 +3,23 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { useNotification } from '@ohif/ui-next';
-import userRepository from '../../api/userRepository';
-import { UserRole } from '../../api/userDTO';
+import userRepository from '../api/userRepository';
+import { UserRole } from '../api/userDTO';
 import {
   useCandidateProcessingPoll,
   ProcessingTransitionEvent,
-} from '../../hooks/useCandidateProcessingPoll';
-import { useStudyProcessing } from './studyProcessing/StudyProcessingProvider';
+} from '../hooks/useCandidateProcessingPoll';
+import { useStudyProcessing } from '../studyProcessing/StudyProcessingProvider';
 import {
   getStudyProcessingAuthIdentity,
   shouldClearStudyProcessingState,
-} from './studyProcessing/authIdentity';
+} from '../studyProcessing/authIdentity';
 import {
   getStudyProcessingFeatureAvailability,
   resolveStudyProcessingFeatureFlags,
-} from './studyProcessing/featureFlags';
-import { studyProcessingRolloutTelemetry } from './studyProcessing/rolloutTelemetry';
-import type { StudyProcessingNotificationTransition } from './studyProcessing';
+} from '../studyProcessing/featureFlags';
+import { studyProcessingRolloutTelemetry } from '../studyProcessing/rolloutTelemetry';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
 import {
   addRecentInferenceNotification,
   applyStudyNotificationMetadata,

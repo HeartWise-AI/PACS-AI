@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useInferenceProcessing } from './InferenceProcessingProvider';
+import { useInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
 import {
   getInferenceNotificationLabels,
   getInferenceNotificationPresentation,
-} from './inferenceNotifications';
+} from '@pacs-ai/extension-core/src/inferenceProcessing/inferenceNotifications';
 import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
-import { isAutomaticProcessingTrigger } from './notificationAudience';
+import { isAutomaticProcessingTrigger } from '@pacs-ai/extension-core/src/inferenceProcessing/notificationAudience';
 
 function formatRelativeTime(timestamp: string) {
   const then = Date.parse(timestamp);

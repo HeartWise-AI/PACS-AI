@@ -2,17 +2,17 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@pacs-ai/ui';
-import { AlertContext } from '../../AlertProvider';
-import { Error } from '../../api/dto';
-import type { ErrorAPIResponse } from '../../api/dto';
-import userRepository from '../../api/userRepository';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import type { ErrorAPIResponse } from '@pacs-ai/extension-core/src/api/dto';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import RegistrationPolicyLinks from '../Register/RegistrationPolicyLinks';
 import {
   resolveRegistrationPolicyPair,
   type RegistrationPolicyPair,
 } from '../Register/registrationPolicies';
-import { getPolicyAcceptanceReturnPath } from '../../service/policyAcceptanceSession';
-import { logoutUser, navigateAfterAuth } from '../../service/userService';
+import { getPolicyAcceptanceReturnPath } from '@pacs-ai/extension-core/src/service/policyAcceptanceSession';
+import { logoutUser, navigateAfterAuth } from '@pacs-ai/extension-core/src/service/userService';
 
 type LoadingStatus = 'loading' | 'ready' | 'error';
 

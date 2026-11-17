@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import {
   deriveLiveStudyProcessingNotificationTransitions,
   type StudyProcessingNotificationTransition,
-} from './notificationTransitions';
-import { shouldApplyStudyProcessingSummary } from './reducer';
+} from '@pacs-ai/extension-core/src/studyProcessing/notificationTransitions';
+import { shouldApplyStudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 import {
   createStudyProcessingSSEConnection,
   type CreateStudyProcessingSSEConnectionOptions,
@@ -20,9 +20,9 @@ import {
   type CreateStudyProcessingSSERecoveryOptions,
   type StudyProcessingSSERecovery,
 } from './sseRecovery';
-import type { RealtimeConnectionStatus } from './reducer';
+import type { RealtimeConnectionStatus } from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 import { studyProcessingSSETelemetry, type StudyProcessingSSETelemetry } from './sseTelemetry';
-import type { StudyProcessingSummary } from './types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 type StudyProcessingSSEConnectionFactory = (
   options: CreateStudyProcessingSSEConnectionOptions

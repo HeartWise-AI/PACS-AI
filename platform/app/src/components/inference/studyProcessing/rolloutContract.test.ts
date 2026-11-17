@@ -5,17 +5,17 @@ import type {
   WorklistStudyStatusDTO,
   WorklistStudyStatusEventDTO,
   WorklistStudyStatusPageDTO,
-} from './restDTO';
+} from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
 import {
   createStudyProcessingRESTRepository,
   type StudyProcessingHTTPClient,
-} from './restRepository';
+} from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
 import {
   initialStudyProcessingState,
   studyProcessingReducer,
   type StudyProcessingState,
-} from './reducer';
-import { createRESTRunHistoryTransport } from './runHistoryTransport';
+} from '@pacs-ai/extension-core/src/studyProcessing/reducer';
+import { createRESTRunHistoryTransport } from '@pacs-ai/extension-core/src/studyProcessing/runHistoryTransport';
 import { createRESTStudyProcessingSnapshotTransport } from './snapshotTransport';
 import { WORKLIST_STUDY_STATUS_EVENT } from './sseParser';
 import { streamStudyProcessingEvents, type StudyProcessingSSEResponse } from './sseTransport';

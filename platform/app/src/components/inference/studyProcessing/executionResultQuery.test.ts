@@ -10,7 +10,7 @@ import {
   modelExecutionResultQueryKey,
   type ModelExecutionResultSelection,
 } from './executionResultQuery';
-import type { ModelExecutionResult } from './types';
+import type { ModelExecutionResult } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

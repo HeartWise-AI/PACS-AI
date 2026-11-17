@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
-import orchestratorRepository from '@ohif/app/src/api/orchestratorRepository';
+import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 
 // Hooks
 import { useChatBox } from './hooks/useChatBox';

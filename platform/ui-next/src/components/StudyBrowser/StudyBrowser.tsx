@@ -1,7 +1,7 @@
 import { buildInferenceStudyModalities } from '@ohif/app/src/components/inference/buildInferenceStudyModalities';
 import React, { useEffect, useRef, useContext } from 'react'; // NOTE: This is a PACS changes ({ useEffect, useRef, useContext })
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider'; // NOTE: This is a PACS changes
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider'; // NOTE: This is a PACS changes
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';

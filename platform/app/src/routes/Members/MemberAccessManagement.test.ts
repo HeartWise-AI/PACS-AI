@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { UserAccessState, UserRole } from '../../api/userDTO';
+import { UserAccessState, UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 import MemberAccessManagement from './MemberAccessManagement';
 
 jest.mock('react-i18next', () => ({

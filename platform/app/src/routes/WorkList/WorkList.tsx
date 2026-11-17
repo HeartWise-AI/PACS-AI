@@ -9,14 +9,14 @@ import { sortBy } from 'lodash';
 import { Button } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import filtersMeta from './filtersMeta.js';
-import orthancRepository from '../../api/orthancRepository';
+import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { summarizeRetrieveJobs } from '../../components/inference/studyRefresh/retrieveJobs';
 import { rememberStudySourceModality } from '../../components/inference/studyRefresh/sourceModality';
 import Modal from '../../components/Modal';
-import { JobState } from '../../api/orthancDTO';
-import { Error } from '../../api/dto';
-import { AlertContext } from '../../AlertProvider';
-import { logoutUser } from '../../service/userService';
+import { JobState } from '@pacs-ai/extension-core/src/api/orthancDTO';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import circularLoading from './../../assets/pacs/icons/circular-loading.png';
 import closeInactive from './../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from './../../assets/pacs/icons/chevron-left.png';
@@ -36,7 +36,7 @@ import {
   useStudyProcessingRealtime,
   useVisibleStudyProcessingSnapshot,
 } from '../../components/inference/studyProcessing';
-import { useInferenceProcessing } from '../../components/inference/InferenceProcessingProvider';
+import { useInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
 import {
   findProcessingNotificationStudyPage,
   PROCESSING_NOTIFICATION_STUDY_PARAM,
@@ -53,7 +53,7 @@ import {
   saveSubmittedWorklistSearch,
   updateSubmittedWorklistSearchPage,
   type WorklistSearchFilters,
-} from '../../utils/worklistSearchSession';
+} from '@pacs-ai/extension-core/src/utils/worklistSearchSession';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');

@@ -1,7 +1,7 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import english from '../../../../../i18n/src/locales/en-US/AIModelButton.json';
-import type { StudyProcessingSummary } from '../studyProcessing/types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { isStudyGrowing } from '../studyRefresh/studyGrowingStore';
 import { RUNNING_JOBS_COLLAPSED_STORAGE_KEY } from './useRunningJobsCardState';
 import { pendingRun, processingRun, STUDY_UID, viewerResult } from './testSupport';
@@ -15,7 +15,7 @@ const mockInferenceProcessing = {
   canUseStudyProcessingREST: true,
 };
 
-jest.mock('../InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useOptionalInferenceProcessing: () => mockInferenceProcessing,
 }));
 

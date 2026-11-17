@@ -6,7 +6,7 @@ import Modal from '../../../../components/Modal';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import { outputModeOptions } from '../../constants';
 import type { InferenceModelView, StatusColorClasses } from '../../types';
-import { GetInferenceModelInfoResponse } from '../../../../api/inferenceDTO';
+import { GetInferenceModelInfoResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { getDICOMTagsName } from '../../utils';
 
 type AddEditInferenceModelModalProps = {

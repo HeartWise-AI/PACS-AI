@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ButtonGradient, Typography } from '@pacs-ai/ui';
 import TopNavigation from '../../components/TopNavigation';
-import tenantRepository from '../../api/tenantRepository';
-import { ModelDetails } from '../../api/inferenceDTO';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import { ModelDetails } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import ModelFactsModal from '../../components/ModelFactsModal';
-import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
-import inferenceRepository from '../../api/inferenceRepository';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 
 const AIModelsPage = () => {
   const { t } = useTranslation('Common');

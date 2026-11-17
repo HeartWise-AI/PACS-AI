@@ -5,7 +5,7 @@ import Table from '../../../../components/Table';
 import playIcon from '../../../../assets/pacs/icons/play.png';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import stopIcon from '../../../../assets/pacs/icons/stop.png';
-import { GetInferenceIngestionJobsResponse } from '../../../../api/inferenceDTO';
+import { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { getIngestionJobHeaders, InferenceContainerStatus } from '../../constants';
 import { getContainerStatusColor } from '../../utils';
 import IngestionJobActionButton from './IngestionJobActionButton';
@@ -16,7 +16,7 @@ import {
   isIngestionJobNotificationsEnabled,
 } from '../../ingestionJobNotifications';
 import OnboardingToggle from '../../onboarding/components/OnboardingToggle';
-import type { UserResponse } from '../../../../api/userDTO';
+import type { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 
 type IngestionJobsTableProps = {
   jobs: GetInferenceIngestionJobsResponse[];

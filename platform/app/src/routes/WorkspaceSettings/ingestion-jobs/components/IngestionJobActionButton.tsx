@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import dotsVertical from '../../../../assets/pacs/icons/dots-vertical-inactive.png';
-import { GetInferenceIngestionJobsResponse } from '../../../../api/inferenceDTO';
+import { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 type IngestionJobActionButtonProps = {
   row: GetInferenceIngestionJobsResponse;

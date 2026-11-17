@@ -4,7 +4,7 @@ import {
   STUDY_NOTIFICATION_QIDO_PATH,
 } from './studyNotificationMetadataRepository';
 
-jest.mock('../../pacsAPIAxios', () => ({ __esModule: true, default: jest.fn() }));
+jest.mock('../pacsAPIAxios', () => ({ __esModule: true, default: jest.fn() }));
 
 // Synthetic QIDO-RS answer; no real patient or study.
 const UID = '1.2.826.0.1.3680043.8.498.1';

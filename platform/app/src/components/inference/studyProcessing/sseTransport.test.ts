@@ -1,5 +1,5 @@
-import type { WorklistStudyStatusEventDTO } from './restDTO';
-import { mapWorklistStudyStatusEvent } from './restMapper';
+import type { WorklistStudyStatusEventDTO } from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
+import { mapWorklistStudyStatusEvent } from '@pacs-ai/extension-core/src/studyProcessing/restMapper';
 import { WORKLIST_STUDY_STATUS_EVENT } from './sseParser';
 import {
   streamStudyProcessingEvents,

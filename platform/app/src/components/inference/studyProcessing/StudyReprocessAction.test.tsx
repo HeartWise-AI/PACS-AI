@@ -1,14 +1,14 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { studyProcessingSummaryFixtures } from './fixtures';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import { getStudyReprocessErrorPresentation, StudyReprocessAction } from './StudyReprocessAction';
 import {
   StudyProcessingProvider,
   useStudyProcessing,
   type StudyProcessingContextValue,
-} from './StudyProcessingProvider';
-import type { CreatedStudyProcessingRun } from './types';
-import { StudyReprocessError } from './reprocessTransport';
+} from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
+import type { CreatedStudyProcessingRun } from '@pacs-ai/extension-core/src/studyProcessing/types';
+import { StudyReprocessError } from '@pacs-ai/extension-core/src/studyProcessing/reprocessTransport';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({

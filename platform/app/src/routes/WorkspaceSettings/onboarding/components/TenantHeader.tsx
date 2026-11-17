@@ -1,5 +1,5 @@
 import React from 'react';
-import { GetTenantInfoResponse } from '../../../../api/tenantDTO';
+import { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import CopyToClipboardButton from './CopyToClipboardButton';
 
 type TenantHeaderProps = {

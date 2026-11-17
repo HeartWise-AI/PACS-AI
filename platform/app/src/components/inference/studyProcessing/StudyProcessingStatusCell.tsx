@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icons } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
-import type { StudyProcessingSummary } from './types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import {
   getStudyProcessingActivityPresentation,
   getStudyProcessingProgress,

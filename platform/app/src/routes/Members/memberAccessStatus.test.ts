@@ -1,4 +1,4 @@
-import { UserAccessState } from '../../api/userDTO';
+import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import { getMemberAccessStatusPresentation } from './memberAccessStatus';
 
 describe('member access status presentation', () => {

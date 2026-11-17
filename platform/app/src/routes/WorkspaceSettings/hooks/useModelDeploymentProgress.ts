@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import inferenceRepository from '../../../api/inferenceRepository';
-import type { InferenceModelDeploymentEvent } from '../../../api/inferenceDTO';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import {
   acceptedDeploymentProgress,
   isActiveModelDeployment,

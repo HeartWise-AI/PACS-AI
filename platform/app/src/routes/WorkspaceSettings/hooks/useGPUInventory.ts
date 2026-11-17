@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAuthenticatedScope } from './authenticatedScope';
-import inferenceRepository from '../../../api/inferenceRepository';
-import type { GetInferenceGPUsResponse } from '../../../api/inferenceDTO';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import type { GetInferenceGPUsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 export function useGPUInventory(enabled: boolean, refreshKey = '', scopeKey = '') {
   const [sample, setSample] = useState<{

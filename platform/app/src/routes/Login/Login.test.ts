@@ -66,12 +66,12 @@ jest.mock('../../App', () => {
   return { FrontendVersionContext: React.createContext('test-version') };
 });
 
-jest.mock('../../AlertProvider', () => {
+jest.mock('@pacs-ai/extension-core/src/providers/AlertProvider', () => {
   const React = require('react');
   return { AlertContext: React.createContext((...args) => mockShowAlert(...args)) };
 });
 
-jest.mock('../../api/userRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/userRepository', () => ({
   __esModule: true,
   default: {
     ForgotPassword: jest.fn(),
@@ -81,26 +81,26 @@ jest.mock('../../api/userRepository', () => ({
   },
 }));
 
-jest.mock('../../api/tenantRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/tenantRepository', () => ({
   __esModule: true,
   default: {
     GetPublicTenantByID: (...args) => mockGetPublicTenant(...args),
   },
 }));
 
-jest.mock('../../api/repository', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/repository', () => ({
   __esModule: true,
   default: {
     GetAPIInfo: (...args) => mockGetAPIInfo(...args),
   },
 }));
 
-jest.mock('../../service/userService', () => ({
+jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({
   logoutUser: jest.fn(),
   navigateAfterAuth: (...args) => mockNavigateAfterAuth(...args),
 }));
 
-jest.mock('../../service/accountAccessSession', () => ({
+jest.mock('@pacs-ai/extension-core/src/service/accountAccessSession', () => ({
   consumeAccountSuspendedRedirect: () => ({ suspended: false, nextSearch: '' }),
 }));
 

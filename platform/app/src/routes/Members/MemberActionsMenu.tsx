@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { UserAccessState } from '../../api/userDTO';
+import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import dotsVertical from './../../assets/pacs/icons/dots-vertical-inactive.png';
 import type { MemberAccessAction } from './MemberAccessConfirmationDialog';
 import { getMemberAccessEligibility, type MemberAccessIdentity } from './memberAccessPolicy';

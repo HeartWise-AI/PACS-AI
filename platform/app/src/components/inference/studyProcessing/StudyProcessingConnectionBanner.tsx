@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 
 export function StudyProcessingConnectionBanner() {
   const { t } = useTranslation('StudyList');

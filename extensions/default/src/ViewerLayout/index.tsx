@@ -8,11 +8,11 @@ import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { useTranslation } from 'react-i18next';
-import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
-import { GetInferenceAvailableModelsResponse } from '@ohif/app/src/api/inferenceDTO';
-import { logoutUser } from '@ohif/app/src/service/userService';
-import { markTourShown, shouldShowTour } from '@ohif/app/src/service/viewerTourService';
-import { Error } from '@ohif/app/src/api/dto';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
+import { markTourShown, shouldShowTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import {
   Onboarding,
   ResizablePanelGroup,

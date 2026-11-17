@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';

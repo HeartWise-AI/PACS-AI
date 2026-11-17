@@ -1,4 +1,4 @@
-import type { RealtimeConnectionStatus } from './reducer';
+import type { RealtimeConnectionStatus } from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 import { StudyProcessingSSEError } from './sseTransport';
 
 export const DEFAULT_STUDY_PROCESSING_SSE_TELEMETRY_LIMIT = 100;

@@ -1,4 +1,4 @@
-import { UserAccessState } from '../../api/userDTO';
+import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import {
   ACCOUNT_ACCESS_TRANSITION_IN_PROGRESS,
   executeMemberAccessTransition,

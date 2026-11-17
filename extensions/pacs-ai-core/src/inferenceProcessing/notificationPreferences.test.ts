@@ -1,7 +1,7 @@
 const mockGetUserMetadata = jest.fn();
 const mockUpdateUserMetadata = jest.fn();
 
-jest.mock('../../api/userRepository', () => ({
+jest.mock('../api/userRepository', () => ({
   __esModule: true,
   default: {
     GetUserMetadata: (...args: unknown[]) => mockGetUserMetadata(...args),

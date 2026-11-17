@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 const mockLoad = jest.fn();
 const mockSave = jest.fn();
 
-jest.mock('../../components/inference/notificationPreferences', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/notificationPreferences', () => ({
   loadNotifyAutomaticRuns: (...args: unknown[]) => mockLoad(...args),
   saveNotifyAutomaticRuns: (...args: unknown[]) => mockSave(...args),
 }));

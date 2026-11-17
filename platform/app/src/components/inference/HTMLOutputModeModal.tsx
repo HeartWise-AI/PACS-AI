@@ -5,10 +5,10 @@ import closeIcon from './../../assets/pacs/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelHTMLResponse,
-} from '../../api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { StoreFileButton } from '@pacs-ai/ui';
-import orthancRepository from '@ohif/app/src/api/orthancRepository';
-import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
+import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
+import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '@pacs-ai/extension-core/src/api/orthancDTO';
 import AddModelFeedback from './AddModelFeedback';
 import { decodeBase64HTML, HTML_REPORT_IFRAME_SANDBOX } from './htmlReport';
 

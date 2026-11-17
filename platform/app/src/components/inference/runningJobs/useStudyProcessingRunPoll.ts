@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createStudyProcessingRESTRepository,
   type StudyProcessingRESTRepository,
-} from '../studyProcessing/restRepository';
-import type { ProcessingRun, StudyProcessingSummary } from '../studyProcessing/types';
+} from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import type { ProcessingRun, StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export const STUDY_PROCESSING_RUN_POLL_INTERVAL_MS = 5_000;
 

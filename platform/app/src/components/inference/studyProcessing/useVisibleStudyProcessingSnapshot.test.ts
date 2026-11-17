@@ -4,12 +4,12 @@ import {
   StudyProcessingProvider,
   useStudyProcessing,
   type StudyProcessingContextValue,
-} from './StudyProcessingProvider';
+} from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import type { StudyProcessingSnapshotTransport } from './snapshotTransport';
-import { studyProcessingSummaryFixtures } from './fixtures';
-import { StudyProcessingRESTError } from './restRepository';
-import type { StudyProcessingRolloutTelemetry } from './rolloutTelemetry';
-import type { StudyProcessingSummary } from './types';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
+import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import type { StudyProcessingRolloutTelemetry } from '@pacs-ai/extension-core/src/studyProcessing/rolloutTelemetry';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
 
 let contextValue: StudyProcessingContextValue;

@@ -1,13 +1,13 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertContext } from '../../../AlertProvider';
-import inferenceRepository from '../../../api/inferenceRepository';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
   GetInferenceModelInfoResponse,
   GetInferenceModelVersionResponse,
-} from '../../../api/inferenceDTO';
-import { ModelDetails } from '../../../api/tenantDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { ModelDetails } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import { EMPTY_INFERENCE_MODEL, POLLING_INTERVAL_MS } from '../constants';
 import { getDefaultDeployableVersionId } from '../inference-models/modelVersions';
 import type { InferenceModelView } from '../types';

@@ -1,8 +1,8 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import InferenceProcessingProvider, { useInferenceProcessing } from './InferenceProcessingProvider';
-import { studyProcessingSummaryFixtures } from './studyProcessing/fixtures';
-import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
+import { studyProcessingSummaryFixtures } from '../studyProcessing/fixtures';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
 import type { ResolvedStudyNotificationMetadata } from './studyNotificationMetadata';
 
 const mockShow = jest.fn();
@@ -23,7 +23,7 @@ jest.mock('@ohif/ui-next', () => ({
   useNotification: () => ({ show: mockShow }),
 }));
 
-jest.mock('../../api/userRepository', () => ({
+jest.mock('../api/userRepository', () => ({
   __esModule: true,
   default: {
     GetCurrentUser: () =>
@@ -31,11 +31,11 @@ jest.mock('../../api/userRepository', () => ({
   },
 }));
 
-jest.mock('../../hooks/useCandidateProcessingPoll', () => ({
+jest.mock('../hooks/useCandidateProcessingPoll', () => ({
   useCandidateProcessingPoll: jest.fn(),
 }));
 
-jest.mock('./studyProcessing/StudyProcessingProvider', () => ({
+jest.mock('../studyProcessing/StudyProcessingProvider', () => ({
   useStudyProcessing: () => ({ clearStudyProcessingState: mockClearStudyProcessingState }),
 }));
 

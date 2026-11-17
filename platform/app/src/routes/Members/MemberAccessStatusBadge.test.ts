@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer from 'react-test-renderer';
-import { UserAccessState } from '../../api/userDTO';
+import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import MemberAccessStatusBadge from './MemberAccessStatusBadge';
 
 jest.mock('react-i18next', () => ({

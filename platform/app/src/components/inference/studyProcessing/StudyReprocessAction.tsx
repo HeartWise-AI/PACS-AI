@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
-import { StudyReprocessError } from './reprocessTransport';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import type { StudyProcessingRunHistoryTransport } from '@pacs-ai/extension-core/src/studyProcessing/runHistoryTransport';
+import { StudyReprocessError } from '@pacs-ai/extension-core/src/studyProcessing/reprocessTransport';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 
 export interface StudyReprocessActionProps {
   studyInstanceUID: string;

@@ -1,5 +1,5 @@
-import { studyProcessingSummaryFixtures } from './studyProcessing/fixtures';
-import type { StudyProcessingNotificationTransition } from './studyProcessing/notificationTransitions';
+import { studyProcessingSummaryFixtures } from '../studyProcessing/fixtures';
+import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
 import {
   addRecentInferenceNotification,
   applyStudyNotificationMetadata,

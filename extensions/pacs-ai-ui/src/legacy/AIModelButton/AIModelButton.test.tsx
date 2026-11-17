@@ -1,8 +1,8 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import AIModelButton from './AIModelButton';
-import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
-import { AlertContext } from '@ohif/app/src/AlertProvider';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 
 jest.mock('react-dom', () => ({ createPortal: children => children }));
@@ -13,18 +13,18 @@ jest.mock('react-i18next', () => ({
       options.modelName ? `${key}:${options.modelName}` : key,
   }),
 }));
-jest.mock('@ohif/app/src/api/dto', () => ({
+jest.mock('@pacs-ai/extension-core/src/api/dto', () => ({
   Error: { UNAUTHORIZED_ACCESS: 'UNAUTHORIZED_ACCESS' },
 }));
-jest.mock('@ohif/app/src/service/userService', () => ({ logoutUser: jest.fn() }));
-jest.mock('@ohif/app/src/api/inferenceRepository', () => ({
+jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({ logoutUser: jest.fn() }));
+jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository', () => ({
   __esModule: true,
   default: { PredictInferenceModel: jest.fn() },
 }));
-jest.mock('@ohif/app/src/AlertProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/providers/AlertProvider', () => ({
   AlertContext: jest.requireActual('react').createContext(null),
 }));
-jest.mock('@ohif/app/src/GlobalStateProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/providers/GlobalStateProvider', () => ({
   useGlobalStateData: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
 }));
 jest.mock('../../../../cornerstone/src/utils/addSegmentation', () => ({

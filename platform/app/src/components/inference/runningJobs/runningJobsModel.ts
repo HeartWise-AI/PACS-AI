@@ -3,7 +3,7 @@ import type {
   PendingViewerModelRun,
   ViewerModelRunStatus,
 } from '../viewerResults/types';
-import type { ProcessingRun } from '../studyProcessing/types';
+import type { ProcessingRun } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import type {
   RunningJobRow,
   RunningJobState,

@@ -1,4 +1,4 @@
-import { UserAccessState, UserRole } from '../../api/userDTO';
+import { UserAccessState, UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 import { getMemberAccessEligibility, type MemberAccessIdentity } from './memberAccessPolicy';
 
 const identity = (

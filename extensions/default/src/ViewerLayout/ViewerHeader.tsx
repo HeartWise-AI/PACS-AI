@@ -12,7 +12,7 @@ import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
 import ChatButton from '@pacs-ai/ui/src/legacy/ChatButton/ChatButton';
 import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
+import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
 import { Types } from '@ohif/core';
 
 function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }>) {

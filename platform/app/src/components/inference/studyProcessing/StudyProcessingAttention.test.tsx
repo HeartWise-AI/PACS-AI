@@ -1,11 +1,11 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { studyProcessingSummaryFixtures } from './fixtures';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   StudyProcessingProvider,
   useStudyProcessing,
   type StudyProcessingContextValue,
-} from './StudyProcessingProvider';
+} from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import { StudyProcessingAttention } from './StudyProcessingAttention';
 
 jest.mock('@ohif/ui-next', () => ({

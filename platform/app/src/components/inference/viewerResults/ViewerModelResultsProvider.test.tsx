@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { AlertContext } from '../../../AlertProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import {
   useViewerModelResults,
   ViewerModelResultsProvider,
@@ -16,7 +16,7 @@ const mockInferenceProcessing = {
   canUseStudyProcessingREST: true,
 };
 
-jest.mock('../InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useOptionalInferenceProcessing: () => mockInferenceProcessing,
 }));
 

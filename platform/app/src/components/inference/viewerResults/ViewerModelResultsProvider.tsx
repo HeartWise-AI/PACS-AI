@@ -9,8 +9,8 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { AlertContext } from '../../../AlertProvider';
-import { useOptionalInferenceProcessing } from '../InferenceProcessingProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { useOptionalInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
 import {
   createViewerResultsRepository,
   isViewerResultsEndpointMissing,

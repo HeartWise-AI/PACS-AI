@@ -1,4 +1,4 @@
-import type { GetInferenceModelVersionResponse } from '../../../api/inferenceDTO';
+import type { GetInferenceModelVersionResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 export function getDefaultDeployableVersionId(
   versions: GetInferenceModelVersionResponse[]

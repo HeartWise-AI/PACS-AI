@@ -1,7 +1,7 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import inferenceRepository from '../../../api/inferenceRepository';
-import type { InferenceModelDeploymentEvent } from '../../../api/inferenceDTO';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
+import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import {
   createModelDeploymentMonitor,
   type ModelDeploymentMonitorCallbacks,
@@ -9,7 +9,7 @@ import {
 import { loadStoredModelDeployments } from '../inference-models/modelDeploymentStorage';
 import { useModelDeploymentProgress } from './useModelDeploymentProgress';
 
-jest.mock('../../../api/inferenceRepository');
+jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository');
 jest.mock('../inference-models/modelDeploymentMonitor');
 
 const mockedRepository = inferenceRepository as jest.Mocked<typeof inferenceRepository>;

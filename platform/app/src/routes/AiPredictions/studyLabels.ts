@@ -3,17 +3,17 @@
 // processing notifications use: one QIDO request per study, remembered for
 // the page, failed lookups retried after a minute.
 
-import Api from '../../pacsAPIAxios';
+import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
 import {
   mapQIDOStudyNotificationMetadata,
   STUDY_NOTIFICATION_QIDO_PATH,
-} from '../../components/inference/studyNotificationMetadataRepository';
+} from '@pacs-ai/extension-core/src/inferenceProcessing/studyNotificationMetadataRepository';
 import {
   createStudyNotificationMetadataResolver,
   isLookupableStudyInstanceUID,
   type ResolvedStudyNotificationMetadata,
   type StudyNotificationMetadataResolver,
-} from '../../components/inference/studyNotificationMetadata';
+} from '@pacs-ai/extension-core/src/inferenceProcessing/studyNotificationMetadata';
 import { readablePersonName } from './presentation';
 import type { PredictionExam, PredictionStudyLabels } from './types';
 

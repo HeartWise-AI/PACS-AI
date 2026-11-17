@@ -1,4 +1,4 @@
-import type { PolicyDefinition } from '../../api/userDTO';
+import type { PolicyDefinition } from '@pacs-ai/extension-core/src/api/userDTO';
 import { resolveRegistrationPolicyPair } from './registrationPolicies';
 
 const currentPolicies = (): PolicyDefinition[] => [

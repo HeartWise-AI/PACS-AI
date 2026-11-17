@@ -1,4 +1,4 @@
-import { InferenceModelLifecycle } from '../../api/inferenceDTO';
+import { InferenceModelLifecycle } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import type {
   InferenceModelView,
   ModalityFormState,

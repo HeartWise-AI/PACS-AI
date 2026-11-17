@@ -1,5 +1,5 @@
-import type { RegisterTenantUserRequest } from '../../api/userDTO';
-import type { PolicyAcceptanceInput } from '../../api/userDTO';
+import type { RegisterTenantUserRequest } from '@pacs-ai/extension-core/src/api/userDTO';
+import type { PolicyAcceptanceInput } from '@pacs-ai/extension-core/src/api/userDTO';
 
 export interface RegistrationRequestValues {
   tenantId: string;

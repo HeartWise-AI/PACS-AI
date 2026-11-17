@@ -1,13 +1,13 @@
-import type { WorklistStudyStatusEventDTO } from './restDTO';
-import { mapWorklistStudyStatus } from './restMapper';
+import type { WorklistStudyStatusEventDTO } from '@pacs-ai/extension-core/src/studyProcessing/restDTO';
+import { mapWorklistStudyStatus } from '@pacs-ai/extension-core/src/studyProcessing/restMapper';
 import {
   initialStudyProcessingState,
   studyProcessingReducer,
   type StudyProcessingState,
-} from './reducer';
+} from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 import { WORKLIST_STUDY_STATUS_EVENT } from './sseParser';
 import { streamStudyProcessingEvents, type StudyProcessingSSEResponse } from './sseTransport';
-import type { StudyProcessingSummary } from './types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 const studyInstanceUID = '1.2.840.113619.2.55.3.604688433.race';
 

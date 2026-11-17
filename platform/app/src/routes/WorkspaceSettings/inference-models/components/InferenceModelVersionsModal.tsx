@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Typography } from '@pacs-ai/ui';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
-import type { GetInferenceModelVersionResponse } from '../../../../api/inferenceDTO';
+import type { GetInferenceModelVersionResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import Modal from '../../../../components/Modal';
 import type { InferenceModelView } from '../../types';
 import type { TrackedModelDeployment } from '../modelDeployment';

@@ -1,8 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertContext } from '../../../AlertProvider';
-import tenantRepository from '../../../api/tenantRepository';
-import { GetTenantInfoResponse } from '../../../api/tenantDTO';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import { handleUnauthorizedAccess } from '../utils';
 
 export function useTenantOnboarding() {

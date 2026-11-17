@@ -1,5 +1,5 @@
-import { mapWorklistStudyStatusEvent } from './restMapper';
-import type { StudyProcessingSummary } from './types';
+import { mapWorklistStudyStatusEvent } from '@pacs-ai/extension-core/src/studyProcessing/restMapper';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import {
   createServerSentEventParser,
   parseWorklistStudyStatusEvent,

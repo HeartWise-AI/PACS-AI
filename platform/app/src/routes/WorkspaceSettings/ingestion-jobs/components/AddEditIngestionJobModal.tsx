@@ -5,7 +5,7 @@ import moment from 'moment';
 import { Input } from '@ohif/ui-next';
 import { Button, Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
-import { GetInferenceAvailableModelsResponse } from '../../../../api/inferenceDTO';
+import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { minIngestionJobIntervalMinutes } from '../../constants';
 import type { DICOMModalities, IngestionScheduleType, SelectOption } from '../../types';
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import inferenceRepository from '../../../api/inferenceRepository';
+import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { useGPUInventory } from './useGPUInventory';
 import { getAuthenticatedScope } from './authenticatedScope';
-jest.mock('../../../api/inferenceRepository');
+jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository');
 let result: ReturnType<typeof useGPUInventory>;
 function Consumer({ enabled, scopeKey = '' }: { enabled: boolean; scopeKey?: string }) {
   result = useGPUInventory(enabled, '', scopeKey);

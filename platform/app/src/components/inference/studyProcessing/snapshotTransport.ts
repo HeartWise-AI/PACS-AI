@@ -2,8 +2,8 @@ import { createVisibleStudyProcessingFixtureSnapshot } from './fixtureAdapter';
 import {
   createStudyProcessingRESTRepository,
   type StudyProcessingRESTRepository,
-} from './restRepository';
-import type { StudyProcessingSummary } from './types';
+} from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export interface StudyProcessingSnapshotTransport {
   loadVisibleStudySnapshot(studyInstanceUIDs: string[]): Promise<StudyProcessingSummary[]>;

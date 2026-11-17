@@ -2,8 +2,8 @@ import {
   createFixtureStudyProcessingSnapshotTransport,
   createRESTStudyProcessingSnapshotTransport,
 } from './snapshotTransport';
-import type { StudyProcessingRESTRepository } from './restRepository';
-import { studyProcessingSummaryFixtures } from './fixtures';
+import type { StudyProcessingRESTRepository } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 
 describe('study processing snapshot transport', () => {
   test('loads one bounded REST snapshot for the visible studies', async () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import { AlertContext } from '../../../AlertProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import {
   useViewerModelResults,
   ViewerModelResultsProvider,
@@ -10,7 +10,7 @@ import type { ViewerResultsRepository } from './viewerResultsRepository';
 
 const mockCancelProcessingRun = jest.fn();
 
-jest.mock('../InferenceProcessingProvider', () => ({
+jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider', () => ({
   useOptionalInferenceProcessing: () => ({
     canViewStudyProcessingRunHistory: true,
     canUseStudyProcessingREST: true,
@@ -18,8 +18,8 @@ jest.mock('../InferenceProcessingProvider', () => ({
 }));
 
 // The card cancels through the processing REST repository.
-jest.mock('../studyProcessing/restRepository', () => ({
-  ...jest.requireActual('../studyProcessing/restRepository'),
+jest.mock('@pacs-ai/extension-core/src/studyProcessing/restRepository', () => ({
+  ...jest.requireActual('@pacs-ai/extension-core/src/studyProcessing/restRepository'),
   createStudyProcessingRESTRepository: () => ({
     cancelProcessingRun: (runId: string) => mockCancelProcessingRun(runId),
   }),

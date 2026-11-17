@@ -1,4 +1,4 @@
-import type { ModelExecutionResult } from '../types';
+import type { ModelExecutionResult } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import {
   CARDIO_SYNTAX_MODEL_NAME,
   CARDIO_SYNTAX_SUPPORTED_MODEL_VERSIONS,

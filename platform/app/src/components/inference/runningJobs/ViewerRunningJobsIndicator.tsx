@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useOptionalInferenceProcessing } from '../InferenceProcessingProvider';
+import { useOptionalInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
 import type {
   EndedViewerModelRun,
   PendingViewerModelRun,
@@ -9,7 +9,7 @@ import type {
 import {
   createStudyProcessingRESTRepository,
   type StudyProcessingRESTRepository,
-} from '../studyProcessing/restRepository';
+} from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
 import { publishStudyGrowing } from '../studyRefresh/studyGrowingStore';
 import { RunningJobsIndicator } from './RunningJobsIndicator';
 import { pendingRunRowId, selectRunningJobs } from './runningJobsModel';

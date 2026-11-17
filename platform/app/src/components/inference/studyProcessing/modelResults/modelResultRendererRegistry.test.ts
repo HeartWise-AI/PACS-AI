@@ -1,4 +1,4 @@
-import type { ModelExecutionResult } from '../types';
+import type { ModelExecutionResult } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 import { cathEfClipResultFixtures } from './cathEfClipFixtures';
 import { cathEfResultFixtures } from './cathEfFixtures';

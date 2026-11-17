@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from './types';
-import { useStudyProcessing } from './StudyProcessingProvider';
-import type { StudyProcessingRunHistoryTransport } from './runHistoryTransport';
+import type { KnownProcessingAttentionReasonCode, ModelExecution, ProcessingRun } from '@pacs-ai/extension-core/src/studyProcessing/types';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
+import type { StudyProcessingRunHistoryTransport } from '@pacs-ai/extension-core/src/studyProcessing/runHistoryTransport';
 import {
   createRunHistorySynchronizationCoordinator,
   getRunHistorySynchronizationTarget,

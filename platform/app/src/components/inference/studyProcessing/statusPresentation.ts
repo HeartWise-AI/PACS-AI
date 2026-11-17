@@ -1,4 +1,4 @@
-import type { StudyProcessingSummary } from './types';
+import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export type StudyProcessingStatusTone =
   | 'waiting'

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icons } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
-import { useStudyProcessing } from './StudyProcessingProvider';
+import { useStudyProcessing } from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 
 export interface StudyProcessingAttentionProps {
   studyInstanceUID: string;

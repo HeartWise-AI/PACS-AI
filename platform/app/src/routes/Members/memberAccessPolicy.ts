@@ -1,4 +1,4 @@
-import { UserAccessState, UserRole } from '../../api/userDTO';
+import { UserAccessState, UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
 
 export interface MemberAccessIdentity {
   id: string;

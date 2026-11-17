@@ -3,8 +3,8 @@ import type {
   StudyProcessingSSEConnectionStateListener,
 } from './sseConnection';
 import { createStudyProcessingSSERecovery } from './sseRecovery';
-import { StudyProcessingRESTError } from './restRepository';
-import type { RealtimeConnectionStatus } from './reducer';
+import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
+import type { RealtimeConnectionStatus } from '@pacs-ai/extension-core/src/studyProcessing/reducer';
 
 function createObservableConnection(): {
   connection: StudyProcessingSSEConnection;

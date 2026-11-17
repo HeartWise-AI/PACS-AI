@@ -3,25 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, Logo, Typography } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
-import userRepository from '../../api/userRepository';
-import tenantRepository from '../../api/tenantRepository';
-import repository from '../../api/repository';
-import { GetAPIInfoResponse } from '../../api/dto';
-import { GetPublicTenantByIDResponse } from '../../api/tenantDTO';
-import { isTenantNotFoundError } from '../../api/tenantLookupAPIError';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import repository from '@pacs-ai/extension-core/src/api/repository';
+import { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
+import { GetPublicTenantByIDResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
+import { isTenantNotFoundError } from '@pacs-ai/extension-core/src/api/tenantLookupAPIError';
 import { FrontendVersionContext } from '../../App';
-import { AlertContext } from '../../AlertProvider';
+import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
 import chevronLeft from './../../assets/pacs/icons/chevron-left-gradient.png';
-import { Error } from '../../api/dto';
-import { logoutUser, navigateAfterAuth } from '../../service/userService';
-import { consumeAccountSuspendedRedirect } from '../../service/accountAccessSession';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
+import { logoutUser, navigateAfterAuth } from '@pacs-ai/extension-core/src/service/userService';
+import { consumeAccountSuspendedRedirect } from '@pacs-ai/extension-core/src/service/accountAccessSession';
 import {
   consumeSessionExpiredRedirect,
   getSessionExpiredReturnPath,
-} from '../../service/sessionExpirySession';
+} from '@pacs-ai/extension-core/src/service/sessionExpirySession';
 import TurnstileWidget, { type VerificationStatus } from '../../components/auth/TurnstileWidget';
-import type { LoginAPIError } from '../../api/loginAPIError';
+import type { LoginAPIError } from '@pacs-ai/extension-core/src/api/loginAPIError';
 import {
   formatLoginWait,
   getLoginErrorMessage,

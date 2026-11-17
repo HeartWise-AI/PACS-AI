@@ -36,14 +36,14 @@ import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 // NOTE: This is a PACS changes
-import { AlertProvider } from './AlertProvider';
+import { AlertProvider } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 // NOTE: This is a PACS changes
-import { GlobalStateProvider } from './GlobalStateProvider';
+import { GlobalStateProvider } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
 // NOTE: This is a PACS changes
 import TutorialProgressOverlay from './components/TutorialProgressOverlay';
-import InferenceProcessingProvider from './components/inference/InferenceProcessingProvider';
-import StudyProcessingProvider from './components/inference/studyProcessing/StudyProcessingProvider';
-import FrontendUpdateMonitor from './components/FrontendUpdateMonitor';
+import InferenceProcessingProvider from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
+import StudyProcessingProvider from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
+import FrontendUpdateMonitor from '@pacs-ai/extension-core/src/updateMonitor/FrontendUpdateMonitor';
 import './App.css';
 
 // NOTE: This is a PACS changes

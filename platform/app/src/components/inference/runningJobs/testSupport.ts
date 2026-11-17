@@ -1,5 +1,5 @@
 // Test-only helpers shared by the running-jobs tests.
-import type { ProcessingRun } from '../studyProcessing/types';
+import type { ProcessingRun } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import type { PendingViewerModelRun, ViewerModelResult } from '../viewerResults/types';
 import type { RunningJobRow } from './types';
 

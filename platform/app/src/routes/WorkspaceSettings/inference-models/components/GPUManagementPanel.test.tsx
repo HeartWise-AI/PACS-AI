@@ -2,10 +2,10 @@ import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import GPUManagementPanel from './GPUManagementPanel';
 import { useGPUInventory } from '../../hooks/useGPUInventory';
-import userRepository from '../../../../api/userRepository';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import type { UseInferenceModelsResult } from '../../hooks/useInferenceModels';
 jest.mock('../../hooks/useGPUInventory');
-jest.mock('../../../../api/userRepository');
+jest.mock('@pacs-ai/extension-core/src/api/userRepository');
 jest.mock('./ModelDeploymentProgressPanel', () => () => null);
 const inventory = {
   sampledAt: '2026-11-12T00:00:00Z',

@@ -1,7 +1,7 @@
 import type {
   InferenceModelDeploymentEvent,
   InferenceModelDeploymentOperation,
-} from '../../../api/inferenceDTO';
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { createModelDeploymentMonitor } from './modelDeploymentMonitor';
 
 const operation = (

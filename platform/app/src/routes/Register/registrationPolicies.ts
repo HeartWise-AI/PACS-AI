@@ -1,4 +1,4 @@
-import type { PolicyAcceptanceInput, PolicyDefinition } from '../../api/userDTO';
+import type { PolicyAcceptanceInput, PolicyDefinition } from '@pacs-ai/extension-core/src/api/userDTO';
 
 export interface RegistrationPolicyPair {
   terms: PolicyDefinition;

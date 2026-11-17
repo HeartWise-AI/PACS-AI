@@ -1,4 +1,4 @@
-import type { GetInferenceIngestionJobsResponse } from '../../api/inferenceDTO';
+import type { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import {
   buildIngestionJobNotificationsUpdate,
   formatIngestionJobCreator,

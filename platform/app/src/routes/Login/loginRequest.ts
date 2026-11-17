@@ -1,4 +1,4 @@
-import type { LoginRequest } from '../../api/userDTO';
+import type { LoginRequest } from '@pacs-ai/extension-core/src/api/userDTO';
 
 interface CreateLoginRequestInput {
   tenantId: string;

@@ -8,18 +8,18 @@ import {
   modelExecutionFixtures,
   studyProcessingRunHistoryFixture,
   studyProcessingSummaryFixtures,
-} from './fixtures';
+} from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   StudyProcessingProvider,
   type StudyProcessingContextValue,
   useStudyProcessing,
-} from './StudyProcessingProvider';
+} from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
 import { StudyProcessingRunHistoryPanel } from './StudyProcessingRunHistoryPanel';
 import {
   RunHistoryUnavailableError,
   type RunHistoryTransportResponse,
   type StudyProcessingRunHistoryTransport,
-} from './runHistoryTransport';
+} from '@pacs-ai/extension-core/src/studyProcessing/runHistoryTransport';
 import type { ModelExecutionResultSelection } from './executionResultQuery';
 
 jest.mock('react-i18next', () => ({
