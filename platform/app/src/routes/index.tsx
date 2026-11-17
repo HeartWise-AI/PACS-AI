@@ -20,6 +20,7 @@ import PropTypes from 'prop-types';
 import Members from './Members';
 import KibanaLogs from './KibanaLogs';
 import AIModels from './AIModels';
+import AiPredictions from './AiPredictions';
 import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
@@ -196,6 +197,13 @@ const createRoutes = ({
     props: { children: AIModels, servicesManager, extensionManager },
   };
 
+  const AiPredictionsRoute = {
+    path: `/ai-predictions`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: AiPredictions, servicesManager, extensionManager },
+  };
+
   const MembersRoute = {
     path: `/admin/members`,
     children: DataSourceWrapper,
@@ -236,6 +244,7 @@ const createRoutes = ({
     ...(showStudyList ? [ChangePasswordRoute] : []),
     ...(showStudyList ? [ResetPasswordRoute] : []),
     ...(showStudyList ? [AIModelsRoute] : []),
+    ...(showStudyList ? [AiPredictionsRoute] : []),
     ...(showStudyList ? [MembersRoute] : []),
     ...(showStudyList ? [KibanaLogsRoute] : []),
     ...(showStudyList ? [SettingsRoute] : []),

@@ -23,6 +23,7 @@ import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import TopNavigation from './TopNavigation.json';
+import AiPredictions from './AiPredictions.json';
 
 export default {
   fr: {
@@ -51,5 +52,6 @@ export default {
     StudyList,
     ViewportDownloadForm,
     TopNavigation,
+    AiPredictions,
   },
 };

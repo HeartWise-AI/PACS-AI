@@ -46,6 +46,16 @@ describe('top navigation model', () => {
     }
   );
 
+  test('links the AI Predictions page and marks it active there only', () => {
+    const predictions = getTopNavigationItems('/', UserRole.USER).find(
+      item => item.key === 'ai-predictions'
+    );
+    expect(predictions).toMatchObject({ to: '/ai-predictions' });
+    expect(predictions?.disabled).toBeFalsy();
+    expect(isTopNavigationItemActive(predictions!, '/ai-predictions')).toBe(true);
+    expect(isTopNavigationItemActive(predictions!, '/ai-models')).toBe(false);
+  });
+
   test('retains worklist search context when leaving a viewer route', () => {
     expect(
       getStudiesDestination(

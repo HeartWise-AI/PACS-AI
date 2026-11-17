@@ -27,6 +27,7 @@ import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 import TopNavigation from './TopNavigation.json';
+import AiPredictions from './AiPredictions.json';
 
 export default {
   'en-US': {
@@ -59,5 +60,6 @@ export default {
     Messages,
     WindowLevelActionMenu,
     TopNavigation,
+    AiPredictions,
   },
 };
