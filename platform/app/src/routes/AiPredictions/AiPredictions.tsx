@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import TopNavigation from '../../components/TopNavigation';
 import { isAdminRole } from '../../components/TopNavigation/navigationModel';
 import userRepository from '../../api/userRepository';
@@ -10,7 +11,8 @@ import { createViewerResultsRepository } from '../../components/inference/viewer
 import { ModelExecutionResultDrawer } from '../../components/inference/studyProcessing/ModelExecutionResultDrawer';
 import { useModelExecutionResultViewer } from '../../components/inference/studyProcessing/useModelExecutionResultViewer';
 import type { ModelExecutionResultClient } from '../../components/inference/studyProcessing/executionResultClient';
-import type { StudyNotificationMetadataResolver } from '../../components/inference/studyNotificationMetadata';
+import { createStudyRefreshRepository } from '../../components/inference/studyRefresh/studyRefreshRepository';
+import { buildProcessingNotificationViewerPath } from '../../components/inference/processingNotificationNavigation';
 import { BUTTON_CLASS, ExamRow, type PredictionsActions } from './ExamRow';
 import { CompareDialog, RawDataDialog } from './PredictionDialogs';
 import { PredictionsFiltersBar, type LaunchedByUser } from './PredictionsFiltersBar';
@@ -22,7 +24,8 @@ import {
   updatePredictionsFilters,
 } from './predictionsQuery';
 import { createPredictionsRepository, type PredictionsRepository } from './predictionsRepository';
-import { createPredictionStudyResolver } from './studyLabels';
+import { createPredictionStudyResolver, type PredictionStudyResolver } from './studyLabels';
+import { createExamRetriever, type ExamRetriever } from './examRetrieval';
 import { usePredictionsPage } from './usePredictionsPage';
 import { useExecutionResults } from './useExecutionResults';
 import { enrichPredictionsCSV, parseCSV, serializeCSV } from './csvExport';
@@ -38,7 +41,10 @@ export const PREDICTION_MODALITIES = ['XA', 'US', 'CT', 'MR', 'ECG'];
 
 export interface AiPredictionsDependencies {
   repository?: PredictionsRepository;
-  resolver?: StudyNotificationMetadataResolver;
+  resolver?: PredictionStudyResolver;
+  // Retrieves exams whose images were removed from the local store; null
+  // disables "Retrieve from PACS and open".
+  retriever?: ExamRetriever | null;
   loadCurrentUser?: () => Promise<{ id: string; role: string | null }>;
   loadAvailableModels?: () => Promise<{ modelName: string; containerId: string }[]>;
   loadUsers?: () => Promise<LaunchedByUser[]>;
@@ -94,6 +100,12 @@ export function AiPredictionsPage(dependencies: AiPredictionsDependencies = {}) 
   const { t } = useTranslation('AiPredictions');
   const repositoryRef = useRef(dependencies.repository ?? createPredictionsRepository());
   const resolverRef = useRef(dependencies.resolver ?? createPredictionStudyResolver());
+  const retrieverRef = useRef<ExamRetriever | null>(
+    dependencies.retriever !== undefined
+      ? dependencies.retriever
+      : createExamRetriever(createStudyRefreshRepository())
+  );
+  const navigate = useNavigate();
   const nowRef = useRef(dependencies.now ?? (() => new Date()));
   const deps = { ...defaults, ...dependencies };
   const depsRef = useRef(deps);
@@ -231,9 +243,12 @@ export function AiPredictionsPage(dependencies: AiPredictionsDependencies = {}) 
         repositoryRef.current
           .loadModelHistory(studyInstanceUID, modelName)
           .then(history => history.executions),
+      retriever: retrieverRef.current,
+      openExam: studyInstanceUID =>
+        navigate(buildProcessingNotificationViewerPath(studyInstanceUID)),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [results, resultViewer.open, runnable, state.reload]
+    [results, resultViewer.open, runnable, state.reload, navigate]
   );
 
   const exportCSV = async () => {

@@ -53,6 +53,8 @@ export function exam(overrides: Partial<PredictionExam> = {}): PredictionExam {
     failed: 0,
     skipped: 0,
     cancelled: 0,
+    stalled: 0,
+    expired: 0,
   };
   models.forEach(item => {
     counts[item.state] += 1;

@@ -52,6 +52,32 @@ describe('AI predictions repository', () => {
     expect(page.exams[0].launchers).toHaveLength(1);
   });
 
+  test('maps the stalled and expired states and their counts', () => {
+    const page = mapPredictionsPage({
+      view: 'automatic',
+      limit: 25,
+      offset: 0,
+      total: 1,
+      hasMore: false,
+      canViewAll: false,
+      exams: [
+        {
+          studyInstanceUID: '1.2.3',
+          lastActivityAt: '2026-08-14T09:00:00Z',
+          active: false,
+          counts: { total: 2, stalled: 1, expired: 1 },
+          models: [
+            { runId: 'r1', executionId: 'e1', modelName: 'PanEcho', state: 'stalled' },
+            { runId: 'r2', executionId: 'e2', modelName: 'EchoPrime', state: 'expired' },
+          ],
+          launchers: [],
+        },
+      ],
+    });
+    expect(page.exams[0].models.map(model => model.state)).toEqual(['stalled', 'expired']);
+    expect(page.exams[0].counts).toMatchObject({ stalled: 1, expired: 1, queued: 0 });
+  });
+
   test('a refused view keeps the HTTP status', async () => {
     const get = jest
       .fn()

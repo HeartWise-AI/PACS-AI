@@ -5,11 +5,16 @@ export type PredictionsView = 'mine' | 'automatic' | 'all';
 export type PredictionState =
   | 'waiting'
   | 'queued'
+  // Pending or queued without a study-service job long after the run was
+  // created: it will not start by itself ("never ran").
+  | 'stalled'
   | 'running'
   | 'completed'
   | 'failed'
   | 'skipped'
-  | 'cancelled';
+  | 'cancelled'
+  // An automatic execution that never ran, closed by the gateway's expiry.
+  | 'expired';
 
 export type PredictionTrigger = 'AUTO' | 'MANUAL_REPROCESS' | 'LEGACY_IMPORT' | 'VIEWER_REQUEST';
 
@@ -51,11 +56,13 @@ export interface PredictionCounts {
   total: number;
   waiting: number;
   queued: number;
+  stalled: number;
   running: number;
   completed: number;
   failed: number;
   skipped: number;
   cancelled: number;
+  expired: number;
 }
 
 export interface PredictionLauncher {
@@ -116,8 +123,16 @@ export interface PredictionsFilters {
   page: number;
 }
 
+/**
+ * Whether the local image store has the exam: 'no' when the lookup found no
+ * such study (the images are removed about 24 hours after they arrive),
+ * 'unknown' when the lookup failed.
+ */
+export type PredictionStudyStored = 'yes' | 'no' | 'unknown';
+
 /** What the page shows for an exam that the local PACS describes. */
 export interface PredictionStudyLabels {
+  stored: PredictionStudyStored;
   patientName: string | null;
   patientId: string | null;
   accessionNumber: string | null;

@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { StudyNotificationMetadataResolver } from '../../components/inference/studyNotificationMetadata';
 import type { PredictionsRepository } from './predictionsRepository';
 import { buildPredictionsListParams, predictionsDateRange } from './predictionsQuery';
-import { patientNameMatches, predictionStudyLabels } from './studyLabels';
+import { examInProgress } from './presentation';
+import {
+  patientNameMatches,
+  predictionStudyLabels,
+  type PredictionStudyResolver,
+} from './studyLabels';
 import type {
   PredictionExam,
   PredictionsFilters,
@@ -29,7 +33,7 @@ export interface PredictionsPageState {
 interface Options {
   filters: PredictionsFilters;
   repository: PredictionsRepository;
-  resolver: StudyNotificationMetadataResolver;
+  resolver: PredictionStudyResolver;
   // False until the user's role is known, so "all" is never requested blindly.
   enabled: boolean;
   now?: () => Date;
@@ -113,7 +117,11 @@ export function usePredictionsPage({
       }
       resolver.resolve(uid).then(metadata => {
         if (!cancelled) {
-          setLabels(current => ({ ...current, [uid]: predictionStudyLabels(exam, metadata) }));
+          const notStored = !metadata && Boolean(resolver.isNotStored?.(uid));
+          setLabels(current => ({
+            ...current,
+            [uid]: predictionStudyLabels(exam, metadata, notStored),
+          }));
         }
       });
     }
@@ -122,7 +130,7 @@ export function usePredictionsPage({
     };
   }, [exams, resolver]);
 
-  const hasActive = Boolean(exams?.some(exam => exam.active));
+  const hasActive = Boolean(exams?.some(examInProgress));
   useEffect(() => {
     if (!hasActive) {
       return;

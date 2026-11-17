@@ -1,11 +1,15 @@
 import {
   countsLine,
   examChips,
+  examInProgress,
   formatElapsed,
   launchedBySummary,
   noResultText,
   readablePersonName,
   shortModelLabel,
+  skipReasonLabel,
+  STATE_CLASSES,
+  stateLabel,
 } from './presentation';
 import { exam, model, NOW, translate as t } from './testSupport';
 
@@ -183,5 +187,49 @@ describe('AI predictions presentation', () => {
   test('DICOM person names are readable', () => {
     expect(readablePersonName('SYNTHETIC^PATIENT^^')).toBe('SYNTHETIC PATIENT');
     expect(readablePersonName(null)).toBeNull();
+  });
+
+  test('a stalled model is a grey "never ran" chip, announced as "did not run"', () => {
+    const stalledExam = exam({
+      active: false,
+      models: [
+        model(),
+        model({ modelName: 'CathEF-CLIP', state: 'stalled', cancellable: true, completedAt: null }),
+        model({
+          modelName: 'DeepRV-CLIP',
+          state: 'expired',
+          completedAt: null,
+          skipReason: { code: 'EXPIRED_NEVER_RAN', message: null },
+        }),
+      ],
+    });
+    const chips = examChips(stalledExam, NOW.getTime(), t);
+    expect(chips.map(chip => [chip.state, chip.text, chip.label])).toEqual([
+      ['completed', 'JEPA ✓', 'DeepCORO-JEPA: Completed'],
+      ['stalled', 'CathEF never ran', 'CathEF-CLIP: did not run'],
+      ['expired', 'DeepRV expired', 'DeepRV-CLIP: Expired'],
+    ]);
+    expect(STATE_CLASSES.stalled).toContain('text-[#D6DAD2]');
+    expect(STATE_CLASSES.expired).toContain('text-[#BDBDBD]');
+    expect(stateLabel('stalled', t)).toBe('Never ran');
+    expect(countsLine(stalledExam.counts, t)).toBe('1 completed · 1 never ran · 1 expired');
+    expect(noResultText(stalledExam.models[1], t)).toBe('No result. It never ran.');
+    expect(noResultText(stalledExam.models[2], t)).toBe(
+      'No result. Closed automatically because it never ran'
+    );
+    expect(skipReasonLabel('EXPIRED_NEVER_RAN', t)).toBe(
+      'Closed automatically because it never ran'
+    );
+  });
+
+  test('an exam whose only unfinished models are stalled is not in progress', () => {
+    const stalled = model({ modelName: 'CathEF-CLIP', state: 'stalled', completedAt: null });
+    expect(examInProgress(exam({ models: [model(), stalled] }))).toBe(false);
+    // Even if a client trusted an older server that still counted it active.
+    expect(examInProgress(exam({ active: true, models: [model(), stalled] }))).toBe(false);
+    expect(
+      examInProgress(exam({ models: [stalled, model({ modelName: 'PanEcho', state: 'running' })] }))
+    ).toBe(true);
+    expect(examInProgress(exam({ models: [model({ state: 'queued' })] }))).toBe(true);
   });
 });

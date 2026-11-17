@@ -1,11 +1,12 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { AiPredictionsPage, type AiPredictionsDependencies } from './AiPredictions';
 import type { PredictionsRepository } from './predictionsRepository';
 import { exam, model, NOW } from './testSupport';
 import type { PredictionsPage } from './types';
-import type { StudyNotificationMetadataResolver } from '../../components/inference/studyNotificationMetadata';
+import type { PredictionStudyResolver } from './studyLabels';
+import { ExamRetrievalError, type ExamRetriever } from './examRetrieval';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -53,7 +54,29 @@ function page(overrides: Partial<PredictionsPage> = {}): PredictionsPage {
   };
 }
 
-function resolver(): StudyNotificationMetadataResolver {
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+}
+
+function notStoredResolver(): PredictionStudyResolver {
+  return {
+    clear: jest.fn(),
+    peek: jest.fn(() => null),
+    resolve: jest.fn(async () => null),
+    isNotStored: jest.fn(() => true),
+  };
+}
+
+function fakeRetriever(overrides: Partial<ExamRetriever> = {}): jest.Mocked<ExamRetriever> {
+  return {
+    source: jest.fn(async () => 'PACS1'),
+    retrieve: jest.fn(async () => true),
+    ...overrides,
+  } as jest.Mocked<ExamRetriever>;
+}
+
+function resolver(): PredictionStudyResolver {
   const metadata = {
     studyInstanceUID: STUDY,
     patientName: 'SYNTHETIC^PATIENT',
@@ -130,12 +153,14 @@ function setup(overrides: Partial<AiPredictionsDependencies> = {}, role = 'USER'
     cancelRun: jest.fn(async () => undefined),
     runModel: jest.fn(async () => undefined),
     saveFile: jest.fn(),
+    retriever: fakeRetriever(),
     now: () => NOW,
     ...overrides,
   };
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/ai-predictions']}>
       <AiPredictionsPage {...dependencies} />
+      <LocationProbe />
     </MemoryRouter>
   );
   return { repository, dependencies, resultClient };
@@ -373,5 +398,180 @@ describe('AI Predictions page', () => {
     await waitFor(() =>
       expect(listPredictions).toHaveBeenLastCalledWith(expect.objectContaining({ offset: '25' }))
     );
+  });
+
+  test('a stalled model shows "never ran", the row its date, and Close cancels the run', async () => {
+    const stalledPage = page({
+      exams: [
+        exam({
+          active: false,
+          lastActivityAt: '2026-08-14T09:05:00Z',
+          models: [
+            model(),
+            model({
+              modelName: 'CathEF-CLIP',
+              state: 'stalled',
+              status: 'pending',
+              cancellable: true,
+              runId: 'run-old',
+              startedAt: null,
+              completedAt: null,
+              runCreatedAt: '2026-08-14T09:00:00Z',
+            }),
+          ],
+        }),
+      ],
+    });
+    const { dependencies } = setup({
+      repository: {
+        listPredictions: jest.fn(async () => stalledPage),
+        loadModelHistory: jest.fn(),
+        exportCSV: jest.fn(),
+      },
+    });
+    const row = (await screen.findByText('SYNTHETIC PATIENT')).closest('tr') as HTMLElement;
+    const chips = within(row).getAllByTestId('ai-predictions-chip');
+    expect(chips.map(chip => chip.getAttribute('data-state'))).toEqual(['completed', 'stalled']);
+    expect(chips[1].textContent).toBe('CathEF never ranCathEF-CLIP: did not run');
+    expect(within(row).getByText('1 completed · 1 never ran')).toBeTruthy();
+    expect(within(row).queryByText('in progress')).toBeNull();
+    expect(
+      within(row).getByText(new Date('2026-08-14T09:05:00Z').toLocaleDateString())
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand exam of SYNTHETIC PATIENT' }));
+    const cathEF = screen.getByTestId('ai-predictions-model-CathEF-CLIP');
+    expect(within(cathEF).getByTestId('ai-predictions-key-result').textContent).toBe(
+      'No result. It never ran.'
+    );
+    expect(within(cathEF).queryByRole('button', { name: 'Cancel' })).toBeNull();
+    fireEvent.click(within(cathEF).getByRole('button', { name: 'Close' }));
+    const confirm = within(cathEF).getByRole('group', { name: 'Confirm closing' });
+    expect(confirm.textContent).toContain(
+      'This run never started and will not start by itself. Closing it marks the run as cancelled; models that have not started are closed: CathEF-CLIP.'
+    );
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Close the run' }));
+    await waitFor(() => expect(dependencies.cancelRun).toHaveBeenCalledWith('run-old'));
+    await within(cathEF).findByText('Closed. The run is marked as cancelled.');
+  });
+
+  test('an exam whose images were removed keeps its MRN, results and offers to retrieve it', async () => {
+    let finish: (completed: boolean) => void = () => undefined;
+    const retriever = fakeRetriever({
+      retrieve: jest.fn(
+        (_uid: string, _modality: string, onProgress: (percent: number | null) => void) =>
+          new Promise<boolean>(resolve => {
+            onProgress(40);
+            finish = resolve;
+          })
+      ),
+    });
+    setup({ resolver: notStoredResolver(), retriever });
+    const name = await screen.findByText('Patient name unavailable (images removed)');
+    const row = name.closest('tr') as HTMLElement;
+    expect(within(row).queryByText('Unknown patient')).toBeNull();
+    expect(within(row).getByText('Images removed after 24 h')).toBeTruthy();
+    expect(within(row).getByText('MRN SYN-MRN-1 · XA')).toBeTruthy();
+    expect(within(row).queryByRole('link', { name: 'Open exam' })).toBeNull();
+
+    // Results come from the stored AI results, not from the images.
+    fireEvent.click(screen.getByRole('button', { name: 'Expand exam of SYN-MRN-1' }));
+    const jepa = screen.getByTestId('ai-predictions-model-DeepCORO-JEPA');
+    await waitFor(() =>
+      expect(within(jepa).getByTestId('ai-predictions-key-result').textContent).toBe(
+        'Significant stenosis: Proximal LAD 80%'
+      )
+    );
+    expect(within(jepa).getByRole('button', { name: 'Result' })).toBeTruthy();
+    expect(within(jepa).getByRole('button', { name: 'Raw data' })).toBeTruthy();
+
+    const retrieve = await within(row).findByRole('button', {
+      name: 'Retrieve from PACS and open',
+    });
+    expect(retrieve.getAttribute('aria-disabled')).toBeNull();
+    fireEvent.click(retrieve);
+    expect(retriever.retrieve).toHaveBeenCalledWith(
+      STUDY,
+      'PACS1',
+      expect.any(Function),
+      expect.any(Function)
+    );
+    expect((await within(row).findByRole('status')).textContent).toBe('Retrieving from PACS… 40%');
+    expect(screen.getByTestId('location').textContent).toBe('/ai-predictions');
+    await act(async () => finish(true));
+    expect(screen.getByTestId('location').textContent).toBe(
+      `/viewer?StudyInstanceUIDs=${encodeURIComponent(STUDY)}`
+    );
+  });
+
+  test('a failed retrieval is shown in the row and can be tried again', async () => {
+    const retriever = fakeRetriever({
+      retrieve: jest.fn(async () => {
+        throw new ExamRetrievalError('timedOut');
+      }),
+    });
+    setup({ resolver: notStoredResolver(), retriever });
+    const row = (await screen.findByText('Patient name unavailable (images removed)')).closest(
+      'tr'
+    ) as HTMLElement;
+    fireEvent.click(
+      await within(row).findByRole('button', { name: 'Retrieve from PACS and open' })
+    );
+    expect((await within(row).findByRole('alert')).textContent).toBe(
+      'Retrieving the exam from the PACS took too long.'
+    );
+    expect(within(row).getByRole('button', { name: 'Try the retrieval again' })).toBeTruthy();
+    expect(screen.getByTestId('location').textContent).toBe('/ai-predictions');
+  });
+
+  test('without a PACS source "Open exam" stays focusable but cannot be activated', async () => {
+    const retriever = fakeRetriever({ source: jest.fn(async () => null) });
+    setup({ resolver: notStoredResolver(), retriever });
+    const row = (await screen.findByText('Patient name unavailable (images removed)')).closest(
+      'tr'
+    ) as HTMLElement;
+    const open = await within(row).findByRole('button', {
+      name: 'Open exam',
+      description: 'This exam is no longer stored on this server',
+    });
+    expect(open.getAttribute('aria-disabled')).toBe('true');
+    expect(open.getAttribute('title')).toBe('This exam is no longer stored on this server');
+    expect((open as HTMLButtonElement).disabled).toBe(false);
+    open.focus();
+    expect(document.activeElement).toBe(open);
+    fireEvent.click(open);
+    expect(retriever.retrieve).not.toHaveBeenCalled();
+    expect(screen.getByTestId('location').textContent).toBe('/ai-predictions');
+  });
+
+  test('"Unknown patient" only when the stored study has no name', async () => {
+    const withoutName: PredictionStudyResolver = {
+      clear: jest.fn(),
+      peek: jest.fn(() => null),
+      resolve: jest.fn(async () => ({
+        studyInstanceUID: STUDY,
+        patientName: null,
+        patientId: 'SYN-MRN-1',
+        accessionNumber: 'SYN-ACC-1',
+        modalitiesInStudy: 'XA',
+      })),
+    };
+    setup({ resolver: withoutName });
+    const row = (await screen.findByText('Unknown patient')).closest('tr') as HTMLElement;
+    expect(within(row).getByRole('link', { name: 'Open exam' })).toBeTruthy();
+    expect(within(row).queryByText('Images removed after 24 h')).toBeNull();
+  });
+
+  test('a failed lookup is not mistaken for removed images', async () => {
+    const failing: PredictionStudyResolver = {
+      clear: jest.fn(),
+      peek: jest.fn(() => null),
+      resolve: jest.fn(async () => null),
+      isNotStored: jest.fn(() => false),
+    };
+    setup({ resolver: failing });
+    const row = (await screen.findByText('Patient name unavailable')).closest('tr') as HTMLElement;
+    expect(within(row).getByRole('link', { name: 'Open exam' })).toBeTruthy();
+    expect(within(row).queryByText('Images removed after 24 h')).toBeNull();
   });
 });

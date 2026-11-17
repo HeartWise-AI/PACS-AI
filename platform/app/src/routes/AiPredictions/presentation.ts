@@ -39,7 +39,22 @@ export const STATE_CLASSES: Record<PredictionState, string> = {
   failed: 'bg-[#40231C] text-[#FFB199]',
   skipped: 'bg-[#3A3320] text-[#F3C988]',
   cancelled: 'bg-[#2E2E2E] text-[#D2D2D2]',
+  // Grey: these models will not run.
+  stalled: 'bg-[#34362F] text-[#D6DAD2]',
+  expired: 'bg-[#2A2A2A] text-[#BDBDBD]',
 };
+
+/** States of a model that may still produce a result. */
+export const IN_PROGRESS_STATES: readonly PredictionState[] = ['waiting', 'queued', 'running'];
+
+/**
+ * Whether the exam has a model that may still produce a result. Stalled
+ * models never ran and will not start by themselves, so an exam whose only
+ * unfinished models are stalled is not in progress.
+ */
+export function examInProgress(exam: PredictionExam): boolean {
+  return exam.active && exam.models.some(model => IN_PROGRESS_STATES.includes(model.state));
+}
 
 export function stateLabel(state: PredictionState, t: Translate): string {
   switch (state) {
@@ -57,6 +72,10 @@ export function stateLabel(state: PredictionState, t: Translate): string {
       return t('Skipped');
     case 'cancelled':
       return t('Cancelled');
+    case 'stalled':
+      return t('Never ran');
+    case 'expired':
+      return t('Expired');
   }
 }
 
@@ -116,6 +135,12 @@ export function examChips(exam: PredictionExam, now: number, t: Translate): Mode
       case 'skipped':
         suffix = t('skipped');
         break;
+      case 'stalled':
+        suffix = t('never ran');
+        break;
+      case 'expired':
+        suffix = t('expired');
+        break;
       default:
         suffix = t('cancelled');
     }
@@ -125,7 +150,7 @@ export function examChips(exam: PredictionExam, now: number, t: Translate): Mode
       text: `${short} ${suffix}`,
       label: t('{{model}} state {{state}}', {
         model: model.modelName,
-        state: stateLabel(model.state, t),
+        state: model.state === 'stalled' ? t('did not run') : stateLabel(model.state, t),
       }),
     };
   });
@@ -145,6 +170,8 @@ export function countsLine(counts: PredictionCounts, t: Translate): string {
   push(counts.failed, '{{count}} failed');
   push(counts.skipped, '{{count}} skipped');
   push(counts.cancelled, '{{count}} cancelled');
+  push(counts.stalled ?? 0, '{{count}} never ran');
+  push(counts.expired ?? 0, '{{count}} expired');
   return parts.join(' · ');
 }
 
@@ -242,6 +269,8 @@ export function skipReasonLabel(code: string, t: Translate): string {
       return t('A prerequisite of this model was not met');
     case 'MODEL_DISABLED':
       return t('The model is disabled');
+    case 'EXPIRED_NEVER_RAN':
+      return t('Closed automatically because it never ran');
     default:
       return code;
   }
@@ -258,6 +287,8 @@ export function noResultText(execution: PredictionExecution, t: Translate): stri
       return t('Running…');
     case 'cancelled':
       return t('No result. Cancelled');
+    case 'stalled':
+      return t('No result. It never ran');
     default: {
       const reason = failureReason(execution, t);
       return reason ? t('No result. {{reason}}', { reason }) : t('No result.');

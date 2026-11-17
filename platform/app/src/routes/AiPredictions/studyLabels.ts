@@ -64,23 +64,49 @@ export async function fetchPredictionStudyMetadata(
   return { ...metadata, studyDescription: study ? firstValue(study, TAG_STUDY_DESCRIPTION) : null };
 }
 
+/** The study lookup of the page, which also remembers the exams the store does not have. */
+export interface PredictionStudyResolver extends StudyNotificationMetadataResolver {
+  /** True when the last lookup answered that the local store has no such study. */
+  isNotStored?(studyInstanceUID: string): boolean;
+}
+
 export function createPredictionStudyResolver(
   fetchStudy: (uid: string) => Promise<PredictionStudyMetadata | null> = uid =>
     fetchPredictionStudyMetadata(uid)
-): StudyNotificationMetadataResolver {
-  return createStudyNotificationMetadataResolver({ fetchStudy });
+): PredictionStudyResolver {
+  // A failed request is not an answer: only a lookup that returned no study
+  // marks the exam as not stored.
+  const notStored = new Set<string>();
+  const resolver = createStudyNotificationMetadataResolver({
+    fetchStudy: async uid => {
+      const metadata = await fetchStudy(uid);
+      if (metadata) {
+        notStored.delete(uid);
+      } else {
+        notStored.add(uid);
+      }
+      return metadata;
+    },
+  });
+  return { ...resolver, isNotStored: uid => notStored.has(uid) };
 }
 
-/** The labels of an exam: the local PACS first, the gateway's stored values otherwise. */
+/**
+ * The labels of an exam: the local PACS first, the gateway's stored values
+ * otherwise. The gateway stores no patient name, so an exam the store no
+ * longer has keeps its MRN and accession but no name.
+ */
 export function predictionStudyLabels(
   exam: PredictionExam,
-  metadata: ResolvedStudyNotificationMetadata | null
+  metadata: ResolvedStudyNotificationMetadata | null,
+  notStored = false
 ): PredictionStudyLabels {
   const description =
     metadata && 'studyDescription' in metadata
       ? ((metadata as PredictionStudyMetadata).studyDescription ?? null)
       : null;
   return {
+    stored: metadata ? 'yes' : notStored ? 'no' : 'unknown',
     patientName: readablePersonName(metadata?.patientName ?? null),
     patientId: metadata?.patientId ?? exam.patientId,
     accessionNumber: metadata?.accessionNumber ?? exam.accessionNumber,

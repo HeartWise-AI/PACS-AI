@@ -40,11 +40,13 @@ export class PredictionsRequestError extends Error {
 const STATES: readonly PredictionState[] = [
   'waiting',
   'queued',
+  'stalled',
   'running',
   'completed',
   'failed',
   'skipped',
   'cancelled',
+  'expired',
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -170,6 +172,8 @@ export function mapPredictionExam(value: unknown): PredictionExam | null {
       failed: count(counts.failed),
       skipped: count(counts.skipped),
       cancelled: count(counts.cancelled),
+      stalled: count(counts.stalled),
+      expired: count(counts.expired),
     },
     models,
     launchers: (Array.isArray(value.launchers) ? value.launchers : [])

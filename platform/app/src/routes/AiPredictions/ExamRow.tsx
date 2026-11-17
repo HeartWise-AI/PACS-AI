@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { buildProcessingNotificationViewerPath } from '../../components/inference/processingNotificationNavigation';
 import type { ExecutionResults, KeyResultState } from './useExecutionResults';
+import { ExamRetrievalError, type ExamRetriever } from './examRetrieval';
 import {
   canRunAgain,
   countsLine,
   examChips,
+  examInProgress,
   executionLauncherName,
   failureReason,
   formatDateTime,
@@ -36,6 +38,10 @@ export interface PredictionsActions {
   runAgain(exam: PredictionExam, execution: PredictionExecution): Promise<void>;
   canRunAgain(modelName: string): boolean;
   loadHistory(studyInstanceUID: string, modelName: string): Promise<PredictionExecution[]>;
+  /** Retrieves exams whose images were removed; null when retrieval is not possible. */
+  retriever: ExamRetriever | null;
+  /** Opens the viewer on an exam. */
+  openExam(studyInstanceUID: string): void;
 }
 
 export const BUTTON_CLASS =
@@ -255,6 +261,9 @@ export function ModelRunRow({
     );
   };
 
+  // A stalled model never started: cancelling it closes a run that would
+  // otherwise stay open for ever.
+  const closes = model.state === 'stalled';
   const origin = triggerOrigin(model.trigger, t);
   const time = formatDateTime(model.completedAt ?? model.startedAt ?? model.runCreatedAt).time;
   const earlierLabel =
@@ -314,7 +323,7 @@ export function ModelRunRow({
             className={`${BUTTON_CLASS} border-[#7A4A3C] text-[#FFB199]`}
             onClick={() => setCancelPhase({ status: 'confirm' })}
           >
-            {t('Cancel')}
+            {closes ? t('Close') : t('Cancel')}
           </button>
         )}
         {(model.state === 'failed' || model.state === 'skipped') && <WhyButton execution={model} />}
@@ -347,19 +356,24 @@ export function ModelRunRow({
         <div
           className="flex flex-wrap items-center gap-3 border-t border-[#2B332A] px-3.5 py-2.5 text-[13px]"
           role="group"
-          aria-label={t('Confirm cancellation')}
+          aria-label={closes ? t('Confirm closing') : t('Confirm cancellation')}
         >
           <span className="flex-1">
-            {t('This cancels every model of this run that has not started {{models}}', {
-              models: sameRunCancellable.join(', ') || model.modelName,
-            })}
+            {closes
+              ? t(
+                  'This run never started and will not start by itself. Closing it marks the run as cancelled; models that have not started are closed {{models}}',
+                  { models: sameRunCancellable.join(', ') || model.modelName }
+                )
+              : t('This cancels every model of this run that has not started {{models}}', {
+                  models: sameRunCancellable.join(', ') || model.modelName,
+                })}
           </span>
           <button
             type="button"
             className={`${BUTTON_CLASS} border-[#7A4A3C] text-[#FFB199]`}
             onClick={confirmCancel}
           >
-            {t('Cancel these models')}
+            {closes ? t('Close the run') : t('Cancel these models')}
           </button>
           <button
             type="button"
@@ -377,9 +391,13 @@ export function ModelRunRow({
           className="border-t border-[#2B332A] px-3.5 py-2 text-[13px]"
           role={cancelPhase.status === 'error' ? 'alert' : 'status'}
         >
-          {cancelPhase.status === 'submitting' && t('Cancelling…')}
-          {cancelPhase.status === 'done' && t('Cancelled. Models already computing will finish.')}
-          {cancelPhase.status === 'error' && t('The models could not be cancelled.')}
+          {cancelPhase.status === 'submitting' && (closes ? t('Closing…') : t('Cancelling…'))}
+          {cancelPhase.status === 'done' &&
+            (closes
+              ? t('Closed. The run is marked as cancelled.')
+              : t('Cancelled. Models already computing will finish.'))}
+          {cancelPhase.status === 'error' &&
+            (closes ? t('The run could not be closed.') : t('The models could not be cancelled.'))}
         </p>
       )}
       {(runPhase.status === 'done' || runPhase.status === 'error') && (
@@ -436,6 +454,177 @@ export function ModelRunRow({
   );
 }
 
+const OPEN_LINK_CLASS =
+  'inline-flex min-h-[44px] items-center rounded px-2.5 text-[#C8F469] hover:text-[#E3FAAE] focus:outline-none focus:ring-2 focus:ring-[#C8F469]';
+
+/**
+ * The name line: the name from the local store; "Unknown patient" only when
+ * the store has the study without a name. The gateway stores no names, so an
+ * exam whose images were removed has none.
+ */
+function patientNameText(
+  stored: PredictionStudyLabels['stored'] | null,
+  patientName: string | null,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  if (patientName) {
+    return patientName;
+  }
+  switch (stored) {
+    case 'yes':
+      return t('Unknown patient');
+    case 'no':
+      return t('Patient name unavailable (images removed)');
+    case 'unknown':
+      return t('Patient name unavailable');
+    default:
+      return t('Loading…');
+  }
+}
+
+type RetrievePhase =
+  | { status: 'resolving' }
+  | { status: 'ready'; modalityId: string }
+  | { status: 'unavailable' }
+  | { status: 'retrieving'; modalityId: string; percent: number | null }
+  | { status: 'error'; modalityId: string; timedOut: boolean };
+
+/**
+ * For an exam whose images were removed from the local store: retrieves it
+ * from its PACS source, shows the progress, then opens the viewer. Without a
+ * PACS source the button stays focusable but cannot be activated.
+ */
+export function RetrieveAndOpen({
+  studyInstanceUID,
+  actions,
+}: {
+  studyInstanceUID: string;
+  actions: PredictionsActions;
+}) {
+  const { t } = useTranslation('AiPredictions');
+  const [phase, setPhase] = useState<RetrievePhase>({ status: 'resolving' });
+  const tooltipId = useId();
+  const { retriever } = actions;
+  const mounted = React.useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    if (!retriever) {
+      setPhase({ status: 'unavailable' });
+      return () => {
+        mounted.current = false;
+      };
+    }
+    retriever.source(studyInstanceUID).then(
+      modalityId => {
+        if (mounted.current) {
+          setPhase(modalityId ? { status: 'ready', modalityId } : { status: 'unavailable' });
+        }
+      },
+      () => mounted.current && setPhase({ status: 'unavailable' })
+    );
+    return () => {
+      mounted.current = false;
+    };
+  }, [retriever, studyInstanceUID]);
+
+  const start = (modalityId: string) => {
+    if (!retriever) {
+      return;
+    }
+    setPhase({ status: 'retrieving', modalityId, percent: null });
+    retriever
+      .retrieve(
+        studyInstanceUID,
+        modalityId,
+        percent => mounted.current && setPhase({ status: 'retrieving', modalityId, percent }),
+        () => !mounted.current
+      )
+      .then(
+        completed => {
+          if (completed && mounted.current) {
+            actions.openExam(studyInstanceUID);
+          }
+        },
+        (error: unknown) =>
+          mounted.current &&
+          setPhase({
+            status: 'error',
+            modalityId,
+            timedOut: error instanceof ExamRetrievalError && error.reason === 'timedOut',
+          })
+      );
+  };
+
+  if (phase.status === 'resolving') {
+    return (
+      <span className={`inline-flex min-h-[44px] items-center px-2.5 text-[13px] ${MUTED}`}>
+        {t('Loading…')}
+      </span>
+    );
+  }
+
+  if (phase.status === 'unavailable') {
+    return (
+      <span className="inline-flex flex-col">
+        <button
+          type="button"
+          className={`${OPEN_LINK_CLASS} cursor-not-allowed text-[#A9B3A6] hover:text-[#A9B3A6]`}
+          aria-disabled="true"
+          aria-describedby={tooltipId}
+          title={t('This exam is no longer stored on this server')}
+          onClick={event => event.preventDefault()}
+          data-testid="ai-predictions-open-unavailable"
+        >
+          {t('Open exam')}
+        </button>
+        <span
+          id={tooltipId}
+          className="sr-only"
+        >
+          {t('This exam is no longer stored on this server')}
+        </span>
+      </span>
+    );
+  }
+
+  if (phase.status === 'retrieving') {
+    return (
+      <span
+        role="status"
+        className={`inline-flex min-h-[44px] items-center px-2.5 text-[13px] ${MUTED}`}
+        data-testid="ai-predictions-retrieving"
+      >
+        {phase.percent === null
+          ? t('Retrieving from PACS…')
+          : t('Retrieving from PACS… {{percent}}%', { percent: phase.percent })}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex flex-col items-start">
+      <button
+        type="button"
+        className={OPEN_LINK_CLASS}
+        onClick={() => start(phase.modalityId)}
+      >
+        {phase.status === 'error' ? t('Try the retrieval again') : t('Retrieve from PACS and open')}
+      </button>
+      {phase.status === 'error' && (
+        <span
+          role="alert"
+          className="max-w-[220px] whitespace-normal px-2.5 text-xs text-[#FFB199]"
+        >
+          {phase.timedOut
+            ? t('Retrieving the exam from the PACS took too long.')
+            : t('The exam could not be retrieved from the PACS.')}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function ExamRow({
   exam,
   labels,
@@ -456,6 +645,8 @@ export function ExamRow({
   const chips = examChips(exam, now, t);
   const launched = launchedBySummary(exam.launchers, t);
   const activity = formatDateTime(exam.lastActivityAt);
+  const inProgress = examInProgress(exam);
+  const stored = labels?.stored ?? null;
   const patientName = labels?.patientName ?? null;
   const patientId = labels?.patientId ?? exam.patientId;
   const description = [
@@ -497,7 +688,7 @@ export function ExamRow({
           </button>
         </td>
         <td className="whitespace-nowrap border-b border-[#222922] p-3 align-top text-[13px]">
-          {exam.active ? (
+          {inProgress ? (
             <span className={MUTED}>{t('in progress')}</span>
           ) : (
             <>
@@ -507,7 +698,20 @@ export function ExamRow({
           )}
         </td>
         <td className="border-b border-[#222922] p-3 align-top text-[13px]">
-          <div className="font-semibold">{patientName ?? t('Unknown patient')}</div>
+          <div
+            className="font-semibold"
+            data-testid="ai-predictions-patient"
+          >
+            {patientNameText(stored, patientName, t)}
+          </div>
+          {stored === 'no' && (
+            <div
+              className="mt-0.5 inline-block rounded-md bg-[#2A2A2A] px-1.5 py-0.5 text-[11px] text-[#D2D2D2]"
+              data-testid="ai-predictions-images-removed"
+            >
+              {t('Images removed after 24 h')}
+            </div>
+          )}
           {description && <div className={`text-xs ${MUTED}`}>{description}</div>}
         </td>
         <td className="border-b border-[#222922] p-3 align-top text-[13px]">
@@ -536,12 +740,19 @@ export function ExamRow({
           {launched.detail && <div className={`text-xs ${MUTED}`}>{launched.detail}</div>}
         </td>
         <td className="whitespace-nowrap border-b border-[#222922] p-3 align-top text-[13px]">
-          <Link
-            to={buildProcessingNotificationViewerPath(exam.studyInstanceUID)}
-            className="inline-flex min-h-[44px] items-center rounded px-2.5 text-[#C8F469] hover:text-[#E3FAAE] focus:outline-none focus:ring-2 focus:ring-[#C8F469]"
-          >
-            {t('Open exam')}
-          </Link>
+          {stored === 'no' ? (
+            <RetrieveAndOpen
+              studyInstanceUID={exam.studyInstanceUID}
+              actions={actions}
+            />
+          ) : (
+            <Link
+              to={buildProcessingNotificationViewerPath(exam.studyInstanceUID)}
+              className={OPEN_LINK_CLASS}
+            >
+              {t('Open exam')}
+            </Link>
+          )}
         </td>
       </tr>
       {expanded && (
