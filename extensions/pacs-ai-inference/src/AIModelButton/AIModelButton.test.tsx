@@ -3,7 +3,7 @@ import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import AIModelButton from './AIModelButton';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
-import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
+import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
 
 jest.mock('react-dom', () => ({ createPortal: children => children }));
 jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
@@ -28,17 +28,17 @@ jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({
   __esModule: true,
   default: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
 }));
-jest.mock('../../../../cornerstone/src/utils/addSegmentation', () => ({
+jest.mock('../utils/addSegmentation', () => ({
   addSegmentationFromLabelmap: jest.fn(),
 }));
-jest.mock('@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider', () => ({
+jest.mock('../viewerResults/ViewerModelResultsProvider', () => ({
   useViewerModelResults: jest.fn(),
 }));
-jest.mock('@ohif/app/src/components/inference/JSONOutputModeModal', () => 'json-output-modal');
-jest.mock('@ohif/app/src/components/inference/WebappOutputModeModal', () => 'webapp-output-modal');
-jest.mock('@ohif/app/src/components/inference/HTMLOutputModeModal', () => 'html-output-modal');
-jest.mock('@ohif/app/src/components/inference/PDFOutputModeModal', () => 'pdf-output-modal');
-jest.mock('@ohif/app/src/components/inference/SelectSeriesModal', () => 'select-series-modal');
+jest.mock('../JSONOutputModeModal', () => 'json-output-modal');
+jest.mock('../WebappOutputModeModal', () => 'webapp-output-modal');
+jest.mock('../HTMLOutputModeModal', () => 'html-output-modal');
+jest.mock('../PDFOutputModeModal', () => 'pdf-output-modal');
+jest.mock('../SelectSeriesModal', () => 'select-series-modal');
 
 const model = {
   modelId: 'deepcoro-jepa',

@@ -8,13 +8,13 @@ import {
   pollRetrieveJobs,
   RetrieveJobsError,
   type RetrieveJobsFailure,
-} from '@ohif/app/src/components/inference/studyRefresh/retrieveJobs';
+} from '@pacs-ai/extension-inference/src/studyRefresh/retrieveJobs';
 import {
   rememberStudySourceModality,
   resolveSourceModality,
   type SourceModalities,
-} from '@ohif/app/src/components/inference/studyRefresh/sourceModality';
-import type { StudyRefreshRepository } from '@ohif/app/src/components/inference/studyRefresh/useStudyRefresh';
+} from '@pacs-ai/extension-inference/src/studyRefresh/sourceModality';
+import type { StudyRefreshRepository } from '@pacs-ai/extension-inference/src/studyRefresh/useStudyRefresh';
 
 export type ExamRetrievalFailure = RetrieveJobsFailure | 'startFailed';
 

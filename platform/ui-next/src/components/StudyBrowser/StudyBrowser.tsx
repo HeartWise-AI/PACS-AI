@@ -1,14 +1,10 @@
-import { buildInferenceStudyModalities } from '@ohif/app/src/components/inference/buildInferenceStudyModalities';
-import React, { useEffect, useRef } from 'react'; // NOTE: This is a PACS changes ({ useEffect, useRef })
+import React from 'react';
 import PropTypes from 'prop-types';
-import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext'; // NOTE: This is a PACS changes
-import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels'; // NOTE: This is a PACS changes
+
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
 import { ScrollArea } from '../ScrollArea';
-import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png'; // NOTE: This is a PACS changes
-import { useTranslation } from 'react-i18next'; // NOTE: This is a PACS changes
 
 const noop = () => {};
 
@@ -22,58 +18,12 @@ const StudyBrowser = ({
   onDoubleClickThumbnail = noop,
   onClickUntrack = noop,
   activeDisplaySetInstanceUIDs,
-  inferenceDisplaySetInstanceUIDs = activeDisplaySetInstanceUIDs,
   servicesManager,
   showSettings,
   viewPresets,
   ThumbnailMenuItems,
   StudyMenuItems,
 }: withAppTypes) => {
-  // NOTE: This is a PACS changes
-  const { setSelectedModalities } = useStudyContext();
-  // NOTE: This is a PACS changes
-  const { inferenceAvailableModels, fetchingAvailableModels } = useAvailableModels();
-  // NOTE: This is a PACS changes
-  const { t } = useTranslation('StudyBrowser');
-  // NOTE: This is a PACS changes
-  const { setDisplaySets } = useStudyContext();
-
-  // NOTE: This is a PACS changes (Find the active tab and its display sets)
-  const activeTab = tabs.find(tab => tab.name === activeTabName);
-  const activeDisplaySets = activeTab?.studies.map(study => study.displaySets).flat() || [];
-
-  // NOTE: This is a PACS changes (Add this before the useEffect)
-  const prevDisplaySets = useRef(activeDisplaySets);
-
-  // NOTE: This is a PACS changes (Update display sets when they change)
-  useEffect(() => {
-    if (
-      activeDisplaySets.length > 0 &&
-      JSON.stringify(activeDisplaySets) !== JSON.stringify(prevDisplaySets.current)
-    ) {
-      setDisplaySets(activeDisplaySets);
-      prevDisplaySets.current = activeDisplaySets;
-    }
-  }, [activeDisplaySets]);
-
-  // NOTE: This is a PACS changes
-  useEffect(() => {
-    // Include loaded comparison exams, independent of the selected browser tab.
-    const tabData = tabs.find(tab => tab.name === 'all') || tabs.find(tab => tab.name === activeTabName);
-    const primaryStudies = tabs.find(tab => tab.name === 'primary')?.studies || [];
-    const primaryUIDs = new Set(primaryStudies.map(study => study.studyInstanceUid));
-    const comparisonStudies = (tabData?.studies || []).filter(study =>
-      !primaryUIDs.has(study.studyInstanceUid) && study.displaySets?.some(displaySet =>
-        inferenceDisplaySetInstanceUIDs?.includes(displaySet.displaySetInstanceUID)
-      )
-    );
-    const selectedModalitiesMap = buildInferenceStudyModalities([
-      ...primaryStudies, ...comparisonStudies,
-    ]);
-
-    setSelectedModalities(selectedModalitiesMap);
-  }, [tabs, activeTabName, inferenceDisplaySetInstanceUIDs, setSelectedModalities]);
-
   const getTabContent = () => {
     const tabData = tabs.find(tab => tab.name === activeTabName);
     const viewPreset = viewPresets
@@ -82,28 +32,8 @@ const StudyBrowser = ({
     return tabData?.studies?.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
-
         return (
           <React.Fragment key={studyInstanceUid}>
-            {/* <div className="flex w-full gap-3 p-3">
-
-              <AIModelButton
-                isShowBG={true}
-                isShowText={true}
-                servicesManager={servicesManager}
-                positionRight={-110}
-                inferenceAvailableModels={inferenceAvailableModels}
-                loading={fetchingAvailableModels}
-              />
-              <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-white bg-opacity-10 px-2 py-2">
-                <img
-                  src={refreshIcon}
-                  className="h-5 w-5"
-                  alt="Refresh icon"
-                />
-                <span className="text-sm !text-white text-transparent">{t('Refresh')}</span>
-              </button>
-            </div> */}
             <StudyItem
               date={date}
               description={description}
@@ -177,8 +107,6 @@ StudyBrowser.propTypes = {
           description: PropTypes.string,
           displaySets: PropTypes.arrayOf(
             PropTypes.shape({
-              // NOTE: This is a PACS changes
-              SeriesInstanceUID: PropTypes.string,
               displaySetInstanceUID: PropTypes.string.isRequired,
               imageSrc: PropTypes.string,
               imageAltText: PropTypes.string,

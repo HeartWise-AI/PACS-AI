@@ -38,7 +38,7 @@ jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({
   logoutUser: (...args) => mockLogoutUser(...args),
 }));
 
-jest.mock('@ohif/app/src/components/inference/InferenceNotificationsBell', () => {
+jest.mock('@pacs-ai/extension-inference/src/InferenceNotificationsBell', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require('react');
   return {

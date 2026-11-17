@@ -2,7 +2,7 @@ import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/
 import {
   createServerSentEventParser,
   type ServerSentEventFrame,
-} from '@ohif/app/src/components/inference/studyProcessing/sseParser';
+} from '@pacs-ai/extension-inference/src/studyProcessing/sseParser';
 
 export const MODEL_DEPLOYMENT_EVENT = 'model-deployment';
 

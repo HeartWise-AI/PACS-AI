@@ -1,7 +1,7 @@
 // "Compare with latest": a two-column diff when both results are flat
 // key -> value objects, otherwise the two raw JSON documents side by side.
 
-import { parseEmbeddedJSON } from '@ohif/app/src/components/inference/studyProcessing/readableResult';
+import { parseEmbeddedJSON } from '@pacs-ai/extension-inference/src/studyProcessing/readableResult';
 
 type Primitive = string | number | boolean | null;
 

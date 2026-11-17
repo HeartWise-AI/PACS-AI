@@ -5,7 +5,7 @@
 // reported, never re-thresholded. Only the main models are summarised;
 // anything else (or an unexpected payload) has no key result.
 
-import { parseEmbeddedJSON } from '@ohif/app/src/components/inference/studyProcessing/readableResult';
+import { parseEmbeddedJSON } from '@pacs-ai/extension-inference/src/studyProcessing/readableResult';
 
 export type Translate = (key: string, options?: Record<string, unknown>) => string;
 

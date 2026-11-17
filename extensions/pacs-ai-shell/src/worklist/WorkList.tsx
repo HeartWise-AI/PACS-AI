@@ -10,8 +10,8 @@ import { Button } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
-import { summarizeRetrieveJobs } from '@ohif/app/src/components/inference/studyRefresh/retrieveJobs';
-import { rememberStudySourceModality } from '@ohif/app/src/components/inference/studyRefresh/sourceModality';
+import { summarizeRetrieveJobs } from '@pacs-ai/extension-inference/src/studyRefresh/retrieveJobs';
+import { rememberStudySourceModality } from '@pacs-ai/extension-inference/src/studyRefresh/sourceModality';
 import Modal from '../components/Modal';
 import { JobState } from '@pacs-ai/extension-core/src/api/orthancDTO';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
@@ -35,12 +35,12 @@ import {
   useModelExecutionResultViewer,
   useStudyProcessingRealtime,
   useVisibleStudyProcessingSnapshot,
-} from '@ohif/app/src/components/inference/studyProcessing';
+} from '@pacs-ai/extension-inference/src/studyProcessing';
 import { useInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
 import {
   findProcessingNotificationStudyPage,
   PROCESSING_NOTIFICATION_STUDY_PARAM,
-} from '@ohif/app/src/components/inference/processingNotificationNavigation';
+} from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
 import WorklistTopNavigation from './WorklistTopNavigation';
 import {

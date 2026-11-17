@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { buildProcessingNotificationViewerPath } from '@ohif/app/src/components/inference/processingNotificationNavigation';
+import { buildProcessingNotificationViewerPath } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import type { ExecutionResults, KeyResultState } from './useExecutionResults';
 import { ExamRetrievalError, type ExamRetriever } from './examRetrieval';
 import {

@@ -2,7 +2,7 @@ import { createExamRetriever, ExamRetrievalError } from './examRetrieval';
 import {
   SELECTED_DICOM_MODALITY_STORAGE_KEY,
   STUDY_SOURCE_MODALITY_STORAGE_KEY,
-} from '@ohif/app/src/components/inference/studyRefresh/sourceModality';
+} from '@pacs-ai/extension-inference/src/studyRefresh/sourceModality';
 
 const STUDY = '1.2.826.0.1.3680043.10.1';
 

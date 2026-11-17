@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import {
   createModelExecutionResultClient,
   type ModelExecutionResultClient,
-} from '@ohif/app/src/components/inference/studyProcessing/executionResultClient';
+} from '@pacs-ai/extension-inference/src/studyProcessing/executionResultClient';
 import { keyResultModel, summarizeKeyResult, type Translate } from './keyResults';
 import type { PredictionExecution } from './types';
 

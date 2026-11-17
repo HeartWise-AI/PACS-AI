@@ -1,0 +1,43 @@
+{
+  "name": "@pacs-ai/extension-inference",
+  "version": "1.0.0",
+  "description": "PACS-AI inference: run a model from the viewer, stored results, study processing status, running jobs, refresh from PACS and the study browser panel",
+  "private": true,
+  "license": "MIT",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": [
+    "ohif-extension"
+  ],
+  "scripts": {
+    "test:unit": "jest --watchAll",
+    "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
+  },
+  "peerDependencies": {
+    "@cornerstonejs/core": "4.5.13",
+    "@cornerstonejs/tools": "4.5.13",
+    "@ohif/core": "3.11.1",
+    "@ohif/extension-default": "3.11.1",
+    "@ohif/i18n": "3.11.1",
+    "@ohif/ui-next": "3.11.1",
+    "i18next": "17.3.1",
+    "react": "18.3.1",
+    "react-dnd": "14.0.2",
+    "react-dom": "18.3.1",
+    "react-i18next": "12.3.1",
+    "react-router": "6.30.1",
+    "react-router-dom": "6.30.1"
+  },
+  "dependencies": {
+    "@pacs-ai/extension-core": "1.0.0",
+    "@pacs-ai/ui": "1.0.0",
+    "classnames": "2.5.1",
+    "prop-types": "15.8.1",
+    "react-d3-speedometer": "^2.2.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "13.4.0",
+    "react-test-renderer": "18.3.1"
+  }
+}

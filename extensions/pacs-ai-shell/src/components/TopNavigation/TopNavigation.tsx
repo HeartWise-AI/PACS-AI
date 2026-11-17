@@ -10,7 +10,7 @@ import type { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
 import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
-import InferenceNotificationsBell from '@ohif/app/src/components/inference/InferenceNotificationsBell';
+import InferenceNotificationsBell from '@pacs-ai/extension-inference/src/InferenceNotificationsBell';
 import {
   getStudiesDestination,
   getTopNavigationItems,

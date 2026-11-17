@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import closeIcon from './../../assets/pacs/icons/close-inactive.png';
+import closeIcon from './assets/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelHTMLResponse,

@@ -5,9 +5,9 @@ import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import aiModelsIcon from '../../assets/icons/ai-models-white.png';
-import playerPlayIcon from '../../assets/icons/player-play-gradient.png';
-import helpInactive from '../../assets/icons/help-inactive.png';
+import aiModelsIcon from '../assets/icons/ai-models-white.png';
+import playerPlayIcon from '../assets/icons/player-play-gradient.png';
+import helpInactive from '../assets/icons/help-inactive.png';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
@@ -16,16 +16,16 @@ import {
   PredictInferenceModelPDFResponse,
   PredictInferenceModelWebappResponse,
 } from '@pacs-ai/extension-core/src/api/inferenceDTO';
-import JSONOutputModeModal from '@ohif/app/src/components/inference/JSONOutputModeModal';
-import WebappOutputModeModal from '@ohif/app/src/components/inference/WebappOutputModeModal';
-import HTMLOutputModeModal from '@ohif/app/src/components/inference/HTMLOutputModeModal';
-import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputModeModal';
-import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
+import JSONOutputModeModal from '../JSONOutputModeModal';
+import WebappOutputModeModal from '../WebappOutputModeModal';
+import HTMLOutputModeModal from '../HTMLOutputModeModal';
+import PDFOutputModeModal from '../PDFOutputModeModal';
+import SelectSeriesModal from '../SelectSeriesModal';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
-import { addSegmentationFromLabelmap } from '../../../../cornerstone/src/utils/addSegmentation';
-import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
-import { viewerModelKey } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel';
+import { addSegmentationFromLabelmap } from '../utils/addSegmentation';
+import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
+import { viewerModelKey } from '../viewerResults/viewerResultsModel';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';

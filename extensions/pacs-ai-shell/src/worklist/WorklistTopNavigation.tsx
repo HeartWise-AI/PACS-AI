@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import TopNavigation from '../components/TopNavigation';
-import { useStudyProcessing } from '@ohif/app/src/components/inference/studyProcessing';
+import { useStudyProcessing } from '@pacs-ai/extension-inference/src/studyProcessing';
 
 export interface WorklistTopNavigationProps {
   fixturePreview: boolean;

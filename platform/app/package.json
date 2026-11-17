@@ -76,6 +76,7 @@
     "@ohif/ui": "3.11.1",
     "@ohif/ui-next": "3.11.1",
     "@pacs-ai/extension-core": "1.0.0",
+    "@pacs-ai/extension-inference": "1.0.0",
     "@pacs-ai/extension-shell": "1.0.0",
     "@pacs-ai/theme": "1.0.0",
     "@pacs-ai/ui": "1.0.0",

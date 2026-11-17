@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
 
-import AIModelButton from '@pacs-ai/ui/src/legacy/AIModelButton';
 import ChatButton from '@pacs-ai/ui/src/legacy/ChatButton/ChatButton';
 import { IconPresentationProvider, ToolButton } from '@ohif/ui-next';
 import { useSystem } from '@ohif/core';
 import { Toolbar, usePatientInfo } from '@ohif/extension-default';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
-import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels';
+import { VIEWER_HEADER_SECTION } from '@pacs-ai/extension-inference/src/toolbar/getToolbarModule';
 
 /**
- * The viewer header bar: the mode's primary toolbar, the run-model menu and
- * the chat button, centred in a rounded bar.
+ * The viewer header bar: the mode's primary toolbar, the PACS-AI header
+ * section (the run-model menu, a toolbar button from
+ * @pacs-ai/extension-inference) and the chat button, centred in a rounded bar.
  *
  * Built from the default extension's ViewerHeader as PACS-AI changed it: the
  * ui-next Header it used had its logo, secondary toolbar, undo/redo, patient
@@ -22,7 +22,6 @@ function PacsAiViewerHeader() {
   const { servicesManager } = useSystem();
   const { patientInfo } = usePatientInfo();
   const { setPatientInfo } = useStudyContext();
-  const { inferenceAvailableModels, fetchingAvailableModels } = useAvailableModels();
 
   useEffect(() => {
     // check if patientInfo is not empty (has PatientName and PatientID)
@@ -45,12 +44,8 @@ function PacsAiViewerHeader() {
             <div className="flex items-center justify-center space-x-2">
               <div className="flex items-center">
                 <Toolbar buttonSection="primary" />
-                <AIModelButton
-                  isShowBG={true}
-                  servicesManager={servicesManager}
-                  inferenceAvailableModels={inferenceAvailableModels}
-                  loading={fetchingAvailableModels}
-                />
+                {/* The run-model menu (@pacs-ai/extension-inference toolbar button). */}
+                <Toolbar buttonSection={VIEWER_HEADER_SECTION} />
                 <div className="ml-2">
                   <ChatButton servicesManager={servicesManager} />
                 </div>

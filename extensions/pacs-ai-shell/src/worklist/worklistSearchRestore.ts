@@ -1,4 +1,4 @@
-import { PROCESSING_NOTIFICATION_STUDY_PARAM } from '@ohif/app/src/components/inference/processingNotificationNavigation';
+import { PROCESSING_NOTIFICATION_STUDY_PARAM } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import {
   createWorklistSearchFilters,
   WORKLIST_SEARCH_FILTER_KEYS,

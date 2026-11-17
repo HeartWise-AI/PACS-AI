@@ -4,8 +4,7 @@ import { HangingProtocolService } from '@ohif/core';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle, useImageViewer } from '@ohif/ui-next';
 import { useAppConfig } from '@state';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
-// Moves to @pacs-ai/extension-inference in P2.4.
-import { ViewerModelResultsProvider } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
+import { ViewerModelResultsProvider } from '@pacs-ai/extension-inference/src/viewerResults/ViewerModelResultsProvider';
 import TopNavigation from '../components/TopNavigation';
 import { AlertContext } from '../alerts';
 import { loadViewerModels } from './loadViewerModels';

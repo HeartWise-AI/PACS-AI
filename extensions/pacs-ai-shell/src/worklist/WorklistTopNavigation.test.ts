@@ -23,7 +23,7 @@ jest.mock('../components/TopNavigation', () => {
   };
 });
 
-jest.mock('@ohif/app/src/components/inference/studyProcessing', () => ({
+jest.mock('@pacs-ai/extension-inference/src/studyProcessing', () => ({
   useStudyProcessing: () => mockUseStudyProcessing(),
 }));
 
