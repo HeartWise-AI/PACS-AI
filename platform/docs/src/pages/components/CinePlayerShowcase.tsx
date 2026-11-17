@@ -15,9 +15,7 @@ export default function CinePlayerShowcase() {
     return null;
   }
 
-  const {
-    default: CinePlayer,
-  } = require('../../../../ui-next/src/components/CinePlayer/CinePlayer');
+  const { default: CinePlayer } = require('../../../../ui-next/src/components/CinePlayer/CinePlayer');
 
   return (
     <ShowcaseRow

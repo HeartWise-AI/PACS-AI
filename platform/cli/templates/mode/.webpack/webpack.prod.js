@@ -44,7 +44,7 @@ const config = {
         commonjs: '@ohif/mode-longitudinal',
         amd: '@ohif/mode-longitudinal',
         root: '@ohif/mode-longitudinal',
-      },
+      }
     },
   ],
   module: {
@@ -63,11 +63,11 @@ const config = {
                         name: 'preset-default',
                         params: {
                           overrides: {
-                            removeViewBox: false,
+                            removeViewBox: false
                           },
                         },
                       },
-                    ],
+                    ]
                   },
                   prettier: false,
                   svgo: true,

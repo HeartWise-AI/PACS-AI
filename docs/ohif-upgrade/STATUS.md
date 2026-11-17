@@ -20,6 +20,13 @@ Plan: `docs/ohif-upgrade/PLAN.md`. One line per work package. States: todo, runn
 
 This relaxes R1 and R2 for this migration: the orchestrator may build and deploy migration builds of the viewer to the MHI server, run the Playwright suites there, and merge integration work when its gates pass. Still kept: deploy at idle moments, check login after every deploy, keep the previous image for rollback, never touch the model gateway, study-service or ingestion jobs as part of the migration (automatic AI runs on new exams continue), no patient data in the repository.
 
+## Baseline at P1.4 (integration/modular-3.11 @ 0132362c0)
+
+- Type errors (G2): 1843
+- Unit tests (G3): 216 suites / 1712 tests, all passing (core 28/261, extension-default 7/27, app 181/1424)
+- Modified upstream files: 299 (after P1.1: 196)
+- Gate note: in containers set only `NODE_EXTRA_CA_CERTS` for the local CA; setting yarn's `cafile` to it alone breaks `yarn install`.
+
 ## Work packages
 
 | WP | State | PR / commit | Notes |
@@ -27,6 +34,6 @@ This relaxes R1 and R2 for this migration: the orchestrator may build and deploy
 | P1.4 | done | `integration/modular-3.11` @ c814f5ea1 | Tree identical to `origin/main` 374c64929 before the `UPSTREAM_REF` commit; merge-base with v3.13.14 = 974ef29aa. Needed `--allow-unrelated-histories` (add to the plan's command). |
 | P0.2 | done | this file | |
 | P0.1 | running | | acceptance suite |
-| P1.1 | running | | formatting-only reverts |
-| P1.2 | done | #504 (draft) | drift guard and ledger; exit check met (script runs and prints the counts). Report vs v3.11.1: 1024 modified upstream files, 58 theme-debt files, 0 ledger rows; 952 unexplained, 14 expected, 57 import violations (all `@ohif/app/src` from upstream files). Awaiting review. |
+| P1.1 | done | `wp/P1.1-revert-formatting` | Modified upstream files 299 → 196 (91 formatting-only reverts, 13 docs restores; +1 `.prettierignore`); 3 stale mode `index.js` deleted. Baseline on `integration/modular-3.11` @ 0132362c0: G1 ok; G2 1843 type errors; G3 216 suites / 1712 tests, all passing. After: same (1843; 216 / 1712). Kept `platform/docs/package.json` + `yarn.lock` (dependabot bump #475). |
+| P1.2 | done | #504 | drift guard and ledger; exit check met (script runs and prints the counts). Report vs v3.11.1: 1024 modified upstream files, 58 theme-debt files, 0 ledger rows; 952 unexplained, 14 expected, 57 import violations (all `@ohif/app/src` from upstream files). Awaiting review. |
 | P1.3 | todo | | after P1.1 (touches config/Docker files) |
