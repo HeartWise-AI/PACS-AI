@@ -183,11 +183,15 @@ const AIModelButton = ({
 
   // Managed runs are recorded in run history and stored as the study's
   // result. Models that need additional metadata keep the direct predict
-  // path because a managed run cannot carry it.
+  // path because a managed run cannot carry it. Segmentation models
+  // (OHIF_ANNOTATIONS, e.g. TotalSegmentator on CT) also keep it: their
+  // result is a labelmap the viewer loads itself, and the managed pipeline
+  // has no CT/MR support.
   const canQueueModel = (model: GetInferenceAvailableModelsResponse) =>
     !!viewerResults?.canRunManaged &&
     !!(model.containerId?.trim() || model.modelId?.trim()) &&
-    !model.supportedAdditionalMetadata?.length;
+    !model.supportedAdditionalMetadata?.length &&
+    model.outputMode !== 'OHIF_ANNOTATIONS';
 
   const managedRunModality = (model: GetInferenceAvailableModelsResponse) =>
     (model.supportedDicomModalities?.length ?? 0) > 1
