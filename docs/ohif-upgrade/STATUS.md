@@ -21,6 +21,6 @@ Plan: `docs/ohif-upgrade/PLAN.md`. One line per work package. States: todo, runn
 | P1.4 | done | `integration/modular-3.11` @ c814f5ea1 | Tree identical to `origin/main` 374c64929 before the `UPSTREAM_REF` commit; merge-base with v3.13.14 = 974ef29aa. Needed `--allow-unrelated-histories` (add to the plan's command). |
 | P0.2 | done | this file | |
 | P0.1 | running | | acceptance suite |
-| P1.1 | running | | formatting-only reverts |
+| P1.1 | done (draft PR, awaiting review) | `wp/P1.1-revert-formatting` | Modified upstream files 299 → 196 (91 formatting-only reverts, 13 docs restores; +1 `.prettierignore`); 3 stale mode `index.js` deleted. Baseline on `integration/modular-3.11` @ 0132362c0: G1 ok; G2 1843 type errors; G3 216 suites / 1712 tests, all passing. After: same (1843; 216 / 1712). Kept `platform/docs/package.json` + `yarn.lock` (dependabot bump #475). |
 | P1.2 | running | | drift guard and ledger |
 | P1.3 | todo | | after P1.1 (touches config/Docker files) |
