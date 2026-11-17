@@ -1,0 +1,22 @@
+diff --git a/rsbuild.config.ts b/rsbuild.config.ts
+index 8f29e37ab3a653f806b48101a7e2c6696df284fe..d875d3d16fdff42a51a27f13364919890505ecf5 100644
+--- a/rsbuild.config.ts
++++ b/rsbuild.config.ts
+@@ -27,7 +27,7 @@ const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
+ const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
+ const OHIF_OPEN = process.env.OHIF_OPEN !== 'false';
+ 
+-export default defineConfig({
++const config = defineConfig({
+   source: {
+     entry: {
+       index: `${SRC_DIR}/index.js`,
+@@ -169,3 +169,8 @@ export default defineConfig({
+     },
+   },
+ });
++
++// PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
++// Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
++const pacsAiExtend = path.resolve(__dirname, 'pacs-ai/build/extend.js');
++export default fs.existsSync(pacsAiExtend) ? require(pacsAiExtend).extendRsbuild(config) : config;

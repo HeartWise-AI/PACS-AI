@@ -7,7 +7,7 @@ services:
   pacs-ai:
     container_name: pacs-ai
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: pacs-ai/docker/Dockerfile.pacs-ai
     expose:
       - '80'

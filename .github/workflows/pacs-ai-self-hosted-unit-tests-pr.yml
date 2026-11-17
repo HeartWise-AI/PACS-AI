@@ -28,4 +28,4 @@ jobs:
       github.event.action != 'closed' &&
       github.event.action != 'converted_to_draft' &&
       github.event.pull_request.draft == false
-    uses: HeartWise-AI/PACS-AI/.github/workflows/self-hosted-unit-tests.yml@main
+    uses: HeartWise-AI/PACS-AI/.github/workflows/pacs-ai-self-hosted-unit-tests.yml@main

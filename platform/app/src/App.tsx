@@ -56,7 +56,8 @@ let commandsManager: CommandsManager,
   hotkeysManager: HotkeysManager;
 
 // NOTE: This is a PACS changes
-const frontendVersion = 'v0.58.0-beta';
+// Build ID set at build time (APP_BUILD_ID, or the build time; pacs-ai/build).
+const frontendVersion = process.env.APP_BUILD_ID || '';
 const queryClient = new QueryClient();
 
 // NOTE: This is a PACS changes

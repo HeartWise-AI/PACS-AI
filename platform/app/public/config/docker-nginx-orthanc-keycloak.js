@@ -6,9 +6,11 @@ window.config = {
   customizationService: {},
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
+  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
+  groupEnabledModesFirst: true,
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,
