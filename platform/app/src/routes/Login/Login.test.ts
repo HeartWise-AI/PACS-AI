@@ -61,7 +61,7 @@ jest.mock(
   { virtual: true }
 );
 
-jest.mock('../../App', () => {
+jest.mock('@pacs-ai/extension-core/src/frontendVersion', () => {
   const React = require('react');
   return { FrontendVersionContext: React.createContext('test-version') };
 });

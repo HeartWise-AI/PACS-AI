@@ -9,7 +9,7 @@ jest.mock('@ohif/i18n', () => ({ __esModule: true, default: { addLocales: jest.f
 describe('registerLocales', () => {
   test('adds every PACS-AI locale bundle through i18n.addLocales', () => {
     registerLocales();
-    expect(i18n.addLocales).toHaveBeenCalledWith(locales);
+    expect((i18n as unknown as { addLocales: jest.Mock }).addLocales).toHaveBeenCalledWith(locales);
   });
 
   test('ships our namespaces and the OHIF-namespace overrides for each language', () => {

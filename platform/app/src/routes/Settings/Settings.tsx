@@ -18,7 +18,7 @@ import Modal from '../../components/Modal';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { resetTutorialAndNotify } from '@pacs-ai/extension-core/src/service/tutorialService';
-import { FrontendVersionContext } from '../../App';
+import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
 import { getProfileCredentialDetails } from './profileCredentialDetails';
 import ViewerTourPreference from './ViewerTourPreference';
 import AutomaticRunNotificationsPreference from './AutomaticRunNotificationsPreference';

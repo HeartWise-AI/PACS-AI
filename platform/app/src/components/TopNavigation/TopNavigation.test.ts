@@ -13,7 +13,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../App', () => {
+jest.mock('@pacs-ai/extension-core/src/frontendVersion', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require('react');
   return { FrontendVersionContext: React.createContext('frontend-test') };

@@ -1,13 +1,13 @@
 // External
-import React, { useEffect, useState, createContext } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+
 import Compose from './routes/Mode/Compose';
 import {
-  ServicesManager,
   ExtensionManager,
   CommandsManager,
   HotkeysManager,
@@ -35,40 +35,15 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
-// NOTE: This is a PACS changes
-import { AlertProvider } from '@pacs-ai/extension-core/src/providers/AlertProvider';
-// NOTE: This is a PACS changes
-import { GlobalStateProvider } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
-// NOTE: This is a PACS changes
+// NOTE: This is a PACS changes (tour overlay; needs the router; moves to pacs-ai-shell in P2.3)
 import TutorialProgressOverlay from './components/TutorialProgressOverlay';
-import InferenceProcessingProvider from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
-import StudyProcessingProvider from '@pacs-ai/extension-core/src/studyProcessing/StudyProcessingProvider';
-import FrontendUpdateMonitor from '@pacs-ai/extension-core/src/updateMonitor/FrontendUpdateMonitor';
 import './App.css';
-
-// NOTE: This is a PACS changes
-export const FrontendVersionContext = createContext('');
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
   servicesManager: AppTypes.ServicesManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
-
-// NOTE: This is a PACS changes
-// Build ID set at build time (APP_BUILD_ID, or the build time; pacs-ai/build).
-const frontendVersion = process.env.APP_BUILD_ID || '';
-const queryClient = new QueryClient();
-
-// NOTE: This is a PACS changes
-const FrontendVersionProvider = ({ value, children }) => (
-  <FrontendVersionContext.Provider value={value}>{children}</FrontendVersionContext.Provider>
-);
-
-FrontendVersionProvider.propTypes = {
-  value: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
-};
 
 function App({
   config = {
@@ -92,7 +67,6 @@ function App({
   defaultModes = [],
 }) {
   const [init, setInit] = useState(null);
-
   useEffect(() => {
     const run = async () => {
       appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
@@ -151,8 +125,6 @@ function App({
     [DialogProvider, { service: uiDialogService, dialog: ManagedDialog }],
     [ModalProvider, { service: uiModalService, modal: ModalNext }],
     [ShepherdJourneyProvider],
-    // NOTE: This is a PACS changes
-    [FrontendVersionProvider, { value: frontendVersion }],
   ];
 
   // Loop through and register each of the service providers registered with the ServiceProvidersManager.
@@ -193,25 +165,13 @@ function App({
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AlertProvider>
-        {/* NOTE: This is a PACS changes */}
-        <GlobalStateProvider>
-          <CombinedProviders>
-            <FrontendUpdateMonitor />
-            <BrowserRouter basename={routerBasename}>
-              <StudyProcessingProvider>
-                <InferenceProcessingProvider>
-                  {authRoutes}
-                  {appRoutes}
-                  <TutorialProgressOverlay />
-                </InferenceProcessingProvider>
-              </StudyProcessingProvider>
-            </BrowserRouter>
-          </CombinedProviders>
-        </GlobalStateProvider>
-      </AlertProvider>
-    </QueryClientProvider>
+    <CombinedProviders>
+      <BrowserRouter basename={routerBasename}>
+        {authRoutes}
+        {appRoutes}
+        <TutorialProgressOverlay />
+      </BrowserRouter>
+    </CombinedProviders>
   );
 }
 

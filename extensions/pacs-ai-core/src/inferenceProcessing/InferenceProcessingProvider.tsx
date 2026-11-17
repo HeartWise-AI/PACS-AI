@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { useNotification } from '@ohif/ui-next';
+import usePathname from '../hooks/usePathname';
 import userRepository from '../api/userRepository';
 import { UserRole } from '../api/userDTO';
 import {
@@ -101,7 +101,9 @@ export function useOptionalInferenceProcessing() {
 function InferenceProcessingProvider({ children }) {
   const { t } = useTranslation('StudyList');
   const { show } = useNotification();
-  const location = useLocation();
+  // Mounted outside OHIF's router (serviceProvidersManager): follow the path
+  // without React Router so the session is re-read after each navigation.
+  const pathname = usePathname();
   const [notifications, setNotifications] = useState<InferenceNotification[]>([]);
   const [canViewProcessing, setCanViewProcessing] = useState(false);
   const [canMutateProcessing, setCanMutateProcessing] = useState(false);
@@ -295,7 +297,7 @@ function InferenceProcessingProvider({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [clearNotificationState, clearStudyProcessingState, location.pathname]);
+  }, [clearNotificationState, clearStudyProcessingState, pathname]);
 
   useEffect(() => {
     // The Settings toggle applies to this browser at once.

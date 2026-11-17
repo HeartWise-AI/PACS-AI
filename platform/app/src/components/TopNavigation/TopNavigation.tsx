@@ -7,7 +7,7 @@ import repository from '@pacs-ai/extension-core/src/api/repository';
 import type { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 import type { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
 import type { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
-import { FrontendVersionContext } from '../../App';
+import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
 import InferenceNotificationsBell from '../inference/InferenceNotificationsBell';

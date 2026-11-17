@@ -15,8 +15,9 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
 }));
 
-jest.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: '/' }),
+jest.mock('../hooks/usePathname', () => ({
+  __esModule: true,
+  default: () => '/',
 }));
 
 jest.mock('@ohif/ui-next', () => ({
