@@ -46,6 +46,8 @@ import {
   type ModelExecutionResultClient,
 } from '../studyProcessing/executionResultClient';
 import { resolveCitationResultActions } from './chatCitations';
+import { getSafeCustomization } from '@pacs-ai/extension-core/src/ohifCompat/customization';
+import { getActiveDisplaySets } from '@pacs-ai/extension-core/src/ohifCompat/displaySets';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
@@ -571,7 +573,7 @@ export function ViewerModelResultsProvider({
     (result: ViewerModelResult): ResultSeriesScope | null =>
       resolveResultSeriesScope(
         result,
-        servicesManager.services.displaySetService?.getActiveDisplaySets?.() ?? []
+        getActiveDisplaySets(servicesManager.services.displaySetService)
       ),
     [servicesManager]
   );
@@ -598,7 +600,7 @@ export function ViewerModelResultsProvider({
         servicesManager.services;
       const [displaySet] = findDisplaySetsForSelectedView(
         view,
-        displaySetService.getActiveDisplaySets()
+        getActiveDisplaySets(displaySetService)
       );
       if (!displaySet) {
         alert(t('ViewerSelectedViewNotLoaded'), 'info');
@@ -608,9 +610,9 @@ export function ViewerModelResultsProvider({
       // Reuse the study browser's double-click behaviour so the clip loads
       // exactly as if the thumbnail had been double-clicked.
       const { activeViewportId, isHangingProtocolLayout } = viewportGridService.getState();
-      const customization = customizationService.getCustomization(
-        'studyBrowser.thumbnailDoubleClickCallback'
-      ) as { callbacks?: Array<(args: unknown) => (uid: string) => Promise<void> | void> };
+      const customization = getSafeCustomization<{
+        callbacks?: Array<(args: unknown) => (uid: string) => Promise<void> | void>;
+      }>(customizationService, 'studyBrowser.thumbnailDoubleClickCallback');
       const setupArgs = {
         activeViewportId,
         commandsManager,

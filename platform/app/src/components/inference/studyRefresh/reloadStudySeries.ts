@@ -4,6 +4,11 @@
 // displaySetService for display sets. That call is idempotent, so series the
 // viewer already shows are left alone and only new images become display sets.
 
+import {
+  forgetStudyMetadata,
+  getSeriesMetadataRetriever,
+} from '@pacs-ai/extension-core/src/ohifCompat/dicomweb';
+
 export interface StudySeriesDataSource {
   retrieve?: {
     series?: {
@@ -18,24 +23,19 @@ export interface StudySeriesDataSource {
 }
 
 export function canReloadStudySeries(dataSource: StudySeriesDataSource | null | undefined) {
-  return typeof dataSource?.retrieve?.series?.metadata === 'function';
+  return getSeriesMetadataRetriever(dataSource) !== undefined;
 }
 
 export async function reloadStudySeries(
   dataSource: StudySeriesDataSource,
   studyInstanceUID: string
 ): Promise<void> {
-  const metadata = dataSource.retrieve?.series?.metadata;
-  if (typeof metadata !== 'function') {
+  const metadata = getSeriesMetadataRetriever(dataSource);
+  if (!metadata) {
     throw new Error('The data source cannot reload the series of a study.');
   }
-  // The DICOMweb data source caches the retrieval of a study under
-  // "<data source name>:<StudyInstanceUID>" and deletes the key it is given,
-  // so both forms are dropped: the bare UID is what the API documents.
-  if (typeof dataSource.deleteStudyMetadataPromise === 'function') {
-    dataSource.deleteStudyMetadataPromise(studyInstanceUID);
-    dataSource.deleteStudyMetadataPromise(`${dataSource.getConfig?.()?.name}:${studyInstanceUID}`);
-  }
+  // Both cache keys of the study retrieval are dropped (see forgetStudyMetadata).
+  forgetStudyMetadata(dataSource, studyInstanceUID);
   await metadata({ StudyInstanceUID: studyInstanceUID, madeInClient: false });
 }
 

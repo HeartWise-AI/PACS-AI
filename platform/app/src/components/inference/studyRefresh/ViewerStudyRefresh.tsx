@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { DicomMetadataStore } from '@ohif/core';
+import { getStudyMetadata } from '@pacs-ai/extension-core/src/ohifCompat/studyMetadata';
 import { StudyRefreshButton } from './StudyRefreshButton';
 import {
   canReloadStudySeries,
@@ -32,7 +32,7 @@ export function ViewerStudyRefresh({ studyInstanceUID, dataSource }: ViewerStudy
     [dataSource]
   );
   const getSeriesSnapshot = useCallback(
-    (study: string) => snapshotStudySeries(DicomMetadataStore.getStudy(study)),
+    (study: string) => snapshotStudySeries(getStudyMetadata(study)),
     []
   );
   const { state, refresh } = useStudyRefresh({

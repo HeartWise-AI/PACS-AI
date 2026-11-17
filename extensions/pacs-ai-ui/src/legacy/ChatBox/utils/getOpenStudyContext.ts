@@ -1,3 +1,9 @@
+import {
+  hasDisplaySetLookup,
+  getActiveDisplaySets,
+  getDisplaySetByUID,
+} from '@pacs-ai/extension-core/src/ohifCompat/displaySets';
+
 /**
  * The study open in the viewer, sent to the chat agent so questions such as
  * "what is the dominance in this study?" need no identifier.
@@ -34,7 +40,7 @@ function viewportEntries(viewports: unknown): any[] {
 
 function activeViewportDisplaySet(services: any): AnyDisplaySet | null {
   const { viewportGridService, displaySetService } = services;
-  if (!viewportGridService?.getState || !displaySetService?.getDisplaySetByUID) {
+  if (!viewportGridService?.getState || !hasDisplaySetLookup(displaySetService)) {
     return null;
   }
   const state = viewportGridService.getState() || {};
@@ -44,7 +50,7 @@ function activeViewportDisplaySet(services: any): AnyDisplaySet | null {
     viewportEntries(viewports).find(viewport => viewport?.viewportId === state.activeViewportId);
   const uids: string[] = active?.displaySetInstanceUIDs || [];
   for (const uid of uids) {
-    const displaySet = displaySetService.getDisplaySetByUID(uid);
+    const displaySet = getDisplaySetByUID<AnyDisplaySet>(displaySetService, uid);
     if (displaySet?.StudyInstanceUID) {
       return displaySet;
     }
@@ -61,7 +67,7 @@ export function getOpenStudyContext(servicesManager: any): OpenStudyContext | nu
   if (!services?.displaySetService) {
     return null;
   }
-  const allDisplaySets: AnyDisplaySet[] = services.displaySetService.getActiveDisplaySets?.() || [];
+  const allDisplaySets = getActiveDisplaySets<AnyDisplaySet>(services.displaySetService);
   const anchor =
     activeViewportDisplaySet(services) ||
     allDisplaySets.find(displaySet => displaySet?.StudyInstanceUID) ||
