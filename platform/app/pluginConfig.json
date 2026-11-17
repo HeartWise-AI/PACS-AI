@@ -81,6 +81,10 @@
     {
       "packageName": "@pacs-ai/extension-shell",
       "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/extension-chat",
+      "version": "1.0.0"
     }
   ],
   "modes": [
