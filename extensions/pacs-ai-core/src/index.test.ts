@@ -25,7 +25,7 @@ function createManagers() {
 }
 
 describe('@pacs-ai/extension-core preRegistration', () => {
-  test('registers the services, the auth header, the providers and the locales', () => {
+  test('registers the services, the auth header and the providers', () => {
     const { servicesManager, serviceProvidersManager } = createManagers();
 
     pacsAiCoreExtension.preRegistration({ servicesManager, serviceProvidersManager } as never);
@@ -42,6 +42,13 @@ describe('@pacs-ai/extension-core preRegistration', () => {
       'pacsAiSessionService',
       PacsAiAppProviders
     );
-    expect(registerLocales).toHaveBeenCalled();
+  });
+
+  test('adds the locales on import, before any extension registers', () => {
+    // Called once by the import at the top of this file, not by preRegistration.
+    expect(registerLocales).toHaveBeenCalledTimes(1);
+    const { servicesManager, serviceProvidersManager } = createManagers();
+    pacsAiCoreExtension.preRegistration({ servicesManager, serviceProvidersManager } as never);
+    expect(registerLocales).toHaveBeenCalledTimes(1);
   });
 });
