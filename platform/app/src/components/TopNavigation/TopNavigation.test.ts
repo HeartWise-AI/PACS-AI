@@ -100,9 +100,9 @@ describe('TopNavigation', () => {
     const studies = within(desktopNavigation).getByRole('link', { name: 'Studies' });
     expect(studies.getAttribute('aria-current')).toBe('page');
     expect(studies.getAttribute('href')).toBe('/?PatientName=Smith');
-    expect(
-      within(desktopNavigation).getByText('AI Predictions').getAttribute('aria-disabled')
-    ).toBe('true');
+    const predictions = within(desktopNavigation).getByRole('link', { name: 'AI Predictions' });
+    expect(predictions.getAttribute('href')).toBe('/ai-predictions');
+    expect(predictions.getAttribute('aria-current')).toBeNull();
     expect(within(desktopNavigation).queryByText('Admin Console')).toBeNull();
   });
 

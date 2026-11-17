@@ -47,7 +47,7 @@ export const getTopNavigationItems = (
   return [
     { key: 'studies', label: 'Studies', to: '/' },
     { key: 'ai-models', label: 'AI Models', to: '/ai-models' },
-    { key: 'ai-predictions', label: 'AI Predictions', disabled: true },
+    { key: 'ai-predictions', label: 'AI Predictions', to: '/ai-predictions' },
     ...(isAdminRole(role)
       ? [
           {
@@ -69,6 +69,8 @@ export const isTopNavigationItemActive = (item: TopNavigationItem, pathname: str
       );
     case 'ai-models':
       return pathname === '/ai-models';
+    case 'ai-predictions':
+      return pathname === '/ai-predictions';
     case 'members':
       return pathname === '/admin/members';
     case 'kibana-logs':
