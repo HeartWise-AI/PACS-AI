@@ -1,0 +1,82 @@
+name: PACS-AI acceptance suite
+
+# Manual run of tests/pacs-ai against a deployed PACS-AI with its real backend
+# (docs/ohif-upgrade/PLAN.md section 8). Needs a self-hosted runner on the
+# hospital network that can reach the server and that holds the golden
+# outputs and baseline screenshots on disk (they contain patient data and
+# never enter the repository or the run's artifacts).
+#
+# Secrets (by name only): PACS_AI_E2E_BASE_URL, PACS_AI_E2E_USER,
+# PACS_AI_E2E_PASSWORD, PACS_AI_E2E_TENANT, PACS_AI_E2E_STUDY_UIDS.
+# Repository variables: PACS_AI_E2E_GOLDEN_HOST_DIR and
+# PACS_AI_E2E_BASELINE_HOST_DIR (host folders mounted read-only).
+
+on:
+  workflow_dispatch:
+    inputs:
+      specs:
+        description: 'Spec files to run (space separated); empty runs every spec'
+        required: false
+        default: ''
+      run_studies:
+        description: 'run-model.spec: study tags to run models on (comma separated); empty = all'
+        required: false
+        default: ''
+      run_models:
+        description: 'run-model.spec: model names (comma separated); empty = all (GPU time on the clinical server)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  # One live server, one GPU queue, one login rate limit.
+  group: pacs-ai-acceptance
+  cancel-in-progress: false
+
+jobs:
+  acceptance:
+    # Secrets live in this environment so a run can require approval.
+    environment: pacs-ai-acceptance
+    # A runner on the hospital network with this label must be registered.
+    runs-on: [self-hosted, linux, x64, pacs-ai-mhi]
+    timeout-minutes: 600
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --network host --ipc=host
+      volumes:
+        - ${{ vars.PACS_AI_E2E_GOLDEN_HOST_DIR }}:/pacs-ai/golden:ro
+        - ${{ vars.PACS_AI_E2E_BASELINE_HOST_DIR }}:/pacs-ai/baseline:ro
+    env:
+      PACS_AI_E2E_BASE_URL: ${{ secrets.PACS_AI_E2E_BASE_URL }}
+      PACS_AI_E2E_USER: ${{ secrets.PACS_AI_E2E_USER }}
+      PACS_AI_E2E_PASSWORD: ${{ secrets.PACS_AI_E2E_PASSWORD }}
+      PACS_AI_E2E_TENANT: ${{ secrets.PACS_AI_E2E_TENANT }}
+      PACS_AI_E2E_STUDY_UIDS: ${{ secrets.PACS_AI_E2E_STUDY_UIDS }}
+      PACS_AI_E2E_GOLDEN_DIR: /pacs-ai/golden
+      PACS_AI_E2E_BASELINE_DIR: /pacs-ai/baseline
+      PACS_AI_E2E_RUN_STUDIES: ${{ inputs.run_studies }}
+      PACS_AI_E2E_RUN_MODELS: ${{ inputs.run_models }}
+      # Session token and failed-login ledger stay on the runner, outside the checkout.
+      PACS_AI_E2E_STATE_DIR: /tmp/pacs-ai-e2e-state
+      PACS_AI_E2E_OUTPUT_DIR: /tmp/pacs-ai-e2e-output
+      HOME: /tmp
+    defaults:
+      run:
+        working-directory: tests/pacs-ai
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install the suite's own dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run the acceptance suite
+        env:
+          SPECS: ${{ inputs.specs }}
+        # No artifacts are uploaded: Playwright output may hold page content
+        # of the live server (patient data).
+        run: npx playwright test -c playwright.pacs-ai.config.ts $SPECS
+      - name: Remove the session state
+        if: always()
+        run: rm -rf "$PACS_AI_E2E_STATE_DIR" "$PACS_AI_E2E_OUTPUT_DIR"
