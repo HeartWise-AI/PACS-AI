@@ -1,6 +1,6 @@
-import englishStudyList from '../../../../i18n/src/locales/en-US/StudyList.json';
+import englishStudyList from '@pacs-ai/extension-core/src/locales/en-US/StudyList.json';
 import frenchStudyList from '@pacs-ai/extension-core/src/locales/fr/StudyList.json';
-import testStudyList from '../../../../i18n/src/locales/test-LNG/StudyList.json';
+import testStudyList from '@pacs-ai/extension-core/src/locales/test-LNG/StudyList.json';
 
 const notificationKeys = Object.keys(englishStudyList).filter(key =>
   key.startsWith('ProcessingNotification')

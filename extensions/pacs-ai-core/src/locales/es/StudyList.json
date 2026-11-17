@@ -1,0 +1,19 @@
+{
+  "BasicViewer": "Visor Básico",
+  "DICOM Modality": "Modalidad DICOM",
+  "OrthancServiceProgress": "Sincronizando Imágenes de Orthanc...",
+  "OrthancServiceInfo": "Actualmente estamos sincronizando este estudio. La primera sincronización puede tardar unos segundos o minutos.",
+  "OrthancServiceProgressMessage": "El trabajo encontró un problema. Por favor, inténtelo de nuevo más tarde.",
+  "Okay": "De acuerdo",
+  "No data found": "No se encontraron datos",
+  "ResultsPerPage": "Resultados por página",
+  "Studies": "Estudios",
+  "StudyDescription": "Descripción",
+  "Status": "Estado",
+  "Search": "Buscar",
+  "Segmentation": "Segmentación",
+  "Searching for data": "Buscando datos",
+  "searchStudyListInfo": "No se encontraron datos. Por favor, busque por nombre del paciente, MRN, rango de fechas, descripción, modalidad o número de acceso.",
+  "Tools": "Herramientas",
+  "ProcessingViewerRun": "Manual · ejecutado desde el visor"
+}

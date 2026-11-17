@@ -1,7 +1,6 @@
 import english from '@pacs-ai/extension-core/src/locales/en-US/AiPredictions.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/AiPredictions.json';
-import englishIndex from '../../../../i18n/src/locales/en-US/index.js';
-import frenchIndex from '../../../../i18n/src/locales/fr/index.js';
+import locales from '@pacs-ai/extension-core/src/locales';
 
 describe('AI Predictions translations', () => {
   test('French has every English key, with non-empty values and the same placeholders', () => {
@@ -19,7 +18,7 @@ describe('AI Predictions translations', () => {
   });
 
   test('both locales register the namespace', () => {
-    expect(englishIndex['en-US'].AiPredictions).toBe(english);
-    expect(frenchIndex.fr.AiPredictions).toBe(french);
+    expect(locales['en-US'].AiPredictions).toBe(english);
+    expect(locales.fr.AiPredictions).toBe(french);
   });
 });

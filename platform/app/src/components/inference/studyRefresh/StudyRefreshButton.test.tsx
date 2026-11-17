@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import english from '../../../../../i18n/src/locales/en-US/StudyBrowser.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/StudyBrowser.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/StudyBrowser.json';
 import { StudyRefreshButton, type StudyRefreshButtonProps } from './StudyRefreshButton';
 import type { StudyRefreshState } from './useStudyRefresh';

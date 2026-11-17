@@ -5,8 +5,8 @@ import {
   isIngestionJobNotificationsEnabled,
   UNKNOWN_JOB_CREATOR,
 } from './ingestionJobNotifications';
-import englishCommon from '../../../../i18n/src/locales/en-US/Common.json';
-import frenchCommon from '../../../../i18n/src/locales/fr/Common.json';
+import englishCommon from '@pacs-ai/extension-core/src/locales/en-US/Common.json';
+import frenchCommon from '@pacs-ai/extension-core/src/locales/fr/Common.json';
 
 const job: GetInferenceIngestionJobsResponse = {
   id: 'job-1',

@@ -1,7 +1,5 @@
 import AboutModal from './AboutModal.json';
-import AIModelButton from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import Buttons from './Buttons.json';
-import ChatBox from '@pacs-ai/extension-core/src/locales/en-US/ChatBox.json';
 import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
@@ -12,13 +10,10 @@ import HotkeysValidators from './HotkeysValidators.json';
 import MeasurementTable from './MeasurementTable.json';
 import Modes from './Modes.json';
 import SegmentationTable from './SegmentationTable.json';
-import Settings from '@pacs-ai/extension-core/src/locales/en-US/Settings.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyItem from './StudyItem.json';
 import StudyList from './StudyList.json';
-import StoreFileButton from '@pacs-ai/extension-core/src/locales/en-US/StoreFileButton.json';
-import TutorialProgressOverlay from '@pacs-ai/extension-core/src/locales/en-US/TutorialProgressOverlay.json';
 import TooltipClipboard from './TooltipClipboard.json';
 import ThumbnailTracked from './ThumbnailTracked.json';
 import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
@@ -26,15 +21,11 @@ import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
-import TopNavigation from '@pacs-ai/extension-core/src/locales/en-US/TopNavigation.json';
-import AiPredictions from '@pacs-ai/extension-core/src/locales/en-US/AiPredictions.json';
 
 export default {
   'en-US': {
     AboutModal,
-    AIModelButton,
     Buttons,
-    ChatBox,
     CineDialog,
     Common,
     DataSourceConfiguration,
@@ -45,13 +36,10 @@ export default {
     MeasurementTable,
     Modes,
     SegmentationTable,
-    Settings,
     SidePanel,
     StudyBrowser,
     StudyItem,
     StudyList,
-    StoreFileButton,
-    TutorialProgressOverlay,
     TooltipClipboard,
     ThumbnailTracked,
     TrackedCornerstoneViewport,
@@ -59,7 +47,5 @@ export default {
     ViewportDownloadForm,
     Messages,
     WindowLevelActionMenu,
-    TopNavigation,
-    AiPredictions,
   },
 };

@@ -1,4 +1,5 @@
 import { id } from './id';
+import registerLocales from './locales/registerLocales';
 
 /**
  * PACS-AI core extension (docs/ohif-upgrade/PLAN.md 6.1): API client,
@@ -7,6 +8,10 @@ import { id } from './id';
  */
 const pacsAiCoreExtension = {
   id,
+
+  preRegistration() {
+    registerLocales();
+  },
 };
 
 export default pacsAiCoreExtension;

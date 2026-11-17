@@ -3,10 +3,10 @@ import germanAIModelButton from '@pacs-ai/extension-core/src/locales/de/AIModelB
 import englishAIModelButton from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import spanishAIModelButton from '@pacs-ai/extension-core/src/locales/es/AIModelButton.json';
 import frenchAIModelButton from '@pacs-ai/extension-core/src/locales/fr/AIModelButton.json';
-import arabicStudyList from '../../../../../i18n/src/locales/ar/StudyList.json';
-import germanStudyList from '../../../../../i18n/src/locales/de/StudyList.json';
-import englishStudyList from '../../../../../i18n/src/locales/en-US/StudyList.json';
-import spanishStudyList from '../../../../../i18n/src/locales/es/StudyList.json';
+import arabicStudyList from '@pacs-ai/extension-core/src/locales/ar/StudyList.json';
+import germanStudyList from '@pacs-ai/extension-core/src/locales/de/StudyList.json';
+import englishStudyList from '@pacs-ai/extension-core/src/locales/en-US/StudyList.json';
+import spanishStudyList from '@pacs-ai/extension-core/src/locales/es/StudyList.json';
 import frenchStudyList from '@pacs-ai/extension-core/src/locales/fr/StudyList.json';
 
 const viewerKeys = Object.keys(englishAIModelButton).filter(key => key.startsWith('Viewer'));
