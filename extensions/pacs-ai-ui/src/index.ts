@@ -12,11 +12,6 @@ export { default as Sidebar } from './components/Sidebar';
 export { default as SidebarAdmin } from './components/SidebarAdmin';
 export { default as StoreFileButton } from './components/StoreFileButton';
 
-// src/legacy/ (ChatBox, ChatButton) is not exported here: it still imports
-// from @ohif/app/src and moves to its own package in P2.5. (AIModelButton
-// moved to @pacs-ai/extension-inference in P2.4.)
-// Until then import it by path, e.g. '@pacs-ai/ui/src/legacy/ChatButton/ChatButton'.
-
 /**
  * Registered in platform/app/pluginConfig.json. It has no OHIF modules; the
  * package exists for the components above.

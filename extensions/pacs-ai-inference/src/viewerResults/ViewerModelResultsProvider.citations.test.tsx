@@ -3,7 +3,7 @@ import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import {
   ChatCitationHostContext,
   type ChatCitationHost,
-} from '@pacs-ai/ui/src/legacy/ChatBox/citations/ChatCitationHost';
+} from '@pacs-ai/extension-chat/citations';
 import { ViewerModelResultsProvider } from './ViewerModelResultsProvider';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
 import type { ViewerModelResult } from './types';
