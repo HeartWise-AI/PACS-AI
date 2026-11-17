@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
@@ -25,7 +25,7 @@ const StudyItem = ({
   StudyMenuItems,
   StudyInstanceUID,
 }: withAppTypes) => {
-  const { setModalitiesInStudy } = useGlobalStateData();
+  const { setModalitiesInStudy } = useStudyContext();
 
   useEffect(() => {
     if (modalities) {

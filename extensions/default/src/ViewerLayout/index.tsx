@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { LoadingIndicatorProgress } from '@ohif/ui';
@@ -8,8 +8,7 @@ import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { useTranslation } from 'react-i18next';
-import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
-import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { markTourShown, shouldShowTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
@@ -22,13 +21,6 @@ import {
 } from '@ohif/ui-next';
 import { ViewerModelResultsProvider } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider'; // NOTE: This is a PACS changes
 import useResizablePanels from './ResizablePanelsHook'; // NOTE: This is a PACS changes
-interface AvailableModelsContextType {
-  inferenceAvailableModels: GetInferenceAvailableModelsResponse[];
-  fetchingAvailableModels: boolean;
-}
-
-export const AvailableModelsContext = createContext<AvailableModelsContextType | null>(null);
-
 const resizableHandleClassName = 'mt-[1px] bg-white/10'; // NOTE: This is a PACS changes
 
 function ViewerLayout({
@@ -53,10 +45,6 @@ function ViewerLayout({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || ''; // NOTE: This is a PACS changes
-  const [inferenceAvailableModels, setInferenceAvailableModels] = useState<
-    GetInferenceAvailableModelsResponse[]
-  >([]); // NOTE: This is a PACS changes
-  const [fetchingAvailableModels, setFetchingAvailableModels] = useState(false); // NOTE: This is a PACS changes
   const { StudyInstanceUIDs = [] } = useImageViewer() || {}; // NOTE: This is a PACS changes
 
   const { panelService, hangingProtocolService, customizationService } = servicesManager.services;
@@ -150,11 +138,10 @@ function ViewerLayout({
   }, [hangingProtocolService]);
 
   useEffect(() => {
+    // NOTE: This is a PACS changes (models for the viewer, read with useAvailableModels)
     const fetchInferenceAvailableModels = async () => {
-      setFetchingAvailableModels(true);
       try {
-        const response = await inferenceRepository.GetInferenceAvailableModels();
-        setInferenceAvailableModels(response.data);
+        await pacsAiModelsService.loadAvailableModels();
       } catch (error) {
         if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
           showAlert(error.message, 'error');
@@ -166,11 +153,10 @@ function ViewerLayout({
 
         console.error('Error fetching available inference models:', error);
       }
-      setFetchingAvailableModels(false);
     };
 
     fetchInferenceAvailableModels();
-  }, [inferenceRepository]);
+  }, []);
 
   const getViewportComponentData = viewportComponent => {
     const { entry } = getComponent(viewportComponent.namespace);
@@ -207,9 +193,7 @@ function ViewerLayout({
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#151815]">
       <TopNavigation title="Viewer" />
-      <AvailableModelsContext.Provider
-        value={{ inferenceAvailableModels, fetchingAvailableModels }}
-      >
+      <>
         {/* NOTE: This is a PACS changes */}
         <ViewerModelResultsProvider
           studyInstanceUID={StudyInstanceUIDs[0] ?? null}
@@ -287,7 +271,7 @@ function ViewerLayout({
             </div>
           </main>
         </ViewerModelResultsProvider>
-      </AvailableModelsContext.Provider>
+      </>
       <Onboarding
         tours={customizationService.getCustomization('ohif.tours')}
         shouldShowTour={shouldShowTour}

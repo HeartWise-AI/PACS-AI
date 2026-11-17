@@ -5,7 +5,7 @@ import { Icons } from '@ohif/ui-next';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ const StoreFileButton = ({
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const showAlert = useContext(AlertContext);
-  const { patientInfo } = useGlobalStateData();
+  const { patientInfo } = useStudyContext();
 
   // handle close modal
   const handleClose = () => {

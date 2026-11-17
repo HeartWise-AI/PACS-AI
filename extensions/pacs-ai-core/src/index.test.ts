@@ -1,6 +1,8 @@
 import pacsAiCoreExtension from './index';
 import PacsAiAppProviders from './providers/PacsAiAppProviders';
 import { pacsAiSessionService } from './services/PacsAiSessionService';
+import { pacsAiModelsService } from './services/PacsAiModelsService';
+import { pacsAiStudyContextService } from './services/PacsAiStudyContextService';
 import registerLocales from './locales/registerLocales';
 
 jest.mock('./locales/registerLocales', () => ({ __esModule: true, default: jest.fn() }));
@@ -12,21 +14,25 @@ function createManagers() {
   };
   const servicesManager = {
     services,
-    registerService: jest.fn(registration => {
-      services[registration.name] = registration.create({});
-    }),
+    registerServices: jest.fn(registrations =>
+      registrations.forEach(registration => {
+        services[registration.name] = registration.create({});
+      })
+    ),
   };
   const serviceProvidersManager = { registerProvider: jest.fn() };
   return { servicesManager, serviceProvidersManager };
 }
 
 describe('@pacs-ai/extension-core preRegistration', () => {
-  test('registers the session service, the auth header, the providers and the locales', () => {
+  test('registers the services, the auth header, the providers and the locales', () => {
     const { servicesManager, serviceProvidersManager } = createManagers();
 
     pacsAiCoreExtension.preRegistration({ servicesManager, serviceProvidersManager } as never);
 
     expect(servicesManager.services.pacsAiSessionService).toBe(pacsAiSessionService);
+    expect(servicesManager.services.pacsAiModelsService).toBe(pacsAiModelsService);
+    expect(servicesManager.services.pacsAiStudyContextService).toBe(pacsAiStudyContextService);
     const { setServiceImplementation } = servicesManager.services
       .userAuthenticationService as { setServiceImplementation: jest.Mock };
     expect(setServiceImplementation).toHaveBeenCalledWith({

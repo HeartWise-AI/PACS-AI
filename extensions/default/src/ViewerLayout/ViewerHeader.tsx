@@ -1,9 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import AIModelButton from '@pacs-ai/ui/src/legacy/AIModelButton';
-import { AvailableModelsContext } from '../ViewerLayout/index';
 import { Button, Header, Icons, useModal } from '@ohif/ui-next';
 import { useSystem } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
@@ -12,14 +11,15 @@ import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
 import ChatButton from '@pacs-ai/ui/src/legacy/ChatButton/ChatButton';
 import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
+import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels';
 import { Types } from '@ohif/core';
 
 function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const { servicesManager, extensionManager, commandsManager } = useSystem();
   const { customizationService } = servicesManager.services;
   const { patientInfo } = usePatientInfo(servicesManager);
-  const { setPatientInfo } = useGlobalStateData();
+  const { setPatientInfo } = useStudyContext();
 
   useEffect(() => {
     // check if patientInfo is not empty (has PatientName and PatientID)
@@ -33,8 +33,7 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { inferenceAvailableModels, fetchingAvailableModels } =
-    useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } = useAvailableModels();
 
   const onClickReturnButton = () => {
     const { pathname } = location;

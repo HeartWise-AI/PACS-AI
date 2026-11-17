@@ -1,7 +1,9 @@
 import { id } from './id';
 import registerLocales from './locales/registerLocales';
 import PacsAiAppProviders from './providers/PacsAiAppProviders';
+import PacsAiModelsService from './services/PacsAiModelsService';
 import PacsAiSessionService, { pacsAiSessionService } from './services/PacsAiSessionService';
+import PacsAiStudyContextService from './services/PacsAiStudyContextService';
 
 /**
  * PACS-AI core extension (docs/ohif-upgrade/PLAN.md 6.1): API client,
@@ -12,7 +14,11 @@ const pacsAiCoreExtension = {
   id,
 
   preRegistration({ servicesManager, serviceProvidersManager }) {
-    servicesManager.registerService(PacsAiSessionService.REGISTRATION);
+    servicesManager.registerServices([
+      PacsAiSessionService.REGISTRATION,
+      PacsAiModelsService.REGISTRATION,
+      PacsAiStudyContextService.REGISTRATION,
+    ]);
     pacsAiSessionService.connectUserAuthenticationService(
       servicesManager.services.userAuthenticationService
     );

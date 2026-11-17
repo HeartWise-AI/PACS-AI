@@ -24,8 +24,9 @@ jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository', () => ({
 jest.mock('@pacs-ai/extension-core/src/providers/AlertProvider', () => ({
   AlertContext: jest.requireActual('react').createContext(null),
 }));
-jest.mock('@pacs-ai/extension-core/src/providers/GlobalStateProvider', () => ({
-  useGlobalStateData: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
+jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({
+  __esModule: true,
+  default: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
 }));
 jest.mock('../../../../cornerstone/src/utils/addSegmentation', () => ({
   addSegmentationFromLabelmap: jest.fn(),

@@ -1,13 +1,13 @@
 import { buildInferenceStudyModalities } from '@ohif/app/src/components/inference/buildInferenceStudyModalities';
-import React, { useEffect, useRef, useContext } from 'react'; // NOTE: This is a PACS changes ({ useEffect, useRef, useContext })
+import React, { useEffect, useRef } from 'react'; // NOTE: This is a PACS changes ({ useEffect, useRef })
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider'; // NOTE: This is a PACS changes
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext'; // NOTE: This is a PACS changes
+import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels'; // NOTE: This is a PACS changes
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
 import { ScrollArea } from '../ScrollArea';
 import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png'; // NOTE: This is a PACS changes
-import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx'; // NOTE: This is a PACS changes
 import { useTranslation } from 'react-i18next'; // NOTE: This is a PACS changes
 
 const noop = () => {};
@@ -30,14 +30,13 @@ const StudyBrowser = ({
   StudyMenuItems,
 }: withAppTypes) => {
   // NOTE: This is a PACS changes
-  const { setSelectedModalities } = useGlobalStateData();
+  const { setSelectedModalities } = useStudyContext();
   // NOTE: This is a PACS changes
-  const { inferenceAvailableModels, fetchingAvailableModels } =
-    useContext(AvailableModelsContext) || {};
+  const { inferenceAvailableModels, fetchingAvailableModels } = useAvailableModels();
   // NOTE: This is a PACS changes
   const { t } = useTranslation('StudyBrowser');
   // NOTE: This is a PACS changes
-  const { setDisplaySets } = useGlobalStateData();
+  const { setDisplaySets } = useStudyContext();
 
   // NOTE: This is a PACS changes (Find the active tab and its display sets)
   const activeTab = tabs.find(tab => tab.name === activeTabName);

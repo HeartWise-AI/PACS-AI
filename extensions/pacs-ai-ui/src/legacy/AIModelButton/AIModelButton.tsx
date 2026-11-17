@@ -22,7 +22,7 @@ import HTMLOutputModeModal from '@ohif/app/src/components/inference/HTMLOutputMo
 import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputModeModal';
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { addSegmentationFromLabelmap } from '../../../../cornerstone/src/utils/addSegmentation';
 import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 import { viewerModelKey } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel';
@@ -55,7 +55,7 @@ const AIModelButton = ({
   const [mounted, setMounted] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
-  const { selectedModalities } = useGlobalStateData();
+  const { selectedModalities } = useStudyContext();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
   const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');

@@ -1,11 +1,11 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
 import SelectSeriesModal from './SelectSeriesModal';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import type { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
-jest.mock('@pacs-ai/extension-core/src/providers/GlobalStateProvider', () => ({ useGlobalStateData: jest.fn() }));
+jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('@ohif/ui-next', () => ({ Input: 'input' }));
 jest.mock('react-dom', () => ({ createPortal: children => children }));
 
@@ -58,7 +58,7 @@ describe('SelectSeriesModal series count selection', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useGlobalStateData as jest.Mock).mockReturnValue({
+    (useStudyContext as jest.Mock).mockReturnValue({
       selectedModalities: {
         CT: { modality: 'CT', displaySets: [series('excluded-group', 'CT')] },
         XA: {
@@ -130,7 +130,7 @@ describe('SelectSeriesModal series count selection', () => {
   });
 
   test('switches between exams without mixing series or retaining the previous selection', () => {
-    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+    (useStudyContext as jest.Mock).mockReturnValue({ selectedModalities: {
       exam1: { modality: 'XA', displaySets: [series('old-series')] },
       exam2: { modality: 'XA', displaySets: [{ ...series('new-series'), StudyInstanceUID: 'study-2', studyDate: '2026-11-12' }] },
     } });
@@ -147,7 +147,7 @@ describe('SelectSeriesModal series count selection', () => {
   });
 
   test('preserves the chosen exam when bulk selection is cleared', () => {
-    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+    (useStudyContext as jest.Mock).mockReturnValue({ selectedModalities: {
       XA: { modality: 'XA', displaySets: [series('old'), { ...series('new'), StudyInstanceUID: 'study-2' }] },
     } });
     mount({ initialSeriesSelection: { selectedSeries: ['new'], studyInstanceUID: 'study-2' } });
@@ -163,7 +163,7 @@ describe('SelectSeriesModal series count selection', () => {
   });
 
   test('skips report, PDF and still-image series in displayed rows and bulk requests', () => {
-    (useGlobalStateData as jest.Mock).mockReturnValue({ selectedModalities: {
+    (useStudyContext as jest.Mock).mockReturnValue({ selectedModalities: {
       XA: { modality: 'XA', displaySets: [
         { ...series('rapport'), description: 'RAPPORT', numImageFrames: 20 },
         { ...series('pdf'), SOPClassUID: '1.2.840.10008.5.1.4.1.1.104.1' },

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { useGlobalStateData } from '@pacs-ai/extension-core/src/providers/GlobalStateProvider';
+import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 
@@ -29,7 +29,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   onMessagesChange,
   onClearChat,
 }) => {
-  const { selectedModalities = {} } = useGlobalStateData();
+  const { selectedModalities = {} } = useStudyContext();
   const chatboxRef = useRef<HTMLDivElement>(null);
 
   // State for message feedback (thumbs up/down)
