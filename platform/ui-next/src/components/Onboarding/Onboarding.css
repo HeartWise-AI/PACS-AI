@@ -1,9 +1,9 @@
 .shepherd-header {
-  @apply !bg-popover !w-[100%] !p-0;
+  @apply !w-[100%] !bg-[#151815] !p-0; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-title {
-  @apply !text-highlight !w-[100%] !break-words !text-xl !leading-[1.5];
+  @apply !w-[100%] !break-words !text-xl !leading-[1.5] !text-white; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-content {
@@ -11,7 +11,7 @@
 }
 
 .shepherd-element {
-  @apply !bg-popover !max-w-[260px];
+  @apply !max-w-[260px] !bg-[#151815]; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-text {
@@ -23,15 +23,15 @@
 }
 
 .shepherd-button {
-  @apply !inline-flex !h-[36px] !min-w-[62px] !flex-row !items-center !justify-center !gap-[5px] !whitespace-nowrap !rounded !bg-[#348cfd] !px-[10px] !text-center !font-sans !text-[14px] !leading-[1.2] !text-white !outline-none !transition !duration-300 !ease-in-out focus:!outline-none;
+  @apply !inline-flex !h-[36px] !min-w-[62px] !flex-row !items-center !justify-center !gap-[5px] !whitespace-nowrap !rounded !bg-[#c8f469] !px-[10px] !text-center !font-sans !text-[14px] !leading-[1.2] !text-white !outline-none !transition !duration-300 !ease-in-out focus:!outline-none; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-button.shepherd-button-secondary {
-  @apply !bg-transparent !text-[#348cfd];
+  @apply !bg-transparent !text-white; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-arrow::before {
-  @apply !bg-popover !h-[30px] !w-[30px];
+  @apply !h-[30px] !w-[30px] !bg-[#151815]; /* NOTE: This is a PACS changes */
 }
 
 .shepherd-element[data-popper-placement^='left'] > .shepherd-arrow {

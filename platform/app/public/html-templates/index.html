@@ -187,6 +187,12 @@
       rel="preload"
       as="script"
       type="text/javascript"
+      src="<%= PUBLIC_URL %>env-config.js"
+    ></script>
+    <script
+      rel="preload"
+      as="script"
+      type="text/javascript"
       src="<%= PUBLIC_URL %>app-config.js"
     ></script>
     <script
@@ -196,7 +202,7 @@
       src="<%= PUBLIC_URL %>init-service-worker.js"
     ></script>
 
-    <title>OHIF Viewer</title>
+    <title>PACS AI Viewer</title>
 
     <script>
       function browserImportFunction(moduleId) {

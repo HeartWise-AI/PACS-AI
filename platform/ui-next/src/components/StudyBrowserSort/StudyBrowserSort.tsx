@@ -55,13 +55,15 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger className="w-full overflow-hidden">
-            <DropdownMenuTrigger className="border-inputfield-main focus:border-inputfield-main flex h-[26px] w-full items-center justify-start overflow-hidden whitespace-nowrap rounded border bg-black p-2 text-base text-white">
+            {/* NOTE: This is a PACS changes */}
+            <DropdownMenuTrigger className="border-inputfield-main focus:border-inputfield-main flex h-[26px] w-full items-center justify-start overflow-hidden whitespace-nowrap rounded border bg-transparent p-2 text-base text-white">
               {selectedSort.label}
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent>{selectedSort.label}</TooltipContent>
         </Tooltip>
-        <DropdownMenuContent className="bg-black">
+        {/* NOTE: This is a PACS changes */}
+        <DropdownMenuContent className="bg-[#151815]">
           {sortFunctions.map(sort => (
             <DropdownMenuItem
               key={sort.label}
@@ -77,7 +79,8 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
         <TooltipTrigger>
           <button
             onClick={toggleSortDirection}
-            className="flex h-[26px] items-center justify-center bg-black"
+            // NOTE: This is a PACS changes
+            className="flex h-[26px] items-center justify-center bg-transparent"
           >
             {sortDirection === 'ascending' ? (
               <Icons.SortingAscending className="text-primary-main w-2" />

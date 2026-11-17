@@ -46,7 +46,8 @@ export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ childr
   const allowAddSegment = showAddSegment && !disableEditing;
 
   return (
-    <div className="my-px flex h-7 w-full items-center justify-between rounded pl-0.5 pr-7">
+    // NOTE: This is a PACS changes
+    <div className="my-px flex h-7 w-full items-center justify-between rounded bg-white/10 pl-0.5 pr-7">
       <div className="mt-1 flex-1">
         {allowAddSegment ? (
           <Button

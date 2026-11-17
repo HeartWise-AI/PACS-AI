@@ -1,13 +1,13 @@
 // External
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
-
+import { QueryClient, QueryClientProvider } from 'react-query';
 import Compose from './routes/Mode/Compose';
 import {
+  ServicesManager,
   ExtensionManager,
   CommandsManager,
   HotkeysManager,
@@ -35,13 +35,39 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
+// NOTE: This is a PACS changes
+import { AlertProvider } from './AlertProvider';
+// NOTE: This is a PACS changes
+import { GlobalStateProvider } from './GlobalStateProvider';
+// NOTE: This is a PACS changes
+import TutorialProgressOverlay from './components/TutorialProgressOverlay';
+import InferenceProcessingProvider from './components/inference/InferenceProcessingProvider';
+import StudyProcessingProvider from './components/inference/studyProcessing/StudyProcessingProvider';
+import FrontendUpdateMonitor from './components/FrontendUpdateMonitor';
 import './App.css';
+
+// NOTE: This is a PACS changes
+export const FrontendVersionContext = createContext('');
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
   servicesManager: AppTypes.ServicesManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
+
+// NOTE: This is a PACS changes
+const frontendVersion = 'v0.58.0-beta';
+const queryClient = new QueryClient();
+
+// NOTE: This is a PACS changes
+const FrontendVersionProvider = ({ value, children }) => (
+  <FrontendVersionContext.Provider value={value}>{children}</FrontendVersionContext.Provider>
+);
+
+FrontendVersionProvider.propTypes = {
+  value: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 function App({
   config = {
@@ -65,6 +91,7 @@ function App({
   defaultModes = [],
 }) {
   const [init, setInit] = useState(null);
+
   useEffect(() => {
     const run = async () => {
       appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
@@ -123,6 +150,8 @@ function App({
     [DialogProvider, { service: uiDialogService, dialog: ManagedDialog }],
     [ModalProvider, { service: uiModalService, modal: ModalNext }],
     [ShepherdJourneyProvider],
+    // NOTE: This is a PACS changes
+    [FrontendVersionProvider, { value: frontendVersion }],
   ];
 
   // Loop through and register each of the service providers registered with the ServiceProvidersManager.
@@ -163,12 +192,25 @@ function App({
   }
 
   return (
-    <CombinedProviders>
-      <BrowserRouter basename={routerBasename}>
-        {authRoutes}
-        {appRoutes}
-      </BrowserRouter>
-    </CombinedProviders>
+    <QueryClientProvider client={queryClient}>
+      <AlertProvider>
+        {/* NOTE: This is a PACS changes */}
+        <GlobalStateProvider>
+          <CombinedProviders>
+            <FrontendUpdateMonitor />
+            <BrowserRouter basename={routerBasename}>
+              <StudyProcessingProvider>
+                <InferenceProcessingProvider>
+                  {authRoutes}
+                  {appRoutes}
+                  <TutorialProgressOverlay />
+                </InferenceProcessingProvider>
+              </StudyProcessingProvider>
+            </BrowserRouter>
+          </CombinedProviders>
+        </GlobalStateProvider>
+      </AlertProvider>
+    </QueryClientProvider>
   );
 }
 

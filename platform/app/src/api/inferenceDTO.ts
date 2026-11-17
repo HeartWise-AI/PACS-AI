@@ -1,0 +1,472 @@
+export interface AddInferenceModelRequest {
+  name: string;
+  dockerImage: string;
+  envs: string[];
+  outputMode: string;
+}
+
+export interface AddOnboardingModelQuestionnaireAnswersRequest {
+  modelId: string;
+  onboardingModelQuestionnaireAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds?: string[];
+          questionnaireAnswers?: string[];
+        },
+      ]
+    | null;
+}
+
+export interface CreateInferenceIngestionJobRequest {
+  dicomModality: string;
+  containerId: string;
+  modelId: string;
+  modelName: string;
+  modelVersion: string;
+  modalities: string[];
+  intervalInMinutes: number;
+  scheduleStartTimestamp: number;
+  scheduleEndTimestamp: number;
+}
+
+export interface DeleteInferenceModelRequest {
+  id: string;
+}
+
+export interface DeleteInferenceIngestionJobRequest {
+  id: string;
+}
+
+export enum InferenceModelLifecycle {
+  STARTING = 'starting',
+  RUNNING = 'running',
+  PAUSED = 'paused',
+  STOPPING = 'stopping',
+  STOPPED = 'stopped',
+  DEGRADED = 'degraded',
+  UNKNOWN = 'unknown',
+}
+
+export interface GetInferenceModelResponse {
+  id: string;
+  tenantId: string;
+  container: {
+    id: string;
+    name: string;
+    lifecycle: InferenceModelLifecycle;
+    startedAt: number;
+    finishedAt: number;
+  };
+  name: string;
+  dockerImage: string;
+  envs: { key: string; value: string }[] | string[];
+  disallowedDICOMTags: string[];
+  outputMode: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface InferenceModelProvenance {
+  sourceRepository: string;
+  sourceRevision: string;
+  modelRepository: string;
+  modelRevision: string;
+  weightsPath: string;
+  weightsSha256: string;
+}
+
+export type InferenceModelVersionStatus = 'AVAILABLE' | 'REVOKED';
+
+export interface GetInferenceModelVersionResponse {
+  id: string;
+  modelId: string;
+  version: string;
+  imageReference: string;
+  imageDigest: string;
+  provenance: InferenceModelProvenance;
+  status: InferenceModelVersionStatus;
+  publishedAt: number;
+  active: boolean;
+}
+
+export interface DeployInferenceModelVersionResponse {
+  deploymentId: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+}
+
+export type InferenceModelDeploymentStatus =
+  | 'PENDING'
+  | 'RUNNING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'ROLLED_BACK'
+  | 'INTERRUPTED';
+
+export type InferenceModelDeploymentStage =
+  | 'resolve_active'
+  | 'resolve_version'
+  | 'pull'
+  | 'create_candidate'
+  | 'validate_candidate'
+  | 'drain_active'
+  | 'prepare_candidate'
+  | 'activate_candidate';
+
+export interface InferenceModelDeploymentOperation {
+  id: string;
+  modelId: string;
+  catalogVersionId: string;
+  requestedVersion: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+  sequence: number;
+  errorCode?: string;
+  errorMessage?: string;
+  rollbackError?: string;
+  createdAt: number;
+  startedAt?: number;
+  updatedAt: number;
+  finishedAt?: number;
+}
+
+export interface GetInferenceModelDeploymentOperationResponse {
+  deployment: InferenceModelDeploymentOperation;
+}
+
+export interface InferenceModelDeploymentEvent {
+  deploymentId: string;
+  status: InferenceModelDeploymentStatus;
+  stage: InferenceModelDeploymentStage;
+  sequence: number;
+  timestamp: number;
+  elapsedMilliseconds: number;
+  terminal: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+  rollbackError?: string;
+}
+
+export interface GetInferenceModelInfoRequest {
+  containerID: string;
+}
+
+export interface GetInferenceModelInfoResponse {
+  modelName: string;
+  version: string;
+  dicomTargetLevel: string;
+  dicomUploadMin: number;
+  dicomUploadMax: number;
+  supportedDicomModalities: string[];
+  supportedDicomTags: string[];
+  supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
+  supportedOutputModes: string[];
+}
+
+export interface GetInferenceModelFactsRequest {
+  containerID: string;
+}
+
+export interface GetInferenceModelFactsResponse {
+  en: ModelDetails;
+}
+
+export interface GetInferenceAvailableModelsResponse {
+  modelId: string;
+  approveFeedbackQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
+  rejectFeedbackQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
+  onboardingModelQuestionnaires: [
+    {
+      answerOptionsEn: [{ answer: string; id: string }] | null;
+      answerOptionsFr: [{ answer: string; id: string }] | null;
+      correctAnswerIds?: string[];
+      id: string;
+      questionEn: string;
+      questionFr: string;
+      type: string;
+    },
+  ];
+  containerId: string;
+  containerName: string;
+  modelName: string;
+  version: string;
+  dicomTargetLevel: string;
+  dicomUploadMin: number;
+  dicomUploadMax: number;
+  supportedDicomModalities: string[];
+  supportedAdditionalMetadata: InferenceAvailableAdditionalMetadata[];
+  supportedDicomTags: string[];
+  outputMode: string;
+  modelFacts: {
+    en: ModelDetails;
+  };
+}
+
+export interface GetModelFeedbackByModelIDRequest {
+  modelId: string;
+}
+
+export interface GetModelFeedbackByModelIDResponse {
+  feedbackType: string;
+  id: string;
+  inferenceModelId: string;
+  modelFeedbackAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds: string[];
+          questionnaireAnswers: string[];
+        },
+      ]
+    | null;
+  modelId: string;
+  tenantId: string;
+  userId: string;
+}
+
+export interface GetOnboardingModelQuestionnaireAnswersRequest {
+  modelId: string;
+}
+
+export interface GetOnboardingModelQuestionnaireAnswersResponse {
+  id: string;
+  tenantId: string;
+  userId: string;
+  modelId: string;
+  questionnaireId: string;
+  questionnaireQuestion: string;
+  questionnaireAnswerIds?: string[];
+  questionnaireAnswers?: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface GetInferenceIngestionJobsResponse {
+  id: string;
+  tenantId: string;
+  containerId: string;
+  dicomModality: string;
+  stabilityMinutes?: number;
+  intervalInMinutes?: number;
+  modelId: string;
+  modelName: string;
+  modelVersion: string;
+  modalities: string[];
+  status: string;
+  scheduleEndTimestamp: number;
+  scheduleStartTimestamp: number;
+  recentWindowMinutes?: number;
+  missingPollsThreshold?: number;
+  studyTimeStart?: string;
+  studyTimeEnd?: string;
+  createdAt: number;
+  updatedAt: number;
+  /** Null for jobs created before the creator was recorded; absent on older gateways. */
+  createdByUserId?: string | null;
+  /** Whether runs started by this job notify its creator and admins; absent on older gateways. */
+  notificationsEnabled?: boolean;
+}
+
+export interface ModelDetails {
+  Changelogs: { [key: string]: string } | string;
+  Summary: { [key: string]: string };
+  Mechanism: { [key: string]: string } | string;
+  Validation_and_performance: { [key: string]: { [key: string]: string | number } } | string;
+  Other_information: { [key: string]: string } | string;
+  Other_results: { [key: string]: string } | string;
+  Uses_and_directions: { [key: string]: string } | string;
+  Warnings_and_limitations: { [key: string]: string };
+}
+
+export interface InferenceAvailableAdditionalMetadata {
+  id: string;
+  name: string;
+  type: string;
+  required: boolean;
+}
+
+export interface ImportInferenceIngestionJobsRequest {
+  file: File;
+}
+
+export interface PredictInferenceModelRequest {
+  studyInstanceUID: string;
+  seriesInstanceUIDs: string[];
+  additionalMetadata: { [key: string]: string | null };
+}
+
+export interface PredictInferenceModelJSONResponse {
+  diagnosis: string;
+  predictions: {
+    [key: string]: {
+      probability: number;
+      confidence: string;
+      presentable: boolean;
+      displayResult: string;
+    };
+  };
+  modelRecommendations: {
+    en: string;
+    fr: string;
+    presentable: boolean;
+  };
+}
+
+export interface PredictInferenceModelOHIFResponse {
+  segmentation: {
+    labelmap: string;
+    dimensions: number[];
+    label: string;
+    segments: {
+      [key: string]: number;
+    };
+  };
+  measurements: number[];
+}
+
+export interface PredictInferenceModelHTMLResponse {
+  htmlBase64: string;
+}
+
+export interface PredictInferenceModelPDFResponse {
+  pdfBase64: string;
+}
+
+export interface PredictInferenceModelWebappResponse {
+  webappPath: string;
+  webappDataBase64: string;
+}
+
+export interface RemoveModelFeedbackRequest {
+  modelId: string;
+}
+
+export interface StartInferenceModelContainerRequest {
+  containerID: string;
+}
+
+export interface StopInferenceModelContainerRequest {
+  containerID: string;
+}
+
+export interface StartInferenceIngestionJobRequest {
+  id: string;
+}
+
+export interface StopInferenceIngestionJobRequest {
+  id: string;
+}
+
+export interface UpdateInferenceModelRequest {
+  disallowedDICOMTags: string[];
+  outputMode: string;
+}
+
+export interface UpdateModelFeedbackRequest {
+  id: string | null;
+  inferenceModelId: string;
+  modelId: string;
+  feedbackType: string;
+  modelFeedbackAnswers:
+    | [
+        {
+          questionnaireId: string;
+          questionnaireQuestion: string;
+          questionnaireAnswerIds: string[];
+          questionnaireAnswers: string[];
+        },
+      ]
+    | null;
+}
+
+export interface UpdateInferenceIngestionJobRequest {
+  id: string;
+  modalities: string[];
+  intervalInMinutes: number;
+  scheduleStartTimestamp: number;
+  scheduleEndTimestamp: number;
+  recentWindowMinutes?: number;
+  missingPollsThreshold?: number;
+  studyTimeStart?: string;
+  studyTimeEnd?: string;
+  /** Omit to keep the stored value. */
+  notificationsEnabled?: boolean;
+}
+
+export type CandidateProcessingStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'partial'
+  | 'failed'
+  | '';
+
+export interface GetInferenceIngestionCandidatesRequest {
+  status?: string;
+  jobId?: string;
+  studyInstanceUID?: string;
+}
+
+export interface GetInferenceIngestionCandidatesResponse {
+  id: string;
+  studyInstanceUID: string;
+  patientId: string;
+  modalitiesInStudy: string;
+  processingStatus: CandidateProcessingStatus;
+  processingStatusAt: number;
+  ingestionJobId: string;
+  updatedAt: number;
+}
+
+export interface InferenceGPUDevice {
+  uuid: string;
+  index: number | null;
+  name: string | null;
+  totalMemoryMiB: number | null;
+  usedMemoryMiB: number | null;
+  freeMemoryMiB: number | null;
+  utilizationPercent: number | null;
+  telemetryStatus: 'available' | 'unavailable';
+  telemetrySampledAt: string | null;
+  managerCapacityMiB: number;
+  managerReservedMiB: number;
+  managerAvailableMiB: number;
+}
+
+export interface InferenceGPUModel {
+  modelId: string;
+  containerId: string;
+  gpuUuid: string | null;
+  desiredGpuUuid: string | null;
+  placementSupported: boolean;
+  reason?: string;
+}
+
+export interface GetInferenceGPUsResponse {
+  sampledAt: string;
+  managerEnabled: boolean;
+  managerReady: boolean;
+  devices: InferenceGPUDevice[];
+  models: InferenceGPUModel[];
+}

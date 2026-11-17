@@ -1,4 +1,11 @@
-import { cache, imageLoadPoolManager, imageLoader, Enums, eventTarget, EVENTS as csEvents } from '@cornerstonejs/core';
+import {
+  cache,
+  imageLoadPoolManager,
+  imageLoader,
+  Enums,
+  eventTarget,
+  EVENTS as csEvents,
+} from '@cornerstonejs/core';
 
 function initStudyPrefetcherService(servicesManager: AppTypes.ServicesManager) {
   const { studyPrefetcherService } = servicesManager.services;
@@ -10,8 +17,8 @@ function initStudyPrefetcherService(servicesManager: AppTypes.ServicesManager) {
   studyPrefetcherService.cache = {
     isImageCached(imageId: string): boolean {
       return !!cache.getImageLoadObject(imageId);
-    }
-  }
+    },
+  };
 
   studyPrefetcherService.imageLoadEventsManager = {
     addEventListeners(onImageLoaded, onImageLoadFailed) {
@@ -20,14 +27,15 @@ function initStudyPrefetcherService(servicesManager: AppTypes.ServicesManager) {
 
       return [
         {
-          unsubscribe: () => eventTarget.removeEventListener(csEvents.IMAGE_LOADED, onImageLoaded)
+          unsubscribe: () => eventTarget.removeEventListener(csEvents.IMAGE_LOADED, onImageLoaded),
         },
         {
-          unsubscribe: () => eventTarget.removeEventListener(csEvents.IMAGE_LOAD_FAILED, onImageLoadFailed)
+          unsubscribe: () =>
+            eventTarget.removeEventListener(csEvents.IMAGE_LOAD_FAILED, onImageLoadFailed),
         },
-      ]
-    }
-  }
+      ];
+    },
+  };
 }
 
 export default initStudyPrefetcherService;

@@ -150,7 +150,8 @@ const [dimensionGroupNumber, setDimensionGroupNumber] = useState(1);
                 className="flex w-[78px]"
                 direction="horizontal"
               >
-                <span className="text-muted-foreground text-xs">FPS</span>
+                {/* NOTE: This is a PACS changes */}
+                <span className="text-foreground/80 text-xs">FPS</span>
               </Numeric.NumberStepper>
               <Numeric.Label className="mt-1">Frame</Numeric.Label>
             </div>

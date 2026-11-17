@@ -69,7 +69,8 @@ function ViewportPane({
       <div
         className={classNames('pointer-events-none absolute inset-0 rounded-md border', {
           'border-highlight': isActive,
-          'group-hover/pane:border-highlight/50 border-transparent': !isActive,
+          // NOTE: This is a PACS changes
+          'group-hover:border-primary/50 rounded-md border border-transparent': !isActive,
           '!border-secondary-light border-dashed': isHighlighted,
         })}
       />

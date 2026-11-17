@@ -1,9 +1,9 @@
 .customSelect__wrapper .customSelect__control {
-  @apply border-secondary-light w-full rounded border bg-black text-sm leading-tight text-white shadow transition duration-300;
-  min-height: 28px;
+  @apply w-full rounded-xl border-none bg-white bg-opacity-10 text-lg leading-tight text-white shadow transition duration-300;
+  min-height: 51px;
 }
 .customSelect__wrapper .customSelect__control:hover {
-  @apply border-gray-500;
+  @apply border-none;
 }
 
 .customSelect__control {
@@ -23,7 +23,7 @@
 
 .customSelect__wrapper .customSelect__control:focus,
 .customSelect__wrapper .customSelect__control--menu-is-open {
-  @apply border-gray-500 outline-none;
+  @apply border-none outline-none;
 }
 
 .customSelect--is-disabled .customSelect__control--is-disabled {
@@ -42,7 +42,7 @@
   padding: 4px;
 }
 
- .customSelect__option {
+.customSelect__option {
   color: #d6d6d6 !important;
   font-size: 14px !important;
   display: flex !important;
@@ -89,13 +89,13 @@
   @apply text-aqua-pale pl-1.5;
 }
 
-.customSelect__menu-portal .customSelect__menu-list::-webkit-scrollbar-thumb {
-  background-color: #0944b3;
+.ohif-select .customSelect__menu-list::-webkit-scrollbar-thumb {
+  background-color: #c8f469;
   border-radius: 10px;
 }
 
 .customSelect__option--is-focused {
-  background-color: #0944b391 !important;
+  background-color: #c8f469 !important;
 }
 
 .customSelect__menu-portal .customSelect__option:hover {
@@ -105,7 +105,7 @@
 .customSelect__menu-portal .customSelect__menu {
   border: 2px solid #0944b3;
   border-radius: 6px;
-  background-color: #151515 !important;
+  background-color: #111827 !important;
 }
 
 .css-1hwfws3 {

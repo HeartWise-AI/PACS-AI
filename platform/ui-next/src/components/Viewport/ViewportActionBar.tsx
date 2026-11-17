@@ -29,7 +29,8 @@ function ViewportActionBar({
   onDoubleClick,
   getStatusComponent,
 }: ViewportActionBarProps): JSX.Element {
-  const { label, studyDate, seriesDescription, patientInformation } = studyData;
+  // NOTE: This is a PACS changes (show current series)
+  const { label, studyDate, seriesDescription, patientInformation, currentSeries } = studyData;
   const { patientName, patientSex, patientAge, MRN, thickness, thicknessUnits, spacing, scanner } =
     patientInformation;
 
@@ -60,20 +61,31 @@ function ViewportActionBar({
 
   return (
     <div
-      className="pointer-events-auto flex h-8 shrink-0 select-none items-center overflow-visible whitespace-nowrap px-2 text-base"
+      // NOTE: This is a PACS changes
+      className="pointer-events-auto flex h-8 shrink-0 select-none items-center justify-between overflow-visible whitespace-nowrap px-2 text-base"
       onDoubleClick={onDoubleClick}
     >
-      {getStatusComponent()}
-      {!!label?.length && <span className="text-aqua-pale text-large ml-1">{label}</span>}
-      <div className="border-secondary-light mx-2 border-l py-2"></div>
-      <span
-        data-cy="studyDate"
-        className="text-white"
-      >
-        {studyDate}
-      </span>
-      <div className="border-secondary-light mx-2 border-l py-2"></div>
-      <span className="text-aqua-pale mr-1 overflow-hidden text-ellipsis">{seriesDescription}</span>
+      {/* NOTE: This is a PACS changes */}
+      <div className="flex min-w-[165px] flex-row items-center gap-2">
+        {getStatusComponent()}
+        {!!label?.length && <span className="text-aqua-pale text-large ml-1">{label}</span>}
+        <div className="border-secondary-light mx-2 border-l py-2"></div>
+        <span
+          data-cy="studyDate"
+          className="text-white"
+        >
+          {studyDate}
+        </span>
+        <div className="border-secondary-light mx-2 border-l py-2"></div>
+        <span className="text-aqua-pale mr-1 overflow-hidden text-ellipsis">
+          {seriesDescription}
+        </span>
+      </div>
+      {/* NOTE: This is a PACS changes */}
+      <div className="mx-auto flex flex-row items-center gap-1 text-white">
+        <span>Series: </span>
+        <span>{currentSeries}</span>
+      </div>
       {/* Prev/Next icons */}
       <Icons.ByName
         className="hover:text-primary-light ml-auto mr-2 cursor-pointer text-white"

@@ -39,6 +39,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                 },
               });
             }}
+            className="border-primary-main mr-2 bg-transparent !text-black"
           >
             <SelectTrigger className="w-full">
               <SelectValue
@@ -109,7 +110,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
               <div className="flex flex-1 space-x-2">
                 <div className="flex-1">
                   <Input
-                    className="w-full"
+                    className="border-primary-main mt-2 w-full bg-transparent"
                     type="text"
                     value={config.ctLower}
                     onChange={e => {
@@ -124,7 +125,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                 </div>
                 <div className="flex-1">
                   <Input
-                    className="w-full"
+                    className="border-primary-main mt-2 w-full bg-transparent"
                     type="text"
                     value={config.ctUpper}
                     onChange={e => {
@@ -148,7 +149,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
               <div className="flex flex-1 space-x-2">
                 <div className="flex-1">
                   <Input
-                    className="w-full"
+                    className="border-primary-main mt-2 w-full bg-transparent"
                     type="text"
                     value={config.ptLower}
                     onChange={e => {
@@ -163,7 +164,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
                 </div>
                 <div className="flex-1">
                   <Input
-                    className="w-full"
+                    className="border-primary-main mt-2 w-full bg-transparent"
                     type="text"
                     value={config.ptUpper}
                     onChange={e => {

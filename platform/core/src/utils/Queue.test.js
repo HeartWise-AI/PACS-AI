@@ -1,22 +1,6 @@
 import makeDeferred from './makeDeferred';
 import Queue from './Queue';
 
-/**
- * Utils
- */
-
-function timeout(delay) {
-  const { resolve, promise } = makeDeferred();
-  setTimeout(() => void resolve(Date.now()), delay);
-  return promise;
-}
-
-/**
- * Tests
- */
-
-const threshold = 2400;
-
 describe('Queue', () => {
   // Todo: comment due to wrong implementation
   // it('should bind functions to the queue', async () => {
@@ -34,36 +18,37 @@ describe('Queue', () => {
   // });
   it('should prevent task execution when queue limit is reached', async () => {
     const queue = new Queue(1);
-    const mockedTimeout = jest.fn(timeout);
-    const timer = queue.bind(mockedTimeout);
-    const start = Date.now();
-    const promise = timer(threshold).then(time => time - start);
-    try {
-      await timer(threshold);
-    } catch (e) {
-      expect(Date.now() - start < threshold).toBe(true);
-      expect(e.message).toBe('Queue limit reached');
-    }
-    const elapsed = await promise;
-    expect(elapsed >= threshold && elapsed < 2 * threshold).toBe(true);
-    expect(mockedTimeout).toBeCalledTimes(1);
+    const deferred = makeDeferred();
+    const mockedTask = jest.fn(() => deferred.promise);
+    const task = queue.bind(mockedTask);
+
+    const firstTask = task();
+
+    await expect(task()).rejects.toThrow('Queue limit reached');
+    expect(mockedTask).toHaveBeenCalledTimes(1);
+
+    deferred.resolve('completed');
+    await expect(firstTask).resolves.toBe('completed');
   });
+
   it('should safely bind tasks to the queue', async () => {
     const queue = new Queue(1);
     const mockedErrorHandler = jest.fn();
-    const mockedTimeout = jest.fn(timeout);
-    const timer = queue.bindSafe(mockedTimeout, mockedErrorHandler);
-    const start = Date.now();
-    const promise = timer(threshold).then(time => time - start);
-    await timer(threshold);
-    expect(Date.now() - start < threshold).toBe(true);
-    expect(mockedErrorHandler).toBeCalledTimes(1);
-    expect(mockedErrorHandler).nthCalledWith(
+    const deferred = makeDeferred();
+    const mockedTask = jest.fn(() => deferred.promise);
+    const task = queue.bindSafe(mockedTask, mockedErrorHandler);
+
+    const firstTask = task();
+
+    await expect(task()).resolves.toBeUndefined();
+    expect(mockedErrorHandler).toHaveBeenCalledTimes(1);
+    expect(mockedErrorHandler).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({ message: 'Queue limit reached' })
     );
-    const elapsed = await promise;
-    expect(elapsed >= threshold && elapsed < 2 * threshold).toBe(true);
-    expect(mockedTimeout).toBeCalledTimes(1);
+    expect(mockedTask).toHaveBeenCalledTimes(1);
+
+    deferred.resolve('completed');
+    await expect(firstTask).resolves.toBe('completed');
   });
 });

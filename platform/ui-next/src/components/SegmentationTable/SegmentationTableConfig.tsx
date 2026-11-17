@@ -32,9 +32,10 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
   }
 
   return (
-    <div className="bg-muted mb-0.5 space-y-2 rounded-b px-1.5 pt-0.5 pb-3">
+    <div className="mb-0.5 space-y-2 rounded-b bg-white/10 px-1.5 pt-0.5 pb-3">
       <div className="my-1 flex items-center justify-between">
-        <span className="text-aqua-pale text-xs">
+        {/* NOTE: This is a PACS changes */}
+        <span className="text-xs text-white">
           {t('Show')}:{' '}
           {renderFill && renderOutline
             ? t('Fill & Outline')
@@ -75,9 +76,8 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
 
       <div className="space-y-2">
         <div className="my-2 flex items-center">
-          <Label className="text-muted-foreground w-14 flex-none whitespace-nowrap text-xs">
-            Opacity
-          </Label>
+          {/* NOTE: This is a PACS changes */}
+          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">Opacity</Label>
           <Slider
             className="mx-1 flex-1"
             value={[fillAlpha]}
@@ -96,7 +96,8 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
         </div>
 
         <div className="my-2 flex items-center">
-          <Label className="text-muted-foreground w-14 flex-none whitespace-nowrap text-xs">
+          {/* NOTE: This is a PACS changes */}
+          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">
             {t('Border')}
           </Label>
           <Slider
@@ -117,22 +118,21 @@ export const SegmentationTableConfig: React.FC<{ children?: React.ReactNode }> =
         </div>
       </div>
 
-      <div className="border-input w-full border"></div>
+      {/* NOTE: This is a PACS changes */}
+      <div className="w-full border border-white/10"></div>
 
       <div className="my-2 flex items-center pl-1">
         <Switch
           checked={renderInactiveSegmentations}
           onCheckedChange={toggleRenderInactiveSegmentations}
         />
-        <Label className="text-muted-foreground mx-2 text-xs">
-          {t('Display inactive segmentations')}
-        </Label>
+        {/* NOTE: This is a PACS changes */}
+        <Label className="mx-2 text-xs text-white">{t('Display inactive segmentations')}</Label>
       </div>
       {renderInactiveSegmentations && (
         <div className="my-2 flex items-center">
-          <Label className="text-muted-foreground w-14 flex-none whitespace-nowrap text-xs">
-            Opacity
-          </Label>
+          {/* NOTE: This is a PACS changes */}
+          <Label className="w-14 flex-none whitespace-nowrap text-xs text-white">Opacity</Label>
           <Slider
             className="mx-1 flex-1"
             value={[fillAlphaInactive]}

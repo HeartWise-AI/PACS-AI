@@ -70,7 +70,7 @@ function _getStudy(StudyInstanceUID) {
  * @returns {*} A series object
  */
 function _getSeries(StudyInstanceUID, SeriesInstanceUID) {
-  if(!StudyInstanceUID) {
+  if (!StudyInstanceUID) {
     const series = _model.studies.map(study => study.series).flat();
     return series.find(aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID);
   }

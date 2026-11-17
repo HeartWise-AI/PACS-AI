@@ -19,7 +19,10 @@ export default function LabelShowcase() {
       `}
     >
       <div className="flex items-center gap-2">
-        <Switch defaultChecked id="preview-switch" />
+        <Switch
+          defaultChecked
+          id="preview-switch"
+        />
         <Label htmlFor="preview-switch">Preview edits before creating</Label>
       </div>
     </ShowcaseRow>

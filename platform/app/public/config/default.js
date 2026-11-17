@@ -10,14 +10,11 @@ window.config = {
   showStudyList: true,
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
-  // below flag is for performance reasons, but it might not work for all servers
-  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
-  experimentalStudyBrowserSort: false,
   strictZSpacingForVolumeViewport: true,
-  groupEnabledModesFirst: true,
   allowMultiSelectExport: false,
+  autoPlayCine: true,
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,
@@ -26,7 +23,6 @@ window.config = {
     prefetch: 25,
   },
   showErrorDetails: 'always', // 'always', 'dev', 'production'
-  // filterQueryParam: false,
   // Defines multi-monitor layouts
   multimonitor: [
     {
@@ -106,9 +102,9 @@ window.config = {
       configuration: {
         friendlyName: 'AWS S3 Static wado server',
         name: 'aws',
-        wadoUriRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
-        qidoRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
-        wadoRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
+        wadoUriRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
+        qidoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
+        wadoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',

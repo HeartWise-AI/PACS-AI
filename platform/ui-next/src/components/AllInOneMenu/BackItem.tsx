@@ -12,7 +12,8 @@ const BackItem = ({ backLabel, onBackClick }: BackItemProps) => {
   return (
     <>
       <div
-        className="hover:bg-accent flex h-8 w-full flex-shrink-0 cursor-pointer items-center pl-1 pr-2 text-base hover:rounded"
+        // NOTE: This is a PACS changes
+        className="flex h-8 w-full flex-shrink-0 cursor-pointer items-center pl-1 pr-2 text-base hover:rounded hover:bg-[#151815]"
         onClick={onBackClick}
       >
         <Icons.ByName

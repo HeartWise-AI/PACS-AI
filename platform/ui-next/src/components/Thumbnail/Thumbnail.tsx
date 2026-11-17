@@ -33,6 +33,7 @@ const Thumbnail = ({
   onReject = () => {},
   onClickUntrack = () => {},
   ThumbnailMenuItems = () => {},
+  selectedViewBadge = null, // NOTE: This is a PACS changes
 }: withAppTypes): React.ReactNode => {
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
@@ -58,12 +59,29 @@ const Thumbnail = ({
     setLastTap(currentTime);
   };
 
+  // NOTE: This is a PACS changes (AI result "selected view" marker)
+  const renderSelectedViewBadge = (sizeClassName: string) =>
+    selectedViewBadge ? (
+      <span
+        className={classnames(
+          'flex shrink-0 items-center justify-center rounded-full bg-[#3ef1d1] font-bold text-black',
+          sizeClassName
+        )}
+        title={selectedViewBadge.label}
+        aria-label={selectedViewBadge.label}
+        data-cy="thumbnail-selected-view-badge"
+      >
+        {selectedViewBadge.number}
+      </span>
+    ) : null;
+
   const renderThumbnailPreset = () => {
     return (
       <div
         className={classnames(
           'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]',
-          isActive && 'bg-popover rounded'
+          // NOTE: This is a PACS changes
+          isActive && 'bg-primary/10 rounded'
         )}
       >
         <div className="h-[114px] w-[128px]">
@@ -76,7 +94,8 @@ const Thumbnail = ({
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              // NOTE: This is a PACS changes
+              <div className="bg-primary/20 h-[114px] w-[128px] rounded"></div>
             )}
 
             {/* bottom left */}
@@ -84,12 +103,20 @@ const Thumbnail = ({
               <div
                 className={classnames(
                   'h-[10px] w-[10px] rounded-[2px]',
-                  isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
+                  // NOTE: This is a PACS changes
+                  isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
                   loadingProgress && loadingProgress < 1 && 'bg-primary/25'
                 )}
               ></div>
               <div className="text-[11px] font-semibold text-white">{modality}</div>
             </div>
+
+            {/* top left (NOTE: This is a PACS changes) */}
+            {selectedViewBadge && (
+              <div className="absolute top-[4px] left-[4px]">
+                {renderSelectedViewBadge('h-[18px] w-[18px] text-[11px]')}
+              </div>
+            )}
 
             {/* top right */}
             <div className="absolute top-0 right-0 flex items-center gap-[4px]">
@@ -145,8 +172,10 @@ const Thumbnail = ({
             </TooltipTrigger>
           </Tooltip>
           <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-            <div className="text-muted-foreground pl-1 text-[11px]"> S:{seriesNumber}</div>
-            <div className="text-muted-foreground text-[11px]">
+            {/* NOTE: This is a PACS changes */}
+            <div className="pl-1 text-[11px] font-semibold text-white/80"> S:{seriesNumber}</div>
+            {/* NOTE: This is a PACS changes */}
+            <div className="text-[11px] font-semibold text-white/80">
               <div className="flex items-center gap-[4px]">
                 {countIcon ? (
                   React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
@@ -167,24 +196,29 @@ const Thumbnail = ({
       <div
         className={classnames(
           'flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]',
-          isActive && 'bg-popover rounded'
+          // NOTE: This is a PACS changes
+          isActive && 'bg-primary/10 rounded'
         )}
       >
         <div className="relative flex h-[32px] w-full items-center gap-[8px] overflow-hidden">
           <div
             className={classnames(
               'h-[32px] w-[4px] min-w-[4px] rounded',
-              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
-              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
+              // NOTE: This is a PACS changes
+              isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
+              loadingProgress && loadingProgress < 1 && 'bg-primary/20'
             )}
           ></div>
           <div className="flex h-full w-[calc(100%-12px)] flex-col justify-start">
             <div className="flex items-center gap-[7px]">
-              <div className="text-[13px] font-semibold text-white">{modality}</div>
+              {renderSelectedViewBadge('h-[16px] w-[16px] text-[10px]')}
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[13px] font-semibold text-white/80">{modality}</div>
               <Tooltip>
                 <TooltipContent>{description}</TooltipContent>
                 <TooltipTrigger className="w-full overflow-hidden">
-                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white">
+                  {/* NOTE: This is a PACS changes */}
+                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white/80">
                     {description}
                   </div>
                 </TooltipTrigger>
@@ -192,8 +226,10 @@ const Thumbnail = ({
             </div>
 
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
-              <div className="text-muted-foreground text-[12px]">
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[12px] font-semibold text-white/80"> S:{seriesNumber}</div>
+              {/* NOTE: This is a PACS changes */}
+              <div className="text-[12px] font-semibold text-white/80">
                 <div className="flex items-center gap-[4px]">
                   {' '}
                   {countIcon ? (
@@ -253,8 +289,10 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        'bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col rounded outline-none',
+        // NOTE: This is a PACS changes
+        'group flex cursor-pointer select-none flex-col rounded bg-white/10 outline-none hover:bg-white/30',
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
+        selectedViewBadge && 'ring-1 ring-[#3ef1d1]',
         viewPreset === 'list' && 'h-[40px] w-full'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
@@ -311,6 +349,11 @@ Thumbnail.propTypes = {
   onClickUntrack: PropTypes.func,
   countIcon: PropTypes.string,
   thumbnailType: PropTypes.oneOf(['thumbnail', 'thumbnailTracked', 'thumbnailNoImage']),
+  // NOTE: This is a PACS changes
+  selectedViewBadge: PropTypes.shape({
+    number: PropTypes.number.isRequired,
+    label: PropTypes.string,
+  }),
 };
 
 export { Thumbnail };

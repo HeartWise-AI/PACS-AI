@@ -2,6 +2,9 @@ import * as Types from './types';
 
 /** COMPONENTS */
 export {
+  AIModelButton,
+  ButtonSecondary,
+  ButtonGradient,
   EmptyStudies,
   Icon,
   InputDateRange,
@@ -11,12 +14,16 @@ export {
   InputText,
   LegacyButton,
   LegacyButtonGroup,
+  Logo,
   Select,
   StudyListExpandedRow,
   StudyListFilter,
+  Sidebar,
+  SidebarAdmin,
   StudyListPagination,
   StudyListTable,
   StudyListTableRow,
+  StoreFileButton,
   Table,
   TableBody,
   TableCell,

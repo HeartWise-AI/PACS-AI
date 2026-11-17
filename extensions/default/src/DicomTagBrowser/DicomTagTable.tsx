@@ -75,7 +75,8 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
   return (
     <div
       className={classNames(
-        'bg-secondary-dark ohif-scrollbar flex w-full flex-row overflow-y-scroll'
+        // NOTE: This is a PACS changes
+        'ohif-scrollbar flex w-full flex-row overflow-y-scroll rounded-t-md bg-white/30'
       )}
       style={rowVerticalPaddingStyle}
     >
@@ -283,7 +284,8 @@ function DicomTagTable({ rows }: { rows: Row[] }) {
         valueRef={valueRef}
       />
       <div
-        className="relative m-auto border-2 border-black bg-black"
+        // NOTE: This is a PACS changes
+        className="relative m-auto border-none bg-transparent"
         style={{ height: '32rem' }}
       >
         {isHeaderRendered() && (

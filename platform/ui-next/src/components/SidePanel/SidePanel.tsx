@@ -58,7 +58,9 @@ const closeIconWidth = 30;
 const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
 
-const baseClasses = 'bg-black border-black justify-start box-content flex flex-col';
+// NOTE: This is a PACS changes
+const baseClasses =
+  'bg-white bg-opacity-[5%] border border-white border-opacity-10 rounded-lg justify-start box-content flex flex-col';
 
 const openStateIconName = {
   left: 'SidePanelCloseLeft',
@@ -111,7 +113,8 @@ const getTabClassNames = (
   isActiveTab: boolean,
   isTabDisabled: boolean
 ) =>
-  classnames('h-[28px] mb-[2px] cursor-pointer text-white bg-black', {
+  // NOTE: This is a PACS changes
+  classnames('h-[28px] mb-[2px] cursor-pointer text-white bg-transparent', {
     'hover:text-primary': !isActiveTab && !isTabDisabled,
     'rounded-l': tabIndex % numColumns === 0,
     'rounded-r': (tabIndex + 1) % numColumns === 0 || tabIndex === numTabs - 1,
@@ -125,7 +128,8 @@ const getTabStyle = (numTabs: number) => {
 
 const getTabIconClassNames = (numTabs: number, isActiveTab: boolean) => {
   return classnames('h-full w-full flex items-center justify-center', {
-    'bg-customblue-40': isActiveTab,
+    // NOTE: This is a PACS changes
+    'bg-primary/20': isActiveTab,
     rounded: isActiveTab,
   });
 };
@@ -285,7 +289,8 @@ const SidePanel = ({
       <>
         <div
           className={classnames(
-            'bg-secondary-dark flex h-[28px] w-full cursor-pointer items-center rounded-md',
+            // NOTE: This is a PACS changes
+            'flex h-[28px] w-full cursor-pointer items-center rounded-md bg-transparent',
             side === 'left' ? 'justify-end pr-2' : 'justify-start pl-2'
           )}
           onClick={() => {
@@ -365,7 +370,8 @@ const SidePanel = ({
       <>
         {getCloseIcon()}
         <div className={classnames('flex grow justify-center')}>
-          <div className={classnames('bg-primary-dark text-primary flex flex-wrap')}>
+          {/* NOTE: This is a PACS changes */}
+          <div className={classnames('flex flex-wrap bg-transparent text-black')}>
             {tabs.map((tab, tabIndex) => {
               const { disabled } = tab;
               return (
@@ -373,7 +379,8 @@ const SidePanel = ({
                   {tabIndex % numCols !== 0 && (
                     <div
                       className={classnames(
-                        'flex h-[28px] w-[2px] items-center bg-black',
+                        // NOTE: This is a PACS changes
+                        'flex h-[28px] w-[2px] items-center bg-transparent',
                         tabSpacerWidth
                       )}
                     >
@@ -429,7 +436,8 @@ const SidePanel = ({
     return (
       <div
         className={classnames(
-          'text-primary flex grow cursor-pointer select-none justify-center self-center text-[13px]'
+          // NOTE: This is a PACS changes
+          'text-primary-active flex grow cursor-pointer select-none justify-center self-center text-[13px]'
         )}
         data-cy={`${tabs[0].name}-btn`}
         onClick={() => updatePanelOpen(!panelOpen)}
@@ -448,7 +456,7 @@ const SidePanel = ({
         </div>
         <Separator
           orientation="horizontal"
-          className="bg-black"
+          className="bg-white/10" // NOTE: This is a PACS changes
           thickness="2px"
         />
       </>

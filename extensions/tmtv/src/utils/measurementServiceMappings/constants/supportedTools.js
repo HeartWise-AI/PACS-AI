@@ -1,1 +1,1 @@
-export default ['RectangleROIStartEndThreshold','CircleROIStartEndThreshold'];
+export default ['RectangleROIStartEndThreshold', 'CircleROIStartEndThreshold'];

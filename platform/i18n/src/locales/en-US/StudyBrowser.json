@@ -1,5 +1,22 @@
 {
+  "All": "All",
+  "AI Models": "AI Models",
   "Primary": "Primary",
   "Recent": "Recent",
-  "All": "All"
+  "Refresh": "Refresh",
+  "Studies": "Studies",
+  "RefreshStudyFromPACS": "Refresh study from PACS",
+  "RefreshStudyStillGrowing": "The exam is still in progress; new images may be available",
+  "RefreshStudyRetrieving": "Retrieving…",
+  "RefreshStudyRetrievingProgress": "Retrieving… {{progress}}%",
+  "RefreshStudyReloading": "Loading series…",
+  "RefreshStudyNewSeriesOne": "1 new series",
+  "RefreshStudyNewSeries": "{{count}} new series",
+  "RefreshStudyNewImagesOne": "1 new image",
+  "RefreshStudyNewImages": "{{count}} new images",
+  "RefreshStudyUpToDate": "Up to date",
+  "RefreshStudyLocalOnly": "local copy only (PACS source unknown)",
+  "RefreshStudyRetrieveFailed": "Retrieval from the PACS failed",
+  "RefreshStudyRetrieveTimedOut": "Retrieval from the PACS is taking too long",
+  "RefreshStudyReloadFailed": "The series could not be reloaded"
 }

@@ -110,7 +110,8 @@ export default function TMTVPatterns() {
                       <div className="bg-muted mb-0.5 space-y-2 rounded-b px-px pt-0.5 pb-3">
                         <div className="mx-1 mb-2.5 mt-1 flex items-center justify-between space-x-4">
                           {/* Display Label with Selected Tab */}
-                          <div className="text-muted-foreground text-xs">Show: {selectedTab}</div>
+                          {/* NOTE: This is a PACS changes */}
+                          <div className="text-foreground/80 text-xs">Show: {selectedTab}</div>
                           {/* Tabs Controls */}
                           <Tabs
                             value={selectedTab}

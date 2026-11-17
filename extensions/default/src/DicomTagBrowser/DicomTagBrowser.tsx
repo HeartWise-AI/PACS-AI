@@ -124,13 +124,13 @@ const DicomTagBrowser = ({
   }, [rows, filterValue]);
 
   return (
-    <div className="dicom-tag-browser-content bg-muted">
+    // NOTE: This is a PACS changes
+    <div className="dicom-tag-browser-content bg-[#151815]">
       <div className="mb-6 flex flex-row items-start pl-1">
         <div className="flex w-full flex-row items-start gap-4">
           <div className="flex w-1/3 flex-col">
-            <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
-              Series
-            </span>
+            {/* NOTE: This is a PACS changes */}
+            <span className="flex h-6 items-center text-xs text-white/80">Series</span>
             <Select
               value={selectedDisplaySetInstanceUID}
               onValueChange={value => onSelectChange({ value })}
@@ -147,7 +147,8 @@ const DicomTagBrowser = ({
                       value={item.value}
                     >
                       {item.label}
-                      <span className="text-muted-foreground ml-1 text-xs">{item.description}</span>
+                      {/* NOTE: This is a PACS changes */}
+                      <span className="ml-1 text-xs text-white/70">{item.description}</span>
                     </SelectItem>
                   );
                 })}
@@ -172,11 +173,10 @@ const DicomTagBrowser = ({
             </div>
           )}
           <div className="ml-auto mr-1 flex w-1/3 flex-col">
-            <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
-              Search metadata
-            </span>
+            {/* NOTE: This is a PACS changes */}
+            <span className="flex h-6 items-center text-xs text-white/80">Search metadata</span>
             <InputFilter
-              className="text-muted-foreground"
+              className="text-white/80" // NOTE: This is a PACS changes
               onChange={setFilterValue}
             >
               <InputFilter.SearchIcon />

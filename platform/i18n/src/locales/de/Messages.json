@@ -1,0 +1,15 @@
+{
+  "1": "Keine gültigen Instanzen in der Serie gefunden.",
+  "2": "Anzeigesatz hat fehlende Positionsinformationen.",
+  "3": "Anzeigesatz ist kein rekonstruierbares 3D-Volumen.",
+  "4": "Mehrere Bilderrahmensätze haben keine Pixelmessungsinformationen.",
+  "5": "Mehrere Bilderrahmensätze haben keine Orientierungsinformationen.",
+  "6": "Mehrere Bilderrahmensätze haben keine Positionsinformationen.",
+  "7": "Anzeigesatz hat fehlende Frames.",
+  "8": "Anzeigesatz hat unregelmäßige Abstände.",
+  "9": "Anzeigesatz hat inkonsistente Abmessungen zwischen Frames.",
+  "10": "Anzeigesatz hat Frames mit inkonsistenter Anzahl von Komponenten.",
+  "11": "Anzeigesatz hat Frames mit inkonsistenter Orientierung.",
+  "12": "Anzeigesatz hat inkonsistente Positionsinformationen.",
+  "13": "Nicht unterstützter Anzeigesatz."
+}

@@ -165,7 +165,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                 )}
               </div>
               {hiddenLines.length > 0 && (
-                <div className="text-muted-foreground mt-1 flex items-center text-sm">
+                // NOTE: This is a PACS changes
+                <div className="mt-1 flex items-center text-sm text-white/70">
                   <span>...</span>
                   <Icons.Info className="mr-1 h-5 w-5" />
                 </div>
@@ -194,19 +195,22 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
       >
         <div
           className={`flex items-center ${
-            isSelected ? 'bg-popover' : 'bg-muted'
+            // NOTE: This is a PACS changes
+            isSelected ? 'bg-primary/50' : 'bg-white/10'
           } group relative cursor-pointer`}
           onClick={onSelect}
           data-cy="data-row"
         >
+          {/* NOTE: This is a PACS changes */}
           {/* Hover Overlay */}
-          <div className="bg-primary/20 pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100"></div>
+          <div className="pointer-events-none absolute inset-0 bg-white/10 opacity-0 transition-opacity group-hover:opacity-100"></div>
 
           {/* Number Box */}
           {number !== null && (
             <div
               className={`flex h-7 max-h-7 w-7 flex-shrink-0 items-center justify-center rounded-l border-r border-black text-base ${
-                isSelected ? 'bg-highlight text-black' : 'bg-muted text-muted-foreground'
+                // NOTE: This is a PACS changes
+                isSelected ? 'bg-primary text-black' : 'bg-white/10 text-white'
               } overflow-hidden`}
             >
               {number}
@@ -231,7 +235,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                 <TooltipTrigger asChild>
                   <span
                     className={`cursor-default text-base ${
-                      isSelected ? 'text-highlight' : 'text-muted-foreground'
+                      // NOTE: This is a PACS changes
+                      isSelected ? 'text-primary' : 'text-white/70'
                     } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
                   >
                     {title}
@@ -247,7 +252,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
             ) : (
               <span
                 className={`text-base ${
-                  isSelected ? 'text-highlight' : 'text-muted-foreground'
+                  // NOTE: This is a PACS changes
+                  isSelected ? 'text-primary' : 'text-white/70'
                 } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
               >
                 {title}
@@ -305,7 +311,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                 >
                   <>
                     <DropdownMenuItem onClick={e => handleAction('Rename', e)}>
-                      <Icons.Rename className="text-foreground" />
+                      {/* NOTE: This is a PACS changes */}
+                      <Icons.Rename className="text-white" />
                       <span
                         className="pl-2"
                         data-cy="Rename"
@@ -314,7 +321,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={e => handleAction('Delete', e)}>
-                      <Icons.Delete className="text-foreground" />
+                      {/* NOTE: This is a PACS changes */}
+                      <Icons.Delete className="text-white" />
                       <span
                         className="pl-2"
                         data-cy="Delete"
@@ -324,7 +332,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                     </DropdownMenuItem>
                     {onColor && (
                       <DropdownMenuItem onClick={e => handleAction('Color', e)}>
-                        <Icons.ColorChange className="text-foreground" />
+                        {/* NOTE: This is a PACS changes */}
+                        <Icons.ColorChange className="text-white" />
                         <span
                           className="pl-2"
                           data-cy="Change Color"
@@ -334,7 +343,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem onClick={e => handleAction('Lock', e)}>
-                      <Icons.Lock className="text-foreground" />
+                      {/* NOTE: This is a PACS changes */}
+                      <Icons.Lock className="text-white" />
                       <span
                         className="pl-2"
                         data-cy="LockToggle"
@@ -355,7 +365,8 @@ const DataRow = React.forwardRef<HTMLDivElement, DataRowProps>(
             <div className="text-secondary-foreground flex items-center gap-1 text-base leading-normal">
               {details.primary?.length > 0 && renderDetails(details.primary)}
               {details.secondary?.length > 0 && (
-                <div className="text-muted-foreground ml-auto text-sm">
+                // NOTE: This is a PACS changes
+                <div className="ml-auto text-sm text-white/70">
                   {renderDetails(details.secondary)}
                 </div>
               )}

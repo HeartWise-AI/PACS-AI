@@ -1,0 +1,10 @@
+{
+  "ApplyingTitle": "Applying LVEF detection…",
+  "ResultTitle": "Results of LVEF detection",
+  "Subtext": "AI detection is currently running in the background. Do not close this page.",
+  "VesselType": "Vessel Type",
+  "Results": "Results",
+  "AgeDistributions": "Age distribution in the study",
+  "Cancel": "Cancel",
+  "Close": "Close"
+}

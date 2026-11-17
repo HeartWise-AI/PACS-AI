@@ -5,12 +5,25 @@ import { ErrorBoundary } from '@ohif/ui-next';
 // Route Components
 import DataSourceWrapper from './DataSourceWrapper';
 import WorkList from './WorkList';
+import Login from './Login';
+import Register from './Register';
+import PolicyAcceptance from './PolicyAcceptance';
+import UserConsent from './User/Consent';
+import ChangePassword from './ChangePassword';
+import ResetPassword from './ResetPassword';
 import Local from './Local';
 import Debug from './Debug';
 import NotFound from './NotFound';
 import buildModeRoutes from './buildModeRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
+import Members from './Members';
+import KibanaLogs from './KibanaLogs';
+import AIModels from './AIModels';
+import AiPredictions from './AiPredictions';
+import Settings from './Settings';
+import TenantNotFound from './TenantNotFound';
+import WorkspaceSettings from './WorkspaceSettings';
 import { routerBasename } from '../utils/publicUrl';
 import { useAppConfig } from '@state';
 import { history } from '../utils/history';
@@ -39,11 +52,25 @@ const NotFoundStudy = () => {
     <div className="absolute flex h-full w-full items-center justify-center text-white">
       <div>
         <h4>
-          One or more of the requested studies are not available at this time.
+          One or more of the requested studies are not available at this time. Return to the{' '}
+          <Link
+            className="text-primary-light"
+            to={`/`}
+          >
+            study list
+          </Link>{' '}
+          to select a different study to view.
         </h4>
         {showStudyList && (
           <p className="mt-2">
-            Return to the <Link className="text-primary-light" to="/">study list</Link> to select a different study to view.
+            Return to the{' '}
+            <Link
+              className="text-primary-light"
+              to="/"
+            >
+              study list
+            </Link>{' '}
+            to select a different study to view.
           </p>
         )}
       </div>
@@ -68,6 +95,10 @@ const bakedInRoutes = [
   {
     path: `/debug`,
     children: Debug,
+  },
+  {
+    path: '/tenantnotfound',
+    children: TenantNotFound,
   },
   {
     path: `/local`,
@@ -111,10 +142,94 @@ const createRoutes = ({
   console.log('Registering worklist route', routerBasename, path);
 
   const WorkListRoute = {
-    path: '/',
+    path: `/`,
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkList, servicesManager, extensionManager },
+  };
+
+  const LoginRoute = {
+    path: `/login`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Login, servicesManager, extensionManager },
+  };
+
+  const RegisterRoute = {
+    path: `/register`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Register, servicesManager, extensionManager },
+  };
+
+  const PolicyAcceptanceRoute = {
+    path: `/policies/accept`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: PolicyAcceptance, servicesManager, extensionManager },
+  };
+
+  const UserConsentRoute = {
+    path: `/user/consent`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: UserConsent, servicesManager, extensionManager },
+  };
+
+  const ChangePasswordRoute = {
+    path: `/change-password`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: ChangePassword, servicesManager, extensionManager },
+  };
+
+  const ResetPasswordRoute = {
+    path: `/reset-password`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: ResetPassword, servicesManager, extensionManager },
+  };
+
+  const AIModelsRoute = {
+    path: `/ai-models`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: AIModels, servicesManager, extensionManager },
+  };
+
+  const AiPredictionsRoute = {
+    path: `/ai-predictions`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: AiPredictions, servicesManager, extensionManager },
+  };
+
+  const MembersRoute = {
+    path: `/admin/members`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Members, servicesManager, extensionManager },
+  };
+
+  const WorkspaceSettingsRoute = {
+    path: `/admin/workspace-settings`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: WorkspaceSettings, servicesManager, extensionManager },
+  };
+
+  const KibanaLogsRoute = {
+    path: `/admin/kibana-logs`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: KibanaLogs, servicesManager, extensionManager },
+  };
+
+  const SettingsRoute = {
+    path: `/settings`,
+    children: DataSourceWrapper,
+    private: true,
+    props: { children: Settings, servicesManager, extensionManager },
   };
 
   const customRoutes = customizationService.getCustomization('routes.customRoutes');
@@ -122,6 +237,18 @@ const createRoutes = ({
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
+    ...(showStudyList ? [UserConsentRoute] : []),
+    ...(showStudyList ? [LoginRoute] : []),
+    ...(showStudyList ? [RegisterRoute] : []),
+    ...(showStudyList ? [PolicyAcceptanceRoute] : []),
+    ...(showStudyList ? [ChangePasswordRoute] : []),
+    ...(showStudyList ? [ResetPasswordRoute] : []),
+    ...(showStudyList ? [AIModelsRoute] : []),
+    ...(showStudyList ? [AiPredictionsRoute] : []),
+    ...(showStudyList ? [MembersRoute] : []),
+    ...(showStudyList ? [KibanaLogsRoute] : []),
+    ...(showStudyList ? [SettingsRoute] : []),
+    ...(showStudyList ? [WorkspaceSettingsRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
@@ -138,6 +265,7 @@ const createRoutes = ({
       <ErrorBoundary
         context={`Route ${route.path}`}
         showErrorDetails={showErrorDetails}
+        showNotification={false} // NOTE: This is a PACS changes (hide the red toast notification)
       >
         <route.children
           {...rest}

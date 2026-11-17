@@ -11,9 +11,7 @@ window.config = {
   showStudyList: true,
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
-  // below flag is for performance reasons, but it might not work for all servers
   omitQuotationForMultipartRequest: true,
-  showWarningMessageForCrossOrigin: false,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   useNorm16Texture: true,
@@ -24,7 +22,6 @@ window.config = {
     // above, the number of requests can be go a lot higher.
     prefetch: 25,
   },
-  // filterQueryParam: false,
   dataSources: [
     {
       friendlyName: 'dcmjs DICOMWeb Server',

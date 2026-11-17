@@ -1,0 +1,657 @@
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
+import closeIcon from './../../assets/pacs/icons/close-inactive.png';
+import uncheckIcon from './../../assets/pacs/icons/check-inactive.png';
+import checkIcon from './../../assets/pacs/icons/check-active.png';
+import informationIcon from './../../assets/pacs/icons/information-circle.png';
+import copyWhiteIcon from './../../assets/pacs/icons/copy-white.png';
+import { Input } from '@ohif/ui-next';
+import { useGlobalStateData } from '../../GlobalStateProvider';
+import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
+import { AlertContext } from '../../AlertProvider';
+import { InferenceAvailableAdditionalMetadata } from '../../api/inferenceDTO';
+import { isInferenceSeriesEligible } from './isInferenceSeriesEligible';
+
+// Add interface for initialSeriesSelection
+interface InitialSeriesSelection {
+  selectedSeries: string[];
+  studyInstanceUID: string;
+}
+
+interface SelectSeriesModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  applyPredictInferenceModel: (
+    containerId: string,
+    seriesInstanceUIDs: string[],
+    studyInstanceUID: string,
+    additionalMetadata: { [key: string]: string | null },
+    outputMode: string
+  ) => void;
+  loading: boolean;
+  title: string;
+  selectedInferenceModel: GetInferenceAvailableModelsResponse;
+  initialSeriesSelection?: InitialSeriesSelection;
+  // Shown instead of the default text while loading.
+  loadingMessage?: string;
+  // When set, the loading state offers a button that calls it.
+  onDismissLoading?: () => void;
+  dismissLoadingLabel?: string;
+}
+
+const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
+  isOpen = false,
+  onClose = () => {},
+  applyPredictInferenceModel,
+  loading = false,
+  title = '',
+  selectedInferenceModel,
+  initialSeriesSelection,
+  loadingMessage,
+  onDismissLoading,
+  dismissLoadingLabel,
+}) => {
+  const [mounted, setMounted] = useState(false);
+  const [stepper, setStepper] = useState(1);
+  const [selectedSeries, setSelectedSeries] = useState<string[]>(initialSeriesSelection?.selectedSeries || []);
+  const [studyInstanceUID, setStudyInstanceUID] = useState<string>(initialSeriesSelection?.studyInstanceUID || '');
+  const [firstSeriesCount, setFirstSeriesCount] = useState('');
+  const { selectedModalities } = useGlobalStateData();
+  const alertContext = useContext(AlertContext);
+  const [additionalDetails, setAdditionalDetails] = useState<{ [key: string]: string | null }>({});
+
+  // Safe alert function that handles both function and object contexts
+  const showAlert = useCallback(
+    (message: string, type: 'error' | 'success' | 'info' | 'warning' = 'info') => {
+      if (typeof alertContext === 'function') {
+        alertContext(message, type);
+      } else if (alertContext && typeof (alertContext as any).show === 'function') {
+        (alertContext as any).show(message, type);
+      } else {
+        // Fallback to console if alert context is not available
+        console.warn('Alert context not available:', message);
+      }
+    },
+    [alertContext]
+  );
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Initialize with the initial selection, if provided
+  useEffect(() => {
+    if (initialSeriesSelection) {
+      setSelectedSeries(initialSeriesSelection.selectedSeries || []);
+      setStudyInstanceUID(initialSeriesSelection.studyInstanceUID || '');
+    }
+  }, [initialSeriesSelection]);
+
+  useEffect(() => {
+    // set default values when component mounts
+    if (selectedInferenceModel?.supportedAdditionalMetadata) {
+      const defaultValues = selectedInferenceModel.supportedAdditionalMetadata.reduce(
+        (acc, metadata) => {
+          // set default values for boolean fields
+          if (metadata.type === 'boolean') {
+            acc[metadata.id] = 'true';
+          } else if (metadata.type === 'string' || metadata.type === 'number') {
+            // set default values for string and number fields
+            acc[metadata.id] = null;
+          }
+          return acc;
+        },
+        {} as { [key: string]: string | null }
+      );
+
+      setAdditionalDetails(prev => ({
+        ...prev,
+        ...defaultValues,
+      }));
+    }
+  }, [selectedInferenceModel?.supportedAdditionalMetadata]);
+
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+    }
+  }, [onClose]);
+
+  // Helper: whether a modality string is supported by the model (two-way substring)
+  const isSupportedModality = (modality?: string) => {
+    if (
+      !selectedInferenceModel?.supportedDicomModalities ||
+      selectedInferenceModel.supportedDicomModalities.length === 0
+    ) {
+      return true;
+    }
+    return selectedInferenceModel.supportedDicomModalities.some(
+      s => modality && (modality.includes(s) || s.includes(modality))
+    );
+  };
+
+  // Keep bulk selection and the rendered list in the same order, with one row
+  // per series even when a series has multiple display sets.
+  const seenSeries = new Set<string>();
+  const availableDisplaySets = Object.values(selectedModalities)
+    .filter(value => isSupportedModality(value?.modality))
+    .flatMap(value => value.displaySets || [])
+    .filter(displaySet => {
+      const uid = displaySet.SeriesInstanceUID;
+      if (!uid || !isInferenceSeriesEligible(displaySet) || !isSupportedModality(displaySet.modality) || seenSeries.has(uid)) {
+        return false;
+      }
+      seenSeries.add(uid);
+      return true;
+    });
+  const exams = Array.from(new Map(availableDisplaySets.map(displaySet => [
+    displaySet.StudyInstanceUID, displaySet,
+  ])).values());
+  const activeStudyUID = exams.some(exam => exam.StudyInstanceUID === studyInstanceUID)
+    ? studyInstanceUID : exams[0]?.StudyInstanceUID || '';
+  const selectableDisplaySets = availableDisplaySets.filter(
+    displaySet => displaySet.StudyInstanceUID === activeStudyUID
+  );
+  const seriesKey = selectableDisplaySets.map(displaySet => displaySet.SeriesInstanceUID).join('|');
+  useEffect(() => {
+    setSelectedSeries(previous => previous.filter(uid => selectableDisplaySets.some(
+      displaySet => displaySet.SeriesInstanceUID === uid
+    )));
+    setStepper(1);
+  }, [activeStudyUID, seriesKey]);
+
+  const selectableSeries = selectableDisplaySets.map(displaySet => displaySet.SeriesInstanceUID);
+  const modelMaximum = selectedInferenceModel?.dicomUploadMax;
+  const hasModelMaximum = Number.isInteger(modelMaximum) && modelMaximum >= 0;
+  const selectionLimit = hasModelMaximum
+    ? Math.min(selectableSeries.length, modelMaximum)
+    : selectableSeries.length;
+  const maximumSelection = selectableSeries.slice(0, selectionLimit);
+  const maximumSelected =
+    maximumSelection.length > 0 &&
+    selectedSeries.length === maximumSelection.length &&
+    maximumSelection.every(uid => selectedSeries.includes(uid));
+  const requestedCount = Number(firstSeriesCount);
+  const validFirstCount = Number.isInteger(requestedCount) && requestedCount > 0;
+
+  useEffect(() => {
+    setFirstSeriesCount(String(selectionLimit));
+  }, [isOpen, selectedInferenceModel?.containerId, selectionLimit]);
+
+  const selectFirstSeries = (count: number) => {
+    const selection = selectableSeries.slice(0, Math.min(count, selectionLimit));
+    setSelectedSeries(selection);
+    setStudyInstanceUID(activeStudyUID);
+  };
+
+  const toggleSeriesSelection = (seriesInstanceUID: string, studyUID: string) => {
+    if (!selectedSeries.includes(seriesInstanceUID) && selectedSeries.length >= selectionLimit) {
+      showAlert(`Please select no more than ${selectionLimit} series`, 'error');
+      return;
+    }
+    setStudyInstanceUID(studyUID);
+    setSelectedSeries(prev =>
+      prev.includes(seriesInstanceUID)
+        ? prev.filter(uid => uid !== seriesInstanceUID)
+        : [...prev, seriesInstanceUID]
+    );
+  };
+
+  // handle additional details change
+  const handleAdditionalDetailsChange = (
+    metadata: InferenceAvailableAdditionalMetadata,
+    value: string
+  ) => {
+    setAdditionalDetails(prev => {
+      const newDetails = { ...prev };
+
+      if (value.trim() === '' && !metadata.required) {
+        // set to null if value is empty and field is not required
+        newDetails[metadata.id] = null;
+      } else {
+        // add/update the value if it's either required or non-empty
+        newDetails[metadata.id] = value;
+      }
+
+      return newDetails;
+    });
+  };
+
+  if (!isOpen || !mounted) {
+    return null;
+  }
+
+  // step 1 handler
+  function stepOneHandler() {
+    if (!activeStudyUID || !selectedSeries.length || selectedSeries.some(uid =>
+      !selectableDisplaySets.some(displaySet => displaySet.SeriesInstanceUID === uid)
+    )) {
+      showAlert('Please select series from the chosen exam', 'error');
+      return;
+    }
+    if (selectedSeries.length < selectedInferenceModel?.dicomUploadMin) {
+      showAlert(
+        'Please select at least ' + selectedInferenceModel?.dicomUploadMin + ' series to continue',
+        'error'
+      );
+      return;
+    }
+
+    if (selectedSeries.length > selectedInferenceModel?.dicomUploadMax) {
+      showAlert(
+        'Please select no more than ' +
+          selectedInferenceModel?.dicomUploadMax +
+          ' series to continue',
+        'error'
+      );
+      return;
+    }
+
+    if (!selectedInferenceModel?.supportedAdditionalMetadata?.length) {
+      applyPredictInferenceModel(
+        selectedInferenceModel.containerId,
+        selectedSeries,
+        activeStudyUID,
+        additionalDetails,
+        selectedInferenceModel.outputMode
+      );
+      return;
+    }
+
+    setStepper(2);
+  }
+
+  // validate required fields
+  const validateRequiredFields = () => {
+    const missingRequired = selectedInferenceModel?.supportedAdditionalMetadata
+      ?.filter(metadata => metadata.required)
+      .filter(
+        metadata =>
+          !additionalDetails[metadata.id] ||
+          additionalDetails[metadata.id] === null ||
+          additionalDetails[metadata.id].trim() === ''
+      );
+
+    if (missingRequired && missingRequired.length > 0) {
+      const missingFields = missingRequired.map(field => field.id).join(', ');
+      showAlert(`Please fill in required fields: ${missingFields}`, 'error');
+      return false;
+    }
+    return true;
+  };
+
+  const modalContent = (
+    <div
+      id="modal"
+      className="fixed inset-0 z-[99999] overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="flex h-auto items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
+          aria-hidden="true"
+        ></div>
+        <span
+          className="hidden sm:inline-block sm:h-screen sm:align-middle"
+          aria-hidden="true"
+        >
+          &#8203;
+        </span>
+
+        <div
+          className={`relative inline-block w-[640px] max-w-[640px] transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle`}
+        >
+          {/* content */}
+          <div className="h-auto w-full">
+            {/* title */}
+            <h1 className="mb-4 text-[18px] font-bold text-white">{title}</h1>
+            {/* stepper */}
+            {!loading && selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div
+                  className={`h-[5px] w-full rounded-full ${
+                    stepper >= 1 ? 'bg-[#C8F469]' : 'bg-[#1F221F]'
+                  }`}
+                ></div>
+                <div
+                  className={`h-[5px] w-full rounded-full ${
+                    stepper >= 2 ? 'bg-[#C8F469]' : 'bg-[#1F221F]'
+                  }`}
+                ></div>
+              </div>
+            )}
+            {loading ? (
+              <div className="flex h-[270px] items-center justify-center">
+                <div>
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                  <h1
+                    className="max-w-[270px] text-center text-[14px] text-white"
+                    role="status"
+                  >
+                    {loadingMessage || 'Applying inference and generating results...'}
+                  </h1>
+                  {onDismissLoading && (
+                    <button
+                      type="button"
+                      className="mx-auto mt-4 block rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-[14px] text-white"
+                      onClick={onDismissLoading}
+                    >
+                      {dismissLoadingLabel || 'Close'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  {stepper === 1 && (
+                    <div>
+                      <label htmlFor="ai-exam-selection" className="block text-white">Exam</label>
+                      <select
+                        id="ai-exam-selection"
+                        className="mt-2 w-full rounded bg-[#1F221F] p-2 text-white"
+                        value={activeStudyUID}
+                        onChange={event => {
+                          setStudyInstanceUID(event.target.value);
+                          setSelectedSeries([]);
+                          setStepper(1);
+                        }}
+                      >
+                        {exams.map((exam, index) => (
+                          <option key={exam.StudyInstanceUID} value={exam.StudyInstanceUID}>
+                            {`Exam ${index + 1}${exam.studyDate ? ` · ${exam.studyDate}` : ''}${exam.studyDescription ? ` · ${exam.studyDescription}` : ''}`}
+                          </option>
+                        ))}
+                      </select>
+                      {/* header */}
+                      <div className="align-center mt-4 flex flex-row justify-between text-[14px]">
+                        <h1 className="text-white">Select Series</h1>
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-white disabled:opacity-50"
+                          disabled={selectionLimit === 0}
+                          onClick={() => {
+                            if (maximumSelected) {
+                              setSelectedSeries([]);
+                            } else {
+                              selectFirstSeries(selectionLimit);
+                            }
+                          }}
+                        >
+                          <span>
+                            {selectionLimit < selectableSeries.length
+                              ? 'Select maximum'
+                              : 'Select all'}
+                          </span>
+                          <img
+                            src={maximumSelected ? checkIcon : uncheckIcon}
+                            alt={maximumSelected ? 'check' : 'uncheck'}
+                            className="h-[18px] w-[18px]"
+                          />
+                        </button>
+                      </div>
+                      <p
+                        className="mt-2 text-[14px] text-white"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {selectedSeries.length} selected · Maximum:{' '}
+                        {hasModelMaximum ? modelMaximum : 'No limit'}
+                        {' · '}
+                        {selectableSeries.length} available
+                      </p>
+                      <div className="mt-3 flex items-center gap-2 text-[14px] text-white">
+                        <label htmlFor="first-series-count">Select first</label>
+                        <input
+                          id="first-series-count"
+                          type="number"
+                          min={1}
+                          max={selectionLimit}
+                          step={1}
+                          value={firstSeriesCount}
+                          disabled={selectionLimit === 0}
+                          onChange={event => setFirstSeriesCount(event.target.value)}
+                          className="w-20 rounded-lg bg-[#323631] px-3 py-2 text-white"
+                        />
+                        <span>series</span>
+                        <button
+                          type="button"
+                          disabled={!validFirstCount || selectionLimit === 0}
+                          onClick={() => selectFirstSeries(requestedCount)}
+                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-3 py-2 disabled:opacity-50"
+                        >
+                          Select
+                        </button>
+                      </div>
+                      <p className="mt-1 text-[12px] text-white opacity-70">
+                        Uses the order shown below, up to the model maximum.
+                      </p>
+
+                      {/* list of series */}
+                      <div className="ml-0 mt-4 max-h-[450px] space-y-3 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#ffffff] [&::-webkit-scrollbar-thumb]:bg-opacity-30 [&::-webkit-scrollbar-track]:bg-transparent">
+                        {selectableDisplaySets.length === 0 ? (
+                          <div className="flex h-[200px] items-center justify-center">
+                            <p className="text-white opacity-70">No data found</p>
+                          </div>
+                        ) : (
+                          selectableDisplaySets.map(displaySet => (
+                            <div
+                              key={displaySet.SeriesInstanceUID}
+                              className="flex cursor-pointer items-center justify-between rounded-xl bg-[#7A7A7A] bg-opacity-10 p-3"
+                              onClick={() => {
+                                toggleSeriesSelection(
+                                  displaySet.SeriesInstanceUID,
+                                  displaySet.StudyInstanceUID
+                                );
+                              }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-[58px] w-[73px] rounded-lg border border-[#C8F469] bg-[#151815] bg-opacity-20">
+                                  {displaySet.imageSrc ? (
+                                    <img
+                                      src={displaySet.imageSrc}
+                                      alt="series"
+                                      className="h-full w-full rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <p className="mt-3 text-center text-xs text-white opacity-70">
+                                      No image available
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-[14px]">
+                                  <h1 className="inline text-[#C8F469]">Series: </h1>
+                                  <h2 className="mr-2 inline text-white">
+                                    {displaySet.seriesNumber}
+                                  </h2>
+                                  <img
+                                    src={copyWhiteIcon}
+                                    alt="copy"
+                                    className="ml-1 inline h-[16px] w-[16px]"
+                                  />
+                                  <h3 className="inline text-white"> {displaySet.numInstances}</h3>
+                                  <h4 className="block text-white opacity-70">
+                                    {displaySet.description}
+                                  </h4>
+                                  <h4 className="mt-1 block text-[12px] text-white opacity-70">
+                                    {displaySet.SeriesInstanceUID}
+                                  </h4>
+                                </div>
+                              </div>
+                              <div>
+                                <img
+                                  src={
+                                    selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                      ? checkIcon
+                                      : uncheckIcon
+                                  }
+                                  alt={
+                                    selectedSeries.includes(displaySet.SeriesInstanceUID)
+                                      ? 'check'
+                                      : 'uncheck'
+                                  }
+                                  className="h-[18px] min-w-[18px]"
+                                />
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {/* actions */}
+                      <div className="mt-4 flex flex-row justify-end gap-3">
+                        <button
+                          disabled={loading}
+                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
+                          onClick={handleClose}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className={`min-w-[100px] rounded-lg px-4 py-2 ${
+                            selectedSeries.length > 0
+                              ? 'bg-[#C8F469] text-black'
+                              : 'cursor-not-allowed bg-[#C8F469] bg-opacity-50 text-black'
+                          }`}
+                          onClick={() => {
+                            if (selectedSeries.length > 0) {
+                              stepOneHandler();
+                            }
+                          }}
+                          disabled={selectedSeries.length === 0 || loading}
+                        >
+                          {loading && !selectedInferenceModel?.supportedAdditionalMetadata?.length
+                            ? '...'
+                            : selectedInferenceModel?.supportedAdditionalMetadata?.length
+                              ? 'Continue'
+                              : 'Apply'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {stepper === 2 && (
+                    <div>
+                      <h1 className="mt-4 block text-white">Additional Details (optional)</h1>
+                      {selectedInferenceModel?.supportedAdditionalMetadata?.length > 0 ? (
+                        <>
+                          {selectedInferenceModel.supportedAdditionalMetadata.map(metadata => (
+                            <div
+                              key={metadata.id}
+                              className="mt-4 grid grid-cols-2 gap-2"
+                            >
+                              <div className="flex h-[43px] w-full items-center rounded-lg bg-[#323631] bg-opacity-10 px-4 text-[14px] text-white">
+                                {metadata.name}{' '}
+                                {metadata.required && <span className="ml-1 text-red-500">*</span>}
+                              </div>
+                              {metadata.type === 'boolean' ? (
+                                <select
+                                  className="h-[43px] w-full rounded-lg bg-[#323631] px-4 text-white"
+                                  required={metadata.required}
+                                  id={metadata.id}
+                                  value={additionalDetails[metadata.id] || 'true'}
+                                  onChange={e =>
+                                    handleAdditionalDetailsChange(metadata, e.target.value)
+                                  }
+                                >
+                                  <option value="true">True</option>
+                                  <option value="false">False</option>
+                                </select>
+                              ) : (
+                                <Input
+                                  className="h-[43px] w-full"
+                                  type={metadata.type}
+                                  required={metadata.required}
+                                  id={metadata.id}
+                                  value={additionalDetails[metadata.id] || ''}
+                                  onChange={e =>
+                                    handleAdditionalDetailsChange(metadata, e.target.value)
+                                  }
+                                  label=""
+                                  onFocus={() => {}}
+                                  onKeyDown={() => {}}
+                                  autoFocus={false}
+                                  onKeyPress={() => {}}
+                                  disabled={false}
+                                  readOnly={false}
+                                  labelChildren={null}
+                                />
+                              )}
+                            </div>
+                          ))}
+                          <div className="mt-3 flex items-center gap-2">
+                            <img
+                              src={informationIcon}
+                              alt="information"
+                              className="h-[15px] w-[15px]"
+                            />
+                            <h1 className="text-[12px] text-white opacity-50">
+                              Additional details required fields should be answered.
+                            </h1>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="my-7 text-center text-white opacity-50">
+                          No additional details found
+                        </div>
+                      )}
+                      {/* actions */}
+                      <div className="mt-5 flex flex-row justify-end gap-3">
+                        <button
+                          disabled={loading}
+                          className="rounded-lg bg-[#ffffff] bg-opacity-10 px-4 py-2 text-white"
+                          onClick={() => {
+                            setStepper(1);
+                          }}
+                        >
+                          Back
+                        </button>
+                        <button
+                          disabled={loading}
+                          className="min-w-[100px] rounded-lg bg-[#C8F469] px-4 py-2 text-black disabled:opacity-50"
+                          onClick={() => {
+                            if (validateRequiredFields()) {
+                              applyPredictInferenceModel(
+                                selectedInferenceModel.containerId,
+                                selectedSeries,
+                                activeStudyUID,
+                                additionalDetails,
+                                selectedInferenceModel.outputMode
+                              );
+                            }
+                          }}
+                        >
+                          {loading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
+};
+
+SelectSeriesModal.propTypes = {
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func,
+  applyPredictInferenceModel: PropTypes.func,
+  loading: PropTypes.bool,
+  title: PropTypes.string,
+  selectedInferenceModel:
+    PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
+  initialSeriesSelection: PropTypes.shape({
+    selectedSeries: PropTypes.arrayOf(PropTypes.string),
+    studyInstanceUID: PropTypes.string,
+  }) as PropTypes.Validator<InitialSeriesSelection>,
+};
+
+export default SelectSeriesModal;

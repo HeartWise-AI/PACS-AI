@@ -20,7 +20,8 @@ export function VolumeRenderingOptions({ viewportId }: { viewportId?: string } =
         <div className="text-muted-foreground text-sm">Lighting</div>
       </div>
       <div className="bg-background mt-1 mb-1 h-px w-full"></div>
-      <div className="hover:bg-accent flex h-8 w-full flex-shrink-0 items-center px-2 text-base hover:rounded">
+      {/* NOTE: This is a PACS changes */}
+      <div className="flex h-8 w-full flex-shrink-0 items-center px-2 text-base hover:rounded hover:bg-[#151815]">
         <VolumeShade
           viewportId={viewportId}
           onClickShade={setShade}

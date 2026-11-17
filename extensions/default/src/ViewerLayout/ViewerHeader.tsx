@@ -1,21 +1,40 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import { AIModelButton } from '@ohif/ui';
+import { AvailableModelsContext } from '../ViewerLayout/index';
 import { Button, Header, Icons, useModal } from '@ohif/ui-next';
 import { useSystem } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
 import { preserveQueryParameters } from '@ohif/app';
+import ChatButton from '@ohif/ui/src/components/ChatButton/ChatButton';
+import usePatientInfo from '../../../../extensions/default/src/hooks/usePatientInfo';
+import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 import { Types } from '@ohif/core';
 
 function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }>) {
   const { servicesManager, extensionManager, commandsManager } = useSystem();
   const { customizationService } = servicesManager.services;
+  const { patientInfo } = usePatientInfo(servicesManager);
+  const { setPatientInfo } = useGlobalStateData();
+
+  useEffect(() => {
+    // check if patientInfo is not empty (has PatientName and PatientID)
+    if (patientInfo && patientInfo.PatientName && patientInfo.PatientID) {
+      setPatientInfo({
+        PatientName: patientInfo.PatientName,
+        PatientID: patientInfo.PatientID,
+      });
+    }
+  }, [patientInfo, setPatientInfo]);
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { inferenceAvailableModels, fetchingAvailableModels } =
+    useContext(AvailableModelsContext) || {};
 
   const onClickReturnButton = () => {
     const { pathname } = location;
@@ -119,8 +138,19 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
         </div>
       }
     >
-      <div className="relative flex justify-center gap-[4px]">
-        <Toolbar buttonSection="primary" />
+      <div className="flex items-center">
+        <Toolbar servicesManager={servicesManager} />
+        {/* NOTE: Added AIModelButton component */}
+        <AIModelButton
+          isShowBG={true}
+          servicesManager={servicesManager}
+          inferenceAvailableModels={inferenceAvailableModels}
+          loading={fetchingAvailableModels}
+        />
+        {/* Chat button */}
+        <div className="ml-2">
+          <ChatButton servicesManager={servicesManager} />
+        </div>
       </div>
     </Header>
   );
