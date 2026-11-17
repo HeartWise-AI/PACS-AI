@@ -1,0 +1,3 @@
+# Extra CA certificates for the image build. Never commit certificates.
+/ca-certificates/*
+!/ca-certificates/README.md

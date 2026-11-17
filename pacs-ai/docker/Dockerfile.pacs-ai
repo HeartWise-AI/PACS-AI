@@ -1,26 +1,22 @@
 # syntax=docker/dockerfile:1.7-labs
-# This dockerfile is used to publish the `ohif/app` image on dockerhub.
+# PACS-AI viewer image: the OHIF app built with pacs-ai/config/pacs-ai.js and
+# served by nginx with our templates (pacs-ai/docker/nginx/).
 #
-# It's a good example of how to build our static application and package it
-# with a web server capable of hosting it as static content.
+# Build from the repository root (the context must be the root; BuildKit then
+# uses pacs-ai/docker/Dockerfile.pacs-ai.dockerignore):
 #
-# docker build
-# --------------
-# If you would like to use this dockerfile to build and tag an image, make sure
-# you set the context to the project's root directory:
-# https://docs.docker.com/engine/reference/commandline/build/
+#   docker build -f pacs-ai/docker/Dockerfile.pacs-ai \
+#     --build-arg APP_BUILD_ID=<id> \
+#     --build-arg APP_PUBLIC_TURNSTILE_SITE_KEY=<public site key> \
+#     -t <image> .
 #
+# Inputs that are not in git:
+#   platform/app/.env                 read by the build (env-config.js, Dotenv)
+#   pacs-ai/docker/ca-certificates/   optional extra CA certificates (*.crt)
+#                                     trusted while installing and building
 #
-# SUMMARY
-# --------------
-# This dockerfile has two stages:
-#
-# 1. Building the React application for production
-# 2. Setting up our Nginx (Alpine Linux) image w/ step one's output
-#
-# Stage 1: Build the application
-# docker build -t ohif/viewer:latest .
-# Copy Files
+# Stages: 1. build the app with Node and yarn; 2. serve it with nginx.
+
 FROM node:20.18.1-slim as builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,7 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY .docker/ca-certificates/*.crt /usr/local/share/ca-certificates/
+# Extra CA certificates hook: every *.crt in pacs-ai/docker/ca-certificates/
+# (git-ignored; the directory itself is tracked, so it may hold none).
+COPY pacs-ai/docker/ca-certificates/ /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
@@ -61,7 +59,7 @@ COPY --link --exclude=yarn.lock --exclude=package.json --exclude=Dockerfile . .
 # After install it should hopefully be stable until the local directory changes
 ENV QUICK_BUILD true
 # ENV GENERATE_SOURCEMAP=false
-ARG APP_CONFIG=config/default.js
+ARG APP_CONFIG=config/pacs-ai.js
 ARG PUBLIC_URL=/
 ARG APP_PUBLIC_TURNSTILE_SITE_KEY=
 ARG APP_BUILD_ID=
