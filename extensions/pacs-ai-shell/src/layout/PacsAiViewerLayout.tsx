@@ -10,7 +10,6 @@ import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { ViewerModelResultsProvider } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 import TopNavigation from '../components/TopNavigation';
 import PacsAiErrorBoundary from '../components/PacsAiErrorBoundary';
-import { RouterLocationBridge } from '../navigation/routerLocation';
 import ViewerTour from '../tour/ViewerTour';
 import PacsAiViewerHeader from './PacsAiViewerHeader';
 import { SidePanelWithServices, useResizablePanels } from './upstreamLayoutPieces';
@@ -193,7 +192,6 @@ function PacsAiViewerLayout({
 
   return (
     <PacsAiErrorBoundary context="Viewer layout">
-      <RouterLocationBridge />
       <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#151815]">
         <TopNavigation title="Viewer" />
         <>

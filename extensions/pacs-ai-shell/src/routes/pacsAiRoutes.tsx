@@ -15,7 +15,6 @@ import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
 import NotFoundStudy from './NotFoundStudy';
 import PacsAiErrorBoundary from '../components/PacsAiErrorBoundary';
-import { RouterLocationBridge } from '../navigation/routerLocation';
 
 export type PacsAiRoute = {
   path: string;
@@ -24,8 +23,8 @@ export type PacsAiRoute = {
 };
 
 /**
- * One route element: our error boundary (no OHIF error notification), the
- * location bridge for the app-wide overlay, then the page. Pages take no
+ * One route element: the page inside our error boundary (no OHIF error
+ * notification). Pages take no
  * props; they used to be rendered through OHIF's DataSourceWrapper, whose
  * study query and data-source props none of them used.
  */
@@ -33,7 +32,6 @@ function pacsAiRoute(path: string, Page: React.ComponentType, isPrivate = true):
   function PacsAiRouteElement() {
     return (
       <PacsAiErrorBoundary context={`Route ${path}`}>
-        <RouterLocationBridge />
         <Page />
       </PacsAiErrorBoundary>
     );

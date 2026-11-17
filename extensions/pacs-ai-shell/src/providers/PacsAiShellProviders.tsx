@@ -7,7 +7,8 @@ import TutorialProgressOverlay from '../components/TutorialProgressOverlay';
  * query and processing providers are around it). OHIF mounts registered
  * providers around its BrowserRouter, so the tutorial progress overlay stays
  * mounted across page changes, as it did when App.tsx rendered it; it reads
- * the location through useShellLocation instead of the router.
+ * the location through useShellLocation (history events) instead of the
+ * router.
  */
 function PacsAiShellProviders({ children }: { children?: React.ReactNode }) {
   return (

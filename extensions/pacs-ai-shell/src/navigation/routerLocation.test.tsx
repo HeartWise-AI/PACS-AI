@@ -1,8 +1,8 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { MemoryRouter, useNavigate } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 
-import { RouterLocationBridge, useShellLocation, useShellNavigate } from './routerLocation';
+import { useShellLocation, useShellNavigate } from './routerLocation';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -33,15 +33,15 @@ describe('router location outside the router', () => {
     container.remove();
   });
 
-  test('follows the router through the bridge', () => {
+  test('follows router navigation and the back button without any bridge in the routes', () => {
+    window.history.replaceState(null, '', '/settings?tab=1');
     act(() => {
       root.render(
         <>
           <ShowLocation />
-          <MemoryRouter initialEntries={['/settings?tab=1']}>
-            <RouterLocationBridge />
+          <BrowserRouter>
             <Navigator />
-          </MemoryRouter>
+          </BrowserRouter>
         </>
       );
     });
@@ -49,6 +49,17 @@ describe('router location outside the router', () => {
 
     act(() => goTo('/viewer?StudyInstanceUIDs=1'));
     expect(container.querySelector('#where').textContent).toBe('/viewer?StudyInstanceUIDs=1');
+
+    act(() => {
+      window.history.pushState(null, '', '/local');
+    });
+    expect(container.querySelector('#where').textContent).toBe('/local');
+
+    act(() => {
+      window.history.replaceState(null, '', '/ai-predictions');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(container.querySelector('#where').textContent).toBe('/ai-predictions');
   });
 
   test('navigates outside the router with a page load', () => {

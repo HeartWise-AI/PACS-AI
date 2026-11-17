@@ -1,16 +1,21 @@
-import { useLayoutEffect, useSyncExternalStore } from 'react';
-import { useLocation, type NavigateFunction } from 'react-router-dom';
+import { useSyncExternalStore } from 'react';
+import { type NavigateFunction } from 'react-router-dom';
+import { installLocationChangeEvents } from '@pacs-ai/extension-core/src/hooks/usePathname';
 
 /**
  * The router location for components that live outside OHIF's BrowserRouter
- * (our app-wide providers, e.g. the tutorial overlay). Our route pages and
- * the viewer layout render <RouterLocationBridge />, which publishes the
- * current location here; before any of them has rendered, the location comes
- * from window.location.
+ * (our app-wide providers, e.g. the tutorial overlay). React Router changes
+ * the URL with history.pushState/replaceState; core's
+ * installLocationChangeEvents makes those fire an event (as core's
+ * usePathname does), so this follows every navigation on every page,
+ * including OHIF's own routes. The path is relative to the router basename,
+ * like useLocation's.
  */
 type ShellLocation = { pathname: string; search: string; hash: string };
 
-function windowLocation(): ShellLocation {
+const LOCATION_CHANGE_EVENT = 'pacs-ai:locationchange';
+
+function readLocation(): ShellLocation {
   if (typeof window === 'undefined') {
     return { pathname: '/', search: '', hash: '' };
   }
@@ -22,28 +27,28 @@ function windowLocation(): ShellLocation {
   return { pathname, search: window.location.search, hash: window.location.hash };
 }
 
-let current: ShellLocation = windowLocation();
-const listeners = new Set<() => void>();
-
-export function publishRouterLocation(location: ShellLocation): void {
-  if (
-    location.pathname === current.pathname &&
-    location.search === current.search &&
-    location.hash === current.hash
-  ) {
-    return;
-  }
-  current = { pathname: location.pathname, search: location.search, hash: location.hash };
-  listeners.forEach(listener => listener());
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+let current: ShellLocation = readLocation();
 
 function getSnapshot(): ShellLocation {
+  const next = readLocation();
+  if (
+    next.pathname !== current.pathname ||
+    next.search !== current.search ||
+    next.hash !== current.hash
+  ) {
+    current = next;
+  }
   return current;
+}
+
+function subscribe(onChange: () => void): () => void {
+  installLocationChangeEvents();
+  window.addEventListener('popstate', onChange);
+  window.addEventListener(LOCATION_CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener('popstate', onChange);
+    window.removeEventListener(LOCATION_CHANGE_EVENT, onChange);
+  };
 }
 
 /** Same shape as react-router's useLocation(), usable outside the router. */
@@ -62,12 +67,4 @@ const shellNavigate = ((to: string) => {
 
 export function useShellNavigate(): NavigateFunction {
   return shellNavigate;
-}
-
-export function RouterLocationBridge(): null {
-  const location = useLocation();
-  useLayoutEffect(() => {
-    publishRouterLocation(location);
-  }, [location]);
-  return null;
 }
