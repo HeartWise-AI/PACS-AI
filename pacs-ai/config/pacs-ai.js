@@ -1,5 +1,17 @@
+/**
+ * PACS-AI app config. Selected at build time with APP_CONFIG=config/pacs-ai.js;
+ * the build copies it to app-config.js (pacs-ai/build/extend.js).
+ *
+ * Based on the platform/app/public/config/default.js that production served
+ * before P1.3, so the served config keeps the same behaviour.
+ * The data source reads its base URL from window._env_ (env-config.js,
+ * generated at build time by pacs-ai/build/generate-env-config.js).
+ */
+/** @type {AppTypes.Config} */
+
 window.config = {
-  routerBasename: '/',
+  name: 'config/pacs-ai.js',
+  routerBasename: null,
   // whiteLabeling: {},
   extensions: [],
   modes: [],
@@ -10,9 +22,15 @@ window.config = {
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
+  allowMultiSelectExport: false,
   autoPlayCine: true,
-  // Runtime rollout controls. These values can be changed in the deployed
-  // app-config.js without rebuilding the frontend bundle.
+  // Stock OHIF options the PACS-AI viewer keeps off (decision D3).
+  showWarningMessageForCrossOrigin: false,
+  experimentalStudyBrowserSort: false,
+  groupEnabledModesFirst: false,
+  // Runtime rollout controls for study processing. The values below are the
+  // defaults in studyProcessing/featureFlags.ts; change them in the deployed
+  // app-config.js without rebuilding the bundle.
   studyProcessing: {
     processingUIEnabled: true,
     restSnapshotsEnabled: true,
@@ -30,6 +48,68 @@ window.config = {
     // above, the number of requests can be go a lot higher.
     prefetch: 25,
   },
+  showErrorDetails: 'always', // 'always', 'dev', 'production'
+  // Defines multi-monitor layouts
+  multimonitor: [
+    {
+      id: 'split',
+      test: ({ multimonitor }) => multimonitor === 'split',
+      screens: [
+        {
+          id: 'ohif0',
+          screen: null,
+          location: {
+            screen: 0,
+            width: 0.5,
+            height: 1,
+            left: 0,
+            top: 0,
+          },
+          options: 'location=no,menubar=no,scrollbars=no,status=no,titlebar=no',
+        },
+        {
+          id: 'ohif1',
+          screen: null,
+          location: {
+            width: 0.5,
+            height: 1,
+            left: 0.5,
+            top: 0,
+          },
+          options: 'location=no,menubar=no,scrollbars=no,status=no,titlebar=no',
+        },
+      ],
+    },
+
+    {
+      id: '2',
+      test: ({ multimonitor }) => multimonitor === '2',
+      screens: [
+        {
+          id: 'ohif0',
+          screen: 0,
+          location: {
+            width: 1,
+            height: 1,
+            left: 0,
+            top: 0,
+          },
+          options: 'fullscreen=yes,location=no,menubar=no,scrollbars=no,status=no,titlebar=no',
+        },
+        {
+          id: 'ohif1',
+          screen: 1,
+          location: {
+            width: 1,
+            height: 1,
+            left: 0,
+            top: 0,
+          },
+          options: 'fullscreen=yes,location=no,menubar=no,scrollbars=no,status=no,titlebar=no',
+        },
+      ],
+    },
+  ],
   defaultDataSourceName: 'dicomweb',
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
@@ -46,8 +126,8 @@ window.config = {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'dicomweb',
       configuration: {
-        friendlyName: 'PACSAI Orthanc',
-        name: 'orthanc',
+        friendlyName: 'AWS S3 Static wado server',
+        name: 'aws',
         wadoUriRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
         qidoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
         wadoRoot: window._env_.APP_PUBLIC_API_URL + '/proxy/orthanc/dicom-web',
@@ -55,25 +135,138 @@ window.config = {
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
         enableStudyLazyLoad: true,
-        supportsFuzzyMatching: false,
-        supportsWildcard: true,
+        supportsFuzzyMatching: true,
+        supportsWildcard: false,
         staticWado: true,
         singlepart: 'bulkdata,video',
-        acceptHeader: ['multipart/related; type=application/octet-stream; transfer-syntax=*'],
         // whether the data source should use retrieveBulkData to grab metadata,
         // and in case of relative path, what would it be relative to, options
         // are in the series level or study level (some servers like series some study)
         bulkDataURI: {
           enabled: true,
-          // NOTE: This is a PACS changes
-          // Not working, see this: https://github.com/OHIF/Viewers/issues/4256#issuecomment-2907713235
-          transform: path => {
-            return path.replace('http://orthanc:8042', window._env_.APP_PUBLIC_API_URL + '/proxy');
-          },
+          relativeResolution: 'studies',
+          transform: url => url.replace('/pixeldata.mp4', '/rendered'),
         },
         omitQuotationForMultipartRequest: true,
       },
     },
+
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+      sourceName: 'ohif2',
+      configuration: {
+        friendlyName: 'AWS S3 Static wado secondary server',
+        name: 'aws',
+        wadoUriRoot: 'https://dd14fa38qiwhyfd.cloudfront.net/dicomweb',
+        qidoRoot: 'https://dd14fa38qiwhyfd.cloudfront.net/dicomweb',
+        wadoRoot: 'https://dd14fa38qiwhyfd.cloudfront.net/dicomweb',
+        qidoSupportsIncludeField: false,
+        supportsReject: false,
+        imageRendering: 'wadors',
+        thumbnailRendering: 'wadors',
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: false,
+        supportsWildcard: true,
+        staticWado: true,
+        singlepart: 'bulkdata,video',
+        // whether the data source should use retrieveBulkData to grab metadata,
+        // and in case of relative path, what would it be relative to, options
+        // are in the series level or study level (some servers like series some study)
+        bulkDataURI: {
+          enabled: true,
+          relativeResolution: 'studies',
+        },
+        omitQuotationForMultipartRequest: true,
+      },
+    },
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+      sourceName: 'ohif3',
+      configuration: {
+        friendlyName: 'AWS S3 Static wado secondary server',
+        name: 'aws',
+        wadoUriRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
+        qidoRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
+        wadoRoot: 'https://d3t6nz73ql33tx.cloudfront.net/dicomweb',
+        qidoSupportsIncludeField: false,
+        supportsReject: false,
+        imageRendering: 'wadors',
+        thumbnailRendering: 'wadors',
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: false,
+        supportsWildcard: true,
+        staticWado: true,
+        singlepart: 'bulkdata,video',
+        // whether the data source should use retrieveBulkData to grab metadata,
+        // and in case of relative path, what would it be relative to, options
+        // are in the series level or study level (some servers like series some study)
+        bulkDataURI: {
+          enabled: true,
+          relativeResolution: 'studies',
+        },
+        omitQuotationForMultipartRequest: true,
+      },
+    },
+
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+      sourceName: 'local5000',
+      configuration: {
+        friendlyName: 'Static WADO Local Data',
+        name: 'DCM4CHEE',
+        qidoRoot: 'http://localhost:5000/dicomweb',
+        wadoRoot: 'http://localhost:5000/dicomweb',
+        qidoSupportsIncludeField: false,
+        supportsReject: true,
+        supportsStow: true,
+        imageRendering: 'wadors',
+        thumbnailRendering: 'wadors',
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: false,
+        supportsWildcard: true,
+        staticWado: true,
+        singlepart: 'video',
+        bulkDataURI: {
+          enabled: true,
+          relativeResolution: 'studies',
+        },
+      },
+    },
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+      sourceName: 'orthanc',
+      configuration: {
+        friendlyName: 'local Orthanc DICOMWeb Server',
+        name: 'DCM4CHEE',
+        wadoUriRoot: 'http://localhost/pacs/dicom-web',
+        qidoRoot: 'http://localhost/pacs/dicom-web',
+        wadoRoot: 'http://localhost/pacs/dicom-web',
+        qidoSupportsIncludeField: true,
+        supportsReject: true,
+        dicomUploadEnabled: true,
+        imageRendering: 'wadors',
+        thumbnailRendering: 'wadors',
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: true,
+        supportsWildcard: true,
+        omitQuotationForMultipartRequest: true,
+        bulkDataURI: {
+          enabled: true,
+          // This is an example config that can be used to fix the retrieve URL
+          // where it has the wrong prefix (eg a canned prefix).  It is better to
+          // just use the correct prefix out of the box, but that is sometimes hard
+          // when URLs go through several systems.
+          // Example URLS are:
+          // "BulkDataURI" : "http://localhost/dicom-web/studies/1.2.276.0.7230010.3.1.2.2344313775.14992.1458058363.6979/series/1.2.276.0.7230010.3.1.3.1901948703.36080.1484835349.617/instances/1.2.276.0.7230010.3.1.4.1901948703.36080.1484835349.618/bulk/00420011",
+          // when running on http://localhost:3003 with no server running on localhost.  This can be corrected to:
+          // /orthanc/dicom-web/studies/1.2.276.0.7230010.3.1.2.2344313775.14992.1458058363.6979/series/1.2.276.0.7230010.3.1.3.1901948703.36080.1484835349.617/instances/1.2.276.0.7230010.3.1.4.1901948703.36080.1484835349.618/bulk/00420011
+          // which is a valid relative URL, and will result in using the http://localhost:3003/orthanc/.... path
+          // startsWith: 'http://localhost/',
+          // prefixWith: '/orthanc/',
+        },
+      },
+    },
+
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomwebproxy',
       sourceName: 'dicomwebproxy',
@@ -100,10 +293,20 @@ window.config = {
   ],
   httpErrorHandler: error => {
     // This is 429 when rejected from the public idc sandbox too often.
-    console.warn('OHIF CONFIG:', error.status);
+    console.warn(error.status);
+
+    // Could use services manager here to bring up a dialog/modal if needed.
+    console.warn('test, navigate to https://ohif.org/');
   },
+  // segmentation: {
+  //   segmentLabel: {
+  //     enabledByDefault: true,
+  //     labelColor: [255, 255, 0, 1], // must be an array
+  //     hoverTimeout: 1,
+  //     background: 'rgba(100, 100, 100, 0.5)', // can be any valid css color
+  //   },
+  // },
   // whiteLabeling: {
-  //   /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
   //   createLogoComponentFn: function (React) {
   //     return React.createElement(
   //       'a',
@@ -111,107 +314,13 @@ window.config = {
   //         target: '_self',
   //         rel: 'noopener noreferrer',
   //         className: 'text-purple-600 line-through',
-  //         href: '/',
+  //         href: '_X___IDC__LOGO__LINK___Y_',
   //       },
-  //       React.createElement('img',
-  //         {
-  //           src: './assets/customLogo.svg',
-  //           className: 'w-8 h-8',
-  //         }
-  //       ))
+  //       React.createElement('img', {
+  //         src: './Logo.svg',
+  //         className: 'w-14 h-14',
+  //       })
+  //     );
   //   },
   // },
-  hotkeys: [
-    {
-      commandName: 'incrementActiveViewport',
-      label: 'Next Viewport',
-      keys: ['right'],
-    },
-    {
-      commandName: 'decrementActiveViewport',
-      label: 'Previous Viewport',
-      keys: ['left'],
-    },
-    { commandName: 'rotateViewportCW', label: 'Rotate Right', keys: ['r'] },
-    { commandName: 'rotateViewportCCW', label: 'Rotate Left', keys: ['l'] },
-    { commandName: 'invertViewport', label: 'Invert', keys: ['i'] },
-    {
-      commandName: 'flipViewportHorizontal',
-      label: 'Flip Horizontally',
-      keys: ['h'],
-    },
-    {
-      commandName: 'flipViewportVertical',
-      label: 'Flip Vertically',
-      keys: ['v'],
-    },
-    { commandName: 'scaleUpViewport', label: 'Zoom In', keys: ['+'] },
-    { commandName: 'scaleDownViewport', label: 'Zoom Out', keys: ['-'] },
-    { commandName: 'fitViewportToWindow', label: 'Zoom to Fit', keys: ['='] },
-    { commandName: 'resetViewport', label: 'Reset', keys: ['space'] },
-    { commandName: 'nextImage', label: 'Next Image', keys: ['down'] },
-    { commandName: 'previousImage', label: 'Previous Image', keys: ['up'] },
-    // {
-    //   commandName: 'previousViewportDisplaySet',
-    //   label: 'Previous Series',
-    //   keys: ['pagedown'],
-    // },
-    // {
-    //   commandName: 'nextViewportDisplaySet',
-    //   label: 'Next Series',
-    //   keys: ['pageup'],
-    // },
-    {
-      commandName: 'setToolActive',
-      commandOptions: { toolName: 'Zoom' },
-      label: 'Zoom',
-      keys: ['z'],
-    },
-    // ~ Window level presets
-    {
-      commandName: 'windowLevelPreset1',
-      label: 'W/L Preset 1',
-      keys: ['1'],
-    },
-    {
-      commandName: 'windowLevelPreset2',
-      label: 'W/L Preset 2',
-      keys: ['2'],
-    },
-    {
-      commandName: 'windowLevelPreset3',
-      label: 'W/L Preset 3',
-      keys: ['3'],
-    },
-    {
-      commandName: 'windowLevelPreset4',
-      label: 'W/L Preset 4',
-      keys: ['4'],
-    },
-    {
-      commandName: 'windowLevelPreset5',
-      label: 'W/L Preset 5',
-      keys: ['5'],
-    },
-    {
-      commandName: 'windowLevelPreset6',
-      label: 'W/L Preset 6',
-      keys: ['6'],
-    },
-    {
-      commandName: 'windowLevelPreset7',
-      label: 'W/L Preset 7',
-      keys: ['7'],
-    },
-    {
-      commandName: 'windowLevelPreset8',
-      label: 'W/L Preset 8',
-      keys: ['8'],
-    },
-    {
-      commandName: 'windowLevelPreset9',
-      label: 'W/L Preset 9',
-      keys: ['9'],
-    },
-  ],
 };
