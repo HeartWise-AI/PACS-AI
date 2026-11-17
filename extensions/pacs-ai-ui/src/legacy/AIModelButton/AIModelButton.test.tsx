@@ -275,6 +275,17 @@ describe('AIModelButton runs', () => {
     expectDirectPredict();
   });
 
+  test('keeps the direct predict call for segmentation models (OHIF_ANNOTATIONS)', async () => {
+    const provider = viewerResults();
+    mount(provider, [{ ...model, outputMode: 'OHIF_ANNOTATIONS' } as never]);
+    clickText('Apply ');
+
+    await confirmSeries();
+
+    expect(provider.startForegroundRun).not.toHaveBeenCalled();
+    expect(predict).toHaveBeenCalled();
+  });
+
   test('keeps the direct predict call outside the viewer results provider', async () => {
     mount(null);
     clickText('Apply ');
