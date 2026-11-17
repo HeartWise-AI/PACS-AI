@@ -6,7 +6,6 @@ import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
 import { ScrollArea } from '../ScrollArea';
-import { AIModelButton } from '@ohif/ui-next'; // NOTE: This is a PACS changes
 import refreshIcon from './../../assets/pacs/icons/refresh-gradient.png'; // NOTE: This is a PACS changes
 import { AvailableModelsContext } from '../../../../../extensions/default/src/ViewerLayout/index.tsx'; // NOTE: This is a PACS changes
 import { useTranslation } from 'react-i18next'; // NOTE: This is a PACS changes
