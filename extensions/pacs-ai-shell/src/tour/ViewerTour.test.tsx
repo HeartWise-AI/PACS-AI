@@ -5,10 +5,12 @@ import { MemoryRouter } from 'react-router-dom';
 const mockOnboarding = jest.fn((_props: unknown) => null);
 jest.mock('@ohif/ui-next', () => ({ Onboarding: props => mockOnboarding(props) }));
 const mockGetUnseenTours = jest.fn((..._args: unknown[]) => undefined as any);
-const mockMarkToursStarted = jest.fn((..._args: unknown[]) => undefined);
 jest.mock('./viewerTours', () => ({
   getUnseenTours: (...args) => mockGetUnseenTours(...args),
-  markToursStarted: (...args) => mockMarkToursStarted(...args),
+}));
+const mockMarkTourShown = jest.fn();
+jest.mock('@pacs-ai/extension-core/src/service/viewerTourService', () => ({
+  markTourShown: (...args) => mockMarkTourShown(...args),
 }));
 
 import ViewerTour from './ViewerTour';
@@ -36,7 +38,7 @@ describe('ViewerTour', () => {
   beforeEach(() => {
     mockOnboarding.mockClear();
     mockGetUnseenTours.mockReset();
-    mockMarkToursStarted.mockReset();
+    mockMarkTourShown.mockReset();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -57,7 +59,7 @@ describe('ViewerTour', () => {
     });
   };
 
-  test('hands Onboarding the unseen tours through the mode customization and marks the start', async () => {
+  test('hands Onboarding the unseen tours through the mode customization', async () => {
     const customizationService = createCustomizationService([viewerTour]);
     mockGetUnseenTours.mockResolvedValue([viewerTour]);
 
@@ -68,8 +70,13 @@ describe('ViewerTour', () => {
       { 'ohif.tours': { $set: [viewerTour] } },
       'mode'
     );
-    expect(mockOnboarding).toHaveBeenLastCalledWith({ tours: [viewerTour] });
-    expect(mockMarkToursStarted).toHaveBeenCalledWith([viewerTour], '/viewer');
+    const props = mockOnboarding.mock.calls[mockOnboarding.mock.calls.length - 1][0] as any;
+    expect(props.tours).toEqual([viewerTour]);
+    expect(props.shouldShowTour('basicViewerTour')).toBe(true);
+    // The server is told only when Onboarding reports the tour started.
+    expect(mockMarkTourShown).not.toHaveBeenCalled();
+    props.onTourShown('basicViewerTour');
+    expect(mockMarkTourShown).toHaveBeenCalledWith('basicViewerTour');
   });
 
   test('renders no Onboarding when the user has seen the tour', async () => {
@@ -83,6 +90,6 @@ describe('ViewerTour', () => {
       'mode'
     );
     expect(mockOnboarding).not.toHaveBeenCalled();
-    expect(mockMarkToursStarted).not.toHaveBeenCalled();
+    expect(mockMarkTourShown).not.toHaveBeenCalled();
   });
 });

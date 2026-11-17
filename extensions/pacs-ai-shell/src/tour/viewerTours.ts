@@ -1,4 +1,4 @@
-import { markTourShown, shouldShowTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
+import { shouldShowTour } from '@pacs-ai/extension-core/src/service/viewerTourService';
 
 export type TourDefinition = {
   id: string;
@@ -42,13 +42,4 @@ export async function getUnseenTours<T extends TourDefinition>(tours: T[] = []):
   const unseen = tours.filter((_tour, index) => decisions[index]);
   unseen.forEach(tour => forgetLocallyShown(tour.id));
   return unseen;
-}
-
-/** Record on the server (and locally) that a tour has started. Never rejects. */
-export function markToursStarted(tours: TourDefinition[], pathname: string): void {
-  tours
-    .filter(tour => tour.route === pathname)
-    .forEach(tour => {
-      markTourShown(tour.id);
-    });
 }
