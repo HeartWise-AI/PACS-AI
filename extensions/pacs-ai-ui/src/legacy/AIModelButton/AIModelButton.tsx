@@ -5,9 +5,9 @@ import { Error } from '@ohif/app/src/api/dto';
 import { logoutUser } from '@ohif/app/src/service/userService';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import aiModelsIcon from './../../assets/pacs/icons/ai-models-white.png';
-import playerPlayIcon from './../../assets/pacs/icons/player-play-gradient.png';
-import helpInactive from './../../assets/pacs/icons/help-inactive.png';
+import aiModelsIcon from '../../assets/icons/ai-models-white.png';
+import playerPlayIcon from '../../assets/icons/player-play-gradient.png';
+import helpInactive from '../../assets/icons/help-inactive.png';
 import inferenceRepository from '@ohif/app/src/api/inferenceRepository';
 import {
   GetInferenceAvailableModelsResponse,
@@ -23,7 +23,7 @@ import PDFOutputModeModal from '@ohif/app/src/components/inference/PDFOutputMode
 import SelectSeriesModal from '@ohif/app/src/components/inference/SelectSeriesModal';
 import { AlertContext } from '@ohif/app/src/AlertProvider';
 import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
-import { addSegmentationFromLabelmap } from '../../../../../extensions/cornerstone/src/utils/addSegmentation';
+import { addSegmentationFromLabelmap } from '../../../../cornerstone/src/utils/addSegmentation';
 import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider';
 import { viewerModelKey } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import pacsLogo from './../../assets/pacs/logo/pacs-ai-logo.png';
+import { pacsAiLogo as pacsLogo } from '@pacs-ai/theme';
 
 const Logo = ({ class: className }) => {
   return (

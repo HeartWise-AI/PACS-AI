@@ -1,7 +1,7 @@
 import React from 'react';
 import GPUManagementPanel from '../inference-models/components/GPUManagementPanel';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@ohif/ui';
+import { Button } from '@pacs-ai/ui';
 import ModelFactsModal from '../../../components/ModelFactsModal';
 import refreshIcon from '../../../assets/pacs/icons/refresh.png';
 import type { UseInferenceModelsResult } from '../hooks/useInferenceModels';

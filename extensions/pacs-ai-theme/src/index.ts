@@ -1,6 +1,7 @@
 import { id } from './id';
 
 export { colors, primaryGradient } from './tokens';
+export { pacsAiLogo, pacsAiLogoVertical, pacsAiIconLogo } from './logos';
 
 /**
  * Registered in platform/app/pluginConfig.json so that the files under

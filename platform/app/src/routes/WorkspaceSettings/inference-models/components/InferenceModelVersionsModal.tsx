@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import type { GetInferenceModelVersionResponse } from '../../../../api/inferenceDTO';
 import Modal from '../../../../components/Modal';

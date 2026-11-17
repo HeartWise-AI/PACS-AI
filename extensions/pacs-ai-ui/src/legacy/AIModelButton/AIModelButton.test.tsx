@@ -27,7 +27,7 @@ jest.mock('@ohif/app/src/AlertProvider', () => ({
 jest.mock('@ohif/app/src/GlobalStateProvider', () => ({
   useGlobalStateData: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
 }));
-jest.mock('../../../../../extensions/cornerstone/src/utils/addSegmentation', () => ({
+jest.mock('../../../../cornerstone/src/utils/addSegmentation', () => ({
   addSegmentationFromLabelmap: jest.fn(),
 }));
 jest.mock('@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider', () => ({

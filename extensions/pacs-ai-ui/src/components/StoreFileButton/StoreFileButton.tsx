@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '@ohif/ui';
+import Button from '../Button';
 import { Icons } from '@ohif/ui-next';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { AlertContext } from '@ohif/app/src/AlertProvider';

@@ -6,7 +6,7 @@ import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
 import { sortBy } from 'lodash';
-import { Button } from '@ohif/ui';
+import { Button } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import filtersMeta from './filtersMeta.js';
 import orthancRepository from '../../api/orthancRepository';

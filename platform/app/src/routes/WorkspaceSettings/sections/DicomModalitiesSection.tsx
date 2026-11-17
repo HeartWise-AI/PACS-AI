@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@ohif/ui';
+import { Button } from '@pacs-ai/ui';
 import type { UseDicomModalitiesResult } from '../hooks/useDicomModalities';
 import AddEditModalityModal from '../dicom/components/AddEditModalityModal';
 import DicomModalitiesTable from '../dicom/components/DicomModalitiesTable';

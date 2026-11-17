@@ -1,11 +1,11 @@
 // Test double for react-i18next's useTranslation('ChatBox'), backed by the real
 // locale files so tests assert the strings users actually see.
 const LOCALES: Record<string, Record<string, string>> = {
-  'en-US': require('../../../../../i18n/src/locales/en-US/ChatBox.json'),
-  fr: require('../../../../../i18n/src/locales/fr/ChatBox.json'),
-  de: require('../../../../../i18n/src/locales/de/ChatBox.json'),
-  es: require('../../../../../i18n/src/locales/es/ChatBox.json'),
-  ar: require('../../../../../i18n/src/locales/ar/ChatBox.json'),
+  'en-US': require('@ohif/i18n/src/locales/en-US/ChatBox.json'),
+  fr: require('@ohif/i18n/src/locales/fr/ChatBox.json'),
+  de: require('@ohif/i18n/src/locales/de/ChatBox.json'),
+  es: require('@ohif/i18n/src/locales/es/ChatBox.json'),
+  ar: require('@ohif/i18n/src/locales/ar/ChatBox.json'),
 };
 
 let activeLocale = 'en-US';

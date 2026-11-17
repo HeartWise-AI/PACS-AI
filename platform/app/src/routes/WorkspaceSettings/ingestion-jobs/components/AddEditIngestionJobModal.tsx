@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
 import moment from 'moment';
 import { Input } from '@ohif/ui-next';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
 import { GetInferenceAvailableModelsResponse } from '../../../../api/inferenceDTO';
 import { minIngestionJobIntervalMinutes } from '../../constants';

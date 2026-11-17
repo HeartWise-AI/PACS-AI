@@ -6,7 +6,7 @@ import {
   GetInferenceAvailableModelsResponse,
   PredictInferenceModelHTMLResponse,
 } from '../../api/inferenceDTO';
-import { StoreFileButton } from '@ohif/ui';
+import { StoreFileButton } from '@pacs-ai/ui';
 import orthancRepository from '@ohif/app/src/api/orthancRepository';
 import { GetLnkedDICOMModalityWithEnabledCStoreResponse } from '../../api/orthancDTO';
 import AddModelFeedback from './AddModelFeedback';

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Typography, Logo } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import logoIcon from './../../assets/pacs/logo/pacs-ai-icon-logo.png';
-import drawerLeftArrow from './../../assets/pacs/icons/align-from-left-gradient.png';
-import membersActiveIcon from './../../assets/pacs/icons/members-active.png';
-import membersInActiveIcon from './../../assets/pacs/icons/members-inactive.png';
-import kibanaLogsActiveIcon from './../../assets/pacs/icons/kibana-logs-active.png';
-import kibanaLogsInActiveIcon from './../../assets/pacs/icons/kibana-logs-inactive.png';
-import workplaceSettingsInActiveIcon from './../../assets/pacs/icons/settings-inactive.png';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Typography from '../Typography';
+import Logo from '../Logo';
+import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
+import drawerLeftArrow from '../../assets/icons/align-from-left-gradient.png';
+import studiesActiveIcon from '../../assets/icons/studies-active.png';
+import studiesInActiveIcon from '../../assets/icons/studies-inactive.png';
+import aiModelsActiveIcon from '../../assets/icons/ai-models-active.png';
+import aiModelsInActiveIcon from '../../assets/icons/ai-models-inactive.png';
+import aiPredictionsInActiveIcon from '../../assets/icons/ai-predictions-inactive.png';
+import comingSoonImg from '../../assets/icons/coming-soon.png';
 
-const SidebarAdmin = () => {
+const Sidebar = () => {
   const [sidebarMini, setSidebarMini] = useState(false);
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -19,6 +21,11 @@ const SidebarAdmin = () => {
     setSidebarMini(prevSidebarMini => !prevSidebarMini);
   };
 
+  // Check if pathname is active
+  const isPageActive = pattern => {
+    const pathname = window.location.pathname;
+    return pathname === pattern;
+  };
   return (
     <aside
       id="default-sidebar"
@@ -44,7 +51,7 @@ const SidebarAdmin = () => {
             {!sidebarMini && <Logo class="h-auto w-[117px]" />}
             <button
               className={`flex h-7 w-7 items-center justify-center rounded-md bg-white bg-opacity-10 ${
-                sidebarMini ? 'ml-1 mt-4 rotate-180' : ''
+                sidebarMini ? 'mx-auto mt-4 block rotate-180' : ''
               }`}
               onClick={handleMinimizeSidebarClick}
             >
@@ -65,133 +72,130 @@ const SidebarAdmin = () => {
           )}
           <ul className="mt-5 space-y-2 font-medium">
             <li
-              className="my-2 rounded-lg"
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background:
-                  location.pathname === '/members'
+                  isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
                     ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                     : undefined,
               }}
             >
               <a
-                onClick={() => navigate('/members')}
+                onClick={() => navigate(`/`)}
                 className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                  sidebarMini ? 'mx-auto block py-2' : 'p-2'
                 }`}
               >
-                {location.pathname === '/members' && (
+                {(isPageActive(`/`) ||
+                  isPageActive(`/viewer`) ||
+                  isPageActive(`/segmentation`)) && (
                   <img
-                    src={membersActiveIcon}
-                    alt="Members icon"
+                    src={studiesActiveIcon}
+                    alt="Studies icon"
                     className="w-[18px]"
                   />
                 )}
-                {location.pathname !== '/members' && (
-                  <img
-                    src={membersInActiveIcon}
-                    alt="Members icon"
-                    className="w-[18px]"
-                  />
-                )}
+                {!isPageActive(`/`) &&
+                  !isPageActive(`/viewer`) &&
+                  !isPageActive(`/segmentation`) && (
+                    <img
+                      src={studiesInActiveIcon}
+                      alt="Studies icon"
+                      className="w-[18px]"
+                    />
+                  )}
 
                 {!sidebarMini && (
                   <Typography
                     variant="body"
                     className={`ms-3 ml-2 font-medium ${
-                      location.pathname === '/members' ? 'text-black' : 'text-white text-opacity-50'
-                    }`}
-                  >
-                    {t('Members')}
-                  </Typography>
-                )}
-              </a>
-            </li>
-            <li
-              className="my-2 rounded-lg"
-              style={{
-                background:
-                  location.pathname === '/kibana-logs'
-                    ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
-                    : undefined,
-              }}
-            >
-              <a
-                onClick={() => navigate('/kibana-logs')}
-                className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
-                  sidebarMini ? 'py-2 px-3' : 'p-2'
-                }`}
-              >
-                {location.pathname === '/kibana-logs' && (
-                  <img
-                    src={kibanaLogsActiveIcon}
-                    alt="Kibana logs icon"
-                    className="w-[18px]"
-                  />
-                )}
-                {location.pathname !== '/kibana-logs' && (
-                  <img
-                    src={kibanaLogsInActiveIcon}
-                    alt="Kibana logs icon"
-                    className="w-[18px]"
-                  />
-                )}
-
-                {!sidebarMini && (
-                  <Typography
-                    variant="body"
-                    className={`ms-3 ml-2 font-medium ${
-                      location.pathname === '/kibana-logs'
+                      isPageActive(`/`) || isPageActive(`/viewer`) || isPageActive(`/segmentation`)
                         ? 'text-black'
                         : 'text-white text-opacity-50'
                     }`}
                   >
-                    {t('Kibana Logs')}
+                    {t('Studies')}
                   </Typography>
                 )}
               </a>
             </li>
             <li
-              className="my-2 rounded-lg"
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
+              style={{
+                background: isPageActive(`/ai-models`)
+                  ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
+                  : undefined,
+              }}
+            >
+              <a
+                onClick={() => navigate(`/ai-models`)}
+                className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
+                  sidebarMini ? 'py-2 px-3' : 'p-2'
+                }`}
+              >
+                {isPageActive(`/ai-models`) && (
+                  <img
+                    src={aiModelsActiveIcon}
+                    alt="AI Models icon"
+                    className="w-[18px]"
+                  />
+                )}
+                {!isPageActive(`/ai-models`) && (
+                  <img
+                    src={aiModelsInActiveIcon}
+                    alt="AI Models icon"
+                    className="w-[18px]"
+                  />
+                )}
+                {!sidebarMini && (
+                  <Typography
+                    variant="body"
+                    className={`ms-3 ml-2 font-medium ${
+                      isPageActive(`/ai-models`) ? 'text-black' : 'text-white text-opacity-50'
+                    }`}
+                  >
+                    {t('AI Models')}
+                  </Typography>
+                )}
+              </a>
+            </li>
+            <li
+              className={`my-2 rounded-lg ${sidebarMini && 'flex justify-center'}`}
               style={{
                 background:
-                  location.pathname === '/workspace-settings'
+                  location.pathname === '/ai-predictions'
                     ? 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)'
                     : undefined,
               }}
             >
               <a
-                onClick={() => navigate('/workspace-settings')}
-                className={`group flex cursor-pointer items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
+                href="#"
+                className={`group flex items-center rounded-lg hover:bg-green-100 hover:bg-opacity-10 ${
                   sidebarMini ? 'py-2 px-3' : 'p-2'
                 }`}
               >
-                {location.pathname === '/workplace-settings' && (
-                  <img
-                    src={workplaceSettingsInActiveIcon}
-                    alt="Cogs icon"
-                    className="w-[18px]"
-                  />
-                )}
-                {location.pathname !== '/workplace-settings' && (
-                  <img
-                    src={workplaceSettingsInActiveIcon}
-                    alt="Cogs icon"
-                    className="w-[18px]"
-                  />
-                )}
-
+                <img
+                  src={aiPredictionsInActiveIcon}
+                  alt="AI Predictions icon"
+                  className="w-[18px]"
+                />
                 {!sidebarMini && (
                   <div className="items-enter flex gap-2">
                     <Typography
                       variant="body"
                       className={`ms-3 ml-2 font-medium ${
-                        location.pathname === '/workspace-settings'
+                        location.pathname === '/ai-predictions'
                           ? 'text-black'
                           : 'text-white text-opacity-50'
                       }`}
                     >
-                      {t('Workspace Settings')}
+                      {t('AI Predictions')}
                     </Typography>
+                    <img
+                      src={comingSoonImg}
+                      alt="AI Predictions icon"
+                      className="h-[17px] w-auto"
+                    />
                   </div>
                 )}
               </a>
@@ -203,4 +207,4 @@ const SidebarAdmin = () => {
   );
 };
 
-export default SidebarAdmin;
+export default Sidebar;

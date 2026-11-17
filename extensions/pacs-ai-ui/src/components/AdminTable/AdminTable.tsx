@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography } from '@ohif/ui';
+import Typography from '../Typography';
 import { useTranslation } from 'react-i18next';
 
 const AdminTable = ({ headers, data }) => {

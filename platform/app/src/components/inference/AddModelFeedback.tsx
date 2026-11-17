@@ -11,7 +11,7 @@ import uncheckIcon from './../../assets/pacs/icons/check-inactive.png';
 import checkIcon from './../../assets/pacs/icons/check-active.png';
 import radioSelected from './../../assets/pacs/icons/radio-selected.png';
 import radioUnselect from './../../assets/pacs/icons/radio-unselect.png';
-import { Button } from '@ohif/ui';
+import { Button } from '@pacs-ai/ui';
 import { useTranslation } from 'react-i18next';
 import inferenceRepository from '../../api/inferenceRepository';
 import { GetInferenceAvailableModelsResponse } from '../../api/inferenceDTO';
