@@ -22,5 +22,5 @@ Plan: `docs/ohif-upgrade/PLAN.md`. One line per work package. States: todo, runn
 | P0.2 | done | this file | |
 | P0.1 | running | | acceptance suite |
 | P1.1 | running | | formatting-only reverts |
-| P1.2 | running | | drift guard and ledger |
+| P1.2 | running | #504 (draft) | drift guard and ledger; exit check met (script runs and prints the counts). Report vs v3.11.1: 1024 modified upstream files, 58 theme-debt files, 0 ledger rows; 952 unexplained, 14 expected, 57 import violations (all `@ohif/app/src` from upstream files). Awaiting review. |
 | P1.3 | todo | | after P1.1 (touches config/Docker files) |
