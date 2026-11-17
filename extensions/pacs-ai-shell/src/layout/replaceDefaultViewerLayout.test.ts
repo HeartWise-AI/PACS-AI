@@ -15,10 +15,11 @@ describe('replaceDefaultViewerLayout', () => {
   });
 
   test('does nothing when the default layout is not registered', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const extensionManager = { getModuleEntry: jest.fn(() => undefined) };
 
     expect(replaceDefaultViewerLayout(extensionManager, () => null)).toBe(false);
-    warn.mockRestore();
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('pluginConfig.json'));
+    consoleError.mockRestore();
   });
 });

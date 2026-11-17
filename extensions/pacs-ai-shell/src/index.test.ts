@@ -12,7 +12,9 @@ jest.mock('./errors/routeErrorNotifications', () => ({
   stopRouteErrorNotifications: jest.fn(),
 }));
 
-import pacsAiShellExtension, { PACS_AI_SHELL_PROVIDER } from './index';
+import pacsAiShellExtension, { PACS_AI_SHELL_PROVIDER, turnOffOhifStudyList } from './index';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import PacsAiViewerLayout from './layout/PacsAiViewerLayout';
 import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
 
@@ -59,5 +61,40 @@ describe('@pacs-ai/extension-shell', () => {
     const [layout] = (pacsAiShellExtension.getLayoutTemplateModule as any)({});
     expect(layout.name).toBe('viewerLayout');
     expect(typeof layout.component).toBe('function');
+  });
+
+  test('preRegistration turns off OHIF\'s own study list so that `/` is ours', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const appConfig = { showStudyList: true };
+    (pacsAiShellExtension.preRegistration as any)({
+      servicesManager: { services: {} },
+      serviceProvidersManager: { registerProvider: jest.fn() },
+      extensionManager: { getModuleEntry: jest.fn(() => ({ component: null })) },
+      appConfig,
+    });
+    expect(appConfig.showStudyList).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('showStudyList'));
+
+    warn.mockClear();
+    const unset: { showStudyList?: boolean } = {};
+    turnOffOhifStudyList(unset);
+    expect(unset.showStudyList).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  test('pluginConfig registers the default extension and core before the shell', () => {
+    const pluginConfig = JSON.parse(
+      readFileSync(resolve(__dirname, '../../../platform/app/pluginConfig.json'), 'utf8')
+    );
+    const order = pluginConfig.extensions.map(extension => extension.packageName);
+    const shell = order.indexOf('@pacs-ai/extension-shell');
+    expect(shell).toBeGreaterThan(-1);
+    // Its layout template is replaced in our preRegistration.
+    expect(order.indexOf('@ohif/extension-default')).toBeGreaterThan(-1);
+    expect(order.indexOf('@ohif/extension-default')).toBeLessThan(shell);
+    // Core's providers must wrap ours.
+    expect(order.indexOf('@pacs-ai/extension-core')).toBeGreaterThan(-1);
+    expect(order.indexOf('@pacs-ai/extension-core')).toBeLessThan(shell);
   });
 });

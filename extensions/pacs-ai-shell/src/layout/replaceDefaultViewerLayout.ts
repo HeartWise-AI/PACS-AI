@@ -15,7 +15,13 @@ export const DEFAULT_VIEWER_LAYOUT_ID = '@ohif/extension-default.layoutTemplateM
 export function replaceDefaultViewerLayout(extensionManager, layoutComponent): boolean {
   const entry = extensionManager.getModuleEntry(DEFAULT_VIEWER_LAYOUT_ID);
   if (!entry) {
-    console.warn(`PACS-AI: ${DEFAULT_VIEWER_LAYOUT_ID} is not registered; stock modes keep their layout.`);
+    // @ohif/extension-default must be listed before @pacs-ai/extension-shell
+    // in platform/app/pluginConfig.json (index.test.ts checks it).
+    console.error(
+      `PACS-AI: ${DEFAULT_VIEWER_LAYOUT_ID} is not registered when @pacs-ai/extension-shell registers; ` +
+        'the viewer will show the stock OHIF layout without the PACS-AI header, run-model menu, chat and results. ' +
+        'Register @ohif/extension-default before @pacs-ai/extension-shell in pluginConfig.json.'
+    );
     return false;
   }
   entry.component = layoutComponent;
