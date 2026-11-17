@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useContext } from 'react';
 import ReactDOM from 'react-dom';
-import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router';
+import { useShellLocation, useShellNavigate } from '../navigation/routerLocation';
 import { useTranslation } from 'react-i18next';
 import { useShepherd } from 'react-shepherd';
 import 'shepherd.js/dist/css/shepherd.css';
@@ -111,7 +110,7 @@ const defaultSteps: TutorialStepState[] = [
  */
 const TutorialProgressOverlay: React.FC = () => {
   const { t, i18n } = useTranslation('TutorialProgressOverlay');
-  const navigate = useNavigate();
+  const navigate = useShellNavigate();
   const showAlert = useContext(AlertContext);
   const [userLoading, setUserLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
@@ -131,7 +130,7 @@ const TutorialProgressOverlay: React.FC = () => {
     return lastCompleted;
   };
 
-  const location = useLocation();
+  const location = useShellLocation();
   useEffect(() => {
     const fetchCurrentUser = async () => {
       setUserLoading(true);

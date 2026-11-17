@@ -6,19 +6,25 @@ import './styles/pacs-ai-shell.css';
 
 import { id } from './id';
 import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
+import PacsAiShellProviders from './providers/PacsAiShellProviders';
 import { getPacsAiRoutes } from './routes/pacsAiRoutes';
+
+/** serviceProvidersManager key for the shell's app-wide UI (no service of that name). */
+export const PACS_AI_SHELL_PROVIDER = 'pacsAiShell';
 
 /**
  * PACS-AI shell extension (docs/ohif-upgrade/PLAN.md 6.1): our pages as
  * routes.customRoutes, the work list, top navigation, the viewer layout
  * template and the viewer tour gating. Registered in
- * platform/app/pluginConfig.json after @pacs-ai/extension-core.
+ * platform/app/pluginConfig.json after @pacs-ai/extension-core (its
+ * providers wrap ours).
  */
 const pacsAiShellExtension = {
   id,
 
-  preRegistration() {
+  preRegistration({ serviceProvidersManager }) {
     stopRouteErrorNotifications();
+    serviceProvidersManager.registerProvider(PACS_AI_SHELL_PROVIDER, PacsAiShellProviders);
   },
 
   getCustomizationModule() {
