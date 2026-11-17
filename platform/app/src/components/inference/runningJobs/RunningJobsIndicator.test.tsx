@@ -1,7 +1,7 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import english from '../../../../../i18n/src/locales/en-US/AIModelButton.json';
-import french from '../../../../../i18n/src/locales/fr/AIModelButton.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
+import french from '@pacs-ai/extension-core/src/locales/fr/AIModelButton.json';
 import { RunningJobsIndicator, type RunningJobsIndicatorProps } from './RunningJobsIndicator';
 import { jobRow, translate, viewerResult } from './testSupport';
 import type { RunningJobRow } from './types';

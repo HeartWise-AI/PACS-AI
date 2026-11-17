@@ -18,7 +18,7 @@ import Dialog from './Dialog.json';
 import Modals from './Modals.json';
 import Local from './Local.json';
 import ErrorBoundary from './ErrorBoundary.json';
-import StoreFileButton from './StoreFileButton.json';
+import StoreFileButton from '@pacs-ai/extension-core/src/locales/zh/StoreFileButton.json';
 
 export default {
   zh: {

@@ -10,8 +10,8 @@ jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/notificationPreferenc
 }));
 
 import AutomaticRunNotificationsPreference from './AutomaticRunNotificationsPreference';
-import englishSettings from '../../../../i18n/src/locales/en-US/Settings.json';
-import frenchSettings from '../../../../i18n/src/locales/fr/Settings.json';
+import englishSettings from '@pacs-ai/extension-core/src/locales/en-US/Settings.json';
+import frenchSettings from '@pacs-ai/extension-core/src/locales/fr/Settings.json';
 
 describe('AutomaticRunNotificationsPreference', () => {
   let container: HTMLDivElement;

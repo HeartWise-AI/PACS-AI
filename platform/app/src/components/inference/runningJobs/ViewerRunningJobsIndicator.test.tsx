@@ -1,6 +1,6 @@
 import React from 'react';
 import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import english from '../../../../../i18n/src/locales/en-US/AIModelButton.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { isStudyGrowing } from '../studyRefresh/studyGrowingStore';
 import { RUNNING_JOBS_COLLAPSED_STORAGE_KEY } from './useRunningJobsCardState';
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
       jest
         .requireActual('./testSupport')
         .translate(
-          jest.requireActual('../../../../../i18n/src/locales/en-US/AIModelButton.json'),
+          jest.requireActual('@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json'),
           key,
           options
         ),

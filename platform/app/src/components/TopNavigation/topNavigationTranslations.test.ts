@@ -1,8 +1,8 @@
-import arabic from '../../../../i18n/src/locales/ar/TopNavigation.json';
-import german from '../../../../i18n/src/locales/de/TopNavigation.json';
-import english from '../../../../i18n/src/locales/en-US/TopNavigation.json';
-import spanish from '../../../../i18n/src/locales/es/TopNavigation.json';
-import french from '../../../../i18n/src/locales/fr/TopNavigation.json';
+import arabic from '@pacs-ai/extension-core/src/locales/ar/TopNavigation.json';
+import german from '@pacs-ai/extension-core/src/locales/de/TopNavigation.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/TopNavigation.json';
+import spanish from '@pacs-ai/extension-core/src/locales/es/TopNavigation.json';
+import french from '@pacs-ai/extension-core/src/locales/fr/TopNavigation.json';
 
 describe('top navigation translations', () => {
   test.each([

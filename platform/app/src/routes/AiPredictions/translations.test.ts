@@ -1,5 +1,5 @@
-import english from '../../../../i18n/src/locales/en-US/AiPredictions.json';
-import french from '../../../../i18n/src/locales/fr/AiPredictions.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/AiPredictions.json';
+import french from '@pacs-ai/extension-core/src/locales/fr/AiPredictions.json';
 import englishIndex from '../../../../i18n/src/locales/en-US/index.js';
 import frenchIndex from '../../../../i18n/src/locales/fr/index.js';
 

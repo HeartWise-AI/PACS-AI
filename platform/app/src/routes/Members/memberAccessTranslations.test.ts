@@ -1,13 +1,13 @@
-import arabicMembers from '../../../../i18n/src/locales/ar/Members.json';
-import germanMembers from '../../../../i18n/src/locales/de/Members.json';
-import englishMembers from '../../../../i18n/src/locales/en-US/Members.json';
-import spanishMembers from '../../../../i18n/src/locales/es/Members.json';
-import frenchMembers from '../../../../i18n/src/locales/fr/Members.json';
-import arabicOnboarding from '../../../../i18n/src/locales/ar/Onboarding.json';
-import germanOnboarding from '../../../../i18n/src/locales/de/Onboarding.json';
-import englishOnboarding from '../../../../i18n/src/locales/en-US/Onboarding.json';
-import spanishOnboarding from '../../../../i18n/src/locales/es/Onboarding.json';
-import frenchOnboarding from '../../../../i18n/src/locales/fr/Onboarding.json';
+import arabicMembers from '@pacs-ai/extension-core/src/locales/ar/Members.json';
+import germanMembers from '@pacs-ai/extension-core/src/locales/de/Members.json';
+import englishMembers from '@pacs-ai/extension-core/src/locales/en-US/Members.json';
+import spanishMembers from '@pacs-ai/extension-core/src/locales/es/Members.json';
+import frenchMembers from '@pacs-ai/extension-core/src/locales/fr/Members.json';
+import arabicOnboarding from '@pacs-ai/extension-core/src/locales/ar/Onboarding.json';
+import germanOnboarding from '@pacs-ai/extension-core/src/locales/de/Onboarding.json';
+import englishOnboarding from '@pacs-ai/extension-core/src/locales/en-US/Onboarding.json';
+import spanishOnboarding from '@pacs-ai/extension-core/src/locales/es/Onboarding.json';
+import frenchOnboarding from '@pacs-ai/extension-core/src/locales/fr/Onboarding.json';
 
 const membersLocales = [
   englishMembers,

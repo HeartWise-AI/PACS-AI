@@ -1,5 +1,5 @@
 // Test helpers for the AI Predictions page. Synthetic values only.
-import english from '../../../../i18n/src/locales/en-US/AiPredictions.json';
+import english from '@pacs-ai/extension-core/src/locales/en-US/AiPredictions.json';
 import type { PredictionExam, PredictionModel } from './types';
 
 const strings = english as Record<string, string>;
