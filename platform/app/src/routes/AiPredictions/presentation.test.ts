@@ -215,10 +215,10 @@ describe('AI predictions presentation', () => {
     expect(countsLine(stalledExam.counts, t)).toBe('1 completed · 1 never ran · 1 expired');
     expect(noResultText(stalledExam.models[1], t)).toBe('No result. It never ran.');
     expect(noResultText(stalledExam.models[2], t)).toBe(
-      'No result. Closed automatically because it never ran'
+      'No result. Closed automatically because it did not complete in time'
     );
     expect(skipReasonLabel('EXPIRED_NEVER_RAN', t)).toBe(
-      'Closed automatically because it never ran'
+      'Closed automatically because it did not complete in time'
     );
   });
 

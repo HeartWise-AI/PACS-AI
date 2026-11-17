@@ -30,7 +30,7 @@
   "Choose a start or end date; the end date cannot be before the start date.": "Choisissez une date de début ou de fin ; la date de fin ne peut pas précéder la date de début.",
   "Close": "Fermer",
   "Close the run": "Fermer l’exécution",
-  "Closed automatically because it never ran": "Fermé automatiquement : jamais exécuté",
+  "Closed automatically because it did not complete in time": "Fermé automatiquement car il ne s’est pas terminé à temps",
   "Closed. The run is marked as cancelled.": "Fermée. L’exécution est marquée comme annulée.",
   "Closing…": "Fermeture…",
   "Collapse exam of {{patient}}": "Replier l’examen de {{patient}}",

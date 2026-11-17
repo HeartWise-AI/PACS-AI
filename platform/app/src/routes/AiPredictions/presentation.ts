@@ -270,7 +270,7 @@ export function skipReasonLabel(code: string, t: Translate): string {
     case 'MODEL_DISABLED':
       return t('The model is disabled');
     case 'EXPIRED_NEVER_RAN':
-      return t('Closed automatically because it never ran');
+      return t('Closed automatically because it did not complete in time');
     default:
       return code;
   }

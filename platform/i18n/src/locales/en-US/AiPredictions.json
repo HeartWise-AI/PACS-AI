@@ -30,7 +30,7 @@
   "Choose a start or end date; the end date cannot be before the start date.": "Choose a start or end date; the end date cannot be before the start date.",
   "Close": "Close",
   "Close the run": "Close the run",
-  "Closed automatically because it never ran": "Closed automatically because it never ran",
+  "Closed automatically because it did not complete in time": "Closed automatically because it did not complete in time",
   "Closed. The run is marked as cancelled.": "Closed. The run is marked as cancelled.",
   "Closing…": "Closing…",
   "Collapse exam of {{patient}}": "Collapse exam of {{patient}}",
