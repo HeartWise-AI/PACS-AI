@@ -1,0 +1,17 @@
+diff --git a/platform/app/.webpack/webpack.pwa.js b/platform/app/.webpack/webpack.pwa.js
+index 9dac1618970986dcc80f59e7e800c8d5a0c82c1c..f8103faa7de08a05ddb554c9c8d23b085ce7e8ac 100644
+--- a/platform/app/.webpack/webpack.pwa.js
++++ b/platform/app/.webpack/webpack.pwa.js
+@@ -221,5 +221,12 @@ module.exports = (env, argv) => {
+     ignored: /node_modules\/@cornerstonejs/,
+   };
+ 
++  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
++  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
++  const pacsAiExtend = path.join(__dirname, '../../../pacs-ai/build/extend.js');
++  if (require('fs').existsSync(pacsAiExtend)) {
++    return require(pacsAiExtend).extendWebpackPwa(mergedConfig, { env, argv });
++  }
++
+   return mergedConfig;
+ };

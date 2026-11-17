@@ -8,8 +8,8 @@ const webpackBase = require('./../../../.webpack/webpack.base.js');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { InjectManifest } = require('workbox-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { FrontendBuildVersionPlugin } = require('../../../.webpack/frontendBuildVersion');
 // ~~ Directories
 const SRC_DIR = path.join(__dirname, '../src');
 const DIST_DIR = path.join(__dirname, '../dist');
@@ -24,6 +24,8 @@ const PROXY_TARGET = process.env.PROXY_TARGET;
 const PROXY_DOMAIN = process.env.PROXY_DOMAIN;
 const PROXY_PATH_REWRITE_FROM = process.env.PROXY_PATH_REWRITE_FROM;
 const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
+const IS_COVERAGE = process.env.COVERAGE === 'true';
+
 const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const ENTRY_TARGET = process.env.ENTRY_TARGET || `${SRC_DIR}/index.js`;
 const Dotenv = require('dotenv-webpack');
@@ -53,11 +55,6 @@ module.exports = (env, argv) => {
   const baseConfig = webpackBase(env, argv, { SRC_DIR, DIST_DIR });
   const isProdBuild = process.env.NODE_ENV === 'production';
   const hasProxy = PROXY_TARGET && PROXY_DOMAIN;
-  const dotenvPlugin = new Dotenv({ defaults: path.resolve(__dirname, '../.env.example') });
-
-  // This public key is explicitly allowlisted by webpack.base.js so Docker/CI
-  // can provide it without exposing every variable from the build environment.
-  delete dotenvPlugin.definitions['process.env.APP_PUBLIC_TURNSTILE_SITE_KEY'];
 
   const mergedConfig = merge(baseConfig, {
     entry: {
@@ -83,15 +80,11 @@ module.exports = (env, argv) => {
         path.resolve(__dirname, '../../../node_modules'),
         SRC_DIR,
       ],
-      fallback: {
-        os: false,
-        crypto: false,
-      },
     },
     plugins: [
       // For debugging re-renders
       // MillionLint.webpack(),
-      dotenvPlugin,
+      new Dotenv(),
       // Clean output.path
       new CleanWebpackPlugin(),
       // Copy "Public" Folder to Dist
@@ -141,7 +134,19 @@ module.exports = (env, argv) => {
           PUBLIC_URL: PUBLIC_URL,
         },
       }),
-      new FrontendBuildVersionPlugin(),
+      // Generate a service worker for fast local loads
+      ...(IS_COVERAGE
+        ? []
+        : [
+          new InjectManifest({
+            swDest: 'sw.js',
+            swSrc: path.join(SRC_DIR, 'service-worker.js'),
+            // Need to exclude the theme as it is updated independently
+            exclude: [/theme/],
+            // Cache large files for the manifests to avoid warning messages
+            maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
+          }),
+        ]),
     ],
     // https://webpack.js.org/configuration/dev-server/
     devServer: {
@@ -187,10 +192,6 @@ module.exports = (env, argv) => {
       devMiddleware: {
         writeToDisk: true,
       },
-      headers: {
-        'Cross-Origin-Embedder-Policy': '*',
-        'Cross-Origin-Opener-Policy': 'same-origin',
-      },
     },
   });
 
@@ -210,8 +211,8 @@ module.exports = (env, argv) => {
   if (isProdBuild) {
     mergedConfig.plugins.push(
       new MiniCssExtractPlugin({
-        filename: '[name].bundle.[contenthash].css',
-        chunkFilename: '[id].[contenthash].css',
+        filename: '[name].bundle.css',
+        chunkFilename: '[id].css',
       })
     );
   }
@@ -219,6 +220,13 @@ module.exports = (env, argv) => {
   mergedConfig.watchOptions = {
     ignored: /node_modules\/@cornerstonejs/,
   };
+
+  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
+  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
+  const pacsAiExtend = path.join(__dirname, '../../../pacs-ai/build/extend.js');
+  if (require('fs').existsSync(pacsAiExtend)) {
+    return require(pacsAiExtend).extendWebpackPwa(mergedConfig, { env, argv });
+  }
 
   return mergedConfig;
 };

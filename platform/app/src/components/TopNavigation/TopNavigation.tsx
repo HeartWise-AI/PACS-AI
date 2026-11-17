@@ -9,7 +9,7 @@ import type { GetTenantInfoResponse } from '../../api/tenantDTO';
 import type { GetAPIInfoResponse } from '../../api/dto';
 import { FrontendVersionContext } from '../../App';
 import { logoutUser } from '../../service/userService';
-import logoIcon from '../../assets/pacs/logo/pacs-ai-icon-logo.png';
+import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
 import InferenceNotificationsBell from '../inference/InferenceNotificationsBell';
 import {
   getStudiesDestination,

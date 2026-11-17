@@ -18,32 +18,39 @@
 # 1. Building the React application for production
 # 2. Setting up our Nginx (Alpine Linux) image w/ step one's output
 #
+
+
+# syntax=docker/dockerfile:1.7-labs
+# This dockerfile is used to publish the `ohif/app` image on dockerhub.
+#
+# It's a good example of how to build our static application and package it
+# with a web server capable of hosting it as static content.
+#
+# docker build
+# --------------
+# If you would like to use this dockerfile to build and tag an image, make sure
+# you set the context to the project's root directory:
+# https://docs.docker.com/engine/reference/commandline/build/
+#
+#
+# SUMMARY
+# --------------
+# This dockerfile is used as an input for a second stage to make things run faster.
+#
+
+
 # Stage 1: Build the application
 # docker build -t ohif/viewer:latest .
 # Copy Files
 FROM node:20.18.1-slim as builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    curl \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential python3
 
-COPY .docker/ca-certificates/*.crt /usr/local/share/ca-certificates/
-RUN update-ca-certificates
-
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV NODE_OPTIONS=--use-openssl-ca
-
-RUN curl -fsSL https://github.com/yarnpkg/yarn/releases/download/v1.22.22/yarn-v1.22.22.tar.gz \
-    | tar xz -C /opt \
-    && ln -sf /opt/yarn-v1.22.22/bin/yarn /usr/local/bin/yarn \
-    && ln -sf /opt/yarn-v1.22.22/bin/yarn /usr/local/bin/yarnpkg
 
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
+RUN npm install -g bun@1.2.23
+RUN npm install -g lerna@7.4.2
 ENV PATH=/usr/src/app/node_modules/.bin:$PATH
 
 # Do an initial install and then a final install
@@ -51,9 +58,9 @@ COPY package.json yarn.lock preinstall.js lerna.json ./
 COPY --parents ./addOns/package.json ./addOns/*/*/package.json ./extensions/*/package.json ./modes/*/package.json ./platform/*/package.json ./
 # Run the install before copying the rest of the files
 
-RUN yarn config set cafile /etc/ssl/certs/ca-certificates.crt \
-    && yarn install --network-timeout 600000
-RUN yarn add -W ajv@8.12.0 --exact
+RUN bun pm cache rm
+RUN bun install
+RUN bun add ajv@8.12.0
 # Copy the local directory
 COPY --link --exclude=yarn.lock --exclude=package.json --exclude=Dockerfile . .
 
@@ -63,14 +70,10 @@ ENV QUICK_BUILD true
 # ENV GENERATE_SOURCEMAP=false
 ARG APP_CONFIG=config/default.js
 ARG PUBLIC_URL=/
-ARG APP_PUBLIC_TURNSTILE_SITE_KEY=
-ARG APP_BUILD_ID=
 ENV PUBLIC_URL=${PUBLIC_URL}
-ENV APP_PUBLIC_TURNSTILE_SITE_KEY=${APP_PUBLIC_TURNSTILE_SITE_KEY}
-ENV APP_BUILD_ID=${APP_BUILD_ID}
 
-RUN yarn run show:config
-RUN yarn run build
+RUN bun run show:config
+RUN bun run build
 
 # Precompress files
 RUN chmod u+x .docker/compressDist.sh

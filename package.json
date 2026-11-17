@@ -133,7 +133,7 @@
     }
   },
   "lint-staged": {
-    "src/**/*.{js,json,css}": [
+    "{extensions/pacs-ai-*,modes/pacs-ai,pacs-ai,tests/pacs-ai}/**/*.{js,jsx,ts,tsx,json,css}": [
       "prettier --write",
       "git add"
     ]

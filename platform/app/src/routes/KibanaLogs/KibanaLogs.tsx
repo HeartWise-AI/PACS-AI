@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DateRangePicker } from 'react-dates';
 import { useNavigate } from 'react-router';
 import moment from 'moment';
-import { Button } from '@ohif/ui';
+import { Button } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import TopNavigation from '../../components/TopNavigation';
 import Table from '../../components/Table';

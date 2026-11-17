@@ -35,7 +35,7 @@ jest.mock('react-router', () => ({
 }));
 
 jest.mock(
-  '@ohif/ui',
+  '@pacs-ai/ui',
   () => {
     const React = require('react');
     return {

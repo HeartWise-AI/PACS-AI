@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import Table from '../../components/Table';
 import TopNavigation from '../../components/TopNavigation';

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import TopNavigation from '../../../components/TopNavigation';
 import { Error } from '../../../api/dto';
 import userRepository from '../../../api/userRepository';

@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 jest.mock(
-  '@ohif/ui',
+  '@pacs-ai/ui',
   () => ({
     Button: ({ children, ...props }) => <button {...props}>{children}</button>,
     Typography: ({ children, ...props }) => <div {...props}>{children}</div>,

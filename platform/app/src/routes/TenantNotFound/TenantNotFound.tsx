@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@ohif/ui';
+import { Typography } from '@pacs-ai/ui';
 
 const TenantNotFound = () => {
   const { t } = useTranslation();

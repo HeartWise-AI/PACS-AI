@@ -40,7 +40,13 @@ module.exports = (env, argv) => {
       libraryTarget: 'umd',
       filename: pkg.main,
     },
-    externals: [/\b(vtk.js)/, /\b(dcmjs)/, /\b(gl-matrix)/, /^@ohif/, /^@cornerstonejs/],
+    externals: [
+      /\b(vtk.js)/,
+      /\b(dcmjs)/,
+      /\b(gl-matrix)/,
+      /^@ohif/,
+      /^@cornerstonejs/,
+    ],
     plugins: [
       new webpack.optimize.LimitChunkCountPlugin({
         maxChunks: 1,

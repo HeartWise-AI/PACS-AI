@@ -1,0 +1,36 @@
+name: PACS-AI upstream drift
+
+# Drift guard from docs/ohif-upgrade/PLAN.md 6.2. Report mode until P2.7:
+# the job prints the counts and never fails on drift.
+
+on:
+  pull_request:
+    branches: ['integration/*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pacs-ai-drift-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: Upstream drift report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the pinned upstream tag fetch only transfers what is missing.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Script tests
+        run: bash pacs-ai/scripts/tests/run-tests.sh
+
+      - name: Drift report
+        run: |
+          bash pacs-ai/scripts/check-upstream-drift.sh --report --markdown drift-summary.md
+          cat drift-summary.md >> "$GITHUB_STEP_SUMMARY"

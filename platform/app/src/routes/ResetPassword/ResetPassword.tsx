@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, Typography } from '@ohif/ui';
+import { Button, Typography } from '@pacs-ai/ui';
 import { Input } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
 import loginBG from './../../assets/pacs/bg/login-bg.png';
