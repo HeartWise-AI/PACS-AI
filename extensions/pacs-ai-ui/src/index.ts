@@ -11,6 +11,11 @@ export { default as Logo } from './components/Logo';
 export { default as Sidebar } from './components/Sidebar';
 export { default as SidebarAdmin } from './components/SidebarAdmin';
 export { default as StoreFileButton } from './components/StoreFileButton';
+// The series picker of the run-model menu and of the chat.
+export {
+  default as SelectSeriesModal,
+  isInferenceSeriesEligible,
+} from './components/SelectSeriesModal';
 
 /**
  * Registered in platform/app/pluginConfig.json. It has no OHIF modules; the

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@pacs-ai/extension-core": "1.0.0",
+    "@pacs-ai/ui": "1.0.0",
     "prop-types": "15.8.1",
     "react-markdown": "8.0.7",
     "remark-gfm": "3.0.1"

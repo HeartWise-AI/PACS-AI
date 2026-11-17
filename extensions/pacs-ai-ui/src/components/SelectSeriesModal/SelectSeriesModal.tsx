@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import closeIcon from './assets/icons/close-inactive.png';
-import uncheckIcon from './assets/icons/check-inactive.png';
-import checkIcon from './assets/icons/check-active.png';
-import informationIcon from './assets/icons/information-circle.png';
-import copyWhiteIcon from './assets/icons/copy-white.png';
+import closeIcon from '../../assets/icons/close-inactive.png';
+import uncheckIcon from '../../assets/icons/check-inactive.png';
+import checkIcon from '../../assets/icons/check-active.png';
+import informationIcon from '../../assets/icons/information-circle.png';
+import copyWhiteIcon from '../../assets/icons/copy-white.png';
 import { Input } from '@ohif/ui-next';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';

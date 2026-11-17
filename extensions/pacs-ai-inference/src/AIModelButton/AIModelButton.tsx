@@ -20,7 +20,7 @@ import JSONOutputModeModal from '../JSONOutputModeModal';
 import WebappOutputModeModal from '../WebappOutputModeModal';
 import HTMLOutputModeModal from '../HTMLOutputModeModal';
 import PDFOutputModeModal from '../PDFOutputModeModal';
-import SelectSeriesModal from '../SelectSeriesModal';
+import SelectSeriesModal from '@pacs-ai/ui/src/components/SelectSeriesModal';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { addSegmentationFromLabelmap } from '../utils/addSegmentation';

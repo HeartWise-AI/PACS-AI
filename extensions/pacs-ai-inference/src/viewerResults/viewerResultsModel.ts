@@ -1,4 +1,4 @@
-import { isInferenceSeriesEligible } from '../isInferenceSeriesEligible';
+import { isInferenceSeriesEligible } from '@pacs-ai/ui/src/components/SelectSeriesModal/isInferenceSeriesEligible';
 import type {
   PendingRunFailure,
   PendingViewerModelRun,

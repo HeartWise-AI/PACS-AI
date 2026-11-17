@@ -38,7 +38,7 @@ jest.mock('../JSONOutputModeModal', () => 'json-output-modal');
 jest.mock('../WebappOutputModeModal', () => 'webapp-output-modal');
 jest.mock('../HTMLOutputModeModal', () => 'html-output-modal');
 jest.mock('../PDFOutputModeModal', () => 'pdf-output-modal');
-jest.mock('../SelectSeriesModal', () => 'select-series-modal');
+jest.mock('@pacs-ai/ui/src/components/SelectSeriesModal', () => 'select-series-modal');
 
 const model = {
   modelId: 'deepcoro-jepa',
