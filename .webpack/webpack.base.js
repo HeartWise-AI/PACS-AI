@@ -32,7 +32,6 @@ const IS_COVERAGE = process.env.COVERAGE === 'true';
 const VERSION_NUMBER = fs.readFileSync(path.join(__dirname, '../version.txt'), 'utf8') || '';
 
 const COMMIT_HASH = fs.readFileSync(path.join(__dirname, '../commit.txt'), 'utf8') || '';
-const { frontendBuildMetadata } = require('../pacs-ai/build/frontendBuildVersion');
 
 //
 dotenv.config();
@@ -46,16 +45,6 @@ const defineValues = {
   'process.env.BUILD_NUM': JSON.stringify(BUILD_NUM),
   'process.env.VERSION_NUMBER': JSON.stringify(VERSION_NUMBER),
   'process.env.COMMIT_HASH': JSON.stringify(COMMIT_HASH),
-  'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
-  'process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED': JSON.stringify(
-    process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED || 'true'
-  ),
-  'process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED': JSON.stringify(
-    process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED || 'true'
-  ),
-  'process.env.APP_PUBLIC_TURNSTILE_SITE_KEY': JSON.stringify(
-    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY || ''
-  ),
   /* i18n */
   'process.env.USE_LOCIZE': JSON.stringify(process.env.USE_LOCIZE || ''),
   'process.env.LOCIZE_PROJECTID': JSON.stringify(process.env.LOCIZE_PROJECTID || ''),
@@ -259,6 +248,13 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
   if (isQuickBuild) {
     config.optimization.minimize = false;
     config.devtool = false;
+  }
+
+  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
+  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
+  const pacsAiExtend = path.join(__dirname, '../pacs-ai/build/extend.js');
+  if (fs.existsSync(pacsAiExtend)) {
+    return require(pacsAiExtend).extendWebpackBase(config, { env, argv, defineValues });
   }
 
   return config;

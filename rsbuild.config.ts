@@ -4,7 +4,6 @@ import { pluginNodePolyfill } from '@rsbuild/plugin-node-polyfill';
 import path from 'path';
 import writePluginImportsFile from './platform/app/.webpack/writePluginImportsFile';
 import fs from 'fs';
-const { frontendBuildMetadata } = require('./pacs-ai/build/frontendBuildVersion');
 
 const SRC_DIR = path.resolve(__dirname, './platform/app/src');
 const DIST_DIR = path.resolve(__dirname, './platform/app/dist');
@@ -28,7 +27,7 @@ const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
 const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const OHIF_OPEN = process.env.OHIF_OPEN !== 'false';
 
-export default defineConfig({
+const config = defineConfig({
   source: {
     entry: {
       index: `${SRC_DIR}/index.js`,
@@ -41,7 +40,6 @@ export default defineConfig({
       'process.env.BUILD_NUM': JSON.stringify(BUILD_NUM),
       'process.env.VERSION_NUMBER': JSON.stringify(VERSION_NUMBER),
       'process.env.COMMIT_HASH': JSON.stringify(COMMIT_HASH),
-      'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
       'process.env.USE_LOCIZE': JSON.stringify(process.env.USE_LOCIZE || ''),
       'process.env.LOCIZE_PROJECTID': JSON.stringify(process.env.LOCIZE_PROJECTID || ''),
       'process.env.LOCIZE_API_KEY': JSON.stringify(process.env.LOCIZE_API_KEY || ''),
@@ -127,11 +125,6 @@ export default defineConfig({
         from: path.resolve(PUBLIC_DIR, APP_CONFIG),
         to: 'app-config.js',
       },
-      {
-        from: path.resolve(__dirname, 'version.json'),
-        to: 'version.json',
-        transform: () => Buffer.from(`${JSON.stringify(frontendBuildMetadata, null, 2)}\n`),
-      },
       // Copy Dicom Microscopy Viewer files
       {
         from: path.resolve(__dirname, 'node_modules/dicom-microscopy-viewer/dist/dynamic-import'),
@@ -176,3 +169,8 @@ export default defineConfig({
     },
   },
 });
+
+// PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
+// Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
+const pacsAiExtend = path.resolve(__dirname, 'pacs-ai/build/extend.js');
+export default fs.existsSync(pacsAiExtend) ? require(pacsAiExtend).extendRsbuild(config) : config;

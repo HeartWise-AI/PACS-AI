@@ -1,0 +1,2 @@
+# The root .gitignore ignores every "build" directory; ours is source.
+!/build/
