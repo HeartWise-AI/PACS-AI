@@ -38,7 +38,7 @@ These override anything else in this plan.
 
 | Name | Ref | Commit | Date |
 |---|---|---|---|
-| Our code today | `origin/main` | `abe08101a` | 2026-11-14 |
+| Our code today | `origin/main` | `364555f69` | 2026-11-17 (features F18–F24 added since the baseline; see section 5) |
 | Baseline tag (same commit) | `baseline/ohif-3.11.1-pre-3.13-upgrade` | `abe08101a` | |
 | OHIF base of the fork | `v3.11.1` | `3c2b027e8bc7a238ffe46ecb5f57c6c913069c3e` | 2025-10-28 |
 | **Target pin** (latest stable) | `v3.13.14` | `e4cd86153a1aaa429ef749330eaeefd4df96a88a` | 2026-11-03 |
@@ -179,7 +179,14 @@ Paths are relative to `platform/app/src/` unless they start with a top-level dir
 | F14 | Build version and release: `version.json` at build, in-app update monitor, runtime `env-config.js`, no-store headers, service-worker kill switch | `.webpack/frontendBuildVersion.js`, `platform/app/scripts/generate-env-config.js`, `components/FrontendUpdateMonitor.tsx`, `utils/frontendVersionMonitor.ts`, `platform/app/public/sw.js`, `docker-compose.yml`, `platform/app/public/config/local_pacs_ai.js` | `webpack.base.js`, `webpack.pwa.js`, `rsbuild.config.ts`, `Dockerfile`, nginx templates, `index.html`, `init-service-worker.js`, `App.tsx` |
 | F15 | Viewer behaviour tweaks: cine autoplay for US and XA with `CineRate`; arrow keys change series and page keys change image; current series shown in the viewport action bar; error boundary without notification; data source error modal off | — | the class-c files in section 7 |
 | F16 | CI: self-hosted unit tests, staging validation, PR assistant | `.github/workflows/{claude,self-hosted-unit-tests,self-hosted-unit-tests-pr,staging-release-validation}.yml`, `CODEOWNERS` | `playwright.config.ts`, `jest.config.base.js` |
-| F17 | 151 test files | app 142, ui 7, extensions/default 1, `tests/StudyProcessingRollout.spec.ts` | `Queue.test.js` |
+| F18 | Running-jobs card (bottom right) with cancel, honest waiting wording and per-model counts; bell opens the exam (PACS-AI #495–#497) | `components/inference/runningJobs/` | none |
+| F19 | Refresh study from PACS: retrieve, progress, reload series in place, "still growing" dot (#498) | `components/inference/studyRefresh/` | `extensions/default/src/Panels/StudyBrowser/PanelStudyBrowserHeader.tsx` (4 lines), `PanelStudyBrowser.tsx` (8 lines); relies on the data source cache key `"<data source>:<uid>"` |
+| F20 | Chat citation chips `[n]` opening model result or web source (#498) | `platform/ui/src/components/ChatBox/{utils/citations.ts,components/CitationChip.tsx,citations/}`, `components/inference/viewerResults/chatCitations.ts` | none (context crosses the portal from `ViewerModelResultsProvider`) |
+| F21 | Notification audience: gateway `notify` flag, regular users only see final outcomes of their own runs, toast grouping, "Automatic" tag, Settings toggle "Notify me about automatic analyses", patient/modality lookup for off-page studies (#499, #500) | `components/inference/{notificationAudience.ts,inferenceNotifications.ts,InferenceProcessingProvider.tsx}`, `routes/Settings/` | none |
+| F22 | Readable table for flat model results without a template (PanEcho 1.0.3), raw data kept (#499) | `components/inference/studyProcessing/{readableResult.ts,ReadableModelResult.tsx}` | none |
+| F23 | AI Predictions page: one row per exam, My/Automatic/All runs (admins), filters, retrieve-from-PACS-and-open, key results, history and compare, CSV export; never-ran/expired states (#502) | `routes/AiPredictions/` | `routes/index.tsx` (route), `components/TopNavigation/navigationModel.ts` (nav item) |
+| F24 | Login cooldown notice when the Turnstile challenge cannot be used (countdown, forgot-password link) (#501); admin ingestion jobs show creator and a per-job notification switch (#500) | `routes/Login/`, `routes/WorkspaceSettings/ingestion-jobs/` | none |
+| F17 | 151 test files (more since: the F18–F24 work added roughly 30 suites; recount at P0) | app 142, ui 7, extensions/default 1, `tests/StudyProcessingRollout.spec.ts` | `Queue.test.js` |
 
 ## 6. Target architecture
 
@@ -297,6 +304,8 @@ Configuration by environment only: `PACS_AI_E2E_BASE_URL`, `PACS_AI_E2E_USER`, `
 - Credentials: `~/.config/pacs-ai/viewer.env` on that host (mode 600, keys `EMAIL` and `PASSWORD`). Load as environment variables for the browser process only; never print, copy or commit them.
 - Studies: the three coronary angiography (XA) studies of 2026-11-14 (accessions ending 958701, 958801, 958901; each has stored results for DeepCORO-JEPA 2.1.0, CathEF-CLIP, DeepRV-CLIP, MACE, CTO, SYNTAX) and one echo (US) study. Their UIDs are in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/studies.env` on the host, not in the repository.
 - CT: the server's Orthanc holds no CT (XA 21 studies, US 191 on 2026-11-15). CT studies are visible only through the hospital PACS query in the work list, and the TotalSegmentator model is not installed. The CT/TotalSegmentator check is blocked until the owner names a CT to retrieve and the model is deployed; record it as blocked, do not retrieve one on your own.
+- **Image retention (stated by the owner, 2026-11-16):** a server process deletes study images from the local Orthanc about 24 h after they arrive; only AI results are kept. The reference studies above may no longer be stored locally: before a viewer run, retrieve the study from the PACS (the F19 refresh button or the work list retrieve) and confirm it is local; a viewer run on a removed study returns 409 `STUDY_NOT_AVAILABLE_LOCALLY`. The US reference study was already removed on 2026-11-16.
+- PanEcho 1.0.3 and the procedure view classifier 1.0.5 now run from the official published images (2026-11-16); the PanEcho and classifier notes below are historical.
 - The work list opens on today's date and is empty on days without studies; tests must set the date range (2026-11-13 to 2026-11-15 shows the reference studies).
 
 **Baseline (taken 2026-11-15 on build `chat-activity-d24465d-20261114`, OHIF 3.11.1, identical to main):** 43 screenshots at 1600×900 in `/home/ravram/pacs-ai-baseline/2026-11-15-ohif-3.11.1/` on the host (mode 700; they contain patient data and must never enter the repository or a PR). The capture scripts are in its `scripts/` folder; `visual.spec.ts` should reproduce the same screens: login, register, reset password, work list (empty default, searched, expanded row, French), user menu, settings (English and French), AI models, members, workspace settings (four tabs), Kibana logs, unknown URL, XA viewer for each study, AI menu, result drawer (DeepRV-CLIP, DeepCORO-JEPA, CathEF, SYNTAX), chat, layout menu, US viewer and its AI menu. Visual comparison runs on the host against that folder; only masked or synthetic images may be committed.
@@ -325,7 +334,11 @@ Known behaviour of the environment that the spec must handle (not viewer defects
 | `study-processing.spec.ts` | status updates; run history; notifications bell; reprocess is offered to operators |
 | `chat.spec.ts` | chat opens, answer streams, tool-activity steps shown live and on the answer, drag |
 | `tour.spec.ts` | tour shows once per user, not again after reload or on another browser context; settings toggle re-enables |
-| `admin.spec.ts` | members list; workspace settings sections load; model catalog; GPU panel |
+| `admin.spec.ts` | members list; workspace settings sections load; model catalog; GPU panel; ingestion jobs show "Created by" and the per-job Notifications switch |
+| `jobs-and-notifications.spec.ts` | running-jobs card appears while a model runs, cancel from the card, counts; bell entry opens the exam; a regular user gets no toast for automatic runs; Settings toggle mutes automatic notifications |
+| `refresh-and-citations.spec.ts` | "Refresh study from PACS" adds new series in place without reload; chat answer shows `[n]` chips that open the model result popover |
+| `ai-predictions.spec.ts` | page loads; My/Automatic/All runs (All only for admins, 403 otherwise); filters; expand an exam shows key results; Compare with latest; CSV export; a removed-images exam offers "Retrieve from PACS and open" |
+| `login-cooldown.spec.ts` | after 3 wrong passwords on a non-existent account: cooldown notice with a countdown, Sign in re-enabled when it ends (use a fake e-mail so no real account is locked) |
 | `i18n.spec.ts` | switch to French; our namespaces render translated strings |
 | `release.spec.ts` | `version.json` served with no-store; no service worker registered; `env-config.js` present |
 | `visual.spec.ts` | screenshots of login, work list, viewer with a study, results drawer, chat, settings; compared against the baseline taken on `main` (tolerance set once in phase 0) |
