@@ -16,7 +16,10 @@ window.config = {
   extensions: [],
   modes: [],
   customizationService: {},
-  showStudyList: true,
+  // OHIF's own study list stays off: the PACS-AI work list is served at `/` by
+  // @pacs-ai/extension-shell (routes.customRoutes). With this on, OHIF would
+  // register its list at `/` ahead of the custom routes.
+  showStudyList: false,
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   showCPUFallbackMessage: true,

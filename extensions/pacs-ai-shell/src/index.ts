@@ -1,4 +1,6 @@
 import { id } from './id';
+import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
+import { getPacsAiRoutes } from './routes/pacsAiRoutes';
 
 /**
  * PACS-AI shell extension (docs/ohif-upgrade/PLAN.md 6.1): our pages as
@@ -8,6 +10,24 @@ import { id } from './id';
  */
 const pacsAiShellExtension = {
   id,
+
+  preRegistration() {
+    stopRouteErrorNotifications();
+  },
+
+  getCustomizationModule() {
+    return [
+      {
+        name: 'global',
+        value: {
+          'routes.customRoutes': {
+            routes: getPacsAiRoutes(),
+            notFoundRoute: null,
+          },
+        },
+      },
+    ];
+  },
 };
 
 export default pacsAiShellExtension;
