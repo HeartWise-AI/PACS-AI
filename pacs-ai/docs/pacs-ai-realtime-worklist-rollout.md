@@ -136,7 +136,7 @@ Verify:
 
 ## Automated deployed verification
 
-The opt-in Playwright suite is `tests/StudyProcessingRollout.spec.ts`. It never stores credentials
+The opt-in Playwright suite is `tests/pacs-ai/rollout/StudyProcessingRollout.spec.ts`. It never stores credentials
 in the repository and disables traces and videos so bearer credentials cannot enter artifacts.
 
 Provide secrets through the secure CI secret store:
