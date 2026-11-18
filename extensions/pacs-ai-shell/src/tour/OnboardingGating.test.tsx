@@ -14,7 +14,7 @@ jest.mock('react-router', () => ({
 jest.mock('shepherd.js/dist/css/shepherd.css', () => ({}), { virtual: true });
 
 // eslint-disable-next-line import/first
-import { Onboarding } from '../../../ui-next/src/components/Onboarding/Onboarding';
+import { Onboarding } from '@ohif/ui-next/components/Onboarding/Onboarding';
 
 const tours = [
   {
