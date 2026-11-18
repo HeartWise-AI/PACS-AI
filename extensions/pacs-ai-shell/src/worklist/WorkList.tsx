@@ -1402,7 +1402,11 @@ function WorkList() {
                                   </h1>
                                   <span
                                     className="inline-flex"
-                                    data-tour-id={WORKLIST_OPEN_VIEWER_TOUR_ID}
+                                    data-tour-id={
+                                      row.studyInstanceUID === tutorialStudyUID
+                                        ? WORKLIST_OPEN_VIEWER_TOUR_ID
+                                        : undefined
+                                    }
                                   >
                                     <Button
                                       onClick={() => {
