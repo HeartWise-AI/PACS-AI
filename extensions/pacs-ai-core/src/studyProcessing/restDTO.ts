@@ -159,3 +159,18 @@ export interface CreateStudyProcessingRunResponseDTO {
   phase: ProcessingRunPhase;
   expectedModels: number;
 }
+
+export interface BulkReprocessStudyResultDTO {
+  studyInstanceUID: string;
+  accepted: boolean;
+  run?: CreateStudyProcessingRunResponseDTO;
+  errorCode?: string;
+  message?: string;
+  retryAfterSeconds?: number;
+}
+
+export interface BulkReprocessStudiesResponseDTO {
+  results: BulkReprocessStudyResultDTO[];
+  acceptedCount: number;
+  rejectedCount: number;
+}

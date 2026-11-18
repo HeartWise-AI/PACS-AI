@@ -1,11 +1,13 @@
 import Api from '../pacsAPIAxios';
 import {
+  mapBulkReprocessStudiesResponse,
   mapCreatedStudyProcessingRun,
   mapProcessingRun,
   mapStudyProcessingRunHistory,
   mapWorklistStudyStatusPage,
 } from './restMapper';
 import type {
+  BulkReprocessStudiesResponseDTO,
   CreateStudyProcessingRunResponseDTO,
   ProcessingRunDetailDTO,
   StudyProcessingRunHistoryPageDTO,
@@ -13,6 +15,7 @@ import type {
   WorklistStudyStatusPageDTO,
 } from './restDTO';
 import type {
+  BulkStudyReprocessResponse,
   CreatedStudyProcessingRun,
   ProcessingRun,
   StudyProcessingRunHistory,
@@ -21,6 +24,7 @@ import type {
 
 export const DEFAULT_STUDY_PROCESSING_PAGE_SIZE = 25;
 export const MAX_STUDY_PROCESSING_PAGE_SIZE = 100;
+export const MAX_BULK_REPROCESS_STUDIES = 10;
 
 interface HTTPResponse<T> {
   data: T;
@@ -28,7 +32,7 @@ interface HTTPResponse<T> {
 
 export interface StudyProcessingHTTPClient {
   get<T>(url: string, config?: { params?: URLSearchParams }): Promise<HTTPResponse<T>>;
-  post<T>(url: string): Promise<HTTPResponse<T>>;
+  post<T>(url: string, data?: unknown): Promise<HTTPResponse<T>>;
 }
 
 export interface StudyProcessingPageRequest {
@@ -67,6 +71,7 @@ export interface StudyProcessingRESTRepository {
   ): Promise<StudyProcessingRunHistoryResult>;
   loadProcessingRunDetail(runId: string): Promise<ProcessingRun>;
   reprocessStudy(studyInstanceUID: string): Promise<CreatedStudyProcessingRun>;
+  reprocessStudies(studyInstanceUIDs: string[]): Promise<BulkStudyReprocessResponse>;
   // Cancels the models of the run that have not started computing and
   // returns the run as it then is. Rejects with status 409 when every
   // remaining model is already computing.
@@ -139,6 +144,19 @@ function requiredPathIdentifier(value: string, label: string): string {
   }
 
   return encodeURIComponent(normalized);
+}
+
+function normalizeBulkStudyInstanceUIDs(studyInstanceUIDs: string[]): string[] {
+  const normalized = [...new Set(studyInstanceUIDs.map(uid => uid.trim()).filter(Boolean))];
+
+  if (normalized.length === 0 || normalized.length > MAX_BULK_REPROCESS_STUDIES) {
+    throw new StudyReprocessRESTError(
+      `Select between 1 and ${MAX_BULK_REPROCESS_STUDIES} studies.`,
+      400
+    );
+  }
+
+  return normalized;
 }
 
 function responseStatus(error: unknown): number | null {
@@ -249,6 +267,24 @@ async function postResponseData<T>(client: StudyProcessingHTTPClient, path: stri
   }
 }
 
+async function postBulkResponseData<T>(
+  client: StudyProcessingHTTPClient,
+  path: string,
+  data: unknown
+): Promise<T> {
+  try {
+    const response = await client.post<WorklistAPIResponse<T>>(path, data);
+
+    if (!response.data.success) {
+      throw new StudyReprocessRESTError('Unable to reprocess the selected studies.', null);
+    }
+
+    return response.data.data;
+  } catch (error: unknown) {
+    throw safeReprocessRESTError(error);
+  }
+}
+
 export function createStudyProcessingRESTRepository(
   client: StudyProcessingHTTPClient = Api() as StudyProcessingHTTPClient
 ): StudyProcessingRESTRepository {
@@ -318,6 +354,16 @@ export function createStudyProcessingRESTRepository(
         `/v1/inference/worklist/studies/${encodedStudyInstanceUID}/reprocess`
       );
       return mapCreatedStudyProcessingRun(run);
+    },
+
+    async reprocessStudies(studyInstanceUIDs: string[]): Promise<BulkStudyReprocessResponse> {
+      const normalizedStudyInstanceUIDs = normalizeBulkStudyInstanceUIDs(studyInstanceUIDs);
+      const response = await postBulkResponseData<BulkReprocessStudiesResponseDTO>(
+        client,
+        '/v1/inference/worklist/studies/reprocess-batch',
+        { studyInstanceUIDs: normalizedStudyInstanceUIDs }
+      );
+      return mapBulkReprocessStudiesResponse(response);
     },
   };
 }

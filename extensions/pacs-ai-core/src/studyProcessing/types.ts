@@ -223,6 +223,29 @@ export interface CreatedStudyProcessingRun {
   expectedModels: number;
 }
 
+export interface BulkStudyReprocessAcceptedResult {
+  studyInstanceUID: string;
+  accepted: true;
+  run: CreatedStudyProcessingRun;
+}
+
+export interface BulkStudyReprocessRejectedResult {
+  studyInstanceUID: string;
+  accepted: false;
+  errorCode: string;
+  retryAfterSeconds: number | null;
+}
+
+export type BulkStudyReprocessResult =
+  | BulkStudyReprocessAcceptedResult
+  | BulkStudyReprocessRejectedResult;
+
+export interface BulkStudyReprocessResponse {
+  results: BulkStudyReprocessResult[];
+  acceptedCount: number;
+  rejectedCount: number;
+}
+
 export interface PaginatedStudyProcessingSummaries {
   items: StudyProcessingSummary[];
   page: number;
