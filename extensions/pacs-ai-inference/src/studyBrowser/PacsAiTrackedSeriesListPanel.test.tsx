@@ -68,8 +68,10 @@ jest.mock(
       FooterAction: Div,
       Icons: new Proxy({}, { get: () => () => null }),
     };
-  },
-  { virtual: true }
+  }
+  // Not virtual: @ohif/ui-next resolves (package exports). A virtual mock of a
+  // resolvable module leaks into later suites of the same jest worker, which
+  // then load the real ui-next instead of their own mock.
 );
 
 jest.mock(

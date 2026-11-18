@@ -22,7 +22,8 @@ jest.mock('../InferenceNotificationsBell', () => ({ __esModule: true, default: (
 jest.mock('../viewerResults/ViewerModelResultsProvider', () => ({}));
 // Module-level needs of our panel components (they are not rendered here).
 jest.mock('@ohif/core', () => ({ utils: {}, useSystem: jest.fn() }), { virtual: true });
-jest.mock('@ohif/ui-next', () => ({ Icons: {} }), { virtual: true });
+// Not virtual: @ohif/ui-next resolves (see PacsAiTrackedSeriesListPanel.test.tsx).
+jest.mock('@ohif/ui-next', () => ({ Icons: {} }));
 jest.mock(
   '@ohif/extension-default',
   () => ({
