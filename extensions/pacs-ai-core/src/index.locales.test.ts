@@ -12,15 +12,17 @@ describe('@pacs-ai/extension-core locales', () => {
   test('a registration-time i18n.t sees our translations after import alone', async () => {
     const i18n = require('@ohif/i18n').default;
     await i18n.initializing;
-    await i18n.changeLanguage('fr');
+    // Upstream de has no SidePanel namespace (since OHIF 3.13 upstream fr
+    // translates these two labels itself), so de shows whether ours are in.
+    await i18n.changeLanguage('de');
     // What extensions/default/src/getPanelModule.tsx does while registering.
     const panelLabels = () => [i18n.t('SidePanel:Studies'), i18n.t('SidePanel:Measurements')];
-    expect(panelLabels()).not.toEqual(['Études', 'Mesures']);
+    expect(panelLabels()).not.toEqual(['Studien', 'Messungen']);
 
     require('./index'); // import only: no preRegistration
 
-    expect(panelLabels()).toEqual(['Études', 'Mesures']);
-    await i18n.changeLanguage('de');
     expect(panelLabels()).toEqual(['Studien', 'Messungen']);
+    await i18n.changeLanguage('fr');
+    expect(panelLabels()).toEqual(['Études', 'Mesures']);
   });
 });
