@@ -1,0 +1,87 @@
+name: PACS-AI upstream canary
+
+# Weekly dry run of the next OHIF upgrade (docs/ohif-upgrade/PLAN.md P4.2,
+# docs/ohif-upgrade/RUNBOOK.md): resolves the newest upstream tag (betas
+# included), runs pacs-ai/scripts/upgrade-ohif.sh with --keep-going on a
+# throwaway local branch of this job's checkout, writes the summary to the
+# run page and uploads the logs. Nothing is pushed: the checkout keeps no
+# credentials and the token is read-only. No other secret is used.
+#
+# Runner: GitHub-hosted ubuntu-latest (Docker present) unless the repository
+# variable PACS_AI_CANARY_RUNS_ON holds a JSON label list, e.g.
+# ["self-hosted","linux","x64","pacs-ai"]; a self-hosted runner needs Docker
+# (the Node steps run in node:<upstream .node-version>-slim) and Node 24.
+# A red run means the next upgrade needs work; read the summary.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1' # Mondays 06:17 UTC
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'OHIF tag: "latest" (newest, betas included), "latest:<prefix>" (e.g. latest:v3.14) or a tag'
+        required: false
+        default: latest
+      build:
+        description: 'Run the build (needs several GB of memory)'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pacs-ai-upstream-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Upgrade dry run
+    runs-on: ${{ vars.PACS_AI_CANARY_RUNS_ON && fromJSON(vars.PACS_AI_CANARY_RUNS_ON) || 'ubuntu-latest' }}
+    timeout-minutes: 150
+    env:
+      UPSTREAM_URL: https://github.com/OHIF/Viewers.git
+      # The script commits the merge on a local branch; this identity never
+      # leaves the runner.
+      GIT_AUTHOR_NAME: pacs-ai-upstream-canary
+      GIT_AUTHOR_EMAIL: canary@example.invalid
+      GIT_COMMITTER_NAME: pacs-ai-upstream-canary
+      GIT_COMMITTER_EMAIL: canary@example.invalid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history: the merge needs the common ancestry with upstream.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Script tests
+        run: bash pacs-ai/scripts/tests/test-upgrade-ohif.sh
+
+      - name: Upgrade dry run
+        env:
+          TAG: ${{ inputs.tag || 'latest' }}
+          BUILD: ${{ inputs.build }}
+        run: |
+          set +e
+          LOG_DIR=$RUNNER_TEMP/upgrade-ohif
+          args=(--keep-going --log-dir "$LOG_DIR")
+          [[ $BUILD == false ]] && args+=(--no-build)
+          bash pacs-ai/scripts/upgrade-ohif.sh "${args[@]}" "$TAG"
+          rc=$?
+          if [[ -f $LOG_DIR/summary.md ]]; then
+            cat "$LOG_DIR/summary.md" >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo "upgrade-ohif.sh stopped before writing a summary (exit $rc); see the job log." >>"$GITHUB_STEP_SUMMARY"
+          fi
+          exit $rc
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-ohif-logs-${{ github.run_id }}
+          path: ${{ runner.temp }}/upgrade-ohif
+          if-no-files-found: ignore
+          retention-days: 30
