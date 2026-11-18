@@ -3,22 +3,6 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-jest.mock('@ohif/ui-next', () => {
-  const ReactActual = jest.requireActual<typeof import('react')>('react');
-  class MockErrorBoundary extends ReactActual.Component<any, { failed: boolean }> {
-    state = { failed: false };
-    static getDerivedStateFromError() {
-      return { failed: true };
-    }
-    componentDidCatch() {}
-    render() {
-      const Fallback = this.props.fallbackComponent;
-      return this.state.failed ? <Fallback /> : this.props.children;
-    }
-  }
-  return { ErrorBoundary: MockErrorBoundary };
-});
-
 const page = name => () => <div id="page">{name}</div>;
 jest.mock('../worklist', () => page('worklist'));
 jest.mock('./Login', () => page('login'));
@@ -95,10 +79,11 @@ describe('PACS-AI custom routes', () => {
       expect(container.querySelector('#page').textContent).toBe('ai-predictions');
     });
 
-    test('keep a failing page inside our own error boundary', () => {
+    test('keep a failing page inside our own error boundary, with a visible message', () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       renderRoute('/settings');
-      expect(container.innerHTML).toBe('');
+      expect(container.querySelector('[data-testid="pacs-ai-error-fallback"]')).not.toBeNull();
+      expect(container.textContent).toContain('settings failed');
       error.mockRestore();
     });
 
