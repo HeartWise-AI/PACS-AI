@@ -1,5 +1,5 @@
 /**
- * OHIF v3.11.1 extensions/default/src/Panels/StudyBrowser/PanelStudyBrowserHeader.tsx
+ * OHIF v3.13.14 extensions/default/src/Panels/StudyBrowser/PanelStudyBrowserHeader.tsx
  * with the PACS-AI changes (marked "PACS-AI"): a transparent bar, the
  * view-preset toggles in our colour, and a slot for extra actions (the
  * refresh-from-PACS button).
@@ -23,6 +23,7 @@ function PacsAiPanelStudyBrowserHeader({
   updateActionIconValue: (actionIcon: actionIcon) => void;
   extraActions?: React.ReactNode; // PACS-AI
 }) {
+  // Button order: Settings button then List view mode (thumbnails vs. list)
   return (
     <>
       {/* PACS-AI */}

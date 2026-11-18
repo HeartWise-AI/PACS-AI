@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ToolbarService from '@ohif/core/src/services/ToolBarService/ToolbarService';
+import { registerModeToolbar } from '@ohif/mode-basic/src/modeCustomization';
 
 import pacsAiChatExtension, {
   CHAT_BUTTON_ID,
@@ -73,6 +74,29 @@ describe('@pacs-ai/extension-chat', () => {
     expect(toolbarService.getButtonSection(CHAT_BUTTON_SECTION)).toHaveLength(1);
   });
 
+  // OHIF 3.13: the mode route seeds the mode's toolbar composition and the
+  // mode's onModeEnter registers it (registerModeToolbar) after the
+  // extensions' onModeEnter; that must not drop the chat button.
+  it('keeps the chat button when the mode registers its toolbar afterwards', () => {
+    const servicesManager = { name: 'services' } as Record<string, unknown>;
+    const toolbarService = createToolbarService(servicesManager);
+    servicesManager.services = { toolbarService };
+
+    toolbarService.onModeEnter();
+    pacsAiChatExtension.onModeEnter({ servicesManager });
+    registerModeToolbar(
+      { toolbarService },
+      {
+        toolbarButtons: [{ id: 'Zoom', uiType: 'ohif.toolButton', props: {} }],
+        toolbarSections: [{ primary: ['Zoom'] }],
+      }
+    );
+
+    const section = toolbarService.getButtonSection(CHAT_BUTTON_SECTION);
+    expect(section).toHaveLength(1);
+    expect(section[0].id).toBe(CHAT_BUTTON_ID);
+  });
+
   it('renders the chat button with the services, ignoring the toolbar props', () => {
     const servicesManager = { name: 'the services' } as Record<string, unknown>;
     const toolbarService = createToolbarService(servicesManager);
@@ -94,6 +118,8 @@ describe('@pacs-ai/extension-chat', () => {
   });
 
   it('does nothing on mode entry without a toolbar service', () => {
-    expect(() => pacsAiChatExtension.onModeEnter({ servicesManager: { services: {} } })).not.toThrow();
+    expect(() =>
+      pacsAiChatExtension.onModeEnter({ servicesManager: { services: {} } })
+    ).not.toThrow();
   });
 });

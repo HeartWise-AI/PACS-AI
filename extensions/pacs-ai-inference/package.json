@@ -36,6 +36,7 @@
     "react-d3-speedometer": "^2.2.1"
   },
   "devDependencies": {
+    "@ohif/mode-basic": "workspace:*",
     "@testing-library/react": "13.4.0"
   }
 }

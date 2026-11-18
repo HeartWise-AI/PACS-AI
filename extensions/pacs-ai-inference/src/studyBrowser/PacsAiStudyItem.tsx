@@ -1,5 +1,5 @@
 /**
- * OHIF v3.11.1 platform/ui-next/src/components/StudyItem/StudyItem.tsx with the
+ * OHIF v3.13.14 platform/ui-next/src/components/StudyItem/StudyItem.tsx with the
  * PACS-AI changes (marked "PACS-AI"): it reports the study's modalities to the
  * study context (the run-model menu reads them), uses our colours, and renders
  * the PACS-AI thumbnail list. Prop types dropped.
