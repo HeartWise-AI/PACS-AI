@@ -1,7 +1,12 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HangingProtocolService } from '@ohif/core';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle, useImageViewer } from '@ohif/ui-next';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+  useImageViewer,
+} from '@ohif/ui-next';
 import { useAppConfig } from '@state';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { ViewerModelResultsProvider } from '@pacs-ai/extension-inference/src/viewerResults/ViewerModelResultsProvider';
@@ -16,7 +21,7 @@ const resizableHandleClassName = 'mt-[1px] bg-white/10';
 
 /**
  * The PACS-AI viewer layout template (getLayoutTemplateModule), built from
- * the default extension's ViewerLayout as PACS-AI changed it: our top
+ * the default extension's ViewerLayout (OHIF 3.13.14) as PACS-AI changed it: our top
  * navigation above a rounded viewer area, our header bar (toolbar, run-model
  * menu, chat), the stored-results context around the viewer, and the tour
  * gated by the server. It takes the same props as the default layout, so a
@@ -98,11 +103,11 @@ function PacsAiViewerLayout({
    * is sized to our viewport.
    */
   useEffect(() => {
-    document.body.classList.add('bg-black');
+    document.body.classList.add('bg-background');
     document.body.classList.add('overflow-hidden');
 
     return () => {
-      document.body.classList.remove('bg-black');
+      document.body.classList.remove('bg-background');
       document.body.classList.remove('overflow-hidden');
     };
   }, []);
@@ -174,6 +179,11 @@ function PacsAiViewerLayout({
 
   const viewportComponents = viewports.map(getViewportComponentData);
 
+  // OHIF's ViewerLayout also renders the investigational-use dialog
+  // (appConfig.investigationalUseDialog) and Onboarding; PACS-AI keeps the
+  // dialog hidden (decision D3) and renders Onboarding through ViewerTour
+  // (server-gated). SidePanelWithServices (3.13) reads toolbarService and
+  // viewportGridService from servicesManager.services, which OHIF passes in.
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#151815]">
       <TopNavigation title="Viewer" />
