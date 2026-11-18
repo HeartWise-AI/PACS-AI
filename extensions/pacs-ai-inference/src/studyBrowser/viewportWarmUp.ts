@@ -15,13 +15,16 @@ import { cache, eventTarget, Enums } from '@cornerstonejs/core';
  * of three runs; with 5 thumbnail requests the advance came 0.1 s after the
  * first image). Waiting for a few frames of the shown series first keeps
  * cine starting right after the first image; the thumbnails start a few
- * hundred milliseconds later.
+ * hundred milliseconds later. P3.7: 2 frames and 1 s (was 4 and 1.5 s), and
+ * the clip's prefetch is held low until the thumbnails are in
+ * (./prefetchHold.ts); with 4 frames and no hold the thumbnails queued behind
+ * the whole clip.
  */
 
 /** Frames after the shown one that must be in the cache before thumbnails start. */
-export const WARM_UP_FRAMES = 4;
+export const WARM_UP_FRAMES = 2;
 /** Longest wait once the first image is shown. */
-export const AFTER_FIRST_IMAGE_TIMEOUT_MS = 1500;
+export const AFTER_FIRST_IMAGE_TIMEOUT_MS = 1000;
 /** Longest wait in total (a viewport that never loads must not block thumbnails). */
 export const TOTAL_TIMEOUT_MS = 5000;
 /** Safety net next to the cache and viewport events. */
