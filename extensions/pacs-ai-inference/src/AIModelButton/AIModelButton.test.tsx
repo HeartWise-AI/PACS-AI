@@ -18,14 +18,15 @@ jest.mock('@pacs-ai/extension-core/src/api/dto', () => ({
 jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({ logoutUser: jest.fn() }));
 jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository', () => ({
   __esModule: true,
-  default: { PredictInferenceModel: jest.fn() },
+  default: { PredictInferenceModel: jest.fn(), GetInferenceAvailableModels: jest.fn() },
 }));
 jest.mock('@pacs-ai/extension-core/src/providers/AlertProvider', () => ({
   AlertContext: jest.requireActual('react').createContext(null),
 }));
+const mockStudyContext = { selectedModalities: { XA: { modality: 'XA' } } as Record<string, unknown> };
 jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({
   __esModule: true,
-  default: () => ({ selectedModalities: { XA: { modality: 'XA' } } }),
+  default: () => mockStudyContext,
 }));
 jest.mock('../utils/addSegmentation', () => ({
   addSegmentationFromLabelmap: jest.fn(),
@@ -345,5 +346,71 @@ describe('AIModelButton runs', () => {
 
     expect(all('[data-testid="ai-model-result-subset"]')).toHaveLength(0);
     expect(all('[data-testid="ai-model-previous-result"]')).toHaveLength(1);
+  });
+});
+
+describe('AIModelButton model list', () => {
+  const getModels = inferenceRepository.GetInferenceAvailableModels as jest.Mock;
+  const panEcho = {
+    modelId: 'panecho',
+    containerId: 'container-panecho',
+    containerName: 'panecho',
+    modelName: 'PanEcho',
+    version: '1.0.3',
+    outputMode: 'HTML',
+    supportedDicomModalities: ['US'],
+    supportedAdditionalMetadata: [],
+  };
+
+  beforeEach(() => {
+    const { pacsAiModelsService } = jest.requireActual(
+      '@pacs-ai/extension-core/src/services/PacsAiModelsService'
+    );
+    pacsAiModelsService.reset();
+    getModels.mockReset();
+    mockStudyContext.selectedModalities = { 'US\\SR': { modality: 'US\\SR' } };
+    (useViewerModelResults as jest.Mock).mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    mockStudyContext.selectedModalities = { XA: { modality: 'XA' } };
+  });
+
+  function renderButton(models: unknown[]) {
+    return render(
+      <AlertContext.Provider value={jest.fn() as any}>
+        <AIModelButton
+          servicesManager={{ services: {} } as any}
+          inferenceAvailableModels={models as any}
+        />
+      </AlertContext.Provider>
+    );
+  }
+
+  test('opening the menu asks api-pacs again for the models', async () => {
+    getModels.mockResolvedValue({ data: [panEcho] });
+    const { container } = renderButton([model]);
+
+    await act(async () => {
+      fireEvent.click(container.querySelector('[data-tour-id="ai-model-button"]')!);
+    });
+
+    expect(getModels).toHaveBeenCalledTimes(1);
+  });
+
+  test('a study whose model is missing offers a retry instead of a dead end', async () => {
+    getModels.mockResolvedValue({ data: [model] });
+    const { container, getByText } = renderButton([model]);
+
+    await act(async () => {
+      fireEvent.click(container.querySelector('[data-tour-id="ai-model-button"]')!);
+    });
+
+    expect(getByText('No inference models found')).toBeTruthy();
+    expect(getByText('ModelsMayBeBusy')).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(getByText('TryAgain'));
+    });
+    expect(getModels).toHaveBeenCalledTimes(2);
   });
 });

@@ -47,5 +47,8 @@
   "ViewerResultSeriesAll": "Todas las series",
   "ViewerResultSeriesSubset": "{{used}} de {{total}} series",
   "ViewerResultSeriesCount": "{{used}} serie(s)",
-  "ViewerResultSeriesListTitle": "Series utilizadas en esta ejecución"
+  "ViewerResultSeriesListTitle": "Series utilizadas en esta ejecución",
+  "LookingForModels": "Buscando modelos…",
+  "ModelsMayBeBusy": "Un modelo ocupado con otro estudio puede faltar un momento.",
+  "TryAgain": "Reintentar"
 }
