@@ -3,6 +3,7 @@ import {
   basicRoute,
   cornerstone,
   customizations as basicCustomizations,
+  dicomecg,
   extensionDependencies as basicDependencies,
   mode as basicMode,
   modeInstance as basicModeInstance,
@@ -47,9 +48,24 @@ export const extensionDependencies = {
 };
 
 /**
+ * OHIF 3.13's basic mode added the waveform handler
+ * (`@ohif/extension-cornerstone.sopClassHandlerModule.DicomEcgSopClassHandler`),
+ * which also takes the Hemodynamic Waveform Storage objects of cath-lab XA
+ * studies. `/viewer` keeps what 3.11.1's longitudinal mode handled: no
+ * waveform handler in the SOP class handlers or in any viewport.
+ */
+const withoutWaveforms = (handlers: string[]) =>
+  handlers.filter(handler => handler !== dicomecg.sopClassHandler);
+
+/** SOP class handlers: basic's (same order), minus the waveform handler. */
+export const sopClassHandlers = withoutWaveforms(basicModeInstance.sopClassHandlers);
+
+/**
  * The layout: the basic layout with the PACS-AI layout template, the PACS-AI
- * study browser (measurement-tracking variant) on the left, and the
- * longitudinal mode's right panels and tracked viewport.
+ * study browser (measurement-tracking variant) on the left, and, as 3.11.1's
+ * longitudinal mode had them, its right panels and viewports: the tracked
+ * cornerstone viewport in place of basic's untracked one, then basic's SR,
+ * PDF, SEG, PMAP and RT viewports.
  */
 export const pacsAiLayout = {
   ...basicLayout,
@@ -61,9 +77,11 @@ export const pacsAiLayout = {
     viewports: [
       {
         namespace: tracked.viewport,
-        displaySetsToDisplay: basicLayout.props.viewports[0].displaySetsToDisplay,
+        displaySetsToDisplay: withoutWaveforms(basicLayout.props.viewports[0].displaySetsToDisplay),
       },
-      ...basicLayout.props.viewports,
+      ...basicLayout.props.viewports.filter(
+        viewport => viewport.namespace !== cornerstone.viewport
+      ),
     ],
   },
 };
@@ -98,7 +116,7 @@ function onModeExit(this: any, args) {
 /**
  * The PACS-AI viewer mode instance (docs/ohif-upgrade/PLAN.md 6.1, F5–F9,
  * F15), built on OHIF's basic mode (@ohif/mode-basic) the way OHIF's
- * longitudinal mode is: same SOP class handlers, hanging protocol, tool
+ * longitudinal mode is: same SOP class handlers (without waveforms, see above), hanging protocol, tool
  * groups, toolbar composition (`cornerstone.toolbarButtons`/`toolbarSections`)
  * and mode customizations (`basicModeCustomizations`). On top of it:
  *
@@ -120,6 +138,7 @@ export const modeInstance = {
   hide: false,
   routes: [pacsAiRoute],
   extensions: extensionDependencies,
+  sopClassHandlers,
   onModeEnter,
   onModeExit,
 };

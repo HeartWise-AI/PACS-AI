@@ -60,7 +60,62 @@ describe('@pacs-ai/mode-viewer', () => {
     expect(viewerMode.hide).toBe(false);
   });
 
-  test('names the PACS-AI layout and study browser and the longitudinal right panels and tracked viewport', () => {
+  // What OHIF 3.11.1's longitudinal mode (`/viewer` before this mode) used,
+  // copied from refs/upstream/v3.11.1:modes/longitudinal/src/index.ts. A
+  // handler or viewport @ohif/mode-basic adds later fails these on purpose:
+  // decide whether `/viewer` takes it.
+  const V3_11_1_SOP_CLASS_HANDLERS = [
+    '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video',
+    '@ohif/extension-cornerstone-dicom-seg.sopClassHandlerModule.dicom-seg',
+    '@ohif/extension-cornerstone-dicom-pmap.sopClassHandlerModule.dicom-pmap',
+    '@ohif/extension-default.sopClassHandlerModule.stack',
+    '@ohif/extension-cornerstone.sopClassHandlerModule.DicomMicroscopySopClassHandler',
+    '@ohif/extension-dicom-pdf.sopClassHandlerModule.dicom-pdf',
+    '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr-3d',
+    '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr',
+    '@ohif/extension-cornerstone-dicom-rt.sopClassHandlerModule.dicom-rt',
+  ];
+  const V3_11_1_VIEWPORTS = [
+    {
+      namespace: '@ohif/extension-measurement-tracking.viewportModule.cornerstone-tracked',
+      displaySetsToDisplay: [
+        '@ohif/extension-default.sopClassHandlerModule.stack',
+        '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video',
+        '@ohif/extension-cornerstone.sopClassHandlerModule.DicomMicroscopySopClassHandler',
+      ],
+    },
+    {
+      namespace: '@ohif/extension-cornerstone-dicom-sr.viewportModule.dicom-sr',
+      displaySetsToDisplay: [
+        '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr',
+        '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr-3d',
+      ],
+    },
+    {
+      namespace: '@ohif/extension-dicom-pdf.viewportModule.dicom-pdf',
+      displaySetsToDisplay: ['@ohif/extension-dicom-pdf.sopClassHandlerModule.dicom-pdf'],
+    },
+    {
+      namespace: '@ohif/extension-cornerstone-dicom-seg.viewportModule.dicom-seg',
+      displaySetsToDisplay: [
+        '@ohif/extension-cornerstone-dicom-seg.sopClassHandlerModule.dicom-seg',
+      ],
+    },
+    {
+      namespace: '@ohif/extension-cornerstone-dicom-pmap.viewportModule.dicom-pmap',
+      displaySetsToDisplay: [
+        '@ohif/extension-cornerstone-dicom-pmap.sopClassHandlerModule.dicom-pmap',
+      ],
+    },
+    {
+      namespace: '@ohif/extension-cornerstone-dicom-rt.viewportModule.dicom-rt',
+      displaySetsToDisplay: ['@ohif/extension-cornerstone-dicom-rt.sopClassHandlerModule.dicom-rt'],
+    },
+  ];
+  const WAVEFORM_HANDLER =
+    '@ohif/extension-cornerstone.sopClassHandlerModule.DicomEcgSopClassHandler';
+
+  test('names the PACS-AI layout and study browser and the longitudinal right panels', () => {
     const route = create().routes[0];
     // Mode.tsx calls route.layoutTemplate(...) as a method of the route.
     const layout = route.layoutTemplate({});
@@ -74,22 +129,23 @@ describe('@pacs-ai/mode-viewer', () => {
     ]);
     expect(layout.props.rightPanelClosed).toBe(true);
     expect(layout.props.leftPanelResizable).toBe(true);
-    expect(layout.props.viewports[0]).toEqual({
-      namespace: '@ohif/extension-measurement-tracking.viewportModule.cornerstone-tracked',
-      displaySetsToDisplay: basicLayout.props.viewports[0].displaySetsToDisplay,
-    });
-    expect(layout.props.viewports.slice(1)).toEqual(basicLayout.props.viewports);
     // Each call returns a copy; the stock layout definition is not changed.
     expect(route.layoutTemplate({})).not.toBe(layout);
     expect(basicLayout.props.leftPanels).toEqual(STOCK_LEFT_PANELS);
   });
 
-  test('keeps the SOP class handlers, hanging protocol and validity check of the basic mode', () => {
+  test("uses exactly 3.11.1 longitudinal's viewports and display sets (no waveforms)", () => {
+    const layout = create().routes[0].layoutTemplate({});
+    expect(layout.props.viewports).toEqual(V3_11_1_VIEWPORTS);
+    // mode-basic 3.13 itself lists the waveform handler; ours drops it.
+    expect(basicLayout.props.viewports[0].displaySetsToDisplay).toContain(WAVEFORM_HANDLER);
+  });
+
+  test("keeps exactly 3.11.1 longitudinal's SOP class handlers, hanging protocol and validity check", () => {
     const viewerMode = create();
-    expect(viewerMode.sopClassHandlers).toEqual(basicModeInstance.sopClassHandlers);
-    expect(viewerMode.sopClassHandlers[0]).toBe(
-      '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video'
-    );
+    expect(viewerMode.sopClassHandlers).toEqual(V3_11_1_SOP_CLASS_HANDLERS);
+    expect(viewerMode.sopClassHandlers).not.toContain(WAVEFORM_HANDLER);
+    expect(basicModeInstance.sopClassHandlers).toContain(WAVEFORM_HANDLER);
     expect(viewerMode.hangingProtocol).toBe('default');
     expect(viewerMode.isValidMode({ modalities: 'XA' }).valid).toBe(true);
     expect(viewerMode.isValidMode({ modalities: 'SR' }).valid).toBe(false);

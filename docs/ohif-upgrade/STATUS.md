@@ -119,6 +119,18 @@ React stays 18.3.1 at 3.13.14. Peer ranges as installed, and the newest release 
 
 After merging `integration/ohif-3.13` @ 4f3c1d951 (P3.3b) — merge 1a811b7af, clean; lockfile unchanged by `pnpm install --no-frozen-lockfile`. Names imported from inference/chat/core unchanged by P3.3b. Tooling 7d9fe9401: root devDependencies `@types/jest` 27.5.2 and ESLint 8.57.1 with the plugins/parsers the root and per-package configs load, at 3.11.1's `addOns` versions (3.13.14 dropped `addOns`), so `lint-imports.sh` runs from the repository; no lint config changed. Gates on 7d9fe9401: `pnpm install --frozen-lockfile` ok. Type check (total / own files): core 332/9, ui 294/4, theme 19/0, shell 877/23, inference 923/34, chat 346/4, mode 992/0 (1013 distinct errors over all our packages, 148 in our files; the drop from the numbers above is the test files now typed by `@types/jest`). Unit tests all pass: shell 75 suites/347 tests, mode 1/9, core 51/327, inference 87/868, chat 9/88, ui 4/25 (theme has no tests). Drift guard `--enforce --forbid-ohif-ui` exit 0 (15 = 7 ledger + 8 expected). `lint-imports.sh` exit 0 (ours 651 files, upstream 1589 files, 0 errors). Image `pacs-ai-viewer-migration:p33-7d9fe9401`: `/`, `/viewer?StudyInstanceUIDs=x`, `/segmentation`, unknown path, `version.json`, `app-config.js`, `env-config.js`, `sw.js` 200; headless Chromium as before (no React/import/runtime errors; API unreachable; 404 page on unknown paths).
 
+Review fixes (independent review of #519: no crash, nothing lost): `/viewer` keeps 3.11.1 longitudinal's SOP class handlers and viewports exactly. 3.13's mode-basic added the waveform handler (`DicomEcgSopClassHandler`, which also takes Hemodynamic Waveform Storage from cath-lab XA studies) to its handlers and its cornerstone viewport; our mode drops it and uses the tracked viewport in place of basic's untracked one. A test compares both lists with 3.11.1's, so a later mode-basic addition fails it. The comment in core's `PacsAiAppProviders.tsx` now says that OHIF dialogs and modals are not available inside our providers (3.13 mounts them before `DialogProvider`/`ModalProvider`); only `useNotification` is used there, and it is available.
+
+Accepted behaviour changes (3.13.14, for the owner):
+
+| # | Change | Note |
+|---|---|---|
+| a | A failed study lookup (5xx, network error, expired token at the proxy) redirects to `/notfoundstudy` | upstream `Mode.tsx` (study validation moved there from the study browser); accepted. One extra QIDO study search per study when the viewer opens. |
+| b | Series and clip order follow `sortingCriteria` (series number, then instance number; SR/SEG last) in the study browser and the first hanging | verify with real echo and XA studies in P3.5 |
+| c | `/viewer/<data source>` for the removed data sources (ohif2, ohif3, local5000, orthanc, dicomwebproxy, dicomjson, dicomlocal) shows the 404 page | follows from the `pacs-ai.js` rebase |
+| d | `shepherd.js` 15.3.0 is AGPL-3.0 and is now imported directly by our shell (`tour/guidedTour.ts`); upstream ships the same version (ui-next, core, app) | licence check for the owner |
+| e | P3.4 theme: `text-primary-light` in `reportTourShown.ts` (`addStepProgress`) and `routes/NotFound/NotFound.tsx`; tour buttons now take ui-next 3.13 `Onboarding.css` colours | P3.4 |
+
 ## P3.3 work list (API breaks between 3.11.1 and 3.13.14 that our packages hit)
 
 Found by grepping `extensions/pacs-ai-*`, `modes/pacs-ai`, `pacs-ai/config`, `pacs-ai/build` for the upstream symbols and diffing those symbols' files between the two tags. Not build-verified (P3.2 first). PLAN 3.3/P3.3 items marked "(plan)".

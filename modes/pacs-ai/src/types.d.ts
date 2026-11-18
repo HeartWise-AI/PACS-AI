@@ -47,6 +47,7 @@ declare module '@ohif/mode-basic' {
   export const modeInstance: ModeInstance;
   export const extensionDependencies: Record<string, string>;
   export const customizations: Record<string, Record<string, unknown>>;
+  export const dicomecg: { sopClassHandler: string };
   export const cornerstone: Record<
     | 'measurements'
     | 'labelMapSegmentationPanel'
