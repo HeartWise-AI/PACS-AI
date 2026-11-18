@@ -33,15 +33,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20.18.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: 1.2.23
+          node-version-file: .node-version
       - name: Set up workspace package manager
-        run: |
-          corepack enable
-          corepack prepare yarn@1.22.22 --activate
+        run: npm install -g pnpm@12.8.1
       - name: Install candidate dependencies
-        run: bun install --frozen-lockfile --no-save
+        run: pnpm install --frozen-lockfile
       - name: Test candidate commit
-        run: bun run test:unit:ci
+        run: pnpm run test:unit:ci

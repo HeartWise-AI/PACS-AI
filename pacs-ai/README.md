@@ -68,28 +68,22 @@ No changes needed anymore! You only needed to setup the environment variables in
 
 ## Local Development Setup
 
-1. **Set up Node.js environment**
+1. **Set up Node.js environment** (Node 24, as `.node-version`)
    ```bash
-   nvm install 18.13.0
-   nvm use 18.13.0
+   nvm install 24.22.2
+   nvm use 24.22.2
    ```
    Verify installation: `node --version`
 
-2. **Install dependencies**
+2. **Install dependencies** (pnpm 12, as `packageManager` in `package.json`)
    ```bash
-   # Install Yarn globally
-   npm install -g yarn
-
-   # Configure Yarn workspaces
-   yarn config set workspaces-experimental true
-
-   # Install project dependencies
-   yarn install
+   npm install -g pnpm@12.8.1
+   pnpm install --frozen-lockfile
    ```
 
 3. **Start the development server**
    ```bash
-   yarn start
+   APP_CONFIG=config/pacs-ai.js pnpm run dev
    ```
 
 4. **Access the viewer**
