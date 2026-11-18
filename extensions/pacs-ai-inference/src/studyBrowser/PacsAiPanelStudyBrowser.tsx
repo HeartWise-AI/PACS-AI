@@ -222,13 +222,11 @@ function PacsAiPanelStudyBrowser({
         // which improves user experience of responsiveness significantly on slower
         // systems.
         const delayMs = 250 + displaySetService.getActiveDisplaySets().length * 10;
-        // PACS-AI (P3.6): after OHIF's delay, also wait until the active
-        // viewport shows its first image and has the next frames cached, so
-        // the thumbnail burst does not hold back the first cine frames
-        // (./viewportWarmUp.ts).
-        // PACS-AI (P3.7): and keep the clip's prefetch low until the
-        // thumbnails are in, so they do not queue behind the whole clip
-        // (./prefetchHold.ts).
+        // PACS-AI (P3.6, P3.7): after OHIF's delay, also wait until the
+        // active viewport has its stack (its first frames are requested
+        // first), and keep the clip's prefetch low until the thumbnails are
+        // in, so neither waits behind the other (./viewportWarmUp.ts,
+        // ./prefetchHold.ts).
         // Started once per panel; cancelled on unmount.
         if (!warmUpRef.current) {
           const warmUp: { timer: number; cancel?: () => void; hold?: PrefetchHold } = {

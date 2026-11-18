@@ -15,16 +15,22 @@ import { cache, eventTarget, Enums } from '@cornerstonejs/core';
  * of three runs; with 5 thumbnail requests the advance came 0.1 s after the
  * first image). Waiting for a few frames of the shown series first keeps
  * cine starting right after the first image; the thumbnails start a few
- * hundred milliseconds later. P3.7: 2 frames and 1 s (was 4 and 1.5 s), and
- * the clip's prefetch is held low until the thumbnails are in
- * (./prefetchHold.ts); with 4 frames and no hold the thumbnails queued behind
- * the whole clip.
+ * hundred milliseconds later.
+ *
+ * P3.7: the thumbnails now go out IMAGE_SET_GRACE_MS after the active viewport
+ * has its stack (its first frame and, through the held prefetch, the next
+ * frames are then already requested, ahead of the thumbnails in the
+ * browser's queue), or as soon as the shown frame and the next
+ * WARM_UP_FRAMES are cached, whichever comes first; and the clip's prefetch
+ * is held low until the thumbnails are in (./prefetchHold.ts). This is the
+ * order 3.11.1 had. Waiting for 4 cached frames without the hold (P3.6) made
+ * the thumbnails queue behind the whole clip (echo: 13.1 s vs 6.9 s).
  */
 
 /** Frames after the shown one that must be in the cache before thumbnails start. */
 export const WARM_UP_FRAMES = 2;
-/** Longest wait once the first image is shown. */
-export const AFTER_FIRST_IMAGE_TIMEOUT_MS = 1000;
+/** Wait after the active viewport has its stack (its first requests are out). */
+export const IMAGE_SET_GRACE_MS = 300;
 /** Longest wait in total (a viewport that never loads must not block thumbnails). */
 export const TOTAL_TIMEOUT_MS = 5000;
 /** Safety net next to the cache and viewport events. */
@@ -35,11 +41,12 @@ type StackLike = {
   getCurrentImageIdIndex?: () => number;
 };
 
-export type WarmUpState = 'waiting' | 'firstImage' | 'ready';
+export type WarmUpState = 'waiting' | 'loading' | 'firstImage' | 'ready';
 
 /**
- * Where the active viewport is: 'waiting' (no image shown yet), 'firstImage'
- * (shown, next frames not all cached) or 'ready'. A viewport that is not a
+ * Where the active viewport is: 'waiting' (no stack yet), 'loading' (stack
+ * set, shown frame not cached), 'firstImage' (shown frame cached, next frames
+ * not all cached) or 'ready'. A viewport that is not a
  * stack (volume, video, PDF, SR) has no frames to wait for and is 'ready' as
  * soon as it exists.
  */
@@ -63,7 +70,7 @@ export function warmUpState(
     imageIds.length - 1
   );
   if (!isLoaded(imageIds[index])) {
-    return 'waiting';
+    return 'loading';
   }
   const next = imageIds.slice(index + 1, index + 1 + frames);
   return next.every(isLoaded) ? 'ready' : 'firstImage';
@@ -84,8 +91,9 @@ export type WarmUpDeps = {
 };
 
 /**
- * Calls `onReady` once: when the active viewport is 'ready', 1.5 s after its
- * first image, or 5 s after the call, whichever comes first. Returns a
+ * Calls `onReady` once: when the active viewport is 'ready',
+ * IMAGE_SET_GRACE_MS after it has its stack, or TOTAL_TIMEOUT_MS after the
+ * call, whichever comes first. Returns a
  * function that cancels the wait without calling `onReady`.
  */
 export function whenViewportWarmedUp(deps: WarmUpDeps, onReady: () => void): () => void {
@@ -95,15 +103,15 @@ export function whenViewportWarmedUp(deps: WarmUpDeps, onReady: () => void): () 
   const clearI = deps.clearInterval ?? window.clearInterval.bind(window);
 
   let done = false;
-  let afterFirstImage: ReturnType<typeof setT> | undefined;
+  let afterImageSet: ReturnType<typeof setT> | undefined;
   let subscriptions: Subscription[] = [];
 
   const stop = () => {
     done = true;
     clearT(total);
     clearI(poll);
-    if (afterFirstImage !== undefined) {
-      clearT(afterFirstImage);
+    if (afterImageSet !== undefined) {
+      clearT(afterImageSet);
     }
     subscriptions.forEach(subscription => {
       if (typeof subscription === 'function') {
@@ -136,8 +144,8 @@ export function whenViewportWarmedUp(deps: WarmUpDeps, onReady: () => void): () 
     }
     if (state === 'ready') {
       finish();
-    } else if (state === 'firstImage' && afterFirstImage === undefined) {
-      afterFirstImage = setT(finish, AFTER_FIRST_IMAGE_TIMEOUT_MS);
+    } else if (state !== 'waiting' && afterImageSet === undefined) {
+      afterImageSet = setT(finish, IMAGE_SET_GRACE_MS);
     }
   };
 
