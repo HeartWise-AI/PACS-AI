@@ -93,7 +93,8 @@
   ],
   "modes": [
     {
-      "packageName": "@ohif/mode-longitudinal"
+      "packageName": "@pacs-ai/mode-viewer",
+      "version": "1.0.0"
     },
     {
       "packageName": "@ohif/mode-segmentation"

@@ -14,7 +14,10 @@ window.config = {
   routerBasename: null,
   // whiteLabeling: {},
   extensions: [],
-  modes: [],
+  // The PACS-AI viewer mode (modes/pacs-ai) comes first: it serves /viewer.
+  // The stock modes still listed in platform/app/pluginConfig.json follow
+  // (segmentation, offered by the work list, and the other stock routes).
+  modes: ['@pacs-ai/mode-viewer'],
   customizationService: {},
   // OHIF's own study list stays off: the PACS-AI work list is served at `/` by
   // @pacs-ai/extension-shell (routes.customRoutes). With this on, OHIF would

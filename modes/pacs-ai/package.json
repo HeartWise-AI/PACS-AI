@@ -1,0 +1,26 @@
+{
+  "name": "@pacs-ai/mode-viewer",
+  "version": "1.0.0",
+  "description": "PACS-AI viewer mode: the stock longitudinal viewer with the PACS-AI layout, study browser, toolbar and viewer behaviour",
+  "private": true,
+  "license": "MIT",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": [
+    "ohif-mode"
+  ],
+  "scripts": {
+    "test:unit": "jest --watchAll",
+    "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
+  },
+  "peerDependencies": {
+    "@ohif/core": "3.11.1",
+    "@ohif/mode-longitudinal": "3.11.1"
+  },
+  "dependencies": {
+    "@pacs-ai/extension-chat": "1.0.0",
+    "@pacs-ai/extension-inference": "1.0.0",
+    "@pacs-ai/extension-shell": "1.0.0"
+  }
+}

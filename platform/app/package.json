@@ -79,6 +79,7 @@
     "@pacs-ai/extension-core": "1.0.0",
     "@pacs-ai/extension-inference": "1.0.0",
     "@pacs-ai/extension-shell": "1.0.0",
+    "@pacs-ai/mode-viewer": "1.0.0",
     "@pacs-ai/theme": "1.0.0",
     "@pacs-ai/ui": "1.0.0",
     "@svgr/webpack": "8.1.0",

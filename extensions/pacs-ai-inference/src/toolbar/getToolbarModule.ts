@@ -24,7 +24,7 @@ export default function getToolbarModule() {
  * clears its buttons and sections when a mode is entered (its onModeEnter
  * runs before the extensions'), so this runs from the extension's
  * onModeEnter, for every mode, as the header did when it rendered the button
- * itself. P2.6: our mode can place the button instead.
+ * itself. modes/pacs-ai calls it from its own onModeEnter as well.
  */
 export function addViewerHeaderButtons(toolbarService): void {
   if (!toolbarService) {

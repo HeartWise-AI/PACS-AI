@@ -13,7 +13,12 @@ export {
   RUN_MODEL_BUTTON_ID,
   RUN_MODEL_UI_TYPE,
   VIEWER_HEADER_SECTION,
+  addViewerHeaderButtons,
 } from './toolbar/getToolbarModule';
+
+/** Panel ids a mode names for the PACS-AI study browser (see getPanelModule). */
+export const STUDY_BROWSER_PANEL_ID = `${id}.panelModule.seriesList`;
+export const TRACKED_STUDY_BROWSER_PANEL_ID = `${id}.panelModule.trackedSeriesList`;
 
 /**
  * PACS-AI inference extension (docs/ohif-upgrade/PLAN.md 6.1, F5–F7, F18–F22):
@@ -23,9 +28,10 @@ export {
  * and the study browser panel that shows them.
  *
  * Registered in platform/app/pluginConfig.json after @ohif/extension-default.
- * Until modes/pacs-ai exists (P2.6) the stock modes' study browser panels
- * render ours (see replaceStudyBrowserPanels) and the button is added to the
- * PACS-AI viewer header's toolbar section on every mode entry.
+ * modes/pacs-ai names our study browser panel and places the run-model button
+ * itself. The stock modes still registered (`/segmentation` and the other
+ * stock routes) keep our study browser through replaceStudyBrowserPanels and
+ * get the button from this extension's onModeEnter, as before P2.6.
  */
 const pacsAiInferenceExtension = {
   id,
