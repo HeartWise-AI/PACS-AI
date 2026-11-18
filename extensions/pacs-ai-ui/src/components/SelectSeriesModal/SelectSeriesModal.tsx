@@ -5,7 +5,7 @@ import uncheckIcon from '../../assets/icons/check-inactive.png';
 import checkIcon from '../../assets/icons/check-active.png';
 import informationIcon from '../../assets/icons/information-circle.png';
 import copyWhiteIcon from '../../assets/icons/copy-white.png';
-import { Input } from '@ohif/ui-next';
+import Input from '../Input';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';

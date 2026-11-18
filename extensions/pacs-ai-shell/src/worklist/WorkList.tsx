@@ -6,8 +6,7 @@ import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
 import { sortBy } from 'lodash';
-import { Button } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input } from '@pacs-ai/ui';
 import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { summarizeRetrieveJobs } from '@pacs-ai/extension-inference/src/studyRefresh/retrieveJobs';
@@ -1039,7 +1038,7 @@ function WorkList() {
                             <td
                               className={`text-md px-4 py-2 font-normal ${
                                 expandedStudyRows[row.studyInstanceUID]
-                                  ? 'border-primary-main rounded-tl-lg border-l-[3px]'
+                                  ? 'border-primary rounded-tl-lg border-l-[3px]'
                                   : 'rounded-l-lg'
                               }`}
                             >
@@ -1101,7 +1100,7 @@ function WorkList() {
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
                                 colSpan={showStudyProcessing ? 9 : 7}
-                                className="border-primary-main rounded-bl-lg rounded-br-lg border-l-[3px] px-4 py-4"
+                                className="border-primary rounded-bl-lg rounded-br-lg border-l-[3px] px-4 py-4"
                               >
                                 {showStudyProcessing && (
                                   <StudyProcessingAttention
@@ -1206,7 +1205,7 @@ function WorkList() {
           <h1 className="mb-4 text-center text-xl text-white">{t('OrthancServiceProgress')}</h1>
           <div className="h-2.5 w-full rounded-full bg-gray-500">
             <div
-              className={`bg-primary-main h-2.5 rounded-full`}
+              className={`bg-primary h-2.5 rounded-full`}
               style={{ width: `${syncingStudyProgress}%` }}
             ></div>
           </div>

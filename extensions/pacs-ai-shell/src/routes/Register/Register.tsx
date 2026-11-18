@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Button, Typography } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';

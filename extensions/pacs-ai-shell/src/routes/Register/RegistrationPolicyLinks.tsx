@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { RegistrationPolicyPair } from './registrationPolicies';
 
 const policyLinkClassName =
-  'font-medium text-primary-light underline underline-offset-2 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary';
+  'font-medium text-primary underline underline-offset-2 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary';
 
 interface RegistrationPolicyLinksProps {
   policies: RegistrationPolicyPair | null;

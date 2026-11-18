@@ -98,7 +98,7 @@ export function StudyReprocessAction({
     <div className="ml-4 flex items-center gap-2">
       <button
         type="button"
-        className="border-primary-main text-primary-main disabled:border-white/15 disabled:text-white/35 rounded-md border px-3 py-1 text-xs font-semibold hover:bg-[#c8f469]/10 disabled:cursor-not-allowed"
+        className="border-primary text-primary disabled:border-white/15 disabled:text-white/35 rounded-md border px-3 py-1 text-xs font-semibold hover:bg-[#c8f469]/10 disabled:cursor-not-allowed"
         onClick={openConfirmation}
         disabled={actionDisabled}
         aria-label={t('ProcessingReprocessStudyAriaLabel', {
@@ -185,7 +185,7 @@ export function StudyReprocessAction({
               </button>
               <button
                 type="button"
-                className="bg-primary-main rounded-md px-4 py-2 text-sm font-bold text-black hover:brightness-105 disabled:cursor-wait disabled:opacity-60"
+                className="bg-primary rounded-md px-4 py-2 text-sm font-bold text-black hover:brightness-105 disabled:cursor-wait disabled:opacity-60"
                 onClick={confirmReprocess}
                 disabled={submitting}
                 data-testid="study-processing-reprocess-confirm"

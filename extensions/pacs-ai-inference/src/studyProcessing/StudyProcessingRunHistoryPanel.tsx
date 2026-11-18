@@ -241,7 +241,7 @@ export function StudyProcessingRunHistoryPanel({
   return (
     <section aria-label={t('ProcessingRunHistory', { defaultValue: 'Processing run history' })}>
       <div className="mb-4 flex min-h-[28px] items-center">
-        <h2 className="text-primary-main text-sm font-bold">
+        <h2 className="text-primary text-sm font-bold">
           {t('Processing', { defaultValue: 'Processing' })}
         </h2>
         {history && (

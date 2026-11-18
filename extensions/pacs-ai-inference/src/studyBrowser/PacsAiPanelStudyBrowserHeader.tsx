@@ -58,7 +58,7 @@ function PacsAiPanelStudyBrowserHeader({
                     aria-label={viewPreset.id}
                     value={viewPreset.id}
                     // PACS-AI
-                    className="text-primary-dark/50"
+                    className="text-primary/50"
                   >
                     {React.createElement(Icons[viewPreset.iconName] || Icons.MissingIcon)}
                   </ToggleGroupItem>

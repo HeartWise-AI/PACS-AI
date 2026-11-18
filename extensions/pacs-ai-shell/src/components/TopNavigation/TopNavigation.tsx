@@ -105,12 +105,12 @@ const useNavigationMenu = (): MenuState => {
 };
 
 const navigationLinkClassName = (active: boolean): string =>
-  `inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-main focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1f1a] ${
-    active ? 'bg-primary-main text-black' : 'text-white/70 hover:bg-white/10 hover:text-white'
+  `inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1f1a] ${
+    active ? 'bg-primary text-black' : 'text-white/70 hover:bg-white/10 hover:text-white'
   }`;
 
 const menuItemClassName =
-  'block w-full rounded-md px-3 py-2 text-left text-sm text-white/80 outline-none hover:bg-white/10 focus:bg-white/10 focus:text-white focus-visible:ring-2 focus-visible:ring-primary-main';
+  'block w-full rounded-md px-3 py-2 text-left text-sm text-white/80 outline-none hover:bg-white/10 focus:bg-white/10 focus:text-white focus-visible:ring-2 focus-visible:ring-primary';
 
 const DesktopNavigationItem = ({
   item,
@@ -260,7 +260,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
         target={item.opensInNewTab ? '_blank' : undefined}
         rel={item.opensInNewTab ? 'noreferrer' : undefined}
         aria-current={active ? 'page' : undefined}
-        className={`${menuItemClassName} ${active ? 'bg-primary-main text-black' : ''}`}
+        className={`${menuItemClassName} ${active ? 'bg-primary text-black' : ''}`}
         onClick={() => mobileMenu.setOpen(false)}
       >
         {label}
@@ -274,7 +274,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
       <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-5 lg:px-7">
         <Link
           to={studiesDestination}
-          className="focus-visible:ring-primary-main flex shrink-0 items-center gap-2 rounded-md outline-none focus-visible:ring-2"
+          className="focus-visible:ring-primary flex shrink-0 items-center gap-2 rounded-md outline-none focus-visible:ring-2"
           aria-label={t('PACS-AI studies')}
         >
           <img
@@ -325,7 +325,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
             <button
               ref={accountMenu.triggerRef}
               type="button"
-              className="min-h-10 focus-visible:ring-primary-main flex items-center gap-2 rounded-lg px-2 text-left text-white outline-none hover:bg-white/10 focus-visible:ring-2"
+              className="min-h-10 focus-visible:ring-primary flex items-center gap-2 rounded-lg px-2 text-left text-white outline-none hover:bg-white/10 focus-visible:ring-2"
               onClick={() => {
                 mobileMenu.setOpen(false);
                 accountMenu.setOpen(open => !open);
@@ -334,7 +334,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
               aria-haspopup="menu"
               aria-expanded={accountMenu.open}
             >
-              <span className="text-primary-main flex h-8 w-8 items-center justify-center rounded-full bg-[#39413a] text-xs font-bold">
+              <span className="text-primary flex h-8 w-8 items-center justify-center rounded-full bg-[#39413a] text-xs font-bold">
                 {initials || 'U'}
               </span>
               <span className="max-w-32 hidden lg:block">
@@ -396,7 +396,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
             <button
               ref={mobileMenu.triggerRef}
               type="button"
-              className="focus-visible:ring-primary-main flex h-10 w-10 items-center justify-center rounded-lg text-white outline-none hover:bg-white/10 focus-visible:ring-2"
+              className="focus-visible:ring-primary flex h-10 w-10 items-center justify-center rounded-lg text-white outline-none hover:bg-white/10 focus-visible:ring-2"
               onClick={() => {
                 accountMenu.setOpen(false);
                 mobileMenu.setOpen(open => !open);

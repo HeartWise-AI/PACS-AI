@@ -2,8 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
-import { Button, Typography } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import i18n from '@ohif/i18n';
 import TopNavigation from '../../components/TopNavigation';
 import copyIcon from '../../assets/pacs/icons/copy-gradient.png';
@@ -394,7 +393,7 @@ const SettingsPage = () => {
             <Link
               href="#"
               showIcon={false}
-              className="text-primary-dark text-base font-light"
+              className="text-primary text-base font-light"
             >
               {t('Privacy Policy')}
             </Link>
@@ -402,7 +401,7 @@ const SettingsPage = () => {
             <Link
               href="#"
               showIcon={false}
-              className="text-primary-dark text-base font-light"
+              className="text-primary text-base font-light"
             >
               {t('Terms and Conditions')}
             </Link>
@@ -442,7 +441,7 @@ const SettingsPage = () => {
                 <Typography
                   variant="subtitle"
                   className={`font-light ${
-                    selectedTab === 'general' ? 'text-primary-dark' : 'text-white text-opacity-50'
+                    selectedTab === 'general' ? 'text-primary' : 'text-white text-opacity-50'
                   }`}
                 >
                   {t('General')}
@@ -461,7 +460,7 @@ const SettingsPage = () => {
                 <Typography
                   variant="subtitle"
                   className={`font-light ${
-                    selectedTab === 'about' ? 'text-primary-dark' : 'text-white text-opacity-50'
+                    selectedTab === 'about' ? 'text-primary' : 'text-white text-opacity-50'
                   }`}
                 >
                   {t('About PACS AI')}

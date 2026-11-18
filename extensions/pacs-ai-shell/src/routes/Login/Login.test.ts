@@ -40,22 +40,12 @@ jest.mock(
     const React = require('react');
     return {
       Button: ({ children, ...props }) => React.createElement('button', props, children),
+      Input: props => React.createElement('input', props),
       Logo: () => React.createElement('div', { 'data-testid': 'logo' }),
       Typography: ({ children, component = 'div', variant, ...props }) => {
         void variant;
         return React.createElement(component, props, children);
       },
-    };
-  },
-  { virtual: true }
-);
-
-jest.mock(
-  '@ohif/ui-next',
-  () => {
-    const React = require('react');
-    return {
-      Input: props => React.createElement('input', props),
     };
   },
   { virtual: true }

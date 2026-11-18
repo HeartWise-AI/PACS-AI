@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@ohif/ui-next';
-import { Button, Typography } from '@pacs-ai/ui';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
 import type { ModalityFormState } from '../../types';
 
@@ -116,7 +115,7 @@ const AddEditModalityModal = ({
                       targetCFindEnabled: isChecked,
                     }));
                   }}
-                  className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                  className="accent-primary h-4 w-4 cursor-pointer rounded"
                 />
                 <Typography
                   variant="body"
@@ -139,7 +138,7 @@ const AddEditModalityModal = ({
                       targetCMoveEnabled: isChecked,
                     }));
                   }}
-                  className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                  className="accent-primary h-4 w-4 cursor-pointer rounded"
                 />
                 <Typography
                   variant="body"
@@ -162,7 +161,7 @@ const AddEditModalityModal = ({
                       targetCStoreEnabled: isChecked,
                     }));
                   }}
-                  className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                  className="accent-primary h-4 w-4 cursor-pointer rounded"
                 />
                 <Typography
                   variant="body"

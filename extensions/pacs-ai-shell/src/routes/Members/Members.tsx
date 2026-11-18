@@ -1,8 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Typography } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import Table from '../../components/Table';
 import TopNavigation from '../../components/TopNavigation';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
@@ -740,7 +739,7 @@ const MembersPage = () => {
                                       resendingTenantInviteId === invite.id ||
                                       removingTenantInviteId === invite.id
                                     }
-                                    className="bg-primary-main/10 text-primary-main hover:bg-primary-main/20 min-w-[71px] rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="bg-primary/10 text-primary hover:bg-primary/20 min-w-[71px] rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                                     onClick={() => {
                                       void handleResendTenantInvite(invite.id);
                                     }}

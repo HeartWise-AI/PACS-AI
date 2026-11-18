@@ -10,7 +10,7 @@ const backgroundClass =
 const textColor =
   'bg-gradient-to-br from-[rgba(5,144,94,1)] via-[rgba(200,244,105,1)] to-[rgba(200,244,105,1)] bg-clip-text text-transparent';
 
-const borderClass = 'border border-solid border-primary-main border-opacity-80 border-[.5px]';
+const borderClass = 'border border-solid border-primary border-opacity-80 border-[.5px]';
 
 const ButtonGradient = ({
   children = '',

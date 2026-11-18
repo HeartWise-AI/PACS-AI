@@ -17,7 +17,13 @@ import ViewerTour from '../tour/ViewerTour';
 import PacsAiViewerHeader from './PacsAiViewerHeader';
 import { SidePanelWithServices, useResizablePanels } from './upstreamLayoutPieces';
 
-const resizableHandleClassName = 'mt-[1px] bg-white/10';
+// The rounded translucent side-panel chrome comes from @pacs-ai/theme
+// (pacs-ai-theme.css), keyed on this class.
+const SIDE_PANEL_CLASS_NAME = 'pacs-ai-side-panel';
+
+// rounded-none: square handle, as on 3.11.1 (upstream's ResizableHandle is
+// rounded-full; its classes are merged with tailwind-merge, so ours win).
+const resizableHandleClassName = 'mt-[1px] rounded-none bg-white/10';
 
 /**
  * The PACS-AI viewer layout template (getLayoutTemplateModule), built from
@@ -211,6 +217,7 @@ function PacsAiViewerLayout({
                           isExpanded={!leftPanelClosedState}
                           servicesManager={servicesManager}
                           {...leftPanelProps}
+                          className={SIDE_PANEL_CLASS_NAME}
                         />
                       </ResizablePanel>
                       <ResizableHandle
@@ -248,6 +255,7 @@ function PacsAiViewerLayout({
                           isExpanded={!rightPanelClosedState}
                           servicesManager={servicesManager}
                           {...rightPanelProps}
+                          className={SIDE_PANEL_CLASS_NAME}
                         />
                       </ResizablePanel>
                     </>

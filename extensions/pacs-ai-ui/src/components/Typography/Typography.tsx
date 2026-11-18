@@ -39,10 +39,10 @@ const classes = {
   color: {
     initial: 'text-white',
     inherit: 'text-inherit',
-    primary: 'text-primary-main',
-    primaryActive: 'text-primary-active',
-    primaryLight: 'text-primary-light',
-    secondary: 'text-common-light',
+    primary: 'text-primary',
+    primaryActive: 'text-primary',
+    primaryLight: 'text-primary',
+    secondary: 'text-[#a19fad]',
     error: 'text-red-600',
   },
   align: {

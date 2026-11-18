@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@ohif/ui-next';
-import { Button, Typography } from '@pacs-ai/ui';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import Modal from '../../../../components/Modal';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import { outputModeOptions } from '../../constants';
@@ -324,7 +323,7 @@ const AddEditInferenceModelModal = ({
                           : [...(prev.disallowedDICOMTags || []), tag],
                       }));
                     }}
-                    className="accent-primary-light h-4 w-4 cursor-pointer rounded"
+                    className="accent-primary h-4 w-4 cursor-pointer rounded"
                   />
                   <Typography
                     variant="body"
