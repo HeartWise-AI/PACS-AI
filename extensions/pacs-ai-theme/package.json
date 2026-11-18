@@ -15,6 +15,6 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "peerDependencies": {
-    "@ohif/ui-next": "3.11.1"
+    "@ohif/ui-next": "workspace:*"
   }
 }

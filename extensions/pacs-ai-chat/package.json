@@ -19,14 +19,14 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "peerDependencies": {
-    "@ohif/core": "3.11.1",
+    "@ohif/core": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1"
   },
   "dependencies": {
-    "@pacs-ai/extension-core": "1.0.0",
-    "@pacs-ai/ui": "1.0.0",
+    "@pacs-ai/extension-core": "workspace:*",
+    "@pacs-ai/ui": "workspace:*",
     "react-markdown": "8.0.7",
     "remark-gfm": "3.0.1"
   },

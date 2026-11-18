@@ -15,15 +15,15 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "peerDependencies": {
-    "@ohif/ui-next": "3.11.1",
+    "@ohif/ui-next": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1",
-    "react-router-dom": "6.30.1"
+    "react-router-dom": "6.30.3"
   },
   "dependencies": {
-    "@pacs-ai/extension-core": "1.0.0",
-    "@pacs-ai/theme": "1.0.0",
+    "@pacs-ai/extension-core": "workspace:*",
+    "@pacs-ai/theme": "workspace:*",
     "classnames": "2.5.1",
     "html2canvas": "1.4.1",
     "jspdf": "^3.0.1"

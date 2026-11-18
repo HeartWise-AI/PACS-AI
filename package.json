@@ -67,11 +67,7 @@
     "format": "prettier --write . && eslint --fix ."
   },
   "dependencies": {
-    "dicom-data-dictionary": "^0.3.1",
-    "execa": "8.0.1",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
-    "react-d3-speedometer": "^2.2.1"
+    "execa": "8.0.1"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
@@ -98,7 +94,6 @@
     "babel-plugin-transform-import-meta": "2.3.3",
     "cross-env": "7.0.3",
     "css-loader": "6.11.0",
-    "cssnano": "5.1.15",
     "cypress": "14.5.2",
     "cypress-file-upload": "5.0.8",
     "file-loader": "6.2.0",

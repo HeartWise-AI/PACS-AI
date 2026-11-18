@@ -15,10 +15,10 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "peerDependencies": {
-    "@ohif/core": "3.11.1",
-    "@ohif/i18n": "3.11.1",
-    "@ohif/ui-next": "3.11.1",
-    "i18next": "17.3.1",
+    "@ohif/core": "workspace:*",
+    "@ohif/i18n": "workspace:*",
+    "@ohif/ui-next": "workspace:*",
+    "i18next": "19.9.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1"
