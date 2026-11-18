@@ -41,9 +41,12 @@ describe('pacsAiSessionService', () => {
     // (updateAuthServiceAndCleanUrl in platform/app/src/routes/Mode, internal to
     // @ohif/app): it replaces the Authorization header implementation with one
     // that returns the URL token.
-    userAuthenticationService.setServiceImplementation({
+    const urlTokenImplementation = {
       getAuthorizationHeader: () => ({ Authorization: 'Bearer ' + 'url-token' }),
-    });
+    };
+    userAuthenticationService.setServiceImplementation(
+      urlTokenImplementation as Parameters<typeof userAuthenticationService.setServiceImplementation>[0]
+    );
 
     expect(userAuthenticationService.getAuthorizationHeader()).toEqual({
       Authorization: 'Bearer session-token',

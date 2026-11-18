@@ -31,7 +31,8 @@ const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62
 const textColor = 'text-white';
 
 type AIModelButtonProps = {
-  servicesManager: AppTypes.ServicesManager;
+  // OHIF's services manager; typed loosely as before (the propTypes said object).
+  servicesManager: any;
   className?: string;
   isShowBG?: boolean;
   isShowText?: boolean;
