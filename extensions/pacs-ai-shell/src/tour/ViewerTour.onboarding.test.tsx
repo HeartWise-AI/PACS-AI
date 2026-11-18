@@ -1,14 +1,17 @@
 /**
  * ViewerTour with OHIF's real Onboarding component and the real core tour
- * service; only the API (userRepository) and shepherd are mocked.
+ * service; only the API (userRepository) and shepherd.js are mocked.
  */
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockStart = jest.fn();
-jest.mock('react-shepherd', () => ({
-  useShepherd: () => ({
+// OHIF's Onboarding (3.13) builds its tour with shepherd.js directly.
+jest.mock('shepherd.js', () => ({
+  __esModule: true,
+  default: {
+    activeTour: null,
     // Like Shepherd: start() shows the first step, which runs the `show`
     // handler of the tour's default step options with the step as `this`.
     Tour: function MockTour(options) {
@@ -17,11 +20,14 @@ jest.mock('react-shepherd', () => ({
         addStep: step => steps.push(step),
         start: () => {
           mockStart();
-          options?.defaultStepOptions?.when?.show?.call({ tour: { steps }, getElement: () => null });
+          options?.defaultStepOptions?.when?.show?.call({
+            tour: { steps },
+            getElement: () => null,
+          });
         },
       };
     },
-  }),
+  },
 }));
 const mockGetViewerTour = jest.fn();
 const mockCompleteViewerTour = jest.fn();

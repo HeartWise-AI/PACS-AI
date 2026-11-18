@@ -21,8 +21,16 @@ const mockTour = jest.fn().mockImplementation(options => ({
   },
 }));
 
-jest.mock('react-shepherd', () => ({
-  useShepherd: () => ({ Tour: mockTour, activeTour: null }),
+// OHIF's Onboarding (3.13) builds its tour with shepherd.js directly.
+jest.mock('shepherd.js', () => ({
+  __esModule: true,
+  default: {
+    // A getter: the factory runs when the imports below are hoisted above mockTour.
+    get Tour() {
+      return mockTour;
+    },
+    activeTour: null,
+  },
 }));
 jest.mock('shepherd.js/dist/css/shepherd.css', () => ({}), { virtual: true });
 

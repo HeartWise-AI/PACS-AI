@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState, useCallback, useContext } from 're
 import ReactDOM from 'react-dom';
 import { useShellLocation, useShellNavigate } from '../navigation/routerLocation';
 import { useTranslation } from 'react-i18next';
-import { useShepherd } from 'react-shepherd';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
+import { createGuidedTour } from '../tour/guidedTour';
 import { Button } from '@pacs-ai/ui';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
@@ -307,8 +307,6 @@ const TutorialProgressOverlay: React.FC = () => {
 
     loadProgressFromAPI();
   }, [currentUser?.id, currentUser?.email]);
-
-  const Shepherd = useShepherd();
 
   const [expanded, setExpanded] = useState<boolean>(false);
   const [steps, setSteps] = useState<TutorialStepState[]>(availableDefaultSteps);
@@ -825,10 +823,6 @@ const TutorialProgressOverlay: React.FC = () => {
   }, [steps.length]);
 
   const startTourForStep = (stepId: string) => {
-    if (!Shepherd) {
-      return;
-    }
-
     const step = steps.find(s => s.id === stepId);
     if (!step) {
       return;
@@ -842,7 +836,7 @@ const TutorialProgressOverlay: React.FC = () => {
       },
     };
 
-    const tour = new Shepherd.Tour(tourOptions);
+    const tour = createGuidedTour(tourOptions);
 
     // NOTE: The actual target selectors and copy should be refined per-step.
     // For now we support a special guided navigation for "View Available Models"
