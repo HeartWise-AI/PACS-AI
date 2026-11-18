@@ -92,5 +92,5 @@ test('a run shows the running-jobs card with counts, cancels from the card, and 
   const entry = page.locator('button.block.w-full').first();
   await expect(entry).toBeVisible({ timeout: 120_000 });
   await entry.click();
-  await expect(page).toHaveURL(new RegExp(`/viewer\\?.*StudyInstanceUIDs=${study.uid.replace(/\./g, '\\.')}`));
+  await expect(page).toHaveURL(new RegExp(`/viewer\\?.*StudyInstanceUIDs=${study.uid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
 });
