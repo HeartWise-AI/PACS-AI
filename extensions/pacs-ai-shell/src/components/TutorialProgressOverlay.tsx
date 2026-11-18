@@ -9,6 +9,7 @@ import {
   buildTutorialWorklistPath,
   clearPendingTutorialStep,
   getPendingTutorialStep,
+  isTutorialSearch,
   pickTutorialModality,
   setPendingTutorialStep,
   tourTarget,
@@ -970,19 +971,25 @@ const TutorialProgressOverlay: React.FC = () => {
 
   /**
    * Run-inference outside the viewer: open the study list with a modality the
-   * models take selected and the dates cleared, run the search, and walk the
-   * user into the first study. The tour has no Skip and ignores Esc: the
-   * overlay leaves only the highlighted element clickable. The step's own
-   * tour (the AI model button) starts once the viewer is open.
+   * models take selected and the dates cleared; the list runs the search.
+   * Shell navigation loads the page, so the tour on the list is started by
+   * the effect below once the list is open.
    */
   const startGuidedStudyOpen = () => {
+    setPendingTutorialStep('run-inference');
+    navigate(buildTutorialWorklistPath(pickTutorialModality(inferenceAvailableModels)));
+  };
+
+  /**
+   * Walks the user into the first study the tutorial's search found. The tour
+   * has no Skip and ignores Esc: the overlay leaves only the highlighted
+   * element clickable. The step's own tour (the AI model button) starts once
+   * the viewer is open.
+   */
+  const showGuidedStudyOpenTour = (modality: string) => {
     guidedOpenAbortRef.current?.abort();
     const controller = new AbortController();
     guidedOpenAbortRef.current = controller;
-
-    const modality = pickTutorialModality(inferenceAvailableModels);
-    setPendingTutorialStep('run-inference');
-    navigate(buildTutorialWorklistPath(modality));
 
     const tour = createGuidedTour({
       useModalOverlay: true,
@@ -1065,10 +1072,30 @@ const TutorialProgressOverlay: React.FC = () => {
     });
   };
 
-  // Back in the viewer with the run-inference step pending: start its tour
-  // on the AI model button once the button is on screen.
   const runInferenceStep = steps.find(step => step.id === 'run-inference');
   const runInferencePending = Boolean(runInferenceStep && !runInferenceStep.completed);
+
+  // On the study list opened by the tutorial: guide the user into a study.
+  const guidedListShownRef = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (
+      isInViewer ||
+      !runInferencePending ||
+      getPendingTutorialStep() !== 'run-inference' ||
+      !isTutorialSearch(params) ||
+      guidedListShownRef.current === location.search
+    ) {
+      return;
+    }
+    guidedListShownRef.current = location.search;
+    showGuidedStudyOpenTour(params.get('modalitiesInStudy') || 'XA');
+    // showGuidedStudyOpenTour is recreated each render; the effect keys on the route.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInViewer, location.search, runInferencePending]);
+
+  // Back in the viewer with the run-inference step pending: start its tour
+  // on the AI model button once the button is on screen.
   useEffect(() => {
     if (!isInViewer || getPendingTutorialStep() !== 'run-inference') {
       return;
