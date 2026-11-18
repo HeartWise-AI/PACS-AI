@@ -24,7 +24,7 @@
     "react-i18next": "12.3.1"
   },
   "dependencies": {
-    "axios": "1.12.0",
+    "axios": "1.21.1",
     "firebase": "^10.11.1",
     "prop-types": "15.8.1",
     "react-query": "^3.39.3"
