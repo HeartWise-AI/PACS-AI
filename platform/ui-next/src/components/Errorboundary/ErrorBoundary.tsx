@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent } from '../Dialog/Dialog';
+import { Dialog, DialogContent, DialogTitle } from '../Dialog/Dialog';
 import { ScrollArea } from '../ScrollArea/ScrollArea';
 import { Button } from '../Button/Button';
 import { useNotification } from '../../contextProviders';
@@ -123,7 +123,6 @@ interface DefaultFallbackProps extends FallbackProps {
   context: string;
   resetErrorBoundary: () => void;
   showErrorDetails?: ShowErrorDetails;
-  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 interface ErrorBoundaryProps {
@@ -135,7 +134,6 @@ interface ErrorBoundaryProps {
   fallbackRoute?: string | null;
   isPage?: boolean;
   showErrorDetails?: ShowErrorDetails;
-  showNotification?: boolean; // NOTE: This is a PACS changes (hide the red toast notification)
 }
 
 const DefaultFallback = ({
@@ -143,7 +141,6 @@ const DefaultFallback = ({
   context,
   resetErrorBoundary = () => {},
   showErrorDetails,
-  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: DefaultFallbackProps) => {
   const isShowDetailsButtonVisible =
     showErrorDetails == null ||
@@ -173,11 +170,6 @@ const DefaultFallback = ({
   };
 
   useEffect(() => {
-    // NOTE: This is a PACS changes (hide the red toast notification)
-    if (!showNotification) {
-      return;
-    }
-
     // Use a stable ID based on error message to support deduplication
     const errorId = `error-${errorTitle || error.message}`;
 
@@ -195,13 +187,14 @@ const DefaultFallback = ({
           }
         : undefined,
     });
-  }, [error, errorTitle, subtitle, t, title, show, showNotification]); // NOTE: This is a PACS changes (hide the red toast notification)
+  }, [error, errorTitle, subtitle, t, title, show]);
 
   return (
     <Dialog
       open={showDetails}
       onOpenChange={setShowDetails}
     >
+      <DialogTitle className="invisible">{errorTitle}</DialogTitle>
       <DialogContent
         className="bg-muted max-w-3xl overflow-hidden border-0 p-0"
         onInteractOutside={e => e.preventDefault()}
@@ -271,7 +264,6 @@ const ErrorBoundary = ({
   fallbackComponent: FallbackComponent = DefaultFallback,
   children,
   showErrorDetails,
-  showNotification = true, // NOTE: This is a PACS changes (hide the red toast notification)
 }: ErrorBoundaryProps) => {
   const [error, setError] = useState<ErrorBoundaryError | null>(null);
 
@@ -285,7 +277,6 @@ const ErrorBoundary = ({
     let errorTimeout: NodeJS.Timeout;
 
     const handleError = (event: ErrorEvent) => {
-      event.preventDefault();
       clearTimeout(errorTimeout);
       errorTimeout = setTimeout(() => {
         setError(event.error);
@@ -327,7 +318,6 @@ const ErrorBoundary = ({
           {...props}
           context={context}
           showErrorDetails={showErrorDetails}
-          showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
         />
       )}
       onReset={onResetHandler}
@@ -341,7 +331,6 @@ const ErrorBoundary = ({
             context={context}
             resetErrorBoundary={() => setError(null)}
             showErrorDetails={showErrorDetails}
-            showNotification={showNotification} // NOTE: This is a PACS changes (hide the red toast notification)
           />
         )}
       </>

@@ -3,7 +3,14 @@ import moment from 'moment';
 import React, { useState, useMemo, useCallback } from 'react';
 import { classes, Types } from '@ohif/core';
 import { InputFilter } from '@ohif/ui-next';
-import { Select, SelectTrigger, SelectContent, SelectItem, Slider } from '@ohif/ui-next';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Slider,
+} from '@ohif/ui-next';
 
 import DicomTagTable from './DicomTagTable';
 import './DicomTagBrowser.css';
@@ -124,20 +131,22 @@ const DicomTagBrowser = ({
   }, [rows, filterValue]);
 
   return (
-    // NOTE: This is a PACS changes
-    <div className="dicom-tag-browser-content bg-[#151815]">
+    <div className="dicom-tag-browser-content bg-muted">
       <div className="mb-6 flex flex-row items-start pl-1">
-        <div className="flex w-full flex-row items-start gap-4">
+        <div className="flex w-full flex-row items-start gap-6">
           <div className="flex w-1/3 flex-col">
-            {/* NOTE: This is a PACS changes */}
-            <span className="flex h-6 items-center text-xs text-white/80">Series</span>
+            <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
+              Series
+            </span>
             <Select
               value={selectedDisplaySetInstanceUID}
               onValueChange={value => onSelectChange({ value })}
             >
-              <SelectTrigger>
-                {displaySetList.find(ds => ds.value === selectedDisplaySetInstanceUID)?.label ||
-                  'Select Series'}
+              <SelectTrigger data-cy="dicom-tag-series-select-trigger">
+                <SelectValue data-cy="dicom-tag-series-select-value">
+                  {displaySetList.find(ds => ds.value === selectedDisplaySetInstanceUID)?.label ||
+                    'Select Series'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {displaySetList.map(item => {
@@ -147,8 +156,7 @@ const DicomTagBrowser = ({
                       value={item.value}
                     >
                       {item.label}
-                      {/* NOTE: This is a PACS changes */}
-                      <span className="ml-1 text-xs text-white/70">{item.description}</span>
+                      <span className="text-muted-foreground ml-1 text-xs">{item.description}</span>
                     </SelectItem>
                   );
                 })}
@@ -157,8 +165,11 @@ const DicomTagBrowser = ({
           </div>
           {shouldShowInstanceList && (
             <div className="mx-auto mt-0.5 flex w-1/4 flex-col">
-              <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
-                Instance Number ({instanceNumber} of {activeDisplaySet?.images?.length})
+              <span className="text-muted-foreground flex h-6 min-w-0 items-center whitespace-nowrap pb-2 text-base">
+                <span className="truncate">Instance Number</span>
+                <span className="shrink-0">
+                  &nbsp;({instanceNumber} of {activeDisplaySet?.images?.length})
+                </span>
               </span>
               <Slider
                 value={[instanceNumber]}
@@ -168,15 +179,16 @@ const DicomTagBrowser = ({
                 min={1}
                 max={activeDisplaySet?.images?.length}
                 step={1}
-                className="pt-4"
+                className="pt-3"
               />
             </div>
           )}
           <div className="ml-auto mr-1 flex w-1/3 flex-col">
-            {/* NOTE: This is a PACS changes */}
-            <span className="flex h-6 items-center text-xs text-white/80">Search metadata</span>
+            <span className="text-muted-foreground flex h-6 items-center pb-2 text-base">
+              Search metadata
+            </span>
             <InputFilter
-              className="text-white/80" // NOTE: This is a PACS changes
+              className="text-muted-foreground"
               onChange={setFilterValue}
             >
               <InputFilter.SearchIcon />
@@ -308,6 +320,10 @@ function getSortedTags(metadata) {
 
 function getRows(metadata, depth = 0) {
   // Tag, Type, Value, Keyword
+
+  if (!metadata) {
+    return [];
+  }
 
   const keywords = Object.keys(metadata);
 

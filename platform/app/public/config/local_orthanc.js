@@ -6,8 +6,10 @@ window.config = {
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
   showLoadingIndicator: true,
+  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   strictZSpacingForVolumeViewport: true,
+  // filterQueryParam: false,
   defaultDataSourceName: 'orthanc',
   dataSources: [
     {
@@ -23,7 +25,8 @@ window.config = {
         supportsReject: true,
         dicomUploadEnabled: true,
         imageRendering: 'wadors',
-        thumbnailRendering: 'wadors',
+        thumbnailRendering: 'rendered',
+        thumbnailRequestStrategy: 'fetch',
         enableStudyLazyLoad: true,
         supportsFuzzyMatching: true,
         supportsWildcard: true,

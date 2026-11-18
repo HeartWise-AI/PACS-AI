@@ -1,22 +1,16 @@
 import AboutModal from './AboutModal.json';
 import Buttons from './Buttons.json';
-import ChatBox from './ChatBox.json';
 import CineDialog from './CineDialog.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
-import HeaderPanel from './HeaderPanel.json';
-import Members from './Members.json';
-import Onboarding from './Onboarding.json';
-import Settings from './Settings.json';
-import Sidebar from './Sidebar.json';
-import StoreFileButton from './StoreFileButton.json';
 import ErrorBoundary from './ErrorBoundary.json';
 import Header from './Header.json';
 import HotkeysValidators from './HotkeysValidators.json';
 import MeasurementTable from './MeasurementTable.json';
+import DataRow from './DataRow.json';
 import Modes from './Modes.json';
-import SegmentationTable from './SegmentationTable.json';
+import SegmentationPanel from './SegmentationPanel.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyItem from './StudyItem.json';
@@ -26,32 +20,24 @@ import ThumbnailTracked from './ThumbnailTracked.json';
 import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
-import TopNavigation from './TopNavigation.json';
 import Messages from './Messages.json';
-import TutorialProgressOverlay from './TutorialProgressOverlay.json';
 import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 
 export default {
   ar: {
     AboutModal,
     Buttons,
-    ChatBox,
     CineDialog,
     Common,
     DataSourceConfiguration,
     DatePicker,
-    HeaderPanel,
-    Members,
-    Onboarding,
-    Settings,
-    Sidebar,
-    StoreFileButton,
     ErrorBoundary,
     Header,
     HotkeysValidators,
     MeasurementTable,
+    DataRow,
     Modes,
-    SegmentationTable,
+    SegmentationPanel,
     SidePanel,
     StudyBrowser,
     StudyItem,
@@ -61,9 +47,7 @@ export default {
     TrackedCornerstoneViewport,
     UserPreferencesModal,
     ViewportDownloadForm,
-    TopNavigation,
     Messages,
-    TutorialProgressOverlay,
     WindowLevelActionMenu,
   },
 };

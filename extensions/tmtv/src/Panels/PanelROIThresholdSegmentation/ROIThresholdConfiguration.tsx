@@ -14,16 +14,29 @@ import { useTranslation } from 'react-i18next';
 export const ROI_STAT = 'roi_stat';
 const RANGE = 'range';
 
-const options = [
-  { value: ROI_STAT, label: 'Max', placeHolder: 'Max' },
-  { value: RANGE, label: 'Range', placeHolder: 'Range' },
-];
-
 function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
   const { t } = useTranslation('ROIThresholdConfiguration');
 
+  const options = [
+    { value: ROI_STAT, label: t('Max'), placeHolder: t('Max') },
+    { value: RANGE, label: t('Range'), placeHolder: t('Range') },
+  ];
+
+  const handlePercentageOfMaxSUVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    if (value === '.') {
+      value = '0.';
+    }
+
+    if (isNaN(Number(value)) || Number(value) < 0 || Number(value) > 1) {
+      return;
+    }
+    dispatch({ type: 'setWeight', payload: { weight: value } });
+  };
+
   return (
-    <div className="bg-primary-dark flex flex-col space-y-4 p-px">
+    <div className="bg-muted flex flex-col space-y-4 p-px">
       <div className="flex items-end space-x-3">
         <div className="flex min-w-0 flex-1 flex-col">
           {/* The original panel design does not include "Strategy," but it was found in the code.
@@ -32,14 +45,8 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
           <Select
             value={config.strategy}
             onValueChange={value => {
-              dispatch({
-                type: 'setStrategy',
-                payload: {
-                  strategy: value,
-                },
-              });
+              dispatch({ type: 'setStrategy', payload: { strategy: value } });
             }}
-            className="border-primary-main mr-2 bg-transparent !text-black"
           >
             <SelectTrigger className="w-full">
               <SelectValue
@@ -82,17 +89,11 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
             <Label>{t('Percentage of Max SUV')}</Label>
           </div>
           <Input
+            data-cy="percentage-of-max-suv-input"
             className="w-full"
             type="text"
             value={config.weight}
-            onChange={e => {
-              dispatch({
-                type: 'setWeight',
-                payload: {
-                  weight: e.target.value,
-                },
-              });
-            }}
+            onChange={handlePercentageOfMaxSUVChange}
           />
         </div>
       )}
@@ -100,7 +101,7 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
         <div className="mr-2 text-sm">
           <div className="flex flex-col space-y-2">
             {/* Header */}
-            <Label>Lower & Upper Ranges</Label>
+            <Label>{t('Lower & Upper Ranges')}</Label>
 
             {/* CT Row */}
             <div className="flex items-center">
@@ -110,31 +111,21 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
               <div className="flex flex-1 space-x-2">
                 <div className="flex-1">
                   <Input
-                    className="border-primary-main mt-2 w-full bg-transparent"
+                    className="w-full"
                     type="text"
                     value={config.ctLower}
                     onChange={e => {
-                      dispatch({
-                        type: 'setThreshold',
-                        payload: {
-                          ctLower: e.target.value,
-                        },
-                      });
+                      dispatch({ type: 'setThreshold', payload: { ctLower: e.target.value } });
                     }}
                   />
                 </div>
                 <div className="flex-1">
                   <Input
-                    className="border-primary-main mt-2 w-full bg-transparent"
+                    className="w-full"
                     type="text"
                     value={config.ctUpper}
                     onChange={e => {
-                      dispatch({
-                        type: 'setThreshold',
-                        payload: {
-                          ctUpper: e.target.value,
-                        },
-                      });
+                      dispatch({ type: 'setThreshold', payload: { ctUpper: e.target.value } });
                     }}
                   />
                 </div>
@@ -149,31 +140,21 @@ function ROIThresholdConfiguration({ config, dispatch, runCommand }) {
               <div className="flex flex-1 space-x-2">
                 <div className="flex-1">
                   <Input
-                    className="border-primary-main mt-2 w-full bg-transparent"
+                    className="w-full"
                     type="text"
                     value={config.ptLower}
                     onChange={e => {
-                      dispatch({
-                        type: 'setThreshold',
-                        payload: {
-                          ptLower: e.target.value,
-                        },
-                      });
+                      dispatch({ type: 'setThreshold', payload: { ptLower: e.target.value } });
                     }}
                   />
                 </div>
                 <div className="flex-1">
                   <Input
-                    className="border-primary-main mt-2 w-full bg-transparent"
+                    className="w-full"
                     type="text"
                     value={config.ptUpper}
                     onChange={e => {
-                      dispatch({
-                        type: 'setThreshold',
-                        payload: {
-                          ptUpper: e.target.value,
-                        },
-                      });
+                      dispatch({ type: 'setThreshold', payload: { ptUpper: e.target.value } });
                     }}
                   />
                 </div>

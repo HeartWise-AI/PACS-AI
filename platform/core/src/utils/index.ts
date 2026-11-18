@@ -15,6 +15,7 @@ import isDicomUid from './isDicomUid';
 import formatDate from './formatDate';
 import formatTime from './formatTime';
 import formatPN from './formatPN';
+import formatValue from './formatValue';
 import generateAcceptHeader from './generateAcceptHeader';
 import resolveObjectPath from './resolveObjectPath';
 import hierarchicalListUtils from './hierarchicalListUtils';
@@ -34,6 +35,7 @@ import {
   sortStudy,
   sortStudySeries,
   sortStudyInstances,
+  sortDisplaySetsCopy,
   sortingCriteria,
   seriesSortCriteria,
   instancesSortCriteria,
@@ -45,6 +47,18 @@ import * as MeasurementFilters from './measurementFilters';
 import getClosestOrientationFromIOP from './getClosestOrientationFromIOP';
 import calculateScanAxisNormal from './calculateScanAxisNormal';
 import areAllImageOrientationsEqual from './areAllImageOrientationsEqual';
+import { structuredCloneWithFunctions } from './structuredCloneWithFunctions';
+import { buildButtonCommands } from './buildButtonCommands';
+import { thumbnailNoImageModalities } from './thumbnailNoImageModalities';
+import {
+  resolveBulkDataTags,
+  registerResolvedBulkDataTags,
+  getResolvedBulkDataTags,
+  decodeNumericBulkData,
+} from './resolveBulkDataTags';
+
+import { downloadBlob, downloadUrl, downloadCsv, downloadDicom } from './downloadBlob';
+
 // Commented out unused functionality.
 // Need to implement new mechanism for derived displaySets using the displaySetManager.
 
@@ -58,6 +72,7 @@ const utils = {
   sortStudy,
   sortStudySeries,
   sortStudyInstances,
+  sortDisplaySetsCopy,
   sortingCriteria,
   seriesSortCriteria,
   instancesSortCriteria,
@@ -65,12 +80,14 @@ const utils = {
   formatDate,
   formatTime,
   formatPN,
+  formatValue,
   b64toBlob,
   urlUtil,
   imageIdToURI,
   //loadAndCacheDerivedDisplaySets,
   makeDeferred,
   makeCancelable,
+  structuredCloneWithFunctions,
   hotkeys,
   Queue,
   isDicomUid,
@@ -95,6 +112,15 @@ const utils = {
   getClosestOrientationFromIOP,
   calculateScanAxisNormal,
   areAllImageOrientationsEqual,
+  thumbnailNoImageModalities,
+  downloadBlob,
+  downloadUrl,
+  downloadCsv,
+  downloadDicom,
+  resolveBulkDataTags,
+  registerResolvedBulkDataTags,
+  getResolvedBulkDataTags,
+  decodeNumericBulkData,
 };
 
 export {
@@ -103,12 +129,14 @@ export {
   absoluteUrl,
   sortBy,
   formatDate,
+  formatValue,
   writeScript,
   b64toBlob,
   urlUtil,
   //loadAndCacheDerivedDisplaySets,
   makeDeferred,
   makeCancelable,
+  structuredCloneWithFunctions,
   hotkeys,
   Queue,
   isDicomUid,
@@ -131,6 +159,16 @@ export {
   createStudyBrowserTabs,
   MeasurementFilters,
   getClosestOrientationFromIOP,
+  buildButtonCommands,
+  thumbnailNoImageModalities,
+  downloadBlob,
+  downloadUrl,
+  downloadCsv,
+  downloadDicom,
+  resolveBulkDataTags,
+  registerResolvedBulkDataTags,
+  getResolvedBulkDataTags,
+  decodeNumericBulkData,
 };
 
 export default utils;

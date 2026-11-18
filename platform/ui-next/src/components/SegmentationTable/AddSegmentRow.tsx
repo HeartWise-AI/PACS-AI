@@ -1,8 +1,10 @@
 import React from 'react';
 import { Button, Icons } from '@ohif/ui-next';
 import { useSegmentationTableContext, useSegmentationExpanded } from './contexts';
+import { useTranslation } from 'react-i18next';
 
 export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ children = null }) => {
+  const { t } = useTranslation('SegmentationPanel');
   const {
     activeRepresentation,
     disableEditing,
@@ -11,6 +13,7 @@ export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ childr
     onToggleSegmentationRepresentationVisibility,
     data,
     showAddSegment,
+    segmentationRepresentationTypes
   } = useSegmentationTableContext('AddSegmentRow');
 
   // Try to get from expanded context first, then fall back to active segmentation
@@ -45,9 +48,12 @@ export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ childr
 
   const allowAddSegment = showAddSegment && !disableEditing;
 
+  const dataCyTypeSuffix = segmentationRepresentationTypes
+  ? `-${segmentationRepresentationTypes[0]}`
+  : '';
+
   return (
-    // NOTE: This is a PACS changes
-    <div className="my-px flex h-7 w-full items-center justify-between rounded bg-white/10 pl-0.5 pr-7">
+    <div className="my-px flex h-7 w-full items-center justify-between rounded pl-0.5 pr-7">
       <div className="mt-1 flex-1">
         {allowAddSegment ? (
           <Button
@@ -57,13 +63,14 @@ export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ childr
             onClick={() => onSegmentAdd(segmentationId)}
           >
             <Icons.Add />
-            Add Segment
+            {t('Add Segment')}
           </Button>
         ) : null}
       </div>
       <Button
         size="icon"
         variant="ghost"
+        data-cy={`all-segments-visibility-toggle${dataCyTypeSuffix}`}
         onClick={() =>
           onToggleSegmentationRepresentationVisibility(segmentationId, representation?.type)
         }

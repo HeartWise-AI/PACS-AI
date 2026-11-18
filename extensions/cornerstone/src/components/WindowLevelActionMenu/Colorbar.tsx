@@ -1,24 +1,24 @@
 import React, { ReactElement, useCallback } from 'react';
 import { Switch } from '@ohif/ui-next';
 import { useViewportRendering } from '../../hooks/useViewportRendering';
+import { useTranslation } from 'react-i18next';
 
 export function Colorbar({ viewportId }: { viewportId?: string } = {}): ReactElement {
   const { hasColorbar, toggleColorbar } = useViewportRendering(viewportId);
+  const { t } = useTranslation('WindowLevelActionMenu');
 
   const handleToggle = useCallback(() => {
     toggleColorbar();
   }, [toggleColorbar]);
 
   return (
-    <div // NOTE: This is a PACS changes
-      className="flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base hover:rounded hover:bg-[#151815]"
-    >
+    <div className="hover:bg-accent flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base hover:rounded">
       <div className="flex w-7 flex-shrink-0 items-center justify-center"></div>
       <span
         className="flex-grow"
         onClick={handleToggle}
       >
-        Display Color bar
+        {t('Display Color bar')}
       </span>
       <Switch
         className="ml-2 flex-shrink-0"

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useImageViewer } from '@ohif/ui-next';
 import { useSystem, utils } from '@ohif/core';
 import { useNavigate } from 'react-router-dom';
@@ -8,14 +7,10 @@ import { PanelStudyBrowserHeader } from './PanelStudyBrowserHeader';
 import { defaultActionIcons } from './constants';
 import MoreDropdownMenu from '../../Components/MoreDropdownMenu';
 import { CallbackCustomization } from 'platform/core/src/types';
-import { useViewerModelResults } from '@ohif/app/src/components/inference/viewerResults/ViewerModelResultsProvider'; // NOTE: This is a PACS changes
-import { SelectedViewsLegend } from '@ohif/app/src/components/inference/viewerResults/SelectedViewsLegend'; // NOTE: This is a PACS changes
-import { buildSelectedViewBadges } from '@ohif/app/src/components/inference/viewerResults/viewerResultsModel'; // NOTE: This is a PACS changes
-import { ViewerStudyRefresh } from '@ohif/app/src/components/inference/studyRefresh/ViewerStudyRefresh'; // NOTE: This is a PACS changes
+import { type TabsProps } from '@ohif/core/src/utils/createStudyBrowserTabs';
+import { thumbnailNoImageModalities } from '@ohif/core/src/utils/thumbnailNoImageModalities';
 
 const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
-
-const thumbnailNoImageModalities = ['SR', 'SEG', 'RTSTRUCT', 'RTPLAN', 'RTDOSE', 'DOC', 'PMAP'];
 
 /**
  * Study Browser component that displays and manages studies and their display sets
@@ -32,7 +27,8 @@ function PanelStudyBrowser({
   const { servicesManager, commandsManager, extensionManager } = useSystem();
   const { displaySetService, customizationService } = servicesManager.services;
   const navigate = useNavigate();
-  const studyMode = customizationService.getCustomization('studyBrowser.studyMode') || 'all';
+  const studyMode =
+    (customizationService.getCustomization('studyBrowser.studyMode') as string) || 'all';
 
   const internalImageViewer = useImageViewer();
   const StudyInstanceUIDs = internalImageViewer.StudyInstanceUIDs;
@@ -40,9 +36,11 @@ function PanelStudyBrowser({
 
   const [{ activeViewportId, viewports, isHangingProtocolLayout }] = useViewportGrid();
   const [activeTabName, setActiveTabName] = useState(studyMode);
-  const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState([
-    ...StudyInstanceUIDs,
-  ]);
+  const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState(
+    studyMode === 'primary' && StudyInstanceUIDs.length > 0
+      ? [StudyInstanceUIDs[0]]
+      : [...StudyInstanceUIDs]
+  );
   const [hasLoadedViewports, setHasLoadedViewports] = useState(false);
   const [studyDisplayList, setStudyDisplayList] = useState([]);
   const [displaySets, setDisplaySets] = useState([]);
@@ -88,7 +86,7 @@ function PanelStudyBrowser({
         commandsManager,
         servicesManager,
         isHangingProtocolLayout,
-        appConfig: extensionManager._appConfig,
+        appConfig: extensionManager.appConfig,
       };
 
       const handlers = customHandler?.callbacks.map(callback => callback(setupArgs));
@@ -122,11 +120,6 @@ function PanelStudyBrowser({
       const qidoForStudyUID = await dataSource.query.studies.search({
         studyInstanceUid: StudyInstanceUID,
       });
-
-      if (!qidoForStudyUID?.length) {
-        navigate('/notfoundstudy', '_self');
-        throw new Error('Invalid study URL');
-      }
 
       let qidoStudiesForPatient = qidoForStudyUID;
 
@@ -162,19 +155,6 @@ function PanelStudyBrowser({
 
     StudyInstanceUIDs.forEach(sid => fetchStudiesForPatient(sid));
   }, [StudyInstanceUIDs, dataSource, getStudiesForPatientByMRN, navigate]);
-
-  // NOTE: This is a PACS changes
-  // Automatically request display set creation for all studies as soon as studyDisplayList is loaded
-  useEffect(() => {
-    if (studyDisplayList && studyDisplayList.length > 0) {
-      studyDisplayList.forEach(study => {
-        if (study.studyInstanceUid) {
-          requestDisplaySetCreationForStudy(displaySetService, study.studyInstanceUid, true);
-        }
-      });
-    }
-    // only run when studyDisplayList changes
-  }, [studyDisplayList]);
 
   // ~~ Initial Thumbnails
   useEffect(() => {
@@ -360,39 +340,7 @@ function PanelStudyBrowser({
     customMapDisplaySets,
   ]);
 
-  // NOTE: This is a PACS changes
-  // Mark the clips the open AI result actually used ("selected views").
-  const { t } = useTranslation('AIModelButton');
-  const openedModelResult = useViewerModelResults()?.openedResult?.result ?? null;
-  const badgedDisplaySets = useMemo(() => {
-    if (!openedModelResult?.selectedViews?.length) {
-      return displaySets;
-    }
-    const badges = buildSelectedViewBadges(
-      openedModelResult.selectedViews,
-      displaySets
-        .map(ds => displaySetService.getDisplaySetByUID(ds.displaySetInstanceUID))
-        .filter(Boolean)
-    );
-    return displaySets.map(ds => {
-      const badge = badges[ds.displaySetInstanceUID];
-      return badge
-        ? {
-            ...ds,
-            selectedViewBadge: {
-              number: badge.number,
-              label: t('ViewerSelectedViewBadge', {
-                number: badge.number,
-                viewLabel: badge.viewLabel ?? t('ViewerUnknownView'),
-                modelName: openedModelResult.modelName,
-              }),
-            },
-          }
-        : ds;
-    });
-  }, [displaySets, displaySetService, openedModelResult, t]);
-
-  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, badgedDisplaySets);
+  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, displaySets);
 
   // TODO: Should not fire this on "close"
   function _handleStudyClick(StudyInstanceUID) {
@@ -402,6 +350,7 @@ function PanelStudyBrowser({
       : [...expandedStudyInstanceUIDs, StudyInstanceUID];
 
     setExpandedStudyInstanceUIDs(updatedExpandedStudyInstanceUIDs);
+
     if (!shouldCollapseStudy) {
       const madeInClient = true;
       requestDisplaySetCreationForStudy(displaySetService, StudyInstanceUID, madeInClient);
@@ -429,8 +378,12 @@ function PanelStudyBrowser({
     }
 
     const displaySetInstanceUID = jumpToDisplaySet;
-    // Set the activeTabName and expand the study
-    const thumbnailLocation = _findTabAndStudyOfDisplaySet(displaySetInstanceUID, tabs);
+    // It is possible to navigate to a study not currently in view
+    const thumbnailLocation = _findTabAndStudyOfDisplaySet(
+      displaySetInstanceUID,
+      tabs,
+      activeTabName
+    );
     if (!thumbnailLocation) {
       return;
     }
@@ -453,23 +406,14 @@ function PanelStudyBrowser({
           updateViewPresetValue={updateViewPresetValue}
           actionIcons={actionIcons}
           updateActionIconValue={updateActionIconValue}
-          // NOTE: This is a PACS changes
-          extraActions={
-            <ViewerStudyRefresh
-              studyInstanceUID={StudyInstanceUIDs[0]}
-              dataSource={dataSource}
-            />
-          }
         />
         <Separator
           orientation="horizontal"
-          className="bg-black"
+          className="bg-background"
           thickness="2px"
         />
       </>
 
-      {/* NOTE: This is a PACS changes */}
-      <SelectedViewsLegend />
       <StudyBrowser
         tabs={tabs}
         servicesManager={servicesManager}
@@ -483,9 +427,6 @@ function PanelStudyBrowser({
         onClickThumbnail={() => {}}
         onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
         activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
-        inferenceDisplaySetInstanceUIDs={Array.from(viewports.values()).flatMap(
-          viewport => viewport.displaySetInstanceUIDs || []
-        )}
         showSettings={actionIcons.find(icon => icon.id === 'settings')?.value}
         viewPresets={viewPresets}
         ThumbnailMenuItems={MoreDropdownMenu({
@@ -547,12 +488,7 @@ function _mapDisplaySets(displaySets, displaySetLoadingState, thumbnailImageSrcM
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
-        numInstances: ds.numImageFrames,
-        // Inference eligibility needs frame count, not DICOM instance count.
-        numImageFrames: ds.numImageFrames,
-        isMultiFrame: ds.isMultiFrame,
-        SOPClassUID: ds.SOPClassUID,
-        sopClassUids: ds.sopClassUids,
+        numInstances: ds.numImageFrames ?? ds.instances?.length,
         loadingProgress,
         countIcon: ds.countIcon,
         messages: ds.messages,
@@ -596,23 +532,23 @@ function getImageIdForThumbnail(displaySet, imageIds) {
   return imageId;
 }
 
-function _findTabAndStudyOfDisplaySet(displaySetInstanceUID, tabs) {
-  for (let t = 0; t < tabs.length; t++) {
-    const { studies } = tabs[t];
+function _findTabAndStudyOfDisplaySet(
+  displaySetInstanceUID: string,
+  tabs: TabsProps,
+  currentTabName: string
+) {
+  const current = tabs.find(tab => tab.name === currentTabName) || tabs[0];
+  const biasedTabs = [current, ...tabs];
 
-    for (let s = 0; s < studies.length; s++) {
-      const { displaySets } = studies[s];
-
-      for (let d = 0; d < displaySets.length; d++) {
-        const displaySet = displaySets[d];
-
-        if (displaySet.displaySetInstanceUID === displaySetInstanceUID) {
-          return {
-            tabName: tabs[t].name,
-            StudyInstanceUID: studies[s].studyInstanceUid,
-          };
-        }
-      }
+  for (let t = 0; t < biasedTabs.length; t++) {
+    const study = biasedTabs[t].studies.find(study =>
+      study.displaySets.find(ds => ds.displaySetInstanceUID === displaySetInstanceUID)
+    );
+    if (study) {
+      return {
+        tabName: biasedTabs[t].name,
+        StudyInstanceUID: study.studyInstanceUid,
+      };
     }
   }
 }

@@ -65,11 +65,39 @@
     {
       "packageName": "@ohif/extension-ultrasound-pleura-bline",
       "version": "3.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/extension-core",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/theme",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/ui",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/extension-inference",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/extension-shell",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@pacs-ai/extension-chat",
+      "version": "1.0.0"
     }
   ],
   "modes": [
     {
-      "packageName": "@ohif/mode-longitudinal"
+      "packageName": "@pacs-ai/mode-viewer",
+      "version": "1.0.0"
+    },
+    {
+      "packageName": "@ohif/mode-basic"
     },
     {
       "packageName": "@ohif/mode-segmentation"
@@ -104,9 +132,10 @@
     },
     {
       "packageName": "dicom-microscopy-viewer",
-      "importPath": "/dicom-microscopy-viewer/dicomMicroscopyViewer.min.js",
+      "importPath": "dicom-microscopy-viewer/dicomMicroscopyViewer.min.js",
       "globalName": "dicomMicroscopyViewer",
-      "directory": "./node_modules/dicom-microscopy-viewer/dist/dynamic-import"
+      "directory": "./node_modules/dicom-microscopy-viewer/dist/dynamic-import",
+      "to": "/dicom-microscopy-viewer/"
     }
   ]
 }

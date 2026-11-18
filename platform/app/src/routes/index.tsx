@@ -3,27 +3,18 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@ohif/ui-next';
 
 // Route Components
+// Study list variants are selected by the `workList.variant` customization:
+// - `'legacy'`  → LegacyWorkList (the pre-3.13 study list)
+// - anything else (including `'default'`) → WorkList (ui-next study list)
+import WorkList from './WorkList/WorkList';
+import LegacyWorkList from './LegacyWorkList/LegacyWorkList';
 import DataSourceWrapper from './DataSourceWrapper';
-import WorkList from './WorkList';
-import Login from './Login';
-import Register from './Register';
-import PolicyAcceptance from './PolicyAcceptance';
-import UserConsent from './User/Consent';
-import ChangePassword from './ChangePassword';
-import ResetPassword from './ResetPassword';
 import Local from './Local';
 import Debug from './Debug';
 import NotFound from './NotFound';
 import buildModeRoutes from './buildModeRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
-import Members from './Members';
-import KibanaLogs from './KibanaLogs';
-import AIModels from './AIModels';
-import AiPredictions from './AiPredictions';
-import Settings from './Settings';
-import TenantNotFound from './TenantNotFound';
-import WorkspaceSettings from './WorkspaceSettings';
 import { routerBasename } from '../utils/publicUrl';
 import { useAppConfig } from '@state';
 import { history } from '../utils/history';
@@ -32,7 +23,7 @@ const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
 }) => {
   return (
-    <div className="absolute flex h-full w-full items-center justify-center text-white">
+    <div className="text-foreground absolute flex h-full w-full items-center justify-center">
       <div>
         <h4>{message}</h4>
       </div>
@@ -49,23 +40,19 @@ const NotFoundStudy = () => {
   const { showStudyList } = appConfig;
 
   return (
-    <div className="absolute flex h-full w-full items-center justify-center text-white">
+    <div className="text-foreground absolute flex h-full w-full items-center justify-center">
       <div>
-        <h4>
-          One or more of the requested studies are not available at this time. Return to the{' '}
-          <Link
-            className="text-primary-light"
-            to={`/`}
-          >
-            study list
-          </Link>{' '}
-          to select a different study to view.
+        <h4 data-cy="study-not-found-message">
+          One or more of the requested studies are not available at this time.
         </h4>
         {showStudyList && (
-          <p className="mt-2">
+          <p
+            className="mt-2"
+            data-cy="return-to-study-list-message"
+          >
             Return to the{' '}
             <Link
-              className="text-primary-light"
+              className="text-highlight"
               to="/"
             >
               study list
@@ -97,10 +84,6 @@ const bakedInRoutes = [
     children: Debug,
   },
   {
-    path: '/tenantnotfound',
-    children: TenantNotFound,
-  },
-  {
     path: `/local`,
     children: Local.bind(null, { modePath: '' }), // navigate to the worklist
   },
@@ -111,7 +94,7 @@ const bakedInRoutes = [
 ];
 
 // NOT FOUND (404)
-const notFoundRoute = { component: NotFound };
+const notFoundRoute = { path: '*', children: NotFound };
 
 const createRoutes = ({
   modes,
@@ -141,95 +124,14 @@ const createRoutes = ({
 
   console.log('Registering worklist route', routerBasename, path);
 
+  const workListVariant = customizationService.getCustomization('workList.variant');
+  const WorkListComponent = workListVariant === 'legacy' ? LegacyWorkList : WorkList;
+
   const WorkListRoute = {
-    path: `/`,
+    path: '/',
     children: DataSourceWrapper,
     private: true,
-    props: { children: WorkList, servicesManager, extensionManager },
-  };
-
-  const LoginRoute = {
-    path: `/login`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: Login, servicesManager, extensionManager },
-  };
-
-  const RegisterRoute = {
-    path: `/register`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: Register, servicesManager, extensionManager },
-  };
-
-  const PolicyAcceptanceRoute = {
-    path: `/policies/accept`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: PolicyAcceptance, servicesManager, extensionManager },
-  };
-
-  const UserConsentRoute = {
-    path: `/user/consent`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: UserConsent, servicesManager, extensionManager },
-  };
-
-  const ChangePasswordRoute = {
-    path: `/change-password`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: ChangePassword, servicesManager, extensionManager },
-  };
-
-  const ResetPasswordRoute = {
-    path: `/reset-password`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: ResetPassword, servicesManager, extensionManager },
-  };
-
-  const AIModelsRoute = {
-    path: `/ai-models`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: AIModels, servicesManager, extensionManager },
-  };
-
-  const AiPredictionsRoute = {
-    path: `/ai-predictions`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: AiPredictions, servicesManager, extensionManager },
-  };
-
-  const MembersRoute = {
-    path: `/admin/members`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: Members, servicesManager, extensionManager },
-  };
-
-  const WorkspaceSettingsRoute = {
-    path: `/admin/workspace-settings`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: WorkspaceSettings, servicesManager, extensionManager },
-  };
-
-  const KibanaLogsRoute = {
-    path: `/admin/kibana-logs`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: KibanaLogs, servicesManager, extensionManager },
-  };
-
-  const SettingsRoute = {
-    path: `/settings`,
-    children: DataSourceWrapper,
-    private: true,
-    props: { children: Settings, servicesManager, extensionManager },
+    props: { children: WorkListComponent, servicesManager, extensionManager, commandsManager },
   };
 
   const customRoutes = customizationService.getCustomization('routes.customRoutes');
@@ -237,18 +139,6 @@ const createRoutes = ({
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
-    ...(showStudyList ? [UserConsentRoute] : []),
-    ...(showStudyList ? [LoginRoute] : []),
-    ...(showStudyList ? [RegisterRoute] : []),
-    ...(showStudyList ? [PolicyAcceptanceRoute] : []),
-    ...(showStudyList ? [ChangePasswordRoute] : []),
-    ...(showStudyList ? [ResetPasswordRoute] : []),
-    ...(showStudyList ? [AIModelsRoute] : []),
-    ...(showStudyList ? [AiPredictionsRoute] : []),
-    ...(showStudyList ? [MembersRoute] : []),
-    ...(showStudyList ? [KibanaLogsRoute] : []),
-    ...(showStudyList ? [SettingsRoute] : []),
-    ...(showStudyList ? [WorkspaceSettingsRoute] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
@@ -265,7 +155,6 @@ const createRoutes = ({
       <ErrorBoundary
         context={`Route ${route.path}`}
         showErrorDetails={showErrorDetails}
-        showNotification={false} // NOTE: This is a PACS changes (hide the red toast notification)
       >
         <route.children
           {...rest}

@@ -17,7 +17,6 @@ export const cornerstone = {
 
 const dicomvideo = {
   sopClassHandler: '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video',
-  viewport: '@ohif/extension-dicom-video.viewportModule.dicom-video',
 };
 
 const dicompdf = {
@@ -103,10 +102,11 @@ function modeFactory({ modeConfiguration }) {
                     // Share the sop class handler with cornerstone version of it
                     '@ohif/extension-cornerstone.sopClassHandlerModule.DicomMicroscopySopClassHandler',
                     '@ohif/extension-dicom-microscopy.sopClassHandlerModule.DicomMicroscopySRSopClassHandler',
+                    '@ohif/extension-dicom-microscopy.sopClassHandlerModule.DicomMicroscopyANNSopClassHandler',
                   ],
                 },
                 {
-                  namespace: dicomvideo.viewport,
+                  namespace: cornerstone.viewport,
                   displaySetsToDisplay: [dicomvideo.sopClassHandler],
                 },
                 {
@@ -124,6 +124,7 @@ function modeFactory({ modeConfiguration }) {
     sopClassHandlers: [
       '@ohif/extension-cornerstone.sopClassHandlerModule.DicomMicroscopySopClassHandler',
       '@ohif/extension-dicom-microscopy.sopClassHandlerModule.DicomMicroscopySRSopClassHandler',
+      '@ohif/extension-dicom-microscopy.sopClassHandlerModule.DicomMicroscopyANNSopClassHandler',
       dicomvideo.sopClassHandler,
       dicompdf.sopClassHandler,
     ],

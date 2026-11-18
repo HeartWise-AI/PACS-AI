@@ -1,21 +1,4 @@
 {
-  "BasicViewer": "عارض أساسي",
-  "DICOM Modality": "الوضعية",
-  "NumOfStudiesHiggerThan100Message": "يرجى تصفية القائمة لعرض 100 دراسة أو أقل لتمكين الترتيب",
-  "OrthancServiceProgress": "جارٍ مزامنة صور أورثانك...",
-  "OrthancServiceInfo": "نقوم حالياً بمزامنة هذه الدراسة. قد تستغرق هذه العملية بضع ثوانٍ إلى دقائق لأول مرة.",
-  "OrthancServiceProgressMessage": "واجهت المهمة مشكلة. يرجى المحاولة مرة أخرى لاحقاً.",
-  "Okay": "حسناً",
-  "No data found": "لم يتم العثور على بيانات",
-  "ResultsPerPage": "النتائج في الصفحة",
-  "Studies": "الدراسات",
-  "StudyDescription": "الوصف",
-  "Status": "الحالة",
-  "Search": "ابحث",
-  "Segmentation": "التقسيم",
-  "Searching for data": "جاري البحث عن البيانات",
-  "searchStudyListInfo": "لم يتم العثور على بيانات. يُرجى البحث باستخدام اسم المريض، رقم السجل الطبي، نطاق التاريخ، الوصف، نوع الفحص، أو رقم الوصول.",
-  "Tools": "الأدوات",
   "AccessionNumber": "رقم التسجيل",
   "ClearFilters": "مسح الفلاتر",
   "Description": "الوصف",
@@ -33,6 +16,5 @@
   "Results per page": "النتائج لكل الصفحة",
   "StudyDate": "تاريخ الدراسة",
   "StudyList": "قائمة الدراسات",
-  "Upload": "رفع",
-  "ProcessingViewerRun": "يدوي · تم التشغيل من العارض"
+  "Upload": "رفع"
 }

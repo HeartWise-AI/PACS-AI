@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useDrag } from 'react-dnd';
@@ -6,12 +6,36 @@ import { Icons } from '../Icons';
 import { DisplaySetMessageListTooltip } from '../DisplaySetMessageListTooltip';
 import { TooltipTrigger, TooltipContent, Tooltip } from '../Tooltip';
 
+const DraggableThumbnailContent = ({ dragData, children }: any) => {
+  const [, drag] = useDrag({
+    type: 'displayset',
+    item: { ...dragData },
+    canDrag: function () {
+      return Object.keys(dragData).length !== 0;
+    },
+  });
+
+  return (
+    <div
+      ref={drag}
+      className="h-full w-full"
+    >
+      {children}
+    </div>
+  );
+};
+
+const StaticThumbnailContent = ({ children }: any) => {
+  return <div className="h-full w-full">{children}</div>;
+};
+
 /**
  * Display a thumbnail for a display set.
  */
 const Thumbnail = ({
   displaySetInstanceUID,
   className,
+  children,
   imageSrc,
   imageAltText,
   description,
@@ -30,23 +54,20 @@ const Thumbnail = ({
   isTracked = false,
   canReject = false,
   dragData = {},
+  isDraggable = true,
   onReject = () => {},
   onClickUntrack = () => {},
   ThumbnailMenuItems = () => {},
-  selectedViewBadge = null, // NOTE: This is a PACS changes
+  onImageLoadError = () => {},
 }: withAppTypes): React.ReactNode => {
-  // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
-  // this will still allow for "drag", even if there is no drop target for the
-  // specified item.
-  const [collectedProps, drag, dragPreview] = useDrag({
-    type: 'displayset',
-    item: { ...dragData },
-    canDrag: function (monitor) {
-      return Object.keys(dragData).length !== 0;
-    },
-  });
-
   const [lastTap, setLastTap] = useState(0);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [imageSrc]);
+
+  const shouldRenderThumbnailImage = Boolean(imageSrc && !imageLoadFailed);
 
   const handleTouchEnd = e => {
     const currentTime = new Date().getTime();
@@ -59,43 +80,29 @@ const Thumbnail = ({
     setLastTap(currentTime);
   };
 
-  // NOTE: This is a PACS changes (AI result "selected view" marker)
-  const renderSelectedViewBadge = (sizeClassName: string) =>
-    selectedViewBadge ? (
-      <span
-        className={classnames(
-          'flex shrink-0 items-center justify-center rounded-full bg-[#3ef1d1] font-bold text-black',
-          sizeClassName
-        )}
-        title={selectedViewBadge.label}
-        aria-label={selectedViewBadge.label}
-        data-cy="thumbnail-selected-view-badge"
-      >
-        {selectedViewBadge.number}
-      </span>
-    ) : null;
-
   const renderThumbnailPreset = () => {
     return (
       <div
         className={classnames(
           'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]',
-          // NOTE: This is a PACS changes
-          isActive && 'bg-primary/10 rounded'
+          isActive && 'bg-popover rounded'
         )}
       >
         <div className="h-[114px] w-[128px]">
-          <div className="relative bg-black">
-            {imageSrc ? (
+          <div className="relative bg-background">
+            {shouldRenderThumbnailImage ? (
               <img
                 src={imageSrc}
                 alt={imageAltText}
                 className="h-[114px] w-[128px] rounded object-contain"
                 crossOrigin="anonymous"
+                onError={() => {
+                  setImageLoadFailed(true);
+                  onImageLoadError();
+                }}
               />
             ) : (
-              // NOTE: This is a PACS changes
-              <div className="bg-primary/20 h-[114px] w-[128px] rounded"></div>
+              <div className="bg-background h-[114px] w-[128px] rounded">{children}</div>
             )}
 
             {/* bottom left */}
@@ -103,20 +110,17 @@ const Thumbnail = ({
               <div
                 className={classnames(
                   'h-[10px] w-[10px] rounded-[2px]',
-                  // NOTE: This is a PACS changes
-                  isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
+                  isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
                   loadingProgress && loadingProgress < 1 && 'bg-primary/25'
                 )}
               ></div>
-              <div className="text-[11px] font-semibold text-white">{modality}</div>
-            </div>
-
-            {/* top left (NOTE: This is a PACS changes) */}
-            {selectedViewBadge && (
-              <div className="absolute top-[4px] left-[4px]">
-                {renderSelectedViewBadge('h-[18px] w-[18px] text-[11px]')}
+              <div
+                className="text-foreground text-[11px] font-semibold"
+                data-cy="series-modality-label"
+              >
+                {modality}
               </div>
-            )}
+            </div>
 
             {/* top right */}
             <div className="absolute top-0 right-0 flex items-center gap-[4px]">
@@ -128,9 +132,9 @@ const Thumbnail = ({
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="group">
-                      <Icons.StatusTracking className="text-primary-light h-[15px] w-[15px] group-hover:hidden" />
+                      <Icons.StatusTracking className="text-highlight h-[15px] w-[15px] group-hover:hidden" />
                       <Icons.Cancel
-                        className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                        className="text-highlight hidden h-[15px] w-[15px] group-hover:block"
                         onClick={onClickUntrack}
                       />
                     </div>
@@ -142,7 +146,7 @@ const Thumbnail = ({
                       </div>
                       <div className="flex flex-1 flex-col">
                         <span>
-                          <span className="text-white">
+                          <span className="text-foreground">
                             {isTracked ? 'Series is tracked' : 'Series is untracked'}
                           </span>
                         </span>
@@ -166,16 +170,17 @@ const Thumbnail = ({
           <Tooltip>
             <TooltipContent>{description}</TooltipContent>
             <TooltipTrigger>
-              <div className="min-h-[18px] w-[128px] overflow-hidden text-ellipsis whitespace-nowrap pb-0.5 pl-1 text-left text-[12px] font-normal leading-4 text-white">
+              <div
+                className="text-foreground min-h-[18px] w-[128px] overflow-hidden text-ellipsis whitespace-nowrap pb-0.5 pl-1 text-left text-[12px] font-normal leading-4"
+                data-cy="series-description-label"
+              >
                 {description}
               </div>
             </TooltipTrigger>
           </Tooltip>
           <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-            {/* NOTE: This is a PACS changes */}
-            <div className="pl-1 text-[11px] font-semibold text-white/80"> S:{seriesNumber}</div>
-            {/* NOTE: This is a PACS changes */}
-            <div className="text-[11px] font-semibold text-white/80">
+            <div className="text-muted-foreground pl-1 text-[11px]"> S:{seriesNumber}</div>
+            <div className="text-muted-foreground text-[11px]">
               <div className="flex items-center gap-[4px]">
                 {countIcon ? (
                   React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
@@ -196,29 +201,32 @@ const Thumbnail = ({
       <div
         className={classnames(
           'flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]',
-          // NOTE: This is a PACS changes
-          isActive && 'bg-primary/10 rounded'
+          isActive && 'bg-popover rounded'
         )}
       >
         <div className="relative flex h-[32px] w-full items-center gap-[8px] overflow-hidden">
           <div
             className={classnames(
               'h-[32px] w-[4px] min-w-[4px] rounded',
-              // NOTE: This is a PACS changes
-              isActive || isHydratedForDerivedDisplaySet ? 'bg-primary' : 'bg-primary/40',
-              loadingProgress && loadingProgress < 1 && 'bg-primary/20'
+              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
+              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
             )}
           ></div>
           <div className="flex h-full w-[calc(100%-12px)] flex-col justify-start">
             <div className="flex items-center gap-[7px]">
-              {renderSelectedViewBadge('h-[16px] w-[16px] text-[10px]')}
-              {/* NOTE: This is a PACS changes */}
-              <div className="text-[13px] font-semibold text-white/80">{modality}</div>
+              <div
+                className="text-foreground text-[13px] font-semibold"
+                data-cy="series-modality-label"
+              >
+                {modality}
+              </div>
               <Tooltip>
                 <TooltipContent>{description}</TooltipContent>
                 <TooltipTrigger className="w-full overflow-hidden">
-                  {/* NOTE: This is a PACS changes */}
-                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white/80">
+                  <div
+                    className="text-foreground max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal"
+                    data-cy="series-description-label"
+                  >
                     {description}
                   </div>
                 </TooltipTrigger>
@@ -226,10 +234,8 @@ const Thumbnail = ({
             </div>
 
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              {/* NOTE: This is a PACS changes */}
-              <div className="text-[12px] font-semibold text-white/80"> S:{seriesNumber}</div>
-              {/* NOTE: This is a PACS changes */}
-              <div className="text-[12px] font-semibold text-white/80">
+              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
+              <div className="text-muted-foreground text-[12px]">
                 <div className="flex items-center gap-[4px]">
                   {' '}
                   {countIcon ? (
@@ -252,9 +258,9 @@ const Thumbnail = ({
             <Tooltip>
               <TooltipTrigger>
                 <div className="group">
-                  <Icons.StatusTracking className="text-primary-light h-[20px] w-[15px] group-hover:hidden" />
+                  <Icons.StatusTracking className="text-highlight h-[20px] w-[15px] group-hover:hidden" />
                   <Icons.Cancel
-                    className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                    className="text-highlight hidden h-[15px] w-[15px] group-hover:block"
                     onClick={onClickUntrack}
                   />
                 </div>
@@ -266,7 +272,7 @@ const Thumbnail = ({
                   </div>
                   <div className="flex flex-1 flex-col">
                     <span>
-                      <span className="text-white">
+                      <span className="text-foreground">
                         {isTracked ? 'Series is tracked' : 'Series is untracked'}
                       </span>
                     </span>
@@ -289,10 +295,10 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        // NOTE: This is a PACS changes
-        'group flex cursor-pointer select-none flex-col rounded bg-white/10 outline-none hover:bg-white/30',
+        'bg-muted group flex select-none flex-col rounded outline-none',
+        isDraggable && 'hover:bg-primary/30 cursor-pointer',
+        !isDraggable && 'cursor-default',
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
-        selectedViewBadge && 'ring-1 ring-[#3ef1d1]',
         viewPreset === 'list' && 'h-[40px] w-full'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
@@ -305,15 +311,19 @@ const Thumbnail = ({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onTouchEnd={handleTouchEnd}
-      role="button"
+      role={isDraggable ? 'button' : undefined}
     >
-      <div
-        ref={drag}
-        className="h-full w-full"
-      >
-        {viewPreset === 'thumbnails' && renderThumbnailPreset()}
-        {viewPreset === 'list' && renderListPreset()}
-      </div>
+      {isDraggable ? (
+        <DraggableThumbnailContent dragData={dragData}>
+          {viewPreset === 'thumbnails' && renderThumbnailPreset()}
+          {viewPreset === 'list' && renderListPreset()}
+        </DraggableThumbnailContent>
+      ) : (
+        <StaticThumbnailContent>
+          {viewPreset === 'thumbnails' && renderThumbnailPreset()}
+          {viewPreset === 'list' && renderListPreset()}
+        </StaticThumbnailContent>
+      )}
     </div>
   );
 };
@@ -321,6 +331,7 @@ const Thumbnail = ({
 Thumbnail.propTypes = {
   displaySetInstanceUID: PropTypes.string.isRequired,
   className: PropTypes.string,
+  children: PropTypes.node,
   imageSrc: PropTypes.string,
   /**
    * Data the thumbnail should expose to a receiving drop target. Use a matching
@@ -348,12 +359,9 @@ Thumbnail.propTypes = {
   isTracked: PropTypes.bool,
   onClickUntrack: PropTypes.func,
   countIcon: PropTypes.string,
+  isDraggable: PropTypes.bool,
   thumbnailType: PropTypes.oneOf(['thumbnail', 'thumbnailTracked', 'thumbnailNoImage']),
-  // NOTE: This is a PACS changes
-  selectedViewBadge: PropTypes.shape({
-    number: PropTypes.number.isRequired,
-    label: PropTypes.string,
-  }),
+  onImageLoadError: PropTypes.func,
 };
 
 export { Thumbnail };

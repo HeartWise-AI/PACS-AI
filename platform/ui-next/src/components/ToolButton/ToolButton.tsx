@@ -6,10 +6,11 @@ import { cn } from '../../lib/utils';
 import { useIconPresentation } from '../../contextProviders/IconPresentationProvider';
 
 const baseClasses = '!rounded-lg inline-flex items-center justify-center';
-const defaultClasses = 'bg-transparent text-foreground/80 hover:bg-primary hover:text-background'; // NOTE: This is a PACS changes
-const activeClasses = 'bg-primary text-background hover:!bg-primary'; // NOTE: This is a PACS changes
+const defaultClasses = 'bg-transparent text-foreground/80 hover:bg-background hover:text-highlight';
+const activeClasses = 'bg-highlight text-background hover:!bg-highlight/80';
+const toggledClasses = 'bg-transparent text-highlight hover:bg-muted';
 const disabledClasses =
-  'text-common-bright hover:bg-primary-dark hover:text-primary-light opacity-40 cursor-not-allowed';
+  'text-foreground hover:bg-muted hover:text-highlight opacity-40 cursor-not-allowed';
 
 const sizeClasses = {
   default: {
@@ -33,6 +34,7 @@ interface ToolButtonProps {
   tooltip?: string;
   size?: 'default' | 'small';
   isActive?: boolean;
+  isToggled?: boolean;
   disabled?: boolean;
   disabledText?: string;
   commands?: Record<string, unknown>;
@@ -50,6 +52,7 @@ function ToolButton(props: ToolButtonProps) {
     size = 'default',
     disabled = false,
     isActive = false,
+    isToggled = false,
     disabledText,
     commands,
     onInteraction,
@@ -63,7 +66,7 @@ function ToolButton(props: ToolButtonProps) {
   const buttonClasses = cn(
     baseClasses,
     buttonSizeClass,
-    disabled ? disabledClasses : isActive ? activeClasses : defaultClasses,
+    disabled ? disabledClasses : isActive ? activeClasses : isToggled ? toggledClasses : defaultClasses,
     className
   );
 
@@ -85,6 +88,7 @@ function ToolButton(props: ToolButtonProps) {
           data-cy={id}
           data-tool={id}
           data-active={isActive}
+          data-toggled={isToggled}
         >
           <Button
             className={buttonClasses}
@@ -116,11 +120,9 @@ function ToolButton(props: ToolButtonProps) {
           <div className="space-y-1">
             {defaultTooltip && <div className="text-sm">{defaultTooltip}</div>}
             {disabledTooltip ? (
-              // NOTE: This is a PACS changes
-              <div className="text-foreground/80 text-xs">{disabledTooltip}</div>
+              <div className="text-muted-foreground text-xs">{disabledTooltip}</div>
             ) : (
-              // NOTE: This is a PACS changes
-              tooltip && <div className="text-foreground/80 text-xs">{tooltip}</div>
+              tooltip && <div className="text-muted-foreground text-xs">{tooltip}</div>
             )}
           </div>
         )}

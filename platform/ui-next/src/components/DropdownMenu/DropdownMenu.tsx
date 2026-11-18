@@ -26,8 +26,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      // NOTE: This is a PACS changes
-      'flex cursor-default select-none items-center rounded px-2 py-1 text-base outline-none focus:bg-[#151815] data-[state=open]:bg-[#151815]',
+      'focus:bg-accent data-[state=open]:bg-accent flex cursor-default select-none items-center rounded px-2 py-1 text-base outline-none',
       inset && 'pl-8',
       disabled && 'pointer-events-none opacity-50',
       className
@@ -47,8 +46,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      // NOTE: This is a PACS changes
-      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded border border-white border-opacity-10 bg-[#4C504B] p-1 text-black shadow-lg',
+      'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-input/50 z-50 min-w-[8rem] overflow-hidden rounded border p-1 shadow-lg',
       className
     )}
     {...props}
@@ -70,8 +68,7 @@ const DropdownMenuContent = React.forwardRef<
         props.onKeyDown?.(e);
       }}
       className={cn(
-        // NOTE: This is a PACS changes
-        'z-50 min-w-[8rem] overflow-hidden rounded border border-white/10 bg-[#4C504B] p-1 text-white shadow-md',
+        'bg-popover text-popover-foreground border-input/50 z-50 min-w-[8rem] overflow-hidden rounded border p-1 shadow-md',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         className
       )}
@@ -90,8 +87,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      // NOTE: This is a PACS changes
-      'focus:text-accent-foreground relative flex cursor-default select-none items-center rounded px-1 py-1 text-base outline-none transition-colors focus:bg-[#151815] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent focus:text-accent-foreground relative flex cursor-default select-none items-center rounded px-1 py-1 text-base outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       inset && 'pl-8',
       className
     )}
@@ -107,8 +103,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      // NOTE: This is a PACS changes
-      'focus:text-accent-foreground relative flex cursor-default select-none items-center rounded py-1 pl-8 pr-2 text-base outline-none transition-colors focus:bg-[#151815] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent focus:text-accent-foreground relative flex cursor-default select-none items-center rounded py-1 pl-8 pr-2 text-base outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     checked={checked}
@@ -131,8 +126,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      // NOTE: This is a PACS changes
-      'focus:text-accent-foreground relative flex cursor-default select-none items-center rounded py-1 pl-8 pr-2 text-base outline-none transition-colors focus:bg-[#151815] data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent focus:text-accent-foreground relative flex cursor-default select-none items-center rounded py-1 pl-8 pr-2 text-base outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className
     )}
     {...props}

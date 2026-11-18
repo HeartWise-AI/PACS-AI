@@ -1,0 +1,17 @@
+diff --git a/.webpack/webpack.base.js b/.webpack/webpack.base.js
+index 43d5d50bb13792604ef1f5766d443e685c68279f..ddbc9075e492436bbfb4fb46d49481b55d50b7c3 100644
+--- a/.webpack/webpack.base.js
++++ b/.webpack/webpack.base.js
+@@ -253,5 +253,12 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
+     config.devtool = false;
+   }
+ 
++  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
++  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
++  const pacsAiExtend = path.join(__dirname, '../pacs-ai/build/extend.js');
++  if (fs.existsSync(pacsAiExtend)) {
++    return require(pacsAiExtend).extendWebpackBase(config, { env, argv, defineValues });
++  }
++
+   return config;
+ };

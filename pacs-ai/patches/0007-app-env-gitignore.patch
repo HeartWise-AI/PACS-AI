@@ -1,0 +1,9 @@
+diff --git a/platform/app/.gitignore b/platform/app/.gitignore
+index 9062b1c2868ec2d64d863683a739593b69d44eae..1d552f59738de43f50494ed30f5db5acec5ee5cf 100644
+--- a/platform/app/.gitignore
++++ b/platform/app/.gitignore
+@@ -1,3 +1,4 @@
+ .vercel
+ test-results
+ store.json
++.env

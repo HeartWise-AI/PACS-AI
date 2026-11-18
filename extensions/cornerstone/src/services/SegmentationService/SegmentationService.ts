@@ -9,30 +9,50 @@ import {
   utilities as csUtils,
   metaData,
 } from '@cornerstonejs/core';
+import { ViewportType } from '@cornerstonejs/core/enums';
+import { isVolume3DViewportType } from '../../utils/getLegacyViewportType';
+
 import {
   Enums as csToolsEnums,
   segmentation as cstSegmentation,
   Types as cstTypes,
+  annotation as cstAnnotation,
 } from '@cornerstonejs/tools';
+
 import { PubSubService, Types as OHIFTypes } from '@ohif/core';
 import i18n from '@ohif/i18n';
-import { easeInOutBell, easeInOutBellRelative } from '../../utils/transitions';
-import { mapROIContoursToRTStructData } from './RTSTRUCT/mapROIContoursToRTStructData';
-import { SegmentationRepresentations } from '@cornerstonejs/tools/enums';
-import { addColorLUT } from '@cornerstonejs/tools/segmentation/addColorLUT';
-import { getNextColorLUTIndex } from '@cornerstonejs/tools/segmentation/getNextColorLUTIndex';
-import { Segment } from '@cornerstonejs/tools/types/SegmentationStateTypes';
-import { ContourStyle, LabelmapStyle, SurfaceStyle } from '@cornerstonejs/tools/types';
-import { ViewportType } from '@cornerstonejs/core/enums';
-import { SegmentationPresentation, SegmentationPresentationItem } from '../../types/Presentation';
-import { updateLabelmapSegmentationImageReferences } from '@cornerstonejs/tools/segmentation/updateLabelmapSegmentationImageReferences';
-import { triggerSegmentationRepresentationModified } from '@cornerstonejs/tools/segmentation/triggerSegmentationEvents';
-import { convertStackToVolumeLabelmap } from '@cornerstonejs/tools/segmentation/helpers/convertStackToVolumeLabelmap';
-import { getLabelmapImageIds } from '@cornerstonejs/tools/segmentation';
-import { VOLUME_LOADER_SCHEME } from '../../constants';
 
-const LABELMAP = csToolsEnums.SegmentationRepresentations.Labelmap;
-const CONTOUR = csToolsEnums.SegmentationRepresentations.Contour;
+import { VOLUME_LOADER_SCHEME } from '../../constants';
+import { mapROIContoursToRTStructData } from './RTSTRUCT/mapROIContoursToRTStructData';
+import { SegmentationPresentation, SegmentationPresentationItem } from '../../types/Presentation';
+import { EasingFunctionEnum, EasingFunctionMap } from '../../utils/transitions';
+import { ViewReference } from '@cornerstonejs/core/types';
+import {
+  LegacySegmentationBackend,
+  NextSegmentationBackend,
+  type ISegmentationBackend,
+  type ISegmentationServiceInternals,
+} from './backends';
+// Sanctioned flag read: the SEG data shape (single- vs multi-layer) is fixed at
+// load time, before any target viewport exists, so this one seg-backend dispatch
+// cannot use a per-viewport capability check and reads the session flag instead.
+import { isNextViewportsEnabled } from '../../utils/nextViewports';
+import { isNextViewport } from '../ViewportService/adapter';
+
+const { DefaultHistoryMemo } = csUtils.HistoryMemo;
+
+const {
+  Labelmap: LABELMAP,
+  Contour: CONTOUR,
+  Surface: SURFACE,
+} = csToolsEnums.SegmentationRepresentations;
+
+const {
+  getLabelmapImageIds,
+  helpers: { convertStackToVolumeLabelmap },
+  state: { addColorLUT },
+  triggerSegmentationEvents: { triggerSegmentationRepresentationModified },
+} = cstSegmentation;
 
 export type SegmentRepresentation = {
   segmentIndex: number;
@@ -47,6 +67,7 @@ export type SegmentationRepresentation = cstTypes.SegmentationRepresentation & {
   viewportId: string;
   id: string;
   label: string;
+  fallbackLabel?: string;
   styles: cstTypes.RepresentationStyle;
   segments: {
     [key: number]: SegmentRepresentation;
@@ -77,11 +98,15 @@ const EVENTS = {
   SEGMENT_LOADING_COMPLETE: 'event::segment_loading_complete',
   // loading completed for all segments
   SEGMENTATION_LOADING_COMPLETE: 'event::segmentation_loading_complete',
+  // fired when a contour annotation cut merge process is completed
+  SEGMENTATION_ANNOTATION_CUT_MERGE_PROCESS_COMPLETED:
+    'event::annotation_cut_merge_process_completed',
+  SEGMENTATION_STYLE_MODIFIED: 'event::segmentation_style_modified',
 };
 
 const VALUE_TYPES = {};
 
-class SegmentationService extends PubSubService {
+class SegmentationService extends PubSubService implements ISegmentationServiceInternals {
   static REGISTRATION = {
     name: 'segmentationService',
     altName: 'SegmentationService',
@@ -92,6 +117,8 @@ class SegmentationService extends PubSubService {
 
   private _segmentationIdToColorLUTIndexMap: Map<string, number>;
   private _segmentationGroupStatsMap: Map<string, any>;
+  private readonly _legacySegBackend: ISegmentationBackend;
+  private readonly _nextSegBackend: ISegmentationBackend;
   readonly servicesManager: AppTypes.ServicesManager;
   highlightIntervalId = null;
   readonly EVENTS = EVENTS;
@@ -104,6 +131,24 @@ class SegmentationService extends PubSubService {
     this.servicesManager = servicesManager;
 
     this._segmentationGroupStatsMap = new Map();
+
+    // Segmentation backend twins (mirror the viewport backend family). Routed PER
+    // VIEWPORT via _segBackend() using the adapter's isNextViewport predicate,
+    // because a flag-on session can mix native and legacy viewports. Both are
+    // constructed eagerly:
+    // per-viewport dispatch has no per-session flag to defer on, and the twins read
+    // state at call time (post-init), not at construction.
+    this._legacySegBackend = new LegacySegmentationBackend(this);
+    this._nextSegBackend = new NextSegmentationBackend();
+  }
+
+  /**
+   * Picks the segmentation backend lane for a specific viewport: the native
+   * ("next") twin for a raw GenericViewport (PlanarViewport), the legacy twin
+   * otherwise. Mirrors viewportOperations' per-viewport dispatch.
+   */
+  private _segBackend(viewport: csTypes.IViewport): ISegmentationBackend {
+    return isNextViewport(viewport) ? this._nextSegBackend : this._legacySegBackend;
   }
 
   public onModeEnter(): void {
@@ -149,13 +194,11 @@ class SegmentationService extends PubSubService {
 
     const representations = this.getSegmentationRepresentations(viewportId);
     for (const representation of representations) {
-      const { segmentationId } = representation;
-
       if (!representation) {
         continue;
       }
 
-      const { type } = representation;
+      const { segmentationId, type } = representation;
 
       segmentationsMap.set(segmentationId, {
         segmentationId,
@@ -212,7 +255,7 @@ class SegmentationService extends PubSubService {
     viewportId: string,
     specifier: {
       segmentationId?: string;
-      type?: SegmentationRepresentations;
+      type?: csToolsEnums.SegmentationRepresentations;
     } = {}
   ): SegmentationRepresentation[] {
     // Get all representations for the viewportId
@@ -237,7 +280,7 @@ class SegmentationService extends PubSubService {
 
     eventTarget.removeEventListener(
       csToolsEnums.Events.SEGMENTATION_REMOVED,
-      this._onSegmentationModifiedFromSource
+      this._onSegmentationRemovedFromSource
     );
 
     eventTarget.removeEventListener(
@@ -246,8 +289,18 @@ class SegmentationService extends PubSubService {
     );
 
     eventTarget.removeEventListener(
+      csToolsEnums.Events.SEGMENTATION_REPRESENTATION_MODIFIED,
+      this._onSegmentationRepresentationModifiedFromSource
+    );
+
+    eventTarget.removeEventListener(
       csToolsEnums.Events.SEGMENTATION_REPRESENTATION_ADDED,
-      this._onSegmentationModifiedFromSource
+      this._onSegmentationRepresentationModifiedFromSource
+    );
+
+    eventTarget.removeEventListener(
+      csToolsEnums.Events.SEGMENTATION_REPRESENTATION_REMOVED,
+      this._onSegmentationRepresentationRemovedFromSource
     );
 
     eventTarget.removeEventListener(
@@ -262,46 +315,86 @@ class SegmentationService extends PubSubService {
     viewportId: string,
     {
       segmentationId,
+      predecessorImageId,
       type,
       config,
       suppressEvents = false,
     }: {
       segmentationId: string;
+      predecessorImageId?: string;
       type?: csToolsEnums.SegmentationRepresentations;
       config?: {
         blendMode?: csEnums.BlendModes;
+        useSliceRendering?: boolean;
       };
       suppressEvents?: boolean;
     }
   ): Promise<void> {
     const segmentation = this.getSegmentation(segmentationId);
+
+    if (!segmentation) {
+      console.warn(
+        `addSegmentationRepresentation: segmentation "${segmentationId}" is not in state yet`
+      );
+      return;
+    }
+
+    if (!segmentation.predecessorImageId && predecessorImageId) {
+      segmentation.predecessorImageId = predecessorImageId;
+    }
     const csViewport = this.getAndValidateViewport(viewportId);
 
     if (!csViewport) {
       return;
     }
 
+    // A stale/invalid segmentationId yields no segmentation; fail fast with a clear
+    // message instead of dereferencing representationData deep inside the backend
+    // classification below.
+    if (!segmentation) {
+      throw new Error(
+        `SegmentationService: cannot add representation - segmentation "${segmentationId}" not found.`
+      );
+    }
+
     const colorLUTIndex = this._segmentationIdToColorLUTIndexMap.get(segmentationId);
 
-    const defaultRepresentationType = csToolsEnums.SegmentationRepresentations.Labelmap;
-    let representationTypeToUse = type || defaultRepresentationType;
     let isConverted = false;
 
-    if (type === csToolsEnums.SegmentationRepresentations.Labelmap) {
-      const { isVolumeViewport, isVolumeSegmentation } = this.determineViewportAndSegmentationType(
-        csViewport,
-        segmentation
-      ) || { isVolumeViewport: false, isVolumeSegmentation: false };
+    const defaultRepresentationType: csToolsEnums.SegmentationRepresentations =
+      isVolume3DViewportType(csViewport) ? SURFACE : LABELMAP;
+    let representationTypeToUse = type || defaultRepresentationType;
 
-      ({ representationTypeToUse, isConverted } = await this.handleViewportConversion(
-        isVolumeViewport,
-        isVolumeSegmentation,
+    if (representationTypeToUse === LABELMAP) {
+      ({ representationTypeToUse, isConverted } = await this._segBackend(
+        csViewport
+      ).classifyAndPrepareLabelmapAdd(
         csViewport,
         segmentation,
         viewportId,
         segmentationId,
         representationTypeToUse
       ));
+
+      // Overlap precondition: an overlapping SEG is registered as multiple labelmap
+      // layers, but cornerstone only stacks them (slice rendering) when the viewport
+      // renders as a volume slice (VTK_VOLUME_SLICE) — i.e. an MPR/volume viewport. On
+      // a stack/acquisition viewport the render plan falls back to a single layer, so
+      // only the primary group is visible. Warn rather than fail silently.
+      const labelmapLayers = segmentation?.representationData?.[LABELMAP]?.labelmaps;
+      const isOverlapping = labelmapLayers && Object.keys(labelmapLayers).length > 1;
+      if (
+        isOverlapping &&
+        isNextViewport(csViewport) &&
+        !csUtils.viewportIsInVolumeMode(csViewport)
+      ) {
+        console.warn(
+          `Overlapping segmentation ${segmentationId} has multiple labelmap layers, but ` +
+            `viewport ${viewportId} does not render as a volume slice (VTK_VOLUME_SLICE); ` +
+            `only the primary layer will be visible. Display the segmentation in an ` +
+            `MPR/volume layout to see all overlapping segments.`
+        );
+      }
     }
 
     await this._addSegmentationRepresentation(
@@ -337,6 +430,39 @@ class SegmentationService extends PubSubService {
       label?: string;
     }
   ): Promise<string> {
+    return this._createSegmentationForDisplaySet(displaySet, LABELMAP, options);
+  }
+
+  public async createContourForDisplaySet(
+    displaySet: AppTypes.DisplaySet,
+    options?: {
+      segmentationId?: string;
+      segments?: { [segmentIndex: number]: Partial<cstTypes.Segment> };
+      FrameOfReferenceUID?: string;
+      label?: string;
+    }
+  ): Promise<string> {
+    return this._createSegmentationForDisplaySet(displaySet, CONTOUR, options);
+  }
+
+  /**
+   * Private method to create segmentation for a display set with the specified type
+   *
+   * @param displaySet - The display set to create the segmentation for
+   * @param segmentationType - The type of segmentation (SegmentationRepresentations enum)
+   * @param options - Optional parameters for creating the segmentation
+   * @returns A promise that resolves to the created segmentation ID
+   */
+  private async _createSegmentationForDisplaySet(
+    displaySet: AppTypes.DisplaySet,
+    segmentationType: SegmentationRepresentations,
+    options?: {
+      segmentationId?: string;
+      segments?: { [segmentIndex: number]: Partial<cstTypes.Segment> };
+      FrameOfReferenceUID?: string;
+      label?: string;
+    }
+  ): Promise<string> {
     // Todo: random does not makes sense, make this better, like
     // labelmap 1, 2, 3 etc
     const segmentationId = options?.segmentationId ?? `${csUtils.uuidv4()}`;
@@ -354,14 +480,14 @@ class SegmentationService extends PubSubService {
     const derivedImages = await imageLoader.createAndCacheDerivedLabelmapImages(referenceImageIds);
 
     const segs = this.getSegmentations();
-    const label = options.label || `Segmentation ${segs.length + 1}`;
+    const label = options?.label || `Segmentation ${segs.length + 1}`;
 
     const segImageIds = derivedImages.map(image => image.imageId);
 
     const segmentationPublicInput: cstTypes.SegmentationPublicInput = {
       segmentationId,
       representation: {
-        type: LABELMAP,
+        type: segmentationType,
         data: {
           imageIds: segImageIds,
           // referencedVolumeId: this._getVolumeIdForDisplaySet(displaySet),
@@ -370,8 +496,9 @@ class SegmentationService extends PubSubService {
       },
       config: {
         label,
+        fallbackLabel: `S:${displaySet.SeriesNumber} ${displaySet.Modality}`,
         segments:
-          options.segments && Object.keys(options.segments).length > 0
+          options?.segments && Object.keys(options.segments).length > 0
             ? options.segments
             : {
                 1: {
@@ -393,7 +520,7 @@ class SegmentationService extends PubSubService {
     segDisplaySet,
     options: {
       segmentationId?: string;
-      type: SegmentationRepresentations;
+      type: csToolsEnums.SegmentationRepresentations;
     } = {
       type: LABELMAP,
     }
@@ -422,10 +549,22 @@ class SegmentationService extends PubSubService {
       throw new Error('No instances were provided for the referenced display set of the SEG');
     }
 
-    const imageIds = images.map(image => image.imageId);
+    // Use the same imageIds as SEG parse (_loadSegments stores these on segDisplaySet).
+    const imageIds =
+      segDisplaySet.referencedImageIds ||
+      (referencedDisplaySet.imageIds as string[] | undefined) ||
+      images.map(image => image.imageId);
+
+    if (!imageIds?.length) {
+      throw new Error('referencedDisplaySet has no imageIds for SEG');
+    }
     const derivedImages = labelMapImages?.flat();
     const derivedImageIds = derivedImages.map(image => image.imageId);
 
+    // Note: instance runtime props (frameNumber, imageId, url, ...) are
+    // intentionally non-enumerable, so this spread deliberately does NOT copy
+    // them — frameNumber must not be carried onto these derived image entries.
+    // Read such props off the original instance, never off a copy.
     segDisplaySet.images = derivedImages.map(image => ({
       ...image,
       ...metaData.get('instance', image.referencedImageId),
@@ -503,35 +642,38 @@ class SegmentationService extends PubSubService {
       };
     });
 
-    // get next color lut index
-    const colorLUTIndex = getNextColorLUTIndex();
-    addColorLUT(colorLUT, colorLUTIndex);
+    const colorLUTIndex = addColorLUT(colorLUT);
     this._segmentationIdToColorLUTIndexMap.set(segmentationId, colorLUTIndex);
+
+    // Build the segmentation input via the backend twin. At SEG-load there is no
+    // target viewport yet, so the lane is chosen by the session flag (the one
+    // viewport-less seg-backend dispatch): the next twin registers overlapping SEGs
+    // as multiple labelmap layers (slice rendering); the legacy twin keeps the single
+    // flattened layer (byte-identical).
+    const segBackend = isNextViewportsEnabled() ? this._nextSegBackend : this._legacySegBackend;
+    const seg = segBackend.assembleSegmentationDataForSEG({
+      segmentationId,
+      segDisplaySet,
+      derivedImageIds,
+      referencedImageIds: imageIds as string[],
+      label: segDisplaySet.SeriesDescription,
+      fallbackLabel: `S:${segDisplaySet.SeriesNumber} ${segDisplaySet.Modality}`,
+      segments,
+    });
+
+    segDisplaySet.isLoaded = true;
+
+    // Add the segmentation to cornerstone state BEFORE broadcasting that loading is
+    // complete. Subscribers (e.g. CornerstoneViewportService) react synchronously and
+    // call addSegmentationRepresentation, which now early-returns when the segmentation
+    // is not yet in cornerstone state. Broadcasting first would make that guard always
+    // fire on initial load, silently preventing the representation from being attached.
+    this.addOrUpdateSegmentation(seg);
 
     this._broadcastEvent(EVENTS.SEGMENTATION_LOADING_COMPLETE, {
       segmentationId,
       segDisplaySet,
     });
-
-    const seg: cstTypes.SegmentationPublicInput = {
-      segmentationId,
-      representation: {
-        type: LABELMAP,
-        data: {
-          imageIds: derivedImageIds,
-          // referencedVolumeId: this._getVolumeIdForDisplaySet(referencedDisplaySet),
-          referencedImageIds: imageIds as string[],
-        },
-      },
-      config: {
-        label: segDisplaySet.SeriesDescription,
-        segments,
-      },
-    };
-
-    segDisplaySet.isLoaded = true;
-
-    this.addOrUpdateSegmentation(seg);
 
     return segmentationId;
   }
@@ -540,7 +682,7 @@ class SegmentationService extends PubSubService {
     rtDisplaySet,
     options: {
       segmentationId?: string;
-      type: SegmentationRepresentations;
+      type: csToolsEnums.SegmentationRepresentations;
     } = {
       type: CONTOUR,
     }
@@ -574,10 +716,19 @@ class SegmentationService extends PubSubService {
     // find the first image id that contains a referenced SOP instance UID
     const firstSegmentedSliceImageId =
       referencedImageIds?.find(imageId =>
-        referencedImageIdsWithGeometry.some(referencedId => imageId.includes(referencedId))
+        referencedImageIdsWithGeometry.some(referencedId =>
+          imageId.includes(referencedId as string)
+        )
       ) || null;
 
     rtDisplaySet.firstSegmentedSliceImageId = firstSegmentedSliceImageId;
+
+    if (!structureSet.ROIContours?.length) {
+      throw new Error(
+        'The structureSet does not contain any ROIContours. Please ensure the structureSet is loaded first.'
+      );
+    }
+
     // Map ROI contours to RT Struct Data
     const allRTStructData = mapROIContoursToRTStructData(structureSet, rtDisplaySetUID);
 
@@ -597,14 +748,9 @@ class SegmentationService extends PubSubService {
       },
       config: {
         label: rtDisplaySet.SeriesDescription,
+        fallbackLabel: `S:${rtDisplaySet.SeriesNumber} ${rtDisplaySet.Modality}`,
       },
     };
-
-    if (!structureSet.ROIContours?.length) {
-      throw new Error(
-        'The structureSet does not contain any ROIContours. Please ensure the structureSet is loaded first.'
-      );
-    }
 
     const segments: { [segmentIndex: string]: cstTypes.Segment } = {};
     let segmentsCachedStats = {};
@@ -613,7 +759,9 @@ class SegmentationService extends PubSubService {
     const colorLUT = [[0, 0, 0, 0]]; // First entry is transparent for index 0
 
     // Process each segment similarly to the SEG function
-    for (const rtStructData of allRTStructData) {
+    for (let i = 0; i < allRTStructData.length; i++) {
+      const rtStructData = allRTStructData[i];
+
       const { data, id, color, segmentIndex, geometryId, group } = rtStructData;
 
       // Add the color to the colorLUT array
@@ -662,8 +810,7 @@ class SegmentationService extends PubSubService {
     }
 
     // Create and register the colorLUT
-    const colorLUTIndex = getNextColorLUTIndex();
-    addColorLUT(colorLUT, colorLUTIndex);
+    const colorLUTIndex = addColorLUT(colorLUT);
     this._segmentationIdToColorLUTIndexMap.set(segmentationId, colorLUTIndex);
 
     // Assign processed segments to segmentation config
@@ -702,9 +849,16 @@ class SegmentationService extends PubSubService {
     if (existingSegmentation) {
       // Update the existing segmentation
       this.updateSegmentationInSource(segmentationId, data as Partial<cstTypes.Segmentation>);
-    } else {
+    } else if (
+      'representation' in data &&
+      (data as cstTypes.SegmentationPublicInput).representation
+    ) {
       // Add a new segmentation
       this.addSegmentationToSource(data as cstTypes.SegmentationPublicInput);
+    } else {
+      console.warn(
+        `addOrUpdateSegmentation: skipping add for ${segmentationId} — missing representation`
+      );
     }
   }
 
@@ -760,7 +914,7 @@ class SegmentationService extends PubSubService {
   public hasCustomStyles(specifier: {
     viewportId: string;
     segmentationId: string;
-    type: SegmentationRepresentations;
+    type: csToolsEnums.SegmentationRepresentations;
   }): boolean {
     return cstSegmentation.config.style.hasCustomStyle(specifier);
   }
@@ -768,7 +922,7 @@ class SegmentationService extends PubSubService {
   public getStyle = (specifier: {
     viewportId: string;
     segmentationId: string;
-    type: SegmentationRepresentations;
+    type: csToolsEnums.SegmentationRepresentations;
     segmentIndex?: number;
   }) => {
     const style = cstSegmentation.config.style.getStyle(specifier);
@@ -778,19 +932,34 @@ class SegmentationService extends PubSubService {
 
   public setStyle = (
     specifier: {
-      type: SegmentationRepresentations;
+      type: csToolsEnums.SegmentationRepresentations;
       viewportId?: string;
       segmentationId?: string;
       segmentIndex?: number;
     },
-    style: LabelmapStyle | ContourStyle | SurfaceStyle
+    style: cstTypes.LabelmapStyle | cstTypes.ContourStyle | cstTypes.SurfaceStyle,
+    merge: boolean = true
   ) => {
-    cstSegmentation.config.style.setStyle(specifier, style);
+    cstSegmentation.config.style.setStyle(specifier, style, merge);
+    this._broadcastEvent(EVENTS.SEGMENTATION_STYLE_MODIFIED, {
+      specifier,
+      style,
+      merge,
+    });
   };
 
   public resetToGlobalStyle = () => {
     cstSegmentation.config.style.resetToGlobalStyle();
   };
+
+  public getNextAvailableSegmentIndex(segmentationId: string): number {
+    const csSegmentation = this.getCornerstoneSegmentation(segmentationId);
+    // grab the next available segment index based on the object keys,
+    // so basically get the highest segment index value + 1
+
+    const segmentKeys = Object.keys(csSegmentation.segments);
+    return segmentKeys.length === 0 ? 1 : Math.max(...segmentKeys.map(Number)) + 1;
+  }
 
   /**
    * Adds a new segment to the specified segmentation.
@@ -815,6 +984,7 @@ class SegmentationService extends PubSubService {
       active?: boolean;
       color?: csTypes.Color; // Add color type
       visibility?: boolean; // Add visibility option
+      cachedStats?: Record<string, unknown>;
     } = {}
   ): void {
     if (config?.segmentIndex === 0) {
@@ -825,10 +995,7 @@ class SegmentationService extends PubSubService {
 
     let segmentIndex = config.segmentIndex;
     if (!segmentIndex) {
-      // grab the next available segment index based on the object keys,
-      // so basically get the highest segment index value + 1
-      const segmentKeys = Object.keys(csSegmentation.segments);
-      segmentIndex = segmentKeys.length === 0 ? 1 : Math.max(...segmentKeys.map(Number)) + 1;
+      segmentIndex = this.getNextAvailableSegmentIndex(segmentationId);
     }
 
     // update the segmentation
@@ -880,10 +1047,74 @@ class SegmentationService extends PubSubService {
   }
 
   /**
+   * Creates a memo that records the current state of a segment (segmentationId/segmentIndex)
+   * so that undo can restore it via addSegment and redo can call removeSegment again
+   * without recording history.
+   *
+   * @param segmentationId - The ID of the segmentation.
+   * @param segmentIndex - The index of the segment (must still exist when called).
+   * @param _options - Reserved (e.g. deleting) for future use.
+   * @returns A Memo with restoreMemo(undo): undo => addSegment, redo => removeSegment (skipRecordingHistory).
+   */
+  public createSegmentIndexMemo(
+    segmentationId: string,
+    segmentIndex: number,
+    _options?: { deleting?: boolean }
+  ): csTypes.Memo | null {
+    const csSegmentation = this.getCornerstoneSegmentation(segmentationId);
+    const segment = csSegmentation?.segments?.[segmentIndex];
+    if (!segment) {
+      return null;
+    }
+
+    let color: csTypes.Color | undefined;
+    let visibility: boolean | undefined;
+    const viewportIds = this.getViewportIdsWithSegmentation(segmentationId);
+    if (viewportIds.length > 0) {
+      const firstViewportId = viewportIds[0];
+      const representations = this.getSegmentationRepresentations(firstViewportId, {
+        segmentationId,
+      });
+      const repType = representations[0]?.type ?? LABELMAP;
+      color = this.getSegmentColor(firstViewportId, segmentationId, segmentIndex);
+      visibility = cstSegmentation.config.visibility.getSegmentIndexVisibility(
+        firstViewportId,
+        { segmentationId, type: repType },
+        segmentIndex
+      );
+    }
+
+    const segmentState = {
+      segmentIndex,
+      label: segment.label,
+      isLocked: segment.locked,
+      active: segment.active,
+      color,
+      visibility,
+    };
+
+    const service = this;
+    const memo: csTypes.Memo = {
+      id: csUtils.uuidv4(),
+      operationType: 'segmentIndex',
+      restoreMemo(undo?: boolean) {
+        if (undo === true) {
+          service.addSegment(segmentationId, segmentState);
+        } else {
+          // Redo: remove the segment via cornerstone without recording history
+          cstSegmentation.removeSegment(segmentationId, segmentIndex, { recordHistory: false });
+        }
+      },
+    };
+    return memo;
+  }
+
+  /**
    * Removes a segment from a segmentation and updates the active segment index if necessary.
    *
    * @param segmentationId - The ID of the segmentation containing the segment to remove.
    * @param segmentIndex - The index of the segment to remove.
+   * @param options - Optional. skipRecordingHistory: if true, do not push undo memo (used when redoing).
    *
    * @remarks
    * This method performs the following actions:
@@ -892,8 +1123,21 @@ class SegmentationService extends PubSubService {
    * 3. If the removed segment was the active segment, it updates the active segment index.
    *
    */
-  public removeSegment(segmentationId: string, segmentIndex: number): void {
-    cstSegmentation.removeSegment(segmentationId, segmentIndex);
+  public removeSegment(
+    segmentationId: string,
+    segmentIndex: number,
+    options?: { skipRecordingHistory?: boolean }
+  ): void {
+    let memo;
+    if (!options?.skipRecordingHistory) {
+      memo = this.createSegmentIndexMemo(segmentationId, segmentIndex, { deleting: true });
+      DefaultHistoryMemo.startGroupRecording();
+      cstSegmentation.removeSegment(segmentationId, segmentIndex, { recordHistory: true });
+      DefaultHistoryMemo.push(memo);
+      DefaultHistoryMemo.endGroupRecording();
+    } else {
+      cstSegmentation.removeSegment(segmentationId, segmentIndex, { recordHistory: false });
+    }
   }
 
   public setSegmentVisibility(
@@ -901,7 +1145,7 @@ class SegmentationService extends PubSubService {
     segmentationId: string,
     segmentIndex: number,
     isVisible: boolean,
-    type?: SegmentationRepresentations
+    type?: csToolsEnums.SegmentationRepresentations
   ): void {
     this._setSegmentVisibility(viewportId, segmentationId, segmentIndex, isVisible, type);
   }
@@ -938,7 +1182,7 @@ class SegmentationService extends PubSubService {
     viewportId: string,
     segmentationId: string,
     segmentIndex: number,
-    type: SegmentationRepresentations
+    type: csToolsEnums.SegmentationRepresentations
   ): void {
     const isVisible = cstSegmentation.config.visibility.getSegmentIndexVisibility(
       viewportId,
@@ -969,6 +1213,12 @@ class SegmentationService extends PubSubService {
     segmentIndex: number,
     color: csTypes.Color
   ): void {
+    const segmentationRepresentations = this.getSegmentationRepresentations(viewportId, {
+      segmentationId,
+    });
+    const { colorLUTIndex } = segmentationRepresentations[0];
+    this._segmentationIdToColorLUTIndexMap.set(segmentationId, colorLUTIndex);
+
     cstSegmentation.config.color.setSegmentIndexColor(
       viewportId,
       segmentationId,
@@ -1010,7 +1260,7 @@ class SegmentationService extends PubSubService {
   public getLabelmapVolume(segmentationId: string) {
     const csSegmentation = cstSegmentation.state.getSegmentation(segmentationId);
     const labelmapData = csSegmentation.representationData[
-      SegmentationRepresentations.Labelmap
+      LABELMAP
     ] as cstTypes.LabelmapToolOperationDataVolume;
 
     if (!labelmapData || !labelmapData.volumeId) {
@@ -1112,7 +1362,10 @@ class SegmentationService extends PubSubService {
    */
   public toggleSegmentationRepresentationVisibility = (
     viewportId: string,
-    { segmentationId, type }: { segmentationId: string; type: SegmentationRepresentations }
+    {
+      segmentationId,
+      type,
+    }: { segmentationId: string; type: csToolsEnums.SegmentationRepresentations }
   ): void => {
     this._toggleSegmentationRepresentationVisibility(viewportId, segmentationId, type);
   };
@@ -1124,14 +1377,14 @@ class SegmentationService extends PubSubService {
 
   /**
    * Clears segmentation representations from the viewport.
-   * Unlike removeSegmentationRepresentations, this doesn't update
+   * Unlike removeRepresentationsFromViewport, this doesn't update
    * removed display set and representation maps.
    * We track removed segmentations manually to avoid re-adding them
    * when the display set is added again.
    * @param viewportId - The viewport ID to clear segmentation representations from.
    */
   public clearSegmentationRepresentations(viewportId: string): void {
-    this.removeSegmentationRepresentations(viewportId);
+    this.removeRepresentationsFromViewport(viewportId);
   }
 
   /**
@@ -1147,7 +1400,7 @@ class SegmentationService extends PubSubService {
   }
 
   /**
-   * It removes the segmentation representations from the viewport.
+   * Removes segmentation representations from the viewport.
    * @param viewportId - The viewport id to remove the segmentation representations from.
    * @param specifier - The specifier to remove the segmentation representations.
    *
@@ -1157,16 +1410,137 @@ class SegmentationService extends PubSubService {
    * If a type specifier is provided, only the segmentation representation with the specified type are removed.
    * If both a segmentationId and type specifier are provided, only the segmentation representation with the specified segmentationId and type are removed.
    */
-  public removeSegmentationRepresentations(
+  public removeRepresentationsFromViewport(
     viewportId: string,
     specifier: {
       segmentationId?: string;
-      type?: SegmentationRepresentations;
+      type?: csToolsEnums.SegmentationRepresentations;
     } = {}
   ): void {
     cstSegmentation.removeSegmentationRepresentations(viewportId, specifier);
   }
 
+  /**
+   * Jumps to the next slice that contains the specified segment in the viewport.
+   * For labelmaps, it jumps to the segment center. For contours, it cycles through
+   * all slices that contain contour data for the segment.
+   *
+   * @param segmentationId - The ID of the segmentation
+   * @param segmentIndex - The index of the segment to jump to
+   * @param viewportId - Optional viewport ID. If not provided, applies to all viewports with this segmentation
+   * @param highlightAlpha - Alpha value for highlighting (0-1)
+   * @param highlightSegment - Whether to highlight the segment after jumping
+   * @param animationLength - Length of highlight animation in milliseconds
+   * @param highlightHideOthers - Whether to hide other segments during highlight
+   * @param animationFunctionType - The easing function to use for animation
+   */
+  public jumpToSegmentNext(
+    segmentationId: string,
+    segmentIndex: number,
+    forViewportId?: string,
+    direction = 1,
+    highlightAlpha = 0.9,
+    highlightSegment = true,
+    animationLength = 750,
+    highlightHideOthers = false,
+    animationFunctionType: EasingFunctionEnum = EasingFunctionEnum.EASE_IN_OUT
+  ): void {
+    const viewportIds = forViewportId
+      ? [forViewportId]
+      : this.getViewportIdsWithSegmentation(segmentationId);
+
+    viewportIds.forEach(viewportId => {
+      const representations = this.getSegmentationRepresentations(viewportId, {
+        segmentationId,
+      });
+
+      if (!representations || representations.length === 0) {
+        return;
+      }
+
+      const representation = representations[0];
+      const { type } = representation;
+
+      // For contours, check if we have a segment center.
+      const center =
+        type === CONTOUR ? this._getSegmentCenter(segmentationId, segmentIndex) : undefined;
+      const canUseSegmentCenter = type !== CONTOUR || !!center;
+      if (canUseSegmentCenter) {
+        this.jumpToSegmentCenter(
+          segmentationId,
+          segmentIndex,
+          viewportId,
+          highlightAlpha,
+          highlightSegment,
+          animationLength,
+          highlightHideOthers,
+          animationFunctionType,
+          center
+        );
+        return;
+      }
+
+      const { viewport } = getEnabledElementByViewportId(viewportId);
+      if (!viewport) {
+        return;
+      }
+
+      const viewRefs = this._getContourViewReferences(segmentationId, viewport, segmentIndex);
+      if (!viewRefs) {
+        return;
+      }
+
+      // Get the current slice index
+      const currentSliceIndex = viewport.getCurrentImageIdIndex();
+      let nearestSliceIndex = null;
+      let loopSliceIndex = null;
+
+      for (const [sliceIndex] of viewRefs.entries()) {
+        // Track loop index for wraparound (smallest for forward, largest for backward)
+        if (direction > 0) {
+          if (loopSliceIndex === null || sliceIndex < loopSliceIndex) {
+            loopSliceIndex = sliceIndex;
+          }
+        } else {
+          if (loopSliceIndex === null || sliceIndex > loopSliceIndex) {
+            loopSliceIndex = sliceIndex;
+          }
+        }
+
+        if (direction > 0) {
+          // Forward direction: find nearest slice after current
+          if (sliceIndex <= currentSliceIndex) {
+            continue;
+          }
+          if (nearestSliceIndex === null || sliceIndex < nearestSliceIndex) {
+            nearestSliceIndex = sliceIndex;
+          }
+        } else {
+          // Backward direction: find nearest slice before current
+          if (sliceIndex >= currentSliceIndex) {
+            continue;
+          }
+          if (nearestSliceIndex === null || sliceIndex > nearestSliceIndex) {
+            nearestSliceIndex = sliceIndex;
+          }
+        }
+      }
+
+      // Wraparound: if no slice found in direction, use loop index
+      nearestSliceIndex = nearestSliceIndex ?? loopSliceIndex;
+      if (nearestSliceIndex === null) {
+        return;
+      }
+      const viewRef = viewRefs.get(nearestSliceIndex);
+      viewport.setViewReference(viewRef);
+      viewport.render();
+    });
+  }
+
+  /**
+   * Jumps the viewport to the center of hte given segment.
+   * Only works for labelmaps, and may result in not showing any contours.
+   */
   public jumpToSegmentCenter(
     segmentationId: string,
     segmentIndex: number,
@@ -1175,15 +1549,16 @@ class SegmentationService extends PubSubService {
     highlightSegment = true,
     animationLength = 750,
     highlightHideOthers = false,
-    highlightFunctionType = 'ease-in-out' // todo: make animation functions configurable from outside
+    animationFunctionType: EasingFunctionEnum = EasingFunctionEnum.EASE_IN_OUT,
+    center?: { image?: csTypes.Point3; world: csTypes.Point3 }
   ): void {
-    const center = this._getSegmentCenter(segmentationId, segmentIndex);
-    if (!center) {
+    const resolvedCenter = center ?? this._getSegmentCenter(segmentationId, segmentIndex);
+    if (!resolvedCenter) {
       console.warn('No center found for segmentation', segmentationId, segmentIndex);
       return;
     }
 
-    const { world } = center as { world: csTypes.Point3 };
+    const { world } = resolvedCenter as { world: csTypes.Point3 };
 
     // need to find which viewports are displaying the segmentation
     const viewportIds = viewportId
@@ -1192,16 +1567,25 @@ class SegmentationService extends PubSubService {
 
     viewportIds.forEach(viewportId => {
       const { viewport } = getEnabledElementByViewportId(viewportId);
-      viewport.jumpToWorld(world);
+      if (!viewport) {
+        return;
+      }
 
-      highlightSegment &&
+      // Recenter via the backend twin: legacy jumpToWorld, or native setViewReference
+      // (a native PlanarViewport has no jumpToWorld). Skip the highlight when the
+      // recenter did not happen, matching the previous guarded behavior.
+      const didJump = this._segBackend(viewport).jumpToSegmentCenter(viewport, world);
+
+      didJump &&
+        highlightSegment &&
         this.highlightSegment(
           segmentationId,
           segmentIndex,
           viewportId,
           highlightAlpha,
           animationLength,
-          highlightHideOthers
+          highlightHideOthers,
+          animationFunctionType
         );
     });
   }
@@ -1213,7 +1597,7 @@ class SegmentationService extends PubSubService {
     alpha = 0.9,
     animationLength = 750,
     hideOthers = true,
-    highlightFunctionType = 'ease-in-out'
+    animationFunctionType: EasingFunctionEnum = EasingFunctionEnum.EASE_IN_OUT
   ): void {
     if (this.highlightIntervalId) {
       clearInterval(this.highlightIntervalId);
@@ -1246,7 +1630,8 @@ class SegmentationService extends PubSubService {
         segments,
         viewportId,
         animationLength,
-        representation
+        representation,
+        animationFunctionType
       );
     });
   }
@@ -1271,7 +1656,7 @@ class SegmentationService extends PubSubService {
   private _setSegmentationRepresentationVisibility(
     viewportId: string,
     segmentationId: string,
-    type: SegmentationRepresentations,
+    type: csToolsEnums.SegmentationRepresentations,
     isVisible: boolean
   ): void {
     const representations = this.getSegmentationRepresentations(viewportId, {
@@ -1297,76 +1682,11 @@ class SegmentationService extends PubSubService {
     );
   }
 
-  private determineViewportAndSegmentationType(csViewport, segmentation) {
-    const isVolumeViewport =
-      csViewport.type === ViewportType.ORTHOGRAPHIC || csViewport.type === ViewportType.VOLUME_3D;
-    const isVolumeSegmentation = 'volumeId' in segmentation.representationData[LABELMAP];
-    return { isVolumeViewport, isVolumeSegmentation };
-  }
-
-  private async handleViewportConversion(
-    isVolumeViewport: boolean,
-    isVolumeSegmentation: boolean,
-    csViewport: csTypes.IViewport,
-    segmentation: cstTypes.Segmentation,
-    viewportId: string,
-    segmentationId: string,
-    representationType: csToolsEnums.SegmentationRepresentations
-  ) {
-    let representationTypeToUse = representationType;
-    let isConverted = false;
-
-    const handler = isVolumeViewport ? this.handleVolumeViewportCase : this.handleStackViewportCase;
-
-    ({ representationTypeToUse, isConverted } = await handler.apply(this, [
-      csViewport,
-      segmentation,
-      isVolumeSegmentation,
-      viewportId,
-      segmentationId,
-    ]));
-
-    return { representationTypeToUse, isConverted };
-  }
-
-  private async handleVolumeViewportCase(csViewport, segmentation, isVolumeSegmentation) {
-    if (csViewport.type === ViewportType.VOLUME_3D) {
-      return { representationTypeToUse: SegmentationRepresentations.Surface, isConverted: false };
-    } else {
-      await this.handleVolumeViewport(
-        csViewport as csTypes.IVolumeViewport,
-        segmentation,
-        isVolumeSegmentation
-      );
-      return { representationTypeToUse: SegmentationRepresentations.Labelmap, isConverted: false };
-    }
-  }
-
-  private async handleStackViewportCase(
-    csViewport: csTypes.IViewport,
-    segmentation: cstTypes.Segmentation,
-    isVolumeSegmentation: boolean,
-    viewportId: string,
-    segmentationId: string
-  ): Promise<{ representationTypeToUse: SegmentationRepresentations; isConverted: boolean }> {
-    if (isVolumeSegmentation) {
-      const isConverted = await this.convertStackToVolumeViewport(csViewport);
-      return { representationTypeToUse: SegmentationRepresentations.Labelmap, isConverted };
-    }
-
-    if (updateLabelmapSegmentationImageReferences(viewportId, segmentationId)) {
-      return { representationTypeToUse: SegmentationRepresentations.Labelmap, isConverted: false };
-    }
-
-    const isConverted = await this.attemptStackToVolumeConversion(
-      csViewport as csTypes.IStackViewport,
-      segmentation,
-      viewportId,
-      segmentationId
-    );
-
-    return { representationTypeToUse: SegmentationRepresentations.Labelmap, isConverted };
-  }
+  // Labelmap-add classification (determineViewportAndSegmentationType +
+  // handleViewportConversion + the stack/volume case handlers) now lives in the
+  // segmentation backend twins (backends/{Legacy,Next}SegmentationBackend), routed
+  // per viewport via _segBackend(). The legacy twin reaches the viewport-recreation
+  // and data-volume-conversion helpers below through ISegmentationServiceInternals.
 
   private async _addSegmentationRepresentation(
     viewportId: string,
@@ -1376,6 +1696,7 @@ class SegmentationService extends PubSubService {
     isConverted: boolean,
     config?: {
       blendMode?: csEnums.BlendModes;
+      useSliceRendering?: boolean;
     }
   ): Promise<void> {
     const representation = {
@@ -1403,7 +1724,7 @@ class SegmentationService extends PubSubService {
       addRepresentation();
     }
   }
-  private async handleVolumeViewport(
+  public async handleVolumeViewport(
     viewport: csTypes.IVolumeViewport,
     segmentation: SegmentationData,
     isVolumeSegmentation: boolean
@@ -1421,7 +1742,7 @@ class SegmentationService extends PubSubService {
     }
   }
 
-  private async convertStackToVolumeViewport(viewport: csTypes.IViewport): Promise<boolean> {
+  public async convertStackToVolumeViewport(viewport: csTypes.IViewport): Promise<boolean> {
     const { viewportGridService, cornerstoneViewportService } = this.servicesManager.services;
     const state = viewportGridService.getState();
     const gridViewport = state.viewports.get(viewport.id);
@@ -1460,7 +1781,7 @@ class SegmentationService extends PubSubService {
     return true;
   }
 
-  private async attemptStackToVolumeConversion(
+  public async attemptStackToVolumeConversion(
     viewport: csTypes.IStackViewport,
     segmentation: SegmentationData,
     viewportId: string,
@@ -1476,14 +1797,14 @@ class SegmentationService extends PubSubService {
       segImage.FrameOfReferenceUID === frameOfReferenceUID
     ) {
       const isConverted = await this.convertStackToVolumeViewport(viewport);
-      triggerSegmentationRepresentationModified(
-        viewportId,
-        segmentationId,
-        SegmentationRepresentations.Labelmap
-      );
+      triggerSegmentationRepresentationModified(viewportId, segmentationId, LABELMAP);
 
       return isConverted;
     }
+
+    // Frame-of-reference mismatch (or missing): no conversion happened. Return an
+    // explicit boolean so the Promise<boolean> contract holds for callers.
+    return false;
   }
 
   private addSegmentationToSource(segmentationPublicInput: cstTypes.SegmentationPublicInput) {
@@ -1552,6 +1873,7 @@ class SegmentationService extends PubSubService {
       id: id,
       segmentationId,
       label: segmentation.label,
+      fallbackLabel: segmentation.fallbackLabel,
       active,
       type,
       visible,
@@ -1571,7 +1893,7 @@ class SegmentationService extends PubSubService {
 
     eventTarget.addEventListener(
       csToolsEnums.Events.SEGMENTATION_REMOVED,
-      this._onSegmentationModifiedFromSource
+      this._onSegmentationRemovedFromSource
     );
 
     eventTarget.addEventListener(
@@ -1591,12 +1913,17 @@ class SegmentationService extends PubSubService {
 
     eventTarget.addEventListener(
       csToolsEnums.Events.SEGMENTATION_REPRESENTATION_REMOVED,
-      this._onSegmentationRepresentationModifiedFromSource
+      this._onSegmentationRepresentationRemovedFromSource
     );
 
     eventTarget.addEventListener(
       csToolsEnums.Events.SEGMENTATION_ADDED,
       this._onSegmentationAddedFromSource
+    );
+
+    eventTarget.addEventListener(
+      csToolsEnums.Events.ANNOTATION_CUT_MERGE_PROCESS_COMPLETED,
+      this._onAnnotationCutMergeProcessCompletedFromSource
     );
   }
 
@@ -1608,10 +1935,11 @@ class SegmentationService extends PubSubService {
     segmentIndex: number,
     alpha: number,
     hideOthers: boolean,
-    segments: Segment[],
+    segments: cstTypes.Segment[],
     viewportId: string,
     animationLength: number,
-    representation: cstTypes.SegmentationRepresentation
+    representation: cstTypes.SegmentationRepresentation,
+    animationFunctionType: EasingFunctionEnum
   ) {
     const { segmentationId } = representation;
     const newSegmentSpecificConfig = {
@@ -1620,13 +1948,6 @@ class SegmentationService extends PubSubService {
 
     if (hideOthers) {
       throw new Error('hideOthers is not working right now');
-      for (let i = 0; i < segments.length; i++) {
-        if (i !== segmentIndex) {
-          newSegmentSpecificConfig[i] = {
-            fillAlpha: 0,
-          };
-        }
-      }
     }
 
     const { fillAlpha } = this.getStyle({
@@ -1645,6 +1966,8 @@ class SegmentationService extends PubSubService {
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / animationLength, 1);
 
+      const easingFunction = EasingFunctionMap.get(animationFunctionType);
+
       cstSegmentation.config.style.setStyle(
         {
           segmentationId,
@@ -1652,7 +1975,7 @@ class SegmentationService extends PubSubService {
           type: LABELMAP,
         },
         {
-          fillAlpha: easeInOutBell(progress, fillAlpha),
+          fillAlpha: easingFunction(progress, fillAlpha),
         }
       );
 
@@ -1665,7 +1988,8 @@ class SegmentationService extends PubSubService {
             segmentIndex,
             type: LABELMAP,
           },
-          {}
+          {},
+          false
         );
       }
     };
@@ -1677,21 +2001,20 @@ class SegmentationService extends PubSubService {
     segmentIndex: number,
     alpha: number,
     hideOthers: boolean,
-    segments: Segment[],
+    segments: cstTypes.Segment[],
     viewportId: string,
     animationLength: number,
-    representation: cstTypes.SegmentationRepresentation
+    representation: cstTypes.SegmentationRepresentation,
+    animationFunctionType: EasingFunctionEnum
   ) {
     const { segmentationId } = representation;
     const startTime = performance.now();
 
     const prevStyle = cstSegmentation.config.style.getStyle({
       type: CONTOUR,
-    }) as ContourStyle;
+    }) as cstTypes.ContourStyle;
 
     const prevOutlineWidth = prevStyle.outlineWidth;
-    // make this configurable
-    const baseline = Math.max(prevOutlineWidth * 3.5, 5);
 
     const animate = (currentTime: number) => {
       const progress = (currentTime - startTime) / animationLength;
@@ -1700,7 +2023,8 @@ class SegmentationService extends PubSubService {
         return;
       }
 
-      const reversedProgress = easeInOutBellRelative(progress, baseline, prevOutlineWidth);
+      const OUTLINE_ANIMATION_SCALE_FACTOR = 5;
+      const easingFunction = EasingFunctionMap.get(animationFunctionType);
 
       cstSegmentation.config.style.setStyle(
         {
@@ -1709,7 +2033,7 @@ class SegmentationService extends PubSubService {
           type: CONTOUR,
         },
         {
-          outlineWidth: reversedProgress,
+          outlineWidth: easingFunction(progress, prevOutlineWidth, OUTLINE_ANIMATION_SCALE_FACTOR),
         }
       );
 
@@ -1722,24 +2046,18 @@ class SegmentationService extends PubSubService {
   private _toggleSegmentationRepresentationVisibility = (
     viewportId: string,
     segmentationId: string,
-    type: SegmentationRepresentations
+    type: csToolsEnums.SegmentationRepresentations
   ): void => {
-    const representations = this.getSegmentationRepresentations(viewportId, {
-      segmentationId,
-      type,
-    });
-    const representation = representations[0];
-
     const segmentsHidden = cstSegmentation.config.visibility.getHiddenSegmentIndices(viewportId, {
       segmentationId,
-      type: representation.type,
+      type,
     });
 
     const currentVisibility = segmentsHidden.size === 0;
     this._setSegmentationRepresentationVisibility(
       viewportId,
       segmentationId,
-      representation.type,
+      type,
       !currentVisibility
     );
   };
@@ -1790,7 +2108,7 @@ class SegmentationService extends PubSubService {
     segmentationId: string,
     segmentIndex: number,
     isVisible: boolean,
-    type?: SegmentationRepresentations
+    type?: csToolsEnums.SegmentationRepresentations
   ) {
     cstSegmentation.config.visibility.setSegmentIndexVisibility(
       viewportId,
@@ -1834,6 +2152,14 @@ class SegmentationService extends PubSubService {
     });
   };
 
+  private _onSegmentationRepresentationRemovedFromSource = evt => {
+    const { segmentationId, viewportId } = evt.detail;
+    this._broadcastEvent(this.EVENTS.SEGMENTATION_REPRESENTATION_REMOVED, {
+      segmentationId,
+      viewportId,
+    });
+  };
+
   private _onSegmentationModifiedFromSource = (
     evt: cstTypes.EventTypes.SegmentationModifiedEventType
   ) => {
@@ -1853,6 +2179,79 @@ class SegmentationService extends PubSubService {
       segmentationId,
     });
   };
+
+  private _onSegmentationRemovedFromSource = (
+    evt: cstTypes.EventTypes.SegmentationRemovedEventType
+  ) => {
+    const { segmentationId } = evt.detail;
+
+    this._broadcastEvent(this.EVENTS.SEGMENTATION_REMOVED, {
+      segmentationId,
+    });
+  };
+
+  private _onAnnotationCutMergeProcessCompletedFromSource = evt => {
+    const { segmentationId } = evt.detail;
+    this._broadcastEvent(this.EVENTS.SEGMENTATION_ANNOTATION_CUT_MERGE_PROCESS_COMPLETED, {
+      segmentationId,
+    });
+  };
+
+  /**
+   * Gets slice indices for contour segmentations by checking view references from annotation metadata
+   * @private
+   */
+  protected _getContourViewReferences(
+    segmentationId: string,
+    viewport: csTypes.IViewport,
+    segmentIndex?: number
+  ): Map<number, ViewReference> | undefined {
+    const segmentation = cstSegmentation.state.getSegmentation(segmentationId);
+    const contourData = segmentation.representationData[CONTOUR];
+
+    if (!contourData || !contourData.annotationUIDsMap) {
+      return;
+    }
+
+    const viewReferences = new Map<number, ViewReference>();
+    // Iterate through the annotationUIDsMap
+    contourData.annotationUIDsMap.forEach((annotationUIDs, currentSegmentIndex) => {
+      // Filter by segment index if specified
+      if (segmentIndex !== undefined && currentSegmentIndex !== segmentIndex) {
+        return;
+      }
+      // Process each annotation UID
+      annotationUIDs.forEach(annotationUID => {
+        const annotation = cstAnnotation.state.getAnnotation(annotationUID);
+
+        if (!annotation?.metadata) {
+          return;
+        }
+        const { metadata } = annotation;
+        // Check if the viewport can view this annotation's view reference with navigation
+        const isViewable = viewport.isReferenceViewable(metadata, {
+          withNavigation: true,
+        });
+
+        if (!isViewable) {
+          return;
+        }
+
+        const { sliceIndex } = metadata;
+        if (sliceIndex === undefined) {
+          console.warn("Can't find slice index:", metadata);
+          return;
+        }
+
+        viewReferences.set(sliceIndex, metadata);
+      });
+    });
+
+    if (viewReferences.size === 0) {
+      return;
+    }
+    return viewReferences;
+  }
 }
 
 export default SegmentationService;

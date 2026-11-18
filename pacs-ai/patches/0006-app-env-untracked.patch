@@ -1,0 +1,17 @@
+diff --git a/platform/app/.env b/platform/app/.env
+deleted file mode 100644
+index 6b1551cd971cdc9f66f23b5ae65e6a6a4369b735..0000000000000000000000000000000000000000
+--- a/platform/app/.env
++++ /dev/null
+@@ -1,11 +0,0 @@
+-##
+-# Environment: Default
+-#
+-# We're using this to set variables for development.
+-# Please feel free to delete or modify this file for your own setup.
+-# Be careful not to commit anything sensitive to source control.
+-#
+-
+-PUBLIC_URL=/
+-# Can choose a default app config, but this over-rides dev scripts: APP_CONFIG=config/default.js
+-USE_HASH_ROUTER=false

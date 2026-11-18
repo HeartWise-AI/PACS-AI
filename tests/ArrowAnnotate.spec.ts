@@ -1,11 +1,51 @@
-import { test } from 'playwright-test-coverage';
 import {
-  visitStudy,
   checkForScreenshot,
+  expect,
+  getAnnotationStats,
   screenShotPaths,
-  simulateClicksOnElement,
-  simulateDoubleClickOnElement,
+  test,
+  visitStudy,
+  waitForViewportRenderCycle,
 } from './utils';
+
+/**
+ * Asserts the arrow annotation text across every surface that should reflect it:
+ *  - the tracked measurements side panel row title,
+ *  - the DOM SVG linked text box rendered in the viewport, and
+ *  - the source-of-truth cornerstone annotation state (`data.label`).
+ *
+ * This avoids relying on the screenshot alone (whose font rendering differs
+ * between systems) to assert the text is correct, mirroring the DOM/state
+ * assertions in the SCOORD rectangle test.
+ */
+async function expectArrowText({
+  page,
+  activeViewport,
+  rightPanelPageObject,
+  annotationUID,
+  expectedText,
+}) {
+  // Side panel: the measurement row title reflects the arrow text.
+  await expect(rightPanelPageObject.measurementsPanel.panel.nthMeasurement(0).title).toHaveText(
+    expectedText
+  );
+
+  // DOM SVG: the arrow's linked text box renders the arrow text, independent of
+  // any system font differences.
+  const svgTextLines = activeViewport.getSvgAnnotationStatTextLines(annotationUID);
+  await expect(svgTextLines).toHaveCount(1);
+  await expect(svgTextLines.nth(0)).toHaveText(expectedText);
+
+  // Source-of-truth annotation state. ArrowAnnotate stores its text on
+  // `data.label` rather than computed `cachedStats`, so read with requireStats: false.
+  const arrows = await getAnnotationStats(page, {
+    toolName: 'ArrowAnnotate',
+    requireStats: false,
+  });
+  const arrow = arrows.find(a => a.annotationUID === annotationUID);
+  expect(arrow).toBeDefined();
+  expect(arrow.label).toBe(expectedText);
+}
 
 test.beforeEach(async ({ page }) => {
   const studyInstanceUID = '1.3.6.1.4.1.25403.345050719074.3824.20170125095438.5';
@@ -13,74 +53,92 @@ test.beforeEach(async ({ page }) => {
   await visitStudy(page, studyInstanceUID, mode, 2000);
 });
 
-test('should display the arrow tool and allow free-form text to be entered', async ({ page }) => {
-  await page.getByTestId('trackedMeasurements-btn').click();
+test('should display the arrow tool and allow free-form text to be entered', async ({
+  page,
+  DOMOverlayPageObject,
+  mainToolbarPageObject,
+  rightPanelPageObject,
+  viewportPageObject,
+}) => {
+  await rightPanelPageObject.measurementsPanel.select();
 
-  await page.getByTestId('MeasurementTools-split-button-secondary').click();
-  await page.getByTestId('ArrowAnnotate').click();
+  await mainToolbarPageObject.measurementTools.arrowAnnotate.click();
 
-  const locator = page.getByTestId('viewport-pane').locator('canvas');
-  await simulateClicksOnElement({
-    locator,
-    points: [
-      {
-        x: 164,
-        y: 234,
-      },
-      {
-        x: 344,
-        y: 232,
-      },
-    ],
-  });
+  const activeViewport = await viewportPageObject.active;
+  await activeViewport.clickAt([
+    { x: 164, y: 234 },
+    { x: 344, y: 232 },
+  ]);
 
-  await page.getByTestId('dialog-input').fill('Ringo Starr was the drummer for The Beatles');
-  await page.getByTestId('input-dialog-save-button').click();
+  await DOMOverlayPageObject.dialog.input.fillAndSave(
+    'Ringo Starr was the drummer for The Beatles'
+  );
 
-  await page.getByTestId('prompt-begin-tracking-yes-btn').click();
+  const viewportRenderCycle = waitForViewportRenderCycle(page);
 
-  await page.waitForTimeout(2000);
+  await DOMOverlayPageObject.viewport.measurementTracking.confirm.click();
+
+  await viewportRenderCycle;
 
   await checkForScreenshot({
     page,
-    maxDiffPixelRatio: 0.0075,
     screenshotPath: screenShotPaths.arrowAnnotate.arrowAnnotateDisplayedCorrectly0,
   });
 
-  // Now edit the arrow text and the label should not change.
+  // Resolve the arrow annotation UID once; it remains stable across subsequent edits.
+  const arrows = await getAnnotationStats(page, {
+    toolName: 'ArrowAnnotate',
+    requireStats: false,
+  });
+  expect(arrows.length).toBeGreaterThan(0);
+  const annotationUID = arrows[0].annotationUID;
 
-  await simulateDoubleClickOnElement({
-    locator,
-    point: {
-      x: 164,
-      y: 234,
-    },
+  await expectArrowText({
+    page,
+    activeViewport,
+    rightPanelPageObject,
+    annotationUID,
+    expectedText: 'Ringo Starr was the drummer for The Beatles',
   });
 
-  await page.getByTestId('dialog-input').fill('Neil Peart was the drummer for Rush');
-  await page.getByTestId('input-dialog-save-button').click();
+  // Double-clicking the arrow re-opens the text dialog. ArrowAnnotate stores its
+  // text on `data.label`, so the new text replaces it across the viewport SVG,
+  // the side panel and the annotation state.
 
-  await page.waitForTimeout(2000);
+  await activeViewport.doubleClickAt({ x: 164, y: 234 });
+
+  await DOMOverlayPageObject.dialog.input.fillAndSave('Neil Peart was the drummer for Rush');
 
   await checkForScreenshot({
     page,
-    maxDiffPixelRatio: 0.0075,
     screenshotPath: screenShotPaths.arrowAnnotate.arrowAnnotateDisplayedCorrectly1,
   });
 
-  // Now edit the label and the text should not change.
+  await expectArrowText({
+    page,
+    activeViewport,
+    rightPanelPageObject,
+    annotationUID,
+    expectedText: 'Neil Peart was the drummer for Rush',
+  });
 
-  await page.getByTestId('actionsMenuTrigger').click();
-  await page.getByTestId('Rename').click();
+  // Renaming from the side panel updates the same `data.label`, so the new text
+  // is reflected everywhere as well.
 
-  await page.getByTestId('dialog-input').fill('Drummer annotation arrow');
-  await page.getByTestId('input-dialog-save-button').click();
-
-  await page.waitForTimeout(2000);
+  await rightPanelPageObject.measurementsPanel.panel
+    .nthMeasurement(0)
+    .actions.rename('Drummer annotation arrow');
 
   await checkForScreenshot({
     page,
-    maxDiffPixelRatio: 0.0075,
     screenshotPath: screenShotPaths.arrowAnnotate.arrowAnnotateDisplayedCorrectly2,
+  });
+
+  await expectArrowText({
+    page,
+    activeViewport,
+    rightPanelPageObject,
+    annotationUID,
+    expectedText: 'Drummer annotation arrow',
   });
 });

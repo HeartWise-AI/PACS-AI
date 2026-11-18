@@ -4,11 +4,10 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
-const webpack = require('webpack');
+const webpack = require('@rspack/core');
 
 // ~~ PLUGINS
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const TerserJSPlugin = require('terser-webpack-plugin');
 
 // ~~ PackageJSON
 // const vtkRules = require('vtk.js/Utilities/config/dependency.js').webpack.core
@@ -18,9 +17,15 @@ const TerserJSPlugin = require('terser-webpack-plugin');
 const loadWebWorkersRule = require('./rules/loadWebWorkers.js');
 const transpileJavaScriptRule = require('./rules/transpileJavaScript.js');
 const cssToJavaScript = require('./rules/cssToJavaScript.js');
+// Module-resolution rules shared with the rsbuild build (see rsbuild.config.ts).
+const resolveConfig = require('./resolveConfig');
 // Only uncomment for old v2 stylus
 // const stylusToJavaScript = require('./rules/stylusToJavaScript.js');
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+let ReactRefreshWebpackPlugin;
+try {
+  const mod = require('@rspack/plugin-react-refresh');
+  ReactRefreshWebpackPlugin = mod.ReactRefreshRspackPlugin || mod.default || mod;
+} catch { ReactRefreshWebpackPlugin = null; }
 
 // ~~ ENV VARS
 const NODE_ENV = process.env.NODE_ENV;
@@ -32,7 +37,6 @@ const IS_COVERAGE = process.env.COVERAGE === 'true';
 const VERSION_NUMBER = fs.readFileSync(path.join(__dirname, '../version.txt'), 'utf8') || '';
 
 const COMMIT_HASH = fs.readFileSync(path.join(__dirname, '../commit.txt'), 'utf8') || '';
-const { frontendBuildMetadata } = require('./frontendBuildVersion');
 
 //
 dotenv.config();
@@ -46,16 +50,6 @@ const defineValues = {
   'process.env.BUILD_NUM': JSON.stringify(BUILD_NUM),
   'process.env.VERSION_NUMBER': JSON.stringify(VERSION_NUMBER),
   'process.env.COMMIT_HASH': JSON.stringify(COMMIT_HASH),
-  'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
-  'process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED': JSON.stringify(
-    process.env.APP_PUBLIC_CANDIDATE_PROCESSING_POLL_ENABLED || 'true'
-  ),
-  'process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED': JSON.stringify(
-    process.env.APP_PUBLIC_STUDY_PROCESSING_SSE_ENABLED || 'true'
-  ),
-  'process.env.APP_PUBLIC_TURNSTILE_SITE_KEY': JSON.stringify(
-    process.env.APP_PUBLIC_TURNSTILE_SITE_KEY || ''
-  ),
   /* i18n */
   'process.env.USE_LOCIZE': JSON.stringify(process.env.USE_LOCIZE || ''),
   'process.env.LOCIZE_PROJECTID': JSON.stringify(process.env.LOCIZE_PROJECTID || ''),
@@ -77,6 +71,12 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
   const config = {
     mode: isProdBuild ? 'production' : 'development',
     devtool: isProdBuild ? 'source-map' : 'cheap-module-source-map',
+    // `rspack serve` (@rspack/cli) auto-enables lazyCompilation for web-only
+    // apps unless the config defines it explicitly. The on-demand proxy chunks
+    // it produces fail to load in the headless cypress/electron e2e run
+    // (ChunkLoadError on cornerstone vendor chunks), so disable it here to match
+    // the rsbuild build (see rsbuild.config.ts `dev.lazyCompilation: false`).
+    lazyCompilation: false,
     entry: ENTRY,
     optimization: {
       // splitChunks: {
@@ -103,9 +103,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
       children: false,
       warnings: true,
     },
-    cache: {
-      type: 'filesystem',
-    },
+    cache: isProdBuild ? false : { type: 'filesystem' },
     module: {
       noParse: [/(dicomicc)/],
       rules: [
@@ -179,9 +177,6 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
           },
         },
         cssToJavaScript,
-        // Note: Only uncomment the following if you are using the old style of stylus in v2
-        // Also you need to uncomment this platform/app/.webpack/rules/extractStyleChunks.js
-        // stylusToJavaScript,
         {
           test: /\.wasm/,
           type: 'asset/resource',
@@ -205,29 +200,16 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
     },
     resolve: {
       mainFields: ['module', 'browser', 'main'],
+      // alias and modules are shared with the rsbuild build via ./resolveConfig
+      // so the two pipelines resolve identically.
       alias: {
-        // Viewer project
-        '@': path.resolve(__dirname, '../platform/app/src'),
-        '@components': path.resolve(__dirname, '../platform/app/src/components'),
-        '@hooks': path.resolve(__dirname, '../platform/app/src/hooks'),
-        '@routes': path.resolve(__dirname, '../platform/app/src/routes'),
-        '@state': path.resolve(__dirname, '../platform/app/src/state'),
-        'dicom-microscopy-viewer':
-          'dicom-microscopy-viewer/dist/dynamic-import/dicomMicroscopyViewer.min.js',
+        ...resolveConfig.alias,
       },
-      // Which directories to search when resolving modules
-      modules: [
-        // Modules specific to this package
-        path.resolve(__dirname, '../node_modules'),
-        // Hoisted Yarn Workspace Modules
-        path.resolve(__dirname, '../../../node_modules'),
-        path.resolve(__dirname, '../platform/app/node_modules'),
-        path.resolve(__dirname, '../platform/ui/node_modules'),
-        SRC_DIR,
-      ],
+      modules: resolveConfig.getModules(SRC_DIR),
       // Attempt to resolve these extensions in order.
       extensions: ['.js', '.jsx', '.json', '.ts', '.tsx', '*'],
-      // symlinked resources are resolved to their real path, not their symlinked location
+      // Workspace packages use relative imports between sibling packages.
+      // Resolve symlinks to keep those imports anchored at the real package paths.
       symlinks: true,
       fallback: {
         fs: false,
@@ -236,29 +218,46 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
         buffer: require.resolve('buffer'),
       },
     },
+    node: {
+      // Leave __filename / __dirname references alone. The previous 'mock'
+      // value triggers an rspack warning whenever bundled deps reference
+      // __dirname (e.g. Emscripten-compiled cornerstone codecs). Those refs
+      // sit inside `if (ENVIRONMENT_IS_NODE)` branches that never execute in
+      // the browser, so leaving them un-substituted is harmless at runtime.
+      __filename: false,
+      __dirname: false,
+    },
     plugins: [
       new webpack.DefinePlugin(defineValues),
       new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
       }),
-      ...(isProdBuild ? [] : [new ReactRefreshWebpackPlugin({ overlay: false })]),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^(fs|path)$/,
+        contextRegExp: /@cornerstonejs[\\/]codec-/,
+      }),
+      ...(isProdBuild || IS_COVERAGE || !ReactRefreshWebpackPlugin
+        ? []
+        : [new ReactRefreshWebpackPlugin({ overlay: false })]),
       // Uncomment to generate bundle analyzer
       // new BundleAnalyzerPlugin(),
     ],
   };
 
   if (isProdBuild) {
-    config.optimization.minimizer = [
-      new TerserJSPlugin({
-        parallel: true,
-        terserOptions: {},
-      }),
-    ];
+    config.optimization.minimizer = [new webpack.SwcJsMinimizerRspackPlugin()];
   }
 
   if (isQuickBuild) {
     config.optimization.minimize = false;
     config.devtool = false;
+  }
+
+  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
+  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
+  const pacsAiExtend = path.join(__dirname, '../pacs-ai/build/extend.js');
+  if (fs.existsSync(pacsAiExtend)) {
+    return require(pacsAiExtend).extendWebpackBase(config, { env, argv, defineValues });
   }
 
   return config;
