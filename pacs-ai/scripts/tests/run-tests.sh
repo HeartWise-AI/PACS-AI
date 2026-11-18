@@ -244,6 +244,47 @@ assert_contains "ledger limit reported" "$out" "ledger has 16 rows; the limit is
 assert_contains "missing patch file reported" "$out" "patch file pacs-ai/patches/missing-1.patch not found"
 git checkout -q -- pacs-ai/UPSTREAM_PATCHES.md
 
+echo "# check-upstream-drift.sh: theme-debt list, root configs, bun.lock"
+w pacs-ai/THEME_DEBT.txt <<'EOF2'
+# comment lines are ignored
+
+src/theme.tsx | colours | P3.4 tokens
+src/vars.css | variables | P3.4 tokens
+src/label.tsx | label text, listed by hand | P3.4 chrome
+README.md | does not differ | P3.4 tokens
+src/theme.tsx | listed twice | P3.4 tokens
+src/broken.tsx | no item
+EOF2
+w extensions/pacs-ai-core/babel.config.js <<'EOF2'
+module.exports = require('../../babel.config.js');
+EOF2
+w extensions/pacs-ai-core/jest.config.js <<'EOF2'
+const base = require('../../jest.config.base.js');
+const other = require('../../babel.config.js');
+EOF2
+echo '# bun lock' >bun.lock
+git add pacs-ai/THEME_DEBT.txt extensions/pacs-ai-core/babel.config.js extensions/pacs-ai-core/jest.config.js bun.lock
+set +e
+out=$("$DRIFT" "${DRIFT_ARGS[@]}" --enforce 2>&1); rc=$?
+set -e
+assert_eq "list: enforce fails" "$rc" 1
+assert_eq "list: theme-debt files are the listed ones" "$(count_of "$out" 'theme-debt files')" 3
+assert_eq "list: unlisted heuristic file is unexplained (8 - label + wrapped)" "$(count_of "$out" 'unexplained files')" 8
+assert_eq "list: theme-list errors" "$(count_of "$out" 'theme-list errors')" 3
+assert_contains "list: stale entry reported" "$out" "README.md does not differ from upstream"
+assert_contains "list: duplicate reported" "$out" "src/theme.tsx listed twice"
+assert_contains "list: malformed line reported" "$out" 'line 8: expected "path | what it changes | P3.4 item"'
+assert_contains "list: unlisted theme-like file named" "$(sed -n '/^Unlisted files the theme heuristic/,/^$/p' <<<"$out")" "src/wrapped.tsx"
+assert_contains "list: hand-listed file named" "$(sed -n '/^Listed theme-debt files the heuristic/,/^$/p' <<<"$out")" "src/label.tsx"
+assert_contains "list: FAIL line counts theme-list errors" "$out" "3 theme-list error(s)"
+viol=$(sed -n '/^Import-direction violations/,/^$/p' <<<"$out")
+assert_not_contains "root babel config from package babel.config.js allowed" "$viol" $'extensions/pacs-ai-core/babel.config.js'
+assert_not_contains "root jest base from package jest.config.js allowed" "$viol" $'jest.config.js\t../../jest.config.base.js'
+assert_contains "other root file from jest.config.js still flagged" "$viol" $'ours-relative-cross-pkg\textensions/pacs-ai-core/jest.config.js\t../../babel.config.js'
+assert_contains "bun.lock is expected" "$(sed -n '/^Expected files/,/^$/p' <<<"$out")" "bun.lock"
+git rm -q --cached pacs-ai/THEME_DEBT.txt extensions/pacs-ai-core/babel.config.js extensions/pacs-ai-core/jest.config.js bun.lock
+rm -f pacs-ai/THEME_DEBT.txt extensions/pacs-ai-core/babel.config.js extensions/pacs-ai-core/jest.config.js bun.lock
+
 echo "# check-upstream-drift.sh: working tree and markdown"
 echo 'export const x = 3;' >src/patched.ts
 out=$("$DRIFT" "${DRIFT_ARGS[@]}" --report --markdown "$WORK/summary.md")

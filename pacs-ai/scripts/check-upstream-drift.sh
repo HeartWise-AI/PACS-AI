@@ -11,7 +11,8 @@
 # Modes:
 #   --report    print the counts and the file lists; always exit 0 (default)
 #   --enforce   exit 1 on any unexplained file, import violation, ledger row
-#               over the limit, or ledger row naming a missing patch file
+#               over the limit, ledger row naming a missing patch file, or
+#               theme-list error
 #
 # Options:
 #   --repo DIR          repository to check (default: the one holding this script)
@@ -27,12 +28,20 @@
 # Classes (each upstream-owned file that differs gets exactly one, in this order):
 #   ledger      named in the first column of a row of pacs-ai/UPSTREAM_PATCHES.md
 #   expected    generated or expected files listed in PLAN.md 6.2 rule 2
-#               (lock files, root and app package.json, pluginConfig.json,
-#               pnpm-workspace.yaml, .github/workflows/*, version.json,
-#               version.txt, commit.txt)
-#   theme       theme debt: a modified (M) text file whose diff changes nothing
-#               but class names and colour values (heuristic below)
+#               (lock files - yarn.lock, pnpm-lock.yaml, bun.lock - root and
+#               app package.json, pluginConfig.json, pnpm-workspace.yaml,
+#               .github/workflows/*, version.json, version.txt, commit.txt)
+#   theme       theme debt. When pacs-ai/THEME_DEBT.txt exists (from P2.7), a
+#               modified (M) file listed there; the list is authoritative and
+#               the heuristic below only reports listed files it would not
+#               recognise and unlisted files it would. Without the list, a
+#               modified (M) text file the heuristic recognises.
 #   unexplained everything else, including added, deleted and binary files
+#
+# pacs-ai/THEME_DEBT.txt: comment lines start with #; every other line is
+# "path | what it changes | P3.4 item" with three non-empty fields, the third
+# starting with "P3.4". A malformed line, a duplicate path, or a listed path
+# that does not differ from upstream as a modification is a theme-list error.
 #
 # Theme-debt heuristic (exact definition; tested in tests/run-tests.sh):
 #   1. Take the -U0 diff of the file. Removed lines form side A, added lines
@@ -78,7 +87,11 @@
 #   ours-imports-app-src      an "ours" file imports @ohif/app/src
 #   ours-imports-ohif-ui      an "ours" file imports @ohif/ui (--forbid-ohif-ui)
 #   ours-relative-cross-pkg   a file in extensions/pacs-ai-<x> or modes/pacs-ai
-#                             imports a relative path outside its own package
+#                             imports a relative path outside its own package;
+#                             allowed: the package's own babel.config.js
+#                             requiring ../../babel.config.js and jest.config.js
+#                             requiring ../../jest.config.base.js (the shared
+#                             root configs, as in every upstream package)
 #
 # Exit status: 0 success (always in --report), 1 enforcement failure,
 # 2 usage or setup error.
@@ -160,7 +173,7 @@ is_ours() {
 }
 is_expected() {
   case "$1" in
-    yarn.lock|pnpm-lock.yaml|package.json|platform/app/package.json) return 0 ;;
+    yarn.lock|pnpm-lock.yaml|bun.lock|package.json|platform/app/package.json) return 0 ;;
     platform/app/pluginConfig.json|pnpm-workspace.yaml) return 0 ;;
     .github/workflows/*|version.json|version.txt|commit.txt) return 0 ;;
   esac
@@ -218,6 +231,33 @@ parse_ledger() {
 }
 parse_ledger
 
+# ------------------------------------------------------------- theme-debt list
+THEME_LIST=pacs-ai/THEME_DEBT.txt
+declare -A THEME_FILE=()
+HAVE_THEME_LIST=0
+THEME_ERRORS=()
+
+parse_theme_list() {
+  local line n=0 path what item rest
+  side_file_exists "$THEME_LIST" || return 0
+  HAVE_THEME_LIST=1
+  while IFS= read -r line || [[ -n $line ]]; do
+    n=$((n + 1))
+    [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+    IFS='|' read -r path what item rest <<<"$line"
+    path=$(trim "${path:-}"); what=$(trim "${what:-}"); item=$(trim "${item:-}")
+    if [[ -z $path || -z $what || $item != P3.4* || -n ${rest:-} ]]; then
+      THEME_ERRORS+=("$THEME_LIST line $n: expected \"path | what it changes | P3.4 item\"")
+      continue
+    fi
+    if [[ -n ${THEME_FILE[$path]:-} ]]; then
+      THEME_ERRORS+=("$THEME_LIST line $n: $path listed twice")
+      continue
+    fi
+    THEME_FILE[$path]=pending
+  done < <(read_side_file "$THEME_LIST")
+}
+
 # ------------------------------------------------------------------ theme debt
 Q_ALL="\"'\`"
 CLS_VARIANT="([a-z0-9-]+:|\\[[^]${Q_ALL}[:space:]]*\\]:)*"
@@ -269,7 +309,10 @@ is_theme_debt() {
 }
 
 # ----------------------------------------------------------------- classify
+parse_theme_list
+
 declare -a C_LEDGER=() C_EXPECTED=() C_THEME=() C_UNEXPLAINED=()
+declare -a THEME_UNLISTED=() THEME_MANUAL=()
 MODIFIED=0
 while IFS= read -r -d '' status && IFS= read -r -d '' path; do
   is_ours "$path" && continue
@@ -279,12 +322,30 @@ while IFS= read -r -d '' status && IFS= read -r -d '' path; do
     C_LEDGER+=("$entry")
   elif is_expected "$path"; then
     C_EXPECTED+=("$entry")
+  elif (( HAVE_THEME_LIST )); then
+    if [[ $status == M && -n ${THEME_FILE[$path]:-} ]]; then
+      THEME_FILE[$path]=seen
+      C_THEME+=("$entry")
+      is_theme_debt "$path" || THEME_MANUAL+=("$path")
+    else
+      [[ -n ${THEME_FILE[$path]:-} ]] && THEME_FILE[$path]=seen
+      C_UNEXPLAINED+=("$entry")
+      [[ $status == M ]] && is_theme_debt "$path" && THEME_UNLISTED+=("$path")
+    fi
   elif [[ $status == M ]] && is_theme_debt "$path"; then
     C_THEME+=("$entry")
   else
     C_UNEXPLAINED+=("$entry")
   fi
 done < <(git diff --no-renames --no-ext-diff --name-status -z "$BASE" "${TARGET[@]}" --)
+
+for path in "${!THEME_FILE[@]}"; do
+  [[ ${THEME_FILE[$path]} == pending ]] &&
+    THEME_ERRORS+=("$THEME_LIST: $path does not differ from upstream (remove the line)")
+done
+mapfile -t THEME_ERRORS < <(((${#THEME_ERRORS[@]})) && printf '%s\n' "${THEME_ERRORS[@]}" | sort)
+mapfile -t THEME_MANUAL < <(((${#THEME_MANUAL[@]})) && printf '%s\n' "${THEME_MANUAL[@]}" | sort)
+mapfile -t THEME_UNLISTED < <(((${#THEME_UNLISTED[@]})) && printf '%s\n' "${THEME_UNLISTED[@]}" | sort)
 
 # ---------------------------------------------------------- import direction
 IMPORT_RE="(^|[^A-Za-z0-9_\$.])(from|import|require)[[:space:]]*\\(?[[:space:]]*['\"][^'\"]+['\"]"
@@ -358,7 +419,10 @@ while IFS= read -r -d '' path; do
         VIOLATIONS+=("ours-imports-ohif-ui	$path	$spec")
       elif [[ -n $root && $spec == .* ]]; then
         target=$(normalise_path "$(dirname "$path")/$spec")
-        if [[ $target != "$root" && $target != "$root"/* ]]; then
+        if [[ $path == "$root/babel.config.js" && $target == babel.config.js ]] ||
+           [[ $path == "$root/jest.config.js" && $target == jest.config.base.js ]]; then
+          :   # the package's config extends the shared root config
+        elif [[ $target != "$root" && $target != "$root"/* ]]; then
           VIOLATIONS+=("ours-relative-cross-pkg	$path	$spec")
         fi
       fi
@@ -375,6 +439,7 @@ if (( LEDGER_ROWS > LEDGER_LIMIT )); then
   LEDGER_ERRORS+=("ledger has $LEDGER_ROWS rows; the limit is $LEDGER_LIMIT")
 fi
 NLEDGER_ERR=${#LEDGER_ERRORS[@]}
+NTHEME_ERR=${#THEME_ERRORS[@]}
 
 print_list() {
   local title=$1; shift
@@ -393,7 +458,15 @@ printf '%-34s %6d\n' "ledger-patched files:" "${#C_LEDGER[@]}"
 printf '%-34s %6d\n' "expected (generated) files:" "${#C_EXPECTED[@]}"
 printf '%-34s %6d\n' "import-direction violations:" "$NVIOL"
 printf '%-34s %6d\n' "ledger errors:" "$NLEDGER_ERR"
+if (( HAVE_THEME_LIST )); then
+  printf '%-34s %6d\n' "theme-list errors:" "$NTHEME_ERR"
+fi
 print_list "Ledger errors" "${LEDGER_ERRORS[@]}"
+if (( HAVE_THEME_LIST )); then
+  print_list "Theme-list errors" "${THEME_ERRORS[@]}"
+  print_list "Unlisted files the theme heuristic recognises (unexplained)" "${THEME_UNLISTED[@]}"
+  print_list "Listed theme-debt files the heuristic does not recognise (allowed by the list)" "${THEME_MANUAL[@]}"
+fi
 print_list "Import-direction violations (rule, file, import)" "${VIOLATIONS[@]}"
 print_list "Unexplained files (status, path)" "${C_UNEXPLAINED[@]}"
 print_list "Theme-debt files" "${C_THEME[@]}"
@@ -422,7 +495,9 @@ if [[ -n $MARKDOWN ]]; then
     echo "| Expected (generated) files | ${#C_EXPECTED[@]} |"
     echo "| Import-direction violations | $NVIOL |"
     echo "| Ledger errors | $NLEDGER_ERR |"
+    (( HAVE_THEME_LIST )) && echo "| Theme-list errors | $NTHEME_ERR |"
     md_list "Ledger errors" "${LEDGER_ERRORS[@]}"
+    (( HAVE_THEME_LIST )) && md_list "Theme-list errors" "${THEME_ERRORS[@]}"
     md_list "Import-direction violations" "${VIOLATIONS[@]}"
     md_list "Unexplained files" "${C_UNEXPLAINED[@]}"
     md_list "Theme-debt files" "${C_THEME[@]}"
@@ -430,9 +505,9 @@ if [[ -n $MARKDOWN ]]; then
 fi
 
 if [[ $MODE == enforce ]]; then
-  if (( UNEXPLAINED || NVIOL || NLEDGER_ERR )); then
+  if (( UNEXPLAINED || NVIOL || NLEDGER_ERR || NTHEME_ERR )); then
     echo
-    echo "FAIL: $UNEXPLAINED unexplained file(s), $NVIOL import violation(s), $NLEDGER_ERR ledger error(s)" >&2
+    echo "FAIL: $UNEXPLAINED unexplained file(s), $NVIOL import violation(s), $NLEDGER_ERR ledger error(s), $NTHEME_ERR theme-list error(s)" >&2
     exit 1
   fi
   echo

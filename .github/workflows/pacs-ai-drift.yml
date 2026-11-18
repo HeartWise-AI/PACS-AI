@@ -1,7 +1,10 @@
 name: PACS-AI upstream drift
 
-# Drift guard from docs/ohif-upgrade/PLAN.md 6.2. Report mode until P2.7:
-# the job prints the counts and never fails on drift.
+# Drift guard from docs/ohif-upgrade/PLAN.md 6.2, enforced from P2.7: the job
+# fails on any upstream-owned file that differs without a ledger row
+# (pacs-ai/UPSTREAM_PATCHES.md), a theme-debt line (pacs-ai/THEME_DEBT.txt) or
+# being an expected generated file, and on inverted imports. Read-only: it
+# checks out the code and runs a shell script; nothing is built or deployed.
 
 on:
   pull_request:
@@ -17,7 +20,7 @@ concurrency:
 
 jobs:
   drift:
-    name: Upstream drift report
+    name: Upstream drift guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -30,7 +33,10 @@ jobs:
       - name: Script tests
         run: bash pacs-ai/scripts/tests/run-tests.sh
 
-      - name: Drift report
+      - name: Drift guard (enforce)
         run: |
-          bash pacs-ai/scripts/check-upstream-drift.sh --report --markdown drift-summary.md
+          set +e
+          bash pacs-ai/scripts/check-upstream-drift.sh --enforce --forbid-ohif-ui --markdown drift-summary.md
+          rc=$?
           cat drift-summary.md >> "$GITHUB_STEP_SUMMARY"
+          exit $rc
