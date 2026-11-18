@@ -199,7 +199,14 @@ for (const tag of studiesWithRuns) {
           async route => {
             if (route.request().method() !== 'POST') return route.continue();
             sent = (route.request().postDataJSON() as { seriesInstanceUIDs?: string[] })?.seriesInstanceUIDs ?? null;
-            const same = !golden.seriesInstanceUIDs || JSON.stringify(sent) === JSON.stringify(golden.seriesInstanceUIDs);
+            // Same series as the reference, in any order: on OHIF 3.11 the
+            // order of the series sent to a model followed network completion
+            // and changed from run to run (STATUS.md, P3.3a), so only the set
+            // is reproducible. A different set is not run (no GPU time).
+            const reference = golden.seriesInstanceUIDs;
+            const same =
+              !reference ||
+              (!!sent && sent.length === reference.length && sent.every(u => reference.includes(u)));
             return same ? route.continue() : route.abort('blockedbyclient');
           }
         );
@@ -217,9 +224,12 @@ for (const tag of studiesWithRuns) {
           const sameSet = !!sentList && sentList.length === reference.length && sentList.every(u => reference.includes(u));
           expect(sentList?.length, 'number of series sent').toBe(reference.length);
           expect(sameSet, 'request carries the reference series').toBe(true);
-          expect(JSON.stringify(sentList) === JSON.stringify(reference), 'request carries them in the reference order').toBe(
-            true
-          );
+          if (JSON.stringify(sentList) !== JSON.stringify(reference)) {
+            test.info().annotations.push({
+              type: 'note',
+              description: 'same series as the reference, in another order (3.11 sent them in network completion order)',
+            });
+          }
         } else {
           test.info().annotations.push({ type: 'note', description: 'no reference request recorded for this run' });
         }
