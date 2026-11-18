@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import closeIcon from '../../assets/icons/close-inactive.png';
 import uncheckIcon from '../../assets/icons/check-inactive.png';
 import checkIcon from '../../assets/icons/check-active.png';
@@ -638,20 +637,6 @@ const SelectSeriesModal: React.FC<SelectSeriesModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-SelectSeriesModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  applyPredictInferenceModel: PropTypes.func,
-  loading: PropTypes.bool,
-  title: PropTypes.string,
-  selectedInferenceModel:
-    PropTypes.object as PropTypes.Validator<GetInferenceAvailableModelsResponse>,
-  initialSeriesSelection: PropTypes.shape({
-    selectedSeries: PropTypes.arrayOf(PropTypes.string),
-    studyInstanceUID: PropTypes.string,
-  }) as PropTypes.Validator<InitialSeriesSelection>,
 };
 
 export default SelectSeriesModal;

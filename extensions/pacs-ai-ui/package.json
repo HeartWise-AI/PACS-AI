@@ -15,9 +15,6 @@
     "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
   },
   "peerDependencies": {
-    "@ohif/app": "3.11.1",
-    "@ohif/core": "3.11.1",
-    "@ohif/i18n": "3.11.1",
     "@ohif/ui-next": "3.11.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -29,10 +26,7 @@
     "@pacs-ai/theme": "1.0.0",
     "classnames": "2.5.1",
     "html2canvas": "1.4.1",
-    "jspdf": "^3.0.1",
-    "prop-types": "15.8.1",
-    "react-markdown": "8.0.7",
-    "remark-gfm": "3.0.1"
+    "jspdf": "^3.0.1"
   },
   "devDependencies": {
     "@testing-library/react": "13.4.0",

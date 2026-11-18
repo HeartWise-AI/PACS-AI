@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import { useOptionalInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
@@ -755,11 +754,5 @@ export function ViewerModelResultsProvider({
     </ViewerModelResultsContext.Provider>
   );
 }
-
-ViewerModelResultsProvider.propTypes = {
-  children: PropTypes.node,
-  studyInstanceUID: PropTypes.string,
-  servicesManager: PropTypes.object.isRequired,
-};
 
 export default ViewerModelResultsProvider;

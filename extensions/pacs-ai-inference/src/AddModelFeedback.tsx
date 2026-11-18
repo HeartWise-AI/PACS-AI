@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import closeIcon from './assets/icons/close-inactive.png';
 import thumbsUp from './assets/icons/thumbs-up-outline.png';
 import thumbsUpChecked from './assets/icons/thumbs-up-solid.png';
@@ -657,11 +656,6 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
         )}
     </>
   );
-};
-
-AddModelFeedback.propTypes = {
-  title: PropTypes.string.isRequired,
-  selectedInferenceModel: PropTypes.any,
 };
 
 export default AddModelFeedback;

@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
-import PropTypes from 'prop-types';
 import type { CreatedStudyProcessingRun, StudyProcessingSummary } from './types';
 import {
   initialStudyProcessingState,
@@ -407,15 +406,5 @@ export function StudyProcessingProvider({
     <StudyProcessingContext.Provider value={value}>{children}</StudyProcessingContext.Provider>
   );
 }
-
-StudyProcessingProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-  runHistoryTransport: PropTypes.shape({
-    loadRunHistory: PropTypes.func.isRequired,
-  }),
-  reprocessTransport: PropTypes.shape({
-    reprocessStudy: PropTypes.func.isRequired,
-  }),
-};
 
 export default StudyProcessingProvider;

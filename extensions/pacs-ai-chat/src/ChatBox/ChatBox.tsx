@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import SelectSeriesModal from '../seriesSelection/SelectSeriesModal';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
@@ -409,15 +408,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       )}
     </div>
   );
-};
-
-ChatBox.propTypes = {
-  servicesManager: PropTypes.object.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  messages: PropTypes.array.isRequired,
-  onMessagesChange: PropTypes.func.isRequired,
-  onClearChat: PropTypes.func.isRequired,
 };
 
 export default ChatBox;

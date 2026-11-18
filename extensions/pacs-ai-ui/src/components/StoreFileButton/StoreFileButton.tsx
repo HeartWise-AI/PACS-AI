@@ -4,7 +4,6 @@ import Button from '../Button';
 import { Icons } from '@ohif/ui-next';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
-import PropTypes from 'prop-types';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -165,15 +164,6 @@ const StoreFileButton = ({
       {isModalOpen && createPortal(confirmationModal, document.body)}
     </div>
   );
-};
-
-StoreFileButton.propTypes = {
-  iframeRef: PropTypes.object.isRequired,
-  encodedData: PropTypes.string.isRequired,
-  modelName: PropTypes.string.isRequired,
-  modelVersion: PropTypes.string.isRequired,
-  modalityId: PropTypes.string.isRequired,
-  seriesInstanceUIDs: PropTypes.string.isRequired,
 };
 
 export default StoreFileButton;

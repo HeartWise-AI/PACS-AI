@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import aiModelsIcon from '../assets/icons/ai-models-white.png';
 import playerPlayIcon from '../assets/icons/player-play-gradient.png';
@@ -31,6 +30,15 @@ const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
 const textColor = 'text-white';
 
+type AIModelButtonProps = {
+  servicesManager: AppTypes.ServicesManager;
+  className?: string;
+  isShowBG?: boolean;
+  isShowText?: boolean;
+  inferenceAvailableModels: any[];
+  loading?: boolean;
+};
+
 const AIModelButton = ({
   servicesManager,
   className = '',
@@ -38,7 +46,7 @@ const AIModelButton = ({
   isShowText = false,
   inferenceAvailableModels,
   loading,
-}) => {
+}: AIModelButtonProps) => {
   const { t } = useTranslation('AIModelButton');
   const tenantId = localStorage.getItem('tenantId') || '';
   const navigate = useNavigate();
@@ -567,15 +575,6 @@ const AIModelButton = ({
       )}
     </div>
   );
-};
-
-AIModelButton.propTypes = {
-  servicesManager: PropTypes.object.isRequired,
-  className: PropTypes.string,
-  isShowBG: PropTypes.bool,
-  isShowText: PropTypes.bool,
-  inferenceAvailableModels: PropTypes.array.isRequired,
-  loading: PropTypes.bool,
 };
 
 export default AIModelButton;

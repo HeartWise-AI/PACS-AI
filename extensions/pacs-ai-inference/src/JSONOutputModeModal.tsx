@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import closeIcon from './assets/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
@@ -213,14 +212,6 @@ const JSONOutputModeModal: React.FC<JSONOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-JSONOutputModeModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  data: PropTypes.object as PropTypes.Validator<PredictInferenceModelJSONResponse>,
-  loading: PropTypes.bool,
-  title: PropTypes.string,
 };
 
 export default JSONOutputModeModal;

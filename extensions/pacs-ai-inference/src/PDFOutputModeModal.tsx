@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import closeIcon from './assets/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
@@ -134,14 +133,6 @@ const PDFOutputModeModal: React.FC<PDFOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-PDFOutputModeModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  data: PropTypes.object as PropTypes.Validator<PredictInferenceModelPDFResponse>,
-  loading: PropTypes.bool,
-  title: PropTypes.string,
 };
 
 export default PDFOutputModeModal;

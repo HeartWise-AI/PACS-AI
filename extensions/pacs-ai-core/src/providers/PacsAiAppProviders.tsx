@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AlertProvider } from './AlertProvider';
 import StudyProcessingProvider from '../studyProcessing/StudyProcessingProvider';
@@ -18,7 +17,7 @@ const queryClient = new QueryClient();
  * Order, outermost first: react-query, alerts, study processing, inference
  * processing (it reads study processing). The update monitor renders nothing.
  */
-function PacsAiAppProviders({ children }) {
+function PacsAiAppProviders({ children }: { children?: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AlertProvider>
@@ -32,9 +31,5 @@ function PacsAiAppProviders({ children }) {
     </QueryClientProvider>
   );
 }
-
-PacsAiAppProviders.propTypes = {
-  children: PropTypes.node,
-};
 
 export default PacsAiAppProviders;

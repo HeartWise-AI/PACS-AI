@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '@ohif/ui-next';
 import usePathname from '../hooks/usePathname';
@@ -98,7 +97,7 @@ export function useOptionalInferenceProcessing() {
   return useContext(InferenceProcessingContext);
 }
 
-function InferenceProcessingProvider({ children }) {
+function InferenceProcessingProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation('StudyList');
   const { show } = useNotification();
   // Mounted outside OHIF's router (serviceProvidersManager): follow the path
@@ -416,9 +415,5 @@ function InferenceProcessingProvider({ children }) {
     </InferenceProcessingContext.Provider>
   );
 }
-
-InferenceProcessingProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};
 
 export default InferenceProcessingProvider;

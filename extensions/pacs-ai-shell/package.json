@@ -37,7 +37,6 @@
     "dicom-data-dictionary": "^0.3.1",
     "lodash": "^4.17.21",
     "moment": "2.30.1",
-    "prop-types": "15.8.1",
     "react-dates": "21.8.0",
     "react-query": "^3.39.3",
     "react-select": "5.7.4"

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 import closeIcon from './assets/icons/close-inactive.png';
 import {
   GetInferenceAvailableModelsResponse,
@@ -161,18 +160,6 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   );
 
   return mounted ? ReactDOM.createPortal(modalContent, document.body) : null;
-};
-
-HTMLOutputModeModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  data: PropTypes.object as PropTypes.Validator<PredictInferenceModelHTMLResponse>,
-  modelName: PropTypes.string,
-  modelVersion: PropTypes.string,
-  outputMode: PropTypes.string,
-  seriesInstanceUIDs: PropTypes.string,
-  loading: PropTypes.bool,
-  title: PropTypes.string,
 };
 
 export default HTMLOutputModeModal;

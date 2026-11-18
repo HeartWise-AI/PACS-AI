@@ -1,8 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { pacsAiLogo as pacsLogo } from '@pacs-ai/theme';
 
-const Logo = ({ class: className }) => {
+const Logo = ({ class: className }: { class?: string; width?: string }) => {
   return (
     <img
       src={pacsLogo}
@@ -12,7 +11,4 @@ const Logo = ({ class: className }) => {
   );
 };
 
-Logo.propTypes = {
-  width: PropTypes.string,
-};
 export default Logo;

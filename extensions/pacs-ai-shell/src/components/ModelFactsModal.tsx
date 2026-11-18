@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@pacs-ai/ui';
 import closeIcon from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
@@ -408,12 +407,6 @@ const ModelFactsModal: React.FC<ModelFactsModalProps> = ({
       )}
     </React.Fragment>
   );
-};
-
-ModelFactsModal.propTypes = {
-  isOpen: PropTypes.bool,
-  onClose: PropTypes.func,
-  data: PropTypes.object as PropTypes.Validator<ModelDetails>,
 };
 
 export default ModelFactsModal;

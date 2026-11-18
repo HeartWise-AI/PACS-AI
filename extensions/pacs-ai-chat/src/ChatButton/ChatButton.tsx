@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import ChatBox from '../ChatBox';
 
@@ -150,10 +149,6 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
       )}
     </>
   );
-};
-
-ChatButton.propTypes = {
-  servicesManager: PropTypes.object.isRequired,
 };
 
 export default ChatButton;

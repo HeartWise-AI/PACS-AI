@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
 
 const baseClasses = 'relative overflow-hidden rounded-lg';
 
@@ -39,17 +38,6 @@ const ButtonGradient = ({
       <span className={`absolute inset-0 rounded-lg ${backgroundClass}`}></span>
     </button>
   );
-};
-
-ButtonGradient.propTypes = {
-  /** What is inside the button, can be text or react component */
-  children: PropTypes.node,
-  /** Callback to be called when the button is clicked  */
-  onClick: PropTypes.func,
-  /** Whether the button should be disabled  */
-  disabled: PropTypes.bool,
-  /** Additional TailwindCSS classnames */
-  className: PropTypes.string,
 };
 
 export default ButtonGradient;
