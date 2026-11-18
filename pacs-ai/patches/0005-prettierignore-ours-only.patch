@@ -1,0 +1,31 @@
+diff --git a/.prettierignore b/.prettierignore
+index dd449725e188f816bcebfc05678064efcbc29a81..a142cfe49f4946c04791a6dba99af32ec186614c 100644
+--- a/.prettierignore
++++ b/.prettierignore
+@@ -1 +1,26 @@
+ *.md
++
++# PACS-AI: OHIF upstream-owned files are never reformatted, so the fork's
++# difference from the pinned OHIF release (pacs-ai/UPSTREAM_REF) stays real
++# changes only. Everything is ignored except the PACS-AI-owned paths listed in
++# docs/ohif-upgrade/PLAN.md section 6.1.
++/*
++!/extensions/
++/extensions/*
++!/extensions/pacs-ai-*/
++!/modes/
++/modes/*
++!/modes/pacs-ai/
++!/pacs-ai/
++!/tests/
++/tests/*
++!/tests/pacs-ai/
++!/docs/
++/docs/*
++!/docs/ohif-upgrade/
++!/.github/
++/.github/*
++!/.github/CODEOWNERS
++!/.github/workflows/
++/.github/workflows/*
++!/.github/workflows/pacs-ai-*.yml
