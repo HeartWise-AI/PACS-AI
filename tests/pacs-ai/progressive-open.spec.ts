@@ -72,7 +72,7 @@ test('the viewer opens once the first series is in, without waiting for the rest
   const startedAt = Date.now();
   await expanded.getByRole('button', { name: 'Basic Viewer' }).click();
 
-  await page.waitForURL(new RegExp(`/viewer\\?StudyInstanceUIDs=${study.uid.replace(/\./g, '\\.')}`), {
+  await page.waitForURL(new RegExp(`/viewer\\?StudyInstanceUIDs=${study.uid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), {
     timeout: 15_000,
   });
   const openedAfterMs = Date.now() - startedAt;
