@@ -14,6 +14,7 @@ import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
 import NotFoundStudy from './NotFoundStudy';
+import NotFound from './NotFound';
 import PacsAiErrorBoundary from '../components/PacsAiErrorBoundary';
 
 export type PacsAiRoute = {
@@ -70,4 +71,13 @@ export function getPacsAiRoutes(): PacsAiRoute[] {
     pacsAiRoute('/tenantnotfound', TenantNotFound, false),
     pacsAiRoute('/notfoundstudy', NotFoundStudy, false),
   ];
+}
+
+/**
+ * The `notFoundRoute` of routes.customRoutes: OHIF 3.13 appends it after our
+ * routes and its own built-in ones (React Router ranks `*` last, so it never
+ * shadows `/` or another page). Public, like OHIF's.
+ */
+export function getPacsAiNotFoundRoute(): PacsAiRoute {
+  return pacsAiRoute('*', NotFound, false);
 }

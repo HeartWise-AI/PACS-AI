@@ -2,10 +2,15 @@ jest.mock('react-dates/initialize', () => ({}), { virtual: true });
 jest.mock('react-dates/lib/css/_datepicker.css', () => ({}), { virtual: true });
 jest.mock('./routes/pacsAiRoutes', () => ({
   getPacsAiRoutes: () => [{ path: '/', children: () => null, private: true }],
+  getPacsAiNotFoundRoute: () => ({ path: '*', children: () => null, private: false }),
 }));
-jest.mock('./providers/PacsAiShellProviders', () => function MockShellProviders() {
-  return null;
-});
+jest.mock(
+  './providers/PacsAiShellProviders',
+  () =>
+    function MockShellProviders() {
+      return null;
+    }
+);
 jest.mock('./layout/PacsAiViewerLayout', () => jest.fn(() => null));
 jest.mock('@ohif/ui-next', () => ({ ErrorBoundary: () => null }));
 jest.mock('./errors/routeErrorNotifications', () => ({
@@ -37,7 +42,9 @@ describe('@pacs-ai/extension-shell', () => {
     expect(module.name).toBe('global');
     const customRoutes = module.value['routes.customRoutes'];
     expect(customRoutes.routes.map(route => route.path)).toEqual(['/']);
-    expect(customRoutes.notFoundRoute).toBeNull();
+    // OHIF 3.13 appends notFoundRoute after the custom and built-in routes as
+    // a `path: '*'` route; ours links back to the PACS-AI work list.
+    expect(customRoutes.notFoundRoute).toMatchObject({ path: '*', private: false });
   });
 
   test('preRegistration mounts the shell providers and gives stock modes our layout', () => {
@@ -92,7 +99,7 @@ describe('@pacs-ai/extension-shell', () => {
     expect(exitPacsAiViewerBehaviour).toHaveBeenCalledWith(servicesManager);
   });
 
-  test('preRegistration turns off OHIF\'s own study list so that `/` is ours', () => {
+  test("preRegistration turns off OHIF's own study list so that `/` is ours", () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const appConfig = { showStudyList: true };
     (pacsAiShellExtension.preRegistration as any)({

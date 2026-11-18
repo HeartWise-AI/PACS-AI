@@ -1,6 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 jest.mock('@ohif/ui-next', () => {
   const ReactActual = jest.requireActual('react');
@@ -36,7 +36,7 @@ jest.mock('./Settings', () => () => {
 jest.mock('./TenantNotFound', () => page('tenant-not-found'));
 jest.mock('./WorkspaceSettings', () => page('workspace-settings'));
 
-import { getPacsAiRoutes } from './pacsAiRoutes';
+import { getPacsAiNotFoundRoute, getPacsAiRoutes } from './pacsAiRoutes';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -99,6 +99,66 @@ describe('PACS-AI custom routes', () => {
       renderRoute('/settings');
       expect(container.innerHTML).toBe('');
       error.mockRestore();
+    });
+
+    test('link the not-found page back to the work list', () => {
+      const route = getPacsAiNotFoundRoute();
+      expect(route.path).toBe('*');
+      expect(route.private).toBe(false);
+      const Element = route.children;
+      act(() => {
+        root.render(
+          <MemoryRouter initialEntries={['/no-such-page']}>
+            <Element />
+          </MemoryRouter>
+        );
+      });
+      expect(container.querySelector('a').getAttribute('href')).toBe('/');
+      expect(container.textContent).toContain('Error (404)');
+    });
+
+    // The order OHIF 3.13's routes/index.tsx builds (mode routes, OHIF's study
+    // list only when showStudyList is on, custom routes, built-in routes,
+    // notFoundRoute last); React Router ranks by path, so `*` never wins over
+    // a page and our `/` is served with showStudyList off.
+    const renderApp = (path: string) => {
+      const allRoutes = [
+        { path: '/viewer', children: page('viewer') },
+        ...getPacsAiRoutes(),
+        { path: '/local', children: page('local') },
+        getPacsAiNotFoundRoute(),
+      ];
+      act(() => {
+        root.render(
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              {allRoutes.map(({ path: routePath, children: Element }, i) => (
+                <Route
+                  key={i}
+                  path={routePath}
+                  element={<Element />}
+                />
+              ))}
+            </Routes>
+          </MemoryRouter>
+        );
+      });
+    };
+
+    test.each([
+      ['/', 'worklist'],
+      ['/viewer', 'viewer'],
+      ['/ai-predictions', 'ai-predictions'],
+      ['/local', 'local'],
+    ])('serve %s with its page, not the not-found route', (path, expected) => {
+      renderApp(path);
+      expect(container.querySelector('#page').textContent).toBe(expected);
+    });
+
+    test('serve unknown paths with the not-found page', () => {
+      renderApp('/no-such-page');
+      expect(container.querySelector('#page')).toBeNull();
+      expect(container.textContent).toContain('Error (404)');
     });
 
     test('link the study-not-found page back to the work list', () => {

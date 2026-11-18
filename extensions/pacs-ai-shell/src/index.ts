@@ -9,7 +9,7 @@ import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
 import getLayoutTemplateModule, { VIEWER_LAYOUT_NAME } from './layout/getLayoutTemplateModule';
 import { replaceDefaultViewerLayout } from './layout/replaceDefaultViewerLayout';
 import PacsAiShellProviders from './providers/PacsAiShellProviders';
-import { getPacsAiRoutes } from './routes/pacsAiRoutes';
+import { getPacsAiNotFoundRoute, getPacsAiRoutes } from './routes/pacsAiRoutes';
 import getToolbarModule from './toolbar/getToolbarModule';
 import { enterPacsAiViewerBehaviour, exitPacsAiViewerBehaviour } from './viewerBehaviour';
 
@@ -115,7 +115,7 @@ const pacsAiShellExtension = {
         value: {
           'routes.customRoutes': {
             routes: getPacsAiRoutes(),
-            notFoundRoute: null,
+            notFoundRoute: getPacsAiNotFoundRoute(),
           },
         },
       },
