@@ -8,11 +8,15 @@
  *   rsbuild.config.ts                    -> extendRsbuild(config)
  *
  * Each function receives the finished upstream config and returns the config
- * to use. Plugins are found by constructor name so this module does not depend
- * on resolving the same plugin packages as the upstream file.
+ * to use. The production build is rspack (OHIF 3.13); plugins are found by
+ * constructor name, and new plugins are made with the constructor of the
+ * upstream instance, so this module does not depend on resolving the same
+ * @rspack/core as the upstream file (the root and platform/app resolve
+ * different versions).
  */
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 const { frontendBuildMetadata, FrontendBuildVersionPlugin } = require('./frontendBuildVersion');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -27,13 +31,19 @@ const THEME_PUBLIC_DIR = path.join(REPO_ROOT, 'extensions/pacs-ai-theme/public')
 const BUILD_PUBLIC_DIR = path.join(PACS_AI_DIR, 'build/public');
 // env-config.js, written by generate-env-config.js before each build (git-ignored).
 const GENERATED_ENV_CONFIG = path.join(PACS_AI_DIR, 'build/generated/env-config.js');
+// The deployment's build environment (untracked, ledger row 0006) and our
+// variables with their defaults.
+const APP_ENV_FILE = path.join(APP_DIR, '.env');
+const ENV_DEFAULTS_FILE = path.join(PACS_AI_DIR, 'build/env.example');
 const APP_TITLE = 'PACS AI Viewer';
 const isThemePublicPattern = pattern =>
   pattern &&
   typeof pattern.from === 'string' &&
-  /[\\/]@pacs-ai[\\/]theme[\\/]public[\\/]?$/.test(pattern.from);
+  // node_modules/@pacs-ai/theme/public (yarn) or the workspace path (pnpm).
+  (/[\\/]@pacs-ai[\\/]theme[\\/]public[\\/]?$/.test(pattern.from) ||
+    path.resolve(pattern.from) === THEME_PUBLIC_DIR);
 
-/** Build-time values the app reads as process.env.* (see webpack DefinePlugin). */
+/** Build-time values the app reads as process.env.* (see DefinePlugin). */
 function pacsAiDefineValues() {
   return {
     'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
@@ -100,13 +110,22 @@ function transformIndexHtml(html) {
 }
 
 class PacsAiIndexHtmlPlugin {
-  constructor(HtmlWebpackPlugin) {
-    this.HtmlWebpackPlugin = HtmlWebpackPlugin;
+  constructor(HtmlPlugin) {
+    // HtmlRspackPlugin (getCompilationHooks) or HtmlWebpackPlugin (getHooks).
+    this.HtmlPlugin = HtmlPlugin;
   }
 
   apply(compiler) {
+    // rspack checks that the compilation comes from the same @rspack/core copy
+    // as the plugin class, and the CLI's copy is not platform/app's: use the
+    // compiler's own HtmlRspackPlugin when there is one.
+    const HtmlPlugin = (compiler.rspack && compiler.rspack.HtmlRspackPlugin) || this.HtmlPlugin;
+    const getHooks = compilation =>
+      HtmlPlugin.getCompilationHooks
+        ? HtmlPlugin.getCompilationHooks(compilation)
+        : HtmlPlugin.getHooks(compilation);
     compiler.hooks.compilation.tap('PacsAiIndexHtmlPlugin', compilation => {
-      this.HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tap(
+      getHooks(compilation).beforeEmit.tap(
         'PacsAiIndexHtmlPlugin',
         data => {
           if (data.outputName === 'index.html') {
@@ -119,73 +138,86 @@ class PacsAiIndexHtmlPlugin {
   }
 }
 
-// DefinePlugin instances created by webpack.base.js (see extendWebpackPwa).
-const baseDefinePlugins = new WeakSet();
+const readEnvFile = file => (fs.existsSync(file) ? dotenv.parse(fs.readFileSync(file)) : {});
 
-function extendWebpackBase(config, { defineValues } = {}) {
-  // Add to upstream's DefinePlugin (it keeps a reference to defineValues), so
-  // the result is the same as if the values were in upstream's table.
+/**
+ * process.env.* values from the env files, as dotenv-webpack defined them
+ * before OHIF 3.13 dropped it: every variable of platform/app/.env, with
+ * pacs-ai/build/env.example supplying the variables .env does not set. Only the
+ * files are read, not the build environment (dotenv-webpack's default), except
+ * for the values pacsAiDefineValues() takes from it. Keys in `skip` (upstream's
+ * own define table) are left to upstream.
+ */
+function envFileDefineValues(skip = {}) {
+  const values = { ...readEnvFile(ENV_DEFAULTS_FILE), ...readEnvFile(APP_ENV_FILE) };
+  const defines = {};
+  Object.entries(values).forEach(([name, value]) => {
+    const key = `process.env.${name}`;
+    if (!(key in skip)) {
+      defines[key] = JSON.stringify(value);
+    }
+  });
+  return { ...defines, ...pacsAiDefineValues() };
+}
+
+function extendWebpackBase(config, { defineValues = {} } = {}) {
+  // A second DefinePlugin of the same bundler for our keys; upstream's table
+  // (defineValues) keeps its own keys.
   const definePlugin = config.plugins.find(p => pluginName(p) === 'DefinePlugin');
-  if (definePlugin) {
-    baseDefinePlugins.add(definePlugin);
+  if (!definePlugin) {
+    throw new Error('pacs-ai/build/extend.js: no DefinePlugin in .webpack/webpack.base.js');
   }
-  Object.assign(definePlugin ? definePlugin.definitions : defineValues, pacsAiDefineValues());
+  config.plugins.push(new definePlugin.constructor(envFileDefineValues(defineValues)));
   return config;
 }
 
-/**
- * dotenv-webpack 1.x returns a webpack DefinePlugin from its constructor.
- * Build one that also reads pacs-ai/build/env.example (our variables and their
- * defaults) as defaults.
- */
-function createDotenvPlugin() {
-  const Dotenv = require(require.resolve('dotenv-webpack', { paths: [APP_DIR] }));
-  const dotenv = new Dotenv({ defaults: path.join(PACS_AI_DIR, 'build/env.example') });
-  // APP_PUBLIC_TURNSTILE_SITE_KEY comes from pacsAiDefineValues() so Docker/CI
-  // can pass it without exposing every variable of the build environment.
-  delete dotenv.definitions['process.env.APP_PUBLIC_TURNSTILE_SITE_KEY'];
-  return dotenv;
+/** The options object of an rspack built-in plugin (CopyRspackPlugin, ...). */
+function builtinPluginOptions(plugin) {
+  const options = plugin._args && plugin._args[0];
+  if (!options) {
+    throw new Error(
+      `pacs-ai/build/extend.js: cannot read the options of ${pluginName(plugin)}; update builtinPluginOptions`
+    );
+  }
+  return options;
 }
 
 function extendWebpackPwa(config) {
   config.plugins = config.plugins.flatMap(plugin => {
     switch (pluginName(plugin)) {
-      case 'DefinePlugin':
-        // The one not from webpack.base.js is upstream's `new Dotenv()`.
-        return [baseDefinePlugins.has(plugin) ? plugin : createDotenvPlugin()];
-      case 'CopyPlugin': {
+      case 'CopyRspackPlugin': {
+        const { patterns } = builtinPluginOptions(plugin);
         // Our favicons have the same names as upstream's in platform/app/public.
-        // CopyPlugin keeps whichever copy finishes first unless a pattern is
-        // forced; a higher priority is written later, so ours always win.
-        plugin.patterns.filter(isThemePublicPattern).forEach(p => {
+        // The copy keeps whichever file comes first unless a pattern is forced;
+        // a higher priority is written later, so ours always win.
+        patterns.filter(isThemePublicPattern).forEach(p => {
           p.force = true;
           p.priority = 1;
         });
-        const appConfigPattern = plugin.patterns.find(
+        const appConfigPatterns = patterns.filter(
           p => typeof p.to === 'string' && p.to.endsWith('/app-config.js')
         );
-        if (appConfigPattern) {
-          plugin.patterns.push(...pacsAiPublicPatterns(path.dirname(appConfigPattern.to)));
+        if (appConfigPatterns.length) {
+          patterns.push(...pacsAiPublicPatterns(path.dirname(appConfigPatterns[0].to)));
         }
         const ours = pacsAiAppConfigPath();
         if (ours) {
-          plugin.patterns
-            .filter(p => typeof p.to === 'string' && p.to.endsWith('/app-config.js'))
-            .forEach(p => {
-              p.from = ours;
-            });
+          appConfigPatterns.forEach(p => {
+            p.from = ours;
+          });
         }
         return [plugin];
       }
-      case 'HtmlWebpackPlugin':
+      case 'HtmlRspackPlugin':
         return [plugin, new PacsAiIndexHtmlPlugin(plugin.constructor)];
-      case 'InjectManifest':
+      case 'InjectServiceWorkerManifestPlugin':
         // No service worker: pacs-ai/build/public/sw.js is a kill switch, and
         // version.json drives the in-app update monitor instead.
         return [new FrontendBuildVersionPlugin()];
-      case 'MiniCssExtractPlugin':
+      case 'CssExtractRspackPlugin':
         return [
           new plugin.constructor({
+            ...plugin.options,
             filename: '[name].bundle.[contenthash].css',
             chunkFilename: '[id].[contenthash].css',
           }),
@@ -196,13 +228,8 @@ function extendWebpackPwa(config) {
   });
 
   if (!config.plugins.some(p => pluginName(p) === 'FrontendBuildVersionPlugin')) {
-    // InjectManifest is absent in coverage builds.
-    const cssIndex = config.plugins.findIndex(p => pluginName(p) === 'MiniCssExtractPlugin');
-    config.plugins.splice(
-      cssIndex === -1 ? config.plugins.length : cssIndex,
-      0,
-      new FrontendBuildVersionPlugin()
-    );
+    // The service-worker plugin is absent in coverage builds.
+    config.plugins.push(new FrontendBuildVersionPlugin());
   }
 
   config.resolve = config.resolve || {};
@@ -223,7 +250,7 @@ function extendRsbuild(config) {
   config.source = config.source || {};
   config.source.define = {
     ...config.source.define,
-    'process.env.APP_BUILD_ID': JSON.stringify(frontendBuildMetadata.buildId),
+    ...envFileDefineValues(config.source.define),
   };
 
   config.output = config.output || {};
@@ -269,6 +296,7 @@ module.exports = {
   extendRsbuild,
   extendWebpackBase,
   extendWebpackPwa,
+  envFileDefineValues,
   pacsAiAppConfigPath,
   pacsAiDefineValues,
   transformIndexHtml,
