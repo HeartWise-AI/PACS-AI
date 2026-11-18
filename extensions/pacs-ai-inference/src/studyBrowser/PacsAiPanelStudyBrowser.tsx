@@ -23,6 +23,7 @@ import { PacsAiPanelStudyBrowserHeader as PanelStudyBrowserHeader } from './Pacs
 import { PacsAiStudyBrowser as StudyBrowser } from './PacsAiStudyBrowser';
 import { defaultActionIcons } from './constants';
 import { withSeriesInstanceUIDs } from './withSeriesInstanceUIDs';
+import { whenActiveViewportWarmedUp } from './viewportWarmUp';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
 import { SelectedViewsLegend } from '../viewerResults/SelectedViewsLegend';
 import { buildSelectedViewBadges } from '../viewerResults/viewerResultsModel';
@@ -75,6 +76,14 @@ function PacsAiPanelStudyBrowser({
       : [...StudyInstanceUIDs]
   );
   const [hasLoadedViewports, setHasLoadedViewports] = useState(false);
+  const warmUpRef = useRef<{ timer: number; cancel?: () => void } | null>(null);
+  useEffect(
+    () => () => {
+      window.clearTimeout(warmUpRef.current?.timer);
+      warmUpRef.current?.cancel?.();
+    },
+    []
+  );
   const [studyDisplayList, setStudyDisplayList] = useState([]);
   const [displaySets, setDisplaySets] = useState([]);
   const [displaySetsLoadingState, setDisplaySetsLoadingState] = useState({});
@@ -211,7 +220,20 @@ function PacsAiPanelStudyBrowser({
         // which improves user experience of responsiveness significantly on slower
         // systems.
         const delayMs = 250 + displaySetService.getActiveDisplaySets().length * 10;
-        window.setTimeout(() => setHasLoadedViewports(true), delayMs);
+        // PACS-AI (P3.6): after OHIF's delay, also wait until the active
+        // viewport shows its first image and has the next frames cached, so
+        // the thumbnail burst does not hold back the first cine frames
+        // (./viewportWarmUp.ts).
+        // Started once per panel; cancelled on unmount.
+        if (!warmUpRef.current) {
+          const warmUp = { timer: 0, cancel: undefined as undefined | (() => void) };
+          warmUpRef.current = warmUp;
+          warmUp.timer = window.setTimeout(() => {
+            warmUp.cancel = whenActiveViewportWarmedUp(servicesManager, () =>
+              setHasLoadedViewports(true)
+            );
+          }, delayMs);
+        }
       }
 
       return;
