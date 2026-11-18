@@ -56,6 +56,7 @@ import {
 import WorklistTopNavigation from './WorklistTopNavigation';
 import {
   isTutorialSearch,
+  pickTutorialStudy,
   WORKLIST_NO_STUDIES_TOUR_ID,
   WORKLIST_OPEN_VIEWER_TOUR_ID,
   WORKLIST_STUDY_ROW_TOUR_ID,
@@ -588,6 +589,28 @@ function WorkList() {
       study => -new Date(study.studyDate).getTime(),
     ]);
   };
+
+  // The study the tutorial walks the user into: the most recent one (an old
+  // study may sit in the PACS archive and take minutes to retrieve). The list
+  // turns to its page.
+  const tutorialStudyUID = useMemo(
+    () =>
+      tutorialSearchState === 'found'
+        ? pickTutorialStudy(tableDataSource)?.studyInstanceUID ?? null
+        : null,
+    [tableDataSource, tutorialSearchState]
+  );
+  useEffect(() => {
+    if (!tutorialStudyUID) {
+      return;
+    }
+    const index = tableDataSource.findIndex(study => study.studyInstanceUID === tutorialStudyUID);
+    if (index >= 0) {
+      setCurrentPage(Math.floor(index / itemsPerPage) + 1);
+    }
+    // only when the tutorial's study is chosen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorialStudyUID]);
 
   /**
    * Table toggle for expandable rows
@@ -1211,7 +1234,7 @@ function WorkList() {
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
-                      {currentItems.map((row, rowIndex) => {
+                      {currentItems.map(row => {
                         const summary = getStudySummary(row.studyInstanceUID);
                         const requestEntry = getStudyReprocessRequestEntry(row.studyInstanceUID);
                         const hasActiveRun =
@@ -1223,7 +1246,7 @@ function WorkList() {
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] px-2 py-2 text-white"
                             data-tour-id={
-                              rowIndex === 0 && tutorialSearchState === 'found'
+                              row.studyInstanceUID === tutorialStudyUID
                                 ? WORKLIST_STUDY_ROW_TOUR_ID
                                 : undefined
                             }

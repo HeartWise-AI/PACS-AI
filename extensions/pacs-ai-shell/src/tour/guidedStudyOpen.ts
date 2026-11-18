@@ -53,6 +53,26 @@ export function pickTutorialModality(models: ModelWithModalities[] = []): string
   return first || DEFAULT_MODALITY;
 }
 
+type StudyWhen = { studyInstanceUID: string; studyDate?: string | null; studyTime?: string | null };
+
+/**
+ * The study the tutorial opens: the most recent one by study date and time
+ * (DICOM YYYYMMDD and HHMMSS sort as text). An old study may sit in the
+ * PACS archive and take minutes to retrieve.
+ */
+export function pickTutorialStudy<T extends StudyWhen>(studies: T[] = []): T | null {
+  let newest: T | null = null;
+  let newestKey = '';
+  for (const study of studies) {
+    const key = `${(study.studyDate || '').trim()}${(study.studyTime || '').trim()}`;
+    if (!newest || key > newestKey) {
+      newest = study;
+      newestKey = key;
+    }
+  }
+  return newest;
+}
+
 /** Study list with the modality selected, the dates cleared and the search run. */
 export function buildTutorialWorklistPath(modality: string): string {
   const params = new URLSearchParams({

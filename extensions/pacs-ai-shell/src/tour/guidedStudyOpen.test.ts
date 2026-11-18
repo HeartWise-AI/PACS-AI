@@ -4,6 +4,7 @@ import {
   getPendingTutorialStep,
   isTutorialSearch,
   pickTutorialModality,
+  pickTutorialStudy,
   setPendingTutorialStep,
   waitForElement,
 } from './guidedStudyOpen';
@@ -98,5 +99,21 @@ describe('waitForElement', () => {
     const aborted = waitForElement('[data-tour-id="missing"]', 5000, controller.signal);
     controller.abort();
     await expect(aborted).resolves.toBeNull();
+  });
+});
+
+describe('pickTutorialStudy', () => {
+  it('picks the most recent study by date and time', () => {
+    const studies = [
+      { studyInstanceUID: 'old', studyDate: '20190101', studyTime: '235959' },
+      { studyInstanceUID: 'new-morning', studyDate: '20261118', studyTime: '080000' },
+      { studyInstanceUID: 'new-noon', studyDate: '20261118', studyTime: '120000.5' },
+      { studyInstanceUID: 'no-date', studyDate: '', studyTime: '' },
+    ];
+    expect(pickTutorialStudy(studies)?.studyInstanceUID).toBe('new-noon');
+  });
+
+  it('returns null for no studies', () => {
+    expect(pickTutorialStudy([])).toBeNull();
   });
 });
