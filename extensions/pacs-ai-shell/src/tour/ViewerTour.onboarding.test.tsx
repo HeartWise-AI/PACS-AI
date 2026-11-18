@@ -9,8 +9,17 @@ import { MemoryRouter } from 'react-router-dom';
 const mockStart = jest.fn();
 jest.mock('react-shepherd', () => ({
   useShepherd: () => ({
-    Tour: function MockTour() {
-      return { addStep: jest.fn(), start: mockStart };
+    // Like Shepherd: start() shows the first step, which runs the `show`
+    // handler of the tour's default step options with the step as `this`.
+    Tour: function MockTour(options) {
+      const steps = [];
+      return {
+        addStep: step => steps.push(step),
+        start: () => {
+          mockStart();
+          options?.defaultStepOptions?.when?.show?.call({ tour: { steps }, getElement: () => null });
+        },
+      };
     },
   }),
 }));

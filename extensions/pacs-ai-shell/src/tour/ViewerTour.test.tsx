@@ -66,17 +66,20 @@ describe('ViewerTour', () => {
     await render(customizationService);
 
     expect(mockGetUnseenTours).toHaveBeenCalledWith([viewerTour]);
-    expect(customizationService.setCustomizations).toHaveBeenCalledWith(
-      { 'ohif.tours': { $set: [viewerTour] } },
-      'mode'
-    );
+    const [values, scope] = customizationService.setCustomizations.mock.calls[0];
+    expect(scope).toBe('mode');
+    expect(values['ohif.tours'].$set).toEqual([
+      expect.objectContaining({ id: 'basicViewerTour', route: '/viewer', steps: [] }),
+    ]);
     const props = mockOnboarding.mock.calls[mockOnboarding.mock.calls.length - 1][0] as any;
-    expect(props.tours).toEqual([viewerTour]);
-    expect(props.shouldShowTour('basicViewerTour')).toBe(true);
-    // The server is told only when Onboarding reports the tour started.
+    expect(props).toEqual({ tours: values['ohif.tours'].$set });
+    // The server is told only when a step of the tour is on screen.
     expect(mockMarkTourShown).not.toHaveBeenCalled();
-    props.onTourShown('basicViewerTour');
+    const show = props.tours[0].tourOptions.defaultStepOptions.when.show;
+    show.call({ tour: { steps: [] }, getElement: () => null });
     expect(mockMarkTourShown).toHaveBeenCalledWith('basicViewerTour');
+    show.call({ tour: { steps: [] }, getElement: () => null });
+    expect(mockMarkTourShown).toHaveBeenCalledTimes(1);
   });
 
   test('renders no Onboarding when the user has seen the tour', async () => {
