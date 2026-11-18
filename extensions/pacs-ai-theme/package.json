@@ -1,7 +1,7 @@
 {
   "name": "@pacs-ai/theme",
   "version": "1.0.0",
-  "description": "PACS-AI theme: colour tokens, logos and favicons",
+  "description": "PACS-AI theme: OHIF 3.13 theme tokens and chrome, logos and favicons",
   "private": true,
   "license": "MIT",
   "main": "src/index.ts",

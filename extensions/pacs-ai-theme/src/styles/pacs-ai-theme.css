@@ -1,0 +1,347 @@
+/*
+ * PACS-AI theme for OHIF 3.13 (PLAN P3.4).
+ *
+ * Applied while `document.body` carries `theme-pacs-ai` (set by the theme
+ * extension's preRegistration, see src/applyTheme.ts), the mechanism of
+ * upstream's presets (`.theme-<name>` in platform/ui-next/src/themes/themes.css).
+ *
+ * 1. Tokens: the ui-next CSS variables (src/theme/pacsAiTheme.ts; a unit test
+ *    keeps both equal).
+ * 2. Chrome: what the tokens cannot express, scoped to upstream components that
+ *    the 3.11.1 fork restyled in place (pacs-ai/THEME_DEBT.txt, deleted in
+ *    P3.4). Most upstream components carry no stable class or data attribute,
+ *    so some rules match the component's own Tailwind class string. Each such
+ *    rule is preceded by an anchor comment
+ *        @upstream <file> :: <class string the selector relies on>
+ *    and src/theme/upstreamAnchors.test.ts fails when the upstream file no
+ *    longer contains that string (re-check the rule after an OHIF upgrade).
+ *    A rule whose anchor is gone simply stops matching: the component falls
+ *    back to the token look.
+ * 3. Icons: the four ui-next icons that still hard-code OHIF blue (#348CFD).
+ *
+ * Every rule starts with `.theme-pacs-ai`, which also lifts it above the
+ * single-class Tailwind utilities it overrides, whatever the stylesheet order.
+ */
+
+/* ── 1. Tokens ────────────────────────────────────────────────────────── */
+
+.theme-pacs-ai {
+  --highlight: 79 86.3% 68.4%;
+  --neutral: 213 22% 59%;
+  --neutral-light: 214 69% 81%;
+  --neutral-dark: 214 16% 21%;
+  --background: 120 6.7% 8.8%;
+  --foreground: 0 0% 100%;
+  --card: 120 6.7% 8.8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 108 3.2% 30.4%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 79 86.3% 68.4%;
+  --primary-foreground: 120 6.7% 8.8%;
+  --secondary: 255 66% 25%;
+  --secondary-foreground: 79 86% 68%;
+  --muted: 108 3.2% 30.4%;
+  --muted-foreground: 0 0% 82%;
+  --accent: 120 6.7% 8.8%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 120 3% 17.9%;
+  --input: 108 2.4% 37.4%;
+  --ring: 79 86.3% 68.4%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+}
+
+/* ── 2. Chrome ────────────────────────────────────────────────────────── */
+
+/* Viewport: no black box behind the image; the panel shows through. */
+/* @upstream extensions/cornerstone/src/Viewport/OHIFCornerstoneViewport.css :: .cornerstone-viewport-element */
+.theme-pacs-ai .cornerstone-viewport-element {
+  background-color: transparent;
+}
+
+/* Viewport grid: no border around the grid. */
+/* @upstream platform/app/src/components/ViewportGrid.tsx :: border-input h-[calc(100%-0.25rem)] w-full border */
+.theme-pacs-ai .border-input.h-\[calc\(100\%-0\.25rem\)\] {
+  border-color: transparent;
+}
+
+/* Viewport overlay text (patient/study/W-L corners) in lime on dark images. */
+/* @upstream extensions/cornerstone/src/Viewport/Overlays/CustomizableViewportOverlay.tsx :: 'text-neutral-light' */
+/* @upstream platform/ui-next/src/components/Viewport/ViewportOverlay.tsx :: 'overlay-text' */
+.theme-pacs-ai .overlay-text.text-neutral-light {
+  color: hsl(var(--primary));
+}
+
+/*
+ * Side panels: rounded translucent white panel with a white/10 border,
+ * transparent header, tab strip and separators (fork SidePanel.tsx). The
+ * PACS-AI layout (@pacs-ai/extension-shell PacsAiViewerLayout) gives the panel
+ * the class `pacs-ai-side-panel`.
+ */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: const baseClasses = 'bg-background border-background justify-start box-content flex flex-col' */
+.theme-pacs-ai .pacs-ai-side-panel {
+  background-color: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0.5rem;
+}
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: "bg-muted flex h-[40px] flex-shrink-0 select-none rounded-t p-2" */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: 'bg-muted text-primary flex flex-wrap' */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: 'bg-popover flex h-[28px] w-full cursor-pointer items-center rounded-md' */
+.theme-pacs-ai .pacs-ai-side-panel .bg-muted.h-\[40px\],
+.theme-pacs-ai .pacs-ai-side-panel .bg-muted.text-primary.flex-wrap,
+.theme-pacs-ai .pacs-ai-side-panel .bg-popover.h-\[28px\].rounded-md {
+  background-color: transparent;
+}
+/* Tab spacers: lime bars, as the fork (its bg-primary-dark was lime). */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: <div className="bg-muted h-[20px] w-full"></div> */
+.theme-pacs-ai .pacs-ai-side-panel .bg-muted.h-\[20px\] {
+  background-color: hsl(var(--primary));
+}
+/* Tabs: transparent, white icons label colour; active tab primary/20 (as upstream). */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: 'h-[28px] mb-[2px] cursor-pointer text-foreground bg-primary/10 hover:bg-primary/20' */
+.theme-pacs-ai .pacs-ai-side-panel .mb-\[2px\].h-\[28px\].bg-primary\/10 {
+  background-color: transparent;
+}
+/* Separator under the tab strip: white/10. */
+/* @upstream platform/ui-next/src/components/SidePanel/SidePanel.tsx :: className="bg-background" */
+.theme-pacs-ai .pacs-ai-side-panel > [data-orientation='horizontal'].bg-background {
+  background-color: rgb(255 255 255 / 0.1);
+}
+
+/* Panel section headers: lime with black text. */
+/* @upstream platform/ui-next/src/components/PanelSection/PanelSection.tsx :: 'bg-popover hover:bg-accent text-muted-foreground' */
+.theme-pacs-ai .bg-popover.hover\:bg-accent.text-muted-foreground.h-7,
+.theme-pacs-ai .bg-popover.hover\:bg-accent.text-muted-foreground.h-7:hover {
+  background-color: hsl(var(--primary));
+  color: #000;
+}
+
+/* Toolbar buttons: hover lime with dark icon (active is lime by token). */
+/* @upstream platform/ui-next/src/components/ToolButton/ToolButton.tsx :: const defaultClasses = 'bg-transparent text-foreground/80 hover:bg-background hover:text-highlight' */
+/* @upstream platform/ui-next/src/components/ToolButton/ToolButton.tsx :: const baseClasses = '!rounded-lg inline-flex items-center justify-center' */
+.theme-pacs-ai .\!rounded-lg.hover\:bg-background:hover {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--background));
+}
+/* Split-button arrow: white/10 hover, lime arrow. */
+/* @upstream platform/ui-next/src/components/ToolButton/ToolButtonList.tsx :: 'text-foreground/80 hover:bg-background hover:text-highlight border-primary' */
+.theme-pacs-ai .border-primary.hover\:bg-background.w-5:hover {
+  background-color: rgb(255 255 255 / 0.1);
+  color: hsl(var(--primary));
+}
+
+/* Layout selector trigger (open state lime with dark icon), presets and grid. */
+/* @upstream platform/ui-next/src/components/LayoutSelector/LayoutSelector.tsx :: ? 'bg-background text-foreground/80' */
+.theme-pacs-ai .h-10.w-10.\!rounded-lg.bg-background.text-foreground\/80 {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--background));
+}
+/* @upstream platform/ui-next/src/components/LayoutSelector/LayoutSelector.tsx :: 'hover:bg-accent flex items-center gap-2 p-1.5' */
+.theme-pacs-ai .hover\:bg-accent.gap-2.p-1\.5:hover {
+  background-color: rgb(255 255 255 / 0.1);
+}
+/* @upstream platform/ui-next/src/components/LayoutSelector/LayoutSelector.tsx :: isHovered(index) ? 'bg-primary' : 'bg-accent' */
+.theme-pacs-ai [data-cy^='Layout-'].bg-accent {
+  background-color: rgb(255 255 255 / 0.5);
+}
+/* Layout menu (toolbar): rounded outer corners, white/10 divider. */
+/* @upstream extensions/default/src/Toolbar/ToolbarLayoutSelector.tsx :: "bg-popover flex flex-col gap-2.5 rounded-lg p-2" */
+.theme-pacs-ai .bg-popover.flex-col.gap-2\.5.rounded-lg.p-2 {
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+/* @upstream extensions/default/src/Toolbar/ToolbarLayoutSelector.tsx :: "bg-muted flex flex-col gap-2.5 border-l-2 border-solid border-background p-2" */
+.theme-pacs-ai .bg-muted.border-l-2.border-background.gap-2\.5 {
+  border-left-color: rgb(255 255 255 / 0.1);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Tool boxes (segmentation tools): dark tool groups on transparent panels. */
+/* @upstream extensions/default/src/Toolbar/ToolBoxWrapper.tsx :: "bg-popover flex flex-row space-x-1 rounded-md px-0 py-0" */
+/* @upstream extensions/default/src/Toolbar/ToolBoxWrapper.tsx :: "bg-popover flex flex-row rounded-md px-0 py-0" */
+.theme-pacs-ai .bg-popover.flex-row.rounded-md.px-0.py-0 {
+  background-color: hsl(var(--background));
+}
+/* @upstream extensions/default/src/utils/Toolbox.tsx :: "bg-muted flex-shrink-0 border-none" */
+/* @upstream extensions/default/src/utils/Toolbox.tsx :: "bg-muted flex flex-wrap gap-2 py-2 px-1" */
+.theme-pacs-ai .bg-muted.flex-shrink-0.border-none,
+.theme-pacs-ai .bg-muted.flex-wrap.gap-2.py-2.px-1 {
+  background-color: transparent;
+}
+/* @upstream extensions/default/src/utils/Toolbox.tsx :: "bg-muted mt-1 h-auto px-2" */
+.theme-pacs-ai .bg-muted.mt-1.h-auto.px-2 {
+  background-color: hsl(var(--background));
+}
+
+/* Measurement / segment rows (DataRow). */
+/* @upstream platform/ui-next/src/components/DataRow/DataRow.tsx :: isSelected ? 'bg-popover' : 'bg-muted' */
+/* @upstream platform/ui-next/src/components/DataRow/DataRow.tsx :: data-cy="data-row" */
+.theme-pacs-ai [data-cy='data-row'].bg-popover {
+  background-color: hsl(var(--primary) / 0.5);
+}
+.theme-pacs-ai [data-cy='data-row'].bg-muted {
+  background-color: rgb(255 255 255 / 0.1);
+}
+/* @upstream platform/ui-next/src/components/DataRow/DataRow.tsx :: "bg-primary/20 pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100" */
+.theme-pacs-ai [data-cy='data-row'] > .bg-primary\/20.opacity-0 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+/* @upstream platform/ui-next/src/components/DataRow/DataRow.tsx :: 'bg-muted text-muted-foreground' */
+.theme-pacs-ai [data-cy='data-row'] .bg-muted.text-muted-foreground {
+  background-color: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+.theme-pacs-ai [data-cy='data-row'] .text-muted-foreground {
+  color: rgb(255 255 255 / 0.7);
+}
+
+/* Segmentation panel. */
+/* @upstream platform/ui-next/src/components/SegmentationTable/SegmentationCollapsed.tsx :: "bg-muted flex h-10 w-full items-center space-x-1 rounded-t px-1.5" */
+.theme-pacs-ai .bg-muted.h-10.space-x-1.rounded-t {
+  background-color: hsl(var(--background));
+}
+/* @upstream platform/ui-next/src/components/SegmentationTable/SegmentationTableConfig.tsx :: "bg-muted mb-0.5 space-y-2 rounded-b px-1.5 pt-0.5 pb-3" */
+.theme-pacs-ai .bg-muted.mb-0\.5.space-y-2.rounded-b {
+  background-color: rgb(255 255 255 / 0.1);
+}
+.theme-pacs-ai .bg-muted.mb-0\.5.space-y-2.rounded-b .text-muted-foreground {
+  color: #fff;
+}
+/* @upstream platform/ui-next/src/components/SegmentationTable/SegmentationTableConfig.tsx :: "border-input w-full border" */
+.theme-pacs-ai .bg-muted.mb-0\.5.space-y-2.rounded-b .border-input.w-full.border {
+  border-color: rgb(255 255 255 / 0.1);
+}
+/* @upstream platform/ui-next/src/components/SegmentationTable/SegmentationSegments.tsx :: "text-muted-foreground break-words font-semibold" */
+.theme-pacs-ai h3.text-muted-foreground.break-words.font-semibold {
+  color: #fff;
+}
+/* @upstream platform/ui-next/src/components/SegmentationTable/AddSegmentRow.tsx :: "my-px flex h-7 w-full items-center justify-between rounded pl-0.5 pr-7" */
+.theme-pacs-ai .my-px.h-7.rounded.pr-7 {
+  background-color: rgb(255 255 255 / 0.1);
+}
+/* @upstream platform/ui-next/src/components/SegmentationTable/AddSegmentationRow.tsx :: "text-primary group-hover:bg-popover flex items-center rounded-[4px] pl-1 group-hover:cursor-pointer" */
+.theme-pacs-ai .group:hover .text-primary.group-hover\:bg-popover {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+/* Select: white trigger border, dark list with white border, lime focused item. */
+/* @upstream platform/ui-next/src/components/Select/Select.tsx :: 'border-input text-foreground ring-offset-background placeholder:text-muted-foreground focus:ring-ring hover:bg-primary/10 flex h-7 w-full min-w-0 */
+.theme-pacs-ai button[role='combobox'].border-input.h-7 {
+  border-color: #fff;
+}
+/* @upstream platform/ui-next/src/components/Select/Select.tsx :: 'bg-popover text-popover-foreground */
+.theme-pacs-ai [role='listbox'].bg-popover {
+  background-color: hsl(var(--background));
+  border-color: #fff;
+}
+/* @upstream platform/ui-next/src/components/Select/Select.tsx :: 'focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default select-none items-center rounded py-1 pl-2 pr-8 */
+.theme-pacs-ai [role='option'].pr-8:focus {
+  background-color: hsl(var(--primary));
+  color: #000;
+}
+
+/* Study browser sort and view dropdowns: lime-bordered transparent triggers. */
+/* @upstream platform/ui-next/src/components/StudyBrowserSort/StudyBrowserSort.tsx :: "border-input focus:border-input text-foreground flex h-[26px] */
+/* @upstream platform/ui-next/src/components/StudyBrowserViewOptions/StudyBrowserViewOptions.tsx :: "border-input focus:border-input text-foreground flex h-[26px] */
+.theme-pacs-ai .border-input.focus\:border-input.h-\[26px\] {
+  background-color: transparent;
+  border-color: hsl(var(--primary));
+}
+/* @upstream platform/ui-next/src/components/StudyBrowserSort/StudyBrowserSort.tsx :: "flex h-[26px] items-center justify-center bg-background" */
+.theme-pacs-ai .h-\[26px\].justify-center.bg-background {
+  background-color: transparent;
+}
+
+/* Number steppers: white/50 border on white/10. */
+/* @upstream platform/ui-next/src/components/Numeric/Numeric.tsx :: 'bg-background border-input flex h-[28px] items-center overflow-hidden rounded-md border' */
+.theme-pacs-ai .bg-background.border-input.h-\[28px\].overflow-hidden.rounded-md {
+  background-color: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.5);
+}
+
+/* Toggles: lime text off-state (the fork's primary-foreground was lime). */
+/* @upstream platform/ui-next/src/components/Toggle/Toggle.tsx :: text-primary-foreground/80 font-medium transition-colors hover:bg-primary/20 hover:text-primary-foreground */
+.theme-pacs-ai .text-primary-foreground\/80 {
+  color: hsl(var(--primary) / 0.8);
+}
+.theme-pacs-ai .text-primary-foreground\/80:hover {
+  color: hsl(var(--primary));
+}
+.theme-pacs-ai .text-primary-foreground\/80[data-state='on'] {
+  color: hsl(var(--highlight));
+}
+
+/* Tooltips: lime text on #4C504B (fork: text-primary-foreground, lime). */
+/* @upstream platform/ui-next/src/components/Tooltip/Tooltip.tsx :: 'bg-muted border-input text-primary-foreground */
+.theme-pacs-ai .bg-muted.border-input.text-primary-foreground {
+  color: hsl(var(--primary));
+}
+
+/* Dialog titles: white instead of highlight. */
+/* @upstream platform/ui-next/src/components/Dialog/Dialog.tsx :: 'text-highlight text-xl font-normal leading-none tracking-tight' */
+.theme-pacs-ai [role='dialog'] .text-highlight.text-xl.leading-none.tracking-tight {
+  color: hsl(var(--foreground));
+}
+
+/* DICOM tag browser: dark dialog body, small light labels, translucent table. */
+/* @upstream extensions/default/src/DicomTagBrowser/DicomTagBrowser.tsx :: "dicom-tag-browser-content bg-muted" */
+.theme-pacs-ai .dicom-tag-browser-content.bg-muted {
+  background-color: hsl(var(--background));
+}
+/* @upstream extensions/default/src/DicomTagBrowser/DicomTagBrowser.tsx :: "text-muted-foreground flex h-6 items-center pb-2 text-base" */
+.theme-pacs-ai .dicom-tag-browser-content span.text-muted-foreground.h-6 {
+  color: rgb(255 255 255 / 0.8);
+  font-size: 0.6875rem;
+  padding-bottom: 0;
+}
+/* @upstream extensions/default/src/DicomTagBrowser/DicomTagTable.tsx :: 'bg-popover ohif-scrollbar flex w-full flex-row overflow-y-scroll' */
+.theme-pacs-ai .bg-popover.ohif-scrollbar.overflow-y-scroll {
+  background-color: rgb(255 255 255 / 0.3);
+  border-radius: 0.375rem 0.375rem 0 0;
+}
+/* @upstream extensions/default/src/DicomTagBrowser/DicomTagTable.tsx :: "relative m-auto border-2 border-background bg-background" */
+.theme-pacs-ai .relative.m-auto.border-2.border-background.bg-background {
+  border-style: none;
+  background-color: transparent;
+}
+
+/* Guided tour (shepherd.js): dark popover, white title, lime primary button. */
+/* @upstream platform/ui-next/src/components/Onboarding/Onboarding.css :: .shepherd-element */
+.theme-pacs-ai .shepherd-element,
+.theme-pacs-ai .shepherd-header,
+.theme-pacs-ai .shepherd-arrow::before {
+  background-color: #151815 !important;
+}
+.theme-pacs-ai .shepherd-title {
+  color: #fff !important;
+}
+.theme-pacs-ai .shepherd-button {
+  background-color: #c8f469 !important;
+  color: #fff !important;
+}
+.theme-pacs-ai .shepherd-button.shepherd-button-secondary {
+  background-color: transparent !important;
+  color: #fff !important;
+}
+/* @upstream platform/ui-next/src/components/Onboarding/utilities.ts :: shepherd-progress */
+.theme-pacs-ai .shepherd-progress {
+  color: hsl(var(--primary));
+}
+
+/* ── 3. Icons ─────────────────────────────────────────────────────────── */
+
+/* CheckBoxChecked, CheckBoxUnChecked, LaunchArrow, LaunchInfo. */
+/* @upstream platform/ui-next/src/components/Icons/Sources/CheckBoxChecked.tsx :: "#348CFD" */
+/* @upstream platform/ui-next/src/components/Icons/Sources/CheckBoxUnChecked.tsx :: "#348CFD" */
+/* @upstream platform/ui-next/src/components/Icons/Sources/LaunchArrow.tsx :: "#348cfd" */
+/* @upstream platform/ui-next/src/components/Icons/Sources/LaunchInfo.tsx :: "#348cfd" */
+.theme-pacs-ai svg [stroke='#348CFD' i] {
+  stroke: #c8f469;
+}
+.theme-pacs-ai svg [fill='#348CFD' i] {
+  fill: #c8f469;
+}

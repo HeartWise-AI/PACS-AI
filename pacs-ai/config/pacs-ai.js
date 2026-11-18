@@ -20,7 +20,11 @@ window.config = {
   // /viewer. The stock modes still listed in platform/app/pluginConfig.json
   // follow (segmentation, offered by the work list, and the other stock routes).
   modes: ['@pacs-ai/mode-viewer'],
-  customizationService: {},
+  // PACS-AI: the PACS-AI theme (@pacs-ai/theme: ui-next tokens, chrome and
+  // icon colours), the default and only theme. Upstream's opt-in theme module
+  // ('@ohif/extension-default.customizationModule.theme') stays out: it adds
+  // the Appearance dialog and theme switching, hidden by decision D5.
+  customizationService: ['@pacs-ai/theme.customizationModule.pacsAiTheme'],
 
   // `?customization=` URL loading stays OFF, as in upstream's default:
   // no `customizationUrlPrefixes`.
