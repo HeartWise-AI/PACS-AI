@@ -31,6 +31,12 @@ describe('PACS-AI hotkeys', () => {
     expect(bindings).toHaveLength((defaultBindings as any[]).length);
   });
 
+  test("keeps OHIF 3.13's `esc` binding (cancelActiveOperation) and uses no key of its own there", () => {
+    const bindings = withPacsAiHotkeys(defaultBindings as any[]);
+    const esc = bindings.filter(binding => binding.keys?.includes('esc'));
+    expect(esc.map(binding => binding.commandName)).toEqual(['cancelActiveOperation']);
+  });
+
   test('is idempotent and does not change its input', () => {
     const before = JSON.stringify(defaultBindings);
     const once = withPacsAiHotkeys(defaultBindings as any[]);
