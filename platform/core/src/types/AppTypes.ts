@@ -34,6 +34,8 @@ import * as PanelModuleTypes from './PanelModule';
 import * as StudyMetadataTypes from './StudyMetadata';
 import * as ViewportGridTypes from './ViewportGridType';
 
+import { StepOptions, TourOptions } from 'shepherd.js';
+
 declare global {
   namespace AppTypes {
     export type ServicesManager = ServicesManagerType;
@@ -81,10 +83,12 @@ declare global {
     }
 
     export interface Config {
+      studyBrowserMode?: 'all' | 'primary';
       routerBasename?: string;
       customizationService?: CustomizationServiceType;
       extensions?: string[];
       modes?: string[];
+      experimentalStudyBrowserSort?: boolean;
       defaultDataSourceName?: string;
       hotkeys?: Record<string, Hotkey> | Hotkey[];
       preferSizeOverAccuracy?: boolean;
@@ -94,6 +98,7 @@ declare global {
       useCursors?: boolean;
       maxCacheSize?: number;
       max3DTextureSize?: number;
+      showWarningMessageForCrossOrigin?: boolean;
       showCPUFallbackMessage?: boolean;
       maxNumRequests?: {
         interaction?: number;
@@ -107,6 +112,7 @@ declare global {
         option: 'always' | 'never' | 'configure';
         days?: number;
       };
+      groupEnabledModesFirst?: boolean;
       measurementTrackingMode?: 'standard' | 'simplified' | 'none';
       disableConfirmationPrompts?: boolean;
       showPatientInfo?: 'visible' | 'visibleCollapsed' | 'disabled' | 'visibleReadOnly';

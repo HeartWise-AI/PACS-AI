@@ -197,22 +197,20 @@ function DataSourceWrapper(props: withAppTypes) {
             return;
           }
 
-          // NOTE: This is a PACS changes
-          // servicesManager.services.uiModalService.show({
-          //   title: 'Data Source Connection Error',
-          //   containerDimensions: 'w-1/2',
-          //   content: () => {
-          //     return (
-          //       <div>
-          //         <p className="text-red-600">Error: {e.message}</p>
-          //         <p>
-          //           Please ensure the following data source is configured correctly or is running:
-          //         </p>
-          //         <div className="mt-2 font-bold">{friendlyName}</div>
-          //       </div>
-          //     );
-          //   },
-          // });
+          servicesManager.services.uiModalService.show({
+            title: 'Data Source Connection Error',
+            content: () => {
+              return (
+                <div className="text-foreground">
+                  <p className="text-red-600">Error: {e.message}</p>
+                  <p>
+                    Please ensure the following data source is configured correctly or is running:
+                  </p>
+                  <div className="mt-2 font-bold">{friendlyName}</div>
+                </div>
+              );
+            },
+          });
         });
       }
     } catch (ex) {
