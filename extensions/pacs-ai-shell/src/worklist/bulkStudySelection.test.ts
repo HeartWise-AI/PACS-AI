@@ -32,6 +32,15 @@ describe('bulk study selection', () => {
     ]);
   });
 
+  it('does not restore a rejected study that became active during reconciliation', () => {
+    const rejectedStudyInstanceUIDs = ['study-b'];
+    const latestEligibleStudyInstanceUIDs = ['study-a', 'study-c'];
+
+    expect(
+      retainBulkStudySelection(rejectedStudyInstanceUIDs, latestEligibleStudyInstanceUIDs)
+    ).toEqual([]);
+  });
+
   it('toggles one study without mutating the existing selection', () => {
     const selected = ['study-a', 'study-b'];
 

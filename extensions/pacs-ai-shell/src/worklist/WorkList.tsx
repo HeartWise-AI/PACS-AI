@@ -150,6 +150,8 @@ function WorkList() {
         })
         .map(study => study.studyInstanceUID)
     : [];
+  const eligibleVisibleStudyInstanceUIDsRef = useRef(eligibleVisibleStudyInstanceUIDs);
+  eligibleVisibleStudyInstanceUIDsRef.current = eligibleVisibleStudyInstanceUIDs;
   const eligibleVisibleStudyInstanceUIDKey = eligibleVisibleStudyInstanceUIDs.join('\u0000');
   const allEligibleVisibleStudiesSelected =
     eligibleVisibleStudyInstanceUIDs.length > 0 &&
@@ -165,6 +167,11 @@ function WorkList() {
       )
     );
   }, [eligibleVisibleStudyInstanceUIDKey]);
+  const applyLatestEligibleBulkSelection = useCallback((studyInstanceUIDs: string[]) => {
+    setSelectedStudyInstanceUIDs(
+      retainBulkStudySelection(studyInstanceUIDs, eligibleVisibleStudyInstanceUIDsRef.current)
+    );
+  }, []);
   useEffect(() => {
     setVisibleStudyNotificationMetadata(
       currentItems.map(study => ({
@@ -1024,7 +1031,7 @@ function WorkList() {
               <div className="mt-4 flex min-h-10 items-center border-t border-white/10 pt-4">
                 <StudyBulkReprocessAction
                   selectedStudyInstanceUIDs={selectedStudyInstanceUIDs}
-                  onSelectionChange={setSelectedStudyInstanceUIDs}
+                  onSelectionChange={applyLatestEligibleBulkSelection}
                   refreshVisibleStudySnapshot={retryVisibleStudyProcessingSnapshot}
                   runHistoryTransport={restRunHistoryTransport}
                 />
