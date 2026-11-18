@@ -1,0 +1,18 @@
+/*
+ * PACS-AI colours of @ohif/ui-next's CinePlayer (see PacsAiCinePlayer.tsx).
+ * The player's root element carries .pacs-ai-cine-player; its first child is
+ * the bar.
+ */
+.pacs-ai-cine-player > div:first-child {
+  background-color: #4c504b;
+}
+
+/* "FPS" next to the frame rate */
+.pacs-ai-cine-player .whitespace-nowrap.text-muted-foreground {
+  color: #fff;
+}
+
+/* label of a dynamic (4D) volume's dimension */
+.pacs-ai-cine-player .max-w-44 > div.text-muted-foreground {
+  color: hsl(var(--foreground) / 0.8);
+}

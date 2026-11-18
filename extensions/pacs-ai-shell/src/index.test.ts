@@ -11,8 +11,21 @@ jest.mock('@ohif/ui-next', () => ({ ErrorBoundary: () => null }));
 jest.mock('./errors/routeErrorNotifications', () => ({
   stopRouteErrorNotifications: jest.fn(),
 }));
+jest.mock('./viewerBehaviour', () => ({
+  enterPacsAiViewerBehaviour: jest.fn(),
+  exitPacsAiViewerBehaviour: jest.fn(),
+}));
+jest.mock('./toolbar/getToolbarModule', () => ({
+  __esModule: true,
+  default: () => [{ name: 'pacsAi.currentSeries', defaultComponent: () => null }],
+}));
 
-import pacsAiShellExtension, { PACS_AI_SHELL_PROVIDER, turnOffOhifStudyList } from './index';
+import pacsAiShellExtension, {
+  PACS_AI_SHELL_PROVIDER,
+  PACS_AI_VIEWER_LAYOUT_ID,
+  turnOffOhifStudyList,
+} from './index';
+import { enterPacsAiViewerBehaviour, exitPacsAiViewerBehaviour } from './viewerBehaviour';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import PacsAiViewerLayout from './layout/PacsAiViewerLayout';
@@ -61,6 +74,22 @@ describe('@pacs-ai/extension-shell', () => {
     const [layout] = (pacsAiShellExtension.getLayoutTemplateModule as any)({});
     expect(layout.name).toBe('viewerLayout');
     expect(typeof layout.component).toBe('function');
+    expect(PACS_AI_VIEWER_LAYOUT_ID).toBe(
+      '@pacs-ai/extension-shell.layoutTemplateModule.viewerLayout'
+    );
+  });
+
+  test('provides the current-series label as a toolbar button type', () => {
+    const [button] = (pacsAiShellExtension.getToolbarModule as any)();
+    expect(button.name).toBe('pacsAi.currentSeries');
+  });
+
+  test('gives every mode, stock ones included, the PACS-AI viewer behaviour', () => {
+    const servicesManager = { services: {} };
+    (pacsAiShellExtension.onModeEnter as any)({ servicesManager });
+    expect(enterPacsAiViewerBehaviour).toHaveBeenCalledWith(servicesManager);
+    (pacsAiShellExtension.onModeExit as any)({ servicesManager });
+    expect(exitPacsAiViewerBehaviour).toHaveBeenCalledWith(servicesManager);
   });
 
   test('preRegistration turns off OHIF\'s own study list so that `/` is ours', () => {

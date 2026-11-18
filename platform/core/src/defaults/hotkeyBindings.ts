@@ -77,7 +77,7 @@ const bindings = [
       direction: -1,
     },
     label: 'Previous Series',
-    keys: ['up'],
+    keys: ['pageup'],
     isEditable: true,
   },
   {
@@ -86,7 +86,7 @@ const bindings = [
       direction: 1,
     },
     label: 'Next Series',
-    keys: ['down'],
+    keys: ['pagedown'],
     isEditable: true,
   },
   {
@@ -106,13 +106,13 @@ const bindings = [
   {
     commandName: 'nextImage',
     label: 'Next Image',
-    keys: ['pagedown'],
+    keys: ['down'],
     isEditable: true,
   },
   {
     commandName: 'previousImage',
     label: 'Previous Image',
-    keys: ['pageup'],
+    keys: ['up'],
     isEditable: true,
   },
   {

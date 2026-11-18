@@ -6,10 +6,24 @@ import './styles/pacs-ai-shell.css';
 
 import { id } from './id';
 import { stopRouteErrorNotifications } from './errors/routeErrorNotifications';
-import getLayoutTemplateModule from './layout/getLayoutTemplateModule';
+import getLayoutTemplateModule, { VIEWER_LAYOUT_NAME } from './layout/getLayoutTemplateModule';
 import { replaceDefaultViewerLayout } from './layout/replaceDefaultViewerLayout';
 import PacsAiShellProviders from './providers/PacsAiShellProviders';
 import { getPacsAiRoutes } from './routes/pacsAiRoutes';
+import getToolbarModule from './toolbar/getToolbarModule';
+import { enterPacsAiViewerBehaviour, exitPacsAiViewerBehaviour } from './viewerBehaviour';
+
+export {
+  enterPacsAiViewerBehaviour,
+  exitPacsAiViewerBehaviour,
+  addCurrentSeriesLabel,
+  CURRENT_SERIES_BUTTON_ID,
+  CURRENT_SERIES_UI_TYPE,
+  withPacsAiHotkeys,
+} from './viewerBehaviour';
+
+/** Id a mode's layoutTemplate names to render the PACS-AI viewer layout. */
+export const PACS_AI_VIEWER_LAYOUT_ID = `${id}.layoutTemplateModule.${VIEWER_LAYOUT_NAME}`;
 
 /**
  * OHIF registers its own study list at `/` ahead of custom routes when
@@ -39,10 +53,17 @@ export const PACS_AI_SHELL_PROVIDER = 'pacsAiShell';
 /**
  * PACS-AI shell extension (docs/ohif-upgrade/PLAN.md 6.1): our pages as
  * routes.customRoutes, the work list, top navigation, the viewer layout
- * template and the viewer tour gating. Registered in
- * platform/app/pluginConfig.json after @pacs-ai/extension-core (its
- * providers wrap ours) and after @ohif/extension-default (its layout
- * template is replaced in preRegistration).
+ * template, the viewer tour gating and the viewer behaviour (F15: keys, cine,
+ * current-series label). Registered in platform/app/pluginConfig.json after
+ * @pacs-ai/extension-core (its providers wrap ours) and after
+ * @ohif/extension-default (its layout template is replaced in
+ * preRegistration, for the stock modes).
+ *
+ * modes/pacs-ai (`/viewer`) names our layout and applies the viewer
+ * behaviour itself. The stock modes still registered (`/segmentation`, which
+ * the work list offers, and the other stock routes) keep the PACS-AI layout
+ * and behaviour they had before P2.6 through replaceDefaultViewerLayout and
+ * this extension's onModeEnter; both go when those modes are retired.
  */
 const pacsAiShellExtension = {
   id,
@@ -59,7 +80,8 @@ const pacsAiShellExtension = {
     turnOffOhifStudyList(appConfig);
     serviceProvidersManager.registerProvider(PACS_AI_SHELL_PROVIDER, PacsAiShellProviders);
 
-    // Until modes/pacs-ai exists (P2.6), the stock modes render our layout.
+    // The stock modes still registered render our layout (modes/pacs-ai
+    // names it directly and does not need this).
     const [viewerLayout] = getLayoutTemplateModule({
       servicesManager,
       extensionManager,
@@ -70,6 +92,21 @@ const pacsAiShellExtension = {
   },
 
   getLayoutTemplateModule,
+
+  getToolbarModule,
+
+  /**
+   * Every mode, stock ones included, gets the PACS-AI viewer behaviour, as
+   * before P2.6 when it was built into OHIF's files. modes/pacs-ai runs the
+   * same (idempotent) call in its own onModeEnter.
+   */
+  onModeEnter({ servicesManager }) {
+    enterPacsAiViewerBehaviour(servicesManager);
+  },
+
+  onModeExit({ servicesManager }) {
+    exitPacsAiViewerBehaviour(servicesManager);
+  },
 
   getCustomizationModule() {
     return [
