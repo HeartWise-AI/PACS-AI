@@ -20,11 +20,15 @@ jest.mock(
     const { createStudyBrowserTabs } = jest.requireActual(
       '@ohif/core/src/utils/createStudyBrowserTabs'
     );
+    const { thumbnailNoImageModalities } = jest.requireActual(
+      '@ohif/core/src/utils/thumbnailNoImageModalities'
+    );
     return {
       useSystem: system.useSystem,
       SystemContextProvider: system.SystemContextProvider,
       utils: {
         createStudyBrowserTabs,
+        thumbnailNoImageModalities,
         formatDate: (date: string) => date,
         sortStudyInstances: jest.fn(),
       },
@@ -115,6 +119,9 @@ jest.mock('../viewerResults/ViewerModelResultsProvider', () => {
 });
 
 const { SystemContextProvider } = jest.requireMock('@ohif/core');
+const {
+  sortingCriteria: { seriesSortCriteria },
+} = jest.requireActual('@ohif/core/src/utils/sortStudy');
 
 function displaySet(n: number) {
   return {
@@ -150,7 +157,7 @@ function renderPanel() {
   };
   const TrackedMeasurementsContext = React.createContext(null);
   const extensionManager = {
-    _appConfig: {},
+    appConfig: {},
     getActiveDataSource: () => [dataSource],
     getModuleEntry: (id: string) => {
       if (id === TRACKED_MEASUREMENTS_CONTEXT_ID) {
@@ -173,13 +180,20 @@ function renderPanel() {
         EVENTS: {},
       },
       customizationService: {
-        getCustomization: key =>
-          key === 'studyBrowser.viewPresets'
-            ? [
-                { id: 'list', iconName: 'ListView', selected: false },
-                { id: 'thumbnails', iconName: 'ThumbnailView', selected: true },
-              ]
-            : undefined,
+        getCustomization: key => {
+          if (key === 'studyBrowser.viewPresets') {
+            return [
+              { id: 'list', iconName: 'ListView', selected: false },
+              { id: 'thumbnails', iconName: 'ThumbnailView', selected: true },
+            ];
+          }
+          // Since 3.13, createStudyBrowserTabs sorts each study's display sets
+          // with this customization (@ohif/extension-default registers it).
+          if (key === 'sortingCriteria') {
+            return seriesSortCriteria.seriesInfoSortingCriteria;
+          }
+          return undefined;
+        },
       },
       viewportGridService: {
         subscribe: subscription,

@@ -6,7 +6,7 @@ import {
 } from '@ohif/extension-default';
 
 /**
- * Renders an image to a canvas and returns it as a data URL (OHIF v3.11.1
+ * Renders an image to a canvas and returns it as a data URL (OHIF v3.13.14
  * extensions/default/src/Panels/getImageSrcFromImageId.js, not exported).
  */
 function getImageSrcFromImageId(cornerstone, imageId) {
@@ -36,7 +36,7 @@ function createGetImageSrcFromImageIdFn(extensionManager) {
 
 /**
  * The props OHIF's panel wrappers (WrappedPanelStudyBrowser and
- * WrappedPanelStudyBrowserTracking in v3.11.1) give the study browser panel:
+ * WrappedPanelStudyBrowserTracking in v3.13.14) give the study browser panel:
  * the active data source and the functions bound to it.
  */
 export function usePanelStudyBrowserProps() {

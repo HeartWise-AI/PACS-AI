@@ -1,19 +1,21 @@
 /**
  * The PACS-AI study browser in place of `@ohif/extension-measurement-tracking`'s
- * seriesList panel: OHIF v3.11.1
+ * seriesList panel: OHIF v3.13.14
  * extensions/measurement-tracking/src/panels/PanelStudyBrowserTracking/
  * (index.tsx and PanelStudyBrowserTracking.tsx) rendering the PACS-AI panel
  * instead of the default extension's PanelStudyBrowser. The tracking context
  * is read through the extension manager (the hook is not exported).
  */
 import React, { useContext, useEffect } from 'react';
-import { useSystem } from '@ohif/core';
+import { useSystem, utils } from '@ohif/core';
 import PacsAiPanelStudyBrowser from './PacsAiPanelStudyBrowser';
 import { UntrackSeriesModal } from './UntrackSeriesModal';
 import { usePanelStudyBrowserProps } from './usePanelStudyBrowserProps';
 
 export const TRACKED_MEASUREMENTS_CONTEXT_ID =
   '@ohif/extension-measurement-tracking.contextModule.TrackedMeasurementsContext';
+
+const { thumbnailNoImageModalities } = utils;
 
 const NO_CONTEXT = React.createContext(null);
 
@@ -24,8 +26,6 @@ function useTrackedMeasurements() {
     | undefined;
   return useContext(entry?.context ?? NO_CONTEXT);
 }
-
-const thumbnailNoImageModalities = ['SR', 'SEG', 'RTSTRUCT', 'RTPLAN', 'RTDOSE', 'PMAP'];
 
 /**
  * Panel component for the Study Browser with tracking capabilities
@@ -41,7 +41,7 @@ export default function PacsAiTrackedSeriesListPanel() {
 
   const checkDirtyMeasurements = displaySetInstanceUID => {
     const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
-    if (displaySet.Modality === 'SR') {
+    if (displaySet.Modality === 'SR' || displaySet.Modality === 'ANN') {
       const activeViewportId = viewportGridService.getActiveViewportId();
       sendTrackedMeasurementsEvent('CHECK_DIRTY', {
         viewportId: activeViewportId,
@@ -112,7 +112,7 @@ export default function PacsAiTrackedSeriesListPanel() {
           seriesNumber: ds.SeriesNumber,
           modality: ds.Modality,
           seriesDate: ds.SeriesDate ? new Date(ds.SeriesDate).toLocaleDateString() : '',
-          numInstances: ds.numImageFrames,
+          numInstances: ds.numImageFrames ?? ds.instances?.length,
           loadingProgress,
           countIcon: ds.countIcon,
           messages: ds.messages,

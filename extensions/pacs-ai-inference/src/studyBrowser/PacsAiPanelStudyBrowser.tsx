@@ -1,5 +1,5 @@
 /**
- * The PACS-AI study browser panel: OHIF v3.11.1's
+ * The PACS-AI study browser panel: OHIF v3.13.14's
  * extensions/default/src/Panels/StudyBrowser/PanelStudyBrowser.tsx with the
  * PACS-AI changes (marked "PACS-AI") that used to be edited into that file:
  * display sets are requested for every study as soon as the study list is
@@ -28,9 +28,7 @@ import { SelectedViewsLegend } from '../viewerResults/SelectedViewsLegend';
 import { buildSelectedViewBadges } from '../viewerResults/viewerResultsModel';
 import { ViewerStudyRefresh } from '../studyRefresh/ViewerStudyRefresh';
 
-const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
-
-const thumbnailNoImageModalities = ['SR', 'SEG', 'RTSTRUCT', 'RTPLAN', 'RTDOSE', 'DOC', 'PMAP'];
+const { sortStudyInstances, formatDate, createStudyBrowserTabs, thumbnailNoImageModalities } = utils;
 
 /**
  * Study Browser component that displays and manages studies and their display sets
@@ -62,7 +60,7 @@ function PacsAiPanelStudyBrowser({
   const { displaySetService, customizationService } = servicesManager.services;
   const navigate = useNavigate();
   const studyMode =
-    (customizationService.getCustomization('studyBrowser.studyMode') as unknown as string) || 'all';
+    (customizationService.getCustomization('studyBrowser.studyMode') as string) || 'all';
 
   const internalImageViewer = useImageViewer();
   const StudyInstanceUIDs = internalImageViewer.StudyInstanceUIDs;
@@ -70,9 +68,11 @@ function PacsAiPanelStudyBrowser({
 
   const [{ activeViewportId, viewports, isHangingProtocolLayout }] = useViewportGrid();
   const [activeTabName, setActiveTabName] = useState(studyMode);
-  const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState([
-    ...StudyInstanceUIDs,
-  ]);
+  const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState(
+    studyMode === 'primary' && StudyInstanceUIDs.length > 0
+      ? [StudyInstanceUIDs[0]]
+      : [...StudyInstanceUIDs]
+  );
   const [hasLoadedViewports, setHasLoadedViewports] = useState(false);
   const [studyDisplayList, setStudyDisplayList] = useState([]);
   const [displaySets, setDisplaySets] = useState([]);
@@ -118,7 +118,7 @@ function PacsAiPanelStudyBrowser({
         commandsManager,
         servicesManager,
         isHangingProtocolLayout,
-        appConfig: (extensionManager as any)._appConfig,
+        appConfig: extensionManager.appConfig,
       };
 
       const handlers = customHandler?.callbacks.map(callback => callback(setupArgs));
@@ -152,11 +152,6 @@ function PacsAiPanelStudyBrowser({
       const qidoForStudyUID = await dataSource.query.studies.search({
         studyInstanceUid: StudyInstanceUID,
       });
-
-      if (!qidoForStudyUID?.length) {
-        (navigate as (to: string, options?: unknown) => void)('/notfoundstudy', '_self');
-        throw new Error('Invalid study URL');
-      }
 
       let qidoStudiesForPatient = qidoForStudyUID;
 
@@ -465,8 +460,12 @@ function PacsAiPanelStudyBrowser({
     }
 
     const displaySetInstanceUID = jumpToDisplaySet;
-    // Set the activeTabName and expand the study
-    const thumbnailLocation = _findTabAndStudyOfDisplaySet(displaySetInstanceUID, tabs);
+    // It is possible to navigate to a study not currently in view
+    const thumbnailLocation = _findTabAndStudyOfDisplaySet(
+      displaySetInstanceUID,
+      tabs,
+      activeTabName
+    );
     if (!thumbnailLocation) {
       return;
     }
@@ -499,7 +498,7 @@ function PacsAiPanelStudyBrowser({
         />
         <Separator
           orientation="horizontal"
-          className="bg-black"
+          className="bg-background"
           thickness="2px"
         />
       </>
@@ -583,7 +582,7 @@ function _mapDisplaySets(displaySets, displaySetLoadingState, thumbnailImageSrcM
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
-        numInstances: ds.numImageFrames,
+        numInstances: ds.numImageFrames ?? ds.instances?.length,
         // Inference eligibility needs frame count, not DICOM instance count.
         numImageFrames: ds.numImageFrames,
         isMultiFrame: ds.isMultiFrame,
@@ -632,23 +631,23 @@ function getImageIdForThumbnail(displaySet, imageIds) {
   return imageId;
 }
 
-function _findTabAndStudyOfDisplaySet(displaySetInstanceUID, tabs) {
-  for (let t = 0; t < tabs.length; t++) {
-    const { studies } = tabs[t];
+function _findTabAndStudyOfDisplaySet(
+  displaySetInstanceUID: string,
+  tabs: ReturnType<typeof createStudyBrowserTabs>,
+  currentTabName: string
+) {
+  const current = tabs.find(tab => tab.name === currentTabName) || tabs[0];
+  const biasedTabs = [current, ...tabs];
 
-    for (let s = 0; s < studies.length; s++) {
-      const { displaySets } = studies[s];
-
-      for (let d = 0; d < displaySets.length; d++) {
-        const displaySet = displaySets[d];
-
-        if (displaySet.displaySetInstanceUID === displaySetInstanceUID) {
-          return {
-            tabName: tabs[t].name,
-            StudyInstanceUID: studies[s].studyInstanceUid,
-          };
-        }
-      }
+  for (let t = 0; t < biasedTabs.length; t++) {
+    const study = biasedTabs[t].studies.find(study =>
+      study.displaySets.find(ds => ds.displaySetInstanceUID === displaySetInstanceUID)
+    );
+    if (study) {
+      return {
+        tabName: biasedTabs[t].name,
+        StudyInstanceUID: study.studyInstanceUid,
+      };
     }
   }
 }

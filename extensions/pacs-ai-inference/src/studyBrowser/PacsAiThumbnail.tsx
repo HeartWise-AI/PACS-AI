@@ -1,10 +1,10 @@
 /**
- * OHIF v3.11.1 platform/ui-next/src/components/Thumbnail/Thumbnail.tsx with the
+ * OHIF v3.13.14 platform/ui-next/src/components/Thumbnail/Thumbnail.tsx with the
  * PACS-AI changes (marked "PACS-AI"): the AI result's selected-view badge
  * (number in a circle, ring around the thumbnail) and our colours. Prop types
  * dropped.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useDrag } from 'react-dnd';
 import {
@@ -15,12 +15,36 @@ import {
   Tooltip,
 } from '@ohif/ui-next';
 
+const DraggableThumbnailContent = ({ dragData, children }: any) => {
+  const [, drag] = useDrag({
+    type: 'displayset',
+    item: { ...dragData },
+    canDrag: function () {
+      return Object.keys(dragData).length !== 0;
+    },
+  });
+
+  return (
+    <div
+      ref={drag}
+      className="h-full w-full"
+    >
+      {children}
+    </div>
+  );
+};
+
+const StaticThumbnailContent = ({ children }: any) => {
+  return <div className="h-full w-full">{children}</div>;
+};
+
 /**
  * Display a thumbnail for a display set.
  */
 const PacsAiThumbnail = ({
   displaySetInstanceUID,
   className,
+  children,
   imageSrc,
   imageAltText,
   description,
@@ -39,23 +63,21 @@ const PacsAiThumbnail = ({
   isTracked = false,
   canReject = false,
   dragData = {},
+  isDraggable = true,
   onReject = () => {},
   onClickUntrack = () => {},
   ThumbnailMenuItems = () => {},
   selectedViewBadge = null, // PACS-AI
+  onImageLoadError = () => {},
 }: Record<string, any>): React.ReactNode => {
-  // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
-  // this will still allow for "drag", even if there is no drop target for the
-  // specified item.
-  const [collectedProps, drag, dragPreview] = useDrag({
-    type: 'displayset',
-    item: { ...dragData },
-    canDrag: function (monitor) {
-      return Object.keys(dragData).length !== 0;
-    },
-  });
-
   const [lastTap, setLastTap] = useState(0);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [imageSrc]);
+
+  const shouldRenderThumbnailImage = Boolean(imageSrc && !imageLoadFailed);
 
   const handleTouchEnd = e => {
     const currentTime = new Date().getTime();
@@ -94,17 +116,21 @@ const PacsAiThumbnail = ({
         )}
       >
         <div className="h-[114px] w-[128px]">
-          <div className="relative bg-black">
-            {imageSrc ? (
+          <div className="relative bg-background">
+            {shouldRenderThumbnailImage ? (
               <img
                 src={imageSrc}
                 alt={imageAltText}
                 className="h-[114px] w-[128px] rounded object-contain"
                 crossOrigin="anonymous"
+                onError={() => {
+                  setImageLoadFailed(true);
+                  onImageLoadError();
+                }}
               />
             ) : (
               // PACS-AI
-              <div className="bg-primary/20 h-[114px] w-[128px] rounded"></div>
+              <div className="bg-primary/20 h-[114px] w-[128px] rounded">{children}</div>
             )}
 
             {/* bottom left */}
@@ -117,7 +143,12 @@ const PacsAiThumbnail = ({
                   loadingProgress && loadingProgress < 1 && 'bg-primary/25'
                 )}
               ></div>
-              <div className="text-[11px] font-semibold text-white">{modality}</div>
+              <div
+                className="text-foreground text-[11px] font-semibold"
+                data-cy="series-modality-label"
+              >
+                {modality}
+              </div>
             </div>
 
             {/* top left (PACS-AI) */}
@@ -137,9 +168,9 @@ const PacsAiThumbnail = ({
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="group">
-                      <Icons.StatusTracking className="text-primary-light h-[15px] w-[15px] group-hover:hidden" />
+                      <Icons.StatusTracking className="text-highlight h-[15px] w-[15px] group-hover:hidden" />
                       <Icons.Cancel
-                        className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                        className="text-highlight hidden h-[15px] w-[15px] group-hover:block"
                         onClick={onClickUntrack}
                       />
                     </div>
@@ -151,7 +182,7 @@ const PacsAiThumbnail = ({
                       </div>
                       <div className="flex flex-1 flex-col">
                         <span>
-                          <span className="text-white">
+                          <span className="text-foreground">
                             {isTracked ? 'Series is tracked' : 'Series is untracked'}
                           </span>
                         </span>
@@ -175,7 +206,10 @@ const PacsAiThumbnail = ({
           <Tooltip>
             <TooltipContent>{description}</TooltipContent>
             <TooltipTrigger>
-              <div className="min-h-[18px] w-[128px] overflow-hidden text-ellipsis whitespace-nowrap pb-0.5 pl-1 text-left text-[12px] font-normal leading-4 text-white">
+              <div
+                className="text-foreground min-h-[18px] w-[128px] overflow-hidden text-ellipsis whitespace-nowrap pb-0.5 pl-1 text-left text-[12px] font-normal leading-4"
+                data-cy="series-description-label"
+              >
                 {description}
               </div>
             </TooltipTrigger>
@@ -223,12 +257,20 @@ const PacsAiThumbnail = ({
               {/* PACS-AI */}
               {renderSelectedViewBadge('h-[16px] w-[16px] text-[10px]')}
               {/* PACS-AI */}
-              <div className="text-[13px] font-semibold text-white/80">{modality}</div>
+              <div
+                className="text-[13px] font-semibold text-white/80"
+                data-cy="series-modality-label"
+              >
+                {modality}
+              </div>
               <Tooltip>
                 <TooltipContent>{description}</TooltipContent>
                 <TooltipTrigger className="w-full overflow-hidden">
                   {/* PACS-AI */}
-                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white/80">
+                  <div
+                    className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white/80"
+                    data-cy="series-description-label"
+                  >
                     {description}
                   </div>
                 </TooltipTrigger>
@@ -262,9 +304,9 @@ const PacsAiThumbnail = ({
             <Tooltip>
               <TooltipTrigger>
                 <div className="group">
-                  <Icons.StatusTracking className="text-primary-light h-[20px] w-[15px] group-hover:hidden" />
+                  <Icons.StatusTracking className="text-highlight h-[20px] w-[15px] group-hover:hidden" />
                   <Icons.Cancel
-                    className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                    className="text-highlight hidden h-[15px] w-[15px] group-hover:block"
                     onClick={onClickUntrack}
                   />
                 </div>
@@ -276,7 +318,7 @@ const PacsAiThumbnail = ({
                   </div>
                   <div className="flex flex-1 flex-col">
                     <span>
-                      <span className="text-white">
+                      <span className="text-foreground">
                         {isTracked ? 'Series is tracked' : 'Series is untracked'}
                       </span>
                     </span>
@@ -300,7 +342,9 @@ const PacsAiThumbnail = ({
       className={classnames(
         className,
         // PACS-AI
-        'group flex cursor-pointer select-none flex-col rounded bg-white/10 outline-none hover:bg-white/30',
+        'group flex select-none flex-col rounded bg-white/10 outline-none',
+        isDraggable && 'cursor-pointer hover:bg-white/30',
+        !isDraggable && 'cursor-default',
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
         selectedViewBadge && 'ring-1 ring-[#3ef1d1]', // PACS-AI
         viewPreset === 'list' && 'h-[40px] w-full'
@@ -315,15 +359,19 @@ const PacsAiThumbnail = ({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onTouchEnd={handleTouchEnd}
-      role="button"
+      role={isDraggable ? 'button' : undefined}
     >
-      <div
-        ref={drag}
-        className="h-full w-full"
-      >
-        {viewPreset === 'thumbnails' && renderThumbnailPreset()}
-        {viewPreset === 'list' && renderListPreset()}
-      </div>
+      {isDraggable ? (
+        <DraggableThumbnailContent dragData={dragData}>
+          {viewPreset === 'thumbnails' && renderThumbnailPreset()}
+          {viewPreset === 'list' && renderListPreset()}
+        </DraggableThumbnailContent>
+      ) : (
+        <StaticThumbnailContent>
+          {viewPreset === 'thumbnails' && renderThumbnailPreset()}
+          {viewPreset === 'list' && renderListPreset()}
+        </StaticThumbnailContent>
+      )}
     </div>
   );
 };

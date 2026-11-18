@@ -1,5 +1,5 @@
 /**
- * OHIF v3.11.1 platform/ui-next/src/components/ThumbnailList/ThumbnailList.tsx,
+ * OHIF v3.13.14 platform/ui-next/src/components/ThumbnailList/ThumbnailList.tsx,
  * unchanged except that it renders the PACS-AI thumbnail (selected-view badge,
  * our colours). Prop types dropped.
  */
@@ -37,7 +37,7 @@ const PacsAiThumbnailList = ({
         {thumbnailItems.length > 0 && (
           <div
             id="ohif-thumbnail-list"
-            className="bg-bkg-low grid grid-cols-[repeat(auto-fit,_minmax(0,135px))] place-items-start gap-[4px]"
+            className="bg-background grid grid-cols-[repeat(auto-fit,_minmax(0,135px))] place-items-start gap-[4px]"
           >
             {thumbnailItems.map(item => {
               const { displaySetInstanceUID, componentType, numInstances, ...rest } = item;
@@ -65,7 +65,7 @@ const PacsAiThumbnailList = ({
         {listItems.length > 0 && (
           <div
             id="ohif-thumbnail-list"
-            className="bg-bkg-low grid grid-cols-[repeat(auto-fit,_minmax(0,275px))] place-items-start gap-[2px]"
+            className="bg-background grid grid-cols-[repeat(auto-fit,_minmax(0,275px))] place-items-start gap-[2px]"
           >
             {listItems.map(item => {
               const { displaySetInstanceUID, componentType, numInstances, ...rest } = item;
