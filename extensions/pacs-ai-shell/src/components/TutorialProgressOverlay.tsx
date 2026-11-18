@@ -997,7 +997,9 @@ const TutorialProgressOverlay: React.FC = () => {
       keyboardNavigation: false,
       defaultStepOptions: {
         classes: 'shepherd-theme-arrows shepherd-theme-pacsai',
-        scrollTo: true,
+        // Centre the target: at the top it would sit under the study list's
+        // sticky search bar, which then takes the click.
+        scrollTo: { behavior: 'auto', block: 'center' },
         cancelIcon: { enabled: false },
       },
     });

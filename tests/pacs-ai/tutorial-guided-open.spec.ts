@@ -14,7 +14,7 @@ import { test, expect } from './support/fixtures';
 
 const STEP_ROW = '[data-tour-id="worklist-study-row"]';
 const OPEN_VIEWER = '[data-tour-id="worklist-open-viewer"]';
-const TOUR_STEP = '.shepherd-element';
+const TOUR_STEP = '.shepherd-element:not([hidden])';
 
 async function fakeTutorialBeforeRunInference(page: Page): Promise<{ progressWrites: () => number }> {
   let resolveSurvey: (hasPreSurvey: boolean) => void = () => {};
