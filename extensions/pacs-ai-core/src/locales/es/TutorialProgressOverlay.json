@@ -18,13 +18,16 @@
   "Next": "Siguiente",
   "Do you want to skip the entire tutorial?": "¿Deseas omitir el tutorial completo?",
   "Cancel": "Cancelar",
-  "Viewer Required": "Visor requerido",
-  "You need to be on a viewer page or have a study selected to continue with this action.": "Debes estar en una página de visualización o tener un estudio seleccionado para continuar con esta acción.",
   "Ok": "Ok",
   "AI Models": "Modelos de IA",
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "Usa este elemento de navegación para explorar los modelos de IA disponibles. Haz clic en cualquier momento para ver los modelos compatibles con PACS AI.",
   "Run Inference": "Ejecutar inferencia",
   "Open the AI Models menu to apply a model to the current study.": "Abre el menú de Modelos de IA para aplicar un modelo al estudio actual.",
   "Close": "Cerrar",
-  "Please answer all questions before submitting.": "Por favor, responde todas las preguntas antes de enviar."
+  "Please answer all questions before submitting.": "Por favor, responde todas las preguntas antes de enviar.",
+  "Open a study": "Abrir un estudio",
+  "We selected {{modality}} and the last 7 days to find a study for you. Searching...": "Seleccionamos {{modality}} y los últimos 7 días para encontrarle un estudio. Buscando...",
+  "Click this study to show its tools.": "Haga clic en este estudio para mostrar sus herramientas.",
+  "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "Haga clic en Visor Básico para abrir el estudio. El tutorial continúa en el visor.",
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "Ningún estudio {{modality}} está listo para abrirse en PACS-AI en este momento. Busque un estudio y ábralo usted mismo, y el tutorial continuará en el visor."
 }

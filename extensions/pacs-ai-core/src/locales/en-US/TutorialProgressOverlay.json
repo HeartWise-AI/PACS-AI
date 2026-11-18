@@ -19,8 +19,6 @@
   "Next": "Next",
   "Do you want to skip the entire tutorial?": "Do you want to skip the entire tutorial?",
   "Cancel": "Cancel",
-  "Viewer Required": "Viewer Required",
-  "You need to be on a viewer page or have a study selected to continue with this action.": "You need to be on a viewer page or have a study selected to continue with this action.",
   "Ok": "Ok",
   "AI Models": "AI Models",
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.",
@@ -31,5 +29,10 @@
   "One or more answers are incorrect. Please review and try again.": "One or more answers are incorrect. Please review and try again.",
   "No model questionnaires are currently available.": "No model questionnaires are currently available.",
   "All available model questionnaires have already been completed.": "All available model questionnaires have already been completed.",
-  "Failed to reset tutorial": "Failed to reset tutorial"
+  "Failed to reset tutorial": "Failed to reset tutorial",
+  "Open a study": "Open a study",
+  "We selected {{modality}} and the last 7 days to find a study for you. Searching...": "We selected {{modality}} and the last 7 days to find a study for you. Searching...",
+  "Click this study to show its tools.": "Click this study to show its tools.",
+  "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "Click Basic Viewer to open the study. The tutorial continues in the viewer.",
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer."
 }

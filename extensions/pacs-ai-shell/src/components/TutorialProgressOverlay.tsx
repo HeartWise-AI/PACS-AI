@@ -1,10 +1,23 @@
-import React, { useEffect, useMemo, useState, useCallback, useContext } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useContext, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useShellLocation, useShellNavigate } from '../navigation/routerLocation';
 import { useTranslation } from 'react-i18next';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
 import { createGuidedTour } from '../tour/guidedTour';
+import {
+  buildTutorialWorklistPath,
+  clearPendingTutorialStep,
+  getPendingTutorialStep,
+  isTutorialSearch,
+  pickTutorialModality,
+  setPendingTutorialStep,
+  tourTarget,
+  waitForElement,
+  WORKLIST_NO_STUDIES_TOUR_ID,
+  WORKLIST_OPEN_VIEWER_TOUR_ID,
+  WORKLIST_STUDY_ROW_TOUR_ID,
+} from '../tour/guidedStudyOpen';
 import { Button } from '@pacs-ai/ui';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
@@ -68,6 +81,9 @@ interface TutorialStepState {
   completed: boolean;
   current: boolean;
 }
+
+/** How long the guided search may take before the tour says nothing was found. */
+const GUIDED_SEARCH_TIMEOUT_MS = 120000;
 
 const defaultSteps: TutorialStepState[] = [
   {
@@ -318,8 +334,8 @@ const TutorialProgressOverlay: React.FC = () => {
   const [isSurveySubmitting, setIsSurveySubmitting] = useState(false);
   const [skipModalOpen, setSkipModalOpen] = useState(false);
   const [isSkipping, setIsSkipping] = useState(false);
-  const [viewerModalOpen, setViewerModalOpen] = useState(false);
-  const [viewerModalStepId, setViewerModalStepId] = useState<string | null>(null);
+  // Guided "open a study" flow of the run-inference step (see guidedStudyOpen).
+  const guidedOpenAbortRef = useRef<AbortController | null>(null);
   // Model questionnaire state
   const [answeredModelIds, setAnsweredModelIds] = useState<Set<string>>(new Set());
   const [modelQuestionnaireQueue, setModelQuestionnaireQueue] = useState<
@@ -953,6 +969,158 @@ const TutorialProgressOverlay: React.FC = () => {
     tour.start();
   };
 
+  /**
+   * Run-inference outside the viewer: open the study list with a modality the
+   * models take and the last 7 days selected; the list runs the search.
+   * Shell navigation loads the page, so the tour on the list is started by
+   * the effect below once the list is open.
+   */
+  const startGuidedStudyOpen = () => {
+    setPendingTutorialStep('run-inference');
+    navigate(buildTutorialWorklistPath(pickTutorialModality(inferenceAvailableModels)));
+  };
+
+  /**
+   * Walks the user into the first study the tutorial's search found. The tour
+   * has no Skip and ignores Esc: the overlay leaves only the highlighted
+   * element clickable. The step's own tour (the AI model button) starts once
+   * the viewer is open.
+   */
+  const showGuidedStudyOpenTour = (modality: string) => {
+    guidedOpenAbortRef.current?.abort();
+    const controller = new AbortController();
+    guidedOpenAbortRef.current = controller;
+
+    const tour = createGuidedTour({
+      useModalOverlay: true,
+      exitOnEsc: false,
+      keyboardNavigation: false,
+      defaultStepOptions: {
+        classes: 'shepherd-theme-arrows shepherd-theme-pacsai',
+        // Centre the target: at the top it would sit under the study list's
+        // sticky search bar, which then takes the click.
+        scrollTo: { behavior: 'auto', block: 'center' },
+        cancelIcon: { enabled: false },
+      },
+    });
+    const title = t('Open a study');
+    const rowSelector = tourTarget(WORKLIST_STUDY_ROW_TOUR_ID);
+    const openSelector = tourTarget(WORKLIST_OPEN_VIEWER_TOUR_ID);
+    const finishOnClick = (selector: string) => {
+      const target = document.querySelector(selector);
+      const onClick = () => tour.complete();
+      target?.addEventListener('click', onClick, { once: true, capture: true });
+      return () => target?.removeEventListener('click', onClick, { capture: true });
+    };
+    let removeOpenListener: (() => void) | null = null;
+
+    tour.addStep({
+      id: 'open-study-search',
+      title,
+      text: t(
+        'We selected {{modality}} and the last 7 days to find a study for you. Searching...',
+        { modality }
+      ),
+      buttons: [],
+    });
+    tour.addStep({
+      id: 'open-study-row',
+      title,
+      text: t('Click this study to show its tools.'),
+      attachTo: { element: rowSelector, on: 'bottom' },
+      advanceOn: { selector: rowSelector, event: 'click' },
+      buttons: [],
+    });
+    tour.addStep({
+      id: 'open-study-viewer',
+      title,
+      text: t('Click Basic Viewer to open the study. The tutorial continues in the viewer.'),
+      attachTo: { element: openSelector, on: 'top' },
+      beforeShowPromise: () =>
+        waitForElement(openSelector, 10000, controller.signal).then(() => undefined),
+      when: {
+        show: () => {
+          removeOpenListener = finishOnClick(openSelector);
+        },
+        hide: () => removeOpenListener?.(),
+      },
+      buttons: [],
+    });
+    tour.addStep({
+      id: 'open-study-none',
+      title,
+      text: t(
+        'No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.',
+        { modality }
+      ),
+      buttons: [
+        {
+          text: t('Ok'),
+          classes: 'bg-[#C8F469] !text-black px-3 py-1 rounded-md',
+          action: () => tour.complete(),
+        },
+      ],
+    });
+    tour.on('complete', () => controller.abort());
+    tour.on('cancel', () => controller.abort());
+    tour.start();
+
+    const anyResult = `${rowSelector}, ${tourTarget(WORKLIST_NO_STUDIES_TOUR_ID)}`;
+    waitForElement(anyResult, GUIDED_SEARCH_TIMEOUT_MS, controller.signal).then(element => {
+      if (controller.signal.aborted || !tour.isActive()) {
+        return;
+      }
+      tour.show(element?.matches(rowSelector) ? 'open-study-row' : 'open-study-none');
+    });
+  };
+
+  const runInferenceStep = steps.find(step => step.id === 'run-inference');
+  const runInferencePending = Boolean(runInferenceStep && !runInferenceStep.completed);
+
+  // On the study list opened by the tutorial: guide the user into a study.
+  const guidedListShownRef = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (
+      isInViewer ||
+      !runInferencePending ||
+      getPendingTutorialStep() !== 'run-inference' ||
+      !isTutorialSearch(params) ||
+      guidedListShownRef.current === location.search
+    ) {
+      return;
+    }
+    guidedListShownRef.current = location.search;
+    showGuidedStudyOpenTour(params.get('modalitiesInStudy') || 'XA');
+    // showGuidedStudyOpenTour is recreated each render; the effect keys on the route.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInViewer, location.search, runInferencePending]);
+
+  // Back in the viewer with the run-inference step pending: start its tour
+  // on the AI model button once the button is on screen.
+  useEffect(() => {
+    if (!isInViewer || getPendingTutorialStep() !== 'run-inference') {
+      return;
+    }
+    if (!runInferencePending) {
+      clearPendingTutorialStep();
+      return;
+    }
+    const controller = new AbortController();
+    waitForElement('[data-tour-id="ai-model-button"]', 60000, controller.signal).then(button => {
+      if (!button || controller.signal.aborted) {
+        return;
+      }
+      clearPendingTutorialStep();
+      startTourForStep('run-inference');
+    });
+    return () => controller.abort();
+    // startTourForStep is recreated each render; the effect keys on the route.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInViewer, location.pathname, location.search, runInferencePending]);
+
+  useEffect(() => () => guidedOpenAbortRef.current?.abort(), []);
+
   const handleStepClick = (stepId: string) => {
     if (stepId === 'pre-survey') {
       setActiveSurvey('pre');
@@ -983,34 +1151,16 @@ const TutorialProgressOverlay: React.FC = () => {
       setModelQuestionnaireAnswers({});
       return;
     }
-    // for run-inference the user must be on a viewer page or have a study selected.
-    // only show the modal when we are NOT already in a viewer context.
+    // run-inference needs an open study: outside the viewer, take the user to
+    // the study list, search for a study and walk them into it first.
     if (stepId === 'run-inference' && !isInViewer) {
-      setViewerModalStepId(stepId);
-      setViewerModalOpen(true);
+      startGuidedStudyOpen();
       return;
     }
 
     startTourForStep(stepId);
   };
 
-  const closeViewerModal = useCallback(() => {
-    setViewerModalOpen(false);
-    setViewerModalStepId(null);
-  }, []);
-
-  const skipViewerStep = useCallback(async () => {
-    const id = viewerModalStepId;
-    closeViewerModal();
-    if (!id) {
-      return;
-    }
-    try {
-      await markStepCompleted(id);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [viewerModalStepId, closeViewerModal, markStepCompleted]);
 
   // only show tutorial if user is logged in or user response exists
   if (userLoading || !currentUser || (!currentUser.id && !currentUser.email) || !progressLoaded) {
@@ -1758,59 +1908,6 @@ const TutorialProgressOverlay: React.FC = () => {
                   >
                     {isSkipping ? '...' : t('Skip')}
                   </Button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-      {viewerModalOpen &&
-        ReactDOM.createPortal(
-          <div
-            id="viewer-required-modal"
-            className="fixed inset-0 z-[100001] overflow-y-auto"
-            aria-labelledby="viewer-required-modal-title"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-              <div
-                className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity"
-                aria-hidden="true"
-              ></div>
-              <span
-                className="hidden sm:inline-block sm:h-screen sm:align-middle"
-                aria-hidden="true"
-              >
-                &#8203;
-              </span>
-              <div className="relative inline-block w-[420px] max-w-full transform overflow-hidden rounded-xl bg-[#151815] p-5 text-left align-bottom shadow-xl transition-all sm:my-8 sm:align-middle">
-                <h2
-                  id="viewer-required-modal-title"
-                  className="mb-2 text-base font-semibold text-white"
-                >
-                  {t('Viewer Required')}
-                </h2>
-                <p className="mb-4 text-sm text-white/80">
-                  {t(
-                    'You need to be on a viewer page or have a study selected to continue with this action.'
-                  )}
-                </p>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="rounded-md bg-transparent px-4 py-2 text-[14px] text-white/70 hover:bg-white/10"
-                    onClick={skipViewerStep}
-                  >
-                    {t('Skip')}
-                  </button>
-                  <button
-                    type="button"
-                    className="h-[41px] rounded-md bg-gradient-to-r from-[#C8F469] to-[#05905E] px-4 py-2 text-[14px] font-medium text-black"
-                    onClick={closeViewerModal}
-                  >
-                    {t('Ok')}
-                  </button>
                 </div>
               </div>
             </div>

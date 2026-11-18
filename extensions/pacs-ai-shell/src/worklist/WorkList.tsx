@@ -5,7 +5,6 @@ import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
-import { sortBy } from 'lodash';
 import { Button, Input } from '@pacs-ai/ui';
 import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
@@ -48,12 +47,21 @@ import {
   PROCESSING_NOTIFICATION_STUDY_PARAM,
 } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
+import { sortStudiesNewestFirst } from './sortStudies';
 import {
   retainBulkStudySelection,
   selectVisibleBulkStudies,
   toggleBulkStudySelection,
 } from './bulkStudySelection';
 import WorklistTopNavigation from './WorklistTopNavigation';
+import {
+  fetchLocalStudyUIDs,
+  isTutorialSearch,
+  pickTutorialStudy,
+  WORKLIST_NO_STUDIES_TOUR_ID,
+  WORKLIST_OPEN_VIEWER_TOUR_ID,
+  WORKLIST_STUDY_ROW_TOUR_ID,
+} from '../tour/guidedStudyOpen';
 import {
   getFiltersFromSearchParams,
   getProcessingNotificationSearchTransition,
@@ -104,6 +112,16 @@ function WorkList() {
   const restoredIdentityRef = useRef<string | null>(null);
   const handledNotificationStudyRef = useRef<string | null>(null);
   const pendingRestoredSearchRef = useRef(false);
+  const handledTutorialSearchRef = useRef<string | null>(null);
+  // Tutorial search progress: the tour points at a row only once its own
+  // search has answered, never at rows left from an earlier search.
+  const [tutorialSearchState, setTutorialSearchState] = useState<
+    'idle' | 'searching' | 'found' | 'empty'
+  >('idle');
+  const tutorialSearchStateRef = useRef(tutorialSearchState);
+  // Studies of the tutorial's modality already stored on the PACS-AI server.
+  const [tutorialLocalUIDs, setTutorialLocalUIDs] = useState<Set<string> | null>(null);
+  tutorialSearchStateRef.current = tutorialSearchState;
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
   const {
@@ -316,12 +334,17 @@ function WorkList() {
    *
    * @async
    */
-  const fetchStudyListData = async () => {
+  /** Runs the study search; resolves with the number of studies found. */
+  const fetchStudyListData = async (): Promise<number> => {
     setSelectedStudyInstanceUIDs([]);
     setTableDataSource([]);
     setIsStudyListDataLoading(true);
-    await refetch();
-    setIsStudyListDataLoading(false);
+    try {
+      const result = await refetch();
+      return result?.data?.data?.studies?.length ?? 0;
+    } finally {
+      setIsStudyListDataLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -381,9 +404,15 @@ function WorkList() {
         ? storedDICOMModality
         : modalityOptions[0]) || '';
     const notificationStudyInstanceUID = searchParams.get(PROCESSING_NOTIFICATION_STUDY_PARAM);
-    const submittedSearch = notificationStudyInstanceUID
-      ? null
-      : loadSubmittedWorklistSearch(studyProcessingAuthIdentity);
+    const tutorialSearch = isTutorialSearch(searchParams);
+    if (tutorialSearch) {
+      handledTutorialSearchRef.current = searchParams.toString();
+      setTutorialSearchState('searching');
+    }
+    const submittedSearch =
+      notificationStudyInstanceUID || tutorialSearch
+        ? null
+        : loadSubmittedWorklistSearch(studyProcessingAuthIdentity);
 
     if (submittedSearch) {
       const restoredDICOMModality = modalityOptions.includes(submittedSearch.filters.modalityId)
@@ -485,13 +514,69 @@ function WorkList() {
     studyProcessingAuthIdentity,
   ]);
 
+  // The tutorial sends the user here with a modality selected and the dates
+  // cleared; this runs that search even when the study list was already open.
+  useEffect(() => {
+    if (
+      !isTutorialSearch(searchParams) ||
+      !areDICOMModalitiesLoaded ||
+      !studyProcessingAuthIdentity ||
+      restoredIdentityRef.current !== studyProcessingAuthIdentity ||
+      handledTutorialSearchRef.current === searchParams.toString()
+    ) {
+      return;
+    }
+    handledTutorialSearchRef.current = searchParams.toString();
+
+    const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
+    const fallbackDICOMModality =
+      (storedDICOMModality && modalityOptions.includes(storedDICOMModality)
+        ? storedDICOMModality
+        : modalityOptions[0]) || '';
+    const today = moment().format('YYYYMMDD');
+    const restoredSearch = getFiltersFromSearchParams(
+      searchParams,
+      fallbackDICOMModality,
+      `${today}-${today}`
+    );
+    setExpandedStudyRows({});
+    setTutorialSearchState('searching');
+    applyStudyListSearchState(restoredSearch.filters, 1);
+    if (fallbackDICOMModality) {
+      pendingRestoredSearchRef.current = true;
+    }
+  }, [
+    applyStudyListSearchState,
+    areDICOMModalitiesLoaded,
+    modalityOptions,
+    searchParams,
+    studyProcessingAuthIdentity,
+  ]);
+
   useEffect(() => {
     if (!pendingRestoredSearchRef.current) {
       return;
     }
 
     pendingRestoredSearchRef.current = false;
-    fetchStudyListData();
+    const forTutorial = tutorialSearchStateRef.current === 'searching';
+    if (forTutorial) {
+      setTutorialLocalUIDs(null);
+      fetchLocalStudyUIDs(filterRef.current.modalitiesInStudy?.split('\\')[0] || 'XA').then(
+        setTutorialLocalUIDs
+      );
+    }
+    fetchStudyListData()
+      .then(count => {
+        if (forTutorial) {
+          setTutorialSearchState(count > 0 ? 'found' : 'empty');
+        }
+      })
+      .catch(() => {
+        if (forTutorial) {
+          setTutorialSearchState('empty');
+        }
+      });
   }, [studyListFilter]);
 
   /**
@@ -500,19 +585,36 @@ function WorkList() {
    * @param studies
    * @returns
    */
-  const sortStudies = studies => {
-    return sortBy(studies, [
-      // sort by last name
-      study => {
-        const nameParts = study.patientName.split('^');
-        const lastName = nameParts[0];
-        // remove suffixes and consider multi-word last names
-        return lastName.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, '').toLowerCase();
-      },
-      // then sort by study date in descending order
-      study => -new Date(study.studyDate).getTime(),
-    ]);
-  };
+  const sortStudies = (studies: any[]) => sortStudiesNewestFirst<any>(studies);
+
+  // The study the tutorial walks the user into: the most recent one already
+  // stored on the PACS-AI server (see pickTutorialStudy). The list turns to
+  // its page.
+  const tutorialStudyUID = useMemo(
+    () =>
+      tutorialSearchState === 'found' && tutorialLocalUIDs
+        ? pickTutorialStudy(tableDataSource, tutorialLocalUIDs)?.studyInstanceUID ?? null
+        : null,
+    [tableDataSource, tutorialLocalUIDs, tutorialSearchState]
+  );
+  // Nothing the tutorial can open without a retrieve from the hospital PACS.
+  const tutorialFoundNothing =
+    tutorialSearchState === 'empty' ||
+    (tutorialSearchState === 'found' &&
+      tutorialLocalUIDs !== null &&
+      tableDataSource.length > 0 &&
+      !tutorialStudyUID);
+  useEffect(() => {
+    if (!tutorialStudyUID) {
+      return;
+    }
+    const index = tableDataSource.findIndex(study => study.studyInstanceUID === tutorialStudyUID);
+    if (index >= 0) {
+      setCurrentPage(Math.floor(index / itemsPerPage) + 1);
+    }
+    // only when the tutorial's study is chosen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorialStudyUID]);
 
   /**
    * Table toggle for expandable rows
@@ -1057,6 +1159,12 @@ function WorkList() {
               </div>
             )}
             <div className="mx-auto w-full overflow-x-auto">
+              {tutorialFoundNothing && (
+                <span
+                  hidden
+                  data-tour-id={WORKLIST_NO_STUDIES_TOUR_ID}
+                />
+              )}
               {isStudyListDataLoading &&
               !Object.values(filterRef.current).every(value => value === '') ? (
                 <div className="flex items-center justify-center p-5 text-center text-white">
@@ -1141,6 +1249,11 @@ function WorkList() {
                         <React.Fragment key={row.studyInstanceUID}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] px-2 py-2 text-white"
+                            data-tour-id={
+                              row.studyInstanceUID === tutorialStudyUID
+                                ? WORKLIST_STUDY_ROW_TOUR_ID
+                                : undefined
+                            }
                             onClick={() => toggleRow(row.studyInstanceUID)}
                           >
                             {canBulkReprocessStudies && (
@@ -1287,17 +1400,22 @@ function WorkList() {
                                   <h1 className="text-lg text-white text-opacity-70">
                                     {t('Tools')}
                                   </h1>
-                                  <Button
-                                    onClick={() => {
-                                      viewStudy(
-                                        'viewer',
-                                        row.studyInstanceUID,
-                                        row.modalitiesInStudy
-                                      );
-                                    }}
+                                  <span
+                                    className="inline-flex"
+                                    data-tour-id={WORKLIST_OPEN_VIEWER_TOUR_ID}
                                   >
-                                    {t('BasicViewer')}
-                                  </Button>
+                                    <Button
+                                      onClick={() => {
+                                        viewStudy(
+                                          'viewer',
+                                          row.studyInstanceUID,
+                                          row.modalitiesInStudy
+                                        );
+                                      }}
+                                    >
+                                      {t('BasicViewer')}
+                                    </Button>
+                                  </span>
                                   <Button
                                     onClick={() => {
                                       viewStudy(

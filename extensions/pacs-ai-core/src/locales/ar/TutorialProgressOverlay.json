@@ -18,13 +18,16 @@
   "Next": "التالي",
   "Do you want to skip the entire tutorial?": "هل تريد تخطي الدرس التعليمي بالكامل؟",
   "Cancel": "إلغاء",
-  "Viewer Required": "يلزم وجود عارض",
-  "You need to be on a viewer page or have a study selected to continue with this action.": "يجب أن تكون على صفحة عارض أو أن يكون لديك دراسة محددة للمتابعة في هذا الإجراء.",
   "Ok": "حسناً",
   "AI Models": "نماذج الذكاء الاصطناعي",
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "استخدم عنصر التنقل هذا لاستكشاف نماذج الذكاء الاصطناعي المتاحة. انقر عليه في أي وقت لعرض النماذج المدعومة في PACS AI.",
   "Run Inference": "تشغيل الاستنتاج",
   "Open the AI Models menu to apply a model to the current study.": "افتح قائمة نماذج الذكاء الاصطناعي لتطبيق نموذج على الدراسة الحالية.",
   "Close": "إغلاق",
-  "Please answer all questions before submitting.": "يرجى الإجابة على جميع الأسئلة قبل الإرسال."
+  "Please answer all questions before submitting.": "يرجى الإجابة على جميع الأسئلة قبل الإرسال.",
+  "Open a study": "افتح دراسة",
+  "We selected {{modality}} and the last 7 days to find a study for you. Searching...": "اخترنا {{modality}} وآخر 7 أيام للعثور على دراسة لك. جارٍ البحث...",
+  "Click this study to show its tools.": "انقر على هذه الدراسة لعرض أدواتها.",
+  "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "انقر على عارض أساسي لفتح الدراسة. يستمر البرنامج التعليمي في العارض.",
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "لا توجد دراسة {{modality}} جاهزة للفتح على PACS-AI حاليًا. ابحث عن دراسة وافتحها بنفسك، وسيستمر البرنامج التعليمي في العارض."
 }
