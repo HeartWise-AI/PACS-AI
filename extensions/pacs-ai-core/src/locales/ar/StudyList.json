@@ -16,5 +16,18 @@
   "Searching for data": "جاري البحث عن البيانات",
   "searchStudyListInfo": "لم يتم العثور على بيانات. يُرجى البحث باستخدام اسم المريض، رقم السجل الطبي، نطاق التاريخ، الوصف، نوع الفحص، أو رقم الوصول.",
   "Tools": "الأدوات",
-  "ProcessingViewerRun": "يدوي · تم التشغيل من العارض"
+  "ProcessingViewerRun": "يدوي · تم التشغيل من العارض",
+  "ProcessingBulkClearSelection": "مسح التحديد",
+  "ProcessingBulkNotQueuedShort": "لم يُضف للطابور",
+  "ProcessingBulkQueuedShort": "أُضيف للطابور",
+  "ProcessingBulkQueueingShort": "جارٍ الإضافة",
+  "ProcessingBulkReprocessConfirm": "إضافة {{count}} عمليات كاملة للطابور",
+  "ProcessingBulkReprocessConfirmDescription": "سيؤدي هذا إلى إضافة {{count}} عمليات معالجة كاملة جديدة، واحدة لكل دراسة محددة، مع الاحتفاظ بالسجل الحالي.",
+  "ProcessingBulkReprocessConfirmTitle": "إعادة معالجة {{count}} دراسات محددة؟",
+  "ProcessingBulkReprocessRequestFailed": "تعذر إرسال الدراسات المحددة. يرجى المحاولة مرة أخرى.",
+  "ProcessingBulkReprocessResult": "أُضيفت {{acceptedCount}} للطابور؛ وتعذر إضافة {{rejectedCount}}. تبقى الدراسات الفاشلة محددة.",
+  "ProcessingBulkReprocessSelected": "إعادة معالجة المحدد ({{count}})",
+  "ProcessingBulkReprocessSubmitting": "جارٍ الإضافة للطابور…",
+  "ProcessingBulkSelectAllVisible": "تحديد كل الدراسات المؤهلة في هذه الصفحة",
+  "ProcessingBulkSelectStudy": "تحديد الدراسة لإعادة المعالجة"
 }

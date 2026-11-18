@@ -33,6 +33,7 @@ export * from './useStudyProcessingRealtime';
 export * from '@pacs-ai/extension-core/src/studyProcessing/reprocessTransport';
 export * from '@pacs-ai/extension-core/src/studyProcessing/reprocessReducer';
 export * from './StudyReprocessAction';
+export * from './StudyBulkReprocessAction';
 export * from './executionResultSelection';
 export * from './ModelExecutionResultDrawer';
 export * from './GenericModelResult';

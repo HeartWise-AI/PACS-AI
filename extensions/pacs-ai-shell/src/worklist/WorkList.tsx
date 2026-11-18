@@ -26,12 +26,14 @@ import {
   createStudyProcessingRESTRepository,
   createRESTStudyProcessingSnapshotTransport,
   ModelExecutionResultDrawer,
+  StudyBulkReprocessAction,
   StudyProcessingAttention,
   StudyProcessingConnectionBanner,
   StudyProcessingRunHistoryPanel,
   StudyProcessingStatus,
   StudyProcessingUpdated,
   useModelExecutionResultViewer,
+  useStudyProcessing,
   useStudyProcessingRealtime,
   useVisibleStudyProcessingSnapshot,
 } from '@pacs-ai/extension-inference/src/studyProcessing';
@@ -41,6 +43,11 @@ import {
   PROCESSING_NOTIFICATION_STUDY_PARAM,
 } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
+import {
+  retainBulkStudySelection,
+  selectVisibleBulkStudies,
+  toggleBulkStudySelection,
+} from './bulkStudySelection';
 import WorklistTopNavigation from './WorklistTopNavigation';
 import {
   getFiltersFromSearchParams,
@@ -67,6 +74,7 @@ function WorkList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [expandedStudyRows, setExpandedStudyRows] = useState<ExpandedStudyRows>({});
+  const [selectedStudyInstanceUIDs, setSelectedStudyInstanceUIDs] = useState<string[]>([]);
   const [jobInfo, setJobInfo] = useState({
     id: '',
     priority: 0,
@@ -110,6 +118,9 @@ function WorkList() {
     showStudyProcessingFixtures || (canViewStudyProcessing && canUseStudyProcessingREST);
   const showStudyProcessingRunHistory =
     showStudyProcessingFixtures || canViewStudyProcessingRunHistory;
+  const { getStudyReprocessRequestEntry, getStudySummary } = useStudyProcessing();
+  const canBulkReprocessStudies =
+    showStudyProcessing && canReprocessStudy && !showStudyProcessingFixtures;
   const modelExecutionResultViewer = useModelExecutionResultViewer(studyProcessingAuthIdentity);
   const studyProcessingRESTRepository = useMemo(() => createStudyProcessingRESTRepository(), []);
   const restStudyProcessingSnapshotTransport = useMemo(
@@ -131,6 +142,29 @@ function WorkList() {
     () => currentItems.map(study => study.studyInstanceUID),
     [currentItems]
   );
+  const eligibleVisibleStudyInstanceUIDs = canBulkReprocessStudies
+    ? currentItems
+        .filter(study => {
+          const phase = getStudySummary(study.studyInstanceUID)?.phase;
+          return phase !== 'QUEUED' && phase !== 'PROCESSING';
+        })
+        .map(study => study.studyInstanceUID)
+    : [];
+  const eligibleVisibleStudyInstanceUIDKey = eligibleVisibleStudyInstanceUIDs.join('\u0000');
+  const allEligibleVisibleStudiesSelected =
+    eligibleVisibleStudyInstanceUIDs.length > 0 &&
+    eligibleVisibleStudyInstanceUIDs.every(studyInstanceUID =>
+      selectedStudyInstanceUIDs.includes(studyInstanceUID)
+    );
+
+  useEffect(() => {
+    setSelectedStudyInstanceUIDs(selected =>
+      retainBulkStudySelection(
+        selected,
+        eligibleVisibleStudyInstanceUIDKey ? eligibleVisibleStudyInstanceUIDKey.split('\u0000') : []
+      )
+    );
+  }, [eligibleVisibleStudyInstanceUIDKey]);
   useEffect(() => {
     setVisibleStudyNotificationMetadata(
       currentItems.map(study => ({
@@ -271,6 +305,7 @@ function WorkList() {
    * @async
    */
   const fetchStudyListData = async () => {
+    setSelectedStudyInstanceUIDs([]);
     setTableDataSource([]);
     setIsStudyListDataLoading(true);
     await refetch();
@@ -325,6 +360,7 @@ function WorkList() {
     if (previousIdentity && previousIdentity !== studyProcessingAuthIdentity) {
       setTableDataSource([]);
       setExpandedStudyRows({});
+      setSelectedStudyInstanceUIDs([]);
       setStudyQueryId('');
     }
     const storedDICOMModality = localStorage.getItem('selectedDICOMModality');
@@ -513,6 +549,7 @@ function WorkList() {
 
   // Handle page change
   const handlePageChange = page => {
+    setSelectedStudyInstanceUIDs([]);
     setCurrentPage(page);
     if (studyProcessingAuthIdentity) {
       updateSubmittedWorklistSearchPage(studyProcessingAuthIdentity, page);
@@ -547,6 +584,7 @@ function WorkList() {
   const submitStudyListSearch = async () => {
     setIsSearching(true);
     setCurrentPage(1);
+    setSelectedStudyInstanceUIDs([]);
     if (studyProcessingAuthIdentity) {
       saveSubmittedWorklistSearch(studyProcessingAuthIdentity, {
         filters: { ...filterRef.current },
@@ -982,6 +1020,16 @@ function WorkList() {
                 classNamePrefix="select"
               />
             </div>
+            {canBulkReprocessStudies && (
+              <div className="mt-4 flex min-h-10 items-center border-t border-white/10 pt-4">
+                <StudyBulkReprocessAction
+                  selectedStudyInstanceUIDs={selectedStudyInstanceUIDs}
+                  onSelectionChange={setSelectedStudyInstanceUIDs}
+                  refreshVisibleStudySnapshot={retryVisibleStudyProcessingSnapshot}
+                  runHistoryTransport={restRunHistoryTransport}
+                />
+              </div>
+            )}
             <div className="mx-auto w-full overflow-x-auto">
               {isStudyListDataLoading &&
               !Object.values(filterRef.current).every(value => value === '') ? (
@@ -994,6 +1042,33 @@ function WorkList() {
                 <table className="mb-4 min-w-full rounded-xl border-none bg-transparent">
                   <thead className="bg-transparent">
                     <tr className="bg-transparent">
+                      {canBulkReprocessStudies && (
+                        <th className="w-16 px-4 py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
+                          <input
+                            type="checkbox"
+                            ref={element => {
+                              if (element) {
+                                element.indeterminate =
+                                  selectedStudyInstanceUIDs.length > 0 &&
+                                  !allEligibleVisibleStudiesSelected;
+                              }
+                            }}
+                            checked={allEligibleVisibleStudiesSelected}
+                            disabled={eligibleVisibleStudyInstanceUIDs.length === 0}
+                            onChange={event =>
+                              setSelectedStudyInstanceUIDs(
+                                event.target.checked
+                                  ? selectVisibleBulkStudies(eligibleVisibleStudyInstanceUIDs)
+                                  : []
+                              )
+                            }
+                            aria-label={t('ProcessingBulkSelectAllVisible', {
+                              defaultValue: 'Select all eligible studies on this page',
+                            })}
+                            className="accent-primary h-4 w-4"
+                          />
+                        </th>
+                      )}
                       <th className="py-3 text-left text-sm font-normal tracking-wider text-white text-opacity-70">
                         {t('PatientName')}
                       </th>
@@ -1029,12 +1104,69 @@ function WorkList() {
                   </thead>
                   {tableDataSource.length > 0 ? (
                     <tbody className="!rounded-lg bg-transparent">
-                      {currentItems.map(row => (
+                      {currentItems.map(row => {
+                        const summary = getStudySummary(row.studyInstanceUID);
+                        const requestEntry = getStudyReprocessRequestEntry(row.studyInstanceUID);
+                        const hasActiveRun =
+                          summary?.phase === 'QUEUED' || summary?.phase === 'PROCESSING';
+                        const selected = selectedStudyInstanceUIDs.includes(row.studyInstanceUID);
+
+                        return (
                         <React.Fragment key={row.studyInstanceUID}>
                           <tr
                             className="expandable-row my-5 cursor-pointer !rounded-lg bg-white bg-opacity-[10%] px-2 py-2 text-white"
                             onClick={() => toggleRow(row.studyInstanceUID)}
                           >
+                            {canBulkReprocessStudies && (
+                              <td
+                                className="w-16 px-4 py-2"
+                                onClick={event => event.stopPropagation()}
+                              >
+                                <div className="flex flex-col items-start gap-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={selected}
+                                    disabled={hasActiveRun || requestEntry.status === 'submitting'}
+                                    onChange={() =>
+                                      setSelectedStudyInstanceUIDs(previous =>
+                                        toggleBulkStudySelection(previous, row.studyInstanceUID)
+                                      )
+                                    }
+                                    aria-label={t('ProcessingBulkSelectStudy', {
+                                      defaultValue: 'Select study for reprocessing',
+                                    })}
+                                    title={
+                                      hasActiveRun
+                                        ? t('ProcessingReprocessActiveRun', {
+                                            defaultValue:
+                                              'This study already has an active processing run.',
+                                          })
+                                        : undefined
+                                    }
+                                    className="accent-primary h-4 w-4"
+                                  />
+                                  {requestEntry.status === 'submitting' && (
+                                    <span className="text-[10px] text-white/60" role="status">
+                                      {t('ProcessingBulkQueueingShort', {
+                                        defaultValue: 'Queueing',
+                                      })}
+                                    </span>
+                                  )}
+                                  {requestEntry.status === 'success' && (
+                                    <span className="text-[10px] font-semibold text-[#5bea8f]" role="status">
+                                      {t('ProcessingBulkQueuedShort', { defaultValue: 'Queued' })}
+                                    </span>
+                                  )}
+                                  {requestEntry.status === 'error' && (
+                                    <span className="text-[10px] font-semibold text-[#ff9b9b]" role="alert">
+                                      {t('ProcessingBulkNotQueuedShort', {
+                                        defaultValue: 'Not queued',
+                                      })}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                            )}
                             <td
                               className={`text-md px-4 py-2 font-normal ${
                                 expandedStudyRows[row.studyInstanceUID]
@@ -1099,7 +1231,9 @@ function WorkList() {
                           {expandedStudyRows[row.studyInstanceUID] && (
                             <tr className="expandable-content mb-5 bg-white bg-opacity-[10%] pb-5">
                               <td
-                                colSpan={showStudyProcessing ? 9 : 7}
+                                colSpan={
+                                  (showStudyProcessing ? 9 : 7) + (canBulkReprocessStudies ? 1 : 0)
+                                }
                                 className="border-primary rounded-bl-lg rounded-br-lg border-l-[3px] px-4 py-4"
                               >
                                 {showStudyProcessing && (
@@ -1156,7 +1290,8 @@ function WorkList() {
                           {/* adding an empty row for spacing */}
                           <tr className="h-3"></tr>
                         </React.Fragment>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   ) : (
                     <tbody>
