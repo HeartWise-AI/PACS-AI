@@ -378,7 +378,7 @@ Branch `wp/P4.1-repeatable` (draft PR into `integration/ohif-3.13`), from 6ac260
 | P4.2 | done | `.github/workflows/pacs-ai-upstream-canary.yml`: Mondays 06:17 UTC and manual; `latest` tag (betas included) or an input; script tests, then the script with `--keep-going` on a local branch; summary to the run page, logs as an artifact (30 days). Read-only token, no secrets, nothing pushed. actionlint 1.7.7 (with its shellcheck pass on the `run:` blocks): no findings. |
 | P4.3 | done | `docs/ohif-upgrade/RUNBOOK.md` |
 | P4.4 | done | `docs/ohif-upgrade/NEXT-3.14.md` (dry run on `v3.14.0-beta.98`) |
-| P4.5 | prepared, not opened | `docs/ohif-upgrade/UPSTREAM-CONTRIBUTIONS.md`: 5 candidates; nothing opened on OHIF's repository (needs the owner's go-ahead) |
+| P4.5 | done (opened, awaiting OHIF review) | OHIF/Viewers #6444 (build hook), #6445 (tour persistence), #6447 (series indicator), #6448 (thumbnail overlay) on `master`; #6446 (active display set order backport) on `release/3.13`. Owner's go-ahead 2026-11-18. Details in `docs/ohif-upgrade/UPSTREAM-CONTRIBUTIONS.md`. |
 
 Script runs (throwaway clones; branches deleted):
 
