@@ -1,20 +1,5 @@
 <!-- prettier-ignore-start -->
 <div align="center">
-  <h1>PACS AI Frontend</h1>
-</div>
-
-To setup PACS AI App (Dev or Prod), you can read and follow this directly: https://github.com/HeartWise-AI/PACS-AI/blob/main/platform/app/README.md
-
----
-
-<div align="center">
-  <h2>Original OHIF Medical Imaging Viewer Documentation</h2>
-  <p>This project is based on the OHIF Viewer. Below is the original documentation.</p>
-</div>
-
----
-
-<div align="center">
   <h1>OHIF Medical Imaging Viewer</h1>
   <p><strong>The OHIF Viewer</strong> is a zero-footprint medical image viewer
 provided by the <a href="https://ohif.org/">Open Health Imaging Foundation (OHIF)</a>. It is a configurable and extensible progressive web application with out-of-the-box support for image archives which support <a href="https://www.dicomstandard.org/using/dicomweb/">DICOMweb</a>.</p>
@@ -156,11 +141,13 @@ Here is a schematic representation of our development workflow:
 
 ### Getting Started
 
-1. Clone the repository
-   - `git clone https://github.com/OHIF/Viewers.git`
-2. Navigate to the cloned project's directory
-3. `yarn install` to restore dependencies and link projects
-4. `yarn dev` to start the development server
+1. [Fork this repository][how-to-fork]
+2. [Clone your forked repository][how-to-clone]
+   - `git clone https://github.com/YOUR-USERNAME/Viewers.git`
+3. Navigate to the cloned project's directory
+4. Add this repo as a `remote` named `upstream`
+   - `git remote add upstream https://github.com/OHIF/Viewers.git`
+5. `yarn install` to restore dependencies and link projects
 
 #### To Develop
 
@@ -180,7 +167,7 @@ These commands are available from the root directory. Each project directory
 also supports a number of commands that can be found in their respective
 `README.md` and `package.json` files.
 
-| Commands                | Description                                                   |
+| Yarn Commands                | Description                                                   |
 | ---------------------------- | ------------------------------------------------------------- |
 | **Develop**                  |                                                               |
 | `dev`              | Default development experience for Viewer                     |
