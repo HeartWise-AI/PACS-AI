@@ -48,6 +48,8 @@ This relaxes R1 and R2 for this migration: the orchestrator may build and deploy
 | P3.1 | done (merge committed; build red by design) | `wp/P3.1-merge` (draft PR) | Merge of `refs/upstream/v3.13.14` (e4cd86153) as a two-parent commit (b5e8af3bc). Git's merge base is 974ef29aa (3.11 pre-release), not v3.11.1: 200 conflicted paths (2 ledger, 30 theme debt, 2 manifests, 2 lock files, 12 deleted upstream, 151 other, 1 workflow) and many clean auto-merges that mixed 3.11.x release-branch content into 3.13.14 files. Every upstream-owned file outside ledger/theme/expected was identical to v3.11.1 before the merge, so all upstream-owned paths were set to v3.13.14 exactly; nothing of ours lost under rule 8. Ledger: 7 rows kept, 0002/0003/0006 regenerated, 0001 refreshed, none retired. Theme debt: all 66 files taken from upstream (rule 3); `pacs-ai/THEME_DEBT.txt` is now the P3.4 to-do list (comment lines; 44 changed upstream, 22 unchanged). Manifests: our scripts, deps and `@pacs-ai/*` (`workspace:*`) re-added; overrides `moment` 2.31.0 and `webpack-dev-server` 5.2.7 kept, postcss/axios pins superseded upstream. `pnpm-lock.yaml` is upstream's and does not yet list our packages (`pnpm install` not run: needs the Node 24 container, P3.2); `yarn.lock`/`bun.lock` deleted (`pacs-ai-staging-release-validation.yml` and the unit-test workflows still use yarn/bun: P3.2). `UPSTREAM_REF` v3.13.14. Drift guard vs v3.13.14 (`--enforce --forbid-ohif-ui`): 14 modified upstream files = 7 ledger + 7 expected; 0 theme, 0 unexplained, 0 import violations. Brand look off until P3.4. |
 | P3.2 | done | #517 | Node 24.22.2 + pnpm 12.8.1 container. Manifests: `@ohif/*`/`@pacs-ai/*` `workspace:*`, peers moved to 3.13.14 versions, dependencies declared by the packages that import them (root/app copies removed). `pnpm install --frozen-lockfile` passes from an empty `node_modules`. `pacs-ai/build` on rspack 2 (defines from `.env` + `env.example` via dotenv, version.json, env-config, kill-switch `sw.js`, content-hashed CSS, our app config and favicons, dev COOP/COEP, rsbuild hook); hook patches 0001–0003 unchanged. `APP_CONFIG=config/pacs-ai.js pnpm run build` 18 s, no errors, 3 size/chunk warnings; no API-break fix was needed to compile. Image `pacs-ai-viewer-migration:p32-043e2aa44` (gzipped JS 15.8 MB vs 13.4 MB in p27-1ce02ecf7, +18%; html dir 124 MB vs 122 MB): `/`, `/viewer?StudyInstanceUIDs=x`, `/version.json` (buildId), `/env-config.js`, `/app-config.js` (ours), `/sw.js` (kill switch) 200 with the same headers as p27 (no-store + CORP; COOP/COEP are dev-server only, as before). Unit tests per package: core 50/51 suites (326/327 tests), inference 86/87 (864/865), shell 72/74 (334/338), chat 9/9 (87), ui 4/4 (25), mode 1/1 (8), app 4/4 (32), upstream core/default/cornerstone/dicom-pdf all pass; the 6 failing tests are API changes for P3.3 (see work list items 5, 6, 11), none from tooling. Drift guard `--enforce`: 15 modified upstream files = 7 ledger + 8 expected, 0 unexplained. Self-hosted runners need Node 24. |
 | P3.4 | done (draft PR; not deployed) | `wp/P3.4-theme` | See the P3.4 section. PACS-AI theme in `@pacs-ai/theme` (tokens, chrome, icons), default in `pacs-ai.js`; Appearance dialog off (D5). `pacs-ai/THEME_DEBT.txt` deleted; ledger unchanged (7 rows). Image `pacs-ai-viewer-migration:p34-46596c475` (after merging P3.3). |
+| P3.5 | done | #521 | See the P3.5 section. Rendering and data checks on the server (`p34-46596c475`), load-time spec; one regression left for P3.6 (echo first cine advance). |
+| P3.6 | done (draft PRs; not deployed; G6 to run) | `wp/P3.6-final` | See the P3.6 section. Echo cine regression fixed in our study browser (thumbnails wait for the active viewport's first frames); gates G1–G5 pass, G7 skipped (every upstream spec needs OHIF's test data), G6 for the orchestrator. Image `pacs-ai-viewer-migration:p36-8ac87af20`. |
 
 ## P3.3a (shell + mode + config)
 
@@ -259,4 +261,66 @@ Load time on 3.11 (`ai-predictions-3f3ffcd`, previous production build, same scr
 | XA_958801 | 4.40 s | 8.53 s (22) | 4.91 s | 12.2 |
 | US_P35 (echo) | 3.52 s | 6.88 s (24) | 3.62 s | 11.2 |
 
-3.13 vs 3.11: first image 0.4–0.8 s faster, thumbnails within 0.4 s, displayed cine rate higher. One regression: on the echo study the first cine frame advance comes 2.0 s later (5.63 s vs 3.62 s) — to investigate in P3.6 (likely cine waiting for more frames before playing).
+3.13 vs 3.11: first image 0.4–0.8 s faster, thumbnails within 0.4 s, displayed cine rate higher. One regression: on the echo study the first cine frame advance comes 2.0 s later (5.63 s vs 3.62 s) — cause and fix in the P3.6 section (the thumbnail burst, not cine).
+
+## P3.6 (full gate and report, 2026-11-18)
+
+Branch `wp/P3.6-final` from `integration/ohif-3.13` @ 6ac260799 (draft PR into `integration/ohif-3.13`); the phase 3 PR `integration/ohif-3.13` → `main` is open as a draft. Image `pacs-ai-viewer-migration:p36-8ac87af20` (built, not deployed).
+
+### Echo regression (first cine frame advance)
+
+**Cause.** Not cine. The load-time runs on `p34-46596c475` were bimodal on the echo study: first cine advance 3.10 s in one run, 5.63 s and 5.94 s in the two others, while every 3.11 run advanced 0.1 s after the first image. The P3.5 run of the same build with `maxNumRequests.thumbnail` 5 instead of 75 (served to the test browser only) advanced 0.03–0.18 s after the first image in all three runs (3.44, 3.56, 3.68 s). So the first frames of the shown clip were waiting behind the study browser's thumbnail requests. What changed with 3.13: OHIF's study browser starts every thumbnail 250 ms (+10 ms per display set) after the layout has an active viewport, as in 3.11; but 3.13's DICOMweb data source adds each series when its metadata arrives, so the hanging protocol and the viewport start earlier (first image 3.08 s vs 3.52 s) and the thumbnail burst (up to 75 WADO-RS frame requests, one per multi-frame echo clip) now reaches the API proxy and the PACS at the moment cine asks for frame 2. On 3.11 the viewport waited for all series metadata, so most thumbnails were already served. Checked and not the cause: cornerstone `playClip` (stack path identical in cs3d 4.5.13 and 5.6.8; only a generic-viewport context was added, off here), `scroll`, `stackPrefetch`, `CineService`, the cornerstone `CinePlayer` (cosmetic change only), `VIEWPORT_DATA_CHANGED` timing (still after `setStack`), the request pools (same limits), the app config (same `maxNumRequests` and data source settings as the 3.11 image).
+
+**Fix (ours).** `extensions/pacs-ai-inference/src/studyBrowser/viewportWarmUp.ts`: after OHIF's delay, our study browser copy (`PacsAiPanelStudyBrowser`, used by `/viewer` and, through the panel swap, the stock modes) starts thumbnails once the active viewport shows its first image and has the next 4 frames in the cornerstone cache; at most 1.5 s after the first image and 5 s in total; viewports that are not stacks (video, PDF, SR, volume) do not wait. The warm-up starts once per panel and is cancelled on unmount (the old timer was never cleared). Thumbnail concurrency stays 75, so all thumbnails should still arrive within a few hundred milliseconds of before. Unit test `viewportWarmUp.test.ts` (12 cases: frame counting, first-image and total caps, late viewport, cancel, non-stack viewports, missing services). No upstream file changed.
+
+**To measure (G6):** `PACS_AI_E2E_LOAD_TIME=1` load-time spec on `p36-8ac87af20` with US_P35 and XA_958801, against the P3.5 numbers below. Expected: echo first cine advance ≈ first image + 0.1–0.3 s; all thumbnails within ~0.5 s of P3.5.
+
+### Gates (Node 24.22.2, pnpm 12.8.1, `node:24.22.2-slim`)
+
+| Gate | Result |
+|---|---|
+| G1 install | `pnpm install --frozen-lockfile` ok (54 s, empty `node_modules`) |
+| G2 type check | `tsc --noEmit --emitDeclarationOnly false -p <pkg>/tsconfig.json`, total / own files: core 332/9, ui 294/4, theme 19/0, chat 346/4 (all as P3.4); shell 1048/23, inference 1167/35, mode 1159/0 (P3.4: 877/23, 923/34, 992/0). The same three numbers on 6ac260799 (branch point, with the P3.6 change taken out): 1048/23, 1167/35, 1159/0, so P3.6 adds no error; the growth since the P3.4 numbers came with the P3.3 merge and P3.5 (upstream files the packages now reach, and one in `runModelSeriesOrder.test.ts`). |
+| G3 unit tests | `pnpm run test:unit:ci`, exit 0, every suite passes. Ours: core 51/327, ui 5/28, theme 3/68, shell 76/353, inference 89/883 (+1/+12, warm-up), chat 9/88, mode 1/10. Upstream: core 39/356, default 13/62, cornerstone 31/600, dicom-pdf 2/30, app 4/32; the other upstream projects have no unit tests. Total 323 suites / 2837 tests. |
+| G4 build | `APP_CONFIG=config/pacs-ai.js pnpm run build` ok (rspack 2.0.3, 27 s, the 3 known size/chunk warnings). `docker build -f pacs-ai/docker/Dockerfile.pacs-ai --build-arg APP_BUILD_ID=p36-8ac87af20` ok. Throwaway container: `/`, `/login`, `/viewer?StudyInstanceUIDs=x`, `/segmentation`, unknown path, `version.json` (buildId `p36-8ac87af20`), `sw.js` (kill switch), `app-config.js`, `env-config.js` 200. Headless Chromium: `/login` renders, an unknown path shows our 404 page, `/viewer` without a session goes to `/login`; no page errors except the unreachable API. |
+| G4 size | Gzipped top-level JS 8.67 MB vs 7.33 MB in the 3.11 image `ai-predictions-3f3ffcd` (+18%, as at P3.2); served files 124 MB vs 122 MB; image 301 MB vs 296 MB. P3.6 adds 2 kB. |
+| G5 drift guard | `check-upstream-drift.sh --enforce --forbid-ohif-ui` exit 0: 15 modified upstream files = 7 ledger + 8 expected; 0 theme-debt, 0 unexplained, 0 import violations, 0 ledger errors. `lint-imports.sh` exit 0: ours 666 files, upstream 1590 files, 0 errors. |
+| G6 acceptance | for the orchestrator (below) |
+| G7 upstream e2e smoke | skipped: all 89 upstream specs under `tests/` open a study through `visitStudy` with `config/e2e.js`, whose only data source reads OHIF's `viewer-testdata` submodule (not checked out; OHIF's test data) or a local DICOMweb server on ports 5000/25080; none runs without OHIF's test data. |
+
+### G6 (orchestrator)
+
+| Suite | Build | Result |
+|---|---|---|
+| acceptance (`tests/pacs-ai`) | `p36-8ac87af20` | _to fill_ |
+| load time US_P35 / XA_958801 (first image, all thumbnails, first cine advance, fps) | `p36-8ac87af20` | _to fill_ |
+| AI results 1:1 | `p36-8ac87af20` | _to fill (P3.3: 22/24 identical, 2 not run)_ |
+
+### Ledger at the end of phase 3
+
+7 rows (limit 15), unchanged since P2.7: 0001 `.webpack/webpack.base.js`, 0002 `platform/app/.webpack/webpack.pwa.js`, 0003 `rsbuild.config.ts` (build hook), 0004 `StaticWadoClient.ts` (bulk data through the API proxy; retire at 3.14), 0005 `.prettierignore`, 0006 `platform/app/.env` (untracked), 0007 `platform/app/.gitignore`. Expected files: root and app `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `pluginConfig.json`, three workflow files. Numbers also in `pacs-ai/README.md`.
+
+### Accepted behaviour changes (all of phase 3)
+
+| # | Change | State |
+|---|---|---|
+| a | A failed study lookup redirects to `/notfoundstudy` (upstream `Mode.tsx`); one extra QIDO study search per opened study | accepted |
+| b | Series and clip order follow `sortingCriteria` (series number, date/time, UID; SR/SEG last) in the study browser, the first hanging, arrow keys and the run-model series dialog; deterministic (3.11 followed network arrival) | accepted; AI results unchanged (P3.3: 22/24 identical, 2 not comparable) |
+| c | `/viewer/<removed data source>` shows the 404 page | accepted |
+| d | `shepherd.js` 15.3.0 (AGPL-3.0) imported directly by our shell tour; upstream ships the same version | licence check for the owner |
+| e | Tour and 404 colours | resolved in P3.4 |
+| f | `esc` during a length drawing ends it and keeps the measurement | accepted (cs3d semantics) |
+| g | Thumbnails start after the active viewport's first image and next 4 frames (≤ 1.5 s after the first image, ≤ 5 s in all) instead of 250 ms after the layout | P3.6; to confirm with G6 |
+| h | `pacs-ai/build/env.example` names `config/pacs-ai.js` (the old `config/local_pacs_ai.js` no longer exists); builds that pass `APP_CONFIG` (Docker) are unaffected | P3.6 |
+
+### Known gaps
+
+- ESLint runs only our import rules (`pacs-ai/scripts/lint-imports.sh`, ESLint 8.57.1 with the plugins of 3.11.1's `addOns` as root devDependencies); 3.13.14 dropped ESLint from the workspace, so there is no general lint of our code.
+- `@rspack/core` 1.7.11 (root, via `@rsbuild/core` 1.7.3) next to 2.0.3 (app, CLI): from upstream's manifests and lockfile; `extend.js` uses the compiler's own `HtmlRspackPlugin`.
+- React 19 at 3.14: `react-query` 3, `react-dates`, `react-d3-speedometer` 2, `react-select` 5.7, `@testing-library/react` 13 do not allow React 19 (table in the P3.2 section).
+- `shepherd.js` 15.3.0 is AGPL-3.0 (change d).
+- Echo reference studies US_1, US_2 (and US_MAX) are no longer retrievable from the PACS (MISSING_RECORD); the echo checks used a local study (US_P35). Re-record echo references.
+- Deep `@pacs-ai/<pkg>/src/...` imports between our packages remain (188 files), allowed by the 6.1 table; replace with public entry points as a follow-up.
+- `prop-types` in core: API repositories throw the imported validator as a fallback error value (runtime behaviour, separate fix).
+- The echo fix is not measured live yet (G6).
+- 3.13's waveform handler (ECG / Hemodynamic Waveform Storage) is not in `/viewer` (kept 3.11.1's handler list on purpose); ECG waveform display is upstream's but not reachable in our mode.
