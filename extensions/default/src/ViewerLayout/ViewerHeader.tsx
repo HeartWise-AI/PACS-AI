@@ -28,7 +28,7 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
     if (dataSourceIdx !== -1 && existingDataSource) {
       searchQuery.append('datasources', pathname.substring(dataSourceIdx + 1));
     }
-    preserveQueryParameters(searchQuery);
+    preserveQueryParameters(searchQuery, customizationService);
 
     navigate({
       pathname: '/',
@@ -41,6 +41,10 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
 
   const AboutModal = customizationService.getCustomization(
     'ohif.aboutModal'
+  ) as Types.MenuComponentCustomization;
+
+  const AppearanceModal = customizationService.getCustomization(
+    'ohif.appearanceModal'
   ) as Types.MenuComponentCustomization;
 
   const UserPreferencesModal = customizationService.getCustomization(
@@ -71,6 +75,19 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
     },
   ];
 
+  if (AppearanceModal) {
+    menuOptions.splice(1, 0, {
+      title: AppearanceModal.menuTitle ?? t('Header:Appearance'),
+      icon: 'ColorChange',
+      onClick: () =>
+        show({
+          content: AppearanceModal,
+          title: AppearanceModal.title ?? t('AppearanceModal:Appearance'),
+          containerClassName: AppearanceModal.containerClassName ?? 'max-w-md',
+        }),
+    });
+  }
+
   if (appConfig.oidc) {
     menuOptions.push({
       title: t('Header:Logout'),
@@ -100,7 +117,8 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
         <div className="text-primary flex cursor-pointer items-center">
           <Button
             variant="ghost"
-            className="hover:bg-primary-dark"
+            className="hover:bg-muted"
+            data-cy="undo-btn"
             onClick={() => {
               commandsManager.run('undo');
             }}
@@ -109,7 +127,8 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
           </Button>
           <Button
             variant="ghost"
-            className="hover:bg-primary-dark"
+            className="hover:bg-muted"
+            data-cy="redo-btn"
             onClick={() => {
               commandsManager.run('redo');
             }}

@@ -19,3 +19,18 @@ one patch file under `pacs-ai/patches/`. The limit is 15 rows.
 | `.prettierignore` | F16 (tooling): Prettier, run by `lint-staged` and `yarn format`, formats only the "ours" paths, so the fork's difference from upstream stays real changes (P1.1 reverted 91 formatting-only edits) | Prettier reads one ignore file, the root `.prettierignore`; there is no per-directory ignore file or config key for it | `--ignore-path pacs-ai/...` in our scripts (editors and other Prettier runs would still read the root file); a narrower `lint-staged` glob alone (already done; does not cover `yarn format` or editors) | `0005-prettierignore-ours-only.patch` | no | P2.7 |
 | `platform/app/.env` | F14: the deployment's build environment (API base URL for `env-config.js`, Turnstile site key) lives in this file, untracked; upstream tracks it with development defaults | `pacs-ai/build/generate-env-config.js` and `extend.js` (Dotenv) read this path; tracking upstream's file at the same path as each deployment's local, secret-bearing file would let `git checkout` overwrite it and `git add` commit it | reading the environment from a git-ignored file under `pacs-ai/` (changes every deployment's build input; planned with the rspack port, PLAN P3.1 rule 6 and P3.2) | `0006-app-env-untracked.patch` | no | P2.7 |
 | `platform/app/.gitignore` | F14: keeps `platform/app/.env` (previous row) untracked | git ignore rules apply per directory; the root `.gitignore` is upstream too | `.git/info/exclude` (per clone, not shared) | `0007-app-env-gitignore.patch` | no | P2.7 |
+
+## Re-applied on v3.13.14 (P3.1)
+
+All seven patches were re-applied after the merge of OHIF v3.13.14 and are
+now made against `refs/upstream/v3.13.14`
+(`apply-patches.sh --fresh --check`: 7 applied, 0 conflicts). 0001, 0004, 0005
+and 0007 applied unchanged (0001 regenerated for its index line and hunk offset only);
+0002 (`webpack.pwa.js`, hook moved to the new end of the function), 0003
+(`rsbuild.config.ts`, same hook on the reworked config) and 0006 (upstream's
+new `.env` content) were regenerated. None retired: the build hooks (0001 to
+0003) now sit in rspack/rsbuild configs and `pacs-ai/build/extend.js` is
+ported to rspack in P3.2; 0004 retires at the 3.14 step. On a working tree
+that holds the deployment's untracked `platform/app/.env`, `apply-patches.sh`
+reports 0006 as a conflict; that is expected (the patch only untracks the
+file).

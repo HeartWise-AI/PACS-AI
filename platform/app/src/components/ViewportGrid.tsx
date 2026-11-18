@@ -273,6 +273,7 @@ function ViewerViewportGrid(props: withAppTypes) {
         >
           <div
             data-cy="viewport-pane"
+            data-is-active={isActive}
             className="flex h-full w-full min-w-[5px] flex-col"
           >
             <ViewportComponent
@@ -304,9 +305,7 @@ function ViewerViewportGrid(props: withAppTypes) {
   }
 
   return (
-    <div
-      className="h-[calc(100%-0.25rem)] w-full border border-transparent" // NOTE: This is a PACS changes
-    >
+    <div className="border-input h-[calc(100%-0.25rem)] w-full border">
       <ViewportGrid
         numRows={numRows}
         numCols={numCols}

@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useSystem } from '@ohif/core';
+import { thumbnailNoImageModalities } from '@ohif/core/src/utils/thumbnailNoImageModalities';
 import PanelStudyBrowser from '@ohif/extension-default/src/Panels/StudyBrowser/PanelStudyBrowser';
 import { UntrackSeriesModal } from './untrackSeriesModal';
 import { useTrackedMeasurements } from '../../getContextModule';
-
-const thumbnailNoImageModalities = ['SR', 'SEG', 'RTSTRUCT', 'RTPLAN', 'RTDOSE', 'PMAP'];
 
 /**
  * Panel component for the Study Browser with tracking capabilities
@@ -24,7 +23,7 @@ export default function PanelStudyBrowserTracking({
 
   const checkDirtyMeasurements = displaySetInstanceUID => {
     const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
-    if (displaySet.Modality === 'SR') {
+    if (displaySet.Modality === 'SR' || displaySet.Modality === 'ANN') {
       const activeViewportId = viewportGridService.getActiveViewportId();
       sendTrackedMeasurementsEvent('CHECK_DIRTY', {
         viewportId: activeViewportId,
@@ -95,7 +94,7 @@ export default function PanelStudyBrowserTracking({
           seriesNumber: ds.SeriesNumber,
           modality: ds.Modality,
           seriesDate: ds.SeriesDate ? new Date(ds.SeriesDate).toLocaleDateString() : '',
-          numInstances: ds.numImageFrames,
+          numInstances: ds.numImageFrames ?? ds.instances?.length,
           loadingProgress,
           countIcon: ds.countIcon,
           messages: ds.messages,

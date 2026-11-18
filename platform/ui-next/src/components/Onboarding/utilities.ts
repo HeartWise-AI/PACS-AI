@@ -39,8 +39,7 @@ const defaultShowHandler = (Shepherd: ShepherdBase) => {
   const currentStep = Shepherd.activeTour?.getCurrentStep();
   if (currentStep) {
     const progress = document.createElement('span');
-    progress.className =
-      'shepherd-progress text-lg text-primary-light'; /* NOTE: This is a PACS changes */
+    progress.className = 'shepherd-progress text-lg text-muted-foreground';
     progress.innerText = `${Shepherd.activeTour?.steps.indexOf(currentStep) + 1}/${Shepherd.activeTour?.steps.length}`;
     progress.style.position = 'absolute';
     progress.style.left = '13px';

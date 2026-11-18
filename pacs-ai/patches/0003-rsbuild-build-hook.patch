@@ -1,17 +1,17 @@
 diff --git a/rsbuild.config.ts b/rsbuild.config.ts
-index 8f29e37ab3a653f806b48101a7e2c6696df284fe..d875d3d16fdff42a51a27f13364919890505ecf5 100644
+index 34ea904a55bcbfbf0d11f849c2c32096f74ff34f..44c23e8c516aa65ece2599ea52292838e2008eb7 100644
 --- a/rsbuild.config.ts
 +++ b/rsbuild.config.ts
-@@ -27,7 +27,7 @@ const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
- const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
- const OHIF_OPEN = process.env.OHIF_OPEN !== 'false';
+@@ -47,7 +47,7 @@ const SOURCE_MAP_LOADER = (() => {
+   }
+ })();
  
 -export default defineConfig({
 +const config = defineConfig({
-   source: {
-     entry: {
-       index: `${SRC_DIR}/index.js`,
-@@ -169,3 +169,8 @@ export default defineConfig({
+   dev: {
+     lazyCompilation: false,
+   },
+@@ -216,3 +216,8 @@ export default defineConfig({
      },
    },
  });

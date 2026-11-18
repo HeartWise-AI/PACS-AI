@@ -1,4 +1,20 @@
 import { useSystem } from '../contextProviders/SystemProvider';
+import i18n from 'i18next';
+
+/**
+ * Tab properties that drive which tab group is used for thumbnail display.
+ */
+export type TabProp = {
+  name: string;
+  label: string;
+  studies: any[];
+};
+
+/**
+ * Collection of tab properties with studies presorted depending on tab mod.
+ * This is used in deciding what thumbnails to show.
+ */
+export type TabsProps = TabProp[];
 
 /**
  *
@@ -11,7 +27,7 @@ import { useSystem } from '../contextProviders/SystemProvider';
  * @param {number} studyDisplayList.numInstances
  * @param {object[]} displaySets
  * @param {number} recentTimeframe - The number of milliseconds to consider a study recent
- * @returns tabs - The prop object expected by the StudyBrowser component
+ * @returns {TabsProps} tabs - The prop object expected by the StudyBrowser component
  */
 
 export function createStudyBrowserTabs(
@@ -19,11 +35,10 @@ export function createStudyBrowserTabs(
   studyDisplayList,
   displaySets,
   recentTimeframeMS = 31536000000
-) {
+): TabsProps {
   const { servicesManager } = useSystem();
-  const { displaySetService } = servicesManager.services;
+  const { displaySetService, customizationService } = servicesManager.services;
 
-  const shouldSortBySeriesUID = process.env.TEST_ENV === 'true';
   const primaryStudies = [];
   const allStudies = [];
 
@@ -32,18 +47,17 @@ export function createStudyBrowserTabs(
       ds => ds.StudyInstanceUID === study.studyInstanceUid
     );
 
-    // sort them by seriesInstanceUID
-    let sortedDisplaySets;
-    if (shouldSortBySeriesUID) {
-      sortedDisplaySets = displaySetsForStudy.sort((a, b) => {
-        const displaySetA = displaySetService.getDisplaySetByUID(a.displaySetInstanceUID);
-        const displaySetB = displaySetService.getDisplaySetByUID(b.displaySetInstanceUID);
+    const sortCriteria = customizationService.getCustomization('sortingCriteria') as (
+      a,
+      b
+    ) => number;
+    const sortedDisplaySets = displaySetsForStudy.sort((a, b) => {
+      const displaySetA = displaySetService.getDisplaySetByUID(a.displaySetInstanceUID);
+      const displaySetB = displaySetService.getDisplaySetByUID(b.displaySetInstanceUID);
+      return sortCriteria(displaySetA, displaySetB);
+    });
 
-        return displaySetA.SeriesInstanceUID.localeCompare(displaySetB.SeriesInstanceUID);
-      });
-    } else {
-      sortedDisplaySets = displaySetsForStudy;
-    }
+    // return displaySetA.SeriesInstanceUID.localeCompare(displaySetB.SeriesInstanceUID);
 
     const tabStudy = Object.assign({}, study, {
       displaySets: sortedDisplaySets,
@@ -83,17 +97,17 @@ export function createStudyBrowserTabs(
   const tabs = [
     {
       name: 'primary',
-      label: 'Primary',
+      label: i18n.t('StudyBrowser:Primary'),
       studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     {
       name: 'recent',
-      label: 'Recent',
+      label: i18n.t('StudyBrowser:Recent'),
       studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     {
       name: 'all',
-      label: 'All',
+      label: i18n.t('StudyBrowser:All'),
       studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
   ];

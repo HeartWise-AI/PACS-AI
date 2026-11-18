@@ -13,7 +13,7 @@
   width: 100%;
   height: 100%;
   position: relative;
-  background-color: transparent; /* NOTE: This is a PACS changes */
+  background-color: black;
 
   /* Prevent the blue outline in Chrome when a viewport is selected */
   outline: 0 !important;
@@ -21,7 +21,7 @@
   /* Prevents the entire page from getting larger
      when the magnify tool is near the sides/corners of the page */
   overflow: hidden;
-
+  
   /* Prevent text selection on the viewport element */
   user-select: none;
   -webkit-user-select: none;

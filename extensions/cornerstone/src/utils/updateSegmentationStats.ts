@@ -1,4 +1,5 @@
 import * as cornerstoneTools from '@cornerstonejs/tools';
+import cloneDeep from 'lodash.clonedeep';
 
 interface BidirectionalAxis {
   length: number;
@@ -51,12 +52,18 @@ export async function updateSegmentationStats({
     return null;
   }
 
-  const updatedSegmentation = { ...segmentation };
+  const updatedSegmentation = cloneDeep(segmentation);
   let hasUpdates = false;
 
   // Loop through each segment's stats
   Object.entries(stats).forEach(([segmentIndex, segmentStats]) => {
     const index = parseInt(segmentIndex);
+
+    if (!updatedSegmentation.segments[index]) {
+      // This happens when a segment is being restored
+      console.warn('Segment not found to update cached stats:', index);
+      return;
+    }
 
     if (!updatedSegmentation.segments[index].cachedStats) {
       updatedSegmentation.segments[index].cachedStats = {};

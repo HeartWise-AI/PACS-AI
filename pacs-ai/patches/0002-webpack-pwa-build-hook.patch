@@ -1,9 +1,9 @@
 diff --git a/platform/app/.webpack/webpack.pwa.js b/platform/app/.webpack/webpack.pwa.js
-index 9dac1618970986dcc80f59e7e800c8d5a0c82c1c..f8103faa7de08a05ddb554c9c8d23b085ce7e8ac 100644
+index 82dc4e98325e233080b3235ac5917ad6e7e5e394..94075cdbe0ed8f06ea90b2a32dfa23aae9ce36c1 100644
 --- a/platform/app/.webpack/webpack.pwa.js
 +++ b/platform/app/.webpack/webpack.pwa.js
-@@ -221,5 +221,12 @@ module.exports = (env, argv) => {
-     ignored: /node_modules\/@cornerstonejs/,
+@@ -264,5 +264,12 @@ module.exports = (env, argv) => {
+     followSymlinks: true,
    };
  
 +  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.

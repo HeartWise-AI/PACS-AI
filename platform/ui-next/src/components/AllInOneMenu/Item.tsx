@@ -31,8 +31,7 @@ const Item = ({
 
   return (
     <div
-      // NOTE: This is a PACS changes
-      className="flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base leading-[18px] hover:rounded hover:bg-[#151815]"
+      className="hover:bg-accent flex h-8 w-full flex-shrink-0 cursor-pointer items-center px-2 text-base leading-[18px] hover:rounded"
       onClick={onClickHandler}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

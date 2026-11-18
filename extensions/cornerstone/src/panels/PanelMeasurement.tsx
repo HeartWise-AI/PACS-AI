@@ -65,7 +65,7 @@ export default function PanelMeasurement(props): React.ReactNode {
     return EmptyComponent ? (
       <EmptyComponent items={displayMeasurements} />
     ) : (
-      <span className="text-white">No Measurements</span>
+      <span className="text-foreground">No Measurements</span>
     );
   }
 
@@ -78,6 +78,7 @@ export default function PanelMeasurement(props): React.ReactNode {
     );
     return cloned;
   }
+
   // Need to merge defaults on the content props to ensure they get passed to children
   return <StudyMeasurements items={displayMeasurements} />;
 }

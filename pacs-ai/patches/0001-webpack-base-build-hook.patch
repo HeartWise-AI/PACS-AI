@@ -1,8 +1,8 @@
 diff --git a/.webpack/webpack.base.js b/.webpack/webpack.base.js
-index ff278678395528836b7c0d171e0433a745f796c5..0b74b475bc4a388bf01728af86208aabd6b68cff 100644
+index 43d5d50bb13792604ef1f5766d443e685c68279f..ddbc9075e492436bbfb4fb46d49481b55d50b7c3 100644
 --- a/.webpack/webpack.base.js
 +++ b/.webpack/webpack.base.js
-@@ -250,5 +250,12 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
+@@ -253,5 +253,12 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
      config.devtool = false;
    }
  

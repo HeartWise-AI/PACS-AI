@@ -14,6 +14,7 @@ function PanelStudyBrowserHeader({
   actionIcons: actionIcon[];
   updateActionIconValue: (actionIcon: actionIcon) => void;
 }) {
+  // Button order: Settings button then List view mode (thumbnails vs. list)
   return (
     <>
       <div className="bg-muted flex h-[40px] select-none rounded-t p-2">
@@ -44,7 +45,7 @@ function PanelStudyBrowserHeader({
                     key={index}
                     aria-label={viewPreset.id}
                     value={viewPreset.id}
-                    className="text-actions-primary"
+                    className="text-primary"
                   >
                     {React.createElement(Icons[viewPreset.iconName] || Icons.MissingIcon)}
                   </ToggleGroupItem>
