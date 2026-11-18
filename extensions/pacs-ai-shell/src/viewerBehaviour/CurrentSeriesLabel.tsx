@@ -14,6 +14,9 @@ type DisplaySetLike = {
   SeriesDescription?: string;
   Modality?: string;
   imageIds?: unknown[];
+  numImageFrames?: number;
+  images?: unknown[];
+  instances?: unknown[];
   unsupported?: boolean;
   excludeFromThumbnailBrowser?: boolean;
 };
@@ -31,14 +34,29 @@ export const NON_IMAGE_MODALITIES = [
   'PMAP',
 ];
 
+/**
+ * Number of images of a display set. `imageIds` is filled only once the
+ * display set has been loaded into a viewport (CornerstoneCacheService), so
+ * the frame and instance counts that OHIF sets when it creates the display
+ * set are used as well; otherwise only the series already viewed would count.
+ */
+function imageCount(displaySet: DisplaySetLike): number {
+  const lengthOf = (list: unknown) => (Array.isArray(list) ? list.length : 0);
+  return Math.max(
+    lengthOf(displaySet.imageIds),
+    Number(displaySet.numImageFrames) || 0,
+    lengthOf(displaySet.images),
+    lengthOf(displaySet.instances)
+  );
+}
+
 /** An image series: an image modality with images to show. */
 export function isImageSeries(displaySet?: DisplaySetLike): boolean {
   return (
     !!displaySet &&
     !displaySet.unsupported &&
     !NON_IMAGE_MODALITIES.includes(displaySet.Modality ?? '') &&
-    Array.isArray(displaySet.imageIds) &&
-    displaySet.imageIds.length > 0
+    imageCount(displaySet) > 0
   );
 }
 
