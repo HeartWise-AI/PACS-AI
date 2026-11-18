@@ -31,6 +31,7 @@
     "remark-gfm": "3.0.1"
   },
   "devDependencies": {
+    "@ohif/mode-basic": "workspace:*",
     "@testing-library/react": "13.4.0"
   }
 }
