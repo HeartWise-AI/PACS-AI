@@ -19,6 +19,12 @@
 #   --rev REV           compare commit REV instead of the working tree
 #   --markdown FILE     also write a Markdown summary to FILE (for CI)
 #   --forbid-ohif-ui    also flag imports of @ohif/ui from "ours" (after P2.1)
+#   --allow-theme-heuristic
+#                       without pacs-ai/THEME_DEBT.txt, accept the files the
+#                       theme heuristic recognises as theme debt (the rule
+#                       before P3.4, for checking old commits). Default: theme
+#                       debt is retired (P3.4 deleted the list), so they are
+#                       unexplained and named under "Theme-like files".
 #   -h, --help          show this help
 #
 # Environment:
@@ -34,8 +40,10 @@
 #   theme       theme debt. When pacs-ai/THEME_DEBT.txt exists (from P2.7), a
 #               modified (M) file listed there; the list is authoritative and
 #               the heuristic below only reports listed files it would not
-#               recognise and unlisted files it would. Without the list, a
-#               modified (M) text file the heuristic recognises.
+#               recognise and unlisted files it would. Without the list
+#               (P3.4 on) there is no theme debt: a modified (M) text file the
+#               heuristic recognises is unexplained, unless
+#               --allow-theme-heuristic is given (then it is theme debt).
 #   unexplained everything else, including added, deleted and binary files
 #
 # pacs-ai/THEME_DEBT.txt: comment lines start with #; every other line is
@@ -107,6 +115,7 @@ REPO=""
 REV=""
 MARKDOWN=""
 FORBID_OHIF_UI=0
+ALLOW_THEME_HEURISTIC=0
 LEDGER_LIMIT=15
 UPSTREAM_URL=${UPSTREAM_URL:-https://github.com/OHIF/Viewers.git}
 
@@ -118,6 +127,7 @@ while [[ $# -gt 0 ]]; do
     --rev) [[ $# -ge 2 ]] || die "--rev needs a value"; REV=$2; shift ;;
     --markdown) [[ $# -ge 2 ]] || die "--markdown needs a value"; MARKDOWN=$2; shift ;;
     --forbid-ohif-ui) FORBID_OHIF_UI=1 ;;
+    --allow-theme-heuristic) ALLOW_THEME_HEURISTIC=1 ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown argument: $1 (see --help)" ;;
   esac
@@ -333,7 +343,12 @@ while IFS= read -r -d '' status && IFS= read -r -d '' path; do
       [[ $status == M ]] && is_theme_debt "$path" && THEME_UNLISTED+=("$path")
     fi
   elif [[ $status == M ]] && is_theme_debt "$path"; then
-    C_THEME+=("$entry")
+    if (( ALLOW_THEME_HEURISTIC )); then
+      C_THEME+=("$entry")
+    else
+      C_UNEXPLAINED+=("$entry")
+      THEME_UNLISTED+=("$path")
+    fi
   else
     C_UNEXPLAINED+=("$entry")
   fi
@@ -466,6 +481,8 @@ if (( HAVE_THEME_LIST )); then
   print_list "Theme-list errors" "${THEME_ERRORS[@]}"
   print_list "Unlisted files the theme heuristic recognises (unexplained)" "${THEME_UNLISTED[@]}"
   print_list "Listed theme-debt files the heuristic does not recognise (allowed by the list)" "${THEME_MANUAL[@]}"
+elif (( ! ALLOW_THEME_HEURISTIC )); then
+  print_list "Theme-like files (unexplained: theme debt was retired in P3.4; use @pacs-ai/theme or a ledger row)" "${THEME_UNLISTED[@]}"
 fi
 print_list "Import-direction violations (rule, file, import)" "${VIOLATIONS[@]}"
 print_list "Unexplained files (status, path)" "${C_UNEXPLAINED[@]}"

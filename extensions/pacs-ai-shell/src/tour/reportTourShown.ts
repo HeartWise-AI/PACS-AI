@@ -22,7 +22,7 @@ export function addStepProgress(step?: StepLike): void {
     return;
   }
   const progress = document.createElement('span');
-  progress.className = 'shepherd-progress text-lg text-primary-light';
+  progress.className = 'shepherd-progress text-lg text-primary';
   progress.innerText = `${steps.indexOf(step) + 1}/${steps.length}`;
   progress.style.position = 'absolute';
   progress.style.left = '13px';

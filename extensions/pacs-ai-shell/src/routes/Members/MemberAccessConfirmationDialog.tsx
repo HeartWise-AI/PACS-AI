@@ -81,7 +81,7 @@ export default function MemberAccessConfirmationDialog({
           disabled={busy}
           rows={4}
           aria-describedby="member-access-effect member-access-reason-count"
-          className="focus:border-primary-main mt-2 w-full resize-y rounded-lg border border-white border-opacity-10 bg-white bg-opacity-10 p-3 text-white placeholder:text-white placeholder:text-opacity-40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus:border-primary mt-2 w-full resize-y rounded-lg border border-white border-opacity-10 bg-white bg-opacity-10 p-3 text-white placeholder:text-white placeholder:text-opacity-40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={t('Add a reason for the audit trail')}
           onChange={event => onReasonChange(event.target.value)}
         />

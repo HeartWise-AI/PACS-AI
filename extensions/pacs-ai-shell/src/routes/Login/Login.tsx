@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Button, Logo, Typography } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input, Logo, Typography } from '@pacs-ai/ui';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
 import repository from '@pacs-ai/extension-core/src/api/repository';
@@ -607,7 +606,7 @@ const LoginPage = () => {
                     hidden={turnstileStatus === 'unavailable'}
                     role="group"
                     aria-labelledby="login-verification-heading"
-                    className="focus:ring-primary-light mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
+                    className="focus:ring-primary mb-4 rounded-lg bg-white bg-opacity-5 p-3 outline-none focus:ring-2"
                   >
                     <Typography
                       id="login-verification-heading"

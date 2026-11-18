@@ -1,8 +1,7 @@
 /**
- * PACS-AI brand colours. On OHIF 3.11.1 the same values are still hard-coded
- * in the upstream Tailwind configs and CSS ("theme debt", see
- * docs/ohif-upgrade/PLAN.md 6.3); they move here when the 3.13 theme
- * customization exists.
+ * PACS-AI brand colours for code that needs a literal value (gradients, inline
+ * styles). The ui-next tokens (CSS variables) are in theme/pacsAiTheme.ts and
+ * styles/pacs-ai-theme.css.
  */
 export const colors = {
   /** Lime accent. */

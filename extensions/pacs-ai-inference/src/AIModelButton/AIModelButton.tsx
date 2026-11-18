@@ -416,7 +416,7 @@ const AIModelButton = ({
                       return (
                         <li
                           key={index}
-                          className="hover:bg-primary-dark flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+                          className="hover:bg-primary flex cursor-pointer items-center gap-2 p-1 hover:text-black"
                           onClick={() => openRunFlow(model)}
                         >
                           <img
@@ -448,7 +448,7 @@ const AIModelButton = ({
                             {latestResult && (
                               <button
                                 type="button"
-                                className="hover:bg-primary-dark whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                                className="hover:bg-primary whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
                                 onClick={() => {
                                   setIsOpen(false);
                                   viewerResults?.openResult(latestResult);
@@ -477,7 +477,7 @@ const AIModelButton = ({
                             ) : (
                               <button
                                 type="button"
-                                className="hover:bg-primary-dark flex items-center gap-1 whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                                className="hover:bg-primary flex items-center gap-1 whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
                                 onClick={() => setConfirmRunModelKey(modelKey)}
                               >
                                 <img

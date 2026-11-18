@@ -116,7 +116,7 @@ const PacsAiThumbnail = ({
         )}
       >
         <div className="h-[114px] w-[128px]">
-          <div className="bg-background relative">
+          <div className="relative bg-black">
             {shouldRenderThumbnailImage ? (
               <img
                 src={imageSrc}

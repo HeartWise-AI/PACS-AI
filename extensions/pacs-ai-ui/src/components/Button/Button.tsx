@@ -41,7 +41,7 @@ const enabledEffectClasses = {
   ),
   [ButtonEnums.type.secondary]: classnames(
     baseEnabledEffectClasses,
-    'hover:bg-customblue-50 active:bg-customblue-20'
+    'hover:bg-[#0f3a94] active:bg-[#0b1f54]'
   ),
 };
 
@@ -54,13 +54,13 @@ const enabledClasses = {
     enabledEffectClasses[ButtonEnums.type.primary]
   ),
   [ButtonEnums.type.secondary]: classnames(
-    'bg-customblue-30',
+    'bg-[#09286e]',
     baseEnabledClasses,
     enabledEffectClasses[ButtonEnums.type.secondary]
   ),
 };
 
-const disabledClasses = 'bg-inputfield-placeholder cursor-default text-white opacity-70';
+const disabledClasses = 'bg-[#39383f] cursor-default text-white opacity-70';
 
 export type ButtonProps = {
   /** What is inside the button, can be text or a React node */

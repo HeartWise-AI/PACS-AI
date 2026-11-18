@@ -15,7 +15,7 @@ const NotFound = () => {
         <h4>
           Error (404): we can&apos;t find the page you&apos;re looking for. Return to the{' '}
           <Link
-            className="text-primary-light"
+            className="text-primary"
             to="/"
           >
             study list

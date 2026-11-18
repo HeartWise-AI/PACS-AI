@@ -2,6 +2,8 @@ import { id } from './id';
 
 export { default as Button, ButtonEnums } from './components/Button';
 export type { ButtonProps } from './components/Button';
+export { default as Input, PACS_AI_INPUT_CLASSES } from './components/Input';
+export type { InputProps } from './components/Input';
 export { default as Typography } from './components/Typography';
 export type { TypographyProps } from './components/Typography';
 export { default as AdminTable } from './components/AdminTable';

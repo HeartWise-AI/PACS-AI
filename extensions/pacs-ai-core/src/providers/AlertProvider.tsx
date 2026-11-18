@@ -16,7 +16,7 @@ export const AlertProvider = ({ children }) => {
         variantClass = 'bg-green-500';
         break;
       default:
-        variantClass = 'bg-primary-dark';
+        variantClass = 'bg-primary';
     }
 
     setAlert({ message, variant: variantClass });

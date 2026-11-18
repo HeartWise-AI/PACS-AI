@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
-import { Button, Typography } from '@pacs-ai/ui';
-import { Input } from '@ohif/ui-next';
+import { Button, Input, Typography } from '@pacs-ai/ui';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import loginBG from '../../assets/pacs/bg/login-bg.png';
 import { AlertContext } from '../../alerts';

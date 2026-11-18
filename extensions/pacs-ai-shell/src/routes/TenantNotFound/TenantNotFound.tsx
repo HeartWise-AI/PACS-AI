@@ -15,7 +15,7 @@ const TenantNotFound = () => {
       <div>
         <Typography
           variant="h4"
-          className="text-primary-dark text-center font-light"
+          className="text-primary text-center font-light"
         >
           {t('Tenant Not Found')}
         </Typography>

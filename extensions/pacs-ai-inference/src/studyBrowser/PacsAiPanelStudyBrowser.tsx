@@ -499,7 +499,7 @@ function PacsAiPanelStudyBrowser({
         />
         <Separator
           orientation="horizontal"
-          className="bg-background"
+          className="bg-black"
           thickness="2px"
         />
       </>

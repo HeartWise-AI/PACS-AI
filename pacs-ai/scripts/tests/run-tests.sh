@@ -172,7 +172,9 @@ w .github/CODEOWNERS <<'EOF'
 EOF
 git add -A && git commit -q -m fork
 
-DRIFT_ARGS=(--repo "$FORK")
+# Theme-debt classification without pacs-ai/THEME_DEBT.txt (the pre-P3.4
+# rule) is tested with --allow-theme-heuristic; the default is checked below.
+DRIFT_ARGS=(--repo "$FORK" --allow-theme-heuristic)
 
 echo "# check-upstream-drift.sh: report"
 out=$("$DRIFT" "${DRIFT_ARGS[@]}" --report); rc=$?
@@ -229,6 +231,18 @@ set -e
 assert_eq "enforce passes on clean commit (--rev)" "$rc" 0
 assert_eq "clean commit: unexplained 0" "$(count_of "$out" 'unexplained files')" 0
 assert_eq "clean commit: theme 3" "$(count_of "$out" 'theme-debt files')" 3
+
+echo "# check-upstream-drift.sh: theme debt retired (no list, default)"
+set +e
+out=$("$DRIFT" --repo "$FORK" --enforce --rev "$CLEAN" 2>&1); rc=$?
+set -e
+assert_eq "enforce fails on theme-like files without the list" "$rc" 1
+assert_eq "retired: theme 0" "$(count_of "$out" 'theme-debt files')" 0
+assert_eq "retired: unexplained 3" "$(count_of "$out" 'unexplained files')" 3
+retired=$(sed -n '/^Theme-like files/,/^$/p' <<<"$out")
+for f in src/theme.tsx src/vars.css src/wrapped.tsx; do
+  assert_contains "retired: theme-like $f named" "$retired" "$f"
+done
 
 # Ledger over the limit and a missing patch file (working tree only).
 {
