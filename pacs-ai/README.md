@@ -20,7 +20,7 @@ Before running this repository, you need to have the PACS AI backend up and runn
 
 1. Create your environment file:
    ```bash
-   cp ./platform/app/.env.example ./platform/app/.env
+   cp ./pacs-ai/build/env.example ./platform/app/.env
    ```
 
 2. Configure the following variables in your `.env` file:

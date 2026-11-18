@@ -135,11 +135,12 @@ function extendWebpackBase(config, { defineValues } = {}) {
 
 /**
  * dotenv-webpack 1.x returns a webpack DefinePlugin from its constructor.
- * Build one that also reads platform/app/.env.example as defaults.
+ * Build one that also reads pacs-ai/build/env.example (our variables and their
+ * defaults) as defaults.
  */
 function createDotenvPlugin() {
   const Dotenv = require(require.resolve('dotenv-webpack', { paths: [APP_DIR] }));
-  const dotenv = new Dotenv({ defaults: path.join(APP_DIR, '.env.example') });
+  const dotenv = new Dotenv({ defaults: path.join(PACS_AI_DIR, 'build/env.example') });
   // APP_PUBLIC_TURNSTILE_SITE_KEY comes from pacsAiDefineValues() so Docker/CI
   // can pass it without exposing every variable of the build environment.
   delete dotenv.definitions['process.env.APP_PUBLIC_TURNSTILE_SITE_KEY'];
