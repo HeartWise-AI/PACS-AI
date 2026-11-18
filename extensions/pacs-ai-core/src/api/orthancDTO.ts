@@ -109,6 +109,11 @@ export interface RetrieveModalityStudyRequest {
 export interface RetrieveModalityStudyResponse {
   readonly id: string;
   readonly path: string;
+  // The series this job moves and its place in the retrieve order (0 = first,
+  // the series the viewer shows first). Absent on older servers.
+  readonly seriesInstanceUID?: string;
+  readonly seriesNumber?: string;
+  readonly order?: number;
 }
 
 export interface RemoveDICOMModalityRequest {
