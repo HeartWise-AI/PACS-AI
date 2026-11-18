@@ -64,7 +64,9 @@ window.config = {
     // PACS-AI: 75 (upstream lowered its default to 5 in 3.13). Our study
     // browser renders every thumbnail with WADO-RS through the API proxy
     // (thumbnailRendering 'wadors') and cardiac studies have up to ~50
-    // series; kept as on 3.11.1 until P3.5 measures load times with 5.
+    // series. P3.5 measured 5 against 75 on the server (p34-46596c475,
+    // median of 3): all 22 thumbnails of an XA study 9.7 s vs 8.4 s,
+    // all 24 of an echo study 11.1 s vs 7.3 s; first image not faster. Kept at 75.
     thumbnail: 75,
     // Prefetch number is dependent on the http protocol. For http 2 or
     // above, the number of requests can be go a lot higher.

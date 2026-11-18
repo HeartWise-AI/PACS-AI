@@ -182,3 +182,34 @@ Build `p33-9e7569ceb` on the MHI server.
 - Acceptance suite: 52 pass. The failures are 5 `visual.spec` comparisons (theme, fixed in P3.4), the chat-citation check (depends on the LLM answer; also fails on 3.11), and 2 specs (admin ingestion jobs, result badges) that pass when rerun alone (data timing in the full run). `viewer-behaviour` 4/4, including the "Series:" label after the display-set order fix.
 - AI results 1:1 against new references recorded on 2026-11-17 with the pre-migration viewer (`ai-predictions-3f3ffcd`), 8 models × 3 XA reference studies: **22/24 identical rendered results**. 20 of the 22 received the same series in a different order (see below). The 2 others (DeepRV-CLIP and DeepCORO-SYNTAX on XA_958801) were not run: their 3.11 reference request contains a different set of series ("first N" on 3.11 picked e.g. series 9 instead of the second series 8).
 - **Finding about 3.11 (production today):** the order of `seriesInstanceUIDs` sent to a model followed network completion of the series metadata requests and changed between runs; occasionally "first N" therefore selected a different set. 3.13 with our packages sends a deterministic order (OHIF `sortingCriteria`: series number, then series date/time, then SeriesInstanceUID; SR/SEG last), pinned by `runModelSeriesOrder.test.ts`. The acceptance check now requires the same set and records order differences; the identical results show the eight XA models are insensitive to series order.
+
+## P3.5 (rendering and data checks, 2026-11-18)
+
+Branch `wp/P3.5-checks` (draft PR into `integration/ohif-3.13`). Checked on the MHI server running `p34-46596c475` (3.13.14 + PACS-AI theme), Playwright 1.56.1 headless Chromium in Docker. No viewer code changed (no image). Studies by tag; the US reference studies (US_1, US_2, US_MAX) are no longer local and the PACS answers MISSING_RECORD for them, so US checks used a local echo study (tag `US_P35`, multi-frame cines) and the CT check a local cardiac CT (`CT_P35`).
+
+| # | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | XA and US cine | pass | Autoplay on open (XA and US). Frame rate set from Cine Rate: XA 15 (Cine Rate 15), echo 30 (Cine Rate 30, Frame Time 34 ms: Cine Rate wins as designed); OHIF's `FrameRate` holds 1000 / Cine Rate. Shown rate XA 13–14 fps once all frames are cached; the echo at 30 is capped by the headless browser, which paints ~21 frames/s, so shown rates are only comparable between builds measured the same way. Mouse-wheel stack scroll, Page keys (image ±1), arrow keys (series and back) on both; `viewer-behaviour` 4/4. |
+| 1 | `esc` | pass, behaviour change (f) | No clash with our keys (our bindings leave `esc` to OHIF's `cancelActiveOperation`). Escape during a length drawing ends the drawing at the pointer and keeps the measurement: cs3d 5.6.8 `LengthTool.cancel` completes a new annotation (contour tools discard theirs). On 3.11 `esc` was bound twice (`cancelMeasurement`, `rejectPreview`) and the later binding won, so Escape did nothing during a length drawing. |
+| 2 | Multi-frame XA through our proxy | pass | All `/api/proxy/orthanc/dicom-web/...` requests 200 (study/series QIDO, series metadata, 168 multi-frame `frames/<n>` requests on one study); no 401/403; frames render (59% non-black pixels in the viewport) and advance. |
+| 3 | Measurements | pass | Length drawn by click–click; "Track measurements for this series?" prompt, Yes; rows `measurement-table-row-*` with mm values in the tracked measurements panel. |
+| 4 | Encapsulated PDF (DOC) | pass | DOC series of XA_958801 opens `object[type=application/pdf]` with a blob URL; the blob is 239 kB starting `%PDF-`; bulk data `.../bulk/00420011` 200 through the authenticated proxy; no failure text. |
+| 5 | Stored AI results | pass | 8 stored results per XA reference study, all report-type (no model stores viewport overlays; only OHIF_ANNOTATIONS models draw on images, see 6). Report drawings render inside the result drawer (DeepCORO-JEPA: 12 images loaded, 4 SVG). Selected-view badges on the thumbnails (8 for DeepCORO-JEPA); `stored-results` 4/4. |
+| 6 | TotalSegmentator on CT | pass | One run (GPUs idle before). CT volume series (134 slices) selected alone in the series dialog; direct predict call 200; labelmap added in 35 s: one segmentation "TotalSegmentator - Task: Total", 48 segments with names and colours in the segmentation panel, coloured overlay on the slices (24% coloured pixels mid-volume). No page errors. |
+| 7 | Thumbnails | pass, 75 kept | All thumbnails visible (median of 3): XA_958801 (22) 8.4 s with `thumbnail: 75`, 9.7 s with 5; echo (24) 7.3 s vs 11.1 s (5 tested by serving a modified `app-config.js` to the test browser only). |
+| 8 | Load-time script | done | `tests/pacs-ai/load-time.spec.ts` (opt-in `PACS_AI_E2E_LOAD_TIME=1`). Verified against the 3.11 production frontend (`ai-predictions-3f3ffcd` static files served to the test browser by Playwright routing, live API): same thumbnail counts, all milestones found. |
+
+Load time on 3.13 (`p34-46596c475`, median of 3, new browser context each, after one unmeasured open):
+
+| Study | First image | All thumbnails | First cine advance | Shown cine fps |
+|---|---|---|---|---|
+| XA_958801 | 3.63 s | 8.43 s (22) | 3.85 s | 13.7 |
+| US_P35 (echo) | 3.08 s | 7.27 s (24) | 5.63 s | 13.3 |
+
+Existing specs on the server: `viewer-behaviour` 4/4, `stored-results` 4/4.
+
+Accepted behaviour changes, continued (for the owner):
+
+| # | Change | Note |
+|---|---|---|
+| f | `esc` during a length drawing ends it and keeps the measurement (3.11: no effect) | upstream cs3d tool semantics; delete with Backspace or the panel |

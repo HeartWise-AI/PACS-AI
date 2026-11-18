@@ -30,6 +30,9 @@ import path from 'node:path';
  *   PACS_AI_E2E_ALLOW_USER_PREFS=1   allow tests that change the test user's own preferences (restored after)
  *   PACS_AI_E2E_ALLOW_EXTRA_RUNS=1   allow the run-and-cancel check of jobs-and-notifications.spec
  *   PACS_AI_E2E_REGULAR_USER / _PASSWORD  a non-admin account for audience checks
+ *   PACS_AI_E2E_LOAD_TIME=1          run load-time.spec (viewer load time, printed as JSON)
+ *   PACS_AI_E2E_LOAD_TIME_STUDIES    tags it measures (default: the first XA and the first US tag)
+ *   PACS_AI_E2E_LOAD_TIME_REPS       measured opens per study (default 3; median reported)
  */
 
 export const SUITE_ROOT = path.resolve(__dirname, '..');
