@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@pacs-ai/ui';
-import closeIcon from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
+import closeIcon from '../assets/pacs/icons/close-inactive.png';
 import { ModelDetails } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 
 interface ModelFactsModalProps {

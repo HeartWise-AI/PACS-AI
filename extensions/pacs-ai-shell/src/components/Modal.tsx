@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import closeIcon from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
+import closeIcon from '../assets/pacs/icons/close-inactive.png';
 
 type ModalProps = {
   children?: React.ReactNode;

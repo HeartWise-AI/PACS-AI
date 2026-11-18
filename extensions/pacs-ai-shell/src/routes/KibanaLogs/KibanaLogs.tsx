@@ -14,7 +14,7 @@ import { AlertContext } from '../../alerts';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import chevronDownIcon from '../../assets/pacs/icons/chevron-down.png';
 import downloadIcon from '../../assets/pacs/icons/download-black.png';
-import closeInactive from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
+import closeInactive from '../../assets/pacs/icons/close-inactive.png';
 import chevronLefttIcon from '../../assets/pacs/icons/chevron-left.png';
 import chevronRightIcon from '../../assets/pacs/icons/chevron-right.png';
 import searchIcon from '../../assets/pacs/icons/search-black.png';

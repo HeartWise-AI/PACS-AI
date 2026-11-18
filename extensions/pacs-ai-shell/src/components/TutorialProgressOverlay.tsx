@@ -15,11 +15,11 @@ import {
   AddOnboardingModelQuestionnaireAnswersRequest,
   GetInferenceAvailableModelsResponse,
 } from '@pacs-ai/extension-core/src/api/inferenceDTO';
-import closeIcon from '@ohif/app/src/assets/pacs/icons/close-inactive.png';
-import checkActive from '@ohif/app/src/assets/pacs/icons/check-active.png';
-import checkInactive from '@ohif/app/src/assets/pacs/icons/check-inactive.png';
-import radioSelected from '@ohif/app/src/assets/pacs/icons/radio-selected.png';
-import radioUnselect from '@ohif/app/src/assets/pacs/icons/radio-unselect.png';
+import closeIcon from '../assets/pacs/icons/close-inactive.png';
+import checkActive from '../assets/pacs/icons/check-active.png';
+import checkInactive from '../assets/pacs/icons/check-inactive.png';
+import radioSelected from '../assets/pacs/icons/radio-selected.png';
+import radioUnselect from '../assets/pacs/icons/radio-unselect.png';
 import chevronUpIcon from '../assets/pacs/icons/chevron-up.png';
 import chevronRightIcon from '../assets/pacs/icons/chevron-right.png';
 import arrowShrink from '../assets/pacs/icons/arrow-shrink.png';
