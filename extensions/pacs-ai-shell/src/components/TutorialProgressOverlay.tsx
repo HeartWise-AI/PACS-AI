@@ -256,7 +256,7 @@ const TutorialProgressOverlay: React.FC = () => {
       try {
         const metaResp = await userRepository.GetUserMetadata();
         // support multiple possible response shapes from GetUserMetadata
-        const respData = (metaResp && (metaResp.data ?? metaResp)) || {};
+        const respData: any = (metaResp && (metaResp.data ?? metaResp)) || {};
         const rawProgress =
           respData.tutorialProgressStep ??
           respData.metadata?.tutorialProgressStep ??

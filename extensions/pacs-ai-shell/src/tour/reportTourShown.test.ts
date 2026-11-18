@@ -33,7 +33,10 @@ describe('reportTourShown', () => {
   });
 
   test('keeps the tour options, its own handlers and its steps', () => {
-    const ownShow = jest.fn();
+    const contexts: unknown[] = [];
+    const ownShow = jest.fn(function (this: unknown) {
+      contexts.push(this);
+    });
     const withShow = {
       ...tour,
       tourOptions: { defaultStepOptions: { when: { show: ownShow, hide: jest.fn() } } },
@@ -42,7 +45,7 @@ describe('reportTourShown', () => {
     const step = { id: 'x' };
     reporting.tourOptions.defaultStepOptions.when.show.call(step, 'arg');
     expect(ownShow).toHaveBeenCalledWith('arg');
-    expect(ownShow.mock.contexts[0]).toBe(step);
+    expect(contexts[0]).toBe(step);
     expect(reporting.tourOptions.defaultStepOptions.when.hide).toBe(
       withShow.tourOptions.defaultStepOptions.when.hide
     );

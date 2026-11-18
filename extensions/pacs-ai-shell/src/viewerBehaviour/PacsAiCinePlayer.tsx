@@ -19,12 +19,13 @@ function PacsAiCinePlayer({ className = '', ...props }: { className?: string; [k
   const placed = className.split(/\s+/).includes('bottom-3')
     ? className.replace(/(^|\s)bottom-3(?=\s|$)/, '$1bottom-8')
     : className;
-  return (
-    <CinePlayer
-      {...props}
-      className={`${placed} ${PACS_AI_CINE_PLAYER_CLASS}`.trim()}
-    />
-  );
+  // The props OHIF's cornerstone CinePlayer passes to the `cinePlayer`
+  // customization, unchanged.
+  const cinePlayerProps = {
+    ...props,
+    className: `${placed} ${PACS_AI_CINE_PLAYER_CLASS}`.trim(),
+  } as React.ComponentProps<typeof CinePlayer>;
+  return <CinePlayer {...cinePlayerProps} />;
 }
 
 export default PacsAiCinePlayer;

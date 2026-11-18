@@ -91,10 +91,13 @@ describe('study browser panels with the real ExtensionManager and PanelService',
       name: 'seriesList',
       label: 'Studies',
     });
-    // Our own panel module is registered too (for the P2.6 mode).
+    // Our own panel module is registered too (modes/pacs-ai names it).
     expect(
-      extensionManager.getModuleEntry('@pacs-ai/extension-inference.panelModule.trackedSeriesList')
-        ?.component
+      (
+        extensionManager.getModuleEntry(
+          '@pacs-ai/extension-inference.panelModule.trackedSeriesList'
+        ) as { component?: unknown } | undefined
+      )?.component
     ).toBe(PacsAiTrackedSeriesListPanel);
   });
 });
