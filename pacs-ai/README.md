@@ -1,6 +1,6 @@
 # PACS AI OHIF Viewer
 
-[![Based on OHIF Viewers v3.9.0](https://img.shields.io/badge/OHIF-v3.9.0-blue)](https://github.com/OHIF/Viewers)
+[![Based on OHIF Viewers v3.13.14](https://img.shields.io/badge/OHIF-v3.13.14-blue)](https://github.com/OHIF/Viewers)
 
 A powerful medical imaging viewer built on top of the OHIF platform, integrated with PACS AI capabilities.
 
@@ -13,8 +13,8 @@ Before running this repository, you need to have the PACS AI backend up and runn
 ### Requirements
 
 - [nvm (Node Version Manager)](https://github.com/nvm-sh/nvm) - Recommended for easy Node.js version management
-- Node.js 18.17.0
-- Yarn package manager
+- Node.js 24.22.2 (`.node-version`)
+- pnpm 12.8.1 (`packageManager` in `package.json`)
 
 ### Environment Variables
 
@@ -57,7 +57,7 @@ Before running this repository, you need to have the PACS AI backend up and runn
    Default configurations (no changes needed):
    ```
    PUBLIC_URL=/
-   APP_CONFIG=config/local_pacs_ai.js
+   APP_CONFIG=config/pacs-ai.js
    USE_HASH_ROUTER=false
    ```
 
@@ -89,6 +89,46 @@ No changes needed anymore! You only needed to setup the environment variables in
 4. **Access the viewer**
 
    Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
+
+## Upstream base and local changes
+
+The viewer is OHIF v3.13.14 (`pacs-ai/UPSTREAM_REF`) with the PACS-AI code in
+its own packages: `extensions/pacs-ai-{core,ui,theme,shell,inference,chat}`,
+`modes/pacs-ai`, and `pacs-ai/` (app config, build hook, Docker, scripts,
+docs). Upstream files are left as they are, except for the rows of the patch
+ledger. `pacs-ai/scripts/check-upstream-drift.sh --enforce --forbid-ohif-ui`
+checks this in CI (`pacs-ai-drift.yml`).
+
+Numbers on `integration/ohif-3.13` (P3.6, 2026-11-18, against
+`refs/upstream/v3.13.14`):
+
+| Measure | Value |
+|---|---:|
+| Modified upstream files | 15 (7 ledger + 8 expected) |
+| Ledger rows (limit 15) | 7 |
+| Unexplained files | 0 |
+| Theme-debt files | 0 |
+| Import-direction violations | 0 |
+
+Ledger rows (`pacs-ai/UPSTREAM_PATCHES.md`, patches in `pacs-ai/patches/`):
+
+| # | Upstream file | Why |
+|---|---|---|
+| 0001 | `.webpack/webpack.base.js` | build hook: build ID, Turnstile key, processing flags as defines |
+| 0002 | `platform/app/.webpack/webpack.pwa.js` | build hook: `version.json`, no service-worker manifest, our app config and env defaults |
+| 0003 | `rsbuild.config.ts` | the same hook for `dev:fast` |
+| 0004 | `extensions/default/src/DicomWebDataSource/utils/StaticWadoClient.ts` | bulk data URIs through the authenticated API proxy (retire at 3.14) |
+| 0005 | `.prettierignore` | Prettier formats our paths only |
+| 0006 | `platform/app/.env` | the deployment's build environment stays untracked |
+| 0007 | `platform/app/.gitignore` | keeps that file untracked |
+
+Expected files (generated or merged by design): root and app `package.json`,
+`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `platform/app/pluginConfig.json`
+(`@pacs-ai/mode-viewer` instead of `@ohif/mode-longitudinal`), and three
+workflow files (`playwright.yml` disabled, `codespell.yml.disabled`).
+
+How the migration was done and its results: `docs/ohif-upgrade/PLAN.md` and
+`docs/ohif-upgrade/STATUS.md`.
 
 ## Support
 
