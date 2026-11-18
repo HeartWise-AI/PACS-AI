@@ -135,6 +135,12 @@
   color: hsl(var(--primary));
 }
 
+/* Toggle-type toolbar buttons (getToggledClassName): #151815 hover. */
+/* @upstream platform/ui-next/src/utils/getToggledClassName.tsx :: '!text-foreground/80 hover:!bg-muted hover:text-highlight' */
+.theme-pacs-ai .hover\:\!bg-muted:hover {
+  background-color: hsl(var(--background)) !important;
+}
+
 /* Layout selector trigger (open state lime with dark icon), presets and grid. */
 /* @upstream platform/ui-next/src/components/LayoutSelector/LayoutSelector.tsx :: ? 'bg-background text-foreground/80' */
 .theme-pacs-ai .h-10.w-10.\!rounded-lg.bg-background.text-foreground\/80 {
