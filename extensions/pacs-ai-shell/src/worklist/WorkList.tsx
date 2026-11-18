@@ -55,6 +55,7 @@ import {
 } from './bulkStudySelection';
 import WorklistTopNavigation from './WorklistTopNavigation';
 import {
+  fetchLocalStudyUIDs,
   isTutorialSearch,
   pickTutorialStudy,
   WORKLIST_NO_STUDIES_TOUR_ID,
@@ -118,6 +119,8 @@ function WorkList() {
     'idle' | 'searching' | 'found' | 'empty'
   >('idle');
   const tutorialSearchStateRef = useRef(tutorialSearchState);
+  // Studies of the tutorial's modality already stored on the PACS-AI server.
+  const [tutorialLocalUIDs, setTutorialLocalUIDs] = useState<Set<string> | null>(null);
   tutorialSearchStateRef.current = tutorialSearchState;
   const tenantId = localStorage.getItem('tenantId') || '';
   const [searchParams] = useSearchParams();
@@ -557,6 +560,12 @@ function WorkList() {
 
     pendingRestoredSearchRef.current = false;
     const forTutorial = tutorialSearchStateRef.current === 'searching';
+    if (forTutorial) {
+      setTutorialLocalUIDs(null);
+      fetchLocalStudyUIDs(filterRef.current.modalitiesInStudy?.split('\\')[0] || 'XA').then(
+        setTutorialLocalUIDs
+      );
+    }
     fetchStudyListData()
       .then(count => {
         if (forTutorial) {
@@ -590,16 +599,23 @@ function WorkList() {
     ]);
   };
 
-  // The study the tutorial walks the user into: the most recent one (an old
-  // study may sit in the PACS archive and take minutes to retrieve). The list
-  // turns to its page.
+  // The study the tutorial walks the user into: the most recent one already
+  // stored on the PACS-AI server (see pickTutorialStudy). The list turns to
+  // its page.
   const tutorialStudyUID = useMemo(
     () =>
-      tutorialSearchState === 'found'
-        ? pickTutorialStudy(tableDataSource)?.studyInstanceUID ?? null
+      tutorialSearchState === 'found' && tutorialLocalUIDs
+        ? pickTutorialStudy(tableDataSource, tutorialLocalUIDs)?.studyInstanceUID ?? null
         : null,
-    [tableDataSource, tutorialSearchState]
+    [tableDataSource, tutorialLocalUIDs, tutorialSearchState]
   );
+  // Nothing the tutorial can open without a retrieve from the hospital PACS.
+  const tutorialFoundNothing =
+    tutorialSearchState === 'empty' ||
+    (tutorialSearchState === 'found' &&
+      tutorialLocalUIDs !== null &&
+      tableDataSource.length > 0 &&
+      !tutorialStudyUID);
   useEffect(() => {
     if (!tutorialStudyUID) {
       return;
@@ -1155,7 +1171,7 @@ function WorkList() {
               </div>
             )}
             <div className="mx-auto w-full overflow-x-auto">
-              {tutorialSearchState === 'empty' && (
+              {tutorialFoundNothing && (
                 <span
                   hidden
                   data-tour-id={WORKLIST_NO_STUDIES_TOUR_ID}

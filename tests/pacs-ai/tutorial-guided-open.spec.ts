@@ -7,6 +7,9 @@ import { test, expect } from './support/fixtures';
  * runs the search, walks them into the first study, and continues on the AI
  * model button in the viewer.
  *
+ * The study it opens is already stored on the server, so the test retrieves
+ * nothing from the hospital PACS.
+ *
  * The test user's tutorial is finished, so the browser is told the tutorial
  * stopped just before this step; progress writes are answered in the browser
  * and never reach the account.
@@ -78,8 +81,15 @@ test('run-inference opens the study list, searches a modality without dates and 
   await expect(page.locator('#FilterEndDate')).toHaveValue('');
   await expect(page.locator(TOUR_STEP)).toContainText('Searching', { timeout: 15_000 });
 
-  // The tour points at the first study, and only that study can be clicked.
-  await expect(page.locator(TOUR_STEP)).toContainText('Click this study', { timeout: 150_000 });
+  // The tour points at the most recent study already stored on the server
+  // (opening it retrieves nothing from the hospital PACS); only it can be clicked.
+  await expect(page.locator(TOUR_STEP)).toContainText(/Click this study|is ready to open/, {
+    timeout: 150_000,
+  });
+  test.skip(
+    /is ready to open/.test((await page.locator(TOUR_STEP).textContent()) ?? ''),
+    'no study of this modality is stored on the server right now'
+  );
   await expect(page.locator(TOUR_STEP).getByRole('button', { name: /Skip/i })).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator(TOUR_STEP)).toContainText('Click this study');

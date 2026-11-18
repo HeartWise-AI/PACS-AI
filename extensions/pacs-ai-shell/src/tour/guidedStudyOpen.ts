@@ -1,3 +1,4 @@
+import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
 import { modalityOptions } from '../worklist/modalityOptions';
 
 /**
@@ -57,13 +58,20 @@ type StudyWhen = { studyInstanceUID: string; studyDate?: string | null; studyTim
 
 /**
  * The study the tutorial opens: the most recent one by study date and time
- * (DICOM YYYYMMDD and HHMMSS sort as text). An old study may sit in the
- * PACS archive and take minutes to retrieve.
+ * (DICOM YYYYMMDD and HHMMSS sort as text) among those already stored on the
+ * PACS-AI server (`localUIDs`), so opening it retrieves nothing from the
+ * hospital PACS. Null when none of the studies is stored.
  */
-export function pickTutorialStudy<T extends StudyWhen>(studies: T[] = []): T | null {
+export function pickTutorialStudy<T extends StudyWhen>(
+  studies: T[] = [],
+  localUIDs: Set<string> = new Set()
+): T | null {
   let newest: T | null = null;
   let newestKey = '';
   for (const study of studies) {
+    if (!localUIDs.has(study.studyInstanceUID)) {
+      continue;
+    }
     const key = `${(study.studyDate || '').trim()}${(study.studyTime || '').trim()}`;
     if (!newest || key > newestKey) {
       newest = study;
@@ -71,6 +79,47 @@ export function pickTutorialStudy<T extends StudyWhen>(studies: T[] = []): T | n
     }
   }
   return newest;
+}
+
+/** The local PACS as the viewer reads it (see the `dicomweb` data source). */
+export const LOCAL_QIDO_STUDIES_PATH = '/proxy/orthanc/dicom-web/studies';
+const LOCAL_LOOKUP_LIMIT = '500';
+const LOCAL_LOOKUP_TIMEOUT_MS = 15_000;
+const TAG_STUDY_INSTANCE_UID = '0020000D';
+
+type HTTPGet = (
+  url: string,
+  config: { headers: Record<string, string>; params: Record<string, string>; timeout: number }
+) => Promise<{ data?: unknown }>;
+
+/**
+ * UIDs of the studies of `modality` already stored on the PACS-AI server.
+ * The tutorial opens one of these: opening it needs no retrieve from the
+ * hospital PACS, where an archived study can hold Orthanc's retrieve slots
+ * for minutes. Resolves with an empty set when the lookup fails.
+ */
+export async function fetchLocalStudyUIDs(
+  modality: string,
+  get: HTTPGet = (url, config) => Api().get(url, config)
+): Promise<Set<string>> {
+  try {
+    const response = await get(LOCAL_QIDO_STUDIES_PATH, {
+      headers: { Accept: 'application/dicom+json' },
+      params: { ModalitiesInStudy: modality, limit: LOCAL_LOOKUP_LIMIT },
+      timeout: LOCAL_LOOKUP_TIMEOUT_MS,
+    });
+    const studies = Array.isArray(response?.data) ? response.data : [];
+    const uids = new Set<string>();
+    studies.forEach(study => {
+      const value = study?.[TAG_STUDY_INSTANCE_UID]?.Value?.[0];
+      if (typeof value === 'string' && value.trim()) {
+        uids.add(value.trim());
+      }
+    });
+    return uids;
+  } catch (error) {
+    return new Set();
+  }
 }
 
 /** Study list with the modality selected, the dates cleared and the search run. */

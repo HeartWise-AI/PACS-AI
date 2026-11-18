@@ -1050,7 +1050,7 @@ const TutorialProgressOverlay: React.FC = () => {
       id: 'open-study-none',
       title,
       text: t(
-        'No {{modality}} study was found. Choose another modality or dates, search, and open a study: the tutorial continues in the viewer.',
+        'No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself: the tutorial continues in the viewer.',
         { modality }
       ),
       buttons: [

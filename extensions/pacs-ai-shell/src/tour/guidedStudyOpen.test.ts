@@ -1,5 +1,6 @@
 import {
   buildTutorialWorklistPath,
+  fetchLocalStudyUIDs,
   clearPendingTutorialStep,
   getPendingTutorialStep,
   isTutorialSearch,
@@ -103,17 +104,55 @@ describe('waitForElement', () => {
 });
 
 describe('pickTutorialStudy', () => {
-  it('picks the most recent study by date and time', () => {
-    const studies = [
-      { studyInstanceUID: 'old', studyDate: '20190101', studyTime: '235959' },
-      { studyInstanceUID: 'new-morning', studyDate: '20261118', studyTime: '080000' },
-      { studyInstanceUID: 'new-noon', studyDate: '20261118', studyTime: '120000.5' },
-      { studyInstanceUID: 'no-date', studyDate: '', studyTime: '' },
-    ];
-    expect(pickTutorialStudy(studies)?.studyInstanceUID).toBe('new-noon');
+  const studies = [
+    { studyInstanceUID: 'old', studyDate: '20190101', studyTime: '235959' },
+    { studyInstanceUID: 'new-morning', studyDate: '20261118', studyTime: '080000' },
+    { studyInstanceUID: 'new-noon', studyDate: '20261118', studyTime: '120000.5' },
+    { studyInstanceUID: 'no-date', studyDate: '', studyTime: '' },
+  ];
+
+  it('picks the most recent study already stored locally', () => {
+    expect(pickTutorialStudy(studies, new Set(['old', 'new-morning', 'new-noon']))?.studyInstanceUID).toBe(
+      'new-noon'
+    );
+    expect(pickTutorialStudy(studies, new Set(['old', 'new-morning']))?.studyInstanceUID).toBe(
+      'new-morning'
+    );
   });
 
-  it('returns null for no studies', () => {
-    expect(pickTutorialStudy([])).toBeNull();
+  it('returns null when no study is stored locally', () => {
+    expect(pickTutorialStudy(studies, new Set(['elsewhere']))).toBeNull();
+    expect(pickTutorialStudy(studies)).toBeNull();
+    expect(pickTutorialStudy([], new Set(['old']))).toBeNull();
+  });
+});
+
+describe('fetchLocalStudyUIDs', () => {
+  it('asks the local DICOMweb server for the modality and reads the study UIDs', async () => {
+    const get = jest.fn().mockResolvedValue({
+      data: [
+        { '0020000D': { vr: 'UI', Value: ['1.2.3'] } },
+        { '0020000D': { vr: 'UI', Value: [' 1.2.4 '] } },
+        { '00080020': { vr: 'DA', Value: ['20261118'] } },
+      ],
+    });
+    const uids = await fetchLocalStudyUIDs('US', get);
+    expect(Array.from(uids)).toEqual(['1.2.3', '1.2.4']);
+    expect(get).toHaveBeenCalledWith(
+      '/proxy/orthanc/dicom-web/studies',
+      expect.objectContaining({
+        headers: { Accept: 'application/dicom+json' },
+        params: expect.objectContaining({ ModalitiesInStudy: 'US' }),
+      })
+    );
+  });
+
+  it('resolves with no studies when the lookup fails or answers oddly', async () => {
+    await expect(fetchLocalStudyUIDs('XA', jest.fn().mockRejectedValue(new Error('down')))).resolves.toEqual(
+      new Set()
+    );
+    await expect(fetchLocalStudyUIDs('XA', jest.fn().mockResolvedValue({ data: {} }))).resolves.toEqual(
+      new Set()
+    );
   });
 });
