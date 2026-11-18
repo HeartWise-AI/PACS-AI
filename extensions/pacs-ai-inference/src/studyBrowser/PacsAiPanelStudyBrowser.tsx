@@ -28,7 +28,8 @@ import { SelectedViewsLegend } from '../viewerResults/SelectedViewsLegend';
 import { buildSelectedViewBadges } from '../viewerResults/viewerResultsModel';
 import { ViewerStudyRefresh } from '../studyRefresh/ViewerStudyRefresh';
 
-const { sortStudyInstances, formatDate, createStudyBrowserTabs, thumbnailNoImageModalities } = utils;
+const { sortStudyInstances, formatDate, createStudyBrowserTabs, thumbnailNoImageModalities } =
+  utils;
 
 /**
  * Study Browser component that displays and manages studies and their display sets

@@ -37,7 +37,9 @@ describe('inference toolbar module', () => {
   it('keeps the run-model button when the mode registers its toolbar afterwards', () => {
     const extensionManager = {
       modules: {
-        toolbarModule: [{ extensionId: '@pacs-ai/extension-inference', module: getToolbarModule() }],
+        toolbarModule: [
+          { extensionId: '@pacs-ai/extension-inference', module: getToolbarModule() },
+        ],
       },
     };
     const toolbarService = new ToolbarService(

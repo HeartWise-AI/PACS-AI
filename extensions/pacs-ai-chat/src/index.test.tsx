@@ -118,6 +118,8 @@ describe('@pacs-ai/extension-chat', () => {
   });
 
   it('does nothing on mode entry without a toolbar service', () => {
-    expect(() => pacsAiChatExtension.onModeEnter({ servicesManager: { services: {} } })).not.toThrow();
+    expect(() =>
+      pacsAiChatExtension.onModeEnter({ servicesManager: { services: {} } })
+    ).not.toThrow();
   });
 });
