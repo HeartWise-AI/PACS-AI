@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { isStudyGrowing } from '../studyRefresh/studyGrowingStore';
@@ -73,23 +73,26 @@ const advance = (ms: number) =>
   });
 
 describe('ViewerRunningJobsIndicator', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let props: ViewerRunningJobsIndicatorProps;
 
   async function render(overrides: Partial<ViewerRunningJobsIndicatorProps> = {}) {
     props = { ...props, ...overrides };
     await act(async () => {
       if (renderer) {
-        renderer.update(<ViewerRunningJobsIndicator {...props} />);
+        renderer.rerender(<ViewerRunningJobsIndicator {...props} />);
       } else {
-        renderer = TestRenderer.create(<ViewerRunningJobsIndicator {...props} />);
+        renderer = rtlRender(<ViewerRunningJobsIndicator {...props} />);
       }
     });
     await settle();
   }
 
-  const byTestId = (id: string) => renderer!.root.findAllByProps({ 'data-testid': id });
-  const elapsed = () => byTestId('running-jobs-elapsed').map(node => node.children.join(''));
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  const elapsed = () => byTestId('running-jobs-elapsed').map(node => node.textContent);
+  // The component rendered nothing at all.
+  const renderedNothing = () => renderer!.container.childNodes.length === 0;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -105,14 +108,14 @@ describe('ViewerRunningJobsIndicator', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     jest.useRealTimers();
   });
 
   test('shows nothing and runs no timer while idle', async () => {
     await render();
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
     expect(jest.getTimerCount()).toBe(0);
   });
 
@@ -132,7 +135,7 @@ describe('ViewerRunningJobsIndicator', () => {
     const run = pendingRun({ requestedAt: START - 30_000 });
     const onOpenResult = jest.fn();
     await render({ pendingRuns: [run], onOpenResult });
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('queued');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('queued');
 
     await advance(10_000);
     const result = viewerResult();
@@ -140,24 +143,26 @@ describe('ViewerRunningJobsIndicator', () => {
       pendingRuns: [],
       endedRuns: [{ run, outcome: 'completed', result, endedAt: Date.now(), foreground: false }],
     });
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('done');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('done');
     expect(byTestId('running-jobs-spinner')).toHaveLength(0);
 
     // The elapsed time is frozen at the end of the run.
     await advance(3000);
     expect(elapsed()).toEqual(['00:40']);
-    act(() => byTestId('running-jobs-open-result')[0].props.onClick());
+    act(() => {
+      fireEvent.click(byTestId('running-jobs-open-result')[0]);
+    });
     expect(onOpenResult).toHaveBeenCalledWith(result);
 
     await advance(3000);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
     expect(jest.getTimerCount()).toBe(0);
   });
 
   test('is hidden while the foreground pop-up shows the same run', async () => {
     const run = pendingRun();
     await render({ pendingRuns: [run], foregroundRun: run });
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
 
     // "Continue in background".
     await render({ foregroundRun: null });
@@ -168,10 +173,10 @@ describe('ViewerRunningJobsIndicator', () => {
     const repo = processingRepository([activeSummary()]);
     await render({ processingRepository: repo, processingPollIntervalMs: 5000 });
 
-    const text = JSON.stringify(renderer!.toJSON());
+    const text = renderer!.container.innerHTML;
     expect(text).toContain('Automatic analysis');
     expect(text).toContain('2 of 7 models');
-    expect(byTestId('running-jobs-progress')[0].props['aria-valuenow']).toBe(2);
+    expect(byTestId('running-jobs-progress')[0].getAttribute('aria-valuenow')).toBe('2');
     // The study identifier is never rendered.
     expect(text).not.toContain(STUDY_UID);
 
@@ -185,9 +190,9 @@ describe('ViewerRunningJobsIndicator', () => {
       })
     );
     await advance(5000);
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('done');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('done');
     await advance(6000);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
   });
 
   test('does not query processing status without access to it', async () => {
@@ -203,16 +208,18 @@ describe('ViewerRunningJobsIndicator', () => {
     await render({
       pendingRuns: [pendingRun(), pendingRun({ key: 'container-2', runId: 'run-2' })],
     });
-    act(() => byTestId('running-jobs-collapse')[0].props.onClick());
+    act(() => {
+      fireEvent.click(byTestId('running-jobs-collapse')[0]);
+    });
 
     expect(byTestId('running-jobs-row')).toHaveLength(0);
-    expect(byTestId('running-jobs-pill')[0].children.length).toBeGreaterThan(0);
-    expect(JSON.stringify(renderer!.toJSON())).toContain(
+    expect(byTestId('running-jobs-pill')[0].childNodes.length).toBeGreaterThan(0);
+    expect(renderer!.container.innerHTML).toContain(
       english.RunningJobsCountRunning.replace('{{total}}', '2')
     );
     expect(window.localStorage.getItem(RUNNING_JOBS_COLLAPSED_STORAGE_KEY)).toBe('1');
 
-    act(() => renderer!.unmount());
+    renderer!.unmount();
     renderer = null;
     await render();
     expect(byTestId('running-jobs-pill')).toHaveLength(1);
@@ -221,11 +228,13 @@ describe('ViewerRunningJobsIndicator', () => {
   test('stays closed until a new run starts', async () => {
     const first = pendingRun();
     await render({ pendingRuns: [first] });
-    act(() => byTestId('running-jobs-close')[0].props.onClick());
-    expect(renderer!.toJSON()).toBeNull();
+    act(() => {
+      fireEvent.click(byTestId('running-jobs-close')[0]);
+    });
+    expect(renderedNothing()).toBe(true);
 
     await advance(20_000);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
 
     await render({
       pendingRuns: [
@@ -256,7 +265,7 @@ describe('ViewerRunningJobsIndicator', () => {
     );
     await advance(5_000);
     expect(isStudyGrowing(STUDY_UID)).toBe(true);
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     expect(isStudyGrowing(STUDY_UID)).toBe(false);
   });

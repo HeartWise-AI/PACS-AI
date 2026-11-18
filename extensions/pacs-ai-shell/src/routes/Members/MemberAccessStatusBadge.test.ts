@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import MemberAccessStatusBadge from './MemberAccessStatusBadge';
 
@@ -13,12 +13,12 @@ describe('member access status badge', () => {
     [UserAccessState.SUSPENDED, 'Suspended'],
     [undefined, 'Unknown'],
   ])('renders %s with visible and accessible status text', (accessState, label) => {
-    const renderer = TestRenderer.create(
-      React.createElement(MemberAccessStatusBadge, { accessState })
-    );
-    const badge = renderer.root.findByType('span');
+    const { container } = render(React.createElement(MemberAccessStatusBadge, { accessState }));
+    const spans = container.querySelectorAll('span');
+    expect(spans).toHaveLength(1);
+    const badge = spans[0];
 
-    expect(badge.children.join('')).toBe(label);
-    expect(badge.props['aria-label']).toBe(`Access Status: ${label}`);
+    expect(badge.textContent).toBe(label);
+    expect(badge.getAttribute('aria-label')).toBe(`Access Status: ${label}`);
   });
 });

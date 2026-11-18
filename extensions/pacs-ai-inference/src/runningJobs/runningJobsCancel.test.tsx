@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/AIModelButton.json';
 import { StudyProcessingRESTError } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
@@ -62,7 +62,7 @@ function deferred<T>() {
 }
 
 describe('useRunningJobsCancel', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let hook: RunningJobsCancel | null = null;
   const row = jobRow({ id: 'processing:run-1', cancelRunId: 'run-1' });
 
@@ -76,13 +76,11 @@ describe('useRunningJobsCancel', () => {
   }
 
   function render(cancel: (row: RunningJobRow) => Promise<'ended' | 'stillRunning'>) {
-    act(() => {
-      renderer = TestRenderer.create(<Probe cancel={cancel} />);
-    });
+    renderer = rtlRender(<Probe cancel={cancel} />);
   }
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     hook = null;
   });
@@ -172,7 +170,7 @@ describe('useRunningJobsCancel', () => {
     render(jest.fn().mockReturnValue(pending.promise));
     act(() => hook!.request(row));
     act(() => hook!.confirm(row));
-    act(() => renderer!.unmount());
+    renderer!.unmount();
     renderer = null;
     const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     await act(async () => {
@@ -211,7 +209,7 @@ describe('useRunningJobsCancel', () => {
 });
 
 describe('cancelling from the running-jobs card', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let props: ViewerRunningJobsIndicatorProps;
 
   // Three of six models done; the others wait for the exam to finish.
@@ -277,17 +275,23 @@ describe('cancelling from the running-jobs card', () => {
     props = { ...props, ...overrides };
     await act(async () => {
       if (renderer) {
-        renderer.update(<ViewerRunningJobsIndicator {...props} />);
+        renderer.rerender(<ViewerRunningJobsIndicator {...props} />);
       } else {
-        renderer = TestRenderer.create(<ViewerRunningJobsIndicator {...props} />);
+        renderer = rtlRender(<ViewerRunningJobsIndicator {...props} />);
       }
     });
     await settle();
   }
 
-  const byTestId = (id: string) => renderer!.root.findAllByProps({ 'data-testid': id });
-  const rendered = () => JSON.stringify(renderer!.toJSON());
-  const click = (id: string) => act(async () => byTestId(id)[0].props.onClick());
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  const rendered = () => renderer!.container.innerHTML;
+  const click = (id: string) =>
+    act(async () => {
+      fireEvent.click(byTestId(id)[0]);
+    });
+  // The component rendered nothing at all.
+  const renderedNothing = () => renderer!.container.childNodes.length === 0;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -300,7 +304,7 @@ describe('cancelling from the running-jobs card', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     jest.useRealTimers();
   });
@@ -313,14 +317,14 @@ describe('cancelling from the running-jobs card', () => {
     expect(rendered()).toContain('Waiting for the exam to finish');
     expect(rendered()).toContain('3 of 6 models');
     const [button] = byTestId('running-jobs-cancel');
-    expect(button.props.title).toBe('Cancel analysis');
-    expect(button.props['aria-label']).toBe('Cancel analysis: Automatic analysis');
+    expect(button.getAttribute('title')).toBe('Cancel analysis');
+    expect(button.getAttribute('aria-label')).toBe('Cancel analysis: Automatic analysis');
     expect(byTestId('running-jobs-cancel-confirm')).toHaveLength(0);
 
     // Step 1: the confirmation opens inside the card; nothing is sent yet.
     await click('running-jobs-cancel');
     const [confirm] = byTestId('running-jobs-cancel-confirm');
-    expect(confirm.props.role).toBe('group');
+    expect(confirm.getAttribute('role')).toBe('group');
     expect(rendered()).toContain('Cancel this analysis?');
     expect(rendered()).toContain('Models already finished keep their results.');
     expect(byTestId('running-jobs-cancel')).toHaveLength(0);
@@ -336,7 +340,7 @@ describe('cancelling from the running-jobs card', () => {
 
     // A brief "Cancelled" end state: no button, no bar, nothing counted.
     const [row] = byTestId('running-jobs-row');
-    expect(row.props['data-state']).toBe('cancelled');
+    expect(row.getAttribute('data-state')).toBe('cancelled');
     expect(rendered()).toContain('Cancelled');
     expect(rendered()).not.toContain('Waiting for the exam to finish');
     expect(byTestId('running-jobs-cancel')).toHaveLength(0);
@@ -347,9 +351,9 @@ describe('cancelling from the running-jobs card', () => {
     // The run is looked at again, then its row leaves like any ended row.
     repo.loadProcessingRunDetail.mockResolvedValue(cancelledRun());
     await advance(5000);
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('cancelled');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('cancelled');
     await advance(6000);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
     // Neither the study nor a patient identifier was rendered or sent.
     expect(repo.cancelProcessingRun.mock.calls.flat().join()).not.toContain(STUDY_UID);
   });
@@ -364,7 +368,7 @@ describe('cancelling from the running-jobs card', () => {
     expect(repo.cancelProcessingRun).not.toHaveBeenCalled();
     expect(byTestId('running-jobs-cancel-confirm')).toHaveLength(0);
     expect(byTestId('running-jobs-cancel')).toHaveLength(1);
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('queued');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('queued');
     expect(rendered()).toContain('Waiting for the exam to finish');
   });
 
@@ -378,8 +382,10 @@ describe('cancelling from the running-jobs card', () => {
     await click('running-jobs-cancel-yes');
 
     expect(rendered()).toContain('Cancelling…');
-    expect(byTestId('running-jobs-cancel-yes')[0].props.disabled).toBe(true);
-    expect(byTestId('running-jobs-cancel-no')[0].props.disabled).toBe(true);
+    expect((byTestId('running-jobs-cancel-yes')[0] as HTMLButtonElement).disabled).toBe(true);
+    expect((byTestId('running-jobs-cancel-no')[0] as HTMLButtonElement).disabled).toBe(true);
+    // A second click on the disabled button does not submit again (the hook's own guard
+    // against a second confirm while submitting is covered by "submits once" above).
     await click('running-jobs-cancel-yes');
     expect(repo.cancelProcessingRun).toHaveBeenCalledTimes(1);
 
@@ -387,7 +393,7 @@ describe('cancelling from the running-jobs card', () => {
       pending.resolve(cancelledRun());
     });
     await settle();
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('cancelled');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('cancelled');
   });
 
   test('keeps the row and shows an inline message when the cancellation fails', async () => {
@@ -400,9 +406,9 @@ describe('cancelling from the running-jobs card', () => {
     await settle();
 
     const [error] = byTestId('running-jobs-cancel-error');
-    expect(error.props.role).toBe('alert');
+    expect(error.getAttribute('role')).toBe('alert');
     expect(rendered()).toContain('Could not cancel. Try again.');
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('queued');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('queued');
     expect(rendered()).toContain('Waiting for the exam to finish');
     // The button is back for another try, which succeeds.
     repo.cancelProcessingRun.mockResolvedValue(cancelledRun());
@@ -410,7 +416,7 @@ describe('cancelling from the running-jobs card', () => {
     expect(byTestId('running-jobs-cancel-error')).toHaveLength(0);
     await click('running-jobs-cancel-yes');
     await settle();
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('cancelled');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('cancelled');
   });
 
   test('a backend without the endpoint leaves an error, not a broken card', async () => {
@@ -451,7 +457,7 @@ describe('cancelling from the running-jobs card', () => {
     expect(rendered()).toContain('Already computing: it can no longer be cancelled.');
     // The attempt triggered another look at the run without waiting for the poll.
     expect(repo.loadProcessingRunDetail.mock.calls.length).toBeGreaterThan(detailCalls);
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('running');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('running');
     expect(byTestId('running-jobs-cancel')).toHaveLength(0);
   });
 
@@ -471,7 +477,7 @@ describe('cancelling from the running-jobs card', () => {
     });
     repo.cancelProcessingRun.mockResolvedValue(stillRunning);
     await render({ processingRepository: repo });
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('running');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('running');
     repo.loadProcessingRunDetail.mockResolvedValue(stillRunning);
 
     await click('running-jobs-cancel');
@@ -479,7 +485,7 @@ describe('cancelling from the running-jobs card', () => {
     await settle();
 
     // Not shown as cancelled: a model is still computing and will be recorded.
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('running');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('running');
     expect(byTestId('running-jobs-cancel')).toHaveLength(0);
     expect(byTestId('running-jobs-cancel-error')).toHaveLength(0);
     expect(byTestId('running-jobs-spinner').length).toBeGreaterThan(0);
@@ -511,7 +517,7 @@ describe('cancelling from the running-jobs card', () => {
     );
     await render({ processingRepository: repo });
 
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('running');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('running');
     expect(byTestId('running-jobs-cancel')).toHaveLength(0);
   });
 
@@ -539,7 +545,7 @@ describe('cancelling from the running-jobs card', () => {
       ]),
       onRunCancelled,
     });
-    expect(byTestId('running-jobs-cancel')[0].props['aria-label']).toBe(
+    expect(byTestId('running-jobs-cancel')[0].getAttribute('aria-label')).toBe(
       'Cancel analysis: DeepCORO'
     );
 
@@ -552,7 +558,7 @@ describe('cancelling from the running-jobs card', () => {
     expect(cancelProcessingRun).toHaveBeenCalledWith('run-1');
     expect(onRunCancelled).toHaveBeenCalledTimes(1);
     expect(onRunCancelled).toHaveBeenCalledWith(run);
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('cancelled');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('cancelled');
 
     // Its owner stops tracking it and reports it ended as cancelled.
     await render({
@@ -562,9 +568,9 @@ describe('cancelling from the running-jobs card', () => {
         { run, outcome: 'cancelled', result: null, endedAt: Date.now(), foreground: false },
       ],
     });
-    expect(byTestId('running-jobs-row')[0].props['data-state']).toBe('cancelled');
+    expect(byTestId('running-jobs-row')[0].getAttribute('data-state')).toBe('cancelled');
     await advance(6000);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderedNothing()).toBe(true);
   });
 
   test('does not offer cancel for a viewer run the backend calls not cancellable', async () => {
@@ -586,10 +592,10 @@ describe('cancelling from the running-jobs card', () => {
     });
 
     const modelRow = byTestId('running-jobs-row').find(
-      row => row.props['data-state'] === 'running'
+      row => row.getAttribute('data-state') === 'running'
     );
     expect(modelRow).toBeDefined();
-    expect(modelRow!.findAllByProps({ 'data-testid': 'running-jobs-cancel' })).toHaveLength(0);
+    expect(modelRow!.querySelectorAll('[data-testid="running-jobs-cancel"]')).toHaveLength(0);
   });
 
   test('the confirmation reads in French', async () => {
@@ -598,7 +604,7 @@ describe('cancelling from the running-jobs card', () => {
     repo.cancelProcessingRun.mockRejectedValue(new StudyProcessingRESTError('x', 500));
     await render({ processingRepository: repo });
 
-    expect(byTestId('running-jobs-cancel')[0].props.title).toBe("Annuler l'analyse");
+    expect(byTestId('running-jobs-cancel')[0].getAttribute('title')).toBe("Annuler l'analyse");
     await click('running-jobs-cancel');
     expect(rendered()).toContain('Annuler cette analyse ?');
     expect(rendered()).toContain('Oui, annuler');

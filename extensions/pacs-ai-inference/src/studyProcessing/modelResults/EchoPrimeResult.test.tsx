@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import { parseEchoPrimeResultPayload } from './echoPrimeContract';
 import { echoPrimeResultFixtures } from './echoPrimeFixtures';
 import { EchoPrimeResult } from './EchoPrimeResult';
@@ -10,39 +10,20 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
+}
+
 describe('EchoPrimeResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test.each(['successfulV1', 'partialV1'] as const)(
     'renders responsive structured output for the %s fixture',
     fixture => {
       const payload = parseEchoPrimeResultPayload(echoPrimeResultFixtures[fixture])!;
-      act(() => {
-        renderer = TestRenderer.create(
-          <EchoPrimeResult
-            payload={payload}
-            modelName="EchoPrime"
-            modelVersion="1.2.0"
-            status="completed"
-          />
-        );
-      });
-
-      expect(renderer!.root.findAllByProps({ 'data-testid': 'echoprime-result' })).toHaveLength(1);
-      expect(renderer!.root.findAllByType('dl').length).toBeGreaterThan(0);
-      expect(JSON.stringify(renderer!.toJSON())).toContain('Completed');
-    }
-  );
-
-  test('shows report sections, units, threshold classifications, and null-safe values', () => {
-    const payload = parseEchoPrimeResultPayload(echoPrimeResultFixtures.successfulV1)!;
-    act(() => {
-      renderer = TestRenderer.create(
+      const { container } = render(
         <EchoPrimeResult
           payload={payload}
           modelName="EchoPrime"
@@ -50,9 +31,25 @@ describe('EchoPrimeResult', () => {
           status="completed"
         />
       );
-    });
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+      expect(container.querySelectorAll('[data-testid="echoprime-result"]')).toHaveLength(1);
+      expect(container.querySelectorAll('dl').length).toBeGreaterThan(0);
+      expect(renderedContent(container)).toContain('Completed');
+    }
+  );
+
+  test('shows report sections, units, threshold classifications, and null-safe values', () => {
+    const payload = parseEchoPrimeResultPayload(echoPrimeResultFixtures.successfulV1)!;
+    const { container } = render(
+      <EchoPrimeResult
+        payload={payload}
+        modelName="EchoPrime"
+        modelVersion="1.2.0"
+        status="completed"
+      />
+    );
+
+    const rendered = renderedContent(container);
     expect(rendered).toContain('Left Ventricle');
     expect(rendered).toContain('59.0 %');
     expect(rendered).toContain('22.5 mmHg');
@@ -62,18 +59,16 @@ describe('EchoPrimeResult', () => {
 
   test('renders unknown and nested partial fields without throwing', () => {
     const payload = parseEchoPrimeResultPayload(echoPrimeResultFixtures.partialV1)!;
-    act(() => {
-      renderer = TestRenderer.create(
-        <EchoPrimeResult
-          payload={payload}
-          modelName="EchoPrime"
-          modelVersion="1.2.0"
-          status="completed"
-        />
-      );
-    });
+    const { container } = render(
+      <EchoPrimeResult
+        payload={payload}
+        modelName="EchoPrime"
+        modelVersion="1.2.0"
+        status="completed"
+      />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).toContain('Future echo metric');
     expect(rendered).toContain('44.0%');
     expect(rendered).toContain('Unknown nested value');

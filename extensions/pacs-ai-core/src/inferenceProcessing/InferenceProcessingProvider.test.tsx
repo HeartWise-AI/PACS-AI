@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import InferenceProcessingProvider, { useInferenceProcessing } from './InferenceProcessingProvider';
 import { studyProcessingSummaryFixtures } from '../studyProcessing/fixtures';
 import type { StudyProcessingNotificationTransition } from '../studyProcessing/notificationTransitions';
@@ -87,7 +87,7 @@ async function flush() {
 }
 
 describe('InferenceProcessingProvider: notification study labels', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
   let context: ReturnType<typeof useInferenceProcessing>;
 
   function Probe() {
@@ -100,7 +100,7 @@ describe('InferenceProcessingProvider: notification study labels', () => {
     mockFetchStudyNotificationMetadata.mockReset();
     localStorage.setItem('sessionToken', 'session-token');
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <InferenceProcessingProvider>
           <Probe />
         </InferenceProcessingProvider>

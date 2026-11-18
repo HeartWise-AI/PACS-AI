@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import {
   StudyProcessingProvider,
   useStudyProcessing,
@@ -13,7 +13,7 @@ import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyPr
 import { useVisibleStudyProcessingSnapshot } from './useVisibleStudyProcessingSnapshot';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 let retryVisibleSnapshot: () => void;
 const silentTelemetry: StudyProcessingRolloutTelemetry = {
   recordSnapshotFailure: () => undefined,
@@ -52,7 +52,7 @@ function providerWithHarness(props: HarnessProps) {
 }
 
 function renderHarness(props: HarnessProps) {
-  renderer = TestRenderer.create(providerWithHarness(props));
+  renderer = render(providerWithHarness(props));
 }
 
 function deferred<T>() {
@@ -196,7 +196,7 @@ describe('useVisibleStudyProcessingSnapshot', () => {
     });
 
     await act(async () => {
-      renderer.update(
+      renderer.rerender(
         providerWithHarness({
           enabled: true,
           studyInstanceUIDs: ['second-page-study'],
@@ -248,7 +248,7 @@ describe('useVisibleStudyProcessingSnapshot', () => {
 
     const fixtureTransport = { loadVisibleStudySnapshot: jest.fn().mockResolvedValue([]) };
     await act(async () => {
-      renderer.update(
+      renderer.rerender(
         providerWithHarness({
           enabled: true,
           fixtureMode: true,

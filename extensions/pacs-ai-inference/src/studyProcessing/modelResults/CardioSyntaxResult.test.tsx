@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { CardioSyntaxResult } from './CardioSyntaxResult';
 import { cardioSyntaxResultFixtures } from './cardioSyntaxFixtures';
 
@@ -9,23 +9,22 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
+}
+
 describe('CardioSyntaxResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('presents all three documented territories with one-decimal scores and categories', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(
+      <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+    const rendered = renderedContent(container);
+    expect(container.querySelectorAll('[data-testid="cardiosyntax-result"]')).toHaveLength(1);
     expect(rendered).toContain('Global cardiac SYNTAX');
     expect(rendered).toContain('Left cardiac SYNTAX');
     expect(rendered).toContain('Right cardiac SYNTAX');
@@ -38,13 +37,11 @@ describe('CardioSyntaxResult', () => {
   });
 
   test('does not display model-generated diagnosis or recommendation strings', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(
+      <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).not.toContain(cardioSyntaxResultFixtures.validV1.diagnosis);
     expect(rendered).not.toContain(cardioSyntaxResultFixtures.validV1.modelRecommendations.en);
     expect(rendered).not.toContain(cardioSyntaxResultFixtures.validV1.modelRecommendations.fr);
@@ -52,17 +49,13 @@ describe('CardioSyntaxResult', () => {
   });
 
   test('uses structural list semantics and exposes the assistive note', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(
+      <CardioSyntaxResult payload={cardioSyntaxResultFixtures.validV1} />
+    );
 
-    expect(renderer!.root.findAllByType('dl')).toHaveLength(1);
-    expect(renderer!.root.findAllByType('dt')).toHaveLength(3);
-    expect(renderer!.root.findAllByType('dd')).toHaveLength(3);
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'cardiosyntax-assistive-note' }).props.role
-    ).toBe('note');
+    expect(container.querySelectorAll('dl')).toHaveLength(1);
+    expect(container.querySelectorAll('dt')).toHaveLength(3);
+    expect(container.querySelectorAll('dd')).toHaveLength(3);
+    expect(screen.getByTestId('cardiosyntax-assistive-note').getAttribute('role')).toBe('note');
   });
 });

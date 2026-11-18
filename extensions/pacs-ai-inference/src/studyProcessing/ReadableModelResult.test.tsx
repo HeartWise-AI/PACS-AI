@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { render as renderWithDom } from '@testing-library/react';
 import { ReadableOrGenericModelResult } from './ReadableModelResult';
 import { readableResultFixtures } from './readableResultFixtures';
 
@@ -19,33 +15,37 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-function renderedText(node: ReactTestInstance | string): string {
-  if (typeof node === 'string') {
-    return node;
+function renderedText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? '';
   }
-  return node.children.map(renderedText).join(' ');
+  return Array.from(node.childNodes, renderedText).join(' ');
+}
+
+function findOne(root: Element, selector: string): HTMLElement {
+  const matches = root.querySelectorAll<HTMLElement>(selector);
+  expect(matches).toHaveLength(1);
+  return matches[0];
+}
+
+// Host props React applied to each rendered DOM element.
+function hostProps(element: Element): Record<string, unknown> {
+  const key = Object.keys(element).find(name => name.startsWith('__reactProps$'));
+  expect(key).toBeDefined();
+  return (element as unknown as Record<string, Record<string, unknown>>)[key!];
 }
 
 describe('ReadableOrGenericModelResult', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let container: HTMLElement;
 
   function render(value: unknown) {
-    act(() => {
-      renderer = TestRenderer.create(<ReadableOrGenericModelResult value={value} />);
-    });
-    return renderer!.root;
+    ({ container } = renderWithDom(<ReadableOrGenericModelResult value={value} />));
+    return container;
   }
 
   function byTestId(id: string) {
-    return renderer!.root.findAll(
-      node => typeof node.type === 'string' && node.props['data-testid'] === id
-    );
+    return Array.from(container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
   }
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
 
   it('renders a serialised echo interpretation as label and value rows', () => {
     render(readableResultFixtures.serialisedDiagnosis);
@@ -55,9 +55,9 @@ describe('ReadableOrGenericModelResult', () => {
     const row = byTestId('readable-model-result-row').find(candidate =>
       renderedText(candidate).includes('Left ventricular (LV) ejection fraction')
     )!;
-    expect(row.findByType('th').props.scope).toBe('row');
-    expect(renderedText(row.findByType('td'))).toContain('61.5 %');
-    expect(renderedText(row.findByType('td'))).toContain('Normal');
+    expect(findOne(row, 'th').getAttribute('scope')).toBe('row');
+    expect(renderedText(findOne(row, 'td'))).toContain('61.5 %');
+    expect(renderedText(findOne(row, 'td'))).toContain('Normal');
     // The serialised string itself is not what the reader sees first.
     expect(renderedText(byTestId('readable-model-result')[0])).not.toContain('{"');
   });
@@ -65,10 +65,10 @@ describe('ReadableOrGenericModelResult', () => {
   it('groups the rows under headings', () => {
     render(readableResultFixtures.serialisedDiagnosis);
 
-    expect(byTestId('readable-model-result-group').map(group => group.props['data-group'])).toEqual(
-      ['leftVentricle', 'rightVentricle', 'leftAtrium', 'rightAtrium', 'valves', 'other']
-    );
-    const text = renderedText(renderer!.root);
+    expect(
+      byTestId('readable-model-result-group').map(group => group.getAttribute('data-group'))
+    ).toEqual(['leftVentricle', 'rightVentricle', 'leftAtrium', 'rightAtrium', 'valves', 'other']);
+    const text = renderedText(container);
     expect(text).toContain('Left ventricle');
     expect(text).toContain('Valves');
   });
@@ -77,18 +77,18 @@ describe('ReadableOrGenericModelResult', () => {
     render(readableResultFixtures.serialisedDiagnosis);
 
     const abnormalRows = byTestId('readable-model-result-row').filter(
-      row => row.props['data-flag'] === 'abnormal'
+      row => row.getAttribute('data-flag') === 'abnormal'
     );
-    expect(abnormalRows.map(row => renderedText(row.findByType('th')))).toEqual([
+    expect(abnormalRows.map(row => renderedText(findOne(row, 'th')))).toEqual([
       'LV stroke volume',
       'LA volume',
     ]);
     abnormalRows.forEach(row => {
-      const mark = row.findByProps({ 'data-testid': 'readable-model-result-abnormal-mark' });
-      expect(mark.props.role).toBe('img');
-      expect(mark.props['aria-label']).toBe('Flagged abnormal');
+      const mark = findOne(row, '[data-testid="readable-model-result-abnormal-mark"]');
+      expect(mark.getAttribute('role')).toBe('img');
+      expect(mark.getAttribute('aria-label')).toBe('Flagged abnormal');
       expect(renderedText(row)).toContain('Abnormal');
-      expect(row.findByType('th').props.className).toContain('font-bold');
+      expect(findOne(row, 'th').className).toContain('font-bold');
     });
     expect(byTestId('readable-model-result-abnormal-mark')).toHaveLength(2);
   });
@@ -112,9 +112,10 @@ describe('ReadableOrGenericModelResult', () => {
 
     const raw = byTestId('readable-model-result-raw');
     expect(raw).toHaveLength(1);
-    expect(raw[0].type).toBe('details');
-    expect(raw[0].props.open).toBeUndefined();
-    expect(renderedText(raw[0].findAllByType('summary')[0])).toBe('Raw data');
+    expect(raw[0].tagName.toLowerCase()).toBe('details');
+    expect(hostProps(raw[0]).open).toBeUndefined();
+    expect(raw[0].hasAttribute('open')).toBe(false);
+    expect(renderedText(raw[0].querySelectorAll('summary')[0])).toBe('Raw data');
     expect(renderedText(raw[0])).toContain(readableResultFixtures.serialisedDiagnosis.diagnosis);
   });
 
@@ -140,9 +141,13 @@ describe('ReadableOrGenericModelResult', () => {
     });
 
     expect(renderedText(root)).toContain('<img src=x onerror=alert(1)>');
-    expect(root.findAllByType('img')).toHaveLength(0);
-    expect(root.findAllByType('script')).toHaveLength(0);
-    expect(root.findAll(node => node.props.dangerouslySetInnerHTML !== undefined)).toHaveLength(0);
+    expect(root.querySelectorAll('img')).toHaveLength(0);
+    expect(root.querySelectorAll('script')).toHaveLength(0);
+    expect(
+      Array.from(root.querySelectorAll('*')).filter(
+        element => hostProps(element).dangerouslySetInnerHTML !== undefined
+      )
+    ).toHaveLength(0);
   });
 
   it.each([
@@ -155,6 +160,6 @@ describe('ReadableOrGenericModelResult', () => {
 
     expect(byTestId('readable-model-result')).toHaveLength(0);
     expect(byTestId('readable-model-result-raw')).toHaveLength(0);
-    expect(renderedText(renderer!.root)).toContain('Result data');
+    expect(renderedText(container)).toContain('Result data');
   });
 });

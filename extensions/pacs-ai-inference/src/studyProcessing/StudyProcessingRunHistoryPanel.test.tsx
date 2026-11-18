@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { act, fireEvent, render, screen, type RenderResult } from '@testing-library/react';
 import {
   modelExecutionFixtures,
   studyProcessingRunHistoryFixture,
@@ -36,15 +32,15 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-let renderer: ReactTestRenderer | null;
+let renderer: RenderResult | null;
 let contextValue: StudyProcessingContextValue;
 
-function getRenderedText(node: ReactTestInstance | string): string {
-  if (typeof node === 'string') {
-    return node;
+function getRenderedText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? '';
   }
 
-  return node.children.map(getRenderedText).join(' ');
+  return Array.from(node.childNodes, getRenderedText).join(' ');
 }
 
 function PanelWithContext({
@@ -78,7 +74,7 @@ function renderPanel(
     trigger: HTMLButtonElement
   ) => void
 ) {
-  renderer = TestRenderer.create(
+  renderer = render(
     <StudyProcessingProvider runHistoryTransport={providerTransport}>
       <PanelWithContext
         studyInstanceUID={studyInstanceUID}
@@ -96,9 +92,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
   afterEach(() => {
     if (renderer) {
-      act(() => {
-        renderer?.unmount();
-      });
+      renderer.unmount();
     }
   });
 
@@ -136,13 +130,13 @@ describe('StudyProcessingRunHistoryPanel', () => {
     );
 
     act(() => {
-      renderer = TestRenderer.create(renderStudyDetails(false));
+      renderer = render(renderStudyDetails(false));
     });
 
     expect(loadRunHistory).not.toHaveBeenCalled();
 
     await act(async () => {
-      renderer?.update(renderStudyDetails(true));
+      renderer?.rerender(renderStudyDetails(true));
     });
 
     expect(loadRunHistory).toHaveBeenCalledTimes(1);
@@ -227,7 +221,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
     expect(panelLoadRunHistory).toHaveBeenCalledTimes(2);
     expect(providerLoadRunHistory).not.toHaveBeenCalled();
-    expect(getRenderedText(renderer!.root)).toContain('Completed');
+    expect(getRenderedText(renderer!.container)).toContain('Completed');
 
     await act(async () => {
       contextValue.applyStatusUpdate({
@@ -285,12 +279,10 @@ describe('StudyProcessingRunHistoryPanel', () => {
     });
 
     expect(loadRunHistory).toHaveBeenCalledTimes(2);
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': `study-processing-run-toggle-${newRun.id}`,
-      })
-    ).toBeDefined();
-    expect(renderer?.root.findAllByType('article')).toHaveLength(refreshedHistory.runs.length);
+    expect(screen.getByTestId(`study-processing-run-toggle-${newRun.id}`)).toBeDefined();
+    expect(renderer?.container.querySelectorAll('article')).toHaveLength(
+      refreshedHistory.runs.length
+    );
   });
 
   test('coalesces rapid SSE versions into one trailing authoritative refresh', async () => {
@@ -400,11 +392,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory });
     });
 
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-run-history-loading',
-      })
-    ).toBeDefined();
+    expect(screen.getByTestId('study-processing-run-history-loading')).toBeDefined();
   });
 
   test('shows partial history without hiding the available runs', async () => {
@@ -417,12 +405,8 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
     });
 
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-run-history-partial',
-      })
-    ).toBeDefined();
-    expect(renderer?.root.findAllByType('article')).toHaveLength(
+    expect(screen.getByTestId('study-processing-run-history-partial')).toBeDefined();
+    expect(renderer?.container.querySelectorAll('article')).toHaveLength(
       studyProcessingRunHistoryFixture.runs.length
     );
   });
@@ -437,7 +421,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, 'empty-study');
     });
 
-    expect(getRenderedText(renderer!.root)).toContain('No processing runs yet.');
+    expect(getRenderedText(renderer!.container)).toContain('No processing runs yet.');
   });
 
   test('shows an unavailable state with a retry action', async () => {
@@ -449,17 +433,9 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, 'unavailable-study');
     });
 
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-run-history-error',
-      })
-    ).toBeDefined();
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-run-history-retry',
-      })
-    ).toBeDefined();
-    expect(getRenderedText(renderer!.root)).toContain(
+    expect(screen.getByTestId('study-processing-run-history-error')).toBeDefined();
+    expect(screen.getByTestId('study-processing-run-history-retry')).toBeDefined();
+    expect(getRenderedText(renderer!.container)).toContain(
       'Processing run history is currently unavailable.'
     );
   });
@@ -473,16 +449,8 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, 'unauthorized-study');
     });
 
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-run-history-error',
-      })
-    ).toBeDefined();
-    expect(
-      renderer?.root.findAllByProps({
-        'data-testid': 'study-processing-run-history-retry',
-      })
-    ).toHaveLength(0);
+    expect(screen.getByTestId('study-processing-run-history-error')).toBeDefined();
+    expect(screen.queryAllByTestId('study-processing-run-history-retry')).toHaveLength(0);
   });
 
   test('keeps cached runs visible while an explicit refresh is pending', async () => {
@@ -504,16 +472,12 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
     });
 
-    act(() => {
-      renderer?.root
-        .findByProps({ 'data-testid': 'study-processing-run-history-refresh' })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId('study-processing-run-history-refresh'));
 
-    expect(renderer?.root.findAllByType('article')).toHaveLength(
+    expect(renderer?.container.querySelectorAll('article')).toHaveLength(
       studyProcessingRunHistoryFixture.runs.length
     );
-    expect(getRenderedText(renderer!.root)).toContain('Refreshing…');
+    expect(getRenderedText(renderer!.container)).toContain('Refreshing…');
 
     await act(async () => {
       resolveRefresh({
@@ -536,16 +500,14 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, studyProcessingRunHistoryFixture.studyInstanceUID);
     });
 
-    const retryButton = renderer?.root.findByProps({
-      'data-testid': 'study-processing-run-history-retry',
-    });
+    const retryButton = screen.getByTestId('study-processing-run-history-retry');
 
     await act(async () => {
-      retryButton?.props.onClick();
+      fireEvent.click(retryButton);
     });
 
     expect(loadRunHistory).toHaveBeenCalledTimes(2);
-    expect(renderer?.root.findAllByType('article')).toHaveLength(
+    expect(renderer?.container.querySelectorAll('article')).toHaveLength(
       studyProcessingRunHistoryFixture.runs.length
     );
   });
@@ -562,49 +524,37 @@ describe('StudyProcessingRunHistoryPanel', () => {
 
     const newestRun = studyProcessingRunHistoryFixture.runs[0];
     const historicalRun = studyProcessingRunHistoryFixture.runs[1];
-    const newestToggle = renderer?.root.findByProps({
-      'data-testid': `study-processing-run-toggle-${newestRun.id}`,
-    });
-    const historicalToggle = renderer?.root.findByProps({
-      'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
-    });
+    const newestToggle = screen.getByTestId(`study-processing-run-toggle-${newestRun.id}`);
+    const historicalToggle = screen.getByTestId(`study-processing-run-toggle-${historicalRun.id}`);
 
-    expect(newestToggle?.props['aria-expanded']).toBe(true);
-    expect(historicalToggle?.props['aria-expanded']).toBe(false);
+    expect(newestToggle.getAttribute('aria-expanded')).toBe('true');
+    expect(historicalToggle.getAttribute('aria-expanded')).toBe('false');
 
-    act(() => {
-      historicalToggle?.props.onClick();
-    });
+    fireEvent.click(historicalToggle);
 
     expect(
-      renderer?.root.findByProps({
-        'data-testid': `study-processing-run-toggle-${newestRun.id}`,
-      }).props['aria-expanded']
-    ).toBe(true);
+      screen
+        .getByTestId(`study-processing-run-toggle-${newestRun.id}`)
+        .getAttribute('aria-expanded')
+    ).toBe('true');
     expect(
-      renderer?.root.findByProps({
-        'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
-      }).props['aria-expanded']
-    ).toBe(true);
+      screen
+        .getByTestId(`study-processing-run-toggle-${historicalRun.id}`)
+        .getAttribute('aria-expanded')
+    ).toBe('true');
 
-    act(() => {
-      renderer?.root
-        .findByProps({
-          'data-testid': `study-processing-run-toggle-${newestRun.id}`,
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId(`study-processing-run-toggle-${newestRun.id}`));
 
     expect(
-      renderer?.root.findByProps({
-        'data-testid': `study-processing-run-toggle-${newestRun.id}`,
-      }).props['aria-expanded']
-    ).toBe(false);
+      screen
+        .getByTestId(`study-processing-run-toggle-${newestRun.id}`)
+        .getAttribute('aria-expanded')
+    ).toBe('false');
     expect(
-      renderer?.root.findByProps({
-        'data-testid': `study-processing-run-toggle-${historicalRun.id}`,
-      }).props['aria-expanded']
-    ).toBe(true);
+      screen
+        .getByTestId(`study-processing-run-toggle-${historicalRun.id}`)
+        .getAttribute('aria-expanded')
+    ).toBe('true');
   });
 
   test('orders runs newest first even when the transport response is unordered', async () => {
@@ -621,13 +571,11 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, unorderedHistory.studyInstanceUID);
     });
 
-    const runToggles = renderer!.root.findAll(
-      node =>
-        typeof node.props['data-testid'] === 'string' &&
-        node.props['data-testid'].startsWith('study-processing-run-toggle-')
+    const runToggles = Array.from(
+      renderer!.container.querySelectorAll('[data-testid^="study-processing-run-toggle-"]')
     );
 
-    expect(runToggles.map(toggle => toggle.props['data-testid'])).toEqual(
+    expect(runToggles.map(toggle => toggle.getAttribute('data-testid'))).toEqual(
       studyProcessingRunHistoryFixture.runs.map(run => `study-processing-run-toggle-${run.id}`)
     );
   });
@@ -649,19 +597,9 @@ describe('StudyProcessingRunHistoryPanel', () => {
       throw new Error('Legacy run fixture is required for this test.');
     }
 
-    act(() => {
-      renderer?.root
-        .findByProps({
-          'data-testid': `study-processing-run-toggle-${legacyRun.id}`,
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId(`study-processing-run-toggle-${legacyRun.id}`));
 
-    expect(
-      renderer?.root.findByProps({
-        'data-testid': 'study-processing-legacy-history-message',
-      })
-    ).toBeDefined();
+    expect(screen.getByTestId('study-processing-legacy-history-message')).toBeDefined();
     expect(legacyRun.modelExecutions).toEqual([]);
   });
 
@@ -690,19 +628,11 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, historyWithLegacySnapshot.studyInstanceUID);
     });
 
-    act(() => {
-      renderer?.root
-        .findByProps({
-          'data-testid': `study-processing-run-toggle-${legacyRun.id}`,
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId(`study-processing-run-toggle-${legacyRun.id}`));
 
-    const legacyMessage = renderer?.root.findByProps({
-      'data-testid': 'study-processing-legacy-history-message',
-    });
+    const legacyMessage = screen.getByTestId('study-processing-legacy-history-message');
     expect(getRenderedText(legacyMessage!)).toContain('available execution snapshot');
-    expect(getRenderedText(renderer!.root)).toContain('LegacySnapshotModel');
+    expect(getRenderedText(renderer!.container)).toContain('LegacySnapshotModel');
   });
 
   test('shows readable attention reasons and safe structured errors', async () => {
@@ -716,12 +646,10 @@ describe('StudyProcessingRunHistoryPanel', () => {
     });
 
     const activeRun = studyProcessingRunHistoryFixture.runs[0];
-    const attention = renderer?.root.findByProps({
-      'data-testid': `study-processing-run-attention-${activeRun.id}`,
-    });
-    const error = renderer?.root.findByProps({
-      'data-testid': `study-processing-model-error-${modelExecutionFixtures.failed.id}`,
-    });
+    const attention = screen.getByTestId(`study-processing-run-attention-${activeRun.id}`);
+    const error = screen.getByTestId(
+      `study-processing-model-error-${modelExecutionFixtures.failed.id}`
+    );
     const renderedAttention = attention ? getRenderedText(attention) : '';
     const renderedError = error ? getRenderedText(error) : '';
 
@@ -756,9 +684,9 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, 'study-with-skipped-model');
     });
 
-    const skip = renderer?.root.findByProps({
-      'data-testid': `study-processing-model-skip-${modelExecutionFixtures.skipped.id}`,
-    });
+    const skip = screen.getByTestId(
+      `study-processing-model-skip-${modelExecutionFixtures.skipped.id}`
+    );
     const renderedSkip = skip ? getRenderedText(skip) : '';
 
     expect(renderedSkip).toContain('The model is not applicable to this study.');
@@ -810,18 +738,14 @@ describe('StudyProcessingRunHistoryPanel', () => {
       );
     });
 
-    const actions = renderer!.root.findAll(
-      node =>
-        typeof node.props['data-testid'] === 'string' &&
-        node.props['data-testid'].startsWith('study-processing-view-result-')
+    const actions = Array.from(
+      renderer!.container.querySelectorAll('[data-testid^="study-processing-view-result-"]')
     );
     expect(actions).toHaveLength(1);
-    expect(actions[0].props.type).toBe('button');
-    expect(actions[0].props['aria-label']).toBe('View result for Model completed');
+    expect(actions[0].getAttribute('type')).toBe('button');
+    expect(actions[0].getAttribute('aria-label')).toBe('View result for Model completed');
 
-    act(() => {
-      actions[0].props.onClick({ currentTarget: actions[0] });
-    });
+    fireEvent.click(actions[0]);
 
     expect(onSelectExecutionResult).toHaveBeenCalledWith(
       {
@@ -867,9 +791,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, skippedRun.studyInstanceUID);
     });
 
-    const skip = renderer?.root.findByProps({
-      'data-testid': `study-processing-model-skip-${futureSkippedExecution.id}`,
-    });
+    const skip = screen.getByTestId(`study-processing-model-skip-${futureSkippedExecution.id}`);
     const renderedSkip = skip ? getRenderedText(skip) : '';
 
     expect(renderedSkip).toContain('Model was skipped');
@@ -911,7 +833,7 @@ describe('StudyProcessingRunHistoryPanel', () => {
       renderPanel({ loadRunHistory }, mixedRun.studyInstanceUID);
     });
 
-    const renderedPanel = getRenderedText(renderer!.root);
+    const renderedPanel = getRenderedText(renderer!.container);
     statuses.forEach(status => expect(renderedPanel).toContain(status));
   });
 });

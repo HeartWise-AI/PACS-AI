@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { getStudyProcessingAuthIdentity, shouldClearStudyProcessingState } from './authIdentity';
 import { studyProcessingRunHistoryFixture, studyProcessingSummaryFixtures } from './fixtures';
 import {
@@ -10,7 +10,7 @@ import {
 import type { RunHistoryTransportResponse } from './runHistoryTransport';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -43,7 +43,7 @@ describe('study processing tenant isolation lifecycle', () => {
     const sameStudyUID = studyProcessingSummaryFixtures.processing.studyInstanceUID;
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         React.createElement(StudyProcessingProvider, null, React.createElement(ContextConsumer))
       );
     });

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import GPUManagementPanel from './GPUManagementPanel';
 import { useGPUInventory } from '../../hooks/useGPUInventory';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
@@ -7,6 +7,17 @@ import type { UseInferenceModelsResult } from '../../hooks/useInferenceModels';
 jest.mock('../../hooks/useGPUInventory');
 jest.mock('@pacs-ai/extension-core/src/api/userRepository');
 jest.mock('./ModelDeploymentProgressPanel', () => () => null);
+const single = <T extends Element>(nodes: NodeListOf<T>): T => {
+  expect(nodes).toHaveLength(1);
+  return nodes[0];
+};
+// Button that has `text` as one of its direct text children.
+const buttonWithChild = (container: HTMLElement, text: string) =>
+  Array.from(container.querySelectorAll('button')).find(node =>
+    Array.from(node.childNodes).some(
+      child => child.nodeType === Node.TEXT_NODE && child.textContent === text
+    )
+  )!;
 const inventory = {
   sampledAt: '2026-11-12T00:00:00Z',
   managerEnabled: true,
@@ -50,7 +61,7 @@ const inventory = {
   ],
 };
 describe('GPUManagementPanel', () => {
-  let renderer: TestRenderer.ReactTestRenderer;
+  let renderer: RenderResult;
   let moveGPU: jest.Mock;
   let inference: UseInferenceModelsResult;
   beforeEach(() => {
@@ -77,7 +88,7 @@ describe('GPUManagementPanel', () => {
   afterEach(() => act(() => renderer?.unmount()));
   const mount = async () => {
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <GPUManagementPanel
           active
           inference={inference}
@@ -87,7 +98,7 @@ describe('GPUManagementPanel', () => {
   };
   test('separates measured memory from reservations and labels missing telemetry', async () => {
     await mount();
-    const text = JSON.stringify(renderer.toJSON());
+    const text = renderer.container.innerHTML;
     expect(text).toContain('Device memory: ');
     expect(text).toContain('6,000 MiB');
     expect(text).toContain('Scheduler reserved: ');
@@ -95,22 +106,19 @@ describe('GPUManagementPanel', () => {
     expect(text).toContain('Device telemetry unavailable');
     expect(text).toContain('GPU-a');
     expect(text).toContain('GPU-b');
-    expect(renderer.root.findAllByProps({ role: 'progressbar' })).toHaveLength(1);
+    expect(renderer.container.querySelectorAll('[role="progressbar"]')).toHaveLength(1);
   });
   test('requires confirmation then sends exact target and expected container identity', async () => {
     await mount();
-    act(() => renderer.root.findByType('select').props.onChange({ target: { value: 'GPU-b' } }));
-    const move = renderer.root
-      .findAllByType('button')
-      .find(node => node.children.includes('Move to GPU'))!;
-    act(() => move.props.onClick());
+    fireEvent.change(single(renderer.container.querySelectorAll('select')), {
+      target: { value: 'GPU-b' },
+    });
+    const move = buttonWithChild(renderer.container, 'Move to GPU');
+    fireEvent.click(move);
     expect(moveGPU).not.toHaveBeenCalled();
-    expect(JSON.stringify(renderer.toJSON())).toContain('same model version');
+    expect(renderer.container.innerHTML).toContain('same model version');
     await act(async () => {
-      await renderer.root
-        .findAllByType('button')
-        .find(node => node.children.includes('Confirm GPU change'))!
-        .props.onClick();
+      fireEvent.click(buttonWithChild(renderer.container, 'Confirm GPU change'));
     });
     expect(moveGPU).toHaveBeenCalledWith('m1', 'GPU-b', 'old-container');
   });
@@ -122,11 +130,11 @@ describe('GPUManagementPanel', () => {
       loading: false,
     });
     await mount();
-    expect(renderer.root.findByType('select').props.disabled).toBe(true);
-    expect(renderer.root.findAllByProps({ role: 'progressbar' })).toHaveLength(0);
+    expect(single(renderer.container.querySelectorAll('select')).disabled).toBe(true);
+    expect(renderer.container.querySelectorAll('[role="progressbar"]')).toHaveLength(0);
     (userRepository.GetCurrentUser as jest.Mock).mockResolvedValue({ data: { role: 'USER' } });
     await act(async () =>
-      renderer.update(
+      renderer.rerender(
         <GPUManagementPanel
           active={false}
           inference={inference}
@@ -134,31 +142,32 @@ describe('GPUManagementPanel', () => {
       )
     );
     await act(async () =>
-      renderer.update(
+      renderer.rerender(
         <GPUManagementPanel
           active
           inference={inference}
         />
       )
     );
-    expect(renderer.toJSON()).toBeNull();
+    expect(renderer.container.childNodes).toHaveLength(0);
   });
   test('rotating the session clears an open confirmation and selected target before reauthorization', async () => {
     await mount();
-    act(() => renderer.root.findByType('select').props.onChange({ target: { value: 'GPU-b' } }));
-    act(() =>
-      renderer.root
-        .findAllByType('button')
-        .find(node => node.children.includes('Move to GPU'))!
-        .props.onClick()
-    );
-    expect(renderer.root.findAllByProps({ 'aria-label': 'Confirm GPU change' })).toHaveLength(1);
+    fireEvent.change(single(renderer.container.querySelectorAll('select')), {
+      target: { value: 'GPU-b' },
+    });
+    fireEvent.click(buttonWithChild(renderer.container, 'Move to GPU'));
+    expect(
+      renderer.container.querySelectorAll('[aria-label="Confirm GPU change"]')
+    ).toHaveLength(1);
     await act(async () => {
       localStorage.setItem('sessionToken', 'token-b');
       window.dispatchEvent(new StorageEvent('storage', { key: 'sessionToken' }));
     });
-    expect(renderer.root.findAllByProps({ 'aria-label': 'Confirm GPU change' })).toHaveLength(0);
-    expect(renderer.root.findByType('select').props.value).toBe('GPU-a');
+    expect(
+      renderer.container.querySelectorAll('[aria-label="Confirm GPU change"]')
+    ).toHaveLength(0);
+    expect(single(renderer.container.querySelectorAll('select')).value).toBe('GPU-a');
     expect(moveGPU).not.toHaveBeenCalled();
   });
 
@@ -171,7 +180,7 @@ describe('GPUManagementPanel', () => {
         })
     );
     await mount();
-    expect(renderer.toJSON()).toBeNull();
+    expect(renderer.container.childNodes).toHaveLength(0);
     (userRepository.GetCurrentUser as jest.Mock).mockResolvedValue({
       data: { role: 'USER', tenantId: 'tenant-b' },
     });
@@ -183,6 +192,6 @@ describe('GPUManagementPanel', () => {
     await act(async () => {
       finishOld({ data: { role: 'ADMIN', tenantId: 'tenant-a' } });
     });
-    expect(renderer.toJSON()).toBeNull();
+    expect(renderer.container.childNodes).toHaveLength(0);
   });
 });

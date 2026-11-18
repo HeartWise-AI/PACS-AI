@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { studyProcessingRunHistoryFixture } from './fixtures';
 import {
   StudyProcessingProvider,
@@ -19,7 +19,7 @@ const createdRun: CreatedStudyProcessingRun = {
 };
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -51,7 +51,7 @@ describe('StudyProcessingProvider reprocessing', () => {
     const refreshVisibleStudySnapshot = jest.fn();
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider
           reprocessTransport={{ reprocessStudy }}
           runHistoryTransport={{ loadRunHistory }}
@@ -96,7 +96,7 @@ describe('StudyProcessingProvider reprocessing', () => {
     const refreshVisibleStudySnapshot = jest.fn();
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider
           reprocessTransport={{ reprocessStudy }}
           runHistoryTransport={{ loadRunHistory }}
@@ -127,7 +127,7 @@ describe('StudyProcessingProvider reprocessing', () => {
   it('keeps existing processing data and records a safe request failure', async () => {
     const existingError = new Error('Unable to reprocess study.');
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider
           reprocessTransport={{ reprocessStudy: jest.fn().mockRejectedValue(existingError) }}
         >
@@ -151,7 +151,7 @@ describe('StudyProcessingProvider reprocessing', () => {
     const refreshVisibleStudySnapshot = jest.fn();
     const conflict = new StudyReprocessError('Active run.', 409);
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider
           reprocessTransport={{ reprocessStudy: jest.fn().mockRejectedValue(conflict) }}
         >
@@ -179,7 +179,7 @@ describe('StudyProcessingProvider reprocessing', () => {
         })
     );
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider reprocessTransport={{ reprocessStudy }}>
           <ContextConsumer />
         </StudyProcessingProvider>

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render } from '@testing-library/react';
 import type { ModelExecutionResultClient } from './executionResultClient';
 import { modelExecutionResultFixtures } from './executionResultFixtures';
 import {
@@ -34,12 +34,9 @@ function Harness({
 }
 
 describe('useModelExecutionResultViewer', () => {
-  let renderer: ReactTestRenderer | null = null;
   let trigger: HTMLButtonElement | null = null;
 
   afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
     trigger?.remove();
     trigger = null;
   });
@@ -53,14 +50,12 @@ describe('useModelExecutionResultViewer', () => {
     document.body.appendChild(trigger);
     trigger.focus();
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <Harness
-          coordinator={coordinator}
-          resetKey="tenant-a"
-        />
-      );
-    });
+    render(
+      <Harness
+        coordinator={coordinator}
+        resetKey="tenant-a"
+      />
+    );
     expect(loadExecutionResult).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -86,28 +81,24 @@ describe('useModelExecutionResultViewer', () => {
       loadExecutionResult,
     } as ModelExecutionResultClient);
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <Harness
-          coordinator={coordinator}
-          resetKey="tenant-a"
-        />
-      );
-    });
+    const { rerender } = render(
+      <Harness
+        coordinator={coordinator}
+        resetKey="tenant-a"
+      />
+    );
     await act(async () => {
       controller.open(selection);
       await Promise.resolve();
     });
     expect(controller.state.status).toBe('ready');
 
-    act(() => {
-      renderer!.update(
-        <Harness
-          coordinator={coordinator}
-          resetKey="tenant-b"
-        />
-      );
-    });
+    rerender(
+      <Harness
+        coordinator={coordinator}
+        resetKey="tenant-b"
+      />
+    );
 
     expect(controller.state.status).toBe('idle');
     expect(controller.state.result).toBeNull();

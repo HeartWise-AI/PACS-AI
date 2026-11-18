@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import InferenceProcessingProvider, {
   TOAST_BURST_WINDOW_MS,
   useInferenceProcessing,
@@ -81,7 +81,7 @@ async function flush() {
 }
 
 describe('InferenceProcessingProvider: notification audience', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
   let context: ReturnType<typeof useInferenceProcessing>;
 
   function Probe() {
@@ -97,7 +97,7 @@ describe('InferenceProcessingProvider: notification audience', () => {
       mockGetUserMetadata.mockRejectedValue({ errorCode: 'MISSING_RECORD' });
     }
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <InferenceProcessingProvider>
           <Probe />
         </InferenceProcessingProvider>

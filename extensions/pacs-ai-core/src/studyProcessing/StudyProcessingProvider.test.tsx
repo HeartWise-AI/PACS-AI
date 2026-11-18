@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import {
   studyProcessingSnapshotFixture,
   studyProcessingSummaryFixtures,
@@ -12,7 +12,7 @@ import {
 } from './StudyProcessingProvider';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -22,7 +22,7 @@ function ContextConsumer() {
 describe('StudyProcessingProvider', () => {
   beforeEach(() => {
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider>
           <ContextConsumer />
         </StudyProcessingProvider>

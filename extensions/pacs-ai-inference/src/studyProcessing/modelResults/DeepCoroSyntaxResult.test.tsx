@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import { DeepCoroSyntaxResult } from './DeepCoroSyntaxResult';
 import { deepCoroSyntaxResultFixtures } from './deepCoroSyntaxFixtures';
 
@@ -10,15 +10,20 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
+}
+
 describe('DeepCoroSyntaxResult', () => {
   test('presents global, territory, severity, and threshold results', () => {
-    let renderer: TestRenderer.ReactTestRenderer;
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroSyntaxResult payload={deepCoroSyntaxResultFixtures.validV5} />
-      );
-    });
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const { container } = render(
+      <DeepCoroSyntaxResult payload={deepCoroSyntaxResultFixtures.validV5} />
+    );
+    const rendered = renderedContent(container);
     expect(rendered).toContain('24.5');
     expect(rendered).toContain('17.2');
     expect(rendered).toContain('7.3');
@@ -27,16 +32,13 @@ describe('DeepCoroSyntaxResult', () => {
   });
 
   test('does not display model-authored diagnosis, note, or recommendations', () => {
-    let renderer: TestRenderer.ReactTestRenderer;
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroSyntaxResult payload={deepCoroSyntaxResultFixtures.validV5} />
-      );
-    });
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const { container } = render(
+      <DeepCoroSyntaxResult payload={deepCoroSyntaxResultFixtures.validV5} />
+    );
+    const rendered = renderedContent(container);
     expect(rendered).not.toContain('Synthetic modified SYNTAX');
     expect(rendered).not.toContain('Synthetic model-authored note');
     expect(rendered).not.toContain('<strong>');
-    expect(renderer!.root.findAllByProps({ role: 'note' })).toHaveLength(1);
+    expect(container.querySelectorAll('[role="note"]')).toHaveLength(1);
   });
 });

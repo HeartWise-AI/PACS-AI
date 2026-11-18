@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import {
@@ -33,7 +33,7 @@ function Consumer({
 }
 
 describe('useModelDeploymentProgress', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
   let callbacks: ModelDeploymentMonitorCallbacks;
   const start = jest.fn();
   const stop = jest.fn();
@@ -60,7 +60,7 @@ describe('useModelDeploymentProgress', () => {
     const onTerminal = jest.fn();
 
     act(() => {
-      renderer = TestRenderer.create(<Consumer onTerminal={onTerminal} />);
+      renderer = render(<Consumer onTerminal={onTerminal} />);
     });
 
     expect(mockedCreateMonitor).toHaveBeenCalledWith('model-1', 'deployment-1', expect.any(Object));
@@ -89,7 +89,7 @@ describe('useModelDeploymentProgress', () => {
       data: { deploymentId: 'deployment-2', status: 'PENDING', stage: 'resolve_active' },
     });
     act(() => {
-      renderer = TestRenderer.create(<Consumer onTerminal={jest.fn()} />);
+      renderer = render(<Consumer onTerminal={jest.fn()} />);
     });
 
     await act(async () => {
@@ -113,7 +113,7 @@ describe('useModelDeploymentProgress', () => {
       data: { deploymentId: 'gpu-operation', status: 'PENDING', stage: 'resolve_active' },
     });
     act(() => {
-      renderer = TestRenderer.create(<Consumer onTerminal={jest.fn()} />);
+      renderer = render(<Consumer onTerminal={jest.fn()} />);
     });
     await act(async () => {
       await hookValue.moveGPU('model-1', 'GPU-a', 'old-container');
@@ -148,7 +148,7 @@ describe('useModelDeploymentProgress', () => {
         })
     );
     act(() => {
-      renderer = TestRenderer.create(<Consumer onTerminal={jest.fn()} />);
+      renderer = render(<Consumer onTerminal={jest.fn()} />);
     });
 
     let firstDeployment!: ReturnType<typeof hookValue.deploy>;
@@ -178,7 +178,7 @@ describe('useModelDeploymentProgress', () => {
         })
     );
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <Consumer
           onTerminal={jest.fn()}
           sessionScope="session-a"
@@ -208,7 +208,7 @@ describe('useModelDeploymentProgress', () => {
     );
     const onTerminal = jest.fn();
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <Consumer
           onTerminal={onTerminal}
           sessionScope="session-a"
@@ -220,7 +220,7 @@ describe('useModelDeploymentProgress', () => {
       pending = hookValue.moveGPU('model-1', 'GPU-a', 'old');
     });
     act(() =>
-      renderer.update(
+      renderer.rerender(
         <Consumer
           onTerminal={onTerminal}
           tenantId="tenant-b"
@@ -247,7 +247,7 @@ describe('useModelDeploymentProgress', () => {
     });
     const onTerminal = jest.fn();
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <Consumer
           onTerminal={onTerminal}
           sessionScope="session-a"
@@ -259,7 +259,7 @@ describe('useModelDeploymentProgress', () => {
     });
     const oldCallbacks = callbacks;
     act(() =>
-      renderer.update(
+      renderer.rerender(
         <Consumer
           onTerminal={onTerminal}
           sessionScope="session-b"

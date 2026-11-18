@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { studyProcessingRunHistoryFixture } from './fixtures';
 import {
   StudyProcessingProvider,
@@ -14,7 +14,7 @@ import {
 import type { StudyProcessingRolloutTelemetry } from './rolloutTelemetry';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -22,7 +22,7 @@ function ContextConsumer() {
 }
 
 function renderProvider() {
-  renderer = TestRenderer.create(
+  renderer = render(
     React.createElement(StudyProcessingProvider, null, React.createElement(ContextConsumer))
   );
 }
@@ -113,7 +113,7 @@ describe('StudyProcessingProvider run-history transport override', () => {
     };
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         React.createElement(
           StudyProcessingProvider,
           { rolloutTelemetry },

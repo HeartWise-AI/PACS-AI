@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/AIModelButton.json';
 import { RunningJobsIndicator, type RunningJobsIndicatorProps } from './RunningJobsIndicator';
@@ -17,38 +17,39 @@ jest.mock('react-i18next', () => ({
 
 const NOW = 1_065_000;
 
-function text(node: { children: unknown[] }): string {
-  return node.children
-    .map(child =>
-      typeof child === 'string' ? child : text(child as unknown as { children: unknown[] })
-    )
-    .join('');
+function text(node: Element): string {
+  return node.textContent ?? '';
 }
 
 describe('RunningJobsIndicator', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   const onToggleCollapsed = jest.fn();
   const onClose = jest.fn();
   const onOpenResult = jest.fn();
 
   function render(rows: RunningJobRow[], props: Partial<RunningJobsIndicatorProps> = {}) {
-    act(() => {
-      renderer = TestRenderer.create(
-        <RunningJobsIndicator
-          rows={rows}
-          now={NOW}
-          collapsed={false}
-          onToggleCollapsed={onToggleCollapsed}
-          onClose={onClose}
-          onOpenResult={onOpenResult}
-          {...props}
-        />
-      );
-    });
-    return renderer!.root;
+    renderer = rtlRender(
+      <RunningJobsIndicator
+        rows={rows}
+        now={NOW}
+        collapsed={false}
+        onToggleCollapsed={onToggleCollapsed}
+        onClose={onClose}
+        onOpenResult={onOpenResult}
+        {...props}
+      />
+    );
+    return renderer;
   }
 
-  const byTestId = (id: string) => renderer!.root.findAllByProps({ 'data-testid': id });
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  // Exactly one matching element.
+  const oneByTestId = (id: string) => {
+    const found = byTestId(id);
+    expect(found).toHaveLength(1);
+    return found[0];
+  };
 
   beforeEach(() => {
     mockStrings = english;
@@ -56,24 +57,24 @@ describe('RunningJobsIndicator', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
   });
 
   test('renders nothing without rows', () => {
     render([]);
-    expect(renderer!.toJSON()).toBeNull();
+    expect(renderer!.container.childNodes).toHaveLength(0);
   });
 
   test('shows a running model with its elapsed time and an indeterminate bar', () => {
-    const root = render([jobRow()]);
-    const card = root.findByProps({ 'data-testid': 'running-jobs-indicator' });
+    render([jobRow()]);
+    const card = oneByTestId('running-jobs-indicator');
 
-    expect(card.props.role).toBe('status');
-    expect(card.props['aria-live']).toBe('polite');
-    expect(card.props.className).toContain('w-[280px]');
-    expect(card.props.className).toContain('z-30');
-    expect(card.props.className).toContain('bottom-4 right-4');
+    expect(card.getAttribute('role')).toBe('status');
+    expect(card.getAttribute('aria-live')).toBe('polite');
+    expect(card.className).toContain('w-[280px]');
+    expect(card.className).toContain('z-30');
+    expect(card.className).toContain('bottom-4 right-4');
 
     const cardText = text(card);
     expect(cardText).toContain('AI analysis');
@@ -83,16 +84,16 @@ describe('RunningJobsIndicator', () => {
     expect(cardText).toContain('01:05');
 
     const [timer] = byTestId('running-jobs-elapsed');
-    expect(timer.props.role).toBe('timer');
-    expect(timer.props['aria-label']).toBe('Elapsed time 01:05');
+    expect(timer.getAttribute('role')).toBe('timer');
+    expect(timer.getAttribute('aria-label')).toBe('Elapsed time 01:05');
     expect(byTestId('running-jobs-progress-indeterminate')).toHaveLength(1);
     expect(byTestId('running-jobs-progress')).toHaveLength(0);
     expect(byTestId('running-jobs-count')).toHaveLength(0);
     // Header and row spinners, stopped for users who prefer reduced motion.
     const spinners = byTestId('running-jobs-spinner');
     expect(spinners).toHaveLength(2);
-    expect(spinners[0].props.className).toContain('animate-spin');
-    expect(spinners[0].props.className).toContain('motion-reduce:animate-none');
+    expect(spinners[0].className).toContain('animate-spin');
+    expect(spinners[0].className).toContain('motion-reduce:animate-none');
     expect(byTestId('running-jobs-open-result')).toHaveLength(0);
   });
 
@@ -125,7 +126,7 @@ describe('RunningJobsIndicator', () => {
     ]);
 
     const rows = byTestId('running-jobs-row');
-    expect(rows.map(row => row.props['data-state'])).toEqual([
+    expect(rows.map(row => row.getAttribute('data-state'))).toEqual([
       'queued',
       'running',
       'failed',
@@ -143,13 +144,11 @@ describe('RunningJobsIndicator', () => {
 
     const bars = byTestId('running-jobs-progress');
     expect(bars).toHaveLength(2);
-    expect(bars[0].props['aria-valuenow']).toBe(2);
-    expect(bars[0].props['aria-valuemax']).toBe(7);
-    expect(bars[0].children[0]).toMatchObject({ props: { style: { width: `${(2 / 7) * 100}%` } } });
+    expect(bars[0].getAttribute('aria-valuenow')).toBe('2');
+    expect(bars[0].getAttribute('aria-valuemax')).toBe('7');
+    expect((bars[0].children[0] as HTMLElement).style.width).toBe(`${(2 / 7) * 100}%`);
     // Three active rows; the failed one has neither spinner nor bar.
-    expect(text(renderer!.root.findByProps({ 'data-testid': 'running-jobs-indicator' }))).toContain(
-      '3 running'
-    );
+    expect(text(oneByTestId('running-jobs-indicator'))).toContain('3 running');
     expect(byTestId('running-jobs-spinner')).toHaveLength(4);
     expect(byTestId('running-jobs-progress-indeterminate')).toHaveLength(1);
   });
@@ -168,7 +167,7 @@ describe('RunningJobsIndicator', () => {
       jobRow({ id: 'c', kind: 'processing', modelName: null, state: 'done', active: false }),
     ]);
 
-    const card = renderer!.root.findByProps({ 'data-testid': 'running-jobs-indicator' });
+    const card = oneByTestId('running-jobs-indicator');
     expect(text(card)).toContain('Finished');
     expect(text(card)).toContain('Skipped');
     expect(text(card)).toContain('Study processing');
@@ -178,8 +177,10 @@ describe('RunningJobsIndicator', () => {
 
     const buttons = byTestId('running-jobs-open-result');
     expect(buttons).toHaveLength(1);
-    expect(buttons[0].props['aria-label']).toBe('DeepCORO: View result');
-    act(() => buttons[0].props.onClick());
+    expect(buttons[0].getAttribute('aria-label')).toBe('DeepCORO: View result');
+    act(() => {
+      fireEvent.click(buttons[0]);
+    });
     expect(onOpenResult).toHaveBeenCalledWith(done);
   });
 
@@ -187,28 +188,34 @@ describe('RunningJobsIndicator', () => {
     render([jobRow(), jobRow({ id: 'b' })]);
     const [collapse] = byTestId('running-jobs-collapse');
     const [close] = byTestId('running-jobs-close');
-    expect(collapse.props['aria-label']).toBe('Collapse');
-    expect(close.props['aria-label']).toBe('Hide until a new run starts');
-    act(() => collapse.props.onClick());
-    act(() => close.props.onClick());
+    expect(collapse.getAttribute('aria-label')).toBe('Collapse');
+    expect(close.getAttribute('aria-label')).toBe('Hide until a new run starts');
+    act(() => {
+      fireEvent.click(collapse);
+    });
+    act(() => {
+      fireEvent.click(close);
+    });
     expect(onToggleCollapsed).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
 
     render([jobRow(), jobRow({ id: 'b' })], { collapsed: true });
     const [pill] = byTestId('running-jobs-pill');
     expect(text(pill)).toBe('2 running');
-    expect(pill.props['aria-label']).toBe('Show AI analysis status (2 running)');
-    expect(pill.props['aria-expanded']).toBe(false);
+    expect(pill.getAttribute('aria-label')).toBe('Show AI analysis status (2 running)');
+    expect(pill.getAttribute('aria-expanded')).toBe('false');
     expect(byTestId('running-jobs-row')).toHaveLength(0);
-    expect(byTestId('running-jobs-indicator')[0].props.role).toBe('status');
-    act(() => pill.props.onClick());
+    expect(byTestId('running-jobs-indicator')[0].getAttribute('role')).toBe('status');
+    act(() => {
+      fireEvent.click(pill);
+    });
     expect(onToggleCollapsed).toHaveBeenCalledTimes(2);
   });
 
   test('moves aside while the result-ready notice uses the corner', () => {
-    const root = render([jobRow()], { besideReadyNotice: true });
-    const card = root.findByProps({ 'data-testid': 'running-jobs-indicator' });
-    expect(card.props.className).toContain('sm:right-[21.5rem]');
+    render([jobRow()], { besideReadyNotice: true });
+    const card = oneByTestId('running-jobs-indicator');
+    expect(card.className).toContain('sm:right-[21.5rem]');
   });
 
   test('renders in French', () => {
@@ -224,13 +231,13 @@ describe('RunningJobsIndicator', () => {
       }),
     ]);
 
-    const cardText = text(renderer!.root.findByProps({ 'data-testid': 'running-jobs-indicator' }));
+    const cardText = text(oneByTestId('running-jobs-indicator'));
     expect(cardText).toContain('Analyse IA');
     expect(cardText).toContain('2 en cours');
     expect(cardText).toContain("En file d'attente");
     expect(cardText).toContain('Analyse automatique');
     expect(cardText).toContain('2 sur 7 modèles');
-    expect(byTestId('running-jobs-collapse')[0].props['aria-label']).toBe('Réduire');
+    expect(byTestId('running-jobs-collapse')[0].getAttribute('aria-label')).toBe('Réduire');
   });
 });
 

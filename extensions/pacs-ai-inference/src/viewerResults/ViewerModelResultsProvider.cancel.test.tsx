@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import {
   useViewerModelResults,
@@ -56,7 +56,7 @@ const cancelledStatus = {
 };
 
 describe('ViewerModelResultsProvider: run cancelled from the running-jobs card', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let context: ViewerModelResultsContextValue | null = null;
   const showAlert = jest.fn();
 
@@ -96,14 +96,18 @@ describe('ViewerModelResultsProvider: run cancelled from the running-jobs card',
     await flush();
   };
 
-  const byTestId = (id: string) => renderer!.root.findAllByProps({ 'data-testid': id });
-  const jobStates = () => byTestId('running-jobs-row').map(row => row.props['data-state']);
-  const click = (id: string) => act(async () => byTestId(id)[0].props.onClick());
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  const jobStates = () => byTestId('running-jobs-row').map(row => row.getAttribute('data-state'));
+  const click = (id: string) =>
+    act(async () => {
+      fireEvent.click(byTestId(id)[0]);
+    });
 
   async function startQueuedRun(repo: jest.Mocked<ViewerResultsRepository>) {
     jest.useFakeTimers();
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <AlertContext.Provider value={showAlert}>
           <ViewerModelResultsProvider
             studyInstanceUID="1.2.3"
@@ -134,7 +138,7 @@ describe('ViewerModelResultsProvider: run cancelled from the running-jobs card',
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     context = null;
     jest.useRealTimers();

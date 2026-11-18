@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { getAuthenticatedScope, useAuthenticatedScope } from './authenticatedScope';
 let value: ReturnType<typeof useAuthenticatedScope>;
 function Consumer() {
@@ -10,9 +10,9 @@ test('direct scope checks cannot consume a session-change notification', () => {
   jest.useFakeTimers();
   localStorage.setItem('tenantId', 'tenant-a');
   localStorage.setItem('sessionToken', 'secret-a');
-  let renderer!: TestRenderer.ReactTestRenderer;
+  let renderer!: RenderResult;
   act(() => {
-    renderer = TestRenderer.create(<Consumer />);
+    renderer = render(<Consumer />);
   });
   const oldScope = value.key;
   localStorage.setItem('sessionToken', 'secret-b');
@@ -30,7 +30,7 @@ test('direct scope checks cannot consume a session-change notification', () => {
   });
   expect(value).toEqual(next);
   expect(value.tenantId).toBe('tenant-b');
-  expect(JSON.stringify(renderer.toJSON())).not.toContain('secret');
+  expect(renderer.container.innerHTML).not.toContain('secret');
   act(() => renderer.unmount());
   expect(jest.getTimerCount()).toBe(0);
   jest.useRealTimers();

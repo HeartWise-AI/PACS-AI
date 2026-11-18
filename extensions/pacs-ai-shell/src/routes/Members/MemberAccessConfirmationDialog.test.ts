@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { fireEvent, render } from '@testing-library/react';
 import MemberAccessConfirmationDialog, {
   MEMBER_ACCESS_REASON_MAX_LENGTH,
 } from './MemberAccessConfirmationDialog';
@@ -13,12 +13,17 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
+function single<T extends Element>(nodes: NodeListOf<T>): T {
+  expect(nodes).toHaveLength(1);
+  return nodes[0];
+}
+
 describe('member access confirmation dialog', () => {
   test.each([
     ['suspend', 'Suspend access for Alex Admin?', 'revokes all active sessions', 'Suspend access'],
     ['reactivate', 'Reactivate access for Alex Admin?', 'restores sign-in', 'Reactivate access'],
   ] as const)('renders the %s effect and target identity', (action, title, effect, submitLabel) => {
-    const renderer = TestRenderer.create(
+    const { container } = render(
       React.createElement(MemberAccessConfirmationDialog, {
         action,
         target: { name: 'Alex Admin', email: 'alex@example.com' },
@@ -30,18 +35,20 @@ describe('member access confirmation dialog', () => {
       })
     );
 
-    expect(renderer.root.findByProps({ id: 'modal-title' }).children.join('')).toContain(title);
+    expect(single(container.querySelectorAll('[id="modal-title"]')).textContent).toContain(title);
     expect(
-      renderer.root.findAllByType('p').some(node => node.children.join('').includes(effect))
+      Array.from(container.querySelectorAll('p')).some(node =>
+        (node.textContent ?? '').includes(effect)
+      )
     ).toBe(true);
-    expect(renderer.root.findByProps({ type: 'submit' }).children.join('')).toBe(submitLabel);
+    expect(single(container.querySelectorAll('[type="submit"]')).textContent).toBe(submitLabel);
   });
 
   test('limits the optional reason and forwards reason, cancel, and confirm events', () => {
     const onReasonChange = jest.fn();
     const onCancel = jest.fn();
     const onConfirm = jest.fn();
-    const renderer = TestRenderer.create(
+    const { container } = render(
       React.createElement(MemberAccessConfirmationDialog, {
         action: 'suspend',
         target: { name: '', email: 'target@example.com' },
@@ -52,12 +59,12 @@ describe('member access confirmation dialog', () => {
         onConfirm,
       })
     );
-    const textarea = renderer.root.findByType('textarea');
+    const textarea = single(container.querySelectorAll('textarea'));
 
-    expect(textarea.props.maxLength).toBe(MEMBER_ACCESS_REASON_MAX_LENGTH);
-    act(() => textarea.props.onChange({ target: { value: 'Updated reason' } }));
-    act(() => renderer.root.findByProps({ type: 'button' }).props.onClick());
-    act(() => renderer.root.findByType('form').props.onSubmit({ preventDefault: jest.fn() }));
+    expect(textarea.maxLength).toBe(MEMBER_ACCESS_REASON_MAX_LENGTH);
+    fireEvent.change(textarea, { target: { value: 'Updated reason' } });
+    fireEvent.click(single(container.querySelectorAll('[type="button"]')));
+    fireEvent.submit(single(container.querySelectorAll('form')));
 
     expect(onReasonChange).toHaveBeenCalledWith('Updated reason');
     expect(onCancel).toHaveBeenCalledTimes(1);

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import SelectSeriesModal from './SelectSeriesModal';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
@@ -7,7 +7,10 @@ import type { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-cor
 
 jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({ __esModule: true, default: jest.fn() }));
 jest.mock('@ohif/ui-next', () => ({ Input: 'input' }));
-jest.mock('react-dom', () => ({ createPortal: children => children }));
+jest.mock('react-dom', () => ({
+  ...jest.requireActual('react-dom'),
+  createPortal: children => children,
+}));
 
 const series = (uid: string, modality = 'XA') => ({
   SeriesInstanceUID: uid,
@@ -26,21 +29,32 @@ const model = {
 } as GetInferenceAvailableModelsResponse;
 
 describe('SelectSeriesModal series count selection', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
   const predict = jest.fn();
   const alert = jest.fn();
 
+  const single = <T extends Element>(nodes: NodeListOf<T>): T => {
+    expect(nodes).toHaveLength(1);
+    return nodes[0];
+  };
+  // True when `text` is one of the node's direct text children.
+  const hasTextChild = (node: Element, text: string) =>
+    Array.from(node.childNodes).some(
+      child => child.nodeType === Node.TEXT_NODE && child.textContent === text
+    );
+  const all = (selector: string) => Array.from(renderer.container.querySelectorAll(selector));
   const button = (label: string) =>
-    renderer.root.findAllByType('button').find(node => node.children.includes(label))!;
-  const status = () => renderer.root.findByProps({ role: 'status' }).children.join('');
-  const countInput = () => renderer.root.findByProps({ id: 'first-series-count' });
+    all('button').find(node => hasTextChild(node, label)) as HTMLButtonElement;
+  const status = () => single(renderer.container.querySelectorAll('[role="status"]')).textContent;
+  const countInput = () =>
+    single(renderer.container.querySelectorAll<HTMLInputElement>('[id="first-series-count"]'));
   const chooseCount = (value: string) => {
-    act(() => countInput().props.onChange({ target: { value } }));
-    act(() => button('Select').props.onClick());
+    fireEvent.change(countInput(), { target: { value } });
+    fireEvent.click(button('Select'));
   };
   const mount = (overrides = {}) => {
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <AlertContext.Provider value={alert}>
           <SelectSeriesModal
             isOpen
@@ -80,14 +94,14 @@ describe('SelectSeriesModal series count selection', () => {
   test('selects unique supported series in displayed order and caps at the model maximum', () => {
     mount();
     expect(status()).toBe('0 selected · Maximum: 2 · 3 available');
-    expect(countInput().props.max).toBe(2);
+    expect(countInput().getAttribute('max')).toBe('2');
     expect(
-      renderer.root.findAllByType('h4').filter(node => node.children.includes('third'))
+      all('h4').filter(node => hasTextChild(node, 'third'))
     ).toHaveLength(1);
 
     chooseCount('100');
     expect(status()).toBe('2 selected · Maximum: 2 · 3 available');
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(button('Apply'));
     expect(predict).toHaveBeenCalledWith(
       'model-container',
       ['third', 'second'],
@@ -99,18 +113,16 @@ describe('SelectSeriesModal series count selection', () => {
 
   test('bulk selection respects the maximum and manual clicks cannot exceed it', () => {
     mount();
-    const bulk = renderer.root
-      .findAllByType('button')
-      .find(node =>
-        node.findAllByType('span').some(span => span.children.includes('Select maximum'))
-      )!;
-    act(() => bulk.props.onClick());
-    const lastRow = renderer.root.findAllByType('h4').find(node => node.children.includes('first'))!
-      .parent!.parent!.parent!;
-    act(() => lastRow.props.onClick());
+    const bulk = all('button').find(node =>
+      Array.from(node.querySelectorAll('span')).some(span => hasTextChild(span, 'Select maximum'))
+    )!;
+    fireEvent.click(bulk);
+    const lastRow = all('h4').find(node => hasTextChild(node, 'first'))!
+      .parentElement!.parentElement!.parentElement!;
+    fireEvent.click(lastRow);
     expect(status()).toBe('2 selected · Maximum: 2 · 3 available');
     expect(alert).toHaveBeenCalledWith('Please select no more than 2 series', 'error');
-    act(() => bulk.props.onClick());
+    fireEvent.click(bulk);
     expect(status()).toBe('0 selected · Maximum: 2 · 3 available');
   });
 
@@ -121,11 +133,11 @@ describe('SelectSeriesModal series count selection', () => {
     });
     expect(status()).toBe('1 selected · Maximum: 2 · 3 available');
     chooseCount('1');
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(button('Apply'));
     expect(alert).toHaveBeenCalledWith('Please select at least 2 series to continue', 'error');
     expect(predict).not.toHaveBeenCalled();
     chooseCount('2');
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(button('Apply'));
     expect(predict.mock.calls[0][1]).toEqual(['third', 'second']);
   });
 
@@ -136,13 +148,14 @@ describe('SelectSeriesModal series count selection', () => {
     } });
     mount();
     chooseCount('1');
-    const examPicker = () => renderer.root.findByProps({ id: 'ai-exam-selection' });
-    expect(examPicker().findAllByType('option')).toHaveLength(2);
-    act(() => examPicker().props.onChange({ target: { value: 'study-2' } }));
+    const examPicker = () =>
+      single(renderer.container.querySelectorAll<HTMLSelectElement>('[id="ai-exam-selection"]'));
+    expect(examPicker().querySelectorAll('option')).toHaveLength(2);
+    fireEvent.change(examPicker(), { target: { value: 'study-2' } });
     expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
-    expect(renderer.root.findAllByType('h4').some(node => node.children.includes('old-series'))).toBe(false);
+    expect(all('h4').some(node => hasTextChild(node, 'old-series'))).toBe(false);
     chooseCount('1');
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(button('Apply'));
     expect(predict).toHaveBeenCalledWith('model-container', ['new-series'], 'study-2', {}, 'HTML');
   });
 
@@ -152,13 +165,15 @@ describe('SelectSeriesModal series count selection', () => {
     } });
     mount({ initialSeriesSelection: { selectedSeries: ['new'], studyInstanceUID: 'study-2' } });
     expect(status()).toBe('1 selected · Maximum: 2 · 1 available');
-    const bulk = renderer.root.findAllByType('button').find(node =>
-      node.findAllByType('span').some(span => span.children.includes('Select all')))!;
-    act(() => bulk.props.onClick());
-    expect(renderer.root.findByProps({ id: 'ai-exam-selection' }).props.value).toBe('study-2');
+    const bulk = all('button').find(node =>
+      Array.from(node.querySelectorAll('span')).some(span => hasTextChild(span, 'Select all')))!;
+    fireEvent.click(bulk);
+    expect(
+      single(renderer.container.querySelectorAll<HTMLSelectElement>('[id="ai-exam-selection"]')).value
+    ).toBe('study-2');
     expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
-    act(() => bulk.props.onClick());
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(bulk);
+    fireEvent.click(button('Apply'));
     expect(predict.mock.calls[0][2]).toBe('study-2');
   });
 
@@ -174,16 +189,16 @@ describe('SelectSeriesModal series count selection', () => {
     mount();
     expect(status()).toBe('0 selected · Maximum: 2 · 1 available');
     chooseCount('2');
-    act(() => button('Apply').props.onClick());
+    fireEvent.click(button('Apply'));
     expect(predict).toHaveBeenCalledWith('model-container', ['cine'], 'study-1', {}, 'HTML');
   });
 
   test('disables invalid counts and caps selection to available series', () => {
     mount({ selectedInferenceModel: { ...model, dicomUploadMax: 10 } });
-    expect(countInput().props.max).toBe(3);
+    expect(countInput().getAttribute('max')).toBe('3');
     for (const value of ['', '0', '-1', '1.5']) {
-      act(() => countInput().props.onChange({ target: { value } }));
-      expect(button('Select').props.disabled).toBe(true);
+      fireEvent.change(countInput(), { target: { value } });
+      expect(button('Select').disabled).toBe(true);
     }
     chooseCount('10');
     expect(status()).toBe('3 selected · Maximum: 10 · 3 available');
@@ -193,7 +208,7 @@ describe('SelectSeriesModal series count selection', () => {
     mount({ loading: true });
 
     expect(status()).toBe('Applying inference and generating results...');
-    expect(renderer.root.findAllByType('button')).toHaveLength(0);
+    expect(renderer.container.querySelectorAll('button')).toHaveLength(0);
   });
 
   test('shows a custom loading message that can be dismissed', () => {
@@ -206,7 +221,7 @@ describe('SelectSeriesModal series count selection', () => {
     });
 
     expect(status()).toBe('Running JEPA…');
-    act(() => button('Continue in background').props.onClick());
+    fireEvent.click(button('Continue in background'));
     expect(dismiss).toHaveBeenCalledTimes(1);
   });
 });

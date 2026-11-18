@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { studyProcessingRunHistoryFixture } from './fixtures';
 import {
   StudyProcessingProvider,
@@ -12,7 +12,7 @@ import type {
 } from './runHistoryTransport';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -37,7 +37,7 @@ describe('StudyProcessingProvider run history', () => {
     const transport: StudyProcessingRunHistoryTransport = { loadRunHistory };
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider runHistoryTransport={transport}>
           <ContextConsumer />
         </StudyProcessingProvider>
@@ -90,7 +90,7 @@ describe('StudyProcessingProvider run history', () => {
     }));
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider runHistoryTransport={{ loadRunHistory }}>
           <ContextConsumer />
         </StudyProcessingProvider>
@@ -112,7 +112,7 @@ describe('StudyProcessingProvider run history', () => {
     }));
 
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <StudyProcessingProvider runHistoryTransport={{ loadRunHistory }}>
           <ContextConsumer />
         </StudyProcessingProvider>

@@ -1,11 +1,10 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import AIModelButton from './AIModelButton';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
 
-jest.mock('react-dom', () => ({ createPortal: children => children }));
 jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -34,11 +33,30 @@ jest.mock('../utils/addSegmentation', () => ({
 jest.mock('../viewerResults/ViewerModelResultsProvider', () => ({
   useViewerModelResults: jest.fn(),
 }));
-jest.mock('../JSONOutputModeModal', () => 'json-output-modal');
-jest.mock('../WebappOutputModeModal', () => 'webapp-output-modal');
-jest.mock('../HTMLOutputModeModal', () => 'html-output-modal');
-jest.mock('../PDFOutputModeModal', () => 'pdf-output-modal');
-jest.mock('@pacs-ai/ui/src/components/SelectSeriesModal', () => 'select-series-modal');
+// The modals are replaced by stubs that render a marker element and record the props of
+// each mounted instance, keyed by that element.
+const mockStubProps = new WeakMap<Element, Record<string, any>>();
+function mockRecordingStub(name: string) {
+  return function RecordingStub(props: Record<string, any>) {
+    const ref = React.useRef<HTMLDivElement | null>(null);
+    React.useLayoutEffect(() => {
+      mockStubProps.set(ref.current!, props);
+    });
+    return (
+      <div
+        data-stub={name}
+        ref={ref}
+      />
+    );
+  };
+}
+jest.mock('../JSONOutputModeModal', () => mockRecordingStub('json-output-modal'));
+jest.mock('../WebappOutputModeModal', () => mockRecordingStub('webapp-output-modal'));
+jest.mock('../HTMLOutputModeModal', () => mockRecordingStub('html-output-modal'));
+jest.mock('../PDFOutputModeModal', () => mockRecordingStub('pdf-output-modal'));
+jest.mock('@pacs-ai/ui/src/components/SelectSeriesModal', () =>
+  mockRecordingStub('select-series-modal')
+);
 
 const model = {
   modelId: 'deepcoro-jepa',
@@ -63,7 +81,7 @@ function deferred<T>() {
 }
 
 describe('AIModelButton runs', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
   const showAlert = jest.fn();
   const predict = inferenceRepository.PredictInferenceModel as jest.Mock;
 
@@ -79,39 +97,43 @@ describe('AIModelButton runs', () => {
     ...overrides,
   });
 
-  const openMenu = () =>
-    act(() =>
-      renderer.root.findByProps({ 'data-tour-id': 'ai-model-button' }).props.onClick({
-        currentTarget: { getBoundingClientRect: () => ({ bottom: 0, left: 0 }) },
-      })
-    );
+  // The menu is portalled to the document body.
+  const all = (selector: string) => Array.from(document.body.querySelectorAll(selector));
+  const openMenu = () => {
+    const buttons = all('[data-tour-id="ai-model-button"]');
+    expect(buttons).toHaveLength(1);
+    act(() => {
+      fireEvent.click(buttons[0]);
+    });
+  };
 
   const mount = (provider: ReturnType<typeof viewerResults> | null, models = [model]) => {
     (useViewerModelResults as jest.Mock).mockReturnValue(provider);
-    act(() => {
-      renderer = TestRenderer.create(
-        <AlertContext.Provider value={showAlert}>
-          <AIModelButton
-            servicesManager={{}}
-            inferenceAvailableModels={models}
-          />
-        </AlertContext.Provider>
-      );
-    });
+    renderer = render(
+      <AlertContext.Provider value={showAlert}>
+        <AIModelButton
+          servicesManager={{}}
+          inferenceAvailableModels={models}
+        />
+      </AlertContext.Provider>
+    );
     openMenu();
   };
 
-  const seriesModals = () => renderer.root.findAllByType('select-series-modal' as never);
-  const seriesModal = () => seriesModals()[0];
+  const seriesModals = () => all('[data-stub="select-series-modal"]');
+  // The props the first series pop-up was last rendered with.
+  const seriesModal = () => ({ props: mockStubProps.get(seriesModals()[0])! });
+  // Clicks the one element that holds this exact text; the click reaches its handler.
   const clickText = (text: string) => {
-    const node = renderer.root.find(
-      item => typeof item.type === 'string' && item.children.includes(text)
+    const nodes = all('*').filter(element =>
+      Array.from(element.childNodes).some(
+        child => child.nodeType === Node.TEXT_NODE && child.textContent === text
+      )
     );
-    let target = node;
-    while (!target.props.onClick) {
-      target = target.parent!;
-    }
-    act(() => target.props.onClick());
+    expect(nodes).toHaveLength(1);
+    act(() => {
+      fireEvent.click(nodes[0]);
+    });
   };
   const confirmSeries = async (series = ['series-1', 'series-2'], study = '1.2.3') => {
     await act(async () => {
@@ -132,7 +154,7 @@ describe('AIModelButton runs', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     jest.restoreAllMocks();
   });
 
@@ -250,7 +272,7 @@ describe('AIModelButton runs', () => {
       additionalMetadata: {},
     });
     expect(seriesModals()).toHaveLength(0);
-    expect(renderer.root.findAllByType('html-output-modal' as never)).toHaveLength(1);
+    expect(all('[data-stub="html-output-modal"]')).toHaveLength(1);
   };
 
   test('falls back to the direct predict call when the provider reports fallback', async () => {
@@ -311,21 +333,17 @@ describe('AIModelButton runs', () => {
     );
 
     expect(getResultSeriesScope).toHaveBeenCalledWith(storedResult);
-    const found = renderer.root.findAllByProps({ 'data-testid': 'ai-model-result-subset' });
+    const found = all('[data-testid="ai-model-result-subset"]');
     expect(found).toHaveLength(markers);
     if (markers) {
-      expect(found[0].children.join('')).toBe(' · ViewerResultSeriesCount');
+      expect(found[0].textContent).toBe(' · ViewerResultSeriesCount');
     }
   });
 
   test('shows stored results from a provider without series scope support', () => {
     mount(viewerResults({ getLatestResult: jest.fn().mockReturnValue(storedResult) }));
 
-    expect(renderer.root.findAllByProps({ 'data-testid': 'ai-model-result-subset' })).toHaveLength(
-      0
-    );
-    expect(
-      renderer.root.findAllByProps({ 'data-testid': 'ai-model-previous-result' })
-    ).toHaveLength(1);
+    expect(all('[data-testid="ai-model-result-subset"]')).toHaveLength(0);
+    expect(all('[data-testid="ai-model-previous-result"]')).toHaveLength(1);
   });
 });

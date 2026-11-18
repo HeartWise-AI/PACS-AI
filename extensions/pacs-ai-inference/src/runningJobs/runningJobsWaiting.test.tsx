@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { render as rtlRender, type RenderResult } from '@testing-library/react';
 import english from '@pacs-ai/extension-core/src/locales/en-US/AIModelButton.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/AIModelButton.json';
 import { RunningJobsIndicator, type RunningJobsIndicatorProps } from './RunningJobsIndicator';
@@ -208,31 +208,25 @@ describe('formatClockTime', () => {
 });
 
 describe('RunningJobsIndicator: waiting runs', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   const STARTED = new Date(2026, 10, 16, 10, 2, 30).getTime();
 
   function render(rows: RunningJobRow[], props: Partial<RunningJobsIndicatorProps> = {}) {
-    act(() => {
-      renderer = TestRenderer.create(
-        <RunningJobsIndicator
-          rows={rows}
-          now={STARTED + 25 * 60_000 + 27_000}
-          collapsed={false}
-          onToggleCollapsed={jest.fn()}
-          onClose={jest.fn()}
-          {...props}
-        />
-      );
-    });
+    renderer = rtlRender(
+      <RunningJobsIndicator
+        rows={rows}
+        now={STARTED + 25 * 60_000 + 27_000}
+        collapsed={false}
+        onToggleCollapsed={jest.fn()}
+        onClose={jest.fn()}
+        {...props}
+      />
+    );
   }
 
-  const byTestId = (id: string) => renderer!.root.findAllByProps({ 'data-testid': id });
-  const text = (node: { children: unknown[] }): string =>
-    node.children
-      .map(child =>
-        typeof child === 'string' ? child : text(child as unknown as { children: unknown[] })
-      )
-      .join('');
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  const text = (node: Element): string => node.textContent ?? '';
   const cardText = () => text(byTestId('running-jobs-indicator')[0]);
 
   const examRow = (overrides: Partial<RunningJobRow> = {}) =>
@@ -253,7 +247,7 @@ describe('RunningJobsIndicator: waiting runs', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
   });
 
@@ -261,8 +255,8 @@ describe('RunningJobsIndicator: waiting runs', () => {
     render([examRow()]);
 
     const [row] = byTestId('running-jobs-row');
-    expect(row.props['data-state']).toBe('queued');
-    expect(row.props['data-waiting']).toBe('exam');
+    expect(row.getAttribute('data-state')).toBe('queued');
+    expect(row.getAttribute('data-waiting')).toBe('exam');
     expect(text(row)).toContain('Automatic analysis');
     expect(text(row)).toContain('Waiting for the exam to finish');
     expect(text(row)).toContain('3 of 6 models');
@@ -270,21 +264,18 @@ describe('RunningJobsIndicator: waiting runs', () => {
 
     // No spinner anywhere, and no ticking timer: a start time instead.
     expect(byTestId('running-jobs-spinner')).toHaveLength(0);
-    expect(byTestId('running-jobs-waiting-mark').map(mark => mark.props['data-waiting'])).toEqual([
-      'exam',
-      'exam',
-    ]);
+    expect(
+      byTestId('running-jobs-waiting-mark').map(mark => mark.getAttribute('data-waiting'))
+    ).toEqual(['exam', 'exam']);
     expect(byTestId('running-jobs-elapsed')).toHaveLength(0);
-    expect(renderer!.root.findAllByProps({ role: 'timer' })).toHaveLength(0);
+    expect(renderer!.container.querySelectorAll('[role="timer"]')).toHaveLength(0);
     expect(text(byTestId('running-jobs-since')[0])).toBe('since 10:02');
     expect(text(row)).not.toContain('25:27');
-    expect(byTestId('running-jobs-state')[0].props.className).toContain('text-white/70');
+    expect(byTestId('running-jobs-state')[0].className).toContain('text-white/70');
     // The count keeps its bar, without the "computing" colour.
     const [bar] = byTestId('running-jobs-progress');
-    expect(bar.props['aria-valuenow']).toBe(3);
-    expect((bar.children[0] as { props: { className: string } }).props.className).toContain(
-      'bg-white/40'
-    );
+    expect(bar.getAttribute('aria-valuenow')).toBe('3');
+    expect(bar.children[0].className).toContain('bg-white/40');
 
     expect(cardText()).toContain('1 waiting');
     expect(cardText()).not.toContain('running');
@@ -294,13 +285,13 @@ describe('RunningJobsIndicator: waiting runs', () => {
     render([examRow({ waiting: 'stale' })]);
 
     const [row] = byTestId('running-jobs-row');
-    expect(row.props['data-waiting']).toBe('stale');
+    expect(row.getAttribute('data-waiting')).toBe('stale');
     expect(text(row)).toContain('Stuck — not started');
     expect(text(row)).toContain('3 of 6 models');
-    expect(byTestId('running-jobs-state')[0].props.className).toContain('text-amber-300');
+    expect(byTestId('running-jobs-state')[0].className).toContain('text-amber-300');
     const marks = byTestId('running-jobs-waiting-mark');
-    expect(marks.map(mark => mark.props['data-waiting'])).toEqual(['stale', 'stale']);
-    expect(marks[1].props.className).toContain('border-amber-300');
+    expect(marks.map(mark => mark.getAttribute('data-waiting'))).toEqual(['stale', 'stale']);
+    expect(marks[1].className).toContain('border-amber-300');
     expect(byTestId('running-jobs-spinner')).toHaveLength(0);
   });
 
@@ -308,7 +299,7 @@ describe('RunningJobsIndicator: waiting runs', () => {
     render([examRow()], { collapsed: true });
     let [pill] = byTestId('running-jobs-pill');
     expect(text(pill)).toBe('1 waiting');
-    expect(pill.props['aria-label']).toBe('Show AI analysis status (1 waiting)');
+    expect(pill.getAttribute('aria-label')).toBe('Show AI analysis status (1 waiting)');
     expect(byTestId('running-jobs-spinner')).toHaveLength(0);
     expect(byTestId('running-jobs-waiting-mark')).toHaveLength(1);
 
@@ -322,14 +313,14 @@ describe('RunningJobsIndicator: waiting runs', () => {
     render([examRow(), examRow({ id: 'processing:other', waiting: 'stale' })], { collapsed: true });
     [pill] = byTestId('running-jobs-pill');
     expect(text(pill)).toBe('2 waiting');
-    expect(byTestId('running-jobs-waiting-mark')[0].props['data-waiting']).toBe('stale');
+    expect(byTestId('running-jobs-waiting-mark')[0].getAttribute('data-waiting')).toBe('stale');
   });
 
   test('an ended row ignores a waiting reason left on it', () => {
     render([examRow({ state: 'cancelled', active: false, endedAt: STARTED + 60_000 })]);
 
     const [row] = byTestId('running-jobs-row');
-    expect(row.props['data-state']).toBe('cancelled');
+    expect(row.getAttribute('data-state')).toBe('cancelled');
     expect(text(row)).toContain('Cancelled');
     expect(text(row)).not.toContain('Waiting for the exam');
     expect(byTestId('running-jobs-waiting-mark')).toHaveLength(0);

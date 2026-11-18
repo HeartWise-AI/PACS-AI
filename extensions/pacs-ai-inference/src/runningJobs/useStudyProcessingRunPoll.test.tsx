@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render as rtlRender, type RenderResult } from '@testing-library/react';
 import type { StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import { processingRun, STUDY_UID } from './testSupport';
 import {
@@ -58,7 +58,7 @@ const advance = (ms: number) =>
   });
 
 describe('useStudyProcessingRunPoll', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let state: StudyProcessingRunPollState | null = null;
 
   function Probe(props: UseStudyProcessingRunPollOptions) {
@@ -77,9 +77,9 @@ describe('useStudyProcessingRunPoll', () => {
     );
     await act(async () => {
       if (renderer) {
-        renderer.update(element);
+        renderer.rerender(element);
       } else {
-        renderer = TestRenderer.create(element);
+        renderer = rtlRender(element);
       }
     });
     await flush();
@@ -92,7 +92,7 @@ describe('useStudyProcessingRunPoll', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     state = null;
     setVisibility('visible');

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, screen } from '@testing-library/react';
 import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   StudyProcessingProvider,
@@ -27,7 +27,6 @@ jest.mock('react-i18next', () => ({
 }));
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -36,19 +35,11 @@ function ContextConsumer() {
 
 describe('StudyProcessingAttention', () => {
   beforeEach(() => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <StudyProcessingProvider>
-          <ContextConsumer />
-        </StudyProcessingProvider>
-      );
-    });
-  });
-
-  afterEach(() => {
-    act(() => {
-      renderer.unmount();
-    });
+    render(
+      <StudyProcessingProvider>
+        <ContextConsumer />
+      </StudyProcessingProvider>
+    );
   });
 
   it('renders a separate warning banner for a study requiring attention', () => {
@@ -61,11 +52,11 @@ describe('StudyProcessingAttention', () => {
       ]);
     });
 
-    const banner = renderer.root.findByProps({
-      'data-testid': 'study-processing-attention-banner',
-    });
+    const banner = screen.getByTestId('study-processing-attention-banner');
 
-    expect(banner.props['aria-label']).toBe('Processing requires attention. 1 processing warning');
+    expect(banner.getAttribute('aria-label')).toBe(
+      'Processing requires attention. 1 processing warning'
+    );
   });
 
   it('does not render a warning banner for a study without attention', () => {
@@ -78,10 +69,6 @@ describe('StudyProcessingAttention', () => {
       ]);
     });
 
-    expect(
-      renderer.root.findAllByProps({
-        'data-testid': 'study-processing-attention-banner',
-      })
-    ).toHaveLength(0);
+    expect(screen.queryAllByTestId('study-processing-attention-banner')).toHaveLength(0);
   });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextDecoder } from 'util';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import { ViewerModelResultDrawer } from './ViewerModelResultDrawer';
 import { ViewerResultsRequestError, type ViewerResultsRepository } from './viewerResultsRepository';
 import type { ResultSeriesScope, ViewerModelResult } from './types';
@@ -82,10 +82,18 @@ function repository(loadReport: ViewerResultsRepository['loadReport']): ViewerRe
   };
 }
 
-const text = (renderer: ReactTestRenderer) => JSON.stringify(renderer.toJSON());
+const text = (renderer: RenderResult) => renderer.container.innerHTML;
+const byTestId = (renderer: RenderResult, id: string) =>
+  Array.from(renderer.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+// Exactly one matching element.
+const oneByTestId = (renderer: RenderResult, id: string) => {
+  const found = byTestId(renderer, id);
+  expect(found).toHaveLength(1);
+  return found[0];
+};
 
 describe('ViewerModelResultDrawer', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   const onSelectView = jest.fn(() => true);
 
   async function render(
@@ -94,7 +102,7 @@ describe('ViewerModelResultDrawer', () => {
     seriesScope?: ResultSeriesScope | null
   ) {
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = rtlRender(
         <ViewerModelResultDrawer
           result={viewerResult}
           seriesScope={seriesScope}
@@ -102,8 +110,7 @@ describe('ViewerModelResultDrawer', () => {
           onClose={jest.fn()}
           onMinimize={jest.fn()}
           onSelectView={onSelectView}
-        />,
-        { createNodeMock: () => ({ focus: jest.fn() }) }
+        />
       );
     });
   }
@@ -114,7 +121,7 @@ describe('ViewerModelResultDrawer', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
   });
 
@@ -125,9 +132,10 @@ describe('ViewerModelResultDrawer', () => {
     });
     await render(result(), repository(loadReport));
 
-    const iframe = renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-report' });
-    expect(iframe.props.srcDoc).toBe('<h1>Report</h1>');
-    expect(iframe.props.sandbox).toBe('allow-same-origin allow-scripts');
+    const iframe = oneByTestId(renderer!, 'viewer-model-result-report');
+    expect(iframe.tagName).toBe('IFRAME');
+    expect(iframe.getAttribute('srcdoc')).toBe('<h1>Report</h1>');
+    expect(iframe.getAttribute('sandbox')).toBe('allow-same-origin allow-scripts');
     expect(mockOpen).not.toHaveBeenCalled();
     expect(text(renderer!)).toContain('Run from viewer');
     expect(text(renderer!)).toContain('1.3.0');
@@ -136,14 +144,14 @@ describe('ViewerModelResultDrawer', () => {
   test('lists selected views, labels unknown ones and loads a clip on click', async () => {
     await render(result(), repository(jest.fn().mockResolvedValue({ htmlBase64: btoa('x') })));
 
-    const items = renderer!.root.findAllByProps({
-      'data-testid': 'viewer-model-result-selected-view',
-    });
+    const items = byTestId(renderer!, 'viewer-model-result-selected-view');
     expect(items).toHaveLength(2);
     expect(text(renderer!)).toContain('LAO cranial');
     expect(text(renderer!)).toContain('Unknown view');
 
-    act(() => items[1].props.onClick());
+    act(() => {
+      fireEvent.click(items[1]);
+    });
     expect(onSelectView).toHaveBeenCalledWith(result().selectedViews![1]);
   });
 
@@ -179,9 +187,7 @@ describe('ViewerModelResultDrawer', () => {
 
     expect(loadReport).toHaveBeenCalled();
     expect(mockOpen).toHaveBeenCalled();
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-report-fallback' })
-    ).toBeTruthy();
+    expect(oneByTestId(renderer!, 'viewer-model-result-report-fallback')).toBeTruthy();
   });
 
   test('labels results without an api-pacs run as legacy automatic', async () => {
@@ -201,20 +207,14 @@ describe('ViewerModelResultDrawer', () => {
       repository(jest.fn())
     );
 
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-no-details' })
-    ).toBeTruthy();
+    expect(oneByTestId(renderer!, 'viewer-model-result-no-details')).toBeTruthy();
     expect(mockOpen).not.toHaveBeenCalled();
   });
 
   describe('series scope', () => {
     const plain = { reportAvailable: false };
-    const scopeNode = () =>
-      renderer!.root.findAllByProps({ 'data-testid': 'viewer-model-result-series-scope' });
-    const flat = (node: { children: unknown[] }): string =>
-      node.children
-        .map(child => (typeof child === 'string' ? child : flat(child as { children: unknown[] })))
-        .join('');
+    const scopeNode = () => byTestId(renderer!, 'viewer-model-result-series-scope');
+    const flat = (node: Element): string => node.textContent ?? '';
 
     test('shows nothing when the scope is not known', async () => {
       await render(result(plain), repository(jest.fn()));
@@ -228,9 +228,9 @@ describe('ViewerModelResultDrawer', () => {
 
       const [scope] = scopeNode();
       expect(flat(scope)).toBe('All series');
-      expect(scope.props['data-series-scope']).toBe('all');
-      expect(scope.props.tabIndex).toBeUndefined();
-      expect(JSON.stringify(renderer!.toJSON())).not.toContain('border-[#3ef1d1]/60');
+      expect(scope.getAttribute('data-series-scope')).toBe('all');
+      expect(scope.hasAttribute('tabindex')).toBe(false);
+      expect(renderer!.container.innerHTML).not.toContain('border-[#3ef1d1]/60');
     });
 
     test('marks a subset run and lists its series on hover or focus', async () => {
@@ -246,17 +246,17 @@ describe('ViewerModelResultDrawer', () => {
       });
 
       const [scope] = scopeNode();
-      expect(scope.props['data-series-scope']).toBe('subset');
-      expect(scope.props.tabIndex).toBe(0);
-      const [badge, list] = scope.children as Array<{ props: { className: string } }>;
-      expect(flat(badge as never)).toBe('3 of 12 series');
-      expect(badge.props.className).toContain('border-[#3ef1d1]/60');
-      expect(list.props.className).toContain('hidden');
-      expect(list.props.className).toContain('group-hover:block');
-      expect(list.props.className).toContain('group-focus:block');
-      expect(scope.props['aria-describedby']).toBe((list.props as never as { id: string }).id);
+      expect(scope.getAttribute('data-series-scope')).toBe('subset');
+      expect(scope.getAttribute('tabindex')).toBe('0');
+      const [badge, list] = Array.from(scope.children);
+      expect(flat(badge)).toBe('3 of 12 series');
+      expect(badge.className).toContain('border-[#3ef1d1]/60');
+      expect(list.className).toContain('hidden');
+      expect(list.className).toContain('group-hover:block');
+      expect(list.className).toContain('group-focus:block');
+      expect(scope.getAttribute('aria-describedby')).toBe(list.id);
       // The series without a number or description is left out.
-      expect(flat(list as never)).toBe('Series used by this run2 · LAO cranial4');
+      expect(flat(list)).toBe('Series used by this run2 · LAO cranial4');
     });
 
     test('reports only the count when the total is unknown', async () => {
@@ -264,7 +264,7 @@ describe('ViewerModelResultDrawer', () => {
 
       const [scope] = scopeNode();
       expect(flat(scope)).toBe('4 series');
-      expect(renderer!.root.findAllByProps({ role: 'tooltip' })).toHaveLength(0);
+      expect(renderer!.container.querySelectorAll('[role="tooltip"]')).toHaveLength(0);
     });
   });
 });

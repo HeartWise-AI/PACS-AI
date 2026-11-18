@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { fireEvent, render } from '@testing-library/react';
 import { AlertContext, AlertProvider } from './AlertProvider';
 
 describe('AlertProvider', () => {
@@ -14,12 +14,14 @@ describe('AlertProvider', () => {
       });
     }
 
-    const renderer = TestRenderer.create(
+    const { container } = render(
       React.createElement(AlertProvider, null, React.createElement(Consumer))
     );
     const initialCallback = observedCallbacks.at(-1);
 
-    act(() => renderer.root.findByType('button').props.onClick());
+    const buttons = container.querySelectorAll('button');
+    expect(buttons).toHaveLength(1);
+    fireEvent.click(buttons[0]);
 
     expect(observedCallbacks.at(-1)).toBe(initialCallback);
   });

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import type { StudySeriesSnapshot } from './reloadStudySeries';
 import { rememberStudySourceModality } from './sourceModality';
 import {
@@ -35,7 +35,7 @@ function repository(overrides: Partial<StudyRefreshRepository> = {}) {
 }
 
 describe('useStudyRefresh', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let controller: StudyRefreshController;
   let phases: StudyRefreshState[];
 
@@ -71,9 +71,8 @@ describe('useStudyRefresh', () => {
       wait: () => Promise.resolve(),
       ...options,
     };
-    act(() => {
-      renderer = TestRenderer.create(<Harness {...props} />);
-    });
+    // A legacy root renders every intermediate state, as the phase log below expects.
+    renderer = render(<Harness {...props} />, { legacyRoot: true });
     return props;
   }
 
@@ -87,7 +86,7 @@ describe('useStudyRefresh', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     jest.useRealTimers();
   });
@@ -164,7 +163,7 @@ describe('useStudyRefresh', () => {
       modalityId: 'ARCHIVE',
       studyInstanceUID: STUDY_UID,
     });
-    act(() => renderer?.unmount());
+    renderer?.unmount();
 
     const single = repository({
       loadModalities: jest.fn().mockResolvedValue({ ONLY_PACS: { targetCMoveEnabled: true } }),
@@ -217,7 +216,7 @@ describe('useStudyRefresh', () => {
     mount({ repository: repository({ retrieveStudy: jest.fn().mockRejectedValue(new Error()) }) });
     await refresh();
     expect(controller.state.error).toBe('retrieveFailed');
-    act(() => renderer?.unmount());
+    renderer?.unmount();
 
     let time = 0;
     jest.spyOn(Date, 'now').mockImplementation(() => time);
@@ -300,7 +299,7 @@ describe('useStudyRefresh', () => {
     const props = mount({ studyInstanceUID: null });
     await refresh();
     expect(props.reloadSeries).not.toHaveBeenCalled();
-    act(() => renderer?.unmount());
+    renderer?.unmount();
 
     let finishReload: () => void = () => undefined;
     const reloadSeries = jest.fn(() => new Promise<void>(resolve => (finishReload = resolve)));
@@ -314,7 +313,7 @@ describe('useStudyRefresh', () => {
     });
     expect(reloadSeries).toHaveBeenCalledTimes(1);
     const seen = phases.length;
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     finishReload();
     await pending;

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import { StudyProcessingStatusCell } from './StudyProcessingStatusCell';
 import { getStudyProcessingStatusPresentation } from './statusPresentation';
@@ -41,53 +41,36 @@ describe('StudyProcessingStatusCell', () => {
   });
 
   it('renders completed versus expected model progress', () => {
-    let renderer!: ReactTestRenderer;
+    const { container, unmount } = render(
+      <StudyProcessingStatusCell summary={studyProcessingSummaryFixtures.processing} />
+    );
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <StudyProcessingStatusCell summary={studyProcessingSummaryFixtures.processing} />
-      );
-    });
+    const progressBars = container.querySelectorAll('[role="progressbar"]');
+    expect(progressBars).toHaveLength(1);
+    const progress = progressBars[0];
+    const modelCount = screen.getByTestId('study-processing-model-count');
 
-    const progress = renderer.root.findByProps({ role: 'progressbar' });
-    const modelCount = renderer.root.findByProps({
-      'data-testid': 'study-processing-model-count',
-    });
+    expect(progress.getAttribute('aria-valuenow')).toBe('1');
+    expect(progress.getAttribute('aria-valuemax')).toBe('3');
+    expect(modelCount.textContent).toBe('1 / 3 models');
+    expect(screen.getByTestId('study-processing-progress-fill').style.width).toBe('33%');
 
-    expect(progress.props['aria-valuenow']).toBe(1);
-    expect(progress.props['aria-valuemax']).toBe(3);
-    expect(modelCount.children.join('')).toBe('1 / 3 models');
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-progress-fill' }).props.style
-        .width
-    ).toBe('33%');
-
-    act(() => {
-      renderer.unmount();
-    });
+    unmount();
   });
 
   it('shows attention without replacing the run outcome', () => {
-    let renderer!: ReactTestRenderer;
+    const { unmount } = render(
+      <StudyProcessingStatusCell summary={studyProcessingSummaryFixtures.partialSuccess} />
+    );
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <StudyProcessingStatusCell summary={studyProcessingSummaryFixtures.partialSuccess} />
-      );
-    });
+    const statusLabel = screen.getByTestId('study-processing-status-label');
+    const attention = screen.getByTestId('study-processing-attention');
 
-    const statusLabel = renderer.root.findByProps({
-      'data-testid': 'study-processing-status-label',
-    });
-    const attention = renderer.root.findByProps({
-      'data-testid': 'study-processing-attention',
-    });
+    expect(Array.from(statusLabel.childNodes, node => node.textContent)).toContain(
+      'Partial success'
+    );
+    expect(attention.getAttribute('aria-label')).toBe('Processing requires attention');
 
-    expect(statusLabel.children).toContain('Partial success');
-    expect(attention.props['aria-label']).toBe('Processing requires attention');
-
-    act(() => {
-      renderer.unmount();
-    });
+    unmount();
   });
 });

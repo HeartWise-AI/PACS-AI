@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { DEEP_CORO_CLIP_ARTERIES } from './deepCoroClipContract';
 import { deepCoroClipResultFixtures } from './deepCoroClipFixtures';
 import { DeepCoroClipResult } from './DeepCoroClipResult';
@@ -14,63 +10,42 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-function textContent(instance: ReactTestInstance): string {
-  return instance.children
-    .map(child => (typeof child === 'string' ? child : textContent(child)))
-    .join('');
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
 }
 
 describe('DeepCoroClipResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('presents all documented vessels in the three model-defined groups', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(
+      <DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />
+    );
 
-    expect(renderer!.root.findAllByType('table')).toHaveLength(3);
-    expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-group-rca' })
-    ).toHaveLength(1);
-    expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-group-lca' })
-    ).toHaveLength(1);
-    expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-group-other' })
-    ).toHaveLength(1);
+    expect(container.querySelectorAll('table')).toHaveLength(3);
+    expect(container.querySelectorAll('[data-testid="deepcoro-clip-group-rca"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="deepcoro-clip-group-lca"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="deepcoro-clip-group-other"]')).toHaveLength(1);
     for (const artery of DEEP_CORO_CLIP_ARTERIES) {
       expect(
-        renderer!.root.findAllByProps({ 'data-testid': `deepcoro-clip-artery-${artery}` })
+        container.querySelectorAll(`[data-testid="deepcoro-clip-artery-${artery}"]`)
       ).toHaveLength(1);
     }
   });
 
   test('formats estimates and probabilities as one-decimal percentages', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />
-      );
-    });
+    render(<DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />);
 
-    const proximalRca = textContent(
-      renderer!.root.findByProps({ 'data-testid': 'deepcoro-clip-artery-Proximal RCA' })
-    );
+    const proximalRca = screen.getByTestId('deepcoro-clip-artery-Proximal RCA').textContent;
     expect(proximalRca).toContain('Blocked');
     expect(proximalRca).toContain('62.4%');
     expect(proximalRca).toContain('82.0%');
     expect(proximalRca).toContain('Calcified');
     expect(proximalRca).toContain('73.0%');
 
-    const midLad = textContent(
-      renderer!.root.findByProps({ 'data-testid': 'deepcoro-clip-artery-Mid LAD' })
-    );
+    const midLad = screen.getByTestId('deepcoro-clip-artery-Mid LAD').textContent;
     expect(midLad).toContain('CTO');
     expect(midLad).toContain('71.0%');
   });
@@ -86,31 +61,25 @@ describe('DeepCoroClipResult', () => {
       },
     };
 
-    act(() => {
-      renderer = TestRenderer.create(<DeepCoroClipResult payload={payload} />);
-    });
+    const { container } = render(<DeepCoroClipResult payload={payload} />);
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).not.toContain(payload.diagnosis);
     expect(rendered).not.toContain(payload.modelRecommendations.en);
     expect(rendered).not.toContain(payload.modelRecommendations.fr);
-    expect(renderer!.root.findAllByType('img')).toHaveLength(0);
-    expect(renderer!.root.findAllByType('script')).toHaveLength(0);
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+    expect(container.querySelectorAll('script')).toHaveLength(0);
   });
 
   test('uses table semantics and exposes an assistive note', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(
+      <DeepCoroClipResult payload={deepCoroClipResultFixtures.validV1} />
+    );
 
-    expect(renderer!.root.findAllByType('caption')).toHaveLength(3);
-    expect(renderer!.root.findAllByProps({ scope: 'row' })).toHaveLength(
+    expect(container.querySelectorAll('caption')).toHaveLength(3);
+    expect(container.querySelectorAll('[scope="row"]')).toHaveLength(
       DEEP_CORO_CLIP_ARTERIES.length
     );
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'deepcoro-clip-assistive-note' }).props.role
-    ).toBe('note');
+    expect(screen.getByTestId('deepcoro-clip-assistive-note').getAttribute('role')).toBe('note');
   });
 });

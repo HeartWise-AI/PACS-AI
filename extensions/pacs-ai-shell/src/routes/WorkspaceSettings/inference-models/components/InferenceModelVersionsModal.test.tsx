@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import InferenceModelVersionsModal from './InferenceModelVersionsModal';
 
 jest.mock('react-i18next', () => ({
@@ -20,7 +20,7 @@ jest.mock('../../../../components/Modal', () => ({ children, isOpen }) =>
 );
 
 describe('InferenceModelVersionsModal', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
 
   afterEach(() => {
     act(() => renderer?.unmount());
@@ -29,7 +29,7 @@ describe('InferenceModelVersionsModal', () => {
   test('replaces deployment actions with an OK button after completion', () => {
     const onClose = jest.fn();
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <InferenceModelVersionsModal
           isOpen
           model={null}
@@ -57,11 +57,15 @@ describe('InferenceModelVersionsModal', () => {
       );
     });
 
-    const buttons = renderer.root.findAllByType('button');
+    const buttons = renderer.container.querySelectorAll('button');
     expect(buttons).toHaveLength(1);
-    expect(buttons[0].children).toEqual(['OK']);
+    expect(
+      Array.from(buttons[0].childNodes).map(node =>
+        node.nodeType === Node.TEXT_NODE ? node.textContent : node
+      )
+    ).toEqual(['OK']);
 
-    act(() => buttons[0].props.onClick());
+    fireEvent.click(buttons[0]);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

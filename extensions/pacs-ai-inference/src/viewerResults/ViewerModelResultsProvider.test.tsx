@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import {
   useViewerModelResults,
@@ -20,16 +20,15 @@ jest.mock('@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingPr
   useOptionalInferenceProcessing: () => mockInferenceProcessing,
 }));
 
+// Records the props of each drawer render, so the tests can read the series scope it got.
+const mockDrawerRenders: Array<{ result: ViewerModelResult; seriesScope?: unknown }> = [];
+
 jest.mock('./ViewerModelResultDrawer', () => ({
   __esModule: true,
-  default: ({ result, seriesScope }: { result: ViewerModelResult; seriesScope?: unknown }) => (
-    <div
-      data-testid="drawer"
-      data-series-scope={seriesScope}
-    >
-      {result.modelName}
-    </div>
-  ),
+  default: ({ result, seriesScope }: { result: ViewerModelResult; seriesScope?: unknown }) => {
+    mockDrawerRenders.push({ result, seriesScope });
+    return <div data-testid="drawer">{result.modelName}</div>;
+  },
 }));
 
 jest.mock('react-i18next', () => ({
@@ -126,7 +125,7 @@ const flush = () =>
   });
 
 describe('ViewerModelResultsProvider', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let context: ViewerModelResultsContextValue | null = null;
   const showAlert = jest.fn();
 
@@ -141,7 +140,7 @@ describe('ViewerModelResultsProvider', () => {
     props: Partial<ViewerModelResultsProviderProps> = {}
   ) {
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = rtlRender(
         <AlertContext.Provider value={showAlert}>
           <ViewerModelResultsProvider
             studyInstanceUID="1.2.3"
@@ -161,10 +160,20 @@ describe('ViewerModelResultsProvider', () => {
     mockInferenceProcessing.canViewStudyProcessingRunHistory = true;
     mockInferenceProcessing.canUseStudyProcessingREST = true;
     showAlert.mockReset();
+    mockDrawerRenders.length = 0;
   });
 
+  const byTestId = (id: string) =>
+    Array.from(renderer!.container.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  // Exactly one matching element.
+  const oneByTestId = (id: string) => {
+    const found = byTestId(id);
+    expect(found).toHaveLength(1);
+    return found[0];
+  };
+
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
     context = null;
     jest.useRealTimers();
@@ -319,12 +328,12 @@ describe('ViewerModelResultsProvider', () => {
 
     expect(context!.getPendingRun(model)).toBeNull();
     expect(context!.getLatestResult(model)?.runId).toBe('run-2');
-    const notice = renderer!.root.findByProps({ 'data-testid': 'viewer-model-result-ready-view' });
+    const notice = oneByTestId('viewer-model-result-ready-view');
     await act(async () => {
-      notice.props.onClick();
+      fireEvent.click(notice);
     });
     expect(context!.openedResult?.result.runId).toBe('run-2');
-    expect(renderer!.root.findByProps({ 'data-testid': 'drawer' })).toBeTruthy();
+    expect(oneByTestId('drawer')).toBeTruthy();
   });
 
   test('opens, minimizes and closes a result', async () => {
@@ -332,11 +341,11 @@ describe('ViewerModelResultsProvider', () => {
 
     act(() => context!.openResult(result()));
     expect(context!.openedResult).toEqual({ result: result(), minimized: false });
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'drawer' })).toHaveLength(1);
+    expect(byTestId('drawer')).toHaveLength(1);
 
     act(() => context!.setResultMinimized(true));
     expect(context!.openedResult?.minimized).toBe(true);
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'drawer' })).toHaveLength(0);
+    expect(byTestId('drawer')).toHaveLength(0);
 
     act(() => context!.closeResult());
     expect(context!.openedResult).toBeNull();
@@ -378,13 +387,17 @@ describe('ViewerModelResultsProvider', () => {
     });
 
     act(() => context!.openResult(subset));
-    const drawer = () => renderer!.root.findByProps({ 'data-testid': 'drawer' });
-    expect(drawer().props['data-series-scope']).toMatchObject({ kind: 'subset', total: 2 });
+    // The scope the one mounted drawer was last rendered with.
+    const drawerSeriesScope = () => {
+      oneByTestId('drawer');
+      return mockDrawerRenders[mockDrawerRenders.length - 1].seriesScope;
+    };
+    expect(drawerSeriesScope()).toMatchObject({ kind: 'subset', total: 2 });
 
     // Series that finish loading while the drawer is open update the scope.
     displaySets.push({ ...displaySets[0], SeriesInstanceUID: 'series-3' });
     act(() => listeners.forEach(listener => listener()));
-    expect(drawer().props['data-series-scope']).toMatchObject({ kind: 'subset', total: 3 });
+    expect(drawerSeriesScope()).toMatchObject({ kind: 'subset', total: 3 });
 
     act(() => context!.closeResult());
     expect(unsubscribe).toHaveBeenCalled();
@@ -432,8 +445,7 @@ describe('ViewerModelResultsProvider', () => {
       completedAt: '2026-11-13T10:00:00Z',
       trigger: 'VIEWER_REQUEST',
     });
-    const readyNotices = () =>
-      renderer!.root.findAllByProps({ 'data-testid': 'viewer-model-result-ready-view' });
+    const readyNotices = () => byTestId('viewer-model-result-ready-view');
     const tick = async (milliseconds: number) => {
       await act(async () => {
         jest.advanceTimersByTime(milliseconds);
@@ -490,7 +502,7 @@ describe('ViewerModelResultsProvider', () => {
       expect(outcome()).toEqual({ status: 'completed', result: newer });
       expect(context!.getPendingRun(model)).toBeNull();
       expect(context!.openedResult).toEqual({ result: newer, minimized: false });
-      expect(renderer!.root.findAllByProps({ 'data-testid': 'drawer' })).toHaveLength(1);
+      expect(byTestId('drawer')).toHaveLength(1);
       expect(readyNotices()).toHaveLength(0);
       expect(showAlert).not.toHaveBeenCalled();
     });
@@ -636,8 +648,8 @@ describe('ViewerModelResultsProvider', () => {
     });
 
     describe('running jobs indicator', () => {
-      const jobRows = () => renderer!.root.findAllByProps({ 'data-testid': 'running-jobs-row' });
-      const jobStates = () => jobRows().map(row => row.props['data-state']);
+      const jobRows = () => byTestId('running-jobs-row');
+      const jobStates = () => jobRows().map(row => row.getAttribute('data-state'));
 
       test('is hidden while the pop-up waits on the run and shows it once dismissed', async () => {
         const repo = repository({
@@ -665,7 +677,7 @@ describe('ViewerModelResultsProvider', () => {
 
         // The finished row opens the result like the ready notice does.
         await act(async () => {
-          renderer!.root.findByProps({ 'data-testid': 'running-jobs-open-result' }).props.onClick();
+          fireEvent.click(oneByTestId('running-jobs-open-result'));
         });
         expect(context!.openedResult?.result.runId).toBe('run-2');
         expect(readyNotices()).toHaveLength(0);

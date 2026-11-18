@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import {
   GENERIC_RESULT_MAX_COLLECTION_ITEMS,
   GENERIC_RESULT_MAX_DEPTH,
@@ -22,37 +18,35 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-function renderedText(node: ReactTestInstance | string): string {
-  if (typeof node === 'string') {
-    return node;
+function renderedText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? '';
   }
-  return node.children.map(renderedText).join(' ');
+  return Array.from(node.childNodes, renderedText).join(' ');
+}
+
+// Host props React applied to each rendered DOM element.
+function hostProps(element: Element): Record<string, unknown> {
+  const key = Object.keys(element).find(name => name.startsWith('__reactProps$'));
+  expect(key).toBeDefined();
+  return (element as unknown as Record<string, Record<string, unknown>>)[key!];
 }
 
 describe('GenericModelResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('renders nested objects, arrays, and every JSON primitive without interpretation', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <GenericModelResult
-          value={{
-            score: 24.5,
-            accepted: true,
-            note: null,
-            labels: ['intermediate', false],
-            nested: { exact_key_name: 'preserved' },
-          }}
-        />
-      );
-    });
+    const { container } = render(
+      <GenericModelResult
+        value={{
+          score: 24.5,
+          accepted: true,
+          note: null,
+          labels: ['intermediate', false],
+          nested: { exact_key_name: 'preserved' },
+        }}
+      />
+    );
 
-    const text = renderedText(renderer!.root);
+    const text = renderedText(container);
     expect(text).toContain('score');
     expect(text).toContain('24.5');
     expect(text).toContain('true');
@@ -63,19 +57,19 @@ describe('GenericModelResult', () => {
     expect(text).toContain('preserved');
     expect(text).toContain('array · 2');
     expect(text).toContain('object · 5');
-    expect(renderer!.root.findAllByType('details').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('details').length).toBeGreaterThan(0);
   });
 
   test('renders model-provided markup only as inert text', () => {
     const suppliedMarkup = '<img src=x onerror="alert(1)"><script>steal()</script>';
-    act(() => {
-      renderer = TestRenderer.create(<GenericModelResult value={{ report: suppliedMarkup }} />);
-    });
+    const { container } = render(<GenericModelResult value={{ report: suppliedMarkup }} />);
 
-    expect(renderedText(renderer!.root)).toContain(suppliedMarkup);
-    expect(renderer!.root.findAllByType('script')).toHaveLength(0);
+    expect(renderedText(container)).toContain(suppliedMarkup);
+    expect(container.querySelectorAll('script')).toHaveLength(0);
     expect(
-      renderer!.root.findAll(node => Object.hasOwn(node.props, 'dangerouslySetInnerHTML'))
+      Array.from(container.querySelectorAll('*')).filter(element =>
+        Object.hasOwn(hostProps(element), 'dangerouslySetInnerHTML')
+      )
     ).toHaveLength(0);
   });
 
@@ -84,17 +78,15 @@ describe('GenericModelResult', () => {
       { length: GENERIC_RESULT_MAX_COLLECTION_ITEMS + 3 },
       (_, index) => `entry-${index}`
     );
-    act(() => {
-      renderer = TestRenderer.create(<GenericModelResult value={value} />);
-    });
+    const { container } = render(<GenericModelResult value={value} />);
 
-    const text = renderedText(renderer!.root);
+    const text = renderedText(container);
     expect(text).toContain(`entry-${GENERIC_RESULT_MAX_COLLECTION_ITEMS - 1}`);
     expect(text).not.toContain(`entry-${GENERIC_RESULT_MAX_COLLECTION_ITEMS}`);
     expect(text).toContain('3 additional entries are not shown');
     expect(
-      renderer!.root.findByProps({ 'data-testid': 'generic-model-result-collection-limit' })
-    ).toBeDefined();
+      container.querySelectorAll('[data-testid="generic-model-result-collection-limit"]')
+    ).toHaveLength(1);
   });
 
   test('bounds pathological nesting depth', () => {
@@ -103,11 +95,9 @@ describe('GenericModelResult', () => {
       value = { nested: value };
     }
 
-    act(() => {
-      renderer = TestRenderer.create(<GenericModelResult value={value} />);
-    });
+    const { container } = render(<GenericModelResult value={value} />);
 
-    const text = renderedText(renderer!.root);
+    const text = renderedText(container);
     expect(text).toContain('Additional nested data is hidden');
     expect(text).not.toContain('hidden-value');
   });
@@ -120,10 +110,8 @@ describe('GenericModelResult', () => {
     ['empty object', {}],
     ['empty array', []],
   ])('supports %s at the result root', (_label, value) => {
-    act(() => {
-      renderer = TestRenderer.create(<GenericModelResult value={value} />);
-    });
+    const { container } = render(<GenericModelResult value={value} />);
 
-    expect(renderer!.root.findByProps({ id: 'generic-model-result-title' })).toBeDefined();
+    expect(container.querySelectorAll('[id="generic-model-result-title"]')).toHaveLength(1);
   });
 });

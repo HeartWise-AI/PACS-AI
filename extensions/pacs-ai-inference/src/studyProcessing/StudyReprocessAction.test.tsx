@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import { getStudyReprocessErrorPresentation, StudyReprocessAction } from './StudyReprocessAction';
 import {
@@ -26,7 +26,7 @@ const createdRun: CreatedStudyProcessingRun = {
 };
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
+let container: HTMLElement;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -42,53 +42,38 @@ function renderAction({
   disabled?: boolean;
   reprocessStudy?: jest.Mock;
 } = {}) {
-  act(() => {
-    renderer = TestRenderer.create(
-      <StudyProcessingProvider reprocessTransport={{ reprocessStudy }}>
-        <ContextConsumer />
-        <StudyReprocessAction
-          studyInstanceUID={studyInstanceUID}
-          authorized={authorized}
-          disabled={disabled}
-        />
-      </StudyProcessingProvider>
-    );
-  });
+  ({ container } = render(
+    <StudyProcessingProvider reprocessTransport={{ reprocessStudy }}>
+      <ContextConsumer />
+      <StudyReprocessAction
+        studyInstanceUID={studyInstanceUID}
+        authorized={authorized}
+        disabled={disabled}
+      />
+    </StudyProcessingProvider>
+  ));
   return reprocessStudy;
 }
 
 describe('StudyReprocessAction', () => {
-  afterEach(() => {
-    act(() => renderer.unmount());
-  });
-
   it('is not rendered for an unauthorized user', () => {
     renderAction({ authorized: false });
 
-    expect(
-      renderer.root.findAllByProps({
-        'data-testid': 'study-processing-reprocess-action',
-      })
-    ).toHaveLength(0);
+    expect(screen.queryAllByTestId('study-processing-reprocess-action')).toHaveLength(0);
   });
 
   it('requires explicit confirmation describing a new full run', async () => {
     const reprocessStudy = renderAction();
-    const action = renderer.root.findByProps({
-      'data-testid': 'study-processing-reprocess-action',
-    });
+    const action = screen.getByTestId('study-processing-reprocess-action');
 
-    act(() => action.props.onClick());
-    const dialog = renderer.root.findByProps({ role: 'dialog' });
-    expect(dialog.props['aria-modal']).toBe('true');
+    fireEvent.click(action);
+    const dialogs = container.querySelectorAll('[role="dialog"]');
+    expect(dialogs).toHaveLength(1);
+    expect(dialogs[0].getAttribute('aria-modal')).toBe('true');
     expect(reprocessStudy).not.toHaveBeenCalled();
 
     await act(async () => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-confirm',
-        })
-        .props.onClick();
+      fireEvent.click(screen.getByTestId('study-processing-reprocess-confirm'));
       await Promise.resolve();
     });
 
@@ -98,23 +83,11 @@ describe('StudyReprocessAction', () => {
 
   it('cancels confirmation without submitting', () => {
     const reprocessStudy = renderAction();
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-action',
-        })
-        .props.onClick();
-    });
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-cancel',
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-action'));
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-cancel'));
 
     expect(reprocessStudy).not.toHaveBeenCalled();
-    expect(renderer.root.findAllByProps({ role: 'dialog' })).toHaveLength(0);
+    expect(container.querySelectorAll('[role="dialog"]')).toHaveLength(0);
   });
 
   it('disables every submission control while the request is pending', async () => {
@@ -127,32 +100,17 @@ describe('StudyReprocessAction', () => {
           })
       ),
     });
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-action',
-        })
-        .props.onClick();
-    });
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-confirm',
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-action'));
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-confirm'));
 
     expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' }).props
-        .disabled
+      (screen.getByTestId('study-processing-reprocess-action') as HTMLButtonElement).disabled
     ).toBe(true);
     expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-confirm' }).props
-        .disabled
+      (screen.getByTestId('study-processing-reprocess-confirm') as HTMLButtonElement).disabled
     ).toBe(true);
     expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-cancel' }).props
-        .disabled
+      (screen.getByTestId('study-processing-reprocess-cancel') as HTMLButtonElement).disabled
     ).toBe(true);
 
     await act(async () => {
@@ -173,8 +131,7 @@ describe('StudyReprocessAction', () => {
     });
 
     expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' }).props
-        .disabled
+      (screen.getByTestId('study-processing-reprocess-action') as HTMLButtonElement).disabled
     ).toBe(true);
   });
 
@@ -182,8 +139,7 @@ describe('StudyReprocessAction', () => {
     renderAction({ disabled: true });
 
     expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' }).props
-        .disabled
+      (screen.getByTestId('study-processing-reprocess-action') as HTMLButtonElement).disabled
     ).toBe(true);
   });
 
@@ -204,54 +160,28 @@ describe('StudyReprocessAction', () => {
 
   it('renders the created run acknowledgement after success', async () => {
     renderAction();
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-action',
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-action'));
 
     await act(async () => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-confirm',
-        })
-        .props.onClick();
+      fireEvent.click(screen.getByTestId('study-processing-reprocess-confirm'));
       await Promise.resolve();
     });
 
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-success' })
-    ).toBeDefined();
+    expect(screen.getByTestId('study-processing-reprocess-success')).toBeDefined();
   });
 
   it('renders safe error feedback without discarding the action', async () => {
     renderAction({
       reprocessStudy: jest.fn().mockRejectedValue(new StudyReprocessError('private detail', 500)),
     });
-    act(() => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-action',
-        })
-        .props.onClick();
-    });
+    fireEvent.click(screen.getByTestId('study-processing-reprocess-action'));
 
     await act(async () => {
-      renderer.root
-        .findByProps({
-          'data-testid': 'study-processing-reprocess-confirm',
-        })
-        .props.onClick();
+      fireEvent.click(screen.getByTestId('study-processing-reprocess-confirm'));
       await Promise.resolve();
     });
 
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-error' })
-    ).toBeDefined();
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-reprocess-action' })
-    ).toBeDefined();
+    expect(screen.getByTestId('study-processing-reprocess-error')).toBeDefined();
+    expect(screen.getByTestId('study-processing-reprocess-action')).toBeDefined();
   });
 });

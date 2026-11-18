@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react';
 import InferenceNotificationsBell from './InferenceNotificationsBell';
 import type { InferenceNotification } from '@pacs-ai/extension-core/src/inferenceProcessing/inferenceNotifications';
 import { buildProcessingNotificationViewerPath } from './processingNotificationNavigation';
@@ -13,7 +13,7 @@ let mockInferenceProcessingContext: {
   isBellOpen: boolean;
   setBellOpen: jest.Mock;
 };
-let renderer: ReactTestRenderer;
+let renderer: RenderResult;
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
@@ -59,21 +59,22 @@ describe('InferenceNotificationsBell', () => {
       isBellOpen: true,
       setBellOpen: jest.fn(),
     };
-    act(() => {
-      renderer = TestRenderer.create(<InferenceNotificationsBell />);
-    });
+    renderer = render(<InferenceNotificationsBell />);
   });
 
   afterEach(() => {
-    act(() => renderer.unmount());
+    renderer.unmount();
   });
 
   it('opens the study in the viewer', () => {
-    const notificationButton = renderer.root
-      .findAllByType('button')
-      .find(button => button.props.className.includes('block w-full'));
+    const notificationButton = Array.from(renderer.container.querySelectorAll('button')).find(
+      button => button.className.includes('block w-full')
+    );
 
-    act(() => notificationButton?.props.onClick());
+    expect(notificationButton).toBeDefined();
+    act(() => {
+      fireEvent.click(notificationButton as HTMLButtonElement);
+    });
 
     expect(mockNavigate).toHaveBeenCalledWith('/viewer?StudyInstanceUIDs=study-1');
     expect(buildProcessingNotificationViewerPath('1.2.840/a b')).toBe(
@@ -84,14 +85,12 @@ describe('InferenceNotificationsBell', () => {
 
   it('preserves the existing mark-all-read behavior when the bell opens', () => {
     mockInferenceProcessingContext.isBellOpen = false;
-    act(() => {
-      renderer.update(<InferenceNotificationsBell />);
-    });
+    renderer.rerender(<InferenceNotificationsBell />);
 
-    const bellButton = renderer.root.findByProps({
-      'aria-label': 'ProcessingNotificationsAriaLabel',
+    const bellButton = renderer.getByLabelText('ProcessingNotificationsAriaLabel');
+    act(() => {
+      fireEvent.click(bellButton);
     });
-    act(() => bellButton.props.onClick());
 
     expect(mockInferenceProcessingContext.markAllRead).toHaveBeenCalledTimes(1);
     expect(mockInferenceProcessingContext.setBellOpen).toHaveBeenCalledWith(true);
@@ -106,11 +105,9 @@ describe('InferenceNotificationsBell', () => {
         studyInstanceUID: '1.2.826.0.1.3680043.8.498.12345678',
       },
     ];
-    act(() => {
-      renderer.update(<InferenceNotificationsBell />);
-    });
+    renderer.rerender(<InferenceNotificationsBell />);
 
-    const text = JSON.stringify(renderer.toJSON());
+    const text = renderer.container.innerHTML;
     expect(text).toContain('ProcessingNotificationUnknownStudy');
     expect(text).toContain('ProcessingNotificationStudyReference|12345678');
     expect(text).not.toContain('ProcessingNotificationUnknownModality');
@@ -118,29 +115,25 @@ describe('InferenceNotificationsBell', () => {
 
   it('labels automatic analyses only', () => {
     expect(
-      renderer.root.findAll(
-        node => node.props['data-testid'] === 'processing-notification-automatic'
-      )
+      renderer.container.querySelectorAll('[data-testid="processing-notification-automatic"]')
     ).toHaveLength(0);
 
     mockInferenceProcessingContext.notifications = [
       notification,
       { ...notification, deduplicationKey: 'study-2:run-2:3:terminal', trigger: 'AUTO' },
     ];
-    act(() => {
-      renderer.update(<InferenceNotificationsBell />);
-    });
+    renderer.rerender(<InferenceNotificationsBell />);
 
-    const labels = renderer.root.findAll(
-      node =>
-        node.type === 'span' && node.props['data-testid'] === 'processing-notification-automatic'
+    const labels = renderer.container.querySelectorAll(
+      'span[data-testid="processing-notification-automatic"]'
     );
     expect(labels).toHaveLength(1);
-    expect(labels[0].children).toEqual(['ProcessingNotificationAutomatic']);
+    expect(labels[0].childNodes).toHaveLength(1);
+    expect(labels[0].textContent).toBe('ProcessingNotificationAutomatic');
   });
 
   it('shows the patient and modalities once they are known', () => {
-    const text = JSON.stringify(renderer.toJSON());
+    const text = renderer.container.innerHTML;
     expect(text).toContain('Visible patient');
     expect(text).toContain('XA');
   });

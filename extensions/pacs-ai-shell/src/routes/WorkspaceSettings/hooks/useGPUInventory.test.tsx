@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { useGPUInventory } from './useGPUInventory';
 import { getAuthenticatedScope } from './authenticatedScope';
@@ -18,7 +18,7 @@ const sample = {
   managerReady: true,
 };
 describe('GPU inventory polling', () => {
-  let renderer: TestRenderer.ReactTestRenderer;
+  let renderer: RenderResult;
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
@@ -31,11 +31,11 @@ describe('GPU inventory polling', () => {
   });
   test('polls only enabled visible panels and releases its timer on unmount', async () => {
     await act(async () => {
-      renderer = TestRenderer.create(<Consumer enabled={false} />);
+      renderer = render(<Consumer enabled={false} />);
     });
     expect(fetch).not.toHaveBeenCalled();
     await act(async () => {
-      renderer.update(<Consumer enabled />);
+      renderer.rerender(<Consumer enabled />);
     });
     expect(fetch).toHaveBeenCalledTimes(1);
     await act(async () => {
@@ -63,7 +63,7 @@ describe('GPU inventory polling', () => {
   test('aborts an in-flight request when its panel is removed', async () => {
     fetch.mockImplementation(() => new Promise(() => {}));
     await act(async () => {
-      renderer = TestRenderer.create(<Consumer enabled />);
+      renderer = render(<Consumer enabled />);
     });
     const signal = fetch.mock.calls[0][0] as AbortSignal;
     expect(signal.aborted).toBe(false);
@@ -77,7 +77,7 @@ describe('GPU inventory polling', () => {
 
   test('clears protected inventory and stops polling after permission is revoked', async () => {
     await act(async () => {
-      renderer = TestRenderer.create(<Consumer enabled />);
+      renderer = render(<Consumer enabled />);
     });
     fetch.mockRejectedValueOnce({ status: 403 });
     await act(async () => {
@@ -92,7 +92,7 @@ describe('GPU inventory polling', () => {
 
   test('retains a failed sample as stale rather than reporting zero memory', async () => {
     await act(async () => {
-      renderer = TestRenderer.create(<Consumer enabled />);
+      renderer = render(<Consumer enabled />);
     });
     fetch.mockRejectedValueOnce(new Error('network'));
     await act(async () => {
@@ -102,7 +102,7 @@ describe('GPU inventory polling', () => {
     expect(result.stale).toBe(true);
     expect(result.error).toBe(true);
     await act(async () => {
-      renderer.update(<Consumer enabled={false} />);
+      renderer.rerender(<Consumer enabled={false} />);
     });
     expect(result.inventory).toBeNull();
   });
@@ -111,7 +111,7 @@ describe('GPU inventory polling', () => {
     localStorage.setItem('sessionToken', 'token-a');
     const firstScope = getAuthenticatedScope().key;
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <Consumer
           enabled
           scopeKey={firstScope}
@@ -140,7 +140,7 @@ describe('GPU inventory polling', () => {
     localStorage.setItem('tenantId', 'tenant-b');
     localStorage.setItem('sessionToken', 'token-b');
     await act(async () => {
-      renderer.update(
+      renderer.rerender(
         <Consumer
           enabled
           scopeKey={getAuthenticatedScope().key}

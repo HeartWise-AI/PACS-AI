@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import {
   isRunningJobsCardClosed,
   readRunningJobsCollapsed,
@@ -27,10 +27,8 @@ describe('running jobs card state', () => {
   });
 
   test('remembers the collapsed state in the browser', () => {
-    let renderer: TestRenderer.ReactTestRenderer;
-    act(() => {
-      renderer = TestRenderer.create(<Probe ids={['a']} />);
-    });
+    let renderer: RenderResult;
+    renderer = render(<Probe ids={['a']} />);
     expect(state!.collapsed).toBe(false);
 
     act(() => state!.toggleCollapsed());
@@ -38,16 +36,14 @@ describe('running jobs card state', () => {
     expect(window.localStorage.getItem(RUNNING_JOBS_COLLAPSED_STORAGE_KEY)).toBe('1');
 
     // A new page load starts collapsed.
-    act(() => renderer!.unmount());
-    act(() => {
-      renderer = TestRenderer.create(<Probe ids={['a']} />);
-    });
+    renderer!.unmount();
+    renderer = render(<Probe ids={['a']} />);
     expect(state!.collapsed).toBe(true);
 
     act(() => state!.toggleCollapsed());
     expect(state!.collapsed).toBe(false);
     expect(window.localStorage.getItem(RUNNING_JOBS_COLLAPSED_STORAGE_KEY)).toBe('0');
-    act(() => renderer!.unmount());
+    renderer!.unmount();
   });
 
   test('works without storage', () => {
@@ -61,36 +57,32 @@ describe('running jobs card state', () => {
     expect(readRunningJobsCollapsed()).toBe(false);
     expect(() => writeRunningJobsCollapsed(true)).not.toThrow();
 
-    let renderer: TestRenderer.ReactTestRenderer;
-    act(() => {
-      renderer = TestRenderer.create(<Probe ids={['a']} />);
-    });
+    let renderer: RenderResult;
+    renderer = render(<Probe ids={['a']} />);
     act(() => state!.toggleCollapsed());
     expect(state!.collapsed).toBe(true);
-    act(() => renderer!.unmount());
+    renderer!.unmount();
   });
 
   test('stays closed until a new run starts', () => {
-    let renderer: TestRenderer.ReactTestRenderer;
-    act(() => {
-      renderer = TestRenderer.create(<Probe ids={['a', 'b']} />);
-    });
+    let renderer: RenderResult;
+    renderer = render(<Probe ids={['a', 'b']} />);
     expect(state!.closed).toBe(false);
 
     act(() => state!.close());
     expect(state!.closed).toBe(true);
 
     // The closed runs going on or ending do not bring the card back.
-    act(() => renderer!.update(<Probe ids={['a']} />));
+    renderer!.rerender(<Probe ids={['a']} />);
     expect(state!.closed).toBe(true);
-    act(() => renderer!.update(<Probe ids={[]} />));
+    renderer!.rerender(<Probe ids={[]} />);
     expect(state!.closed).toBe(true);
 
-    act(() => renderer!.update(<Probe ids={['a', 'c']} />));
+    renderer!.rerender(<Probe ids={['a', 'c']} />);
     expect(state!.closed).toBe(false);
     // Closing is not persisted.
     expect(window.localStorage.getItem(RUNNING_JOBS_COLLAPSED_STORAGE_KEY)).toBeNull();
-    act(() => renderer!.unmount());
+    renderer!.unmount();
   });
 
   test('isRunningJobsCardClosed', () => {

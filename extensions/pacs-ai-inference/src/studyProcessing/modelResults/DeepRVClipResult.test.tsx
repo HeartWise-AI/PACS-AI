@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { DeepRVClipResult } from './DeepRVClipResult';
 import { deepRVClipResultFixtures } from './deepRVClipFixtures';
 
@@ -14,36 +10,23 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-function textContent(instance: ReactTestInstance): string {
-  return instance.children
-    .map(child => (typeof child === 'string' ? child : textContent(child)))
-    .join('');
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
 }
 
 describe('DeepRVClipResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('presents normal status, probability, and threshold as localized percentages', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepRVClipResult payload={deepRVClipResultFixtures.validV1} />
-      );
-    });
+    render(<DeepRVClipResult payload={deepRVClipResultFixtures.validV1} />);
 
-    expect(
-      textContent(renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-diagnosis' }))
-    ).toBe('Normal RV systolic function');
-    expect(
-      textContent(renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-probability' }))
-    ).toBe('12.4%');
-    expect(
-      textContent(renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-threshold' }))
-    ).toBe('50.0%');
+    expect(screen.getByTestId('deeprv-clip-diagnosis').textContent).toBe(
+      'Normal RV systolic function'
+    );
+    expect(screen.getByTestId('deeprv-clip-probability').textContent).toBe('12.4%');
+    expect(screen.getByTestId('deeprv-clip-threshold').textContent).toBe('50.0%');
   });
 
   test('presents the abnormal state using explicit text', () => {
@@ -58,16 +41,12 @@ describe('DeepRVClipResult', () => {
       },
     };
 
-    act(() => {
-      renderer = TestRenderer.create(<DeepRVClipResult payload={payload} />);
-    });
+    render(<DeepRVClipResult payload={payload} />);
 
-    expect(
-      textContent(renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-diagnosis' }))
-    ).toBe('Possible RV systolic dysfunction');
-    expect(
-      textContent(renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-probability' }))
-    ).toBe('83.6%');
+    expect(screen.getByTestId('deeprv-clip-diagnosis').textContent).toBe(
+      'Possible RV systolic dysfunction'
+    );
+    expect(screen.getByTestId('deeprv-clip-probability').textContent).toBe('83.6%');
   });
 
   test('does not display model-authored diagnosis or recommendation strings', () => {
@@ -81,30 +60,22 @@ describe('DeepRVClipResult', () => {
       },
     };
 
-    act(() => {
-      renderer = TestRenderer.create(<DeepRVClipResult payload={payload} />);
-    });
+    const { container } = render(<DeepRVClipResult payload={payload} />);
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).not.toContain(payload.diagnosis);
     expect(rendered).not.toContain(payload.modelRecommendations.en);
     expect(rendered).not.toContain(payload.modelRecommendations.fr);
-    expect(renderer!.root.findAllByType('img')).toHaveLength(0);
-    expect(renderer!.root.findAllByType('script')).toHaveLength(0);
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+    expect(container.querySelectorAll('script')).toHaveLength(0);
   });
 
   test('uses description-list semantics and exposes the assistive note', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepRVClipResult payload={deepRVClipResultFixtures.validV1} />
-      );
-    });
+    const { container } = render(<DeepRVClipResult payload={deepRVClipResultFixtures.validV1} />);
 
-    expect(renderer!.root.findAllByType('dl')).toHaveLength(1);
-    expect(renderer!.root.findAllByType('dt')).toHaveLength(3);
-    expect(renderer!.root.findAllByType('dd')).toHaveLength(3);
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'deeprv-clip-assistive-note' }).props.role
-    ).toBe('note');
+    expect(container.querySelectorAll('dl')).toHaveLength(1);
+    expect(container.querySelectorAll('dt')).toHaveLength(3);
+    expect(container.querySelectorAll('dd')).toHaveLength(3);
+    expect(screen.getByTestId('deeprv-clip-assistive-note').getAttribute('role')).toBe('note');
   });
 });

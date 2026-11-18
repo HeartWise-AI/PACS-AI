@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import Table, { type TableProps } from './Table';
 
 interface TestRow {
@@ -29,18 +29,14 @@ const renderTable = (data: TestRow[]) =>
 describe('Table stable row identity', () => {
   test('keeps row-local controls attached to the same member after reordering', () => {
     nextInstance = 0;
-    const renderer = TestRenderer.create(renderTable(rows));
+    const { container, rerender } = render(renderTable(rows));
+    const spanTexts = () =>
+      Array.from(container.querySelectorAll('span')).map(node => node.textContent);
 
-    expect(renderer.root.findAllByType('span').map(node => node.children.join(''))).toEqual([
-      'member-a:1',
-      'member-b:2',
-    ]);
+    expect(spanTexts()).toEqual(['member-a:1', 'member-b:2']);
 
-    act(() => renderer.update(renderTable([...rows].reverse())));
+    rerender(renderTable([...rows].reverse()));
 
-    expect(renderer.root.findAllByType('span').map(node => node.children.join(''))).toEqual([
-      'member-b:2',
-      'member-a:1',
-    ]);
+    expect(spanTexts()).toEqual(['member-b:2', 'member-a:1']);
   });
 });

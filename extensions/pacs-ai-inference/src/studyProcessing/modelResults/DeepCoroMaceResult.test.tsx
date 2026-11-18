@@ -1,9 +1,5 @@
 import React from 'react';
-import TestRenderer, {
-  act,
-  type ReactTestInstance,
-  type ReactTestRenderer,
-} from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import {
   DEEP_CORO_MACE_EXPLORATORY_ENDPOINTS,
   DEEP_CORO_MACE_PRIMARY_ENDPOINTS,
@@ -18,88 +14,67 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-function textContent(instance: ReactTestInstance): string {
-  return instance.children
-    .map(child => (typeof child === 'string' ? child : textContent(child)))
-    .join('');
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
 }
 
 describe('DeepCoroMaceResult', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('presents every documented endpoint in primary and exploratory tables', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
-      );
-    });
+    const { container } = render(
+      <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
+    );
 
-    expect(renderer!.root.findAllByType('table')).toHaveLength(2);
+    expect(container.querySelectorAll('table')).toHaveLength(2);
     for (const key of [
       ...DEEP_CORO_MACE_PRIMARY_ENDPOINTS,
       ...DEEP_CORO_MACE_EXPLORATORY_ENDPOINTS,
     ]) {
       expect(
-        renderer!.root.findAllByProps({ 'data-testid': `deepcoro-mace-endpoint-${key}` })
+        container.querySelectorAll(`[data-testid="deepcoro-mace-endpoint-${key}"]`)
       ).toHaveLength(1);
     }
   });
 
   test('formats scores, thresholds, and threshold states', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
-      );
-    });
+    render(<DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />);
 
-    const composite = textContent(
-      renderer!.root.findByProps({ 'data-testid': 'deepcoro-mace-endpoint-compositeMace' })
-    );
+    const composite = screen.getByTestId('deepcoro-mace-endpoint-compositeMace').textContent;
     expect(composite).toContain('62.4%');
     expect(composite).toContain('50.0%');
     expect(composite).toContain('At or above threshold');
 
-    const revascularization = textContent(
-      renderer!.root.findByProps({
-        'data-testid': 'deepcoro-mace-endpoint-urgentRevascularization',
-      })
-    );
+    const revascularization = screen.getByTestId(
+      'deepcoro-mace-endpoint-urgentRevascularization'
+    ).textContent;
     expect(revascularization).toContain('38.2%');
     expect(revascularization).toContain('Below threshold');
   });
 
   test('uses fixed cautions instead of model-authored strings or markup', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
-      );
-    });
+    const { container } = render(
+      <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).toContain('Research use only');
     expect(rendered).toContain('very few cardiovascular deaths');
     expect(rendered).not.toContain(deepCoroMaceResultFixtures.parsedV1.diagnosis);
     expect(rendered).not.toContain(deepCoroMaceResultFixtures.parsedV1.predictions.thresholdNote);
     expect(rendered).not.toContain(deepCoroMaceResultFixtures.parsedV1.modelRecommendations.en);
-    expect(renderer!.root.findAllByType('strong')).toHaveLength(0);
+    expect(container.querySelectorAll('strong')).toHaveLength(0);
   });
 
   test('uses table semantics and exposes the research caution as a note', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
-      );
-    });
+    const { container } = render(
+      <DeepCoroMaceResult payload={deepCoroMaceResultFixtures.parsedV1} />
+    );
 
-    expect(renderer!.root.findAllByType('caption')).toHaveLength(2);
-    expect(renderer!.root.findAllByProps({ scope: 'row' })).toHaveLength(9);
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'deepcoro-mace-research-note' }).props.role
-    ).toBe('note');
+    expect(container.querySelectorAll('caption')).toHaveLength(2);
+    expect(container.querySelectorAll('[scope="row"]')).toHaveLength(9);
+    expect(screen.getByTestId('deepcoro-mace-research-note').getAttribute('role')).toBe('note');
   });
 });

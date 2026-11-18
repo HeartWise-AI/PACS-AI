@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   StudyProcessingProvider,
@@ -26,7 +26,7 @@ import {
 } from './useStudyProcessingRealtime';
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer | null = null;
+let renderer: RenderResult | null = null;
 
 function Harness(options: UseStudyProcessingRealtimeOptions) {
   useStudyProcessingRealtime(options);
@@ -91,7 +91,7 @@ function createRealtimeDoubles() {
 }
 
 function renderHarness(options: UseStudyProcessingRealtimeOptions) {
-  renderer = TestRenderer.create(
+  renderer = render(
     <StudyProcessingProvider>
       <Harness {...options} />
     </StudyProcessingProvider>
@@ -340,7 +340,7 @@ describe('useStudyProcessingRealtime', () => {
     });
 
     act(() => {
-      renderer?.update(
+      renderer?.rerender(
         <StudyProcessingProvider>
           <Harness
             {...baseOptions}
@@ -376,7 +376,7 @@ describe('useStudyProcessingRealtime', () => {
     });
 
     act(() => {
-      renderer?.update(
+      renderer?.rerender(
         <StudyProcessingProvider>
           <Harness
             {...baseOptions}

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { fireEvent, render, screen } from '@testing-library/react';
 import {
   modelExecutionResultFailureFixtures,
   modelExecutionResultFixtures,
@@ -57,75 +57,59 @@ function queryState(
   };
 }
 
+// Rendered text plus every attribute value (what the serialized render tree exposed).
+function renderedContent(container: HTMLElement): string {
+  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
+    Array.from(element.attributes, attribute => attribute.value)
+  );
+  return [container.textContent ?? '', ...attributeValues].join('\n');
+}
+
 describe('ModelExecutionResultDrawer', () => {
-  let renderer: ReactTestRenderer | null = null;
-
-  afterEach(() => {
-    act(() => renderer?.unmount());
-    renderer = null;
-  });
-
   test('does not render before an explicit execution selection', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={initialModelExecutionResultQueryState}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={initialModelExecutionResultQueryState}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.toJSON()).toBeNull();
+    expect(container.childNodes).toHaveLength(0);
   });
 
   test('opens an identified modal drawer in a polite loading state', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState()}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState()}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    const drawer = renderer!.root.findByProps({
-      'data-testid': 'model-execution-result-drawer',
-    });
-    const loading = renderer!.root.findByProps({
-      'data-testid': 'model-execution-result-loading',
-    });
-    expect(drawer.props.role).toBe('dialog');
-    expect(drawer.props['aria-modal']).toBe('true');
-    expect(loading.props.role).toBe('status');
-    expect(JSON.stringify(renderer!.toJSON())).toContain('CardioSyntax');
-    expect(JSON.stringify(renderer!.toJSON())).toContain('v1.0.0');
-    expect(JSON.stringify(renderer!.toJSON())).not.toContain('syntax_score');
+    const drawer = screen.getByTestId('model-execution-result-drawer');
+    const loading = screen.getByTestId('model-execution-result-loading');
+    expect(drawer.getAttribute('role')).toBe('dialog');
+    expect(drawer.getAttribute('aria-modal')).toBe('true');
+    expect(loading.getAttribute('role')).toBe('status');
+    expect(renderedContent(container)).toContain('CardioSyntax');
+    expect(renderedContent(container)).toContain('v1.0.0');
+    expect(renderedContent(container)).not.toContain('syntax_score');
   });
 
   test('closes from the button, Escape key, and backdrop', () => {
     const onClose = jest.fn();
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState()}
-          onClose={onClose}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    render(
+      <ModelExecutionResultDrawer
+        state={queryState()}
+        onClose={onClose}
+        onRetry={jest.fn()}
+      />
+    );
 
-    act(() => {
-      renderer!.root.findByProps({ 'data-testid': 'model-execution-result-close' }).props.onClick();
-      renderer!.root
-        .findByProps({ 'data-testid': 'model-execution-result-drawer' })
-        .props.onKeyDown({ key: 'Escape', preventDefault: jest.fn() });
-      const overlay = renderer!.root.findByProps({
-        'data-testid': 'model-execution-result-overlay',
-      });
-      overlay.props.onMouseDown({ target: overlay, currentTarget: overlay });
-    });
+    fireEvent.click(screen.getByTestId('model-execution-result-close'));
+    fireEvent.keyDown(screen.getByTestId('model-execution-result-drawer'), { key: 'Escape' });
+    fireEvent.mouseDown(screen.getByTestId('model-execution-result-overlay'));
 
     expect(onClose).toHaveBeenCalledTimes(3);
   });
@@ -158,17 +142,15 @@ describe('ModelExecutionResultDrawer', () => {
   });
 
   test('shows completion context and generic data only from the correlated loaded result', () => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result: modelExecutionResultFixtures.available })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result: modelExecutionResultFixtures.available })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).toContain('2026');
     expect(rendered).toContain('syntax_score');
     expect(rendered).toContain('24.5');
@@ -180,19 +162,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: cardioSyntaxResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="cardiosyntax-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -204,19 +184,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: cathEfResultFixtures.withLvefV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-result' })).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="cathef-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -228,19 +206,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: cathEfClipResultFixtures.reducedV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'cathef-clip-result' })).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="cathef-clip-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -251,19 +227,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: cardioSyntaxResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'cardiosyntax-result' })).toHaveLength(0);
+    expect(container.querySelectorAll('[data-testid="cardiosyntax-result"]')).toHaveLength(0);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' }).length
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]').length
     ).toBeGreaterThan(0);
   });
 
@@ -275,21 +249,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: deepCoroClipResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
-
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-clip-result' })).toHaveLength(
-      1
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
     );
+
+    expect(container.querySelectorAll('[data-testid="deepcoro-clip-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -301,19 +271,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: deepRVResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-result' })).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="deeprv-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -325,19 +293,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: deepRVClipResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'deeprv-clip-result' })).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="deeprv-clip-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -349,21 +315,17 @@ describe('ModelExecutionResultDrawer', () => {
       result: deepCoroMaceResultFixtures.validV1,
     };
 
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
-
-    expect(renderer!.root.findAllByProps({ 'data-testid': 'deepcoro-mace-result' })).toHaveLength(
-      1
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
     );
+
+    expect(container.querySelectorAll('[data-testid="deepcoro-mace-result"]')).toHaveLength(1);
     expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+      container.querySelectorAll('[data-testid="generic-model-result-collection"]')
     ).toHaveLength(0);
   });
 
@@ -373,27 +335,25 @@ describe('ModelExecutionResultDrawer', () => {
   ])(
     'selects the %s renderer for an exact supported result',
     (modelName, modelVersion, result, testId) => {
-      act(() => {
-        renderer = TestRenderer.create(
-          <ModelExecutionResultDrawer
-            state={queryState({
-              status: 'ready',
-              result: {
-                ...modelExecutionResultFixtures.available,
-                modelName,
-                modelVersion,
-                result,
-              },
-            })}
-            onClose={jest.fn()}
-            onRetry={jest.fn()}
-          />
-        );
-      });
+      const { container } = render(
+        <ModelExecutionResultDrawer
+          state={queryState({
+            status: 'ready',
+            result: {
+              ...modelExecutionResultFixtures.available,
+              modelName,
+              modelVersion,
+              result,
+            },
+          })}
+          onClose={jest.fn()}
+          onRetry={jest.fn()}
+        />
+      );
 
-      expect(renderer!.root.findAllByProps({ 'data-testid': testId })).toHaveLength(1);
+      expect(container.querySelectorAll(`[data-testid="${testId}"]`)).toHaveLength(1);
       expect(
-        renderer!.root.findAllByProps({ 'data-testid': 'generic-model-result-collection' })
+        container.querySelectorAll('[data-testid="generic-model-result-collection"]')
       ).toHaveLength(0);
     }
   );
@@ -406,76 +366,64 @@ describe('ModelExecutionResultDrawer', () => {
     [modelExecutionResultFailureFixtures.notFound, 'unavailable'],
     [modelExecutionResultFailureFixtures.upstreamUnavailable, 'temporarily unavailable'],
   ])('shows operator-safe state for a normalized result failure', (failure, expectedCopy) => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'error', failure })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'error', failure })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    const rendered = JSON.stringify(renderer!.toJSON());
+    const rendered = renderedContent(container);
     expect(rendered).toContain(expectedCopy);
     expect(rendered).not.toMatch(/patient|credential|upstream body|job[_ -]?id/i);
   });
 
   test('offers retry only for a transient failure', () => {
     const onRetry = jest.fn();
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({
-            status: 'error',
-            failure: modelExecutionResultFailureFixtures.upstreamUnavailable,
-          })}
-          onClose={jest.fn()}
-          onRetry={onRetry}
-        />
-      );
-    });
+    const { container, rerender } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({
+          status: 'error',
+          failure: modelExecutionResultFailureFixtures.upstreamUnavailable,
+        })}
+        onClose={jest.fn()}
+        onRetry={onRetry}
+      />
+    );
 
-    const retry = renderer!.root.findByProps({
-      'data-testid': 'model-execution-result-retry',
-    });
-    act(() => retry.props.onClick());
+    const retry = screen.getByTestId('model-execution-result-retry');
+    fireEvent.click(retry);
     expect(onRetry).toHaveBeenCalledTimes(1);
 
-    act(() => {
-      renderer!.update(
-        <ModelExecutionResultDrawer
-          state={queryState({
-            status: 'error',
-            failure: modelExecutionResultFailureFixtures.notFound,
-          })}
-          onClose={jest.fn()}
-          onRetry={onRetry}
-        />
-      );
-    });
-    expect(
-      renderer!.root.findAllByProps({ 'data-testid': 'model-execution-result-retry' })
-    ).toHaveLength(0);
+    rerender(
+      <ModelExecutionResultDrawer
+        state={queryState({
+          status: 'error',
+          failure: modelExecutionResultFailureFixtures.notFound,
+        })}
+        onClose={jest.fn()}
+        onRetry={onRetry}
+      />
+    );
+    expect(container.querySelectorAll('[data-testid="model-execution-result-retry"]')).toHaveLength(
+      0
+    );
   });
 
   test.each([
     ['empty object', modelExecutionResultFixtures.emptyObject],
     ['empty array', modelExecutionResultFixtures.emptyArray],
   ])('shows an intentional empty state for an %s result', (_label, result) => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <ModelExecutionResultDrawer
-          state={queryState({ status: 'ready', result })}
-          onClose={jest.fn()}
-          onRetry={jest.fn()}
-        />
-      );
-    });
+    const { container } = render(
+      <ModelExecutionResultDrawer
+        state={queryState({ status: 'ready', result })}
+        onClose={jest.fn()}
+        onRetry={jest.fn()}
+      />
+    );
 
-    expect(
-      renderer!.root.findByProps({ 'data-testid': 'model-execution-result-empty' }).props.role
-    ).toBe('status');
-    expect(JSON.stringify(renderer!.toJSON())).toContain('contains no fields');
+    expect(screen.getByTestId('model-execution-result-empty').getAttribute('role')).toBe('status');
+    expect(renderedContent(container)).toContain('contains no fields');
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, type RenderResult } from '@testing-library/react';
 import ModelDeploymentProgressPanel from './ModelDeploymentProgressPanel';
 
 jest.mock('react-i18next', () => ({
@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 describe('ModelDeploymentProgressPanel', () => {
-  let renderer: ReactTestRenderer;
+  let renderer: RenderResult;
 
   afterEach(() => {
     act(() => renderer?.unmount());
@@ -15,7 +15,7 @@ describe('ModelDeploymentProgressPanel', () => {
 
   test('shows the current stage, status, elapsed time, and live transport', () => {
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <ModelDeploymentProgressPanel
           deployment={{
             modelId: 'model-1',
@@ -34,7 +34,7 @@ describe('ModelDeploymentProgressPanel', () => {
       );
     });
 
-    const rendered = JSON.stringify(renderer.toJSON());
+    const rendered = renderer.container.innerHTML;
     expect(rendered).toContain('Pulling image');
     expect(rendered).toContain('Running');
     expect(rendered).toContain('Elapsed');
@@ -43,7 +43,7 @@ describe('ModelDeploymentProgressPanel', () => {
 
   test('renders rollback errors distinctly without reconnect status', () => {
     act(() => {
-      renderer = TestRenderer.create(
+      renderer = render(
         <ModelDeploymentProgressPanel
           deployment={{
             modelId: 'model-1',
@@ -63,7 +63,7 @@ describe('ModelDeploymentProgressPanel', () => {
       );
     });
 
-    const rendered = JSON.stringify(renderer.toJSON());
+    const rendered = renderer.container.innerHTML;
     expect(rendered).toContain('Rolled back');
     expect(rendered).toContain('Activation failed.');
     expect(rendered).not.toContain('Reconnecting');

@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, render, screen } from '@testing-library/react';
 import { studyProcessingSummaryFixtures } from '@pacs-ai/extension-core/src/studyProcessing/fixtures';
 import {
   StudyProcessingProvider,
@@ -19,7 +19,6 @@ jest.mock('react-i18next', () => ({
 }));
 
 let contextValue: StudyProcessingContextValue;
-let renderer: ReactTestRenderer;
 
 function ContextConsumer() {
   contextValue = useStudyProcessing();
@@ -28,25 +27,17 @@ function ContextConsumer() {
 
 describe('StudyProcessingStatus', () => {
   beforeEach(() => {
-    act(() => {
-      renderer = TestRenderer.create(
-        <StudyProcessingProvider>
-          <ContextConsumer />
-        </StudyProcessingProvider>
-      );
-    });
-  });
-
-  afterEach(() => {
-    act(() => {
-      renderer.unmount();
-    });
+    render(
+      <StudyProcessingProvider>
+        <ContextConsumer />
+      </StudyProcessingProvider>
+    );
   });
 
   it('shows a loading skeleton before the initial snapshot is ready', () => {
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-loading' }).props['aria-label']
-    ).toBe('Loading processing status');
+    expect(screen.getByTestId('study-processing-loading').getAttribute('aria-label')).toBe(
+      'Loading processing status'
+    );
   });
 
   it('shows no status when the snapshot has no matching study', () => {
@@ -54,9 +45,9 @@ describe('StudyProcessingStatus', () => {
       contextValue.receiveSnapshot([]);
     });
 
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-empty' }).props['aria-label']
-    ).toBe('No processing status yet');
+    expect(screen.getByTestId('study-processing-empty').getAttribute('aria-label')).toBe(
+      'No processing status yet'
+    );
   });
 
   it('shows unavailable when the initial snapshot fails', () => {
@@ -64,12 +55,10 @@ describe('StudyProcessingStatus', () => {
       contextValue.failInitialSnapshot('Status service could not be reached.');
     });
 
-    const unavailable = renderer.root.findByProps({
-      'data-testid': 'study-processing-unavailable',
-    });
+    const unavailable = screen.getByTestId('study-processing-unavailable');
 
-    expect(unavailable.props['aria-label']).toBe('Processing status unavailable');
-    expect(unavailable.props.title).toBe('Status service could not be reached.');
+    expect(unavailable.getAttribute('aria-label')).toBe('Processing status unavailable');
+    expect(unavailable.getAttribute('title')).toBe('Status service could not be reached.');
   });
 
   it('renders a matching summary even when snapshot health later fails', () => {
@@ -83,8 +72,6 @@ describe('StudyProcessingStatus', () => {
       contextValue.failInitialSnapshot('Refresh failed.');
     });
 
-    expect(
-      renderer.root.findByProps({ 'data-testid': 'study-processing-status-cell' })
-    ).toBeDefined();
+    expect(screen.getByTestId('study-processing-status-cell')).toBeDefined();
   });
 });

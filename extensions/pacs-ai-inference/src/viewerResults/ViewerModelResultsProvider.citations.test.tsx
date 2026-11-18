@@ -1,9 +1,6 @@
 import React, { useContext } from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
-import {
-  ChatCitationHostContext,
-  type ChatCitationHost,
-} from '@pacs-ai/extension-chat/citations';
+import { act, render as rtlRender, type RenderResult } from '@testing-library/react';
+import { ChatCitationHostContext, type ChatCitationHost } from '@pacs-ai/extension-chat/citations';
 import { ViewerModelResultsProvider } from './ViewerModelResultsProvider';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
 import type { ViewerModelResult } from './types';
@@ -77,7 +74,7 @@ const settle = () =>
   });
 
 describe('ViewerModelResultsProvider as the host of the chat citations', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   let host: ChatCitationHost | null = null;
 
   // Stands for the chat, which is mounted under the provider.
@@ -94,7 +91,7 @@ describe('ViewerModelResultsProvider as the host of the chat citations', () => {
       loadRunStatus: jest.fn(),
     } as unknown as jest.Mocked<ViewerResultsRepository>;
     await act(async () => {
-      renderer = TestRenderer.create(
+      renderer = rtlRender(
         <ViewerModelResultsProvider
           studyInstanceUID={STUDY_UID}
           servicesManager={
@@ -109,7 +106,7 @@ describe('ViewerModelResultsProvider as the host of the chat citations', () => {
     return repository;
   }
 
-  const drawers = () => renderer!.root.findAllByProps({ 'data-testid': 'drawer' });
+  const drawers = () => Array.from(renderer!.container.querySelectorAll('[data-testid="drawer"]'));
 
   beforeEach(() => {
     mockInferenceProcessing.canViewStudyProcessingRunHistory = true;
@@ -118,7 +115,7 @@ describe('ViewerModelResultsProvider as the host of the chat citations', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
   });
 
@@ -145,7 +142,7 @@ describe('ViewerModelResultsProvider as the host of the chat citations', () => {
     expect(drawers()).toHaveLength(0);
     act(() => actions.open?.());
     expect(drawers()).toHaveLength(1);
-    expect(drawers()[0].children.join('')).toBe('DeepCORO-JEPA:job-1');
+    expect(drawers()[0].textContent).toBe('DeepCORO-JEPA:job-1');
   });
 
   it('reads the raw data of the cited result from its model execution', async () => {

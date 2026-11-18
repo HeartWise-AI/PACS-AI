@@ -1,5 +1,5 @@
 import React from 'react';
-import TestRenderer, { act, type ReactTestRenderer } from 'react-test-renderer';
+import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import english from '@pacs-ai/extension-core/src/locales/en-US/StudyBrowser.json';
 import french from '@pacs-ai/extension-core/src/locales/fr/StudyBrowser.json';
 import { StudyRefreshButton, type StudyRefreshButtonProps } from './StudyRefreshButton';
@@ -19,38 +19,39 @@ jest.mock('react-i18next', () => ({
 
 const IDLE: StudyRefreshState = { phase: 'idle', progress: null, result: null, error: null };
 
-function text(node: { children: unknown[] }): string {
-  return node.children
-    .map(child =>
-      typeof child === 'string' ? child : text(child as unknown as { children: unknown[] })
-    )
-    .join('');
+function text(node: Element): string {
+  return node.textContent ?? '';
 }
 
 describe('StudyRefreshButton', () => {
-  let renderer: ReactTestRenderer | null = null;
+  let renderer: RenderResult | null = null;
   const onRefresh = jest.fn();
 
   function render(
     state: Partial<StudyRefreshState> = {},
     props: Partial<StudyRefreshButtonProps> = {}
   ) {
-    act(() => {
-      renderer = TestRenderer.create(
-        <StudyRefreshButton
-          state={{ ...IDLE, ...state }}
-          onRefresh={onRefresh}
-          {...props}
-        />
-      );
-    });
-    return renderer!.root;
+    renderer = rtlRender(
+      <StudyRefreshButton
+        state={{ ...IDLE, ...state }}
+        onRefresh={onRefresh}
+        {...props}
+      />
+    );
+    return renderer.container;
   }
 
-  const button = (root: TestRenderer.ReactTestInstance) =>
-    root.findByProps({ 'data-testid': 'study-refresh-button' });
-  const status = (root: TestRenderer.ReactTestInstance) =>
-    root.findAllByProps({ 'data-testid': 'study-refresh-status' })[0] ?? null;
+  const byTestId = (root: HTMLElement, id: string) =>
+    Array.from(root.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`));
+  // Exactly one matching element.
+  const oneByTestId = (root: HTMLElement, id: string) => {
+    const found = byTestId(root, id);
+    expect(found).toHaveLength(1);
+    return found[0];
+  };
+  const button = (root: HTMLElement) =>
+    oneByTestId(root, 'study-refresh-button') as HTMLButtonElement;
+  const status = (root: HTMLElement) => byTestId(root, 'study-refresh-status')[0] ?? null;
 
   beforeEach(() => {
     mockStrings = english;
@@ -58,29 +59,31 @@ describe('StudyRefreshButton', () => {
   });
 
   afterEach(() => {
-    act(() => renderer?.unmount());
+    renderer?.unmount();
     renderer = null;
   });
 
   it('is an icon button with a tooltip that starts the refresh', () => {
     const root = render();
 
-    expect(button(root).props['aria-label']).toBe('Refresh study from PACS');
-    expect(button(root).props.title).toBe('Refresh study from PACS');
-    expect(button(root).props.disabled).toBe(false);
+    expect(button(root).getAttribute('aria-label')).toBe('Refresh study from PACS');
+    expect(button(root).getAttribute('title')).toBe('Refresh study from PACS');
+    expect(button(root).disabled).toBe(false);
     expect(status(root)).toBeNull();
-    expect(root.findAllByProps({ 'data-testid': 'study-refresh-growing' })).toHaveLength(0);
+    expect(byTestId(root, 'study-refresh-growing')).toHaveLength(0);
 
-    act(() => button(root).props.onClick());
+    act(() => {
+      fireEvent.click(button(root));
+    });
     expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('shows the retrieval progress, or an indeterminate state, and is disabled meanwhile', () => {
     let root = render({ phase: 'retrieving', progress: 42 });
     expect(text(status(root))).toBe('Retrieving… 42%');
-    expect(status(root).props.role).toBe('status');
-    expect(button(root).props.disabled).toBe(true);
-    expect(button(root).props['aria-busy']).toBe(true);
+    expect(status(root).getAttribute('role')).toBe('status');
+    expect(button(root).disabled).toBe(true);
+    expect(button(root).getAttribute('aria-busy')).toBe('true');
 
     root = render({ phase: 'retrieving', progress: null });
     expect(text(status(root))).toBe('Retrieving…');
@@ -88,7 +91,7 @@ describe('StudyRefreshButton', () => {
     expect(text(status(root))).toBe('Retrieving…');
     root = render({ phase: 'reloading' });
     expect(text(status(root))).toBe('Loading series…');
-    expect(button(root).props.disabled).toBe(true);
+    expect(button(root).disabled).toBe(true);
   });
 
   it('says what the refresh changed', () => {
@@ -106,9 +109,9 @@ describe('StudyRefreshButton', () => {
 
   it('shows a clear error when the retrieval or the reload fails', () => {
     let root = render({ phase: 'error', error: 'retrieveFailed' });
-    expect(status(root).props.role).toBe('alert');
+    expect(status(root).getAttribute('role')).toBe('alert');
     expect(text(status(root))).toBe('Retrieval from the PACS failed');
-    expect(button(root).props.disabled).toBe(false);
+    expect(button(root).disabled).toBe(false);
 
     root = render({
       phase: 'error',
@@ -125,22 +128,24 @@ describe('StudyRefreshButton', () => {
 
   it('hints that the exam is still in progress', () => {
     let root = render({}, { growing: true });
-    const dot = root.findByProps({ 'data-testid': 'study-refresh-growing' });
-    expect(dot.props.title).toBe('The exam is still in progress; new images may be available');
-    expect(button(root).props.title).toBe(
+    const dot = oneByTestId(root, 'study-refresh-growing');
+    expect(dot.getAttribute('title')).toBe(
+      'The exam is still in progress; new images may be available'
+    );
+    expect(button(root).getAttribute('title')).toBe(
       'Refresh study from PACS — The exam is still in progress; new images may be available'
     );
 
     root = render({ phase: 'retrieving' }, { growing: true });
-    expect(root.findAllByProps({ 'data-testid': 'study-refresh-growing' })).toHaveLength(0);
+    expect(byTestId(root, 'study-refresh-growing')).toHaveLength(0);
   });
 
   it('is translated to French', () => {
     mockStrings = french;
 
     let root = render({}, { growing: true });
-    expect(button(root).props['aria-label']).toBe("Actualiser l'examen depuis le PACS");
-    expect(root.findByProps({ 'data-testid': 'study-refresh-growing' }).props.title).toBe(
+    expect(button(root).getAttribute('aria-label')).toBe("Actualiser l'examen depuis le PACS");
+    expect(oneByTestId(root, 'study-refresh-growing').getAttribute('title')).toBe(
       "L'examen est toujours en cours ; de nouvelles images peuvent être disponibles"
     );
     root = render({ phase: 'retrieving', progress: 42 });
