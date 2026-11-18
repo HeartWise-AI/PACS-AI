@@ -50,6 +50,7 @@ This relaxes R1 and R2 for this migration: the orchestrator may build and deploy
 | P3.4 | done (draft PR; not deployed) | `wp/P3.4-theme` | See the P3.4 section. PACS-AI theme in `@pacs-ai/theme` (tokens, chrome, icons), default in `pacs-ai.js`; Appearance dialog off (D5). `pacs-ai/THEME_DEBT.txt` deleted; ledger unchanged (7 rows). Image `pacs-ai-viewer-migration:p34-46596c475` (after merging P3.3). |
 | P3.5 | done | #521 | See the P3.5 section. Rendering and data checks on the server (`p34-46596c475`), load-time spec; one regression left for P3.6 (echo first cine advance). |
 | P3.6 | done (G6 on the server; draft #523 into `main` waits for the owner) | `wp/P3.6-final` | See the P3.6 section. Echo cine regression fixed in our study browser (thumbnails wait for the active viewport's first frames); gates G1–G5 pass, G7 skipped (every upstream spec needs OHIF's test data), G6 for the orchestrator. Image `pacs-ai-viewer-migration:p36-8ac87af20`. |
+| P3.7 | done (merged; not deployed yet: server busy) | `wp/P3.7-thumbnails` | See the P3.7 section. Echo thumbnail strip after P3.6: thumbnails now go out before the clip's prefetch, as on 3.11.1 (prefetch held at 2 while the first thumbnails load; release 300 ms after the viewport has its stack). Image `pacs-ai-viewer-migration:p37-fc9dd68e9`. |
 
 ## P3.3a (shell + mode + config)
 
@@ -323,7 +324,7 @@ The echo cine regression is fixed: cine now advances 0.01 s after the first imag
 | d | `shepherd.js` 15.3.0 (AGPL-3.0) imported directly by our shell tour; upstream ships the same version | licence check for the owner |
 | e | Tour and 404 colours | resolved in P3.4 |
 | f | `esc` during a length drawing ends it and keeps the measurement | accepted (cs3d semantics) |
-| g | Thumbnails start after the active viewport's first image and next 4 frames (≤ 1.5 s after the first image, ≤ 5 s in all) instead of 250 ms after the layout. G6: echo cine advance back to 3.11 (3.50 s), all echo thumbnails 13.1 s vs 6.9 s on 3.11 | P3.6; trade-off for the owner |
+| g | Thumbnails start 300 ms after the active viewport has its stack (P3.6: after its first image and next 4 frames), and the clip's prefetch is held at 2 requests until they are in (P3.7), as 3.11.1 ordered them. Echo, interleaved runs: cine advance within 0.1 s of the first image; all thumbnails 3.7 s sooner than P3.6, 1.0 s later than 3.11 | P3.7; accepted (owner: fix) |
 | h | `pacs-ai/build/env.example` names `config/pacs-ai.js` (the old `config/local_pacs_ai.js` no longer exists); builds that pass `APP_CONFIG` (Docker) are unaffected | P3.6 |
 
 ### Known gaps
@@ -335,8 +336,37 @@ The echo cine regression is fixed: cine now advances 0.01 s after the first imag
 - Echo reference studies US_1, US_2 (and US_MAX) are no longer retrievable from the PACS (MISSING_RECORD); the echo checks used a local study (US_P35). Re-record echo references.
 - Deep `@pacs-ai/<pkg>/src/...` imports between our packages remain (188 files), allowed by the 6.1 table; replace with public entry points as a follow-up.
 - `prop-types` in core: API repositories throw the imported validator as a fallback error value (runtime behaviour, separate fix).
-- Echo thumbnail strip completes ~6 s later than 3.11 (change g); tuning is a follow-up if the owner wants it.
+- Echo thumbnail strip: 1.0 s later than 3.11 after P3.7 (was ~6 s, change g).
+- Occasionally one study browser thumbnail never shows its image (seen in 2 of 7 echo runs on P3.6 builds, 1 of 7 on P3.7, 0 of 7 on 3.11, under load from another user); not investigated yet.
 - 3.13's waveform handler (ECG / Hemodynamic Waveform Storage) is not in `/viewer` (kept 3.11.1's handler list on purpose); ECG waveform display is upstream's but not reachable in our mode.
+
+
+## P3.7 (echo thumbnail timing, 2026-11-18)
+
+Branch `wp/P3.7-thumbnails` from `main` @ ccf2a0927. Image `pacs-ai-viewer-migration:p37-fc9dd68e9`.
+
+**Cause.** Request timing (resource timing of every `/api` request, echo study US_P35, 3.11 build `ai-predictions-3f3ffcd` vs P3.6): each WADO-RS frame is uncompressed (~2.1 MB on this study) and the API proxy speaks HTTP/1.1, so the browser runs 6 requests at a time and every request handed to it waits in one queue. On 3.13 the stack context prefetch (cornerstone 4/5, enabled by OHIF on every new image set) hands 25 frames of the shown clip to the browser at the first image. On P3.6 the thumbnails (one frame of each other clip, frame ~16, the same frames 3.11 asks for) were released only after 4 frames were cached, so they queued behind the whole clip: all thumbnails ~10 s after the first image. 3.11.1 sent the 22 thumbnail frames about 0.3 s after the shown clip's first requests and prefetched with ~3 requests in flight until the thumbnails were in; cine still advanced right away because the next frames were requested first.
+
+**Fix (ours, no upstream file).**
+- `extensions/pacs-ai-inference/src/studyBrowser/prefetchHold.ts`: while the study browser's first thumbnails load, the prefetch limit of cornerstone's image load pool is lowered to 2 (restored once no thumbnail request is queued or running for 0.75 s, after 12 s, or when the panel unmounts; only if nobody changed it meanwhile; one hold at a time). The shown frame and scrolling are interaction requests and are not held. Unit tests `prefetchHold.test.ts` (7).
+- `viewportWarmUp.ts`: thumbnails go out 300 ms after the active viewport has its stack (its first frame and next frames are then already requested, ahead of the thumbnails), or at once when the shown frame and the next 2 are cached (was: first image + 4 frames, ≤ 1.5 s). Tests updated (13).
+
+**Measured** (the build's files served to the test browser only, by Playwright routing, against the live API; another user was active on the server, so absolute times are ~1 s above the deployed P3.5/P3.6 numbers). Echo study, 4 rounds interleaving the four builds, medians:
+
+| Build | First image | All thumbnails | Thumbnails after first image | First cine advance after first image |
+|---|---|---|---|---|
+| 3.11 `ai-predictions-3f3ffcd` | 5.40 s | 10.08 s | 4.7 s | 0.02–0.24 s |
+| P3.6 `p36-8ac87af20` | 4.95 s | 14.85 s | 9.9 s | 0.01–0.06 s |
+| P3.7 first try (`p37-2eb111c07`: 2 cached frames + hold) | 4.64 s | 12.48 s | 7.8 s | 0.02 s |
+| **P3.7 `p37-fc9dd68e9`** | 4.68 s | 11.11 s | 6.2 s | 0.04–0.09 s |
+
+XA_958801, 3 runs per build in blocks (not interleaved): all thumbnails 3.11 10.0 s, P3.6 11.8 s, `p37-fc9dd68e9` 9.6 s.
+
+Result: cine still starts with the first image; the echo thumbnail strip is 3.7 s faster than P3.6 and 1.0 s behind 3.11 (whose first image is 0.7 s later). The rest of the gap is transfer: the same 22 frames take longer while the shown clip is also loading. Further gains would need smaller thumbnail requests (rendered/JPEG thumbnails or compressed transfer syntax from the proxy), which is outside the viewer.
+
+Gates: G1 install ok; G2 inference 35 own errors (as P3.6), none in the changed files; G3 `pnpm run test:unit:ci` exit 0; G4 image built; G5 drift guard exit 0 (15 files, 0 unexplained), `lint-imports.sh` 0 errors. Viewer specs against a local replica of the site serving `p37-fc9dd68e9` to the test browser only (Chromium host mapping to a local TLS proxy; `/api` forwarded to the live server; the browser confirmed buildId `p37-fc9dd68e9`): `viewer-behaviour` 4/4, `viewer-shell` 4/4, `visual` 6/6 (against the 3.11 baseline), `run-model` CathEF-CLIP and DeepCORO-MACE on XA_958701 identical to the 3.11 reference (2/2; GPU idle).
+
+Not deployed: another user was working on the server all morning (worklist, reprocess, retrieve), so the live frontend stays `p36-8ac87af20` until an idle moment. Deploy as in the RUNBOOK (pin the image, `docker compose up -d --no-build pacs-ai`, login check, buildId); rollback `p36-8ac87af20`, then the 3.11 image `ai-predictions-3f3ffcd`.
 
 ## Phase 4 (make it repeatable)
 

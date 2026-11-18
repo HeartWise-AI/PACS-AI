@@ -1,5 +1,5 @@
 import {
-  AFTER_FIRST_IMAGE_TIMEOUT_MS,
+  IMAGE_SET_GRACE_MS,
   POLL_MS,
   TOTAL_TIMEOUT_MS,
   WARM_UP_FRAMES,
@@ -45,7 +45,7 @@ describe('warmUpState', () => {
   });
 
   it('waits for the shown image, then for the next frames', () => {
-    expect(warmUpState(stack(ids), loadedUpTo(0))).toBe('waiting');
+    expect(warmUpState(stack(ids), loadedUpTo(0))).toBe('loading');
     expect(warmUpState(stack(ids), loadedUpTo(1))).toBe('firstImage');
     expect(warmUpState(stack(ids), loadedUpTo(WARM_UP_FRAMES))).toBe('firstImage');
     expect(warmUpState(stack(ids), loadedUpTo(WARM_UP_FRAMES + 1))).toBe('ready');
@@ -66,7 +66,7 @@ describe('whenViewportWarmedUp', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it('starts thumbnails once the shown frame and the next frames are cached (echo cine)', () => {
+  it('starts thumbnails at once when the shown frame and the next frames are cached', () => {
     const ids = frames(60);
     const { deps, load, unsubscribe } = harness(stack(ids));
     const onReady = jest.fn();
@@ -85,21 +85,30 @@ describe('whenViewportWarmedUp', () => {
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
-  it('gives up waiting for frames some time after the first image', () => {
-    const ids = frames(60);
-    const { deps, load } = harness(stack(ids));
+  it('starts thumbnails shortly after the viewport has its stack, before its frames arrive', () => {
+    const { deps } = harness(stack(frames(60)));
     const onReady = jest.fn();
     whenViewportWarmedUp(deps, onReady);
-
-    load(ids[0]);
-    jest.advanceTimersByTime(AFTER_FIRST_IMAGE_TIMEOUT_MS - 1);
+    jest.advanceTimersByTime(IMAGE_SET_GRACE_MS - 1);
     expect(onReady).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1);
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
+  it('counts the grace from the moment the stack appears', () => {
+    const { deps, state } = harness(null);
+    const onReady = jest.fn();
+    whenViewportWarmedUp(deps, onReady);
+    jest.advanceTimersByTime(2 * POLL_MS);
+    state.viewport = stack(frames(60));
+    jest.advanceTimersByTime(POLL_MS);
+    expect(onReady).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(IMAGE_SET_GRACE_MS);
+    expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
   it('never holds thumbnails longer than the total limit', () => {
-    const { deps } = harness(stack(frames(60)));
+    const { deps } = harness(stack([]));
     const onReady = jest.fn();
     whenViewportWarmedUp(deps, onReady);
     jest.advanceTimersByTime(TOTAL_TIMEOUT_MS - 1);

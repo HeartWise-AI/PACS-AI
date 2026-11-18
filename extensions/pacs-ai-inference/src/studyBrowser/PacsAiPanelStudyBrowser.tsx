@@ -24,6 +24,7 @@ import { PacsAiStudyBrowser as StudyBrowser } from './PacsAiStudyBrowser';
 import { defaultActionIcons } from './constants';
 import { withSeriesInstanceUIDs } from './withSeriesInstanceUIDs';
 import { whenActiveViewportWarmedUp } from './viewportWarmUp';
+import { holdImagePrefetch, type PrefetchHold } from './prefetchHold';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
 import { SelectedViewsLegend } from '../viewerResults/SelectedViewsLegend';
 import { buildSelectedViewBadges } from '../viewerResults/viewerResultsModel';
@@ -76,11 +77,12 @@ function PacsAiPanelStudyBrowser({
       : [...StudyInstanceUIDs]
   );
   const [hasLoadedViewports, setHasLoadedViewports] = useState(false);
-  const warmUpRef = useRef<{ timer: number; cancel?: () => void } | null>(null);
+  const warmUpRef = useRef<{ timer: number; cancel?: () => void; hold?: PrefetchHold } | null>(null);
   useEffect(
     () => () => {
       window.clearTimeout(warmUpRef.current?.timer);
       warmUpRef.current?.cancel?.();
+      warmUpRef.current?.hold?.release();
     },
     []
   );
@@ -220,18 +222,23 @@ function PacsAiPanelStudyBrowser({
         // which improves user experience of responsiveness significantly on slower
         // systems.
         const delayMs = 250 + displaySetService.getActiveDisplaySets().length * 10;
-        // PACS-AI (P3.6): after OHIF's delay, also wait until the active
-        // viewport shows its first image and has the next frames cached, so
-        // the thumbnail burst does not hold back the first cine frames
-        // (./viewportWarmUp.ts).
+        // PACS-AI (P3.6, P3.7): after OHIF's delay, also wait until the
+        // active viewport has its stack (its first frames are requested
+        // first), and keep the clip's prefetch low until the thumbnails are
+        // in, so neither waits behind the other (./viewportWarmUp.ts,
+        // ./prefetchHold.ts).
         // Started once per panel; cancelled on unmount.
         if (!warmUpRef.current) {
-          const warmUp = { timer: 0, cancel: undefined as undefined | (() => void) };
+          const warmUp: { timer: number; cancel?: () => void; hold?: PrefetchHold } = {
+            timer: 0,
+            hold: holdImagePrefetch(),
+          };
           warmUpRef.current = warmUp;
           warmUp.timer = window.setTimeout(() => {
-            warmUp.cancel = whenActiveViewportWarmedUp(servicesManager, () =>
-              setHasLoadedViewports(true)
-            );
+            warmUp.cancel = whenActiveViewportWarmedUp(servicesManager, () => {
+              warmUp.hold?.thumbnailsStarted();
+              setHasLoadedViewports(true);
+            });
           }, delayMs);
         }
       }
