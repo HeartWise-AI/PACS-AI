@@ -5,7 +5,6 @@ import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
 import moment from 'moment';
-import { sortBy } from 'lodash';
 import { Button, Input } from '@pacs-ai/ui';
 import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
@@ -48,6 +47,7 @@ import {
   PROCESSING_NOTIFICATION_STUDY_PARAM,
 } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
 import { toggleExpandedStudyRow, type ExpandedStudyRows } from './expandedStudyRows';
+import { sortStudiesNewestFirst } from './sortStudies';
 import {
   retainBulkStudySelection,
   selectVisibleBulkStudies,
@@ -585,48 +585,7 @@ function WorkList() {
    * @param studies
    * @returns
    */
-  const sortStudies = studies => {
-    return sortBy(studies, [
-      // sort by last name
-      study => {
-        const nameParts = study.patientName.split('^');
-        const lastName = nameParts[0];
-        // remove suffixes and consider multi-word last names
-        return lastName.replace(/\s+(Jr\.?|Sr\.?|II|III|IV)$/, '').toLowerCase();
-      },
-      // then sort by study date in descending order
-      study => -new Date(study.studyDate).getTime(),
-    ]);
-  };
-
-  // The study the tutorial walks the user into: the most recent one already
-  // stored on the PACS-AI server (see pickTutorialStudy). The list turns to
-  // its page.
-  const tutorialStudyUID = useMemo(
-    () =>
-      tutorialSearchState === 'found' && tutorialLocalUIDs
-        ? pickTutorialStudy(tableDataSource, tutorialLocalUIDs)?.studyInstanceUID ?? null
-        : null,
-    [tableDataSource, tutorialLocalUIDs, tutorialSearchState]
-  );
-  // Nothing the tutorial can open without a retrieve from the hospital PACS.
-  const tutorialFoundNothing =
-    tutorialSearchState === 'empty' ||
-    (tutorialSearchState === 'found' &&
-      tutorialLocalUIDs !== null &&
-      tableDataSource.length > 0 &&
-      !tutorialStudyUID);
-  useEffect(() => {
-    if (!tutorialStudyUID) {
-      return;
-    }
-    const index = tableDataSource.findIndex(study => study.studyInstanceUID === tutorialStudyUID);
-    if (index >= 0) {
-      setCurrentPage(Math.floor(index / itemsPerPage) + 1);
-    }
-    // only when the tutorial's study is chosen
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tutorialStudyUID]);
+  const sortStudies = studies => sortStudiesNewestFirst(studies);
 
   /**
    * Table toggle for expandable rows

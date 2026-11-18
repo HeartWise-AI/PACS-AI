@@ -3,7 +3,7 @@ import { test, expect } from './support/fixtures';
 
 /**
  * The tutorial's "Run Inference to Model" step outside the viewer: it takes
- * the user to the study list with a modality selected and the dates cleared,
+ * the user to the study list with a modality and the last 7 days selected,
  * runs the search, walks them into the first study, and continues on the AI
  * model button in the viewer.
  *
@@ -53,7 +53,7 @@ async function fakeTutorialBeforeRunInference(page: Page): Promise<{ progressWri
   return { progressWrites: () => writes };
 }
 
-test('run-inference opens the study list, searches a modality without dates and walks into a study', async ({
+test('run-inference opens the study list, searches a modality over the last 7 days and walks into a study', async ({
   page,
 }) => {
   test.setTimeout(300_000);
@@ -72,13 +72,18 @@ test('run-inference opens the study list, searches a modality without dates and 
   );
   await step.click();
 
-  // On the study list, with a modality chosen and the dates cleared.
+  // On the study list, with a modality and the last 7 days chosen.
   await expect(page).toHaveURL(/tutorialSearch=1/);
   const body = (await search).postDataJSON();
   expect(['XA', 'US']).toContain(body.modalitiesInStudy);
-  expect(body.studyDate ?? '').toBe('');
-  await expect(page.locator('#FilterStartDate')).toHaveValue('');
-  await expect(page.locator('#FilterEndDate')).toHaveValue('');
+  // The last 7 days: without dates the PACS answers with its oldest studies.
+  expect(body.studyDate).toMatch(/^\d{8}-\d{8}$/);
+  const [from, to] = String(body.studyDate).split('-');
+  const days = (Date.UTC(+to.slice(0, 4), +to.slice(4, 6) - 1, +to.slice(6)) -
+    Date.UTC(+from.slice(0, 4), +from.slice(4, 6) - 1, +from.slice(6))) / 86_400_000;
+  expect(days).toBe(6);
+  await expect(page.locator('#FilterStartDate')).not.toHaveValue('');
+  await expect(page.locator('#FilterEndDate')).not.toHaveValue('');
   await expect(page.locator(TOUR_STEP)).toContainText('Searching', { timeout: 15_000 });
 
   // The tour points at the most recent study already stored on the server

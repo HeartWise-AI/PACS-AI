@@ -7,6 +7,7 @@ import {
   pickTutorialModality,
   pickTutorialStudy,
   setPendingTutorialStep,
+  tutorialStudyDateRange,
   waitForElement,
 } from './guidedStudyOpen';
 import { getFiltersFromSearchParams } from '../worklist/worklistSearchRestore';
@@ -31,8 +32,8 @@ describe('pickTutorialModality', () => {
 });
 
 describe('buildTutorialWorklistPath', () => {
-  it('selects the modality, clears the dates and runs the search', () => {
-    const path = buildTutorialWorklistPath('US');
+  it('selects the modality and the last 7 days, and runs the search', () => {
+    const path = buildTutorialWorklistPath('US', new Date(2026, 10, 18, 15, 30));
     const searchParams = new URLSearchParams(path.slice(path.indexOf('?')));
 
     expect(path.startsWith('/?')).toBe(true);
@@ -41,12 +42,20 @@ describe('buildTutorialWorklistPath', () => {
     const restored = getFiltersFromSearchParams(searchParams, 'PACS', '20261118-20261118');
     expect(restored.shouldSearch).toBe(true);
     expect(restored.filters.modalitiesInStudy).toBe('US');
-    expect(restored.filters.studyDate).toBe('');
+    expect(restored.filters.studyDate).toBe('20261112-20261118');
     expect(restored.filters.modalityId).toBe('PACS');
   });
 
   it('is not a tutorial search without the parameter', () => {
     expect(isTutorialSearch(new URLSearchParams('modalitiesInStudy=XA'))).toBe(false);
+  });
+});
+
+describe('tutorialStudyDateRange', () => {
+  it('covers the last 7 days, today included, across month and year ends', () => {
+    expect(tutorialStudyDateRange(new Date(2026, 10, 18))).toBe('20261112-20261118');
+    expect(tutorialStudyDateRange(new Date(2026, 11, 3))).toBe('20261127-20261203');
+    expect(tutorialStudyDateRange(new Date(2027, 0, 2))).toBe('20261227-20270102');
   });
 });
 

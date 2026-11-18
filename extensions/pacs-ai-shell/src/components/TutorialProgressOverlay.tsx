@@ -971,7 +971,7 @@ const TutorialProgressOverlay: React.FC = () => {
 
   /**
    * Run-inference outside the viewer: open the study list with a modality the
-   * models take selected and the dates cleared; the list runs the search.
+   * models take and the last 7 days selected; the list runs the search.
    * Shell navigation loads the page, so the tour on the list is started by
    * the effect below once the list is open.
    */
@@ -1018,7 +1018,7 @@ const TutorialProgressOverlay: React.FC = () => {
       id: 'open-study-search',
       title,
       text: t(
-        'We selected {{modality}} and cleared the dates to find a study for you. Searching...',
+        'We selected {{modality}} and the last 7 days to find a study for you. Searching...',
         { modality }
       ),
       buttons: [],

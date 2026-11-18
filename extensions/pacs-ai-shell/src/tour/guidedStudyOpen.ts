@@ -5,7 +5,7 @@ import { modalityOptions } from '../worklist/modalityOptions';
  * Guided "open a study" flow of the tutorial's "Run Inference to Model" step.
  *
  * Outside the viewer the step takes the user to the study list with one
- * modality selected and the dates cleared, runs the search, and walks them
+ * modality and the last 7 days selected, runs the search, and walks them
  * into a study. The step's own tour (the AI model button) then starts in the
  * viewer. The pending step is kept in sessionStorage because the study list
  * and the viewer are different routes.
@@ -132,11 +132,30 @@ export async function fetchLocalStudyUIDs(
   }
 }
 
-/** Study list with the modality selected, the dates cleared and the search run. */
-export function buildTutorialWorklistPath(modality: string): string {
+/** Study list with the modality and the last 7 days selected, and the search run. */
+/** Days of studies the tutorial searches, today included. */
+export const TUTORIAL_SEARCH_DAYS = 7;
+
+const dicomDate = (date: Date): string =>
+  `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
+
+/**
+ * Date range of the tutorial's search: the last TUTORIAL_SEARCH_DAYS days.
+ * Without dates the hospital PACS answers with its 5,000 oldest studies
+ * (2006-2020 on MHI), none stored on PACS-AI and slow to retrieve.
+ */
+export function tutorialStudyDateRange(today: Date = new Date()): string {
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  start.setDate(start.getDate() - (TUTORIAL_SEARCH_DAYS - 1));
+  return `${dicomDate(start)}-${dicomDate(today)}`;
+}
+
+export function buildTutorialWorklistPath(modality: string, today: Date = new Date()): string {
   const params = new URLSearchParams({
     modalitiesInStudy: modality,
-    studyDate: '',
+    studyDate: tutorialStudyDateRange(today),
     [TUTORIAL_SEARCH_PARAM]: '1',
   });
   return `/?${params.toString()}`;
