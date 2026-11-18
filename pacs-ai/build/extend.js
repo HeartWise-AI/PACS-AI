@@ -106,7 +106,7 @@ class PacsAiIndexHtmlPlugin {
 
   apply(compiler) {
     compiler.hooks.compilation.tap('PacsAiIndexHtmlPlugin', compilation => {
-      this.HtmlWebpackPlugin.getHooks(compilation).beforeEmission.tap(
+      this.HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tap(
         'PacsAiIndexHtmlPlugin',
         data => {
           if (data.outputName === 'index.html') {
