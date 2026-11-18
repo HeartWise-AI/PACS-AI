@@ -1,3 +1,4 @@
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 // OHIF's basic mode as it ships (its package `main` is a build output jest
 // cannot load, so the source is used). Its one @ohif/core import is
 // structuredCloneWithFunctions.
@@ -8,7 +9,7 @@ jest.mock(
   '@ohif/core',
   () => ({
     utils: {
-      structuredCloneWithFunctions: jest.requireActual(
+      structuredCloneWithFunctions: jest.requireActual<any>(
         '@ohif/core/src/utils/structuredCloneWithFunctions'
       ).structuredCloneWithFunctions,
     },

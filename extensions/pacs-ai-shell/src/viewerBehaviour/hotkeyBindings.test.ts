@@ -1,3 +1,4 @@
+import { describe, test, expect, jest } from '@jest/globals';
 // OHIF's default bindings, from @ohif/core's sources (the package entry is its
 // build output, absent in unit tests).
 import defaultBindings from '@ohif/core/src/defaults/hotkeyBindings';
@@ -25,7 +26,8 @@ describe('PACS-AI hotkeys', () => {
       expect(bindings.filter(binding => binding.keys?.includes(key))).toHaveLength(1);
     });
     const untouched = (defaultBindings as any[]).filter(
-      binding => !['updateViewportDisplaySet', 'previousImage', 'nextImage'].includes(binding.commandName)
+      binding =>
+        !['updateViewportDisplaySet', 'previousImage', 'nextImage'].includes(binding.commandName)
     );
     untouched.forEach(binding => expect(bindings).toContain(binding));
     expect(bindings).toHaveLength((defaultBindings as any[]).length);

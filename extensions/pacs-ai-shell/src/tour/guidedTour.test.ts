@@ -1,3 +1,4 @@
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 const mockShepherd: { activeTour: { cancel: jest.Mock } | null; Tour: jest.Mock } = {
   activeTour: null,
   Tour: jest.fn().mockImplementation(function MockTour(options) {

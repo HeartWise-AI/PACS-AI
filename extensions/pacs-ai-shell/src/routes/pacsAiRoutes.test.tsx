@@ -1,9 +1,10 @@
+import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 jest.mock('@ohif/ui-next', () => {
-  const ReactActual = jest.requireActual('react');
+  const ReactActual = jest.requireActual<typeof import('react')>('react');
   class MockErrorBoundary extends ReactActual.Component<any, { failed: boolean }> {
     state = { failed: false };
     static getDerivedStateFromError() {
