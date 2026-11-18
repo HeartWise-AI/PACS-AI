@@ -10,6 +10,11 @@ import { Button, Input } from '@pacs-ai/ui';
 import { modalityOptions as studyModalityFilterOptions } from './modalityOptions';
 import orthancRepository from '@pacs-ai/extension-core/src/api/orthancRepository';
 import { summarizeRetrieveJobs } from '@pacs-ai/extension-inference/src/studyRefresh/retrieveJobs';
+import {
+  firstSeriesJobIds,
+  isReadyToOpen,
+  rememberPendingRetrieve,
+} from '@pacs-ai/extension-inference/src/studyRefresh/progressiveRetrieve';
 import { rememberStudySourceModality } from '@pacs-ai/extension-inference/src/studyRefresh/sourceModality';
 import Modal from '../components/Modal';
 import { JobState } from '@pacs-ai/extension-core/src/api/orthancDTO';
@@ -701,42 +706,56 @@ function WorkList() {
 
       // extract job IDs from the response
       const jobIds = modalityStudyResponse.data.map(item => item.id);
+      // The viewer opens once the first series is stored; it shows the other
+      // series as they arrive (see progressiveRetrieve).
+      const firstIds = firstSeriesJobIds(modalityStudyResponse.data);
+      let opened = false;
 
-      // get job info with interval of 3 seconds
+      const openViewer = (remainingJobIds: string[]) => {
+        rememberPendingRetrieve(studyInstanceUID, remainingJobIds);
+        if (type === 'viewer') {
+          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+        }
+        if (type === 'segmentation') {
+          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+        }
+      };
+
+      // get job info every second
       const intervalId = setInterval(async () => {
+        if (opened) {
+          return;
+        }
         jobInfoResponse = await orthancRepository.GetJobsInfo({
           jobIds: jobIds,
         });
+        if (opened) {
+          return;
+        }
 
         // overall progress: share of the jobs that have completed (progress
         // is 100%), rounded down to nearest integer
         const { overallProgress } = summarizeRetrieveJobs(jobInfoResponse.data);
+        const ready = overallProgress === 100 || isReadyToOpen(jobInfoResponse.data, firstIds);
 
         setSyncingStudyProgress(overallProgress);
-
-        // clear interval if all jobs are completed
-        if (overallProgress === 100) {
-          clearInterval(intervalId);
-        }
 
         // set job info
         setJobInfo({
           id: jobInfoResponse.data[0].id,
           priority: jobInfoResponse.data[0].priority,
           progress: overallProgress,
-          state: overallProgress === 100 ? JobState.SUCCESS : JobState.RUNNING,
+          state: ready ? JobState.SUCCESS : JobState.RUNNING,
         });
 
-        // redirect to viewer if all jobs are in success state
-        if (overallProgress === 100) {
-          setTimeout(() => {
-            if (type === 'viewer') {
-              navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
-            }
-            if (type === 'segmentation') {
-              navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
-            }
-          }, 2000);
+        // open as soon as the first series is in, with no extra pause
+        if (ready) {
+          opened = true;
+          clearInterval(intervalId);
+          const remaining = jobInfoResponse.data
+            .filter(job => !(job.progress === 100 && job.state === JobState.SUCCESS))
+            .map(job => job.id);
+          openViewer(overallProgress === 100 ? [] : remaining);
         }
       }, 1000);
     } catch (error) {

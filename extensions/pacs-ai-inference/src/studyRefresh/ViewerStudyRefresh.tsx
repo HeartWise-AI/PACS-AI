@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { getStudyMetadata } from '@pacs-ai/extension-core/src/ohifCompat/studyMetadata';
 import { StudyRefreshButton } from './StudyRefreshButton';
 import {
@@ -10,6 +10,7 @@ import {
 import { useStudyGrowing } from './studyGrowingStore';
 import { useStudyRefresh } from './useStudyRefresh';
 import { createStudyRefreshRepository } from './studyRefreshRepository';
+import { followPendingRetrieve, takePendingRetrieve } from './progressiveRetrieve';
 
 export { createStudyRefreshRepository } from './studyRefreshRepository';
 
@@ -42,6 +43,28 @@ export function ViewerStudyRefresh({ studyInstanceUID, dataSource }: ViewerStudy
     getSeriesSnapshot,
   });
   const growing = useStudyGrowing(uid);
+
+  // Opened from the work list before the whole study was stored: show the
+  // remaining series as they arrive.
+  useEffect(() => {
+    if (!uid || !canReloadStudySeries(dataSource)) {
+      return undefined;
+    }
+    const jobIds = takePendingRetrieve(uid);
+    if (!jobIds.length) {
+      return undefined;
+    }
+    let cancelled = false;
+    void followPendingRetrieve({
+      jobIds,
+      loadJobs: repository.loadJobs,
+      reload: () => reloadSeries(uid),
+      isCancelled: () => cancelled,
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, dataSource, repository, reloadSeries]);
 
   if (!uid || !canReloadStudySeries(dataSource)) {
     return null;
