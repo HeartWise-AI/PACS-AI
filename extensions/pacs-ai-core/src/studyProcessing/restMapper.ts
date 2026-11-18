@@ -1,4 +1,6 @@
 import type {
+  BulkStudyReprocessResponse,
+  BulkStudyReprocessResult,
   CreatedStudyProcessingRun,
   ModelExecution,
   ProcessingAttentionReason,
@@ -9,6 +11,8 @@ import type {
 } from './types';
 import { PROCESSING_RUN_WAITING_REASONS } from './types';
 import type {
+  BulkReprocessStudiesResponseDTO,
+  BulkReprocessStudyResultDTO,
   CreateStudyProcessingRunResponseDTO,
   ProcessingAttentionReasonDTO,
   ProcessingRunDetailDTO,
@@ -18,6 +22,39 @@ import type {
   WorklistStudyStatusEventDTO,
   WorklistStudyStatusPageDTO,
 } from './restDTO';
+
+function mapBulkReprocessStudyResult(
+  result: BulkReprocessStudyResultDTO
+): BulkStudyReprocessResult {
+  if (result.accepted && result.run) {
+    return {
+      studyInstanceUID: result.studyInstanceUID,
+      accepted: true,
+      run: mapCreatedStudyProcessingRun(result.run),
+    };
+  }
+
+  return {
+    studyInstanceUID: result.studyInstanceUID,
+    accepted: false,
+    errorCode: result.errorCode || 'SERVER_ERROR',
+    retryAfterSeconds:
+      typeof result.retryAfterSeconds === 'number' ? result.retryAfterSeconds : null,
+  };
+}
+
+export function mapBulkReprocessStudiesResponse(
+  response: BulkReprocessStudiesResponseDTO
+): BulkStudyReprocessResponse {
+  const results = response.results.map(mapBulkReprocessStudyResult);
+  const acceptedCount = results.filter(result => result.accepted).length;
+
+  return {
+    results,
+    acceptedCount,
+    rejectedCount: results.length - acceptedCount,
+  };
+}
 
 export function mapCreatedStudyProcessingRun(
   run: CreateStudyProcessingRunResponseDTO

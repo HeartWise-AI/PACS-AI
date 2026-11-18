@@ -1,5 +1,9 @@
 import React, { createContext, useCallback, useContext, useMemo, useReducer, useRef } from 'react';
-import type { CreatedStudyProcessingRun, StudyProcessingSummary } from './types';
+import type {
+  BulkStudyReprocessResponse,
+  CreatedStudyProcessingRun,
+  StudyProcessingSummary,
+} from './types';
 import {
   initialStudyProcessingState,
   studyProcessingReducer,
@@ -24,9 +28,12 @@ import {
   type StudyReprocessRequestEntry,
 } from './reprocessReducer';
 import {
+  bulkStudyReprocessError,
+  createRESTStudyBulkReprocessTransport,
   createRESTStudyReprocessTransport,
   createStudyReprocessRequestCoordinator,
   StudyReprocessError,
+  type StudyBulkReprocessTransport,
   type StudyReprocessTransport,
 } from './reprocessTransport';
 import {
@@ -80,6 +87,11 @@ export interface StudyProcessingContextValue {
     refreshVisibleStudySnapshot?: () => Promise<void> | void,
     runHistoryTransport?: StudyProcessingRunHistoryTransport
   ) => Promise<CreatedStudyProcessingRun>;
+  reprocessStudies: (
+    studyInstanceUIDs: string[],
+    refreshVisibleStudySnapshot?: () => Promise<void> | void,
+    runHistoryTransport?: StudyProcessingRunHistoryTransport
+  ) => Promise<BulkStudyReprocessResponse>;
   dismissStudyReprocessResult: (studyInstanceUID: string) => void;
   clearStudyProcessingState: () => void;
 }
@@ -100,6 +112,7 @@ export interface StudyProcessingProviderProps {
   children: React.ReactNode;
   runHistoryTransport?: StudyProcessingRunHistoryTransport;
   reprocessTransport?: StudyReprocessTransport;
+  bulkReprocessTransport?: StudyBulkReprocessTransport;
   rolloutTelemetry?: StudyProcessingRolloutTelemetry;
 }
 
@@ -107,6 +120,7 @@ export function StudyProcessingProvider({
   children,
   runHistoryTransport,
   reprocessTransport,
+  bulkReprocessTransport,
   rolloutTelemetry = studyProcessingRolloutTelemetry,
 }: StudyProcessingProviderProps) {
   const [state, dispatch] = useReducer(studyProcessingReducer, initialStudyProcessingState);
@@ -136,6 +150,10 @@ export function StudyProcessingProvider({
   const effectiveReprocessTransport = useMemo(
     () => reprocessTransport ?? createRESTStudyReprocessTransport(),
     [reprocessTransport]
+  );
+  const effectiveBulkReprocessTransport = useMemo(
+    () => bulkReprocessTransport ?? createRESTStudyBulkReprocessTransport(),
+    [bulkReprocessTransport]
   );
   const reprocessRequestCoordinator = useMemo(
     () => createStudyReprocessRequestCoordinator(effectiveReprocessTransport),
@@ -333,6 +351,70 @@ export function StudyProcessingProvider({
     [refreshRunHistory, reprocessRequestCoordinator]
   );
 
+  const reprocessStudies = useCallback(
+    async (
+      studyInstanceUIDs: string[],
+      refreshVisibleStudySnapshot?: () => Promise<void> | void,
+      transport?: StudyProcessingRunHistoryTransport
+    ): Promise<BulkStudyReprocessResponse> => {
+      const normalizedStudyInstanceUIDs = [
+        ...new Set(studyInstanceUIDs.map(studyInstanceUID => studyInstanceUID.trim()).filter(Boolean)),
+      ];
+      const requestGeneration = reprocessRequestGeneration.current;
+      normalizedStudyInstanceUIDs.forEach(studyInstanceUID => {
+        dispatchReprocessRequest({ type: 'reprocess.started', studyInstanceUID });
+      });
+
+      try {
+        const response = await effectiveBulkReprocessTransport.reprocessStudies(
+          normalizedStudyInstanceUIDs
+        );
+        if (requestGeneration !== reprocessRequestGeneration.current) {
+          return response;
+        }
+
+        response.results.forEach(result => {
+          if (result.accepted) {
+            dispatchReprocessRequest({
+              type: 'reprocess.succeeded',
+              studyInstanceUID: result.studyInstanceUID,
+              createdRun: result.run,
+            });
+          } else {
+            dispatchReprocessRequest({
+              type: 'reprocess.failed',
+              studyInstanceUID: result.studyInstanceUID,
+              error: bulkStudyReprocessError(result.errorCode, result.retryAfterSeconds),
+            });
+          }
+        });
+
+        const refreshes = response.results
+          .filter(result => result.accepted)
+          .map(result => refreshRunHistory(result.studyInstanceUID, transport));
+        if (refreshVisibleStudySnapshot) {
+          refreshes.push(Promise.resolve(refreshVisibleStudySnapshot()));
+        }
+        await Promise.allSettled(refreshes);
+        return response;
+      } catch (error: unknown) {
+        const normalizedError =
+          error instanceof Error ? error : new Error('Unable to reprocess selected studies.');
+        if (requestGeneration === reprocessRequestGeneration.current) {
+          normalizedStudyInstanceUIDs.forEach(studyInstanceUID => {
+            dispatchReprocessRequest({
+              type: 'reprocess.failed',
+              studyInstanceUID,
+              error: normalizedError,
+            });
+          });
+        }
+        throw normalizedError;
+      }
+    },
+    [effectiveBulkReprocessTransport, refreshRunHistory]
+  );
+
   const dismissStudyReprocessResult = useCallback((studyInstanceUID: string) => {
     dispatchReprocessRequest({ type: 'reprocess.dismissed', studyInstanceUID });
   }, []);
@@ -376,6 +458,7 @@ export function StudyProcessingProvider({
         reprocessRequestState.entriesByStudyInstanceUID[studyInstanceUID] ??
         createIdleStudyReprocessRequestEntry(),
       reprocessStudy,
+      reprocessStudies,
       dismissStudyReprocessResult,
       clearStudyProcessingState,
     }),
@@ -395,6 +478,7 @@ export function StudyProcessingProvider({
       receiveSnapshot,
       reprocessRequestState.entriesByStudyInstanceUID,
       reprocessStudy,
+      reprocessStudies,
       refreshRunHistory,
       runHistoryState.entriesByStudyInstanceUID,
       startInitialSnapshot,

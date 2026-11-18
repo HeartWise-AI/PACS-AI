@@ -24,5 +24,18 @@
   "Searching for data": "Daten werden gesucht",
   "searchStudyListInfo": "Keine Daten gefunden. Bitte suchen Sie nach Patientenname, MRN, Datumsbereich, Beschreibung, Modalität oder Zugangsnr.",
   "Tools": "Werkzeuge",
-  "ProcessingViewerRun": "Manuell · aus dem Viewer gestartet"
+  "ProcessingViewerRun": "Manuell · aus dem Viewer gestartet",
+  "ProcessingBulkClearSelection": "Auswahl aufheben",
+  "ProcessingBulkNotQueuedShort": "Nicht eingereiht",
+  "ProcessingBulkQueuedShort": "Eingereiht",
+  "ProcessingBulkQueueingShort": "Wird eingereiht",
+  "ProcessingBulkReprocessConfirm": "{{count}} vollständige Läufe einreihen",
+  "ProcessingBulkReprocessConfirmDescription": "Dadurch werden {{count}} neue vollständige Verarbeitungsläufe eingereiht, einer pro ausgewählter Studie. Der Verlauf bleibt erhalten.",
+  "ProcessingBulkReprocessConfirmTitle": "{{count}} ausgewählte Studien erneut verarbeiten?",
+  "ProcessingBulkReprocessRequestFailed": "Die ausgewählten Studien konnten nicht übermittelt werden. Bitte erneut versuchen.",
+  "ProcessingBulkReprocessResult": "{{acceptedCount}} eingereiht; {{rejectedCount}} nicht eingereiht. Fehlgeschlagene Studien bleiben ausgewählt.",
+  "ProcessingBulkReprocessSelected": "Auswahl erneut verarbeiten ({{count}})",
+  "ProcessingBulkReprocessSubmitting": "Wird eingereiht…",
+  "ProcessingBulkSelectAllVisible": "Alle geeigneten Studien auf dieser Seite auswählen",
+  "ProcessingBulkSelectStudy": "Studie zur erneuten Verarbeitung auswählen"
 }

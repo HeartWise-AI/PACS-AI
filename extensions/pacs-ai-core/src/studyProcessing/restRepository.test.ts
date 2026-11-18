@@ -192,6 +192,78 @@ describe('study processing REST repository', () => {
     expect(post.mock.calls[0][0]).not.toContain('tenant');
   });
 
+  test('submits a normalized bulk selection and maps independent outcomes', async () => {
+    const { client, post } = createClient();
+    post.mockResolvedValue({
+      data: {
+        success: true,
+        message: 'evaluated',
+        data: {
+          acceptedCount: 1,
+          rejectedCount: 1,
+          results: [
+            {
+              studyInstanceUID: '1.2.3',
+              accepted: true,
+              run: {
+                runId: 'run-3',
+                runNumber: 3,
+                trigger: 'MANUAL_REPROCESS',
+                phase: 'QUEUED',
+                expectedModels: 2,
+              },
+            },
+            {
+              studyInstanceUID: '1.2.4',
+              accepted: false,
+              errorCode: 'DUPLICATE_RECORD',
+              message: 'safe backend copy',
+            },
+          ],
+        },
+      },
+    });
+    const repository = createStudyProcessingRESTRepository(client);
+
+    await expect(repository.reprocessStudies([' 1.2.3 ', '1.2.4', '1.2.3'])).resolves.toEqual({
+      acceptedCount: 1,
+      rejectedCount: 1,
+      results: [
+        {
+          studyInstanceUID: '1.2.3',
+          accepted: true,
+          run: {
+            id: 'run-3',
+            runNumber: 3,
+            trigger: 'MANUAL_REPROCESS',
+            phase: 'QUEUED',
+            expectedModels: 2,
+          },
+        },
+        {
+          studyInstanceUID: '1.2.4',
+          accepted: false,
+          errorCode: 'DUPLICATE_RECORD',
+          retryAfterSeconds: null,
+        },
+      ],
+    });
+    expect(post).toHaveBeenCalledWith('/v1/inference/worklist/studies/reprocess-batch', {
+      studyInstanceUIDs: ['1.2.3', '1.2.4'],
+    });
+  });
+
+  test('rejects an empty or oversized bulk selection before sending a request', async () => {
+    const { client, post } = createClient();
+    const repository = createStudyProcessingRESTRepository(client);
+
+    await expect(repository.reprocessStudies([])).rejects.toMatchObject({ status: 400 });
+    await expect(
+      repository.reprocessStudies(Array.from({ length: 11 }, (_, index) => `study-${index}`))
+    ).rejects.toMatchObject({ status: 400 });
+    expect(post).not.toHaveBeenCalled();
+  });
+
   test('rejects unbounded pagination before sending a request', async () => {
     const { client, get } = createClient();
     const repository = createStudyProcessingRESTRepository(client);
