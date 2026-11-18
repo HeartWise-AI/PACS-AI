@@ -1,5 +1,4 @@
 import UserAuthenticationService from '@ohif/core/src/services/UserAuthenticationService/UserAuthenticationService';
-import { updateAuthServiceAndCleanUrl } from '@ohif/app/src/routes/Mode/updateAuthServiceAndCleanUrl';
 import PacsAiSessionService, { pacsAiSessionService } from './PacsAiSessionService';
 
 describe('pacsAiSessionService', () => {
@@ -39,7 +38,12 @@ describe('pacsAiSessionService', () => {
     localStorage.setItem('sessionToken', 'session-token');
 
     // What OHIF's Mode route does for /viewer?StudyInstanceUIDs=...&token=url-token
-    updateAuthServiceAndCleanUrl('url-token', { search: '?token=url-token' }, userAuthenticationService);
+    // (updateAuthServiceAndCleanUrl in platform/app/src/routes/Mode, internal to
+    // @ohif/app): it replaces the Authorization header implementation with one
+    // that returns the URL token.
+    userAuthenticationService.setServiceImplementation({
+      getAuthorizationHeader: () => ({ Authorization: 'Bearer ' + 'url-token' }),
+    });
 
     expect(userAuthenticationService.getAuthorizationHeader()).toEqual({
       Authorization: 'Bearer session-token',
