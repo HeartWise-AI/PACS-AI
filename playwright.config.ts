@@ -1,7 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const deployedBaseURL = process.env.PACS_AI_E2E_BASE_URL;
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: !!process.env.CI,
@@ -21,7 +19,7 @@ export default defineConfig({
   globalTimeout: 800_000,
   timeout: 800_000,
   use: {
-    baseURL: deployedBaseURL || 'http://localhost:3335',
+    baseURL: 'http://localhost:3335',
     trace: 'on-first-retry',
     video: 'on-first-retry',
     testIdAttribute: 'data-cy',
@@ -50,12 +48,10 @@ export default defineConfig({
     //  use: { ...devices['Desktop Safari'], deviceScaleFactor: 1 },
     //},
   ],
-  webServer: deployedBaseURL
-    ? undefined
-    : {
-        command: 'cross-env APP_CONFIG=config/e2e.js COVERAGE=true OHIF_PORT=3335 nyc yarn start',
-        url: 'http://localhost:3335',
-        reuseExistingServer: !process.env.CI,
-        timeout: 360_000,
-      },
+  webServer: {
+    command: 'cross-env APP_CONFIG=config/e2e.js COVERAGE=true OHIF_PORT=3335 nyc yarn start',
+    url: 'http://localhost:3335',
+    reuseExistingServer: !process.env.CI,
+    timeout: 360_000,
+  },
 });

@@ -22,6 +22,12 @@ const PACS_AI_DIR = path.resolve(__dirname, '..');
 // Files that replace upstream ones at the same URL (favicons). OHIF copies an
 // extension's public/ folder into the build (writePluginImportsFile.js).
 const THEME_PUBLIC_DIR = path.join(REPO_ROOT, 'extensions/pacs-ai-theme/public');
+// Files we serve at the root of the app that replace or add to upstream's
+// public/ (the service-worker kill switch: sw.js and init-service-worker.js).
+const BUILD_PUBLIC_DIR = path.join(PACS_AI_DIR, 'build/public');
+// env-config.js, written by generate-env-config.js before each build (git-ignored).
+const GENERATED_ENV_CONFIG = path.join(PACS_AI_DIR, 'build/generated/env-config.js');
+const APP_TITLE = 'PACS AI Viewer';
 const isThemePublicPattern = pattern =>
   pattern &&
   typeof pattern.from === 'string' &&
@@ -60,6 +66,58 @@ function pacsAiAppConfigPath() {
 }
 
 const pluginName = plugin => plugin && plugin.constructor && plugin.constructor.name;
+
+/** CopyPlugin patterns for our root files; forced and later than upstream's public/ copy. */
+function pacsAiPublicPatterns(toDir) {
+  return [
+    { from: BUILD_PUBLIC_DIR, to: toDir, force: true, priority: 1 },
+    {
+      from: GENERATED_ENV_CONFIG,
+      to: toDir === '.' ? 'env-config.js' : path.join(toDir, 'env-config.js'),
+      force: true,
+      priority: 1,
+      noErrorOnMissing: true,
+    },
+  ];
+}
+
+/**
+ * index.html: load env-config.js (window._env_) right before app-config.js,
+ * which reads it, and use our title. Upstream's template is left unchanged.
+ */
+const APP_CONFIG_TAG = /<script\b[^>]*\bsrc="([^"]*)app-config\.js"[^>]*>\s*<\/script>/;
+function transformIndexHtml(html) {
+  const appConfigTag = html.match(APP_CONFIG_TAG);
+  if (!appConfigTag || !/<title>[^<]*<\/title>/.test(html)) {
+    throw new Error(
+      'pacs-ai/build/extend.js: index.html has no app-config.js script or <title>; update transformIndexHtml'
+    );
+  }
+  const envConfigTag = `<script type="text/javascript" src="${appConfigTag[1]}env-config.js"></script>\n    `;
+  return html
+    .replace(APP_CONFIG_TAG, tag => envConfigTag + tag)
+    .replace(/<title>[^<]*<\/title>/, `<title>${APP_TITLE}</title>`);
+}
+
+class PacsAiIndexHtmlPlugin {
+  constructor(HtmlWebpackPlugin) {
+    this.HtmlWebpackPlugin = HtmlWebpackPlugin;
+  }
+
+  apply(compiler) {
+    compiler.hooks.compilation.tap('PacsAiIndexHtmlPlugin', compilation => {
+      this.HtmlWebpackPlugin.getHooks(compilation).beforeEmission.tap(
+        'PacsAiIndexHtmlPlugin',
+        data => {
+          if (data.outputName === 'index.html') {
+            data.html = transformIndexHtml(data.html);
+          }
+          return data;
+        }
+      );
+    });
+  }
+}
 
 // DefinePlugin instances created by webpack.base.js (see extendWebpackPwa).
 const baseDefinePlugins = new WeakSet();
@@ -102,6 +160,12 @@ function extendWebpackPwa(config) {
           p.force = true;
           p.priority = 1;
         });
+        const appConfigPattern = plugin.patterns.find(
+          p => typeof p.to === 'string' && p.to.endsWith('/app-config.js')
+        );
+        if (appConfigPattern) {
+          plugin.patterns.push(...pacsAiPublicPatterns(path.dirname(appConfigPattern.to)));
+        }
         const ours = pacsAiAppConfigPath();
         if (ours) {
           plugin.patterns
@@ -112,9 +176,11 @@ function extendWebpackPwa(config) {
         }
         return [plugin];
       }
+      case 'HtmlWebpackPlugin':
+        return [plugin, new PacsAiIndexHtmlPlugin(plugin.constructor)];
       case 'InjectManifest':
-        // No service worker: public/sw.js is a kill switch, and version.json
-        // drives the in-app update monitor instead.
+        // No service worker: pacs-ai/build/public/sw.js is a kill switch, and
+        // version.json drives the in-app update monitor instead.
         return [new FrontendBuildVersionPlugin()];
       case 'MiniCssExtractPlugin':
         return [
@@ -169,6 +235,7 @@ function extendRsbuild(config) {
         p.from = ours;
       });
   }
+  copy.push(...pacsAiPublicPatterns('.'));
   copy.push({
     from: THEME_PUBLIC_DIR,
     to: '.',
@@ -181,6 +248,19 @@ function extendRsbuild(config) {
     transform: () => Buffer.from(`${JSON.stringify(frontendBuildMetadata, null, 2)}\n`),
   });
   config.output.copy = copy;
+
+  config.html = config.html || {};
+  const upstreamTags = config.html.tags;
+  config.html.tags = [
+    ...(Array.isArray(upstreamTags) ? upstreamTags : upstreamTags ? [upstreamTags] : []),
+    {
+      tag: 'script',
+      attrs: { type: 'text/javascript', src: `${process.env.PUBLIC_URL || '/'}env-config.js` },
+      head: true,
+      append: false,
+    },
+  ];
+  config.html.title = APP_TITLE;
   return config;
 }
 
@@ -190,4 +270,5 @@ module.exports = {
   extendWebpackPwa,
   pacsAiAppConfigPath,
   pacsAiDefineValues,
+  transformIndexHtml,
 };

@@ -154,7 +154,7 @@ PACS_AI_E2E_TENANT_A_ONLY_STUDY_UID
 Run:
 
 ```bash
-yarn test:e2e:ci tests/StudyProcessingRollout.spec.ts
+npx playwright test -c tests/pacs-ai/rollout/playwright.rollout.config.ts
 ```
 
 The suite verifies:

@@ -21,6 +21,8 @@ process.env.PACS_AI_E2E_SUITE = '1';
 export default defineConfig({
   testDir: __dirname,
   testMatch: '*.spec.ts',
+  // rollout/ is the opt-in deployed rollout check with its own config.
+  testIgnore: 'rollout/**',
   outputDir: env.outputDir,
   globalSetup: require.resolve('./global-setup'),
   // One live server, one GPU queue and a shared login rate limit: run serially.
