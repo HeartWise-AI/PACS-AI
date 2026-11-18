@@ -29,5 +29,5 @@
   "We selected {{modality}} and cleared the dates to find a study for you. Searching...": "اخترنا {{modality}} ومسحنا التواريخ للعثور على دراسة لك. جارٍ البحث...",
   "Click this study to show its tools.": "انقر على هذه الدراسة لعرض أدواتها.",
   "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "انقر على عارض أساسي لفتح الدراسة. يستمر البرنامج التعليمي في العارض.",
-  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself: the tutorial continues in the viewer.": "لا توجد دراسة {{modality}} جاهزة للفتح على PACS-AI حاليًا. ابحث عن دراسة وافتحها بنفسك: يستمر البرنامج التعليمي في العارض."
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "لا توجد دراسة {{modality}} جاهزة للفتح على PACS-AI حاليًا. ابحث عن دراسة وافتحها بنفسك، وسيستمر البرنامج التعليمي في العارض."
 }

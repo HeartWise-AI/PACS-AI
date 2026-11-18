@@ -83,9 +83,10 @@ export function pickTutorialStudy<T extends StudyWhen>(
 
 /** The local PACS as the viewer reads it (see the `dicomweb` data source). */
 export const LOCAL_QIDO_STUDIES_PATH = '/proxy/orthanc/dicom-web/studies';
-const LOCAL_LOOKUP_LIMIT = '500';
+const LOCAL_LOOKUP_LIMIT = '2000';
 const LOCAL_LOOKUP_TIMEOUT_MS = 15_000;
 const TAG_STUDY_INSTANCE_UID = '0020000D';
+const TAG_MODALITIES_IN_STUDY = '00080061';
 
 type HTTPGet = (
   url: string,
@@ -97,6 +98,10 @@ type HTTPGet = (
  * The tutorial opens one of these: opening it needs no retrieve from the
  * hospital PACS, where an archived study can hold Orthanc's retrieve slots
  * for minutes. Resolves with an empty set when the lookup fails.
+ *
+ * The local Orthanc answers 400 to a ModalitiesInStudy filter, so all stored
+ * studies are listed (a day's worth, images are kept about 24 h) and
+ * filtered here.
  */
 export async function fetchLocalStudyUIDs(
   modality: string,
@@ -105,12 +110,17 @@ export async function fetchLocalStudyUIDs(
   try {
     const response = await get(LOCAL_QIDO_STUDIES_PATH, {
       headers: { Accept: 'application/dicom+json' },
-      params: { ModalitiesInStudy: modality, limit: LOCAL_LOOKUP_LIMIT },
+      params: { limit: LOCAL_LOOKUP_LIMIT },
       timeout: LOCAL_LOOKUP_TIMEOUT_MS,
     });
     const studies = Array.isArray(response?.data) ? response.data : [];
     const uids = new Set<string>();
+    const wanted = modality.trim().toUpperCase();
     studies.forEach(study => {
+      const modalities: unknown[] = study?.[TAG_MODALITIES_IN_STUDY]?.Value ?? [];
+      if (!modalities.some(code => String(code).trim().toUpperCase() === wanted)) {
+        return;
+      }
       const value = study?.[TAG_STUDY_INSTANCE_UID]?.Value?.[0];
       if (typeof value === 'string' && value.trim()) {
         uids.add(value.trim());

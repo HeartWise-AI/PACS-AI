@@ -128,23 +128,23 @@ describe('pickTutorialStudy', () => {
 });
 
 describe('fetchLocalStudyUIDs', () => {
-  it('asks the local DICOMweb server for the modality and reads the study UIDs', async () => {
+  it('lists the local studies and keeps those of the modality', async () => {
     const get = jest.fn().mockResolvedValue({
       data: [
-        { '0020000D': { vr: 'UI', Value: ['1.2.3'] } },
-        { '0020000D': { vr: 'UI', Value: [' 1.2.4 '] } },
-        { '00080020': { vr: 'DA', Value: ['20261118'] } },
+        { '0020000D': { vr: 'UI', Value: ['1.2.3'] }, '00080061': { vr: 'CS', Value: ['US'] } },
+        { '0020000D': { vr: 'UI', Value: [' 1.2.4 '] }, '00080061': { vr: 'CS', Value: ['SR', 'us'] } },
+        { '0020000D': { vr: 'UI', Value: ['1.2.5'] }, '00080061': { vr: 'CS', Value: ['XA'] } },
+        { '0020000D': { vr: 'UI', Value: ['1.2.6'] } },
+        { '00080061': { vr: 'CS', Value: ['US'] } },
       ],
     });
     const uids = await fetchLocalStudyUIDs('US', get);
     expect(Array.from(uids)).toEqual(['1.2.3', '1.2.4']);
-    expect(get).toHaveBeenCalledWith(
-      '/proxy/orthanc/dicom-web/studies',
-      expect.objectContaining({
-        headers: { Accept: 'application/dicom+json' },
-        params: expect.objectContaining({ ModalitiesInStudy: 'US' }),
-      })
-    );
+    const [url, config] = get.mock.calls[0];
+    expect(url).toBe('/proxy/orthanc/dicom-web/studies');
+    expect(config.headers).toEqual({ Accept: 'application/dicom+json' });
+    // The local Orthanc rejects a ModalitiesInStudy filter.
+    expect(config.params).not.toHaveProperty('ModalitiesInStudy');
   });
 
   it('resolves with no studies when the lookup fails or answers oddly', async () => {

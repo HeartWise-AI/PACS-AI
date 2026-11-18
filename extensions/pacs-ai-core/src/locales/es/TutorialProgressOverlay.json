@@ -29,5 +29,5 @@
   "We selected {{modality}} and cleared the dates to find a study for you. Searching...": "Seleccionamos {{modality}} y borramos las fechas para encontrarle un estudio. Buscando...",
   "Click this study to show its tools.": "Haga clic en este estudio para mostrar sus herramientas.",
   "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "Haga clic en Visor Básico para abrir el estudio. El tutorial continúa en el visor.",
-  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself: the tutorial continues in the viewer.": "Ningún estudio {{modality}} está listo para abrirse en PACS-AI en este momento. Busque un estudio y ábralo usted mismo: el tutorial continúa en el visor."
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "Ningún estudio {{modality}} está listo para abrirse en PACS-AI en este momento. Busque un estudio y ábralo usted mismo, y el tutorial continuará en el visor."
 }

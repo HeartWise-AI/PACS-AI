@@ -34,5 +34,5 @@
   "We selected {{modality}} and cleared the dates to find a study for you. Searching...": "We selected {{modality}} and cleared the dates to find a study for you. Searching...",
   "Click this study to show its tools.": "Click this study to show its tools.",
   "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "Click Basic Viewer to open the study. The tutorial continues in the viewer.",
-  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself: the tutorial continues in the viewer.": "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself: the tutorial continues in the viewer."
+  "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer.": "No {{modality}} study is ready to open on PACS-AI right now. Search for a study and open it yourself, and the tutorial continues in the viewer."
 }
