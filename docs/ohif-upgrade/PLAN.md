@@ -458,7 +458,7 @@ Resolution rules, in order:
 3. Path in `THEME_DEBT.txt` → take upstream (the theme comes back in P3.4).
 4. `package.json` (root, app) and `pluginConfig.json` → take upstream, then re-add our packages and our dependencies.
 5. Lockfiles → take upstream's `pnpm-lock.yaml`; delete `yarn.lock`/`bun.lock`; regenerate with `pnpm install --no-frozen-lockfile` in the Node 24 container.
-6. Files we deleted that upstream modified (`platform/app/src/service-worker.js`, `platform/app/.env`, `.netlify/build-deploy-preview.sh`) → take upstream's version (they are upstream-owned; our kill switch lives in `pacs-ai/build`).
+6. Files we deleted that upstream modified (`platform/app/src/service-worker.js`, `platform/app/.env`, `.netlify/build-deploy-preview.sh`) → take upstream's version (they are upstream-owned; our kill switch lives in `pacs-ai/build`). Exception: `platform/app/.env` is ledgered (row 0006) and stays untracked — rule 2 wins; back it up before merging, because git overwrites ignored files when upstream tracks the same path.
 7. Files we modified that upstream deleted (`nx.json`, `addOns/externals/devDependencies/package.json`, `DicomUpload.css`, docs showcase pages, `versioned_docs/version-3.10/*`) → accept the deletion. The `addOns` bumps (moment, postcss, webpack-dev-server) become pnpm `overrides` only if still needed.
 8. Anything else → take upstream and write down what was lost in `STATUS.md`.
 - Update `pacs-ai/UPSTREAM_REF`. Commit the merge even if the build is red; the following packages fix it.
