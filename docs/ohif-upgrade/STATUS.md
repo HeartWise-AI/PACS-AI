@@ -337,3 +337,28 @@ The echo cine regression is fixed: cine now advances 0.01 s after the first imag
 - `prop-types` in core: API repositories throw the imported validator as a fallback error value (runtime behaviour, separate fix).
 - Echo thumbnail strip completes ~6 s later than 3.11 (change g); tuning is a follow-up if the owner wants it.
 - 3.13's waveform handler (ECG / Hemodynamic Waveform Storage) is not in `/viewer` (kept 3.11.1's handler list on purpose); ECG waveform display is upstream's but not reachable in our mode.
+
+## Phase 4 (make it repeatable)
+
+Branch `wp/P4.1-repeatable` (draft PR into `integration/ohif-3.13`), from 6ac260799. No viewer code changed, no image.
+
+| WP | State | Result |
+|---|---|---|
+| P4.1 | done | `pacs-ai/scripts/upgrade-ohif.sh <tag>` (+ `merge-manifest.py`, tests `pacs-ai/scripts/tests/test-upgrade-ohif.sh`, 90 cases on a synthetic upstream and fork). Fetches the tag, moves the untracked `platform/app/.env` aside and back, creates `upgrade/<tag>`, merges with the P3.1 rules three-way against the pinned tag (not git's merge base), re-applies and refreshes the ledger patches, merges the manifests (JSON three-way), regenerates the lock file, commits a two-parent merge, updates `UPSTREAM_REF`, then runs the gates in `node:<.node-version>-slim` with pnpm from `packageManager`. Options `--dry-run`, `--keep-going`, `--no-build`, `--no-checks`, `--checks-only`, `--typecheck`, `--base`, `--no-docker`. |
+| P4.2 | done | `.github/workflows/pacs-ai-upstream-canary.yml`: Mondays 06:17 UTC and manual; `latest` tag (betas included) or an input; script tests, then the script with `--keep-going` on a local branch; summary to the run page, logs as an artifact (30 days). Read-only token, no secrets, nothing pushed. actionlint 1.7.7 (with its shellcheck pass on the `run:` blocks): no findings. |
+| P4.3 | done | `docs/ohif-upgrade/RUNBOOK.md` |
+| P4.4 | done | `docs/ohif-upgrade/NEXT-3.14.md` (dry run on `v3.14.0-beta.98`) |
+| P4.5 | prepared, not opened | `docs/ohif-upgrade/UPSTREAM-CONTRIBUTIONS.md`: 5 candidates; nothing opened on OHIF's repository (needs the owner's go-ahead) |
+
+Script runs (throwaway clones; branches deleted):
+
+- **No-op, `v3.13.14` from 6ac260799 + P4 tooling:** "already merged", every rule leaves the tree unchanged, no commit, `.env` byte-identical afterwards. Gates all green: ledger patches on a fresh tag 7/7, drift guard `--enforce --forbid-ohif-ui` (15 modified upstream files = 7 ledger + 8 expected), `pnpm install --frozen-lockfile` 54 s, build 21 s, `lint-imports.sh` 0 errors, unit tests 12 packages / 2,825 tests all passing (194 s), tsc per package (total / own files): core 332/9, ui 294/4, theme 19/0, shell 1048/23, inference 1167/35, chat 346/4, mode 1159/0.
+- **Older base, P3.1 replayed:** from P3.1's first parent (98359e881, pinned v3.11.1) to v3.13.14, `--no-checks --keep-going`: 200 git conflicts (as P3.1 counted), 0002 three-way, 0003 not applying, 0006 regenerated (as in P3.1). The result differs from the hand-made merge b5e8af3bc in 4 upstream-owned files only, all listed by the script for a person: root and app `package.json` (yarn-era scripts and `resolutions`), `pnpm-workspace.yaml` (P3.1 moved `resolutions` into `overrides` by hand), `rsbuild.config.ts` (0003).
+- **Newer tag, `v3.14.0-beta.98`:** see `NEXT-3.14.md` (40 git conflicts, 4 items for a person, 0003 fails, build and lint red, 9–13 days estimated).
+
+Notes:
+
+- Self-hosted runners for the canary need **Docker and Node 24**; GitHub-hosted `ubuntu-latest` is the default (repository variable `PACS_AI_CANARY_RUNS_ON` with a JSON label list switches it). Both triggers (schedule, `workflow_dispatch`) need the workflow on the default branch, so the canary starts once this reaches `main`.
+- The local repository is shallow at the fork commit 13d321435: a plain `git clone` of it is broken (missing objects). Throwaway clones: `git clone --shared --no-checkout <git dir>` and copy its `shallow` file into the clone's `.git`. CI checkouts (`fetch-depth: 0`) are complete.
+- `pnpm -r --no-bail` still skips every package that depends on a failing one (3.14 run: `@pacs-ai/theme` failed, so ui, shell, inference, chat, mode and app never ran); the script runs the tests with `--no-sort` and names packages that did not run.
+- The merge base of 3.14 betas and v3.13.14 is again a pre-release commit (`43f3f4550`); the rules make that harmless (three-way against the pinned tag; 0 clean merges reset).
