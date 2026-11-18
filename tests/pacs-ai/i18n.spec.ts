@@ -55,7 +55,13 @@ test('viewer AI menu renders in French', async ({ page }) => {
 });
 
 test('login page renders in French', async ({ browser }) => {
-  const context = await browser.newContext({ baseURL: env.baseURL, ignoreHTTPSErrors: true });
+  // Logged out on purpose: the config's stored session would make /login
+  // restore it and go straight to the work list.
+  const context = await browser.newContext({
+    baseURL: env.baseURL,
+    ignoreHTTPSErrors: true,
+    storageState: { cookies: [], origins: [] },
+  });
   await useFrench(context);
   const page = await context.newPage();
   await page.goto(`/login?t=${encodeURIComponent(env.tenant)}`);
