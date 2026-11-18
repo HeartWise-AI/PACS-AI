@@ -1,9 +1,30 @@
-# Candidate contributions to OHIF (P4.5, prepared, not opened)
+# Contributions to OHIF (P4.5)
 
 PLAN P4.5: contributions that would let PACS-AI drop a ledger row or a copy of
-upstream code. **Nothing here has been opened on OHIF's repository**; each
-item needs the owner's go-ahead first. Checked against `v3.13.14` (our pin)
-and `v3.14.0-beta.98` (newest tag on 2026-11-18).
+upstream code. **Opened on 2026-11-18** with the owner's go-ahead, from the fork
+`robertavram-md/Viewers` (generic changes only; nothing about PACS-AI). OHIF has
+no CLA. Each PR ran OHIF's checks (PR_CHECKS, dependency audit, Netlify preview)
+and got automated reviews (CodeRabbit, Codex); the review points were addressed
+in follow-up commits on each branch.
+
+| # | OHIF PR | Base | What it adds |
+|---|---|---|---|
+| 1 | [#6444](https://github.com/OHIF/Viewers/pull/6444) | `master` | `OHIF_BUILD_EXTEND`: a module that extends the rsbuild / rspack config |
+| 2 | [#6445](https://github.com/OHIF/Viewers/pull/6445) | `master` | `ohif.tourPersistence`: async "tour shown" store; recorded when a step is displayed |
+| 3 | [#6447](https://github.com/OHIF/Viewers/pull/6447) | `master` | `ohif.seriesIndicator` toolbar item ("Series n/N · #number description"), opt-in |
+| 4 | [#6446](https://github.com/OHIF/Viewers/pull/6446) | `release/3.13` | backport: stable `activeDisplaySets` order (active-order part of #6399) |
+| 5 | [#6448](https://github.com/OHIF/Viewers/pull/6448) | `master` | `studyBrowser.thumbnailOverlay`: a component drawn over each thumbnail image |
+
+When they are merged: #1 lets us replace patches 0001–0003 with
+`OHIF_BUILD_EXTEND=pacs-ai/build/extend.js` (the module then exports
+`rsbuild`/`rspack`); #2 replaces the tour gating in the shell with an
+`ohif.tourPersistence` backed by our API; #3 replaces `CurrentSeriesLabel`
+with `seriesIndicator` in `viewportActionMenu.topMiddle`; #4 (if released on
+3.13.x) retires `displaySetOrder.ts` before 3.14; #5 lets the inference package
+drop its study browser copy for upstream's panel plus a customization.
+
+Original analysis, checked against `v3.13.14` (our pin) and `v3.14.0-beta.98`
+(newest tag on 2026-11-18):
 
 | # | Contribution | What it retires for us | Status upstream (beta.98) | Size |
 |---|---|---|---|---|
