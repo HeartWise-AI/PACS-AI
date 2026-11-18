@@ -47,5 +47,8 @@
   "ViewerResultSeriesAll": "جميع السلاسل",
   "ViewerResultSeriesSubset": "{{used}} من {{total}} سلاسل",
   "ViewerResultSeriesCount": "السلاسل: {{used}}",
-  "ViewerResultSeriesListTitle": "السلاسل المستخدمة في هذا التشغيل"
+  "ViewerResultSeriesListTitle": "السلاسل المستخدمة في هذا التشغيل",
+  "LookingForModels": "جارٍ البحث عن النماذج…",
+  "ModelsMayBeBusy": "قد يغيب نموذج مشغول بفحص آخر لحظةً.",
+  "TryAgain": "إعادة المحاولة"
 }

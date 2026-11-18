@@ -22,6 +22,8 @@ import PDFOutputModeModal from '../PDFOutputModeModal';
 import SelectSeriesModal from '@pacs-ai/ui/src/components/SelectSeriesModal';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
+import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableModels';
+import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
 import { addSegmentationFromLabelmap } from '../utils/addSegmentation';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
 import { viewerModelKey } from '../viewerResults/viewerResultsModel';
@@ -65,6 +67,8 @@ const AIModelButton = ({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [containerName, setContainerName] = useState<string>('');
   const { selectedModalities } = useStudyContext();
+  // A background refresh runs each time the menu opens (see handleButtonClick).
+  const { refreshingAvailableModels } = useAvailableModels();
   const [selectedInferenceModel, setSelectedInferenceModel] =
     useState<GetInferenceAvailableModelsResponse | null>(null);
   const [sortedSeriesInstanceUIDs, setSortedSeriesInstanceUIDs] = useState<string>('');
@@ -100,6 +104,9 @@ const AIModelButton = ({
     if (!isOpen) {
       setConfirmRunModelKey(null);
       void viewerResults?.refreshLatestResults();
+      // api-pacs leaves out a model whose container is busy at that moment, so
+      // the list loaded with the viewer can miss one; ask again on every open.
+      void pacsAiModelsService.refreshAvailableModels();
     }
     setIsOpen(!isOpen);
     const buttonRect = e.currentTarget.getBoundingClientRect();
@@ -495,8 +502,25 @@ const AIModelButton = ({
                   })}
               </ul>
             ) : (
-              <div className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white">
-                <p className="opacity-50">{t('No inference models found')}</p>
+              <div
+                className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white"
+                data-testid="ai-model-menu-empty"
+              >
+                {refreshingAvailableModels ? (
+                  <p className="opacity-50">{t('LookingForModels')}</p>
+                ) : (
+                  <>
+                    <p className="opacity-50">{t('No inference models found')}</p>
+                    <p className="max-w-[16rem] text-xs opacity-50">{t('ModelsMayBeBusy')}</p>
+                    <button
+                      type="button"
+                      className="mx-auto mt-1 rounded px-2 py-0.5 text-xs underline hover:opacity-80"
+                      onClick={() => void pacsAiModelsService.refreshAvailableModels()}
+                    >
+                      {t('TryAgain')}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>,

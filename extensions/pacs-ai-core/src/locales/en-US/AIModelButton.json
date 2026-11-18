@@ -78,5 +78,8 @@
   "RunningJobsCancelling": "Cancelling…",
   "RunningJobsCancelKeepsResults": "Models already finished keep their results.",
   "RunningJobsCancelError": "Could not cancel. Try again.",
-  "RunningJobsCancelTooLate": "Already computing: it can no longer be cancelled."
+  "RunningJobsCancelTooLate": "Already computing: it can no longer be cancelled.",
+  "LookingForModels": "Looking for models…",
+  "ModelsMayBeBusy": "A model busy with another exam can be missing for a moment.",
+  "TryAgain": "Try again"
 }

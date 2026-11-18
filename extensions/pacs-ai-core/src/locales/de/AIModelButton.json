@@ -47,5 +47,8 @@
   "ViewerResultSeriesAll": "Alle Serien",
   "ViewerResultSeriesSubset": "{{used}} von {{total}} Serien",
   "ViewerResultSeriesCount": "{{used}} Serie(n)",
-  "ViewerResultSeriesListTitle": "Für diesen Lauf verwendete Serien"
+  "ViewerResultSeriesListTitle": "Für diesen Lauf verwendete Serien",
+  "LookingForModels": "Modelle werden gesucht…",
+  "ModelsMayBeBusy": "Ein Modell, das gerade ein anderes Exam bearbeitet, kann kurz fehlen.",
+  "TryAgain": "Erneut versuchen"
 }

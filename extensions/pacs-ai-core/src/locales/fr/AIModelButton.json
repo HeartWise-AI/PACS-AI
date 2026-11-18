@@ -78,5 +78,8 @@
   "RunningJobsCancelling": "Annulation…",
   "RunningJobsCancelKeepsResults": "Les modèles déjà terminés conservent leurs résultats.",
   "RunningJobsCancelError": "Annulation impossible. Réessayez.",
-  "RunningJobsCancelTooLate": "Calcul déjà en cours : annulation impossible."
+  "RunningJobsCancelTooLate": "Calcul déjà en cours : annulation impossible.",
+  "LookingForModels": "Recherche des modèles…",
+  "ModelsMayBeBusy": "Un modèle occupé par un autre examen peut manquer un instant.",
+  "TryAgain": "Réessayer"
 }
