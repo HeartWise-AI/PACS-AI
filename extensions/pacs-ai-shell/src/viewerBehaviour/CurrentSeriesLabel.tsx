@@ -9,33 +9,41 @@ export const CURRENT_SERIES_BUTTON_ID = 'PacsAiCurrentSeries';
 
 type DisplaySetLike = {
   displaySetInstanceUID: string;
+  StudyInstanceUID?: string;
   SeriesNumber?: number | string;
   SeriesDescription?: string;
+  Modality?: string;
+  imageIds?: unknown[];
+  unsupported?: boolean;
+  excludeFromThumbnailBrowser?: boolean;
 };
 
-/**
- * Text after "Series:" for a viewport: the position of its series among the
- * study's display sets, in the order the arrow keys walk through them
- * (`displaySetService.getActiveDisplaySets()`, as the
- * `updateViewportDisplaySet` command uses), then the series number and
- * description. Empty when the viewport shows nothing known.
- */
-export function currentSeriesText(
-  displaySetInstanceUIDs: string[] = [],
-  activeDisplaySets: DisplaySetLike[] = []
-): string {
-  const uid = displaySetInstanceUIDs[0];
-  if (!uid) {
-    return '';
-  }
-  const index = activeDisplaySets.findIndex(
-    displaySet => displaySet.displaySetInstanceUID === uid
+/** Modalities that are not image series (reports, segmentations, documents, ...). */
+export const NON_IMAGE_MODALITIES = [
+  'SR',
+  'SEG',
+  'RTSTRUCT',
+  'RTPLAN',
+  'RTDOSE',
+  'PR',
+  'KO',
+  'DOC',
+  'PMAP',
+];
+
+/** An image series: an image modality with images to show. */
+export function isImageSeries(displaySet?: DisplaySetLike): boolean {
+  return (
+    !!displaySet &&
+    !displaySet.unsupported &&
+    !NON_IMAGE_MODALITIES.includes(displaySet.Modality ?? '') &&
+    Array.isArray(displaySet.imageIds) &&
+    displaySet.imageIds.length > 0
   );
-  if (index < 0) {
-    return '';
-  }
-  const displaySet = activeDisplaySets[index];
-  const details = [
+}
+
+function seriesDetails(displaySet: DisplaySetLike): string {
+  return [
     displaySet.SeriesNumber !== undefined && displaySet.SeriesNumber !== ''
       ? `#${displaySet.SeriesNumber}`
       : '',
@@ -43,14 +51,57 @@ export function currentSeriesText(
   ]
     .filter(Boolean)
     .join(' ');
-  const position = `${index + 1}/${activeDisplaySets.length}`;
+}
+
+/**
+ * Text after "Series:" for a viewport.
+ *
+ * - "#number description" of the series the viewport shows;
+ * - preceded by "n/N" when that display set is an image series: its position
+ *   among the image series of its own study (same StudyInstanceUID; no SR,
+ *   SEG, RTSTRUCT, PR, KO, PDF or other display set without images), in the
+ *   order the PACS-AI study browser lists that study's image thumbnails
+ *   (`displaySetService.getActiveDisplaySets()` order; the browser puts the
+ *   series without images after them). The other studies of the patient
+ *   that the study browser loads are not counted. The arrow keys may walk
+ *   on into another study; the count is then that study's.
+ *
+ * Empty when the viewport shows nothing known.
+ */
+export function currentSeriesText(
+  displaySetInstanceUIDs: string[] = [],
+  activeDisplaySets: DisplaySetLike[] = []
+): string {
+  const uid = displaySetInstanceUIDs[0];
+  const current = uid
+    ? activeDisplaySets.find(displaySet => displaySet.displaySetInstanceUID === uid)
+    : undefined;
+  if (!current) {
+    return '';
+  }
+  const details = seriesDetails(current);
+  if (!isImageSeries(current)) {
+    return details;
+  }
+  const studySeries = activeDisplaySets.filter(
+    displaySet =>
+      displaySet.StudyInstanceUID === current.StudyInstanceUID &&
+      !displaySet.excludeFromThumbnailBrowser &&
+      isImageSeries(displaySet)
+  );
+  const index = studySeries.indexOf(current);
+  if (index < 0) {
+    return details;
+  }
+  const position = `${index + 1}/${studySeries.length}`;
   return details ? `${position} · ${details}` : position;
 }
 
 /**
  * "Series: <current series>" in the viewport's action bar (F15), placed by
  * modes/pacs-ai in the `viewportActionMenu.topMiddle` toolbar section, which
- * OHIF renders per viewport with the viewport's id. It follows the series
+ * OHIF renders per viewport with the viewport's id, and only while that
+ * viewport is active or hovered. It follows the series
  * shown in the viewport (arrow keys, thumbnails, hanging protocol). PACS-AI
  * had added this to @ohif/ui-next's ViewportActionBar, which OHIF 3.11 no
  * longer renders, so the label had been missing.

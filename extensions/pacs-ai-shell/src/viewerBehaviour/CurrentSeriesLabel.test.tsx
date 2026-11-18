@@ -21,14 +21,51 @@ import CurrentSeriesLabel, {
   CURRENT_SERIES_UI_TYPE,
   addCurrentSeriesLabel,
   currentSeriesText,
+  isImageSeries,
 } from './CurrentSeriesLabel';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
+const img = (uid: string, study: string, extra: Record<string, unknown> = {}) => ({
+  displaySetInstanceUID: uid,
+  StudyInstanceUID: study,
+  Modality: 'XA',
+  imageIds: [`wadors:${uid}`],
+  ...extra,
+});
+
+// Display sets in displaySetService order: one study of three image series,
+// an SR and a PDF, plus an earlier study of the same patient.
 const displaySets = [
-  { displaySetInstanceUID: 'a', SeriesNumber: 1, SeriesDescription: 'LAO' },
-  { displaySetInstanceUID: 'b', SeriesNumber: 2, SeriesDescription: 'RAO CRA' },
-  { displaySetInstanceUID: 'c' },
+  img('a', 'study-1', { SeriesNumber: 1, SeriesDescription: 'LAO' }),
+  img('b', 'study-1', { SeriesNumber: 2, SeriesDescription: 'RAO CRA' }),
+  img('c', 'study-1'),
+];
+
+const multiStudy = [
+  img('p1', 'study-0', { SeriesNumber: 1, SeriesDescription: 'Prior LAO' }),
+  img('p2', 'study-0', { SeriesNumber: 2 }),
+  img('a', 'study-1', { SeriesNumber: 1, SeriesDescription: 'LAO' }),
+  {
+    displaySetInstanceUID: 'sr',
+    StudyInstanceUID: 'study-1',
+    Modality: 'SR',
+    SeriesNumber: 900,
+    SeriesDescription: 'Report',
+  },
+  img('b', 'study-1', { SeriesNumber: 2, SeriesDescription: 'RAO CRA' }),
+  {
+    displaySetInstanceUID: 'pdf',
+    StudyInstanceUID: 'study-1',
+    Modality: 'DOC',
+    SeriesNumber: 901,
+    SeriesDescription: 'Letter',
+  },
+  img('seg', 'study-1', { Modality: 'SEG', SeriesNumber: 902, SeriesDescription: 'Labels' }),
+  img('noimages', 'study-1', { imageIds: [], SeriesNumber: 3 }),
+  img('hidden', 'study-1', { excludeFromThumbnailBrowser: true, SeriesNumber: 4 }),
+  img('c', 'study-1', { SeriesNumber: 5 }),
+  img('p3', 'study-0', { SeriesNumber: 3 }),
 ];
 
 describe('current series label', () => {
@@ -39,6 +76,37 @@ describe('current series label', () => {
     expect(currentSeriesText(['unknown'], displaySets)).toBe('');
     expect(currentSeriesText([], displaySets)).toBe('');
     expect(currentSeriesText(undefined, undefined)).toBe('');
+  });
+
+  test("counts only the image series of the viewport's own study", () => {
+    // study-1 has a, b and c as image series; the prior study is not counted.
+    expect(currentSeriesText(['a'], multiStudy)).toBe('1/3 · #1 LAO');
+    expect(currentSeriesText(['b'], multiStudy)).toBe('2/3 · #2 RAO CRA');
+    expect(currentSeriesText(['c'], multiStudy)).toBe('3/3 · #5');
+    // The arrow keys can walk on into the prior study: its own count.
+    expect(currentSeriesText(['p1'], multiStudy)).toBe('1/3 · #1 Prior LAO');
+    expect(currentSeriesText(['p3'], multiStudy)).toBe('3/3 · #3');
+  });
+
+  test('shows only the series number and description for a non-image series', () => {
+    expect(currentSeriesText(['sr'], multiStudy)).toBe('#900 Report');
+    expect(currentSeriesText(['pdf'], multiStudy)).toBe('#901 Letter');
+    expect(currentSeriesText(['seg'], multiStudy)).toBe('#902 Labels');
+    expect(currentSeriesText(['noimages'], multiStudy)).toBe('#3');
+    expect(currentSeriesText(['hidden'], multiStudy)).toBe('#4');
+  });
+
+  test('tells image series from the others', () => {
+    expect(isImageSeries(multiStudy[0] as any)).toBe(true);
+    ['sr', 'pdf', 'seg', 'noimages'].forEach(uid =>
+      expect(
+        isImageSeries(multiStudy.find(ds => ds.displaySetInstanceUID === uid) as any)
+      ).toBe(false)
+    );
+    expect(isImageSeries(img('u', 's', { unsupported: true }) as any)).toBe(false);
+    expect(isImageSeries(img('pr', 's', { Modality: 'PR' }) as any)).toBe(false);
+    expect(isImageSeries(img('ko', 's', { Modality: 'KO' }) as any)).toBe(false);
+    expect(isImageSeries(undefined)).toBe(false);
   });
 
   test('is placed in the viewport action bar', () => {
