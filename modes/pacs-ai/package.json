@@ -1,7 +1,7 @@
 {
   "name": "@pacs-ai/mode-viewer",
   "version": "1.0.0",
-  "description": "PACS-AI viewer mode: the stock longitudinal viewer with the PACS-AI layout, study browser, toolbar and viewer behaviour",
+  "description": "PACS-AI viewer mode: OHIF basic mode with measurement tracking, the PACS-AI layout, study browser, toolbar and viewer behaviour",
   "private": true,
   "license": "MIT",
   "main": "src/index.ts",
@@ -16,7 +16,7 @@
   },
   "peerDependencies": {
     "@ohif/core": "workspace:*",
-    "@ohif/mode-longitudinal": "workspace:*"
+    "@ohif/mode-basic": "workspace:*"
   },
   "dependencies": {
     "@pacs-ai/extension-chat": "workspace:*",

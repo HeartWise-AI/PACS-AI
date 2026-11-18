@@ -1547,9 +1547,9 @@ importers:
       '@ohif/core':
         specifier: workspace:*
         version: link:../../platform/core
-      '@ohif/mode-longitudinal':
+      '@ohif/mode-basic':
         specifier: workspace:*
-        version: link:../longitudinal
+        version: link:../basic
       '@pacs-ai/extension-chat':
         specifier: workspace:*
         version: link:../../extensions/pacs-ai-chat
