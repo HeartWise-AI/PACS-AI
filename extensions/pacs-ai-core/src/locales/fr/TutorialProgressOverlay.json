@@ -19,8 +19,6 @@
   "Next": "Suivant",
   "Do you want to skip the entire tutorial?": "Voulez-vous passer l'intégralité du tutoriel ?",
   "Cancel": "Annuler",
-  "Viewer Required": "Visionneuse requise",
-  "You need to be on a viewer page or have a study selected to continue with this action.": "Vous devez être sur une page de visionneuse ou avoir une étude sélectionnée pour continuer cette action.",
   "Ok": "Ok",
   "AI Models": "Modèles IA",
   "Use this navigation item to explore available AI models. Click it any time to view models supported in PACS AI.": "Utilisez cet élément de navigation pour explorer les modèles IA disponibles. Cliquez dessus à tout moment pour voir les modèles pris en charge par PACS AI.",
@@ -31,5 +29,10 @@
   "One or more answers are incorrect. Please review and try again.": "Une ou plusieurs réponses sont incorrectes. Veuillez les vérifier et réessayer.",
   "No model questionnaires are currently available.": "Aucun questionnaire de modèle n'est actuellement disponible.",
   "All available model questionnaires have already been completed.": "Tous les questionnaires de modèle disponibles ont déjà été remplis.",
-  "Failed to reset tutorial": "Échec de la réinitialisation du tutoriel"
+  "Failed to reset tutorial": "Échec de la réinitialisation du tutoriel",
+  "Open a study": "Ouvrir un examen",
+  "We selected {{modality}} and cleared the dates to find a study for you. Searching...": "Nous avons sélectionné {{modality}} et effacé les dates pour vous trouver un examen. Recherche en cours...",
+  "Click this study to show its tools.": "Cliquez sur cet examen pour afficher ses outils.",
+  "Click Basic Viewer to open the study. The tutorial continues in the viewer.": "Cliquez sur Visionneuse de base pour ouvrir l'examen. Le tutoriel continue dans la visionneuse.",
+  "No {{modality}} study was found. Choose another modality or dates, search, and open a study: the tutorial continues in the viewer.": "Aucun examen {{modality}} trouvé. Choisissez une autre modalité ou d'autres dates, lancez la recherche et ouvrez un examen : le tutoriel continue dans la visionneuse."
 }
