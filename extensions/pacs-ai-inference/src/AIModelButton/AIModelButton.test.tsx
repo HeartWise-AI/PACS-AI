@@ -23,7 +23,9 @@ jest.mock('@pacs-ai/extension-core/src/api/inferenceRepository', () => ({
 jest.mock('@pacs-ai/extension-core/src/providers/AlertProvider', () => ({
   AlertContext: jest.requireActual('react').createContext(null),
 }));
-const mockStudyContext = { selectedModalities: { XA: { modality: 'XA' } } as Record<string, unknown> };
+const mockStudyContext = {
+  selectedModalities: { XA: { modality: 'XA' } } as Record<string, unknown>,
+};
 jest.mock('@pacs-ai/extension-core/src/hooks/useStudyContext', () => ({
   __esModule: true,
   default: () => mockStudyContext,
@@ -157,6 +159,48 @@ describe('AIModelButton runs', () => {
   afterEach(() => {
     renderer?.unmount();
     jest.restoreAllMocks();
+  });
+
+  test('with a TTE and an angiogram open, each exam lists only its models and its own results', () => {
+    const echoModel = {
+      ...model,
+      modelId: 'panecho',
+      containerId: 'container-echo',
+      containerName: 'panecho',
+      modelName: 'PanEcho',
+      supportedDicomModalities: ['US'],
+    };
+    mockStudyContext.selectedModalities = {
+      US: {
+        modality: 'US',
+        studies: [{ studyInstanceUID: 'tte', date: '2026-10-09', description: 'TTE' }],
+      },
+      XA: {
+        modality: 'XA',
+        studies: [{ studyInstanceUID: 'cath', date: '2026-11-17', description: 'CATH' }],
+      },
+    };
+    const getLatestResult = jest.fn((m: { modelName: string }, study: string) =>
+      m.modelName === 'DeepCORO-JEPA' && study === 'cath' ? storedResult : null
+    );
+    try {
+      mount(viewerResults({ getLatestResult }), [model, echoModel]);
+
+      const headers = all('[data-testid="ai-model-menu-exam"]').map(item => item.textContent);
+      expect(headers).toEqual(['US · 2026-10-09 · TTE', 'XA · 2026-11-17 · CATH']);
+      const rows = all('li').map(item => item.textContent || '');
+      const panEchoRows = rows.filter(text => text.includes('PanEcho'));
+      const jepaRows = rows.filter(text => text.includes('DeepCORO-JEPA'));
+      expect(panEchoRows).toHaveLength(1);
+      expect(jepaRows).toHaveLength(1);
+      expect(getLatestResult).toHaveBeenCalledWith(echoModel, 'tte');
+      expect(getLatestResult).toHaveBeenCalledWith(model, 'cath');
+      expect(getLatestResult).not.toHaveBeenCalledWith(echoModel, 'cath');
+      // The angiogram's stored result is offered; the TTE's PanEcho has none yet.
+      expect(all('[data-testid="ai-model-previous-result"]')).toHaveLength(1);
+    } finally {
+      mockStudyContext.selectedModalities = { XA: { modality: 'XA' } };
+    }
   });
 
   test('Apply opens the series pop-up instead of queueing a run', () => {

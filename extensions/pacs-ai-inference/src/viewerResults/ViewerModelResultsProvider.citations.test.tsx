@@ -119,23 +119,21 @@ describe('ViewerModelResultsProvider as the host of the chat citations', () => {
     renderer = null;
   });
 
-  it('loads the stored results when a citation is shown, then opens the cited result', async () => {
+  it('loads the stored results up front and again when a citation is shown, then opens the cited result', async () => {
     const repository = await render([
       result({ modelName: 'DeepCORO-CTO', studyServiceJobId: 'job-2' }),
       result(),
     ]);
 
-    // Nothing is loaded before the AI menu or a citation asks for it.
-    expect(repository.loadLatestResults).not.toHaveBeenCalled();
-    expect(host!.resolveModelResult(CITATION)).toEqual({
-      open: null,
-      loadRawResult: null,
-      loading: true,
-    });
+    // The open exam's results load as soon as the viewer opens; a citation
+    // shown later asks again, since the cited result may be newer.
+    await settle();
+    expect(repository.loadLatestResults).toHaveBeenCalledTimes(1);
+    expect(repository.loadLatestResults).toHaveBeenCalledWith(STUDY_UID);
 
     act(() => host!.onModelResultShown?.(CITATION));
     await settle();
-    expect(repository.loadLatestResults).toHaveBeenCalledWith(STUDY_UID);
+    expect(repository.loadLatestResults).toHaveBeenCalledTimes(2);
 
     const actions = host!.resolveModelResult(CITATION);
     expect(actions.open).not.toBeNull();

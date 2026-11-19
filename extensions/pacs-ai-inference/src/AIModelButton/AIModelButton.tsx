@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
+import { aiModelMenuSectionTitle, buildAIModelMenuSections } from './aiModelMenuSections';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
@@ -296,6 +297,110 @@ const AIModelButton = ({
   const formatResultDate = (completedAt: string | null) =>
     completedAt ? new Date(completedAt).toLocaleDateString() : '';
 
+  // With several exams open, one block per exam, each offering only the
+  // models of its modality and showing that exam's results.
+  const menuSections = buildAIModelMenuSections(
+    selectedModalities as Parameters<typeof buildAIModelMenuSections>[0],
+    inferenceAvailableModels as GetInferenceAvailableModelsResponse[]
+  );
+
+  // One model row of the menu, for one open exam (studyUID; the primary
+  // exam when null).
+  const renderModelRow = (
+    model: GetInferenceAvailableModelsResponse,
+    index: number,
+    studyUID: string | null
+  ) => {
+    const latestResult = viewerResults?.getLatestResult(model, studyUID) ?? null;
+    const pendingRun = viewerResults?.getPendingRun(model, studyUID) ?? null;
+    const latestScope = latestResult
+      ? (viewerResults?.getResultSeriesScope?.(latestResult) ?? null)
+      : null;
+    const modelKey = `${studyUID ?? ''}|${viewerModelKey(model)}`;
+    const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
+
+    if (!latestResult && !pendingRun) {
+      return (
+        <li
+          key={`${studyUID ?? ''}-${index}`}
+          className="hover:bg-primary flex cursor-pointer items-center gap-2 p-1 hover:text-black"
+          onClick={() => openRunFlow(model)}
+        >
+          <img
+            src={playerPlayIcon}
+            alt="Player play icon"
+            className="w-5"
+          />
+          <h1 className="whitespace-nowrap text-sm">Apply {modelLabel}</h1>
+          <img
+            src={helpInactive}
+            alt="Player play icon"
+            className="mr-2 w-5"
+          />
+        </li>
+      );
+    }
+
+    return (
+      <li
+        key={`${studyUID ?? ''}-${index}`}
+        className="flex flex-col gap-1 p-1"
+        data-testid="ai-model-previous-result"
+      >
+        <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
+        {confirmRunModelKey === modelKey ? (
+          renderRerunConfirmation(model)
+        ) : (
+          <div className="flex items-center gap-2 px-1">
+            {latestResult && (
+              <button
+                type="button"
+                className="hover:bg-primary whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                onClick={() => {
+                  setIsOpen(false);
+                  viewerResults?.openResult(latestResult);
+                }}
+              >
+                {t('ViewerViewResult', {
+                  date: formatResultDate(latestResult.completedAt),
+                })}
+                {latestScope?.kind === 'subset' && (
+                  <span
+                    className="font-semibold"
+                    data-testid="ai-model-result-subset"
+                  >
+                    {` · ${t('ViewerResultSeriesCount', { used: latestScope.used })}`}
+                  </span>
+                )}
+              </button>
+            )}
+            {pendingRun ? (
+              <span
+                className="whitespace-nowrap px-2 py-1 text-xs opacity-70"
+                role="status"
+              >
+                {t('ViewerRunInProgress')}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="hover:bg-primary flex items-center gap-1 whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                onClick={() => setConfirmRunModelKey(modelKey)}
+              >
+                <img
+                  src={playerPlayIcon}
+                  alt=""
+                  className="w-4"
+                />
+                {t('ViewerRerun')}
+              </button>
+            )}
+          </div>
+        )}
+      </li>
+    );
+  };
+
   // add segmentation
   const addSegmentation = async data => {
     try {
@@ -394,112 +499,23 @@ const AIModelButton = ({
             className="absolute z-50 inline-block divide-y divide-gray-100 rounded-lg px-2 shadow"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left, width: 'auto' }}
           >
-            {inferenceAvailableModels.some(model =>
-              model.supportedDicomModalities?.some(modality =>
-                Object.keys(selectedModalities).some(selectedModality =>
-                  selectedModality.includes(modality)
-                )
-              )
-            ) ? (
+            {menuSections.length ? (
               <ul className="flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white">
-                {inferenceAvailableModels
-                  .filter(model =>
-                    model.supportedDicomModalities?.some(modality =>
-                      Object.keys(selectedModalities).some(selectedModality =>
-                        selectedModality.includes(modality)
-                      )
-                    )
-                  )
-                  .map((model, index) => {
-                    const latestResult = viewerResults?.getLatestResult(model) ?? null;
-                    const pendingRun = viewerResults?.getPendingRun(model) ?? null;
-                    const latestScope = latestResult
-                      ? (viewerResults?.getResultSeriesScope?.(latestResult) ?? null)
-                      : null;
-                    const modelKey = viewerModelKey(model);
-                    const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
-
-                    if (!latestResult && !pendingRun) {
-                      return (
-                        <li
-                          key={index}
-                          className="hover:bg-primary flex cursor-pointer items-center gap-2 p-1 hover:text-black"
-                          onClick={() => openRunFlow(model)}
-                        >
-                          <img
-                            src={playerPlayIcon}
-                            alt="Player play icon"
-                            className="w-5"
-                          />
-                          <h1 className="whitespace-nowrap text-sm">Apply {modelLabel}</h1>
-                          <img
-                            src={helpInactive}
-                            alt="Player play icon"
-                            className="mr-2 w-5"
-                          />
-                        </li>
-                      );
-                    }
-
-                    return (
+                {menuSections.map(section => (
+                  <React.Fragment key={`${section.studyInstanceUID ?? ''}|${section.modality}`}>
+                    {menuSections.length > 1 && (
                       <li
-                        key={index}
-                        className="flex flex-col gap-1 p-1"
-                        data-testid="ai-model-previous-result"
+                        className="px-2 pt-1 text-xs font-semibold uppercase tracking-wide opacity-70"
+                        data-testid="ai-model-menu-exam"
                       >
-                        <h1 className="whitespace-nowrap px-1 text-sm">{modelLabel}</h1>
-                        {confirmRunModelKey === modelKey ? (
-                          renderRerunConfirmation(model)
-                        ) : (
-                          <div className="flex items-center gap-2 px-1">
-                            {latestResult && (
-                              <button
-                                type="button"
-                                className="hover:bg-primary whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
-                                onClick={() => {
-                                  setIsOpen(false);
-                                  viewerResults?.openResult(latestResult);
-                                }}
-                              >
-                                {t('ViewerViewResult', {
-                                  date: formatResultDate(latestResult.completedAt),
-                                })}
-                                {latestScope?.kind === 'subset' && (
-                                  <span
-                                    className="font-semibold"
-                                    data-testid="ai-model-result-subset"
-                                  >
-                                    {` · ${t('ViewerResultSeriesCount', { used: latestScope.used })}`}
-                                  </span>
-                                )}
-                              </button>
-                            )}
-                            {pendingRun ? (
-                              <span
-                                className="whitespace-nowrap px-2 py-1 text-xs opacity-70"
-                                role="status"
-                              >
-                                {t('ViewerRunInProgress')}
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                className="hover:bg-primary flex items-center gap-1 whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
-                                onClick={() => setConfirmRunModelKey(modelKey)}
-                              >
-                                <img
-                                  src={playerPlayIcon}
-                                  alt=""
-                                  className="w-4"
-                                />
-                                {t('ViewerRerun')}
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        {aiModelMenuSectionTitle(section)}
                       </li>
-                    );
-                  })}
+                    )}
+                    {section.models.map((model, index) =>
+                      renderModelRow(model, index, section.studyInstanceUID)
+                    )}
+                  </React.Fragment>
+                ))}
               </ul>
             ) : (
               <div
