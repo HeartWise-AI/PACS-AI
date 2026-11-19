@@ -10,6 +10,7 @@ const PUBLIC_AUTH_PATHS = new Set([
   '/v1/iam/login',
   '/v1/iam/forgot-password',
   '/v1/iam/verify-email',
+  '/v1/iam/handoff/exchange',
   '/v1/user/register',
   '/v1/user/specialties',
   '/v1/user/policies/registration',

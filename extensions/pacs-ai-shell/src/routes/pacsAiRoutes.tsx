@@ -15,6 +15,7 @@ import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
 import NotFoundStudy from './NotFoundStudy';
 import NotFound from './NotFound';
+import { HandoffLink, HandoffSignIn } from './Handoff';
 import PacsAiErrorBoundary from '../components/PacsAiErrorBoundary';
 
 export type PacsAiRoute = {
@@ -57,6 +58,9 @@ export function getPacsAiRoutes(): PacsAiRoute[] {
   return [
     pacsAiRoute('/', WorkList),
     pacsAiRoute('/login', Login),
+    // Sign-in handoff from CardioAgent (CA-268).
+    pacsAiRoute('/auth/handoff', HandoffSignIn),
+    pacsAiRoute('/auth/link', HandoffLink),
     pacsAiRoute('/register', Register),
     pacsAiRoute('/policies/accept', PolicyAcceptance),
     pacsAiRoute('/user/consent', UserConsent),

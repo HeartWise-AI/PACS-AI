@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 const page = name => () => <div id="page">{name}</div>;
 jest.mock('../worklist', () => page('worklist'));
 jest.mock('./Login', () => page('login'));
+jest.mock('./Handoff', () => ({ HandoffSignIn: page('handoff'), HandoffLink: page('link') }));
 jest.mock('./Register', () => page('register'));
 jest.mock('./PolicyAcceptance', () => page('policy'));
 jest.mock('./User/Consent', () => page('consent'));
@@ -31,6 +32,8 @@ describe('PACS-AI custom routes', () => {
     expect(routes.map(route => [route.path, route.private])).toEqual([
       ['/', true],
       ['/login', true],
+      ['/auth/handoff', true],
+      ['/auth/link', true],
       ['/register', true],
       ['/policies/accept', true],
       ['/user/consent', true],
