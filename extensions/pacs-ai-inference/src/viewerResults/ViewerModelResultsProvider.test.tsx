@@ -764,4 +764,63 @@ describe('ViewerModelResultsProvider', () => {
       });
     });
   });
+
+  describe('several open exams', () => {
+    const echoModel = {
+      modelId: 'panecho',
+      containerId: 'container-echo',
+      modelName: 'PanEcho',
+      version: '1.0.3',
+    };
+
+    it("loads every open exam's results as soon as the viewer opens", async () => {
+      const repo = repository({
+        loadLatestResults: jest.fn((uid: string) =>
+          Promise.resolve(
+            uid === '1.2.3'
+              ? [result()]
+              : [
+                  result({
+                    studyInstanceUID: '4.5.6',
+                    modelName: 'PanEcho',
+                    containerId: 'container-echo',
+                    runId: 'run-echo',
+                    artifactModelId: 'panecho',
+                    modelId: 'model-echo',
+                  }),
+                ]
+          )
+        ),
+      });
+
+      await render(repo, undefined, { studyInstanceUIDs: ['1.2.3', '4.5.6', '1.2.3'] });
+      await flush();
+
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(2);
+      expect(repo.loadLatestResults).toHaveBeenCalledWith('1.2.3');
+      expect(repo.loadLatestResults).toHaveBeenCalledWith('4.5.6');
+      expect(context!.latestResultsStatus).toBe('ready');
+      expect(context!.getLatestResult(model)?.runId).toBe('run-1');
+      expect(context!.getLatestResult(echoModel, '4.5.6')?.runId).toBe('run-echo');
+      // Each exam only sees its own results.
+      expect(context!.getLatestResult(echoModel)).toBeNull();
+      expect(context!.getLatestResult(model, '4.5.6')).toBeNull();
+    });
+
+    it("keeps the other exams when one exam's results cannot be loaded", async () => {
+      const repo = repository({
+        loadLatestResults: jest.fn((uid: string) =>
+          uid === '1.2.3'
+            ? Promise.reject(new ViewerResultsRequestError('down', 500))
+            : Promise.resolve([result({ studyInstanceUID: '4.5.6', runId: 'run-2' })])
+        ),
+      });
+
+      await render(repo, undefined, { studyInstanceUIDs: ['1.2.3', '4.5.6'] });
+      await flush();
+
+      expect(context!.latestResultsStatus).toBe('ready');
+      expect(context!.getLatestResult(model, '4.5.6')?.runId).toBe('run-2');
+    });
+  });
 });

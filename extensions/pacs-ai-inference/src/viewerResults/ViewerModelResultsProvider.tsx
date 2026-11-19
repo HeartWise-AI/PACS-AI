@@ -36,10 +36,7 @@ import type {
   ViewerModelRunStatus,
   ViewerResultModelIdentity,
 } from './types';
-import {
-  ChatCitationHostContext,
-  type ChatCitationHost,
-} from '@pacs-ai/extension-chat/citations';
+import { ChatCitationHostContext, type ChatCitationHost } from '@pacs-ai/extension-chat/citations';
 import {
   createModelExecutionResultClient,
   type ModelExecutionResultClient,
@@ -85,11 +82,18 @@ export interface ViewerModelResultsContextValue {
   canRunManaged: boolean;
   latestResultsStatus: LatestResultsStatus;
   refreshLatestResults: () => Promise<void>;
-  getLatestResult: (model: ViewerResultModelIdentity) => ViewerModelResult | null;
+  // studyInstanceUID: one of the open exams; the primary exam when omitted.
+  getLatestResult: (
+    model: ViewerResultModelIdentity,
+    studyInstanceUID?: string | null
+  ) => ViewerModelResult | null;
   // Which of the study's loaded series the result's run used; null when the
   // backend does not report it.
   getResultSeriesScope: (result: ViewerModelResult) => ResultSeriesScope | null;
-  getPendingRun: (model: ViewerResultModelIdentity) => PendingViewerModelRun | null;
+  getPendingRun: (
+    model: ViewerResultModelIdentity,
+    studyInstanceUID?: string | null
+  ) => PendingViewerModelRun | null;
   startManagedRun: (request: StartManagedRunRequest) => Promise<ManagedRunOutcome>;
   // Starts a managed run and resolves when it ends or is dismissed. Rejects
   // like startManagedRun when the run cannot be started.
@@ -120,7 +124,11 @@ const ENDED_RUNS_LIMIT = 10;
 
 export interface ViewerModelResultsProviderProps {
   children: React.ReactNode;
+  // The primary exam (first in the URL).
   studyInstanceUID: string | null;
+  // Every exam open in the viewer, primary included. Results are loaded for
+  // all of them as soon as the viewer opens.
+  studyInstanceUIDs?: readonly string[];
   servicesManager: AppTypes.ServicesManager;
   commandsManager?: unknown;
   appConfig?: unknown;
@@ -133,6 +141,7 @@ export interface ViewerModelResultsProviderProps {
 export function ViewerModelResultsProvider({
   children,
   studyInstanceUID,
+  studyInstanceUIDs,
   servicesManager,
   commandsManager,
   appConfig,
@@ -194,50 +203,83 @@ export function ViewerModelResultsProvider({
     [showAlert]
   );
 
+  // The primary exam first, then the other open exams, without duplicates.
+  const openStudyKey = [studyInstanceUID, ...(studyInstanceUIDs ?? [])]
+    .map(uid => uid?.trim())
+    .filter((uid): uid is string => !!uid)
+    .filter((uid, index, all) => all.indexOf(uid) === index)
+    .join('\n');
+  const openStudyUIDs = useMemo(
+    () => (openStudyKey ? openStudyKey.split('\n') : []),
+    [openStudyKey]
+  );
+
   const refreshLatestResults = useCallback(async () => {
-    const uid = studyInstanceUID?.trim();
-    if (!canViewResults || !uid) {
+    if (!canViewResults || !openStudyUIDs.length) {
       return;
     }
 
     const generation = ++refreshGeneration.current;
     setLatestResultsStatus(current => (current === 'ready' ? current : 'loading'));
-    try {
-      const results = await repository.loadLatestResults(uid);
-      if (generation === refreshGeneration.current) {
-        setLatestResults(results);
-        setLatestResultsStatus('ready');
-      }
-    } catch (error: unknown) {
-      if (generation !== refreshGeneration.current) {
-        return;
-      }
-      // An older backend without the endpoint behaves as "no stored results".
-      setLatestResults([]);
-      setLatestResultsStatus(isViewerResultsEndpointMissing(error) ? 'unavailable' : 'error');
+    // One request per open exam, in parallel; one exam failing does not hide
+    // the others' results.
+    const outcomes = await Promise.allSettled(
+      openStudyUIDs.map(uid => repository.loadLatestResults(uid))
+    );
+    if (generation !== refreshGeneration.current) {
+      return;
     }
-  }, [canViewResults, repository, studyInstanceUID]);
+    const loaded = outcomes.flatMap(outcome =>
+      outcome.status === 'fulfilled' ? outcome.value : []
+    );
+    const failures = outcomes.flatMap(outcome =>
+      outcome.status === 'rejected' ? [outcome.reason as unknown] : []
+    );
+    setLatestResults(loaded);
+    if (failures.length < outcomes.length) {
+      setLatestResultsStatus('ready');
+    } else {
+      // An older backend without the endpoint behaves as "no stored results".
+      setLatestResultsStatus(
+        failures.every(isViewerResultsEndpointMissing) ? 'unavailable' : 'error'
+      );
+    }
+  }, [canViewResults, repository, openStudyUIDs]);
 
   useEffect(() => {
-    // A different study (or losing access) invalidates everything shown.
+    // Different exams (or losing access) invalidate everything shown; load
+    // the new exams' results right away instead of on the first menu open.
     refreshGeneration.current += 1;
     setLatestResults([]);
     setLatestResultsStatus('idle');
     setOpenedResult(null);
     setReadyResults([]);
-  }, [studyInstanceUID, canViewResults]);
+    void refreshLatestResults();
+  }, [refreshLatestResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getLatestResult = useCallback(
-    (model: ViewerResultModelIdentity) =>
-      canViewResults ? findLatestResultForModel(model, latestResults) : null,
-    [canViewResults, latestResults]
+    (model: ViewerResultModelIdentity, forStudyInstanceUID?: string | null) => {
+      if (!canViewResults) {
+        return null;
+      }
+      const study = forStudyInstanceUID?.trim() || studyInstanceUID?.trim();
+      return findLatestResultForModel(
+        model,
+        latestResults.filter(result => result.studyInstanceUID === study)
+      );
+    },
+    [canViewResults, latestResults, studyInstanceUID]
   );
 
   const getPendingRun = useCallback(
-    (model: ViewerResultModelIdentity) =>
-      pendingRuns.find(
-        run => run.key === viewerModelKey(model) && run.studyInstanceUID === studyInstanceUID
-      ) ?? null,
+    (model: ViewerResultModelIdentity, forStudyInstanceUID?: string | null) => {
+      const study = forStudyInstanceUID?.trim() || studyInstanceUID?.trim();
+      return (
+        pendingRuns.find(
+          run => run.key === viewerModelKey(model) && run.studyInstanceUID === study
+        ) ?? null
+      );
+    },
     [pendingRuns, studyInstanceUID]
   );
 
@@ -413,10 +455,14 @@ export function ViewerModelResultsProvider({
         )
       );
 
-      const primaryResults = studyInstanceUID ? resultsByStudy.get(studyInstanceUID) : undefined;
-      if (primaryResults && canViewResults) {
+      // Replace the reloaded open exams' results; keep the other exams' ones.
+      const reloadedOpenStudies = openStudyUIDs.filter(uid => resultsByStudy.has(uid));
+      if (reloadedOpenStudies.length && canViewResults) {
         refreshGeneration.current += 1;
-        setLatestResults(primaryResults);
+        setLatestResults(current => [
+          ...current.filter(result => !reloadedOpenStudies.includes(result.studyInstanceUID)),
+          ...reloadedOpenStudies.flatMap(uid => resultsByStudy.get(uid) ?? []),
+        ]);
         setLatestResultsStatus('ready');
       }
 
@@ -530,7 +576,7 @@ export function ViewerModelResultsProvider({
     } finally {
       pollInFlight.current = false;
     }
-  }, [alert, canViewResults, maxPendingMs, repository, settleForegroundRun, studyInstanceUID, t]);
+  }, [alert, canViewResults, maxPendingMs, repository, settleForegroundRun, openStudyUIDs, t]);
 
   // Poll faster while the user is waiting on a run in the series pop-up.
   const activePollIntervalMs = foregroundRunActive
