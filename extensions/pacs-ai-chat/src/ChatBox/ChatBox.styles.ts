@@ -243,4 +243,124 @@ export const chatBoxStyles = `
   .markdown-content th {
     background-color: rgba(0, 0, 0, 0.2);
   }
+
+  /* Structured clinical summary & evidence cards */
+  .chat-structured-answer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    white-space: normal;
+  }
+  .chat-answer-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 0.1rem;
+  }
+  .chat-summary-card {
+    background: linear-gradient(145deg, rgba(200, 244, 105, 0.14) 0%, rgba(32, 43, 30, 0.96) 100%);
+    border: 1px solid rgba(200, 244, 105, 0.45);
+    border-left: 3px solid #C8F469;
+    border-radius: 0.625rem;
+    padding: 0.75rem 0.875rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  }
+  .chat-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+  }
+  .chat-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(200, 244, 105, 0.2);
+    color: #C8F469;
+    border: 1px solid rgba(200, 244, 105, 0.45);
+    border-radius: 9999px;
+    padding: 0.125rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .chat-summary-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.55rem;
+  }
+  .chat-summary-pill {
+    background-color: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.375rem;
+    padding: 0.15rem 0.45rem;
+    font-size: 0.72rem;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .chat-section-card {
+    background-color: rgba(20, 23, 21, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.8rem;
+  }
+  .chat-caveats-card {
+    background-color: rgba(120, 83, 20, 0.16);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.8rem;
+  }
+  .chat-sources-card {
+    background-color: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  .chat-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .chat-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .chat-section-subtitle {
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.72);
+    margin-top: 0.125rem;
+  }
+  .chat-card-provenance {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+  }
+  .chat-card-markdown p:last-child,
+  .chat-card-markdown ul:last-child,
+  .chat-card-markdown ol:last-child {
+    margin-bottom: 0;
+  }
+  .chat-card-markdown ul,
+  .chat-card-markdown ol {
+    margin-left: 1.15rem;
+  }
+  .chat-answer-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-top: 0.15rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.82);
+  }
 `;
