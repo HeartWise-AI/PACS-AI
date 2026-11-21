@@ -1,6 +1,8 @@
 import React from 'react';
 import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import { pacsAiStudyContextService } from '@pacs-ai/extension-core/src/services/PacsAiStudyContextService';
+import { buildInferenceStudyModalities } from '../buildInferenceStudyModalities';
 import {
   useViewerModelResults,
   ViewerModelResultsProvider,
@@ -161,6 +163,7 @@ describe('ViewerModelResultsProvider', () => {
     mockInferenceProcessing.canUseStudyProcessingREST = true;
     showAlert.mockReset();
     mockDrawerRenders.length = 0;
+    pacsAiStudyContextService.reset();
   });
 
   const byTestId = (id: string) =>
@@ -176,6 +179,7 @@ describe('ViewerModelResultsProvider', () => {
     renderer?.unmount();
     renderer = null;
     context = null;
+    pacsAiStudyContextService.reset();
     jest.useRealTimers();
   });
 
@@ -821,6 +825,93 @@ describe('ViewerModelResultsProvider', () => {
 
       expect(context!.latestResultsStatus).toBe('ready');
       expect(context!.getLatestResult(model, '4.5.6')?.runId).toBe('run-2');
+    });
+
+    it('loads comparison exam results published to study context after the viewer opens', async () => {
+      const repo = repository({
+        loadLatestResults: jest.fn((uid: string) =>
+          Promise.resolve(
+            uid === '1.2.3'
+              ? [result()]
+              : [
+                  result({
+                    studyInstanceUID: '4.5.6',
+                    modelName: 'PanEcho',
+                    containerId: 'container-echo',
+                    runId: 'run-echo',
+                    artifactModelId: 'panecho',
+                    modelId: 'model-echo',
+                  }),
+                ]
+          )
+        ),
+      });
+
+      await render(repo, undefined, { studyInstanceUIDs: ['1.2.3'] });
+      await flush();
+
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(1);
+      expect(context!.getLatestResult(echoModel, '4.5.6')).toBeNull();
+
+      await act(async () => {
+        pacsAiStudyContextService.setSelectedModalities(
+          buildInferenceStudyModalities([
+            { studyInstanceUid: '1.2.3', modalities: 'XA', displaySets: [] },
+            { studyInstanceUid: '4.5.6', modalities: 'US', displaySets: [] },
+          ])
+        );
+      });
+      await flush();
+
+      expect(repo.loadLatestResults).toHaveBeenCalledWith('4.5.6');
+      expect(context!.getLatestResult(echoModel, '4.5.6')?.runId).toBe('run-echo');
+    });
+
+    it('does not loop when a child re-publishes fresh selectedModalities objects for the same exam', async () => {
+      const repo = repository();
+      let childRenders = 0;
+
+      function NoisyStudyBrowserChild() {
+        childRenders += 1;
+        useViewerModelResults();
+        React.useEffect(() => {
+          pacsAiStudyContextService.setSelectedModalities(
+            buildInferenceStudyModalities([
+              {
+                studyInstanceUid: '1.2.3',
+                modalities: 'XA',
+                displaySets: [{ displaySetInstanceUID: 'ds-1', Modality: 'XA' }],
+              },
+            ])
+          );
+          pacsAiStudyContextService.setDisplaySets([
+            { displaySetInstanceUID: 'ds-1', Modality: 'XA' },
+          ]);
+        });
+        return null;
+      }
+
+      await act(async () => {
+        renderer = rtlRender(
+          <AlertContext.Provider value={showAlert}>
+            <ViewerModelResultsProvider
+              studyInstanceUID="1.2.3"
+              studyInstanceUIDs={['1.2.3']}
+              servicesManager={services().servicesManager}
+              repository={repo}
+              pollIntervalMs={1000}
+            >
+              <Probe />
+              <NoisyStudyBrowserChild />
+            </ViewerModelResultsProvider>
+          </AlertContext.Provider>
+        );
+      });
+      await flush();
+
+      expect(childRenders).toBeLessThan(10);
+      expect(repo.loadLatestResults).toHaveBeenCalledTimes(1);
+      expect(context!.getLatestResult(model)?.runId).toBe('run-1');
     });
   });
 });
