@@ -14,3 +14,5 @@ export {
   formatCitationDate,
   remarkCitationMarkers,
 } from './citations';
+export { parseStructuredAnswer } from './structuredAnswer';
+export type { AnswerCardKind, ParsedAnswerCard, StructuredAnswer } from './structuredAnswer';

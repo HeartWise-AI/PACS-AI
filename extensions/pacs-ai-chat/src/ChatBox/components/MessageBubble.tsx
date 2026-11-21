@@ -3,9 +3,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ChatActivity, ChatCitation, Message } from '../types';
 import { CITATION_INDEX_ATTRIBUTE, remarkCitationMarkers } from '../utils/citations';
+import { parseStructuredAnswer } from '../utils/structuredAnswer';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ActivitySummary } from './ActivitySummary';
 import { CitationChip } from './CitationChip';
+import { StructuredAnswerCards } from './StructuredAnswerCards';
 
 interface MessageBubbleProps {
   message: Message;
@@ -65,22 +67,34 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const isUser = message.sender === 'user';
   const isAssistant = message.sender === 'assistant';
-  const markdown = useMarkdownRendering((isAssistant && message.citations) || NO_CITATIONS);
+  const citations = (isAssistant && message.citations) || NO_CITATIONS;
+  const markdown = useMarkdownRendering(citations);
+  const structured = useMemo(
+    () => (isAssistant && !message.isThinking ? parseStructuredAnswer(message.text) : null),
+    [isAssistant, message.isThinking, message.text]
+  );
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[80%] rounded-lg px-4 py-2 ${
+        className={`${structured ? 'max-w-[94%]' : 'max-w-[80%]'} rounded-lg px-4 py-2 ${
           isUser
             ? 'bg-gradient-to-r from-[rgba(100,180,100,0.7)] to-[rgba(180,230,100,0.7)] text-white'
             : 'bg-[#333633] text-white'
         }`}
       >
-        <div className="whitespace-pre-wrap text-sm">
+        <div className={structured ? 'text-sm' : 'whitespace-pre-wrap text-sm'}>
           {message.isThinking ? (
             <ThinkingIndicator
               activity={progress}
               startedAt={message.timestamp}
+            />
+          ) : structured ? (
+            <StructuredAnswerCards
+              structured={structured}
+              citations={citations}
+              markdownComponents={markdown.components}
+              remarkPlugins={markdown.remarkPlugins}
             />
           ) : (
             <ReactMarkdown
