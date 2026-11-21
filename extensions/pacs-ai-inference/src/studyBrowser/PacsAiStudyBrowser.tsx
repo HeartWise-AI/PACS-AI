@@ -10,7 +10,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { StudyBrowserSort, StudyBrowserViewOptions, ScrollArea } from '@ohif/ui-next';
-import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
+import { pacsAiStudyContextService } from '@pacs-ai/extension-core/src/services/PacsAiStudyContextService';
 import { buildInferenceStudyModalities } from '../buildInferenceStudyModalities';
 import { PacsAiStudyItem as StudyItem } from './PacsAiStudyItem';
 
@@ -33,10 +33,7 @@ const PacsAiStudyBrowser = ({
   ThumbnailMenuItems,
   StudyMenuItems,
 }: Record<string, any>) => {
-  // PACS-AI
-  const { setSelectedModalities } = useStudyContext();
-  // PACS-AI
-  const { setDisplaySets } = useStudyContext();
+  const { setSelectedModalities, setDisplaySets } = pacsAiStudyContextService;
 
   // PACS-AI (Find the active tab and its display sets)
   const activeTab = tabs.find(tab => tab.name === activeTabName);
@@ -75,7 +72,12 @@ const PacsAiStudyBrowser = ({
       ...comparisonStudies,
     ]);
 
-    setSelectedModalities(selectedModalitiesMap);
+    if (
+      JSON.stringify(selectedModalitiesMap) !==
+      JSON.stringify(pacsAiStudyContextService.getState().selectedModalities)
+    ) {
+      setSelectedModalities(selectedModalitiesMap);
+    }
   }, [tabs, activeTabName, inferenceDisplaySetInstanceUIDs, setSelectedModalities]);
 
   const getTabContent = () => {

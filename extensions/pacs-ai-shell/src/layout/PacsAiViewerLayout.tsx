@@ -10,8 +10,6 @@ import {
 import { useAppConfig } from '@state';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { ViewerModelResultsProvider } from '@pacs-ai/extension-inference/src/viewerResults/ViewerModelResultsProvider';
-import { inferenceStudyUIDs } from '@pacs-ai/extension-inference/src/buildInferenceStudyModalities';
-import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import TopNavigation from '../components/TopNavigation';
 import { AlertContext } from '../alerts';
 import { loadViewerModels } from './loadViewerModels';
@@ -58,12 +56,6 @@ function PacsAiViewerLayout({
   const tenantId = localStorage.getItem('tenantId') || '';
   const showAlert = useContext(AlertContext);
   const { StudyInstanceUIDs = [] } = useImageViewer() || {};
-  // Exams opened from the URL plus comparison exams added from the study
-  // browser: the AI results of all of them load as soon as they are known.
-  const { selectedModalities } = useStudyContext();
-  const openStudyInstanceUIDs = [
-    ...new Set([...StudyInstanceUIDs, ...inferenceStudyUIDs(selectedModalities)]),
-  ];
 
   const { panelService, hangingProtocolService, customizationService } = servicesManager.services;
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(appConfig.showLoadingIndicator);
@@ -204,7 +196,7 @@ function PacsAiViewerLayout({
       <>
         <ViewerModelResultsProvider
           studyInstanceUID={StudyInstanceUIDs[0] ?? null}
-          studyInstanceUIDs={openStudyInstanceUIDs}
+          studyInstanceUIDs={StudyInstanceUIDs}
           servicesManager={servicesManager}
           commandsManager={commandsManager}
           appConfig={appConfig}

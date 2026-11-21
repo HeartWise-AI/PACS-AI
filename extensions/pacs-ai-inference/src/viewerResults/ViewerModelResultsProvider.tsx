@@ -6,10 +6,14 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
 import { useOptionalInferenceProcessing } from '@pacs-ai/extension-core/src/inferenceProcessing/InferenceProcessingProvider';
+import { pacsAiStudyContextService } from '@pacs-ai/extension-core/src/services/PacsAiStudyContextService';
+import { STATE_CHANGED } from '@pacs-ai/extension-core/src/services/createStore';
+import { inferenceStudyUIDs } from '../buildInferenceStudyModalities';
 import {
   createViewerResultsRepository,
   isViewerResultsEndpointMissing,
@@ -122,6 +126,12 @@ export const VIEWER_RESULTS_MAX_PENDING_MS = 30 * 60_000;
 // Ended runs kept for the running-jobs indicator.
 const ENDED_RUNS_LIMIT = 10;
 
+const subscribeStudyContext = (onChange: () => void) =>
+  pacsAiStudyContextService.subscribe(STATE_CHANGED, onChange).unsubscribe;
+
+const getContextStudyUIDsKey = () =>
+  inferenceStudyUIDs(pacsAiStudyContextService.getState().selectedModalities).join('\n');
+
 export interface ViewerModelResultsProviderProps {
   children: React.ReactNode;
   // The primary exam (first in the URL).
@@ -203,8 +213,21 @@ export function ViewerModelResultsProvider({
     [showAlert]
   );
 
+  // Subscribe only to the primitive UID key from study context so publishing
+  // fresh selectedModalities/displaySets objects for the same exam(s) never
+  // re-renders the viewer layout or study browser in a loop.
+  const contextStudyKey = useSyncExternalStore(
+    subscribeStudyContext,
+    getContextStudyUIDsKey,
+    getContextStudyUIDsKey
+  );
+
   // The primary exam first, then the other open exams, without duplicates.
-  const openStudyKey = [studyInstanceUID, ...(studyInstanceUIDs ?? [])]
+  const openStudyKey = [
+    studyInstanceUID,
+    ...(studyInstanceUIDs ?? []),
+    ...(contextStudyKey ? contextStudyKey.split('\n') : []),
+  ]
     .map(uid => uid?.trim())
     .filter((uid): uid is string => !!uid)
     .filter((uid, index, all) => all.indexOf(uid) === index)
