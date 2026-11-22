@@ -1,5 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { CitationChip } from './CitationChip';
 import { MessageBubble } from './MessageBubble';
 import { ChatCitationHostContext, type ChatCitationHost } from '../citations/ChatCitationHost';
 import { setTestLocale } from '../testUtils/chatBoxTranslation';
@@ -174,6 +175,46 @@ describe('citation markers in an answer', () => {
     );
     expect(chips(container)).toHaveLength(0);
     expect(container.textContent).toContain('see [1]');
+  });
+});
+
+describe('citation chips by kind', () => {
+  it('styles model results and published sources differently, with their kind as tooltip', () => {
+    const { container } = renderMessage('LAD 80% [1], J-CTO 2 [2], guideline [4].', CITATIONS);
+
+    const [model, cto, source] = chips(container);
+    for (const chip of [model, cto]) {
+      expect(chip.classList.contains('chat-citation-chip-model')).toBe(true);
+      expect(chip.getAttribute('title')).toBe('AI model result');
+    }
+    expect(source.classList.contains('chat-citation-chip-source')).toBe(true);
+    expect(source.classList.contains('chat-citation-chip-model')).toBe(false);
+    expect(source.getAttribute('title')).toBe('Published source');
+    // The number and the accessible name are unchanged.
+    expect(source.textContent).toBe('4');
+    expect(source.getAttribute('aria-label')).toBe(
+      'Source 4: 2024 ESC Guidelines for the management of chronic coronary syndromes'
+    );
+  });
+
+  it('gives the tooltip in French', () => {
+    setTestLocale('fr');
+    const { container } = renderMessage('LAD [1], guideline [4].', CITATIONS);
+
+    expect(chips(container).map(chip => chip.getAttribute('title'))).toEqual([
+      "Résultat de modèle d'IA",
+      'Source publiée',
+    ]);
+  });
+
+  it('keeps the neutral style for a citation of an unknown kind', () => {
+    const other = { index: 3, kind: 'report', title: 'Echo report' } as unknown as ChatCitation;
+    const { container } = render(<CitationChip citation={other} />);
+
+    const chip = chips(container)[0];
+    expect(chip.className).not.toMatch(/chat-citation-chip-(model|source)/);
+    expect(chip.classList.contains('bg-white/10')).toBe(true);
+    expect(chip.hasAttribute('title')).toBe(false);
   });
 });
 

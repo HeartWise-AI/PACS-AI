@@ -191,6 +191,44 @@ describe('MessageBubble Markdown rendering', () => {
     expect(sources?.textContent).toContain('A ninth item of a list of three');
   });
 
+  it('styles the chips of the Sources card by kind, with a key when both kinds are cited', () => {
+    const answer = [
+      '**Summary — 2 vessels (AI estimates) [1]**\n- Guidelines weigh PCI and CABG [2].',
+      '**Sources**\n2. [Myocardial revascularization guideline](https://example.org/multivessel)',
+    ].join('\n\n');
+
+    const { container } = renderAssistantMessage(answer, [
+      { index: 1, kind: 'model_result', modelName: 'DeepCORO-JEPA' },
+      {
+        index: 2,
+        kind: 'web_source',
+        title: 'Myocardial revascularization guideline',
+        url: 'https://example.org/multivessel',
+      },
+    ]);
+
+    const sources = container.querySelector('[data-cy="chat-sources-card"]');
+    const chip = sources?.querySelector('[data-cy="chat-citation-chip"]');
+    expect(chip?.classList.contains('chat-citation-chip-source')).toBe(true);
+    const key = sources?.querySelector('[data-cy="chat-citation-key"]');
+    expect(key?.textContent).toBe('AI model resultPublished source');
+    expect(key?.querySelector('.chat-citation-key-model')).not.toBeNull();
+    expect(key?.querySelector('.chat-citation-key-source')).not.toBeNull();
+  });
+
+  it('shows no key in a Sources card when the answer cites one kind only', () => {
+    const answer = [
+      '**Summary**\n- Guidelines weigh PCI and CABG [1].',
+      '**Sources**\n1. [Guideline](https://example.org/g)',
+    ].join('\n\n');
+
+    const { container } = renderAssistantMessage(answer, [
+      { index: 1, kind: 'web_source', title: 'Guideline', url: 'https://example.org/g' },
+    ]);
+
+    expect(container.querySelector('[data-cy="chat-citation-key"]')).toBeNull();
+  });
+
   it('renders findings_summary lead Summary section in its own summary card', () => {
     const summaryText = [
       '**Summary**\n- Proximal LAD 70% severe with LCx and RCA CTO flags; SYNTAX 23.7, LVEF 55% [1][2]',
