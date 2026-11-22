@@ -43,6 +43,84 @@ function HeaderCitations({
   );
 }
 
+const NUMBERED_SOURCE = /^(\d+)\.\s+(.*)$/;
+
+type SourceLine = { number: number; text: string } | { markdown: string };
+
+/** Lines of a Sources card: numbered sources, and any other Markdown between them. */
+function sourceLines(body: string): SourceLine[] {
+  const lines: SourceLine[] = [];
+  for (const line of body.split('\n')) {
+    const match = line.trim().match(NUMBERED_SOURCE);
+    const last = lines[lines.length - 1];
+    if (match) {
+      lines.push({ number: Number(match[1]), text: match[2] });
+    } else if (last && 'markdown' in last) {
+      last.markdown += `\n${line}`;
+    } else {
+      lines.push({ markdown: line });
+    }
+  }
+  return lines;
+}
+
+/**
+ * The sources of an answer with the number each one has in the text. An
+ * ordered list would number them from its first item, so a list that skips
+ * a number would no longer match the [n] markers.
+ */
+function SourcesBody({
+  body,
+  byIndex,
+  markdownComponents,
+  remarkPlugins,
+}: {
+  body: string;
+  byIndex: Map<number, ChatCitation>;
+  markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'];
+  remarkPlugins: React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'];
+}) {
+  return (
+    <>
+      {sourceLines(body).map((line, idx) => {
+        if (!('number' in line)) {
+          return (
+            <ReactMarkdown
+              key={`markdown-${idx}`}
+              className="markdown-content chat-card-markdown"
+              components={markdownComponents}
+              remarkPlugins={remarkPlugins}
+            >
+              {line.markdown}
+            </ReactMarkdown>
+          );
+        }
+        const citation = byIndex.get(line.number);
+        return (
+          <div
+            key={`source-${idx}`}
+            className="flex items-baseline gap-1.5"
+            data-cy="chat-source-line"
+          >
+            {citation ? (
+              <CitationChip citation={citation} />
+            ) : (
+              <span className="text-[11px] opacity-75">{line.number}.</span>
+            )}
+            <ReactMarkdown
+              className="markdown-content chat-card-markdown min-w-0"
+              components={markdownComponents}
+              remarkPlugins={remarkPlugins}
+            >
+              {line.text}
+            </ReactMarkdown>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 function CardItem({
   card,
   byIndex,
@@ -135,13 +213,22 @@ function CardItem({
           byIndex={byIndex}
         />
       </div>
-      <ReactMarkdown
-        className="markdown-content chat-card-markdown"
-        components={markdownComponents}
-        remarkPlugins={remarkPlugins}
-      >
-        {card.body}
-      </ReactMarkdown>
+      {card.kind === 'sources' ? (
+        <SourcesBody
+          body={card.body}
+          byIndex={byIndex}
+          markdownComponents={markdownComponents}
+          remarkPlugins={remarkPlugins}
+        />
+      ) : (
+        <ReactMarkdown
+          className="markdown-content chat-card-markdown"
+          components={markdownComponents}
+          remarkPlugins={remarkPlugins}
+        >
+          {card.body}
+        </ReactMarkdown>
+      )}
     </section>
   );
 }

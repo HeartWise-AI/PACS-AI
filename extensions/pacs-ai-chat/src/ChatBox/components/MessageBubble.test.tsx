@@ -124,6 +124,42 @@ describe('MessageBubble Markdown rendering', () => {
     );
   });
 
+  it('numbers each source of the Sources card as the text cites it, not by list position', () => {
+    // An ordered list numbers from its first item: "5., 6., 10." showed as 5, 6, 7.
+    const answer = [
+      '**Synthesis — 2 vessels with significant disease (AI estimates) [1]**\n- Guidelines weigh PCI and CABG [5][10].',
+      [
+        '**Sources**',
+        '5. [Myocardial revascularization guideline](https://example.org/multivessel) — Eur Heart J, 2024',
+        '6. [Uncited page](https://example.org/uncited)',
+        '10. [CTO PCI consensus](https://example.org/cto)',
+        'Retrieved for this answer only.',
+      ].join('\n'),
+    ].join('\n\n');
+
+    const { container } = renderAssistantMessage(answer, [
+      { index: 1, kind: 'model_result', modelName: 'DeepCORO-JEPA' },
+      {
+        index: 5,
+        kind: 'web_source',
+        title: 'Myocardial revascularization guideline',
+        url: 'https://example.org/multivessel',
+      },
+      { index: 10, kind: 'web_source', title: 'CTO PCI consensus', url: 'https://example.org/cto' },
+    ]);
+
+    const sources = container.querySelector('[data-cy="chat-sources-card"]');
+    expect(sources?.querySelector('ol')).toBeNull();
+    const lines = Array.from(sources?.querySelectorAll('[data-cy="chat-source-line"]') || []);
+    expect(
+      lines.map(line => line.querySelector('[data-cy="chat-citation-chip"]')?.textContent ?? null)
+    ).toEqual(['5', null, '10']);
+    expect(lines[1].textContent).toBe('6.Uncited page');
+    expect(lines[2].querySelector('a')?.getAttribute('href')).toBe('https://example.org/cto');
+    expect(lines[0].textContent).toContain('Eur Heart J, 2024');
+    expect(sources?.textContent).toContain('Retrieved for this answer only.');
+  });
+
   it('renders findings_summary lead Summary section in its own summary card', () => {
     const summaryText = [
       '**Summary**\n- Proximal LAD 70% severe with LCx and RCA CTO flags; SYNTAX 23.7, LVEF 55% [1][2]',
