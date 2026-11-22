@@ -43,22 +43,38 @@ function HeaderCitations({
   );
 }
 
-const NUMBERED_SOURCE = /^(\d+)\.\s+(.*)$/;
+// "1. ..." or "1) ...". At most three digits: "2024. ..." starts with a year.
+const NUMBERED_SOURCE = /^(\d{1,3})[.)]\s+(.*)$/;
 
 type SourceLine = { number: number; text: string } | { markdown: string };
 
-/** Lines of a Sources card: numbered sources, and any other Markdown between them. */
-function sourceLines(body: string): SourceLine[] {
+/**
+ * Lines of a Sources card: numbered sources, and any other Markdown between
+ * them. A number is a source when it is at most the highest citation index
+ * of the answer or the count of numbered lines; any other numbered line
+ * stays text, with its number escaped so Markdown does not renumber it as a
+ * list.
+ */
+function sourceLines(body: string, byIndex: Map<number, ChatCitation>): SourceLine[] {
+  const rows = body.split('\n');
+  const highest = Math.max(
+    rows.filter(row => NUMBERED_SOURCE.test(row.trim())).length,
+    ...byIndex.keys()
+  );
   const lines: SourceLine[] = [];
-  for (const line of body.split('\n')) {
-    const match = line.trim().match(NUMBERED_SOURCE);
+  for (const row of rows) {
+    const match = row.trim().match(NUMBERED_SOURCE);
+    const number = match ? Number(match[1]) : 0;
     const last = lines[lines.length - 1];
-    if (match) {
-      lines.push({ number: Number(match[1]), text: match[2] });
-    } else if (last && 'markdown' in last) {
-      last.markdown += `\n${line}`;
+    if (match && number >= 1 && number <= highest) {
+      lines.push({ number, text: match[2] });
+      continue;
+    }
+    const markdown = row.replace(/^(\s*\d+)([.)])/, '$1\\$2');
+    if (last && 'markdown' in last) {
+      last.markdown += `\n${markdown}`;
     } else {
-      lines.push({ markdown: line });
+      lines.push({ markdown });
     }
   }
   return lines;
@@ -82,7 +98,7 @@ function SourcesBody({
 }) {
   return (
     <>
-      {sourceLines(body).map((line, idx) => {
+      {sourceLines(body, byIndex).map((line, idx) => {
         if (!('number' in line)) {
           return (
             <ReactMarkdown
