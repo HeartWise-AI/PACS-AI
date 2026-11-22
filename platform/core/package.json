@@ -52,11 +52,11 @@
     "json5": "2.2.3",
     "lodash.clonedeep": "4.5.0",
     "lodash.isequal": "4.5.0",
-    "moment": "2.30.1",
+    "moment": "2.31.0",
     "object-hash": "2.1.1",
     "query-string": "10.0.0",
     "shepherd.js": "15.3.0",
-    "validate.js": "0.12.0"
+    "validate.js": "0.13.1"
   },
   "devDependencies": {
     "webpack-merge": "5.10.0"

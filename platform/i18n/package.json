@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.29.7",
-    "i18next-locize-backend": "2.2.2",
+    "i18next-locize-backend": "9.0.2",
     "locize-editor": "2.2.2",
     "locize-lastused": "1.1.1"
   },
