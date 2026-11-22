@@ -5,6 +5,11 @@ This file provides guidance to AI coding agents (Claude, Codex, and other LLM to
 ## Project Overview
 
 This is **OHIF** v3  (Open Health Imaging Foundation) - a medical imaging viewer. It's an extensible web imaging platform.
+## Release candidates
+
+When preparing a release candidate, rebuilding after a fix, verifying staging evidence,
+or proposing production promotion, read [docs/agents/release.md](docs/agents/release.md).
+
 ## Development Commands
 
 ### Main Development
