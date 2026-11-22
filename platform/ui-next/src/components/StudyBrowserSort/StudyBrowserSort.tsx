@@ -55,19 +55,17 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger className="w-full overflow-hidden">
-            {/* NOTE: This is a PACS changes */}
-            <DropdownMenuTrigger className="border-inputfield-main focus:border-inputfield-main flex h-[26px] w-full items-center justify-start overflow-hidden whitespace-nowrap rounded border bg-transparent p-2 text-base text-white">
+            <DropdownMenuTrigger className="border-input focus:border-input text-foreground flex h-[26px] w-full items-center justify-start overflow-hidden whitespace-nowrap rounded border bg-background p-2 text-base">
               {selectedSort.label}
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent>{selectedSort.label}</TooltipContent>
         </Tooltip>
-        {/* NOTE: This is a PACS changes */}
-        <DropdownMenuContent className="bg-[#151815]">
+        <DropdownMenuContent className="bg-background">
           {sortFunctions.map(sort => (
             <DropdownMenuItem
               key={sort.label}
-              className="text-white"
+              className="text-foreground"
               onClick={() => handleSortChange(sort)}
             >
               {sort.label}
@@ -79,13 +77,12 @@ export function StudyBrowserSort({ servicesManager }: withAppTypes) {
         <TooltipTrigger>
           <button
             onClick={toggleSortDirection}
-            // NOTE: This is a PACS changes
-            className="flex h-[26px] items-center justify-center bg-transparent"
+            className="flex h-[26px] items-center justify-center bg-background"
           >
             {sortDirection === 'ascending' ? (
-              <Icons.SortingAscending className="text-primary-main w-2" />
+              <Icons.SortingAscending className="text-primary w-2" />
             ) : (
-              <Icons.SortingDescending className="text-primary-main w-2" />
+              <Icons.SortingDescending className="text-primary w-2" />
             )}
           </button>
         </TooltipTrigger>

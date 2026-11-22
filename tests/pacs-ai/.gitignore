@@ -1,0 +1,8 @@
+node_modules/
+# session token and failed-login ledger
+.state/
+# Playwright output; may hold page content of the live server
+.output/
+test-results/
+# the suite is self-contained: keep its npm lock (the root ignores package-lock.json)
+!package-lock.json

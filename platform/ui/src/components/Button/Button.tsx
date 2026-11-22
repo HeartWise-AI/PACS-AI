@@ -6,16 +6,17 @@ import Tooltip from '../Tooltip/Tooltip';
 
 const sizeClasses = {
   [ButtonEnums.size.small]: 'h-[26px] text-[13px]',
+  [ButtonEnums.size.smallTall]: 'h-[32px] text-[13px]',
   [ButtonEnums.size.medium]: 'h-[32px] text-[14px]',
 };
 
 const layoutClasses =
-  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center outline-none rounded px-3';
+  'box-content inline-flex flex-row items-center justify-center gap-[5px] justify center px-[10px] outline-none rounded';
 
 const baseFontTextClasses = 'leading-[1.2] font-sans text-center whitespace-nowrap';
 
 const fontTextClasses = {
-  [ButtonEnums.type.primary]: classnames(baseFontTextClasses, 'font-medium'),
+  [ButtonEnums.type.primary]: classnames(baseFontTextClasses, 'font-semibold'),
   [ButtonEnums.type.secondary]: classnames(baseFontTextClasses, 'font-400'),
 };
 
@@ -24,7 +25,7 @@ const baseEnabledEffectClasses = 'transition duration-300 ease-in-out focus:outl
 const enabledEffectClasses = {
   [ButtonEnums.type.primary]: classnames(
     baseEnabledEffectClasses,
-    'hover:pacs-gradient-bg active:pacs-gradient-bg'
+    'hover:bg-customblue-80 active:bg-customblue-40'
   ),
   [ButtonEnums.type.secondary]: classnames(
     baseEnabledEffectClasses,
@@ -32,11 +33,11 @@ const enabledEffectClasses = {
   ),
 };
 
-const baseEnabledClasses = 'text-black ';
+const baseEnabledClasses = 'text-white';
 
 const enabledClasses = {
   [ButtonEnums.type.primary]: classnames(
-    'bg-gray-300',
+    'bg-primary-main',
     baseEnabledClasses,
     enabledEffectClasses[ButtonEnums.type.primary]
   ),
@@ -47,7 +48,7 @@ const enabledClasses = {
   ),
 };
 
-const disabledClasses = 'bg-inputfield-placeholder cursor-default text-white opacity-70';
+const disabledClasses = 'bg-inputfield-placeholder text-common-light cursor-default';
 
 const defaults = {
   color: 'default',
@@ -113,9 +114,6 @@ const Button = ({
       ref={buttonElement}
       onClick={handleOnClick}
       data-cy={dataCY}
-      style={{
-        background: 'linear-gradient(98.05deg, #C8F469 21.15%, #05905E 100%)',
-      }}
     >
       {startIconTooltip ? <Tooltip content={startIconTooltip}>{startIcon}</Tooltip> : startIcon}
       {children}

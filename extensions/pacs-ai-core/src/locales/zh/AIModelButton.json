@@ -1,0 +1,8 @@
+{
+  "DetectButton": "应用LVEF检测",
+  "AI Models": "AI模型",
+  "No inference models found": "未找到推理模型",
+  "LookingForModels": "正在查找模型…",
+  "ModelsMayBeBusy": "正在处理其他检查的模型可能暂时缺失。",
+  "TryAgain": "重试"
+}

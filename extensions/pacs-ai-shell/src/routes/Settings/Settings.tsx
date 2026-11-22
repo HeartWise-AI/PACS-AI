@@ -1,0 +1,573 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation } from 'react-router';
+import { Link } from 'react-router-dom';
+import { Button, Input, Typography } from '@pacs-ai/ui';
+import i18n from '@ohif/i18n';
+import TopNavigation from '../../components/TopNavigation';
+import copyIcon from '../../assets/pacs/icons/copy-gradient.png';
+import chevronDown from '../../assets/pacs/icons/chevron-down.png';
+import { pacsAiLogoVertical as logoVertical } from '@pacs-ai/theme';
+import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
+import { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
+import { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
+import { Error, Languages } from '@pacs-ai/extension-core/src/api/dto';
+import { AlertContext } from '../../alerts';
+import Modal from '../../components/Modal';
+import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
+import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
+import { resetTutorialAndNotify } from '@pacs-ai/extension-core/src/service/tutorialService';
+import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
+import { getProfileCredentialDetails } from './profileCredentialDetails';
+import ViewerTourPreference from './ViewerTourPreference';
+import AutomaticRunNotificationsPreference from './AutomaticRunNotificationsPreference';
+
+const SettingsPage = () => {
+  const { t } = useTranslation('Settings');
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<Partial<UserResponse>>({});
+  const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
+  const [selectedTab, setSelectedTab] = useState<string>('general');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isOpenChangePasswordModal, setIsOpenChangePasswordModal] = useState<boolean>(false);
+  const [isOpenResetTutorialModal, setIsOpenResetTutorialModal] = useState<boolean>(false);
+  const [isResettingTutorial, setIsResettingTutorial] = useState(false);
+  const [imageSrc, setImageSrc] = useState('');
+  const showAlert = useContext(AlertContext);
+  const tenantId = localStorage.getItem('tenantId') || '';
+  const frontendVersion = useContext(FrontendVersionContext);
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Settings - PACS AI';
+  }, []);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await userRepository.GetCurrentUser();
+        setCurrentUser(response.data);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
+      }
+    };
+
+    const fetchTenantInfo = async () => {
+      try {
+        const response = await tenantRepository.GetTenantInfo();
+        setTenantInfo(response.data);
+      } catch (error) {
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
+      }
+    };
+
+    fetchCurrentUser();
+    fetchTenantInfo();
+  }, [userRepository, tenantRepository]);
+
+  useEffect(() => {
+    fetchImage();
+  }, [currentUser.id]);
+
+  // Change password
+  const changePassword = e => {
+    e.preventDefault();
+    setIsChangingPassword(true);
+
+    // validate the new password
+    const passwordErrors = validatePassword(newPassword);
+    const hasErrors = Object.values(passwordErrors).some(error => error);
+
+    if (hasErrors) {
+      setIsChangingPassword(false);
+      showAlert(
+        Object.values(passwordErrors)
+          .filter(error => error)
+          .join(', '),
+        'error'
+      );
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setIsChangingPassword(false);
+      showAlert(`Password doesn't match`, 'error');
+      return;
+    }
+
+    userRepository
+      .UpdatePassword({
+        newPassword,
+      })
+      .then(response => {
+        setIsChangingPassword(false);
+        showAlert(response.message, 'success');
+        setIsOpenChangePasswordModal(false);
+      })
+      .catch(error => {
+        setIsChangingPassword(false);
+        if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+          setTimeout(() => {
+            logoutUser(navigate, tenantId);
+          }, 3000);
+        }
+
+        showAlert(error.message, 'error');
+      });
+  };
+
+  const CopyToClipboardButton = ({ text }) => {
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(text).then(() => {
+        showAlert('Copy to clipboard success', 'success');
+      });
+    };
+
+    return (
+      <button className="p-0 focus:ring-0">
+        <img
+          src={copyIcon}
+          alt="Copy icon"
+          className="ml-2 h-5 w-5 cursor-pointer"
+          onClick={copyToClipboard}
+        />
+      </button>
+    );
+  };
+
+  const fetchImage = async () => {
+    if (currentUser?.id) {
+      try {
+        const response = await fetch(
+          `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.id}`,
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'image/svg+xml',
+            },
+            credentials: 'omit',
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch the image');
+        }
+        const blob = await response.blob();
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        setImageSrc(base64 as string);
+      } catch (error) {
+        console.error('Error fetching the image:', error);
+      }
+    }
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab: string) => {
+    setSelectedTab(tab);
+  };
+
+  // Check if password is valid
+  const validatePassword = value => {
+    return {
+      required: !value && 'Password is required',
+      minLength: value.length < 8 && 'Minimum 8 characters required',
+      hasUpperCase: !/[A-Z]/.test(value) && 'At least one uppercase letter required',
+      hasLowerCase: !/[a-z]/.test(value) && 'At least one lowercase letter required',
+      hasNumber: !/\d/.test(value) && 'At least one number required',
+      hasSpecialChar:
+        !/[!@#$%^&*()_+={};:'"|,.<>?]+/.test(value) && 'At least one special character required',
+    };
+  };
+
+  const resetTutorial = async () => {
+    setIsResettingTutorial(true);
+    try {
+      await resetTutorialAndNotify();
+      showAlert(t('Tutorial progress and questionnaire answers have been reset successfully'), 'success');
+      setIsOpenResetTutorialModal(false);
+    } catch (error) {
+      if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
+        setTimeout(() => {
+          logoutUser(navigate, tenantId);
+        }, 3000);
+      }
+      showAlert(error.message || t('Failed to reset tutorial'), 'error');
+    } finally {
+      setIsResettingTutorial(false);
+    }
+  };
+
+  const GeneralSettings = () => {
+    const profileCredentials = getProfileCredentialDetails(
+      currentUser.specialty,
+      currentUser.licenseNo
+    );
+
+    return (
+      <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+        <div className="">
+          <h1 className="text-2xl text-white">{t('General Settings')}</h1>
+        </div>
+        <div className="flex items-center pt-7">
+          {currentUser.name ? (
+            <ProfileImage />
+          ) : (
+            <div className="min-w-10 h-10 rounded-lg bg-white opacity-10"></div>
+          )}
+
+          {currentUser.name ? (
+            <div className="ml-3">
+              <h1 className="text-lg font-normal text-white">{currentUser.name}</h1>
+              <div className="-mt-1 flex flex-col text-sm font-light text-white text-opacity-70 sm:flex-row sm:items-center">
+                <div className="text-left capitalize">{profileCredentials.specialtyLabel}</div>
+                {profileCredentials.licenseNo && (
+                  <div className="flex items-center sm:ml-1">
+                    {profileCredentials.licenseNo}
+                    <CopyToClipboardButton text={profileCredentials.licenseNo} />
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              role="userInfo"
+              className={`ml-3 mt-1 grid max-w-full animate-pulse grid-cols-9 gap-4`}
+            >
+              <div>
+                <div className='className="mb-2 mb-2 h-3 w-[150px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+                <div className='className="mb-2 mb-2 h-2 w-[70px] rounded-lg bg-gray-200 bg-opacity-30'></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-7">
+          <h1 className="text-lg font-normal text-white">{t('Security')}</h1>
+
+          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
+            <div>
+              <h2 className="text-base font-light text-white">{t('Change Password')}</h2>
+              <h2 className="text-sm text-white text-opacity-70">
+                {t('Change your current password')}
+              </h2>
+            </div>
+            <button
+              className="text-primary focus:ring-0"
+              onClick={() => setIsOpenChangePasswordModal(true)}
+            >
+              <span className="relative z-10 bg-gradient-to-r from-[rgba(200,244,105,1)] to-[rgba(25,154,95,1)] bg-clip-text text-lg font-bold text-transparent">
+                {t('Change Password')}
+              </span>
+            </button>
+          </div>
+        </div>
+        <div className="pt-5">
+          <h1 className="text-lg font-normal text-white">{t('Preferences')}</h1>
+
+          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
+            <div>
+              <h2 className="text-base font-light text-white">{t('Language')}</h2>
+              <h2 className="text-sm text-white text-opacity-70">
+                {t('Change your preferred language')}
+              </h2>
+            </div>
+            <div className="relative">
+              <select
+                id="language"
+                value={Languages[i18n.language.toLocaleUpperCase()]}
+                onChange={e => {
+                  const enumKey = Object.keys(Languages).find(
+                    key => Languages[key] === e.target.value
+                  );
+
+                  i18n.changeLanguage(enumKey.toLowerCase());
+                }}
+                className="mb-4 block h-[51px] w-[140px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+              >
+                {Object.values(Languages).map(lang => (
+                  <option
+                    key={lang}
+                    value={Languages[lang]}
+                    className="!cursor-pointer !bg-[#323631] !py-2"
+                  >
+                    {lang}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <img
+                  src={chevronDown}
+                  alt="Chevron down icon"
+                  className="w-5"
+                />
+              </div>
+            </div>
+          </div>
+          <ViewerTourPreference
+            t={t}
+            showAlert={showAlert}
+          />
+          <AutomaticRunNotificationsPreference
+            t={t}
+            showAlert={showAlert}
+          />
+        </div>
+        <div className="pt-5">
+          <h1 className="text-lg font-normal text-white">{t('Tutorial')}</h1>
+
+          <div className="mt-2 flex items-center justify-between pb-5">
+            <div>
+              <h2 className="text-base font-light text-white">{t('Reset Tutorial')}</h2>
+              <h2 className="text-sm text-white text-opacity-70">
+                {t('Clear your progress and stored questionnaire answers, then begin again')}
+              </h2>
+            </div>
+            <button
+              className="text-primary focus:ring-0"
+              onClick={() => setIsOpenResetTutorialModal(true)}
+            >
+              <span className="relative z-10 bg-gradient-to-r from-[rgba(200,244,105,1)] to-[rgba(25,154,95,1)] bg-clip-text text-lg font-bold text-transparent">
+                {t('Reset Tutorial')}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const AboutSettings = () => {
+    return (
+      <div className="rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+        <div className="flex w-full flex-col items-center justify-center">
+          <img
+            src={logoVertical}
+            alt="Pacs logo"
+            className="max-w-[138px]"
+          />
+          <Typography
+            variant="subtitle"
+            className="mt-5 text-center font-light text-white text-opacity-80"
+          >
+            {tenantInfo.name + ' ' + `(${tenantInfo.id})`}
+          </Typography>
+          <Typography
+            variant="subtitle"
+            className="mt-5 max-w-[70%] text-center font-light text-white text-opacity-80"
+          >
+            {t(
+              'PACS AI is a custom built platform that will integrate artificial intelligence within the existing Pictures Archiving Communication System infrastructure across Canadian hospitals, facilitating real-time AI inference on medical images. The initiative focuses on leveraging pre-existing infrastructure for cost-effective, fair, and accessible AI deployment, ensuring patient privacy and data security, and promoting continual learning through feedback. The ultimate objective is to scale this solution, demonstrating its utility in improving clinical outcomes and promoting responsible AI adoption in healthcare.'
+            )}
+          </Typography>
+          <Typography
+            variant="body"
+            className="mt-5 text-center font-light text-white text-opacity-80"
+          >
+            {frontendVersion}
+          </Typography>
+          <Typography
+            variant="body"
+            className="mt-5 text-center font-light text-white text-opacity-80"
+          >
+            Last updated: January 23, 2025 1:38PM
+          </Typography>
+          <div className="mt-5 flex items-end gap-2">
+            <Link
+              href="#"
+              showIcon={false}
+              className="text-primary text-base font-light"
+            >
+              {t('Privacy Policy')}
+            </Link>
+            <span className="text-white text-opacity-80">&</span>
+            <Link
+              href="#"
+              showIcon={false}
+              className="text-primary text-base font-light"
+            >
+              {t('Terms and Conditions')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ProfileImage = () => {
+    return (
+      <img
+        src={imageSrc}
+        alt="Profile"
+        width="45"
+        height="45"
+        className="rounded-lg border border-gray-200 bg-white p-2"
+      />
+    );
+  };
+  return (
+    <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
+      <TopNavigation title="Settings" />
+      <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
+          <div className="mb-5">
+            <ul className="-mb-px flex flex-wrap text-center text-sm font-medium">
+              <li
+                className={`me-2 cursor-pointer rounded-lg px-8 py-3 ${
+                  selectedTab === 'general'
+                    ? 'bg-gradient-to-r from-[rgba(200,244,105,0.2)] via-[rgba(200,244,105,0.2)] to-[rgba(5,144,94,0.2)]'
+                    : 'bg-transparent'
+                }`}
+                onClick={() => {
+                  handleTabChange('general');
+                }}
+              >
+                <Typography
+                  variant="subtitle"
+                  className={`font-light ${
+                    selectedTab === 'general' ? 'text-primary' : 'text-white text-opacity-50'
+                  }`}
+                >
+                  {t('General')}
+                </Typography>
+              </li>
+              <li
+                className={`me-2 cursor-pointer rounded-lg px-8 py-3 ${
+                  selectedTab === 'about'
+                    ? 'bg-gradient-to-r from-[rgba(200,244,105,0.2)] via-[rgba(200,244,105,0.2)] to-[rgba(5,144,94,0.2)]'
+                    : 'bg-transparent'
+                }`}
+                onClick={() => {
+                  handleTabChange('about');
+                }}
+              >
+                <Typography
+                  variant="subtitle"
+                  className={`font-light ${
+                    selectedTab === 'about' ? 'text-primary' : 'text-white text-opacity-50'
+                  }`}
+                >
+                  {t('About PACS AI')}
+                </Typography>
+              </li>
+            </ul>
+          </div>
+          {selectedTab === 'general' && <GeneralSettings />}
+          {selectedTab === 'about' && <AboutSettings />}
+          {isOpenResetTutorialModal && (
+            <Modal
+              isOpen={isOpenResetTutorialModal}
+              size="max-w-[420px]"
+              isCloseable={true}
+              onClose={() => {
+                setIsOpenResetTutorialModal(false);
+              }}
+            >
+              <div className="relative">
+                <Typography
+                  variant="h6"
+                  className="font-light text-white"
+                >
+                  {t('Reset Tutorial')}
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="mt-2 font-light text-white text-opacity-70"
+                >
+                  {t(
+                    'Are you sure you want to reset the tutorial? Your progress and stored questionnaire answers will be cleared.'
+                  )}
+                </Typography>
+                <div className="mt-5 flex w-full justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md bg-transparent px-4 py-2 text-sm text-white/70 hover:bg-white/10"
+                    onClick={() => setIsOpenResetTutorialModal(false)}
+                  >
+                    {t('Cancel')}
+                  </button>
+                  <Button
+                    disabled={isResettingTutorial}
+                    className="h-[41px] min-w-[80px] rounded-lg px-4"
+                    onClick={resetTutorial}
+                  >
+                    {isResettingTutorial ? '...' : t('Reset')}
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+          )}
+          {isOpenChangePasswordModal && (
+            <Modal
+              isOpen={isOpenChangePasswordModal}
+              size="max-w-[520px]"
+              isCloseable={true}
+              onClose={() => {
+                setIsOpenChangePasswordModal(false);
+              }}
+            >
+              <div className="relative">
+                <Typography
+                  variant="h6"
+                  className="font-light text-white"
+                >
+                  {t('Change Password')}
+                </Typography>
+                <Typography
+                  variant="body"
+                  className="mt-2 font-light text-white text-opacity-70"
+                >
+                  {t('Please provide your current and new password to continue.')}
+                </Typography>
+
+                <div className="mt-5">
+                  <Input
+                    id="newPassword"
+                    placeholder={t('New Password')}
+                    className="mb-4 w-full"
+                    type="password"
+                    onChange={e => setNewPassword(e.target.value)}
+                    autoFocus
+                  />
+                  <Input
+                    id="confirmNewPassword"
+                    placeholder={t('Confirm New Password')}
+                    className="mb-4 w-full"
+                    type="password"
+                    onChange={e => setConfirmNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="mt-2 flex w-full justify-end">
+                  <Button
+                    disabled={isChangingPassword}
+                    className="h-[41px] w-[111px] rounded-lg"
+                    onClick={changePassword}
+                  >
+                    {isChangingPassword ? '...' : t('Confirm')}
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+          )}
+      </main>
+    </div>
+  );
+};
+
+export default SettingsPage;

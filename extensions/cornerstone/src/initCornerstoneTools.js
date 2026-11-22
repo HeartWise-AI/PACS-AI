@@ -3,6 +3,7 @@ import {
   WindowLevelTool,
   SegmentBidirectionalTool,
   StackScrollTool,
+  PlanarRotateTool,
   VolumeRotateTool,
   ZoomTool,
   MIPJumpToClickTool,
@@ -39,8 +40,12 @@ import {
   OrientationMarkerTool,
   WindowLevelRegionTool,
   SegmentSelectTool,
-  RegionSegmentPlusTool,
+  ClickSegmentTool,
   SegmentLabelTool,
+  LivewireContourSegmentationTool,
+  SculptorTool,
+  SplineContourSegmentationTool,
+  LabelMapEditWithContourTool,
 } from '@cornerstonejs/tools';
 import { LabelmapSlicePropagationTool, MarkerLabelmapTool } from '@cornerstonejs/ai';
 import * as polySeg from '@cornerstonejs/polymorphic-segmentation';
@@ -70,6 +75,7 @@ export default function initCornerstoneTools(configuration = {}) {
   addTool(SegmentBidirectionalTool);
   addTool(WindowLevelTool);
   addTool(StackScrollTool);
+  addTool(PlanarRotateTool);
   addTool(VolumeRotateTool);
   addTool(ZoomTool);
   addTool(ProbeTool);
@@ -108,7 +114,11 @@ export default function initCornerstoneTools(configuration = {}) {
   addTool(SegmentLabelTool);
   addTool(LabelmapSlicePropagationTool);
   addTool(MarkerLabelmapTool);
-  addTool(RegionSegmentPlusTool);
+  addTool(ClickSegmentTool);
+  addTool(LivewireContourSegmentationTool);
+  addTool(SculptorTool);
+  addTool(SplineContourSegmentationTool);
+  addTool(LabelMapEditWithContourTool);
   // Modify annotation tools to use dashed lines on SR
   const annotationStyle = {
     textBoxFontSize: '15px',
@@ -130,6 +140,7 @@ const toolNames = {
   WindowLevel: WindowLevelTool.toolName,
   StackScroll: StackScrollTool.toolName,
   Zoom: ZoomTool.toolName,
+  PlanarRotate: PlanarRotateTool.toolName,
   VolumeRotate: VolumeRotateTool.toolName,
   MipJumpToClick: MIPJumpToClickTool.toolName,
   Length: LengthTool.toolName,
@@ -167,7 +178,11 @@ const toolNames = {
   SegmentLabel: SegmentLabelTool.toolName,
   LabelmapSlicePropagation: LabelmapSlicePropagationTool.toolName,
   MarkerLabelmap: MarkerLabelmapTool.toolName,
-  RegionSegmentPlus: RegionSegmentPlusTool.toolName,
+  ClickSegment: ClickSegmentTool.toolName,
+  LivewireContourSegmentation: LivewireContourSegmentationTool.toolName,
+  SculptorTool: SculptorTool.toolName,
+  SplineContourSegmentation: SplineContourSegmentationTool.toolName,
+  LabelMapEditWithContourTool: LabelMapEditWithContourTool.toolName,
 };
 
 export { toolNames };

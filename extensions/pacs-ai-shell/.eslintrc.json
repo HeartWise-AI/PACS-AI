@@ -1,0 +1,133 @@
+// @pacs-ai/extension-shell: import rules (docs/ohif-upgrade/PLAN.md 3.5, 6.1, 6.2). Generated with the other
+// packages' files from the same table; keep them in step. Tests may import upstream sources
+// (@ohif/<pkg>/src/...): packages are not built for jest.
+// @ohif/i18n: EXCEPTION (not in PLAN 6.1): the Settings page language switch
+// @pacs-ai/extension-inference: EXCEPTION (not in PLAN 6.1): work list processing column and notifications bell, AI Predictions page (result renderers, retrieve-and-open), viewer layout providers and toolbar
+// src/layout/upstreamLayoutPieces.ts: EXCEPTION, marked there with eslint-disable-next-line: re-exports the two viewer-layout pieces @ohif/extension-default does not export; retire when the layout is rebased on 3.13 (P3.3).
+{
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": [
+              "@ohif/app/src",
+              "@ohif/app/src/**"
+            ],
+            "message": "PLAN 6.2: ours never imports @ohif/app/src; use a public export or move the file into our package."
+          },
+          {
+            "group": [
+              "@ohif/ui",
+              "@ohif/ui/**"
+            ],
+            "message": "PLAN 3.5/6.2: ours never imports the old @ohif/ui; use @ohif/ui-next or @pacs-ai/ui."
+          },
+          {
+            "group": [
+              "react-test-renderer",
+              "react-test-renderer/**"
+            ],
+            "message": "PLAN 3.5: use @testing-library/react (React 19 drops react-test-renderer)."
+          },
+          {
+            "group": [
+              "@ohif/*/src",
+              "@ohif/*/src/**"
+            ],
+            "message": "PLAN 6.2: no deep imports of upstream package sources outside tests; use the package export."
+          },
+          {
+            "group": [
+              "@pacs-ai/extension-chat",
+              "@pacs-ai/extension-chat/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-shell may not import @pacs-ai/extension-chat."
+          },
+          {
+            "group": [
+              "@pacs-ai/mode-viewer",
+              "@pacs-ai/mode-viewer/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-shell may not import @pacs-ai/mode-viewer."
+          },
+          {
+            "group": [
+              "@ohif/*",
+              "@ohif/*/**",
+              "!@ohif/core",
+              "!@ohif/ui-next",
+              "!@ohif/extension-default",
+              "!@ohif/i18n",
+              "!@ohif/core/**",
+              "!@ohif/ui-next/**",
+              "!@ohif/extension-default/**",
+              "!@ohif/i18n/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-shell may import only @ohif/core, @ohif/ui-next, @ohif/extension-default, @ohif/i18n from @ohif."
+          }
+        ]
+      }
+    ],
+    "import/no-relative-packages": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/__mocks__/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@ohif/app/src",
+                  "@ohif/app/src/**"
+                ],
+                "message": "PLAN 6.2: ours never imports @ohif/app/src; use a public export or move the file into our package."
+              },
+              {
+                "group": [
+                  "@ohif/ui",
+                  "@ohif/ui/**"
+                ],
+                "message": "PLAN 3.5/6.2: ours never imports the old @ohif/ui; use @ohif/ui-next or @pacs-ai/ui."
+              },
+              {
+                "group": [
+                  "react-test-renderer",
+                  "react-test-renderer/**"
+                ],
+                "message": "PLAN 3.5: use @testing-library/react (React 19 drops react-test-renderer)."
+              },
+              {
+                "group": [
+                  "@pacs-ai/extension-chat",
+                  "@pacs-ai/extension-chat/**"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-shell may not import @pacs-ai/extension-chat."
+              },
+              {
+                "group": [
+                  "@pacs-ai/mode-viewer",
+                  "@pacs-ai/mode-viewer/**"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-shell may not import @pacs-ai/mode-viewer."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

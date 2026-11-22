@@ -69,7 +69,12 @@ export default class DICOMSRDisplayTool extends AnnotationTool {
       trackingUniqueIdentifiers.includes(annotation.data?.TrackingUniqueIdentifier)
     );
 
-    if (!viewport._actors?.size) {
+    const hasActors =
+      typeof viewport.getActors === 'function'
+        ? viewport.getActors().length > 0
+        : Boolean(viewport._actors?.size);
+
+    if (!hasActors) {
       return;
     }
 
@@ -232,27 +237,30 @@ export default class DICOMSRDisplayTool extends AnnotationTool {
 
       if (data[1] !== undefined) {
         canvasCoordinates.push(viewport.worldToCanvas(data[1]));
-      } else {
-        // We get the other point for the arrow by using the image size
-        const imagePixelModule = metaData.get('imagePixelModule', referencedImageId);
-
-        let xOffset = 10;
-        let yOffset = 10;
-
-        if (imagePixelModule) {
-          const { columns, rows } = imagePixelModule;
-          xOffset = columns / 10;
-          yOffset = rows / 10;
-        }
-
-        const imagePoint = csUtils.worldToImageCoords(referencedImageId, point);
-        const arrowEnd = csUtils.imageToWorldCoords(referencedImageId, [
-          imagePoint[0] + xOffset,
-          imagePoint[1] + yOffset,
-        ]);
-
-        canvasCoordinates.push(viewport.worldToCanvas(arrowEnd));
       }
+      else{
+         // We get the other point for the arrow by using the image size
+      const imagePixelModule = metaData.get('imagePixelModule', referencedImageId);
+
+      let xOffset = 10;
+      let yOffset = 10;
+
+      if (imagePixelModule) {
+        const { columns, rows } = imagePixelModule;
+        xOffset = columns / 10;
+        yOffset = rows / 10;
+      }
+
+      const imagePoint = csUtils.worldToImageCoords(referencedImageId, point);
+      const arrowEnd = csUtils.imageToWorldCoords(referencedImageId, [
+        imagePoint[0] + xOffset,
+        imagePoint[1] + yOffset,
+      ]);
+
+      canvasCoordinates.push(viewport.worldToCanvas(arrowEnd));
+        
+      }
+     
 
       const arrowUID = `${index}`;
 

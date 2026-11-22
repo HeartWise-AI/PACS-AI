@@ -1,7 +1,5 @@
 const getToggledClassName = isToggled => {
-  return isToggled
-    ? 'text-primary' // NOTE: This is a PACS changes
-    : '!text-common-bright hover:!bg-[#151815] hover:text-primary-light'; // NOTE: This is a PACS change
+  return isToggled ? '!text-primary' : '!text-foreground/80 hover:!bg-muted hover:text-highlight';
 };
 
 export { getToggledClassName };

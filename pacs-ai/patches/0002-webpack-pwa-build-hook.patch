@@ -1,0 +1,17 @@
+diff --git a/platform/app/.webpack/webpack.pwa.js b/platform/app/.webpack/webpack.pwa.js
+index 82dc4e98325e233080b3235ac5917ad6e7e5e394..94075cdbe0ed8f06ea90b2a32dfa23aae9ce36c1 100644
+--- a/platform/app/.webpack/webpack.pwa.js
++++ b/platform/app/.webpack/webpack.pwa.js
+@@ -264,5 +264,12 @@ module.exports = (env, argv) => {
+     followSymlinks: true,
+   };
+ 
++  // PACS-AI build hook: pacs-ai/build/extend.js extends the config when present.
++  // Ledger row in pacs-ai/UPSTREAM_PATCHES.md.
++  const pacsAiExtend = path.join(__dirname, '../../../pacs-ai/build/extend.js');
++  if (require('fs').existsSync(pacsAiExtend)) {
++    return require(pacsAiExtend).extendWebpackPwa(mergedConfig, { env, argv });
++  }
++
+   return mergedConfig;
+ };

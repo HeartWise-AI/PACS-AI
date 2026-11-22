@@ -77,7 +77,7 @@ const bindings = [
       direction: -1,
     },
     label: 'Previous Series',
-    keys: ['up'],
+    keys: ['pageup'],
     isEditable: true,
   },
   {
@@ -86,7 +86,7 @@ const bindings = [
       direction: 1,
     },
     label: 'Next Series',
-    keys: ['down'],
+    keys: ['pagedown'],
     isEditable: true,
   },
   {
@@ -106,13 +106,13 @@ const bindings = [
   {
     commandName: 'nextImage',
     label: 'Next Image',
-    keys: ['pagedown'],
+    keys: ['down'],
     isEditable: true,
   },
   {
     commandName: 'previousImage',
     label: 'Previous Image',
-    keys: ['pageup'],
+    keys: ['up'],
     isEditable: true,
   },
   {
@@ -134,8 +134,8 @@ const bindings = [
     isEditable: true,
   },
   {
-    commandName: 'cancelMeasurement',
-    label: 'Cancel Measurement',
+    commandName: 'cancelActiveOperation',
+    label: 'Cancel',
     keys: ['esc'],
   },
   {
@@ -171,11 +171,6 @@ const bindings = [
     commandName: 'acceptPreview',
     label: 'Accept Preview',
     keys: ['enter'],
-  },
-  {
-    commandName: 'rejectPreview',
-    label: 'Reject Preview',
-    keys: ['esc'],
   },
   {
     commandName: 'undo',

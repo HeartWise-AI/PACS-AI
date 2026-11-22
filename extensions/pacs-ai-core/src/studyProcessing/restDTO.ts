@@ -1,0 +1,176 @@
+import type {
+  IngestionStatus,
+  ModelExecutionStatus,
+  ProcessingRunOutcome,
+  ProcessingRunPhase,
+  ProcessingRunTrigger,
+} from './types';
+
+export interface WorklistAPIResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface WorklistAPIErrorResponse {
+  success: false;
+  message: string;
+  errorCode: string;
+  data: unknown;
+}
+
+export interface WorklistPageDTO {
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface ProcessingRunCountsDTO {
+  expectedModels: number;
+  pendingModels: number;
+  queuedModels: number;
+  runningModels: number;
+  completedModels: number;
+  failedModels: number;
+  skippedModels: number;
+  cancelledModels: number;
+  activeModels: number;
+}
+
+export interface ProcessingAttentionReasonDTO {
+  code: string;
+  message?: string | null;
+}
+
+export interface WorklistStudyStatusDTO extends ProcessingRunCountsDTO {
+  studyInstanceUID: string;
+  ingestionStatus: IngestionStatus;
+  retrievalState: string | null;
+  retrievalError: string | null;
+  runId: string | null;
+  runNumber: number | null;
+  trigger: ProcessingRunTrigger | null;
+  phase: ProcessingRunPhase | null;
+  outcome: ProcessingRunOutcome | null;
+  attentionRequired: boolean;
+  attentionReasons: ProcessingAttentionReasonDTO[];
+  version: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+export interface WorklistStudyStatusPageDTO extends WorklistPageDTO {
+  studies: WorklistStudyStatusDTO[];
+}
+
+export interface WorklistStudyStatusEventDTO extends ProcessingRunCountsDTO {
+  type: 'study_status.updated';
+  studyInstanceUID: string;
+  runId: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  outcome: ProcessingRunOutcome | null;
+  attentionRequired: boolean;
+  attentionReasons: ProcessingAttentionReasonDTO[];
+  version: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+  /**
+   * Whether this signed-in user should get a bell entry / toast for the event.
+   * Absent from gateways older than the notification audience policy, which
+   * means true. The status itself is applied whatever its value.
+   */
+  notify?: boolean;
+  /** True when this signed-in user cancelled the run. */
+  cancelledByYou?: boolean;
+}
+
+export interface ProcessingRunSummaryDTO extends ProcessingRunCountsDTO {
+  runId: string;
+  studyInstanceUID: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  outcome: ProcessingRunOutcome | null;
+  attentionRequired: boolean;
+  attentionReasons: ProcessingAttentionReasonDTO[];
+  version: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcessingRunExecutionDTO {
+  executionId: string;
+  modelName: string;
+  modelVersion: string | null;
+  modality: string | null;
+  status: ModelExecutionStatus;
+  errorMessage: string | null;
+  skipReason: {
+    code: string;
+    message?: string | null;
+  } | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+export interface ProcessingRunDetailDTO extends ProcessingRunSummaryDTO {
+  executions: ProcessingRunExecutionDTO[];
+  // Added with run cancellation; an older backend omits them.
+  cancellable?: boolean;
+  cancelledAt?: string | null;
+  waitingReason?: string | null;
+  stableAfter?: string | null;
+}
+
+// The shared transport treats result as opaque JSON and does not define any
+// model-specific fields.
+export interface ProcessingRunExecutionResultDTO {
+  runId: string;
+  executionId: string;
+  studyInstanceUID: string;
+  modelName: string;
+  modelVersion: string | null;
+  status: 'completed';
+  completedAt: string;
+  result: unknown;
+}
+
+export interface ProcessingRunExecutionResultResponseDTO {
+  success: true;
+  message: string;
+  data: ProcessingRunExecutionResultDTO;
+}
+
+export interface StudyProcessingRunHistoryPageDTO extends WorklistPageDTO {
+  runs: ProcessingRunDetailDTO[];
+}
+
+export interface CreateStudyProcessingRunResponseDTO {
+  runId: string;
+  runNumber: number;
+  trigger: ProcessingRunTrigger;
+  phase: ProcessingRunPhase;
+  expectedModels: number;
+}
+
+export interface BulkReprocessStudyResultDTO {
+  studyInstanceUID: string;
+  accepted: boolean;
+  run?: CreateStudyProcessingRunResponseDTO;
+  errorCode?: string;
+  message?: string;
+  retryAfterSeconds?: number;
+}
+
+export interface BulkReprocessStudiesResponseDTO {
+  results: BulkReprocessStudyResultDTO[];
+  acceptedCount: number;
+  rejectedCount: number;
+}

@@ -29,22 +29,22 @@ module.exports = {
       },
 
       primary: {
-        light: '#C8F469',
-        main: '#C8F469',
-        dark: '#C8F469',
-        active: '#C8F469',
+        light: '#5acce6',
+        main: '#0944b3',
+        dark: '#090c29',
+        active: '#348cfd',
       },
       inputfield: {
-        main: '#C8F469',
+        main: '#3a3f99',
         disabled: '#2b166b',
         focus: '#5acce6',
         placeholder: '#39383f',
       },
 
       secondary: {
-        light: '#C8F469',
+        light: '#3a3f99',
         main: '#2b166b',
-        dark: '#C8F469',
+        dark: '#041c4a',
         active: '#1f1f27',
       },
 
@@ -306,7 +306,7 @@ module.exports = {
       full: '100%',
       viewport: '0.5rem',
       '1/2': '50%',
-      'viewport-scrollbar': '1.3rem',
+      'viewport-scrollbar': '1.5rem',
     }),
     letterSpacing: {
       tighter: '-0.05em',

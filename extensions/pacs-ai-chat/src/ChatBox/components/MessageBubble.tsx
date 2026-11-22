@@ -1,0 +1,169 @@
+import React, { useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { ChatActivity, ChatCitation, Message } from '../types';
+import { CITATION_INDEX_ATTRIBUTE, remarkCitationMarkers } from '../utils/citations';
+import { parseStructuredAnswer } from '../utils/structuredAnswer';
+import { ThinkingIndicator } from './ThinkingIndicator';
+import { ActivitySummary } from './ActivitySummary';
+import { CitationChip } from './CitationChip';
+import { StructuredAnswerCards } from './StructuredAnswerCards';
+
+interface MessageBubbleProps {
+  message: Message;
+  // Live steps while this message is the thinking placeholder.
+  progress?: ChatActivity | null;
+  feedback?: 'up' | 'down' | null;
+  onFeedback?: (messageId: string, type: 'up' | 'down') => void;
+}
+
+const NO_CITATIONS: ChatCitation[] = [];
+
+// Built once per set of citations: react-markdown mounts these as component
+// types, so a new function on every render would remount the chips and close
+// an open citation popover.
+function useMarkdownRendering(citations: ChatCitation[]) {
+  return useMemo(() => {
+    const byIndex = new Map(citations.map(citation => [citation.index, citation]));
+    return {
+      remarkPlugins: [
+        remarkGfm,
+        [remarkCitationMarkers, { indexes: Array.from(byIndex.keys()) }],
+      ] as React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'],
+      components: {
+        a: ({ node: _node, ...props }) => (
+          <a
+            {...props}
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        ),
+        img: ({ node: _node, alt }) => <span>{alt ? `[Image: ${alt}]` : '[Image omitted]'}</span>,
+        table: ({ node: _node, ...props }) => (
+          <div
+            className="markdown-table-wrapper"
+            role="region"
+            aria-label="Scrollable table"
+            tabIndex={0}
+          >
+            <table {...props} />
+          </div>
+        ),
+        // A "[n]" marker with a citation (see remarkCitationMarkers).
+        sup: ({ node: _node, children, ...props }) => {
+          const citation = byIndex.get(Number(props[CITATION_INDEX_ATTRIBUTE]));
+          return citation ? <CitationChip citation={citation} /> : <sup {...props}>{children}</sup>;
+        },
+      } as React.ComponentProps<typeof ReactMarkdown>['components'],
+    };
+  }, [citations]);
+}
+
+export const MessageBubble: React.FC<MessageBubbleProps> = ({
+  message,
+  progress = null,
+  feedback,
+  onFeedback,
+}) => {
+  const isUser = message.sender === 'user';
+  const isAssistant = message.sender === 'assistant';
+  const citations = (isAssistant && message.citations) || NO_CITATIONS;
+  const markdown = useMarkdownRendering(citations);
+  const structured = useMemo(
+    () => (isAssistant && !message.isThinking ? parseStructuredAnswer(message.text) : null),
+    [isAssistant, message.isThinking, message.text]
+  );
+
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`${structured ? 'max-w-[94%]' : 'max-w-[80%]'} rounded-lg px-4 py-2 ${
+          isUser
+            ? 'bg-gradient-to-r from-[rgba(100,180,100,0.7)] to-[rgba(180,230,100,0.7)] text-white'
+            : 'bg-[#333633] text-white'
+        }`}
+      >
+        <div className={structured ? 'text-sm' : 'whitespace-pre-wrap text-sm'}>
+          {message.isThinking ? (
+            <ThinkingIndicator
+              activity={progress}
+              startedAt={message.timestamp}
+            />
+          ) : structured ? (
+            <StructuredAnswerCards
+              structured={structured}
+              citations={citations}
+              markdownComponents={markdown.components}
+              remarkPlugins={markdown.remarkPlugins}
+            />
+          ) : (
+            <ReactMarkdown
+              className="markdown-content"
+              components={markdown.components}
+              remarkPlugins={markdown.remarkPlugins}
+            >
+              {message.text?.trim() || ''}
+            </ReactMarkdown>
+          )}
+        </div>
+        {isAssistant && !message.isThinking && message.activity && (
+          <ActivitySummary activity={message.activity} />
+        )}
+        <div className="mt-1 flex items-center justify-between">
+          <span className="text-xs opacity-70">
+            {message.timestamp.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+          {isAssistant && !message.isThinking && onFeedback && (
+            <div className="flex gap-2 text-gray-400">
+              <button
+                onClick={() => onFeedback(message.id, 'up')}
+                className={`transition-colors ${
+                  feedback === 'up' ? 'text-green-500' : 'hover:text-green-400'
+                }`}
+                aria-label="Thumbs up"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => onFeedback(message.id, 'down')}
+                className={`transition-colors ${
+                  feedback === 'down' ? 'text-red-500' : 'hover:text-red-400'
+                }`}
+                aria-label="Thumbs down"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.737 3h4.017c.163 0 .326.02.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

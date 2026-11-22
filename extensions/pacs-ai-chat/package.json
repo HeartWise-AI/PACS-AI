@@ -1,0 +1,37 @@
+{
+  "name": "@pacs-ai/extension-chat",
+  "version": "1.0.0",
+  "description": "PACS-AI chat assistant: the draggable chat with tool-activity steps, series carousel and citations, and its toolbar button",
+  "private": true,
+  "license": "MIT",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./citations": "./src/citations.ts"
+  },
+  "keywords": [
+    "ohif-extension"
+  ],
+  "scripts": {
+    "test:unit": "jest --watchAll",
+    "test:unit:ci": "jest --ci --runInBand --collectCoverage --passWithNoTests"
+  },
+  "peerDependencies": {
+    "@ohif/core": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "12.3.1"
+  },
+  "dependencies": {
+    "@pacs-ai/extension-core": "workspace:*",
+    "@pacs-ai/ui": "workspace:*",
+    "react-markdown": "8.0.7",
+    "remark-gfm": "3.0.1"
+  },
+  "devDependencies": {
+    "@ohif/mode-basic": "workspace:*",
+    "@testing-library/react": "13.4.0"
+  }
+}

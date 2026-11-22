@@ -364,9 +364,8 @@ function NumberStepper({ className, children, direction, inputWidth }: NumberSte
     // We'll handle the control positioning ourselves
     return (
       <div
-        // NOTE: This is a PACS changes
         className={cn(
-          'flex h-[28px] items-center overflow-hidden rounded-md border border-white/50 bg-white/10',
+          'bg-background border-input flex h-[28px] items-center overflow-hidden rounded-md border',
           className
         )}
       >

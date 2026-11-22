@@ -1,1 +1,0 @@
-export { formatSeriesInfo } from './formatSeriesInfo';

@@ -1,7 +1,4 @@
 {
-  "Build Number": "رقم البنية",
-  "Latest Master Commits": "أحدث الالتزامات الرئيسية",
-  "OHIF Viewer - About": "حول OHIF Viewer",
   "About OHIF Viewer": "حول عارض OHIF",
   "Browser": "المتصفح",
   "Build number": "رقم الإصدار",
@@ -15,8 +12,7 @@
   "Report an issue": "الإبلاغ عن مشكلة",
   "Repository URL": "رابط المستودع",
   "Value": "القيمة",
-  "Version Information": "معلومات الإصدار",
-  "Visit the forum": "زيارة المنتدى",
   "Version information": "معلومات الإصدار",
-  "Version number": "رقم الإصدار"
+  "Version number": "رقم الإصدار",
+  "Visit the forum": "زيارة المنتدى"
 }

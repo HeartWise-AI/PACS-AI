@@ -4,6 +4,8 @@ window.config = {
   showStudyList: true,
   extensions: [],
   modes: [],
+  // below flag is for performance reasons, but it might not work for all servers
+  showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
@@ -21,7 +23,9 @@ window.config = {
         qidoSupportsIncludeField: true,
         imageRendering: 'wadors',
         enableStudyLazyLoad: true,
-        thumbnailRendering: 'wadors',
+        thumbnailRendering: 'thumbnail',
+        thumbnailRequestStrategy: 'fetch',
+        supportsWildcard: true,
         requestOptions: {
           auth: 'admin:admin',
         },

@@ -55,7 +55,7 @@ const DEFAULT_TYPES = [GroupAccordion, Content, Trigger];
  * measurements panel for a practical, working example.
  */
 export function AccordionGroup(props) {
-  const { grouping, items, children, sourceChildren, type } = props;
+  const { grouping, items, children, sourceChildren } = props;
   const childProps = useSystem();
   let defaultValue = props.defaultValue;
   const groups = grouping.groupingFunction(items, grouping, childProps);
@@ -91,14 +91,14 @@ function DefaultAccordion(props) {
     return null;
   }
 
-  if (Boolean(asChild)) {
+  if (asChild) {
     return React.cloneElement(props.children, props);
   }
 
   return (
     <Accordion
       type={grouping.type || 'multiple'}
-      className="text-white"
+      className="text-foreground"
       defaultValue={defaultValue}
     >
       {[...groups.entries()].map(([key, group]) => {

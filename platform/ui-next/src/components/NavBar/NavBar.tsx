@@ -17,8 +17,7 @@ const NavBar = ({
   return (
     <div
       className={classnames(
-        // NOTE: This is a PACS changes
-        'mb-2 w-full rounded-lg border border-white border-opacity-10 bg-white bg-opacity-[5%] py-1',
+        'bg-popover z-20 border-background px-1',
         isSticky && stickyClasses,
         !isSticky && notStickyClasses,
         className

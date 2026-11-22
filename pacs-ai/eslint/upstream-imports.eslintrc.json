@@ -1,0 +1,48 @@
+// PLAN 6.2 rule 1 for upstream-owned code: nothing upstream imports @pacs-ai/* or
+// @ohif/app/src from outside platform/app. Used alone (--no-eslintrc) by
+// pacs-ai/scripts/lint-imports.sh over platform/, extensions/ and modes/ minus our
+// packages; the root .eslintrc.json is upstream's and stays unchanged.
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "ecmaFeatures": { "jsx": true }
+  },
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["@pacs-ai/*", "@pacs-ai/*/**"],
+            "message": "PLAN 6.2: upstream-owned code never imports PACS-AI packages; use an extension point (PLAN 6.3) or a ledger row."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["platform/core/**", "platform/ui/**", "platform/ui-next/**", "platform/i18n/**", "platform/cli/**", "extensions/**", "modes/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@pacs-ai/*", "@pacs-ai/*/**"],
+                "message": "PLAN 6.2: upstream-owned code never imports PACS-AI packages; use an extension point (PLAN 6.3) or a ledger row."
+              },
+              {
+                "group": ["@ohif/app/src", "@ohif/app/src/**"],
+                "message": "PLAN 6.2: upstream packages never import @ohif/app/src."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

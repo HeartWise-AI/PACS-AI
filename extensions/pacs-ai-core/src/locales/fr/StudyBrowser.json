@@ -1,0 +1,21 @@
+{
+  "All": "Tous",
+  "AI Models": "Modèles AI",
+  "Primary": "Primaire",
+  "Recent": "Récent",
+  "Refresh": "Rafraichir",
+  "RefreshStudyFromPACS": "Actualiser l'examen depuis le PACS",
+  "RefreshStudyStillGrowing": "L'examen est toujours en cours ; de nouvelles images peuvent être disponibles",
+  "RefreshStudyRetrieving": "Récupération…",
+  "RefreshStudyRetrievingProgress": "Récupération… {{progress}} %",
+  "RefreshStudyReloading": "Chargement des séries…",
+  "RefreshStudyNewSeriesOne": "1 nouvelle série",
+  "RefreshStudyNewSeries": "{{count}} nouvelles séries",
+  "RefreshStudyNewImagesOne": "1 nouvelle image",
+  "RefreshStudyNewImages": "{{count}} nouvelles images",
+  "RefreshStudyUpToDate": "À jour",
+  "RefreshStudyLocalOnly": "copie locale seulement (source PACS inconnue)",
+  "RefreshStudyRetrieveFailed": "Échec de la récupération depuis le PACS",
+  "RefreshStudyRetrieveTimedOut": "La récupération depuis le PACS prend trop de temps",
+  "RefreshStudyReloadFailed": "Les séries n'ont pas pu être rechargées"
+}

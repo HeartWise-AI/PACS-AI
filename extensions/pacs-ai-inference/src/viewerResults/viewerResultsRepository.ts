@@ -1,0 +1,312 @@
+import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
+import type {
+  SelectedView,
+  ViewerModelResult,
+  ViewerModelRun,
+  ViewerModelRunStatus,
+} from './types';
+
+interface HTTPResponse<T> {
+  data: T;
+}
+
+export interface ViewerResultsHTTPClient {
+  get<T>(url: string): Promise<HTTPResponse<T>>;
+  post<T>(url: string, body?: unknown): Promise<HTTPResponse<T>>;
+}
+
+export interface ViewerModelReport {
+  htmlBase64: string;
+  contentType: string;
+}
+
+export interface RunViewerModelRequest {
+  studyInstanceUID: string;
+  // Registration id, container id or model-info modelId; the viewer sends the
+  // container id because /model/proxy/available has no registration id.
+  modelRef: string;
+  // DICOM modality, only for models that support several.
+  modality?: string | null;
+  // Series chosen in the viewer; study-service selects them itself when absent.
+  seriesInstanceUIDs?: string[];
+}
+
+export interface ViewerResultsRepository {
+  loadLatestResults(studyInstanceUID: string): Promise<ViewerModelResult[]>;
+  loadReport(result: ViewerModelResult): Promise<ViewerModelReport>;
+  runModel(request: RunViewerModelRequest): Promise<ViewerModelRun>;
+  loadRunStatus(runId: string): Promise<ViewerModelRunStatus>;
+}
+
+export class ViewerResultsRequestError extends Error {
+  readonly status: number | null;
+  readonly errorCode: string | null;
+  // api-pacs `message` of a coded error response, when present.
+  readonly serverMessage: string | null;
+
+  constructor(
+    message: string,
+    status: number | null,
+    errorCode: string | null = null,
+    serverMessage: string | null = null
+  ) {
+    super(message);
+    this.name = 'ViewerResultsRequestError';
+    this.status = status;
+    this.errorCode = errorCode;
+    this.serverMessage = serverMessage;
+  }
+}
+
+export const VIEWER_RESULTS_ERROR_CODES = {
+  reportNotAvailable: 'REPORT_NOT_AVAILABLE',
+  reportRenderRejected: 'REPORT_RENDER_REJECTED',
+  reportRenderFailed: 'REPORT_RENDER_FAILED',
+  runAlreadyActive: 'RUN_ALREADY_ACTIVE',
+  studyNotAvailableLocally: 'STUDY_NOT_AVAILABLE_LOCALLY',
+} as const;
+
+// An api-pacs that predates the contract has no route: 404/405/501 without a
+// JSON errorCode. The viewer then keeps its previous behaviour. A coded error
+// (e.g. 404 MISSING_RECORD) comes from the new endpoint and is not a fallback.
+export function isViewerResultsEndpointMissing(error: unknown): boolean {
+  return (
+    error instanceof ViewerResultsRequestError &&
+    !error.errorCode &&
+    (error.status === 404 || error.status === 405 || error.status === 501)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function optionalString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
+}
+
+function encodedIdentifier(value: string | null | undefined, label: string): string {
+  const normalized = value?.trim();
+  if (!normalized) {
+    throw new ViewerResultsRequestError(`${label} is required.`, 400);
+  }
+  return encodeURIComponent(normalized);
+}
+
+function requestError(error: unknown, fallbackMessage: string): ViewerResultsRequestError {
+  if (error instanceof ViewerResultsRequestError) {
+    return error;
+  }
+
+  const response = isRecord(error) && isRecord(error.response) ? error.response : null;
+  const status = typeof response?.status === 'number' ? response.status : null;
+  const body = isRecord(response?.data) ? response.data : null;
+  const errorCode = optionalString(body?.errorCode);
+  return new ViewerResultsRequestError(
+    fallbackMessage,
+    status,
+    errorCode,
+    errorCode ? optionalString(body?.message) : null
+  );
+}
+
+// api-pacs wraps most payloads as {success, message, data}; accept both the
+// wrapped and the bare form so either backend style works.
+function unwrap(body: unknown): unknown {
+  if (isRecord(body) && typeof body.success === 'boolean' && 'data' in body) {
+    if (!body.success) {
+      throw new ViewerResultsRequestError(
+        optionalString(body.message) ?? 'The request failed.',
+        null,
+        optionalString(body.errorCode),
+        optionalString(body.message)
+      );
+    }
+    return body.data;
+  }
+  return body;
+}
+
+export function mapSelectedViews(value: unknown): SelectedView[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  return value
+    .filter(isRecord)
+    .map((view, index) => ({
+      sopInstanceUID: optionalString(view.sopInstanceUID),
+      seriesInstanceUID: optionalString(view.seriesInstanceUID),
+      viewLabel: optionalString(view.viewLabel),
+      order: typeof view.order === 'number' && Number.isFinite(view.order) ? view.order : index,
+      role: optionalString(view.role),
+      extra: isRecord(view.extra) ? view.extra : null,
+    }))
+    .filter(view => view.sopInstanceUID || view.seriesInstanceUID)
+    .sort((left, right) => left.order - right.order);
+}
+
+// A list of UIDs, null ("every series"), or undefined when the backend does
+// not report the field (or sends something else).
+export function mapDispatchSeriesInstanceUIDs(value: unknown): string[] | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const uids = value
+    .filter((uid): uid is string => typeof uid === 'string')
+    .map(uid => uid.trim())
+    .filter(Boolean);
+  return uids.length ? [...new Set(uids)] : null;
+}
+
+export function mapViewerModelResult(
+  value: unknown,
+  studyInstanceUID: string
+): ViewerModelResult | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const modelName = optionalString(value.modelName);
+  if (!modelName) {
+    return null;
+  }
+
+  return {
+    studyInstanceUID,
+    modelName,
+    modelVersion: optionalString(value.modelVersion),
+    modality: optionalString(value.modality),
+    modelId: optionalString(value.modelId),
+    artifactModelId: optionalString(value.artifactModelId),
+    containerId: optionalString(value.containerId),
+    runId: optionalString(value.runId),
+    executionId: optionalString(value.executionId),
+    studyServiceJobId: optionalString(value.studyServiceJobId),
+    completedAt: optionalString(value.completedAt),
+    trigger: optionalString(value.trigger),
+    selectedViews: mapSelectedViews(value.selectedViews),
+    reportAvailable: value.reportAvailable === true,
+    dispatchSeriesInstanceUIDs: mapDispatchSeriesInstanceUIDs(value.dispatchSeriesInstanceUIDs),
+  };
+}
+
+function mapViewerModelRun(value: unknown): ViewerModelRun {
+  const runId = isRecord(value) ? optionalString(value.runId) : null;
+  if (!isRecord(value) || !runId) {
+    throw new ViewerResultsRequestError('The run request returned an invalid response.', null);
+  }
+
+  return {
+    runId,
+    runNumber: typeof value.runNumber === 'number' ? value.runNumber : null,
+    trigger: optionalString(value.trigger),
+    executionId: optionalString(value.executionId),
+    modelName: optionalString(value.modelName),
+    modelVersion: optionalString(value.modelVersion),
+  };
+}
+
+export function createViewerResultsRepository(
+  client: ViewerResultsHTTPClient = Api() as ViewerResultsHTTPClient
+): ViewerResultsRepository {
+  return {
+    async loadLatestResults(studyInstanceUID: string): Promise<ViewerModelResult[]> {
+      const encodedStudyInstanceUID = encodedIdentifier(studyInstanceUID, 'Study Instance UID');
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>(
+          `/v1/inference/worklist/studies/${encodedStudyInstanceUID}/latest-results`
+        );
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load previous model results.');
+      }
+
+      const results = isRecord(body) && Array.isArray(body.results) ? body.results : [];
+      return results
+        .map(result => mapViewerModelResult(result, studyInstanceUID.trim()))
+        .filter((result): result is ViewerModelResult => result !== null);
+    },
+
+    async loadReport(result: ViewerModelResult): Promise<ViewerModelReport> {
+      const path =
+        result.runId && result.executionId
+          ? `/v1/inference/processing/runs/${encodedIdentifier(
+              result.runId,
+              'Processing run ID'
+            )}/executions/${encodedIdentifier(result.executionId, 'Model execution ID')}/report`
+          : `/v1/inference/worklist/studies/${encodedIdentifier(
+              result.studyInstanceUID,
+              'Study Instance UID'
+            )}/jobs/${encodedIdentifier(result.studyServiceJobId, 'Study service job ID')}/report`;
+
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>(path);
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load the model report.');
+      }
+
+      const htmlBase64 = isRecord(body) ? optionalString(body.htmlBase64) : null;
+      if (!htmlBase64) {
+        throw new ViewerResultsRequestError('The model report is empty.', null);
+      }
+      return {
+        htmlBase64,
+        contentType: (isRecord(body) && optionalString(body.contentType)) || 'text/html',
+      };
+    },
+
+    async runModel(request: RunViewerModelRequest): Promise<ViewerModelRun> {
+      const path = `/v1/inference/worklist/studies/${encodedIdentifier(
+        request.studyInstanceUID,
+        'Study Instance UID'
+      )}/models/${encodedIdentifier(request.modelRef, 'Model ID')}/run`;
+      // Without series study-service selects them itself, so the key is omitted.
+      const modality = request.modality?.trim();
+      const seriesInstanceUIDs = (request.seriesInstanceUIDs ?? [])
+        .map(uid => uid?.trim())
+        .filter(Boolean);
+      const body = {
+        ...(modality ? { modality } : {}),
+        ...(seriesInstanceUIDs.length ? { seriesInstanceUIDs } : {}),
+      };
+
+      try {
+        const response = await client.post<unknown>(path, body);
+        return mapViewerModelRun(unwrap(response.data));
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to start the model run.');
+      }
+    },
+
+    async loadRunStatus(runId: string): Promise<ViewerModelRunStatus> {
+      const path = `/v1/inference/processing/runs/${encodedIdentifier(runId, 'Processing run ID')}`;
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>(path);
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load the model run status.');
+      }
+
+      const executions = isRecord(body) && Array.isArray(body.executions) ? body.executions : [];
+      return {
+        phase: isRecord(body) ? optionalString(body.phase) : null,
+        outcome: isRecord(body) ? optionalString(body.outcome) : null,
+        executions: executions.filter(isRecord).map(execution => ({
+          executionId: optionalString(execution.executionId),
+          status: optionalString(execution.status),
+        })),
+        ...(isRecord(body) && typeof body.cancellable === 'boolean'
+          ? { cancellable: body.cancellable }
+          : {}),
+      };
+    },
+  };
+}

@@ -1,1 +1,26 @@
 *.md
+
+# PACS-AI: OHIF upstream-owned files are never reformatted, so the fork's
+# difference from the pinned OHIF release (pacs-ai/UPSTREAM_REF) stays real
+# changes only. Everything is ignored except the PACS-AI-owned paths listed in
+# docs/ohif-upgrade/PLAN.md section 6.1.
+/*
+!/extensions/
+/extensions/*
+!/extensions/pacs-ai-*/
+!/modes/
+/modes/*
+!/modes/pacs-ai/
+!/pacs-ai/
+!/tests/
+/tests/*
+!/tests/pacs-ai/
+!/docs/
+/docs/*
+!/docs/ohif-upgrade/
+!/.github/
+/.github/*
+!/.github/CODEOWNERS
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/pacs-ai-*.yml
