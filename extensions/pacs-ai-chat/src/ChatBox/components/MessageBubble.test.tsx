@@ -160,6 +160,37 @@ describe('MessageBubble Markdown rendering', () => {
     expect(sources?.textContent).toContain('Retrieved for this answer only.');
   });
 
+  it('takes only plausible source numbers as sources, in "n." or "n)" style', () => {
+    const answer = [
+      '**Summary**\n- Guidelines weigh PCI and CABG [1][2].',
+      [
+        '**Sources**',
+        '1) [Myocardial revascularization guideline](https://example.org/multivessel)',
+        '2) [CTO PCI consensus](https://example.org/cto)',
+        '2024. Focused update, not a numbered source.',
+        '9. A ninth item of a list of three, without a citation.',
+      ].join('\n'),
+    ].join('\n\n');
+
+    const { container } = renderAssistantMessage(answer, [
+      {
+        index: 1,
+        kind: 'web_source',
+        title: 'Myocardial revascularization guideline',
+        url: 'https://example.org/multivessel',
+      },
+      { index: 2, kind: 'web_source', title: 'CTO PCI consensus', url: 'https://example.org/cto' },
+    ]);
+
+    const sources = container.querySelector('[data-cy="chat-sources-card"]');
+    const lines = Array.from(sources?.querySelectorAll('[data-cy="chat-source-line"]') || []);
+    expect(
+      lines.map(line => line.querySelector('[data-cy="chat-citation-chip"]')?.textContent)
+    ).toEqual(['1', '2']);
+    expect(sources?.textContent).toContain('2024. Focused update, not a numbered source.');
+    expect(sources?.textContent).toContain('A ninth item of a list of three');
+  });
+
   it('renders findings_summary lead Summary section in its own summary card', () => {
     const summaryText = [
       '**Summary**\n- Proximal LAD 70% severe with LCx and RCA CTO flags; SYNTAX 23.7, LVEF 55% [1][2]',
