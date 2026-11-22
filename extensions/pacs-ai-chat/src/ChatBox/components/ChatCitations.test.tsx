@@ -98,6 +98,30 @@ describe('citation markers in an answer', () => {
     expect(container.textContent).not.toContain('[1]');
   });
 
+  it('renders a group of markers as adjacent chips in ascending order, each once', () => {
+    // Live MHI check: "[5][3]" showed as the chips 5 then 3, and "[5, 3]" stayed text.
+    const { container } = renderMessage('A [4][1], B [4, 2], C [1-2], D [2][2] [1].', CITATIONS);
+
+    expect(chips(container).map(chip => chip.textContent)).toEqual([
+      '1',
+      '4',
+      '2',
+      '4',
+      '1',
+      '2',
+      '1',
+      '2',
+    ]);
+    expect(container.textContent).toContain('A 14, B 24, C 12, D 12.');
+  });
+
+  it('keeps a group with a member that has no citation as it was written', () => {
+    const { container } = renderMessage('A [2, 3] and B [4][3].', CITATIONS);
+
+    expect(chips(container).map(chip => chip.textContent)).toEqual(['4']);
+    expect(container.textContent).toContain('A [2, 3] and B 4[3].');
+  });
+
   it('leaves a marker without a citation, and ordinary brackets, as text', () => {
     const { container } = renderMessage(
       'Seen in [3] and [1]. Published [2024], range [0], list [12], [01], [a] and array[x].',

@@ -125,6 +125,12 @@ export function formatCitationDate(value: string | null | undefined): string {
 
 // A "[n]" marker; the digits are captured.
 const MARKER = /\[(\d{1,4})\]/g;
+// A group of markers: "[5, 3]", a range "[3-5]", or markers side by side
+// ("[5][3]", "[3] [5]"), which cite together.
+const BRACKET = String.raw`\[\d{1,4}(?:\s*[,\-–]\s*\d{1,4})*\]`;
+const GROUP = new RegExp(`${BRACKET}(?: ?${BRACKET})*`, 'g');
+// A range longer than this is not a citation group.
+const MAX_RANGE = 20;
 
 export const CITATION_INDEX_ATTRIBUTE = 'data-citation-index';
 
@@ -138,7 +144,45 @@ interface MarkdownNode {
 // Text in these is left alone: a chip is a button and cannot sit in a link.
 const SKIPPED_PARENTS = new Set(['link', 'linkReference', 'definition']);
 
-function splitMarkers(text: string, indexes: ReadonlySet<number>): MarkdownNode[] | null {
+function markerNode(index: number): MarkdownNode {
+  return {
+    type: 'citationMarker',
+    children: [{ type: 'text', value: `[${index}]` }],
+    data: { hName: 'sup', hProperties: { [CITATION_INDEX_ATTRIBUTE]: String(index) } },
+  };
+}
+
+/**
+ * The citations a group of markers names, ascending and each once, or null
+ * when one of its members is not a citation of the answer ("[01]" is not
+ * the marker of citation 1).
+ */
+function groupIndexes(group: string, indexes: ReadonlySet<number>): number[] | null {
+  const members = new Set<number>();
+  for (const body of group.match(/[^[\]]+(?=\])/g) ?? []) {
+    for (const part of body.split(',')) {
+      const bounds = part.trim().split(/\s*[-–]\s*/);
+      if (bounds.some(bound => String(Number(bound)) !== bound)) {
+        return null;
+      }
+      const [start, end] = bounds.map(Number);
+      const last = end ?? start;
+      if (last < start || last - start > MAX_RANGE) {
+        return null;
+      }
+      for (let index = start; index <= last; index += 1) {
+        if (!indexes.has(index)) {
+          return null;
+        }
+        members.add(index);
+      }
+    }
+  }
+  return [...members].sort((a, b) => a - b);
+}
+
+/** Each "[n]" of `text` whose n is a citation, as a marker node; the rest stays text. */
+function singleMarkers(text: string, indexes: ReadonlySet<number>): MarkdownNode[] {
   const nodes: MarkdownNode[] = [];
   let last = 0;
   MARKER.lastIndex = 0;
@@ -152,11 +196,31 @@ function splitMarkers(text: string, indexes: ReadonlySet<number>): MarkdownNode[
     if (match.index > last) {
       nodes.push({ type: 'text', value: text.slice(last, match.index) });
     }
-    nodes.push({
-      type: 'citationMarker',
-      children: [{ type: 'text', value: match[0] }],
-      data: { hName: 'sup', hProperties: { [CITATION_INDEX_ATTRIBUTE]: String(index) } },
-    });
+    nodes.push(markerNode(index));
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    nodes.push({ type: 'text', value: text.slice(last) });
+  }
+  return nodes;
+}
+
+function splitMarkers(text: string, indexes: ReadonlySet<number>): MarkdownNode[] | null {
+  const nodes: MarkdownNode[] = [];
+  let last = 0;
+  GROUP.lastIndex = 0;
+  for (let match = GROUP.exec(text); match; match = GROUP.exec(text)) {
+    const group = groupIndexes(match[0], indexes);
+    // A group with a member that is not a citation keeps its single markers
+    // that are, as written; the rest stays text.
+    const marked = group ? group.map(markerNode) : singleMarkers(match[0], indexes);
+    if (!marked.some(node => node.type === 'citationMarker')) {
+      continue;
+    }
+    if (match.index > last) {
+      nodes.push({ type: 'text', value: text.slice(last, match.index) });
+    }
+    nodes.push(...marked);
     last = match.index + match[0].length;
   }
   if (!nodes.length) {
@@ -193,7 +257,9 @@ function markChildren(node: MarkdownNode, indexes: ReadonlySet<number>): void {
 /**
  * remark plugin: turns each "[n]" of the prose whose n is one of `indexes`
  * into a `<sup data-citation-index="n">[n]</sup>` element, which the message
- * renders as a citation chip. Every other "[n]" stays text.
+ * renders as a citation chip. A group ("[5, 3]", "[3-5]", "[5][3]") whose
+ * members are all citations becomes adjacent chips in ascending order, each
+ * once. Every other "[n]" stays text.
  */
 export function remarkCitationMarkers(options?: { indexes?: Iterable<number> } | null) {
   const indexes = new Set(options?.indexes ?? []);
