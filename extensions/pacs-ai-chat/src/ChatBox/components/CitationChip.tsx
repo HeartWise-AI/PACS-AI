@@ -20,6 +20,32 @@ interface CitationChipProps {
   citation: ChatCitation;
 }
 
+const CHIP_CLASS =
+  'mx-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border px-1 align-super text-[10px] font-semibold leading-none transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#C8F469]';
+// A citation of an unknown kind keeps the neutral look of the first chips.
+const NEUTRAL_CHIP_CLASS =
+  'border-white/30 bg-white/10 text-white/90 hover:border-[#C8F469] hover:text-[#C8F469] focus-visible:border-[#C8F469] focus-visible:text-[#C8F469] aria-expanded:border-[#C8F469] aria-expanded:text-[#C8F469]';
+
+/**
+ * How a chip shows what it cites: a model result and a published source
+ * have their own colours (ChatBox.styles.ts) and say their kind as tooltip.
+ */
+export const CITATION_KINDS: Record<
+  string,
+  { className: string; labelKey: string; defaultLabel: string }
+> = {
+  model_result: {
+    className: 'chat-citation-chip-model',
+    labelKey: 'CitationModelResult',
+    defaultLabel: 'AI model result',
+  },
+  web_source: {
+    className: 'chat-citation-chip-source',
+    labelKey: 'CitationWebSource',
+    defaultLabel: 'Published source',
+  },
+};
+
 /**
  * The "[n]" marker of an answer as a small chip that opens a popover saying
  * what the marker refers to.
@@ -29,6 +55,7 @@ export const CitationChip: React.FC<CitationChipProps> = ({ citation }) => {
   const [isOpen, setIsOpen] = useState(false);
   const chipRef = useRef<HTMLButtonElement>(null);
   const label = citationLabel(citation, t as Translate);
+  const kind = CITATION_KINDS[citation.kind];
 
   const close = useCallback((returnFocus: boolean) => {
     setIsOpen(false);
@@ -42,8 +69,9 @@ export const CitationChip: React.FC<CitationChipProps> = ({ citation }) => {
       <button
         ref={chipRef}
         type="button"
-        className="mx-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full border border-white/30 bg-white/10 px-1 align-super text-[10px] font-semibold leading-none text-white/90 transition-colors hover:border-[#C8F469] hover:text-[#C8F469] focus:outline-none focus-visible:border-[#C8F469] focus-visible:text-[#C8F469] focus-visible:ring-1 focus-visible:ring-[#C8F469] aria-expanded:border-[#C8F469] aria-expanded:text-[#C8F469]"
+        className={`${CHIP_CLASS} ${kind ? kind.className : NEUTRAL_CHIP_CLASS}`}
         aria-label={label}
+        title={kind ? t(kind.labelKey, { defaultValue: kind.defaultLabel }) : undefined}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(open => !open)}

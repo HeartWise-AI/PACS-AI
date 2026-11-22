@@ -314,6 +314,47 @@ export const chatBoxStyles = `
     border-radius: 0.5rem;
     padding: 0.65rem 0.8rem;
   }
+  /* Citation chips by kind. Colours are theme tokens (pacs-ai-theme):
+     a model result is lime (primary) on 20% lime over the page background
+     (contrast 8.2:1), a published source is neutral-light on neutral-dark
+     (7.5:1). Both backgrounds are opaque, so the number keeps its contrast
+     on any card. */
+  .chat-citation-chip-model {
+    color: hsl(var(--primary, 79 86.3% 68.4%));
+    background-color: color-mix(in srgb, hsl(var(--primary, 79 86.3% 68.4%)) 20%, hsl(var(--background, 120 6.7% 8.8%)));
+    border-color: hsl(var(--primary, 79 86.3% 68.4%) / 0.55);
+  }
+  .chat-citation-chip-source {
+    color: hsl(var(--neutral-light, 214 69% 81%));
+    background-color: hsl(var(--neutral-dark, 214 16% 21%));
+    border-color: hsl(var(--neutral, 213 22% 59%) / 0.6);
+  }
+  .chat-citation-chip-model:hover,
+  .chat-citation-chip-model[aria-expanded='true'] {
+    border-color: hsl(var(--primary, 79 86.3% 68.4%));
+  }
+  .chat-citation-chip-source:hover,
+  .chat-citation-chip-source[aria-expanded='true'] {
+    border-color: hsl(var(--neutral-light, 214 69% 81%));
+  }
+  .chat-citation-key {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .chat-citation-key-model::before,
+  .chat-citation-key-source::before {
+    content: '●';
+    margin-right: 0.25rem;
+  }
+  .chat-citation-key-model::before {
+    color: hsl(var(--primary, 79 86.3% 68.4%));
+  }
+  .chat-citation-key-source::before {
+    color: hsl(var(--neutral-light, 214 69% 81%));
+  }
   .chat-sources-card {
     background-color: rgba(0, 0, 0, 0.22);
     border: 1px solid rgba(255, 255, 255, 0.09);

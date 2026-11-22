@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 import type { ChatCitation } from '../types';
 import type { ParsedAnswerCard, StructuredAnswer } from '../utils/structuredAnswer';
-import { CitationChip } from './CitationChip';
+import { CITATION_KINDS, CitationChip } from './CitationChip';
 
 interface StructuredAnswerCardsProps {
   structured: StructuredAnswer;
@@ -85,6 +86,30 @@ function sourceLines(body: string, byIndex: Map<number, ChatCitation>): SourceLi
  * ordered list would number them from its first item, so a list that skips
  * a number would no longer match the [n] markers.
  */
+/** "● AI model result ● Published source", when the answer cites both kinds. */
+function CitationKey({ byIndex }: { byIndex: Map<number, ChatCitation> }) {
+  const { t } = useTranslation('ChatBox');
+  const kinds = new Set([...byIndex.values()].map(citation => citation.kind));
+  if (!kinds.has('model_result') || !kinds.has('web_source')) {
+    return null;
+  }
+  return (
+    <div
+      className="chat-citation-key"
+      data-cy="chat-citation-key"
+    >
+      {(['model_result', 'web_source'] as const).map(name => (
+        <span
+          key={name}
+          className={`chat-citation-key-${name === 'model_result' ? 'model' : 'source'}`}
+        >
+          {t(CITATION_KINDS[name].labelKey, { defaultValue: CITATION_KINDS[name].defaultLabel })}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SourcesBody({
   body,
   byIndex,
@@ -98,6 +123,7 @@ function SourcesBody({
 }) {
   return (
     <>
+      <CitationKey byIndex={byIndex} />
       {sourceLines(body, byIndex).map((line, idx) => {
         if (!('number' in line)) {
           return (
