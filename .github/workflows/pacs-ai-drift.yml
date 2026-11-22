@@ -1,0 +1,42 @@
+name: PACS-AI upstream drift
+
+# Drift guard from docs/ohif-upgrade/PLAN.md 6.2, enforced from P2.7: the job
+# fails on any upstream-owned file that differs without a ledger row
+# (pacs-ai/UPSTREAM_PATCHES.md) or
+# being an expected generated file, and on inverted imports. Read-only: it
+# checks out the code and runs a shell script; nothing is built or deployed.
+
+on:
+  pull_request:
+    branches: ['integration/*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pacs-ai-drift-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: Upstream drift guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the pinned upstream tag fetch only transfers what is missing.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Script tests
+        run: bash pacs-ai/scripts/tests/run-tests.sh
+
+      - name: Drift guard (enforce)
+        run: |
+          set +e
+          bash pacs-ai/scripts/check-upstream-drift.sh --enforce --forbid-ohif-ui --markdown drift-summary.md
+          rc=$?
+          cat drift-summary.md >> "$GITHUB_STEP_SUMMARY"
+          exit $rc

@@ -1,13 +1,13 @@
 // External
-import React, { useEffect, useState, createContext } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { BrowserRouter, type BrowserRouterProps } from 'react-router-dom';
+
 import Compose from './routes/Mode/Compose';
 import {
-  ServicesManager,
   ExtensionManager,
   CommandsManager,
   HotkeysManager,
@@ -34,20 +34,7 @@ import { AppConfigProvider } from '@state';
 import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
-import { ShepherdJourneyProvider } from 'react-shepherd';
-// NOTE: This is a PACS changes
-import { AlertProvider } from './AlertProvider';
-// NOTE: This is a PACS changes
-import { GlobalStateProvider } from './GlobalStateProvider';
-// NOTE: This is a PACS changes
-import TutorialProgressOverlay from './components/TutorialProgressOverlay';
-import InferenceProcessingProvider from './components/inference/InferenceProcessingProvider';
-import StudyProcessingProvider from './components/inference/studyProcessing/StudyProcessingProvider';
-import FrontendUpdateMonitor from './components/FrontendUpdateMonitor';
 import './App.css';
-
-// NOTE: This is a PACS changes
-export const FrontendVersionContext = createContext('');
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -55,18 +42,9 @@ let commandsManager: CommandsManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
 
-// NOTE: This is a PACS changes
-const frontendVersion = 'v0.58.0-beta';
-const queryClient = new QueryClient();
-
-// NOTE: This is a PACS changes
-const FrontendVersionProvider = ({ value, children }) => (
-  <FrontendVersionContext.Provider value={value}>{children}</FrontendVersionContext.Provider>
-);
-
-FrontendVersionProvider.propTypes = {
-  value: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
+const routerFutureFlags: BrowserRouterProps['future'] = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
 };
 
 function App({
@@ -91,7 +69,6 @@ function App({
   defaultModes = [],
 }) {
   const [init, setInit] = useState(null);
-
   useEffect(() => {
     const run = async () => {
       appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
@@ -132,7 +109,6 @@ function App({
     cineService,
     userAuthenticationService,
     uiNotificationService,
-    customizationService,
   } = servicesManager.services;
 
   const providers = [
@@ -149,25 +125,27 @@ function App({
     [TooltipProvider],
     [DialogProvider, { service: uiDialogService, dialog: ManagedDialog }],
     [ModalProvider, { service: uiModalService, modal: ModalNext }],
-    [ShepherdJourneyProvider],
-    // NOTE: This is a PACS changes
-    [FrontendVersionProvider, { value: frontendVersion }],
   ];
 
-  // Loop through and register each of the service providers registered with the ServiceProvidersManager.
-  const providersFromManager = Object.entries(serviceProvidersManager.providers);
+  // Providers registered with the ServiceProvidersManager are inserted ahead of
+  // the dialog/modal providers: dialog and modal content renders at those
+  // providers' own level (as a sibling of their children, not inside the route
+  // tree), so any context a registered provider supplies must already be in
+  // scope there.
+  const providersFromManager = Object.entries(serviceProvidersManager.providers).map(
+    ([serviceName, provider]) => [provider, { service: servicesManager.services[serviceName] }]
+  );
   if (providersFromManager.length > 0) {
-    providersFromManager.forEach(([serviceName, provider]) => {
-      providers.push([provider, { service: servicesManager.services[serviceName] }]);
-    });
+    const dialogIndex = providers.findIndex(([component]) => component === DialogProvider);
+    providers.splice(dialogIndex, 0, ...providersFromManager);
   }
 
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 
   let authRoutes = null;
 
-  // Should there be a generic call to init on the extension manager?
-  customizationService.init(extensionManager);
+  // customizationService.init(extensionManager) runs in appInit after extensions register;
+  // do not call init again here — repeated init would duplicate-merge unless guarded (see CustomizationService.init).
 
   // Use config to create routes
   const appRoutes = createRoutes({
@@ -192,25 +170,15 @@ function App({
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AlertProvider>
-        {/* NOTE: This is a PACS changes */}
-        <GlobalStateProvider>
-          <CombinedProviders>
-            <FrontendUpdateMonitor />
-            <BrowserRouter basename={routerBasename}>
-              <StudyProcessingProvider>
-                <InferenceProcessingProvider>
-                  {authRoutes}
-                  {appRoutes}
-                  <TutorialProgressOverlay />
-                </InferenceProcessingProvider>
-              </StudyProcessingProvider>
-            </BrowserRouter>
-          </CombinedProviders>
-        </GlobalStateProvider>
-      </AlertProvider>
-    </QueryClientProvider>
+    <CombinedProviders>
+      <BrowserRouter
+        basename={routerBasename}
+        future={routerFutureFlags}
+      >
+        {authRoutes}
+        {appRoutes}
+      </BrowserRouter>
+    </CombinedProviders>
   );
 }
 
@@ -218,12 +186,16 @@ App.propTypes = {
   config: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({
-      routerBasename: PropTypes.string.isRequired,
+      routerBasename: PropTypes.string,
       oidc: PropTypes.array,
       whiteLabeling: PropTypes.object,
       extensions: PropTypes.array,
+      showLoadingIndicator: PropTypes.bool,
+      showStudyList: PropTypes.bool,
+      modes: PropTypes.array,
+      dataSources: PropTypes.array,
     }),
-  ]).isRequired,
+  ]),
   /* Extensions that are "bundled" or "baked-in" to the application.
    * These would be provided at build time as part of they entry point. */
   defaultExtensions: PropTypes.array,

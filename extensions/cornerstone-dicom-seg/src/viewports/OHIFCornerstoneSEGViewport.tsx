@@ -60,15 +60,26 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
   // In such cases, we attempt to handle this scenario gracefully by
   // invoking a custom handler. Ideally, if a user tries to launch a series that isn't viewable,
   // (eg.: we can prompt them with an explanation and provide a link to the full study).
+
+  // Additional guard: If no customization handler is registered for missing
+  // referenced display sets, skip SEG rendering to avoid a viewport crash.
   if (!referencedDisplaySetInstanceUID) {
     const missingReferenceDisplaySetHandler = customizationService.getCustomization(
       'missingReferenceDisplaySetHandler'
     );
-    const { handled } = missingReferenceDisplaySetHandler();
-    if (handled) {
+    if (typeof missingReferenceDisplaySetHandler === 'function') {
+      const { handled } = missingReferenceDisplaySetHandler();
+      if (handled) {
+        return;
+      }
+    } else {
+      console.log(
+        "No customization 'missingReferenceDisplaySetHandler' registered. Skipping SEG rendering."
+      );
       return;
     }
   }
+
   const referencedDisplaySet = displaySetService.getDisplaySetByUID(
     referencedDisplaySetInstanceUID
   );
@@ -84,10 +95,13 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
   };
 
   const getCornerstoneViewport = useCallback(() => {
+    // Stack uses the referenced series (data[0]); SEG is applied as an overlay (data[1]).
+    // Passing only the SEG display set leaves the stack with derived labelmap imageIds,
+    // which are not displayable without the underlying grayscale series.
     return (
       <OHIFCornerstoneViewport
         {...props}
-        displaySets={[segDisplaySet]}
+        displaySets={[referencedDisplaySet, segDisplaySet]}
         viewportOptions={{
           viewportType: viewportOptions.viewportType,
           toolGroupId: toolGroupId,
@@ -100,7 +114,14 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
         }}
       />
     );
-  }, [viewportId, segDisplaySet, toolGroupId, props, viewportOptions]);
+  }, [
+    viewportId,
+    segDisplaySet,
+    referencedDisplaySet,
+    toolGroupId,
+    props,
+    viewportOptions,
+  ]);
 
   useEffect(() => {
     if (segIsLoading) {
@@ -134,7 +155,7 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
     const { unsubscribe } = segmentationService.subscribe(
       segmentationService.EVENTS.SEGMENTATION_LOADING_COMPLETE,
       evt => {
-        if (evt.segDisplaySet.displaySetInstanceUID === segDisplaySet.displaySetInstanceUID) {
+        if (evt.segDisplaySet?.displaySetInstanceUID === segDisplaySet?.displaySetInstanceUID) {
           setSegIsLoading(false);
         }
 

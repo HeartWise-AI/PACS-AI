@@ -131,10 +131,10 @@ const Trigger = ({
       className={cn(
         'inline-flex h-10 w-10 items-center justify-center !rounded-lg',
         disabled
-          ? 'text-common-bright hover:bg-primary-dark hover:text-primary-light cursor-not-allowed opacity-40'
+          ? 'text-foreground/80 hover:bg-muted hover:text-highlight cursor-not-allowed opacity-40'
           : isOpen
-            ? 'bg-primary text-background' // NOTE: This is a PACS changes
-            : 'text-foreground/80 hover:bg-primary hover:text-background bg-transparent', // NOTE: This is a PACS changes
+            ? 'bg-background text-foreground/80'
+            : 'text-foreground/80 hover:bg-background hover:text-highlight bg-transparent',
         className
       )}
       variant="ghost"
@@ -212,8 +212,7 @@ type PresetSectionProps = {
 const PresetSection = ({ children, title, className }: PresetSectionProps) => {
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      {/* NOTE: This is a PACS changes */}
-      <div className="text-foreground/80 text-xs">{title}</div>
+      <div className="text-muted-foreground text-xs">{title}</div>
       {React.Children.count(children) > 0 && (
         <div
           className={cn(title.toLowerCase() === 'common' ? 'flex gap-2' : 'flex flex-col gap-0')}
@@ -258,7 +257,7 @@ const Preset = ({
     <div
       className={cn(
         'group cursor-pointer rounded transition',
-        'flex items-center gap-2 p-1.5 hover:bg-white/10', // NOTE: This is a PACS changes
+        'hover:bg-accent flex items-center gap-2 p-1.5',
         disabled && 'pointer-events-none opacity-50',
         className
       )}
@@ -321,7 +320,7 @@ const GridSelector = ({ rows = 3, columns = 4, className }: GridSelectorProps) =
       {Array.from(Array(rows * columns).keys()).map(index => (
         <div
           key={index}
-          className={cn('cursor-pointer', isHovered(index) ? 'bg-primary-active' : 'bg-white/50')} // NOTE: This is a PACS changes
+          className={cn('cursor-pointer', isHovered(index) ? 'bg-primary' : 'bg-accent')}
           data-cy={`Layout-${index % columns}-${Math.floor(index / columns)}`}
           onClick={() => handleSelection(index)}
           onMouseEnter={() => setHoveredIndex(index)}
@@ -333,12 +332,11 @@ const GridSelector = ({ rows = 3, columns = 4, className }: GridSelectorProps) =
 };
 
 const Divider = ({ className }: { className?: string }) => (
-  <div className={cn('h-px bg-black', className)}></div>
+  <div className={cn('h-px bg-background', className)}></div>
 );
 
 const HelpText = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  // NOTE: This is a PACS changes
-  <p className={cn('text-foreground/80 text-xs leading-tight', className)}>{children}</p>
+  <p className={cn('text-muted-foreground text-xs leading-tight', className)}>{children}</p>
 );
 
 // Assemble the compound component

@@ -71,11 +71,12 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
 
   return (
     <div
-      className={`pointer-events-auto absolute top-10 left-1/2 z-50 -translate-x-1/2 ${className}`}
+      className={`pointer-events-none absolute top-10 left-1/2 z-50 -translate-x-1/2 ${className}`}
     >
-      {/* NOTE: This is a PACS changes */}
       <div
-        className={'inline-flex select-none items-center gap-2 rounded-md bg-[#4C504B] px-2 py-2'}
+        className={
+          'bg-muted pointer-events-auto inline-flex select-none items-center gap-2 rounded-md px-2 py-2'
+        }
       >
         <Button
           variant="ghost"
@@ -92,8 +93,7 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
               <span className="text-foreground w-2">{dynamicInfo.dimensionGroupNumber}</span>{' '}
               <span className="text-muted-foreground">{`/${dynamicInfo.numDimensionGroups}`}</span>
             </div>
-            {/* NOTE: This is a PACS changes */}
-            <div className="text-foreground/80 text-xs">{dynamicInfo.label}</div>
+            <div className="text-muted-foreground text-xs">{dynamicInfo.label}</div>
           </div>
         )}
 
@@ -103,9 +103,10 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
             onOpenChange={setPopoverOpen}
           >
             <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-full border-none bg-transparent p-0 hover:bg-transparent"
+              <div
+                role="button"
+                tabIndex={0}
+                className="h-full cursor-pointer border-none bg-transparent p-0"
               >
                 <Numeric.Container
                   mode="stepper"
@@ -122,13 +123,14 @@ const CinePlayer: React.FC<CinePlayerProps> = ({
                   >
                     <div className="flex items-center justify-center gap-1">
                       <div className="text-foreground flex-shrink-0 text-center text-sm leading-[22px]">
-                        {/* NOTE: This is a PACS changes */}
-                        <span className="whitespace-nowrap text-xs text-white">{' FPS'}</span>
+                        <span className="text-muted-foreground whitespace-nowrap text-xs">
+                          {' FPS'}
+                        </span>
                       </div>
                     </div>
                   </Numeric.NumberStepper>
                 </Numeric.Container>
-              </Button>
+              </div>
             </PopoverTrigger>
             <PopoverContent
               side="bottom"

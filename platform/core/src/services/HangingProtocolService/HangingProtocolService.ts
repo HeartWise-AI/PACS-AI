@@ -11,6 +11,7 @@ import { isDisplaySetFromUrl, sopInstanceLocation } from './custom-attribute/isD
 import numberOfDisplaySetsWithImages from './custom-attribute/numberOfDisplaySetsWithImages';
 import seriesDescriptionsFromDisplaySets from './custom-attribute/seriesDescriptionsFromDisplaySets';
 import uuidv4 from '../../utils/uuidv4';
+import { getUniqueAttributeFromList } from './lib/getUniqueAttributeFromList';
 
 type Protocol = HangingProtocol.Protocol | HangingProtocol.ProtocolGenerator;
 
@@ -77,15 +78,15 @@ export default class HangingProtocolService extends PubSubService {
     },
     ModalitiesInStudy: {
       name: 'Gets the array of the modalities for the series',
-      callback: metadata =>
-        metadata.ModalitiesInStudy ??
-        (metadata.series || []).reduce((prev, curr) => {
-          const { Modality } = curr;
-          if (Modality && prev.indexOf(Modality) == -1) {
-            prev.push(Modality);
-          }
-          return prev;
-        }, []),
+      callback: metadata => {
+        if (metadata.ModalitiesInStudy?.length > 0) {
+          return metadata.ModalitiesInStudy;
+        }
+        if (Array.isArray(metadata.series)) {
+          return getUniqueAttributeFromList(metadata.series, 'Modality');
+        }
+        return [];
+      },
     },
     isReconstructable: {
       name: 'Checks if the display set is reconstructable',
@@ -660,6 +661,12 @@ export default class HangingProtocolService extends PubSubService {
     if (displaySet?.unsupported) {
       throw new Error('Unsupported displaySet');
     }
+    // Overlays (SEG, RTSTRUCT) share selectors with referenced volumes but must not
+    // sync to every matched viewport before hydration (would replace e.g. 3D primary).
+    if (displaySet?.isOverlayDisplaySet) {
+      return defaultReturn;
+    }
+
     const protocol = this.protocol;
     const protocolStage = protocol.stages[this.stageIndex];
     const protocolViewports = protocolStage.viewports;

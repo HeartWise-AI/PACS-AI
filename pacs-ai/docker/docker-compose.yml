@@ -1,0 +1,13 @@
+networks:
+  default:
+    external: true
+    name: pacs-net
+
+services:
+  pacs-ai:
+    container_name: pacs-ai
+    build:
+      context: ../..
+      dockerfile: pacs-ai/docker/Dockerfile.pacs-ai
+    expose:
+      - '80'

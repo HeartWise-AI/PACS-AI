@@ -1,0 +1,117 @@
+// Viewer previous results (cross-service contract v1, section 4/5).
+// All fields beyond the identifiers are optional on the wire: the backend
+// pieces ship independently, so every mapper tolerates their absence.
+
+export interface SelectedView {
+  sopInstanceUID: string | null;
+  seriesInstanceUID: string | null;
+  viewLabel: string | null;
+  order: number;
+  role: string | null;
+  extra: Record<string, unknown> | null;
+}
+
+export interface ViewerModelResult {
+  studyInstanceUID: string;
+  modelName: string;
+  modelVersion: string | null;
+  modality: string | null;
+  // Firestore registration id of the tenant's model, when one matches.
+  modelId: string | null;
+  // model-info modelId (what /model/proxy/available returns as modelId).
+  artifactModelId: string | null;
+  containerId: string | null;
+  runId: string | null;
+  executionId: string | null;
+  studyServiceJobId: string | null;
+  completedAt: string | null;
+  trigger: string | null;
+  // null means the run did not record its selection (old runs, models
+  // without a selection step); [] means it recorded an empty selection.
+  selectedViews: SelectedView[] | null;
+  reportAvailable: boolean;
+  // Series the run was dispatched with. A run requested from the viewer
+  // records its list whether or not series were picked; null means no list
+  // was recorded and the run used every series of the modality; undefined
+  // means the backend does not report it.
+  dispatchSeriesInstanceUIDs?: string[] | null;
+}
+
+export interface ResultSeriesInfo {
+  seriesInstanceUID: string;
+  seriesNumber: string | null;
+  description: string | null;
+}
+
+// Which series a stored result covers, compared with the series loaded in the
+// viewer. `series` lists the used series the viewer knows, for display.
+export type ResultSeriesScope =
+  | { kind: 'all'; series: ResultSeriesInfo[] }
+  | { kind: 'subset'; used: number; total: number; series: ResultSeriesInfo[] }
+  // The viewer has none of the used series loaded, so the total is unknown.
+  | { kind: 'count'; used: number; series: ResultSeriesInfo[] };
+
+// The part of a processing run's detail used to notice that a pending run
+// ended without producing a result.
+export interface ViewerModelRunStatus {
+  phase: string | null;
+  outcome: string | null;
+  executions: Array<{ executionId: string | null; status: string | null }>;
+  // True while the run can still be cancelled; absent when the backend does
+  // not report it.
+  cancellable?: boolean;
+}
+
+export type PendingRunFailure = 'failed' | 'skipped';
+
+export interface ViewerModelRun {
+  runId: string;
+  runNumber: number | null;
+  trigger: string | null;
+  executionId: string | null;
+  modelName: string | null;
+  modelVersion: string | null;
+}
+
+// The subset of an available-model entry used for matching; kept structural
+// so this module does not depend on the full inference DTO.
+export interface ViewerResultModelIdentity {
+  // /model/proxy/available returns the model-info id here, not the Firestore id.
+  modelId?: string | null;
+  containerId?: string | null;
+  modelName: string;
+  version?: string | null;
+}
+
+export interface SelectedViewBadge {
+  number: number;
+  viewLabel: string | null;
+}
+
+export interface PendingViewerModelRun {
+  key: string;
+  studyInstanceUID: string;
+  modelId: string | null;
+  containerId: string | null;
+  modelName: string;
+  modelVersion: string | null;
+  // null when the run was already active (409) and its ids are unknown.
+  runId: string | null;
+  executionId: string | null;
+  requestedAt: number;
+  // The newest result known for the model when the run was requested, used
+  // to recognize the run's result when the backend omits run identifiers.
+  baselineCompletedAt: string | null;
+}
+
+// How a run requested from the viewer ended, kept briefly for the running-jobs
+// indicator. `foreground` is true when the user was waiting on the run in the
+// series pop-up, which then reported the end itself.
+export interface EndedViewerModelRun {
+  run: PendingViewerModelRun;
+  // 'cancelled': the user cancelled the run from the running-jobs indicator.
+  outcome: 'completed' | PendingRunFailure | 'cancelled';
+  result: ViewerModelResult | null;
+  endedAt: number;
+  foreground: boolean;
+}

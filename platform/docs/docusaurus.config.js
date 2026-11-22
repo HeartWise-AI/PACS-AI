@@ -1,8 +1,17 @@
 // read this text file
 const fs = require('fs');
-const versions = fs.readFileSync('../../version.txt', 'utf8').split('\n');
+const rawVersion = fs.readFileSync('../../version.txt', 'utf8').trim();
+const [major, minor] = rawVersion.split('.');
+const versionLabel = rawVersion.includes('beta')
+  ? `${major}.${minor} Beta`
+  : `${major}.${minor}`;
 
 const ArchivedVersionsDropdownItems = [
+  {
+    version: '3.10',
+    href: 'https://v3p10.docs.ohif.org',
+    isExternal: true,
+  },
   {
     version: '3.9',
     href: 'https://v3p9.docs.ohif.org',
@@ -30,7 +39,11 @@ const baseUrl = process.env.BASE_URL || '/';
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   future: {
-    experimental_faster: true,
+    faster: true,
+    v4: {
+      removeLegacyPostBuildHeadAttribute: true,
+      useCssCascadeLayers: true,
+    },
   },
   title: 'OHIF',
   tagline: 'Open-source web-based medical imaging platform',
@@ -44,7 +57,11 @@ module.exports = {
     locales: ['en'],
   },
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
+  },
   favicon: 'img/favicon.ico',
   themes: ['@docusaurus/theme-live-codeblock'],
   plugins: [
@@ -92,7 +109,7 @@ module.exports = {
           //     : undefined,
           versions: {
             current: {
-              label: `${versions} (Latest)`,
+              label: `${versionLabel} (Latest)`,
             },
           },
         },
@@ -124,9 +141,9 @@ module.exports = {
         // respectPrefersColorScheme: true,
       },
       announcementBar: {
-        id: 'ohif310_segmentation_ui_update',
+        id: 'ohif311_multimodality_rt_ultrasound',
         content:
-          '🛠️ OHIF 3.10 is here! Explore powerful new segmentation tools, including local AI-assisted workflows, real-time 3D GrowCut, segment statistics, and undo/redo. Plus, enjoy a polished new UI library and smoother interactions across the board. Read the release notes <a target="_blank" rel="noopener noreferrer" href="https://ohif.org/release-notes/3p10/">here</a>! 🔍✨',
+          'OHIF v3.11 is here! New features include multimodality fusion with viewport overlays, RT Dose visualization, dedicated ultrasound mode, DICOM Labelmap support, and advanced RT Structure Set visualization. Read the release notes <a target="_blank" rel="noopener noreferrer" href="https://ohif.org/release-notes/3p11/">here</a>!',
       },
       prism: {
         theme: require('prism-react-renderer').themes.github,
@@ -177,12 +194,6 @@ module.exports = {
             position: 'left',
           },
           {
-            to: '/migration-guide/3p9-to-3p10/',
-            //activeBaseRegex: '(^/help$)|(/help)',
-            label: '3.10 Migration Guides',
-            position: 'left',
-          },
-          {
             type: 'docsVersionDropdown',
             position: 'right',
             dropdownActiveClassDisabled: true,
@@ -224,78 +235,7 @@ module.exports = {
       },
       footer: {
         style: 'dark',
-        links: [
-          {
-            title: ' ',
-            items: [
-              {
-                // This doesn't show up on dev for some reason, but displays in build
-                html: `
-                <a href="https://www.massgeneral.org/" target="_blank" rel="noreferrer noopener">
-                  <img src="/img/mgh-logo.png" id="mgh-logo" alt="MGH" />
-                </a>
-              `,
-              },
-            ],
-          },
-          {
-            title: 'Learn',
-            items: [
-              {
-                label: 'Introduction',
-                to: '/',
-              },
-              {
-                label: 'Getting Started',
-                to: 'development/getting-started',
-              },
-              {
-                label: 'FAQ',
-                to: '/faq',
-              },
-              {
-                label: 'Resources',
-                to: '/resources',
-              },
-            ],
-          },
-          {
-            title: 'Community',
-            items: [
-              {
-                label: 'Discussion board',
-                href: 'https://community.ohif.org/',
-              },
-              {
-                label: 'Help',
-                to: '/help',
-              },
-            ],
-          },
-          {
-            title: 'More',
-            items: [
-              {
-                label: 'Donate',
-                href: 'https://giving.massgeneral.org/ohif',
-              },
-              {
-                label: 'GitHub',
-                href: 'https://github.com/OHIF/Viewers',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/OHIFviewer',
-              },
-            ],
-          },
-        ],
-        logo: {
-          alt: 'OHIF ',
-          src: 'img/netlify-color-accent.svg',
-          href: 'https://viewer.ohif.org/',
-        },
-        copyright: `OHIF is open source software released under the MIT license.`,
+        links: [],
       },
     }),
 };

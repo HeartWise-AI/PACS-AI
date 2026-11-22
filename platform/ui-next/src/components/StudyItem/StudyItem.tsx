@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
-import { useGlobalStateData } from '@ohif/app/src/GlobalStateProvider';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
@@ -25,30 +24,18 @@ const StudyItem = ({
   StudyMenuItems,
   StudyInstanceUID,
 }: withAppTypes) => {
-  const { setModalitiesInStudy } = useGlobalStateData();
-
-  useEffect(() => {
-    if (modalities) {
-      setModalitiesInStudy(modalities);
-    }
-  }, [modalities, setModalitiesInStudy]);
-
   return (
     <Accordion
       type="single"
       collapsible
       onClick={onClick}
       onKeyDown={() => {}}
-      className="flex-shrink-0"
       role="button"
       tabIndex={0}
       defaultValue={isActive ? 'study-item' : undefined}
     >
       <AccordionItem value="study-item">
-        {/* NOTE: This is a PACS changes */}
-        <AccordionTrigger
-          className={classnames('group w-full rounded bg-white/10 hover:bg-white/20')}
-        >
+        <AccordionTrigger className={classnames('hover:bg-accent bg-popover group w-full rounded')}>
           <div className="flex h-[40px] w-full flex-row overflow-hidden">
             <div className="flex w-full flex-row items-center justify-between">
               <div className="flex min-w-0 flex-col items-start text-[13px]">
@@ -58,8 +45,7 @@ const StudyItem = ({
                     className="w-full"
                     asChild
                   >
-                    {/* NOTE: This is a PACS changes */}
-                    <div className="h-[18px] w-full max-w-[160px] overflow-hidden truncate whitespace-nowrap text-left text-white/70">
+                    <div className="text-foreground h-[18px] w-full max-w-[160px] overflow-hidden truncate whitespace-nowrap text-left">
                       {date}
                     </div>
                   </TooltipTrigger>
@@ -70,15 +56,13 @@ const StudyItem = ({
                     className="w-full"
                     asChild
                   >
-                    {/* NOTE: This is a PACS changes */}
-                    <div className="h-[18px] w-full overflow-hidden truncate whitespace-nowrap text-left text-white/70">
+                    <div className="text-muted-foreground h-[18px] w-full overflow-hidden truncate whitespace-nowrap text-left">
                       {description}
                     </div>
                   </TooltipTrigger>
                 </Tooltip>
               </div>
-              {/* NOTE: This is a PACS changes */}
-              <div className="flex flex-col items-end pl-[10px] text-[12px] text-white/70">
+              <div className="text-muted-foreground flex flex-col items-end pl-[10px] text-[12px]">
                 <div className="max-w-[150px] overflow-hidden text-ellipsis">{modalities}</div>
                 <div>{numInstances}</div>
               </div>

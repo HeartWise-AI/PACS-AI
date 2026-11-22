@@ -1,0 +1,172 @@
+// @pacs-ai/extension-inference: import rules (docs/ohif-upgrade/PLAN.md 3.5, 6.1, 6.2). Generated with the other
+// packages' files from the same table; keep them in step. Tests may import upstream sources
+// (@ohif/<pkg>/src/...): packages are not built for jest.
+{
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@pacs-ai/extension-chat",
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-chat (only @pacs-ai/extension-chat/citations)."
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "@ohif/app/src",
+              "@ohif/app/src/**"
+            ],
+            "message": "PLAN 6.2: ours never imports @ohif/app/src; use a public export or move the file into our package."
+          },
+          {
+            "group": [
+              "@ohif/ui",
+              "@ohif/ui/**"
+            ],
+            "message": "PLAN 3.5/6.2: ours never imports the old @ohif/ui; use @ohif/ui-next or @pacs-ai/ui."
+          },
+          {
+            "group": [
+              "react-test-renderer",
+              "react-test-renderer/**"
+            ],
+            "message": "PLAN 3.5: use @testing-library/react (React 19 drops react-test-renderer)."
+          },
+          {
+            "group": [
+              "@ohif/*/src",
+              "@ohif/*/src/**"
+            ],
+            "message": "PLAN 6.2: no deep imports of upstream package sources outside tests; use the package export."
+          },
+          {
+            "group": [
+              "@pacs-ai/theme",
+              "@pacs-ai/theme/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/theme."
+          },
+          {
+            "group": [
+              "@pacs-ai/extension-shell",
+              "@pacs-ai/extension-shell/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-shell."
+          },
+          {
+            "group": [
+              "@pacs-ai/extension-chat/*",
+              "@pacs-ai/extension-chat/*/**",
+              "!@pacs-ai/extension-chat/citations"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-chat (only @pacs-ai/extension-chat/citations)."
+          },
+          {
+            "group": [
+              "@pacs-ai/mode-viewer",
+              "@pacs-ai/mode-viewer/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/mode-viewer."
+          },
+          {
+            "group": [
+              "@ohif/*",
+              "@ohif/*/**",
+              "!@ohif/core",
+              "!@ohif/ui-next",
+              "!@ohif/extension-cornerstone",
+              "!@ohif/extension-default",
+              "!@ohif/core/**",
+              "!@ohif/ui-next/**",
+              "!@ohif/extension-cornerstone/**",
+              "!@ohif/extension-default/**"
+            ],
+            "message": "PLAN 6.1: @pacs-ai/extension-inference may import only @ohif/core, @ohif/ui-next, @ohif/extension-cornerstone, @ohif/extension-default from @ohif."
+          }
+        ]
+      }
+    ],
+    "import/no-relative-packages": "error"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/__mocks__/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@pacs-ai/extension-chat",
+                "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-chat (only @pacs-ai/extension-chat/citations)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "@ohif/app/src",
+                  "@ohif/app/src/**"
+                ],
+                "message": "PLAN 6.2: ours never imports @ohif/app/src; use a public export or move the file into our package."
+              },
+              {
+                "group": [
+                  "@ohif/ui",
+                  "@ohif/ui/**"
+                ],
+                "message": "PLAN 3.5/6.2: ours never imports the old @ohif/ui; use @ohif/ui-next or @pacs-ai/ui."
+              },
+              {
+                "group": [
+                  "react-test-renderer",
+                  "react-test-renderer/**"
+                ],
+                "message": "PLAN 3.5: use @testing-library/react (React 19 drops react-test-renderer)."
+              },
+              {
+                "group": [
+                  "@pacs-ai/theme",
+                  "@pacs-ai/theme/**"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/theme."
+              },
+              {
+                "group": [
+                  "@pacs-ai/extension-shell",
+                  "@pacs-ai/extension-shell/**"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-shell."
+              },
+              {
+                "group": [
+                  "@pacs-ai/extension-chat/*",
+                  "@pacs-ai/extension-chat/*/**",
+                  "!@pacs-ai/extension-chat/citations"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/extension-chat (only @pacs-ai/extension-chat/citations)."
+              },
+              {
+                "group": [
+                  "@pacs-ai/mode-viewer",
+                  "@pacs-ai/mode-viewer/**"
+                ],
+                "message": "PLAN 6.1: @pacs-ai/extension-inference may not import @pacs-ai/mode-viewer."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

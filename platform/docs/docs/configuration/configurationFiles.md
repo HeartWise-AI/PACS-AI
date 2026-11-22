@@ -118,6 +118,7 @@ window.config = ({ servicesManager } = {}) => {
 
 
 Here are a list of some options available:
+- `customizationService`: An array of customization module references and inline overrides applied at the global scope. This is how deployers enable optional features like the [Appearance & Theming](./ui.md) system and configure UI components without modifying core code. See [Customization Service](../platform/services/customization-service/customizationService.md) for the full syntax reference.
 - `disableEditing`:  If true, it disables editing in OHIF, hiding edit buttons in segmentation
   panel and locking already stored measurements.
 - `maxNumberOfWebWorkers`: The maximum number of web workers to use for
@@ -125,12 +126,14 @@ Here are a list of some options available:
   what is specified by `maxNumberOfWebWorkers`. Some windows machines require smaller values.
 - `acceptHeader` : accept header to request specific dicom transfer syntax ex : [ 'multipart/related; type=image/jls; q=1', 'multipart/related; type=application/octet-stream; q=0.1' ]
 - `investigationalUseDialog`: This should contain an object with `option` value, it can be either `always` which always shows the dialog once per session, `never` which never shows the dialog, or `configure` which shows the dialog once and won't show it again until a set number of days defined by the user, if it's set to configure, you are required to add an additional property `days` which is the number of days to wait before showing the dialog again.
+- `groupEnabledModesFirst`: boolean, if set to true, all valid modes for the study get grouped together first, then the rest of the modes. If false, all modes are shown in the order they are defined in the configuration.
+- `experimentalStudyBrowserSort`: boolean, if set to true, you will get the experimental StudyBrowserSort component in the UI, which displays a list of sort functions that the displaySets can be sorted by, the sort reflects in all part of the app including the thumbnail/study panel. These sort functions are defined in the customizationModule and can be expanded by users.
 - `disableConfirmationPrompts`: boolean, if set to true, it skips confirmation prompts for segmentation related prompts.
 - `showPatientInfo`: string, if set to 'visible', the patient info header will be shown and its initial state is expanded. If set to 'visibleCollapsed', the patient info header will be shown but it's initial state is collapsed. If set to 'disabled', the patient info header will never be shown, and if set to 'visibleReadOnly', the patient info header will be shown and always expanded.
 - `requestTransferSyntaxUID` : Request a specific Transfer syntax from dicom web server ex: 1.2.840.10008.1.2.4.80  (applied only if acceptHeader is not set)
 - `omitQuotationForMultipartRequest`: Some servers (e.g., .NET) require the `multipart/related` request to be sent without quotation marks. Defaults to `false`. If your server doesn't require this, then setting this flag to `true` might improve performance (by removing the need for preflight requests). Also note that
 if auth headers are used, a preflight request is required.
-- `maxNumRequests`: The maximum number of requests to allow in parallel. It is an object with keys of `interaction`, `thumbnail`, and `prefetch`. You can specify a specific number for each type.
+- `maxNumRequests`: The maximum number of requests to allow in parallel. It is an object with keys of `interaction`, `thumbnail`, and `prefetch`. You can specify a specific number for each type. For `thumbnail`, a small pool (around `5`) is recommended: the study list preview panel fetches a thumbnail per series in parallel, and a larger pool yields little throughput benefit while risking server overload and contention with `interaction`/`prefetch` requests.
 - `modesConfiguration`: Allows overriding modes configuration.
   - Example config:
   ```js
@@ -309,6 +312,18 @@ reasons:
 
 However, if you would like to get compressed data in a specific transfer syntax, you can modify the `acceptHeader` configuration or
 `requestTransferSyntaxUID` configuration.
+
+### Data Source: stackRetrieveOptions
+At the data source configuration level, you can set `stackRetrieveOptions` to customize Cornerstone stack image retrieval. Merged with defaults; only specify overrides. For example, set `streaming: false` when the data source returns uncompressed DICOM (e.g. `application/octet-stream` only) to avoid black image on load:
+
+```js
+configuration: {
+  acceptHeader: ['application/octet-stream'],
+  stackRetrieveOptions: {
+    retrieveOptions: { single: { streaming: false } },
+  },
+}
+```
 
 ## Environment Variables
 

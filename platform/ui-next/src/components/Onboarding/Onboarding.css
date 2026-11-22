@@ -1,9 +1,9 @@
 .shepherd-header {
-  @apply !w-[100%] !bg-[#151815] !p-0; /* NOTE: This is a PACS changes */
+  @apply !bg-popover !w-[100%] !p-0;
 }
 
 .shepherd-title {
-  @apply !w-[100%] !break-words !text-xl !leading-[1.5] !text-white; /* NOTE: This is a PACS changes */
+  @apply !text-highlight !w-[100%] !break-words !text-xl !leading-[1.5];
 }
 
 .shepherd-content {
@@ -11,7 +11,7 @@
 }
 
 .shepherd-element {
-  @apply !max-w-[260px] !bg-[#151815]; /* NOTE: This is a PACS changes */
+  @apply !bg-popover !max-w-[260px];
 }
 
 .shepherd-text {
@@ -23,15 +23,15 @@
 }
 
 .shepherd-button {
-  @apply !inline-flex !h-[36px] !min-w-[62px] !flex-row !items-center !justify-center !gap-[5px] !whitespace-nowrap !rounded !bg-[#c8f469] !px-[10px] !text-center !font-sans !text-[14px] !leading-[1.2] !text-white !outline-none !transition !duration-300 !ease-in-out focus:!outline-none; /* NOTE: This is a PACS changes */
+  @apply !text-foreground !inline-flex !h-[36px] !min-w-[62px] !flex-row !items-center !justify-center !gap-[5px] !whitespace-nowrap !rounded !bg-primary !px-[10px] !text-center !font-sans !text-[14px] !leading-[1.2] !outline-none !transition !duration-300 !ease-in-out focus:!outline-none;
 }
 
 .shepherd-button.shepherd-button-secondary {
-  @apply !bg-transparent !text-white; /* NOTE: This is a PACS changes */
+  @apply !bg-transparent !text-primary;
 }
 
 .shepherd-arrow::before {
-  @apply !h-[30px] !w-[30px] !bg-[#151815]; /* NOTE: This is a PACS changes */
+  @apply !bg-popover !h-[30px] !w-[30px];
 }
 
 .shepherd-element[data-popper-placement^='left'] > .shepherd-arrow {

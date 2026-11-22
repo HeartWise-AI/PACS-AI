@@ -17,15 +17,7 @@ const classes = {
   bottomLeft: 'overlay-bottom left-viewport',
 };
 
-// NOTE: This is a PACS changes
-function ViewportOverlay({
-  topLeft,
-  topRight,
-  bottomRight,
-  bottomLeft,
-  color = 'text-primary',
-  shadowClass = 'shadow-dark',
-}) {
+function ViewportOverlay({ topLeft, topRight, bottomRight, bottomLeft, color = 'text-highlight', shadowClass = 'shadow-dark' }) {
   const overlay = 'absolute pointer-events-none viewport-overlay';
 
   return (
@@ -39,14 +31,12 @@ function ViewportOverlay({
       <div
         data-cy="viewport-overlay-top-right"
         className={classNames(overlay, classes.topRight)}
-        style={{ transform: 'translateX(9px)' }}
       >
         {topRight}
       </div>
       <div
         data-cy="viewport-overlay-bottom-right"
         className={classNames(overlay, classes.bottomRight)}
-        style={{ transform: 'translateX(6px)' }}
       >
         {bottomRight}
       </div>

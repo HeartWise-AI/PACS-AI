@@ -1,16 +1,4 @@
 {
-  "emptyFilenameError": "لا يمكن أن يكون اسم الملف فارغًا.",
-  "fileType": "نوع الملف",
-  "filename": "اسم الملف",
-  "formTitle": "يرجى تحديد الأبعاد واسم الملف والنوع المطلوب للصورة الناتجة.",
-  "imageHeight": "ارتفاع الصورة (بكسل)",
-  "imagePreview": "معاينة الصورة",
-  "imageWidth": "عرض الصورة (بكسل)",
-  "keepAspectRatio": "الحفاظ على نسبة الأبعاد",
-  "loadingPreview": "جاري تحميل معاينة الصورة...",
-  "minHeightError": "الارتفاع الصالح الأدنى هو 100 بكسل.",
-  "minWidthError": "العرض الصالح الأدنى هو 100 بكسل.",
-  "showAnnotations": "إظهار التعليقات",
   "Export Options": "خيارات التصدير",
   "Transparent Background": "خلفية شفافة",
   "Image Quality": "جودة الصورة"

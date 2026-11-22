@@ -1,0 +1,7 @@
+{
+  "No hotkeys found": "No se han configurado teclas de acceso rápido para esta aplicación. Las teclas de acceso rápido se pueden configurar en el archivo app-config.js de la aplicación.",
+  "Reset to Defaults": "$t(Buttons:Reset to Defaults)",
+  "ResetDefaultMessage": "Preferencias restablecidas a los valores predeterminados con éxito. <br /> Debe <strong>Guardar</strong> para realizar esta acción.",
+  "SaveMessage": "Preferencias guardadas",
+  "User Preferences": "Preferencias de Usuario"
+}
