@@ -22,9 +22,17 @@ import { buildIngestionJobNotificationsUpdate } from '../ingestionJobNotificatio
 
 type UseIngestionJobsOptions = {
   availableModels: GetInferenceAvailableModelsResponse[];
+  /** Load and poll ingestion jobs (needs processing.manage). */
+  enabled?: boolean;
+  /** Resolve job creators from the member list (needs members.manage). */
+  loadMembers?: boolean;
 };
 
-export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
+export function useIngestionJobs({
+  availableModels,
+  enabled = true,
+  loadMembers = true,
+}: UseIngestionJobsOptions) {
   const showAlert = useContext(AlertContext);
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
@@ -82,6 +90,10 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetchIngestionJobs().then(() => setLoading(false));
 
@@ -92,10 +104,13 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
     return () => {
       clearInterval(interval);
     };
-  }, [fetchIngestionJobs]);
+  }, [enabled, fetchIngestionJobs]);
 
   useEffect(() => {
     // Resolves "Created by"; without it the column shows a dash.
+    if (!enabled || !loadMembers) {
+      return;
+    }
     let cancelled = false;
     userRepository
       .GetAllTenantUsers()
@@ -110,7 +125,7 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled, loadMembers]);
 
   const setIngestionJobNotifications = async (
     row: GetInferenceIngestionJobsResponse,
@@ -254,9 +269,7 @@ export function useIngestionJobs({ availableModels }: UseIngestionJobsOptions) {
       return;
     }
 
-    const selectedModel = availableModelsRef.current.find(
-      m => m.containerId === newJobModel.value
-    );
+    const selectedModel = availableModelsRef.current.find(m => m.containerId === newJobModel.value);
 
     if (isAddIngestionJob && !selectedModel) {
       showAlert('Selected model not found. Please try again.', 'error');

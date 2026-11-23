@@ -6,7 +6,17 @@ import { EMPTY_MODALITY_FORM } from '../constants';
 import type { DICOMModalities, ModalityFormState } from '../types';
 import { handleUnauthorizedAccess, mapOrthancModalities } from '../utils';
 
-export function useDicomModalities() {
+type UseDicomModalitiesOptions = {
+  /** Load the modality list (DICOM settings or ingestion jobs are visible). */
+  enabled?: boolean;
+  /** Probe each modality with C-ECHO (needs dicom.manage). */
+  probeStatus?: boolean;
+};
+
+export function useDicomModalities({
+  enabled = true,
+  probeStatus = true,
+}: UseDicomModalitiesOptions = {}) {
   const showAlert = useContext(AlertContext);
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
@@ -14,8 +24,7 @@ export function useDicomModalities() {
   const [modalities, setModalities] = useState<DICOMModalities[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModalityToRemove, setSelectedModalityToRemove] = useState('');
-  const [selectedModality, setSelectedModality] =
-    useState<ModalityFormState>(EMPTY_MODALITY_FORM);
+  const [selectedModality, setSelectedModality] = useState<ModalityFormState>(EMPTY_MODALITY_FORM);
   const [isAddModality, setIsAddModality] = useState(true);
   const [isUpdatingModality, setIsUpdatingModality] = useState(false);
   const [isAddingModality, setIsAddingModality] = useState(false);
@@ -52,7 +61,9 @@ export function useDicomModalities() {
       const response = await orthancRepository.GetDICOMModalities();
       const nextModalities = mapOrthancModalities(response.data.modalities);
       setModalities(nextModalities);
-      updateModalitiesStatus(nextModalities);
+      if (probeStatus) {
+        updateModalitiesStatus(nextModalities);
+      }
     } catch (error) {
       handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error fetching DICOM modalities:', error);
@@ -60,11 +71,15 @@ export function useDicomModalities() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- showAlert from AlertContext is unstable
-  }, []);
+  }, [probeStatus]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     fetchDICOMModalities();
-  }, [fetchDICOMModalities]);
+  }, [enabled, fetchDICOMModalities]);
 
   const updateModalityStatus = async (modalityId: string) => {
     setIsRefreshingDICOMModalities(true);

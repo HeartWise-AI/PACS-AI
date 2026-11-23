@@ -49,5 +49,9 @@
   "Specialty": "Spécialité",
   "Search member name, email, license no., etc.": "Recherche par nom de membre, e-mail, numéro de licence, etc.",
   "Update member information.": "Mettre à jour les informations du membre.",
-  "{{count}} / 500 characters": "{{count}} / 500 caractères"
+  "{{count}} / 500 characters": "{{count}} / 500 caractères",
+  "Custom role": "Rôle personnalisé",
+  "None (use models and rate reports)": "Aucun (utiliser les modèles et évaluer les rapports)",
+  "Create and edit roles in Workspace Settings → Roles.": "Créez et modifiez les rôles dans Réglages de l’espace de travail → Rôles.",
+  "Your role can invite members but cannot see the member list.": "Votre rôle permet d’inviter des membres, mais pas de voir la liste des membres."
 }

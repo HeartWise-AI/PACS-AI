@@ -1,4 +1,15 @@
-import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import {
+  Permission,
+  can,
+  canAny,
+  getAdminLandingPath,
+  hasAdminArea,
+  isAdminRole,
+  WORKSPACE_SETTINGS_PERMISSIONS,
+  type UserAccess,
+} from '@pacs-ai/extension-core/src/access/permissions';
+
+export { isAdminRole };
 
 export type TopNavigationItemKey =
   | 'studies'
@@ -18,42 +29,47 @@ export interface TopNavigationItem {
   opensInNewTab?: boolean;
 }
 
-const ADMIN_ROLES = new Set<UserRole>([UserRole.ADMIN, UserRole.OWNER]);
-
-export const isAdminRole = (role?: UserRole | null): boolean =>
-  role != null && ADMIN_ROLES.has(role);
-
 export const isAdminPath = (pathname: string): boolean => pathname.startsWith('/admin/');
 
+/**
+ * Builds the top navigation from the user's effective access. OWNER/ADMIN see
+ * every admin page; a custom role sees only the pages its permissions open.
+ * The gateway enforces the same permissions on every admin API.
+ */
 export const getTopNavigationItems = (
   pathname: string,
-  role?: UserRole | null
+  access?: UserAccess | null
 ): TopNavigationItem[] => {
   if (isAdminPath(pathname)) {
-    return [
-      { key: 'members', label: 'Members', to: '/admin/members' },
-      { key: 'kibana-logs', label: 'Kibana Logs', to: '/admin/kibana-logs' },
-      {
+    const items: TopNavigationItem[] = [];
+    if (canAny(access, [Permission.MEMBERS_INVITE, Permission.MEMBERS_MANAGE])) {
+      items.push({ key: 'members', label: 'Members', to: '/admin/members' });
+    }
+    if (can(access, Permission.LOGS_VIEW)) {
+      items.push({ key: 'kibana-logs', label: 'Kibana Logs', to: '/admin/kibana-logs' });
+    }
+    if (access?.isAdmin || canAny(access, WORKSPACE_SETTINGS_PERMISSIONS)) {
+      items.push({
         key: 'workspace-settings',
         label: 'Workspace Settings',
         to: '/admin/workspace-settings',
-      },
-      ...(isAdminRole(role)
-        ? [{ key: 'launch-pacs-ai' as const, label: 'Launch PACS AI', to: '/' }]
-        : []),
-    ];
+      });
+    }
+    items.push({ key: 'launch-pacs-ai', label: 'Launch PACS AI', to: '/' });
+    return items;
   }
 
+  const adminLanding = getAdminLandingPath(access);
   return [
     { key: 'studies', label: 'Studies', to: '/' },
     { key: 'ai-models', label: 'AI Models', to: '/ai-models' },
     { key: 'ai-predictions', label: 'AI Predictions', to: '/ai-predictions' },
-    ...(isAdminRole(role)
+    ...(hasAdminArea(access) && adminLanding
       ? [
           {
             key: 'admin-console' as const,
             label: 'Admin Console',
-            to: '/admin/members',
+            to: adminLanding,
             opensInNewTab: true,
           },
         ]

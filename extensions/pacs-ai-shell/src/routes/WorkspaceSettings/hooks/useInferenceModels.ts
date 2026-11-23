@@ -15,7 +15,16 @@ import { formatEnvsForApi, handleUnauthorizedAccess, transformInferenceModels } 
 import { useModelDeploymentProgress } from './useModelDeploymentProgress';
 import { useAuthenticatedScope, getAuthenticatedScope } from './authenticatedScope';
 
-export function useInferenceModels() {
+type UseInferenceModelsOptions = {
+  /** Load and poll the model registry (needs models.manage). */
+  enabled?: boolean;
+};
+
+/**
+ * The available-models list (`/model/proxy/available`) is always loaded: the
+ * ingestion, feedback and roles tabs need it. The registry needs models.manage.
+ */
+export function useInferenceModels({ enabled = true }: UseInferenceModelsOptions = {}) {
   const showAlert = useContext(AlertContext);
   const navigate = useNavigate();
   const authScope = useAuthenticatedScope();
@@ -89,9 +98,13 @@ export function useInferenceModels() {
   };
 
   useEffect(() => {
+    fetchAvailableInferenceModels();
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetchInferenceModels().then(() => setLoading(false));
-    fetchAvailableInferenceModels();
 
     const interval = setInterval(() => {
       fetchInferenceModels();
@@ -100,7 +113,7 @@ export function useInferenceModels() {
     return () => {
       clearInterval(interval);
     };
-  }, [fetchInferenceModels, fetchAvailableInferenceModels]);
+  }, [enabled, fetchInferenceModels, fetchAvailableInferenceModels]);
 
   const refreshInferenceModels = () => {
     setLoading(true);

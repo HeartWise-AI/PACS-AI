@@ -9,6 +9,7 @@ import type { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tena
 import type { GetAPIInfoResponse } from '@pacs-ai/extension-core/src/api/dto';
 import { FrontendVersionContext } from '@pacs-ai/extension-core/src/frontendVersion';
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
+import { useUserAccess } from '@pacs-ai/extension-core/src/hooks/useUserAccess';
 import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
 import InferenceNotificationsBell from '@pacs-ai/extension-inference/src/InferenceNotificationsBell';
 import {
@@ -168,6 +169,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
   const { setOpen: setAccountMenuOpen } = accountMenu;
   const { setOpen: setMobileMenuOpen } = mobileMenu;
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+  const { access } = useUserAccess(currentUser?.role ?? null);
   const [tenantInfo, setTenantInfo] = useState<Partial<GetTenantInfoResponse>>({});
   const [apiInfo, setAPIInfo] = useState<Partial<GetAPIInfoResponse>>({});
   const tenantId = localStorage.getItem('tenantId') || '';
@@ -219,8 +221,8 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
   }, [location.pathname, location.search, setAccountMenuOpen, setMobileMenuOpen]);
 
   const navigationItems = useMemo(
-    () => getTopNavigationItems(location.pathname, currentUser?.role),
-    [currentUser?.role, location.pathname]
+    () => getTopNavigationItems(location.pathname, access),
+    [access, location.pathname]
   );
   const studiesDestination = getStudiesDestination(location.pathname, location.search);
   const userName = currentUser?.name?.trim() || t('User');

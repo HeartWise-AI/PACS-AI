@@ -49,5 +49,8 @@
   "Reconnecting": "Reconnecting",
   "Created by": "Created by",
   "Notifications": "Notifications",
-  "Model Feedback": "Model Feedback"
+  "Model Feedback": "Model Feedback",
+  "Roles": "Roles",
+  "Your role does not include any workspace settings.": "Your role does not include any workspace settings.",
+  "Loading...": "Loading..."
 }

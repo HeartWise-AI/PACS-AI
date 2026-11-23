@@ -124,19 +124,32 @@ describe('TopNavigation', () => {
     expect(mobileAdminConsole.getAttribute('target')).toBe('_blank');
   });
 
-  test('shows the existing admin destinations on admin pages', async () => {
+  test('shows admins every admin destination on admin pages', async () => {
+    mockGetCurrentUser.mockResolvedValue({ data: user(UserRole.ADMIN) });
     renderNavigation('/admin/workspace-settings', 'Workspace Settings');
     await screen.findByText('Ada Clinician');
 
     const desktopNavigation = screen.getByTestId('desktop-navigation');
-    expect(within(desktopNavigation).getByRole('link', { name: 'Members' })).not.toBeNull();
+    expect(await within(desktopNavigation).findByRole('link', { name: 'Members' })).not.toBeNull();
     expect(within(desktopNavigation).getByRole('link', { name: 'Kibana Logs' })).not.toBeNull();
     expect(
       within(desktopNavigation)
         .getByRole('link', { name: 'Workspace Settings' })
         .getAttribute('aria-current')
     ).toBe('page');
-    expect(within(desktopNavigation).queryByText('Launch PACS AI')).toBeNull();
+    expect(within(desktopNavigation).getByText('Launch PACS AI')).not.toBeNull();
+  });
+
+  test('hides admin destinations a plain user cannot open', async () => {
+    mockGetCurrentUser.mockResolvedValue({ data: user(UserRole.USER) });
+    renderNavigation('/admin/workspace-settings', 'Workspace Settings');
+    await screen.findByText('Ada Clinician');
+
+    const desktopNavigation = screen.getByTestId('desktop-navigation');
+    await waitFor(() =>
+      expect(within(desktopNavigation).queryByRole('link', { name: 'Members' })).toBeNull()
+    );
+    expect(within(desktopNavigation).getByText('Launch PACS AI')).not.toBeNull();
   });
 
   test('supports keyboard navigation and predictable Escape focus in the small-screen menu', async () => {

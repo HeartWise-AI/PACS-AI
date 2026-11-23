@@ -1,6 +1,7 @@
 import tenantRepository from '../api/tenantRepository';
 import userRepository from '../api/userRepository';
 import type { UserResponse } from '../api/userDTO';
+import { clearUserAccess } from '../access/userAccessService';
 import { clearAuthenticatedSession } from '../utils/authenticatedSession';
 import { getPendingAccountSuspendedLoginURL } from './accountAccessSession';
 import { getPolicyAcceptanceURL } from './policyAcceptanceSession';
@@ -16,6 +17,8 @@ import { getPendingSessionExpiredLoginURL } from './sessionExpirySession';
  * instead of flashing through `/` first.
  */
 export const navigateAfterAuth = async (navigate, user: UserResponse, destination = '/') => {
+  // A new sign-in may be a different account: drop the previous user's permissions.
+  clearUserAccess();
   // Admin-created users who have not verified their email must set a password first.
   if (!user.isEmailVerified && user.isAdminCreated) {
     navigate('/change-password', { replace: true });

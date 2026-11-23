@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
+import { useUserAccess } from '@pacs-ai/extension-core/src/hooks/useUserAccess';
 import TopNavigation from '../../components/TopNavigation';
 import WorkspaceSettingsNav from './components/WorkspaceSettingsNav';
 import { useDicomModalities } from './hooks/useDicomModalities';
@@ -12,14 +15,31 @@ import InferenceModelsSection from './sections/InferenceModelsSection';
 import IngestionJobsSection from './sections/IngestionJobsSection';
 import ModelFeedbackSection from './sections/ModelFeedbackSection';
 import OnboardingSection from './sections/OnboardingSection';
+import RolesSection from './sections/RolesSection';
+import { useCustomRoles } from './roles/useCustomRoles';
+import { getVisibleWorkspaceSettingsTabs } from './workspaceSettingsAccess';
 import type { WorkspaceSettingsTabId } from './constants';
 
 const WorkspaceSettingsPage = () => {
-  const { activeTab, setActiveTab } = useWorkspaceSettingsTab();
+  const { t } = useTranslation('Common');
+  const { access, loading: accessLoading, can } = useUserAccess();
+  const visibleTabs = useMemo(() => getVisibleWorkspaceSettingsTabs(access), [access]);
+  const isVisible = (tab: WorkspaceSettingsTabId) => visibleTabs.includes(tab);
+  const { activeTab, setActiveTab } = useWorkspaceSettingsTab(visibleTabs);
   const onboarding = useTenantOnboarding();
-  const dicom = useDicomModalities();
-  const inference = useInferenceModels();
-  const ingestion = useIngestionJobs({ availableModels: inference.availableModels });
+  // Each tab's data loads only for users allowed to open it; the gateway
+  // enforces the same permissions.
+  const dicom = useDicomModalities({
+    enabled: isVisible('dicom') || isVisible('ingestion'),
+    probeStatus: isVisible('dicom'),
+  });
+  const inference = useInferenceModels({ enabled: isVisible('models') });
+  const ingestion = useIngestionJobs({
+    availableModels: inference.availableModels,
+    enabled: isVisible('ingestion'),
+    loadMembers: can(Permission.MEMBERS_MANAGE),
+  });
+  const roles = useCustomRoles({ enabled: isVisible('roles') });
 
   useEffect(() => {
     document.title = 'Admin Workspace Settings - PACS AI';
@@ -32,6 +52,8 @@ const WorkspaceSettingsPage = () => {
     hidden: activeTab !== tab,
   });
 
+  const noAccess = !accessLoading && visibleTabs.length === 0;
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
       <TopNavigation title="Workspace Settings" />
@@ -42,34 +64,62 @@ const WorkspaceSettingsPage = () => {
           <WorkspaceSettingsNav
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            visibleTabs={visibleTabs}
           />
 
-          <div {...panelProps('onboarding')}>
-            <OnboardingSection onboarding={onboarding} />
-          </div>
-          <div {...panelProps('dicom')}>
-            <DicomModalitiesSection dicom={dicom} />
-          </div>
-          <div {...panelProps('models')}>
-            <InferenceModelsSection
-              inference={inference}
-              active={activeTab === 'models'}
-            />
-          </div>
-          <div {...panelProps('ingestion')}>
-            <IngestionJobsSection
-              ingestion={ingestion}
-              dicomModalities={dicom.modalities}
-              availableModels={inference.availableModels}
-            />
-          </div>
-          <div {...panelProps('feedback')}>
-            <ModelFeedbackSection
-              active={activeTab === 'feedback'}
-              availableModels={inference.availableModels}
-              tenantName={onboarding.tenantInfo.name}
-            />
-          </div>
+          {accessLoading && visibleTabs.length === 0 && (
+            <p className="text-sm text-white text-opacity-60">{t('Loading...')}</p>
+          )}
+          {noAccess && (
+            <p className="text-sm text-white text-opacity-60">
+              {t('Your role does not include any workspace settings.')}
+            </p>
+          )}
+
+          {isVisible('onboarding') && (
+            <div {...panelProps('onboarding')}>
+              <OnboardingSection onboarding={onboarding} />
+            </div>
+          )}
+          {isVisible('dicom') && (
+            <div {...panelProps('dicom')}>
+              <DicomModalitiesSection dicom={dicom} />
+            </div>
+          )}
+          {isVisible('models') && (
+            <div {...panelProps('models')}>
+              <InferenceModelsSection
+                inference={inference}
+                active={activeTab === 'models'}
+              />
+            </div>
+          )}
+          {isVisible('ingestion') && (
+            <div {...panelProps('ingestion')}>
+              <IngestionJobsSection
+                ingestion={ingestion}
+                dicomModalities={dicom.modalities}
+                availableModels={inference.availableModels}
+              />
+            </div>
+          )}
+          {isVisible('feedback') && (
+            <div {...panelProps('feedback')}>
+              <ModelFeedbackSection
+                active={activeTab === 'feedback'}
+                availableModels={inference.availableModels}
+                tenantName={onboarding.tenantInfo.name}
+              />
+            </div>
+          )}
+          {isVisible('roles') && (
+            <div {...panelProps('roles')}>
+              <RolesSection
+                roles={roles}
+                availableModels={inference.availableModels}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>
