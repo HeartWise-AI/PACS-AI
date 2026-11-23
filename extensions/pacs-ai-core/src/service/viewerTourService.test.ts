@@ -115,6 +115,7 @@ describe('viewerTourService', () => {
     // Codex review of #490: reset, reload with the API down, tour shown locally,
     // completion fails with no known user; the server-synced marker from the
     // reset stayed, so the tour came back once the API recovered.
+    localStorage.setItem('sessionToken', 'token-of-user-a');
     mockGetViewerTour.mockResolvedValue(notCompleted);
     await resetViewerTour();
     let fresh: typeof import('./viewerTourService');
@@ -137,6 +138,30 @@ describe('viewerTourService', () => {
     // another device (server: not completed) shows the tour again here.
     expect(localStorage.getItem('viewerTourPendingCompletion')).toBeNull();
     await expect(fresh!.shouldShowTour(VIEWER_TOUR_ID)).resolves.toBe(true);
+  });
+
+  it('does not apply a pending completion of one account to the next account on the browser', async () => {
+    // Codex review of #554: user A's failed completion hid the tour user B
+    // asked to see again.
+    const notCompletedB = { data: { userId: 'user-b', viewerTourCompletedAt: null } };
+    let fresh: typeof import('./viewerTourService');
+    jest.isolateModules(() => {
+      fresh = require('./viewerTourService');
+    });
+    localStorage.setItem('sessionToken', 'token-of-user-a');
+    mockGetViewerTour.mockRejectedValue(apiError);
+    await fresh!.shouldShowTour(VIEWER_TOUR_ID);
+    mockCompleteViewerTour.mockRejectedValueOnce(apiError);
+    await fresh!.markTourShown(VIEWER_TOUR_ID);
+
+    // A signs out, B signs in; B reset the tour on another device.
+    localStorage.setItem('sessionToken', 'token-of-user-b');
+    localStorage.setItem('viewerTourServerSyncedUsers', JSON.stringify(['user-b']));
+    mockGetViewerTour.mockResolvedValue(notCompletedB);
+    mockCompleteViewerTour.mockClear();
+
+    await expect(fresh!.shouldShowTour(VIEWER_TOUR_ID)).resolves.toBe(true);
+    expect(mockCompleteViewerTour).not.toHaveBeenCalled();
   });
 
   it('keeps other tours on the local flag only', async () => {
