@@ -97,6 +97,7 @@ export interface FeedbackCSVLabels {
     modelId: string;
     version: string;
     vote: string;
+    reason: string;
     userName: string;
     userEmail: string;
     userId: string;
@@ -107,6 +108,8 @@ export interface FeedbackCSVLabels {
   };
   vote: (feedbackType: string) => string;
   model: (inferenceModelId: string) => string;
+  // The rejection reason shown for a vote; empty for approvals.
+  reason: (item: ModelFeedbackListItem) => string;
 }
 
 /** CSV rows (header first) with every cell safe from formula injection. */
@@ -122,6 +125,7 @@ export function feedbackCSVRows(
     headers.modelId,
     headers.version,
     headers.vote,
+    headers.reason,
     headers.userName,
     headers.userEmail,
     headers.userId,
@@ -137,6 +141,7 @@ export function feedbackCSVRows(
     item.modelId,
     item.modelVersion,
     labels.vote(item.feedbackType),
+    labels.reason(item),
     item.userName ?? '',
     item.userEmail ?? '',
     item.userId,

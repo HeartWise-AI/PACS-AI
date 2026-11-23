@@ -36,34 +36,41 @@ const WorkspaceSettingsPage = () => {
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
       <TopNavigation title="Workspace Settings" />
       <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
-          <div className="mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            <TenantHeader tenantInfo={onboarding.tenantInfo} />
-            <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
-            <WorkspaceSettingsNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="mb-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <TenantHeader tenantInfo={onboarding.tenantInfo} />
+          <div className="my-5 h-px w-full bg-white bg-opacity-10"></div>
+          <WorkspaceSettingsNav
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
 
-            <div {...panelProps('onboarding')}>
-              <OnboardingSection onboarding={onboarding} />
-            </div>
-            <div {...panelProps('dicom')}>
-              <DicomModalitiesSection dicom={dicom} />
-            </div>
-            <div {...panelProps('models')}>
-              <InferenceModelsSection inference={inference} active={activeTab === 'models'} />
-            </div>
-            <div {...panelProps('ingestion')}>
-              <IngestionJobsSection
-                ingestion={ingestion}
-                dicomModalities={dicom.modalities}
-                availableModels={inference.availableModels}
-              />
-            </div>
-            <div {...panelProps('feedback')}>
-              <ModelFeedbackSection
-                active={activeTab === 'feedback'}
-                availableModels={inference.availableModels}
-              />
-            </div>
+          <div {...panelProps('onboarding')}>
+            <OnboardingSection onboarding={onboarding} />
           </div>
+          <div {...panelProps('dicom')}>
+            <DicomModalitiesSection dicom={dicom} />
+          </div>
+          <div {...panelProps('models')}>
+            <InferenceModelsSection
+              inference={inference}
+              active={activeTab === 'models'}
+            />
+          </div>
+          <div {...panelProps('ingestion')}>
+            <IngestionJobsSection
+              ingestion={ingestion}
+              dicomModalities={dicom.modalities}
+              availableModels={inference.availableModels}
+            />
+          </div>
+          <div {...panelProps('feedback')}>
+            <ModelFeedbackSection
+              active={activeTab === 'feedback'}
+              availableModels={inference.availableModels}
+              tenantName={onboarding.tenantInfo.name}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );

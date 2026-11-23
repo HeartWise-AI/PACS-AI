@@ -23,6 +23,8 @@ import {
   GetInferenceModelDeploymentOperationResponse,
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
+  ListFeedbackReportCountsRequest,
+  ListFeedbackReportCountsResponse,
   ListModelFeedbackRequest,
   ListModelFeedbackResponse,
   GetOnboardingModelQuestionnaireAnswersRequest,
@@ -297,7 +299,9 @@ const inferenceRepository = {
     request: GetModelFeedbackByModelIDRequest
   ): Promise<APIResponse<GetModelFeedbackByModelIDResponse>> {
     return Api()
-      .get(`/v1/inference/model/${request.modelId}/feedback`)
+      .get(`/v1/inference/model/${request.modelId}/feedback`, {
+        params: request.executionId ? { executionId: request.executionId } : undefined,
+      })
       .then((response: AxiosResponse<APIResponse<GetModelFeedbackByModelIDResponse>>) => {
         const { data } = response;
         return data;
@@ -320,6 +324,28 @@ const inferenceRepository = {
     return Api()
       .get(`/v1/inference/model/feedback/list`, { params: request })
       .then((response: AxiosResponse<APIResponse<ListModelFeedbackResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * Completed reports per model in a window, the denominator for "reports
+   * rated" (workspace owners and administrators).
+   *
+   * @param   {ListFeedbackReportCountsRequest}  request
+   *
+   * @return  {Promise<APIResponse><ListFeedbackReportCountsResponse>}
+   */
+  async ListFeedbackReportCounts(
+    request: ListFeedbackReportCountsRequest
+  ): Promise<APIResponse<ListFeedbackReportCountsResponse>> {
+    return Api()
+      .get(`/v1/inference/model/feedback/report-counts`, { params: request })
+      .then((response: AxiosResponse<APIResponse<ListFeedbackReportCountsResponse>>) => {
         const { data } = response;
         return data;
       })
@@ -448,7 +474,9 @@ const inferenceRepository = {
    */
   async RemoveModelFeedback(request: RemoveModelFeedbackRequest): Promise<APIResponse<void>> {
     return Api()
-      .delete(`/v1/inference/model/${request.modelId}/feedback/remove`)
+      .delete(`/v1/inference/model/${request.modelId}/feedback/remove`, {
+        params: request.executionId ? { executionId: request.executionId } : undefined,
+      })
       .then((response: AxiosResponse<APIResponse<void>>) => {
         const { data } = response;
         return data;

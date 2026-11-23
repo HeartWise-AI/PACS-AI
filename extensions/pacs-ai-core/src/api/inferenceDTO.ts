@@ -224,6 +224,8 @@ export interface GetInferenceAvailableModelsResponse {
 
 export interface GetModelFeedbackByModelIDRequest {
   modelId: string;
+  // Scopes the vote to one report; omitted for the model-wide (legacy) vote.
+  executionId?: string | null;
 }
 
 export interface GetModelFeedbackByModelIDResponse {
@@ -360,6 +362,8 @@ export interface PredictInferenceModelWebappResponse {
 
 export interface RemoveModelFeedbackRequest {
   modelId: string;
+  // Scopes the removal to the vote on one report.
+  executionId?: string | null;
 }
 
 export interface StartInferenceModelContainerRequest {
@@ -452,6 +456,26 @@ export interface ListModelFeedbackResponse {
   summary: ModelFeedbackSummaryEntry[];
   items: ModelFeedbackListItem[];
   truncated: boolean;
+}
+
+export interface ListFeedbackReportCountsRequest {
+  // RFC3339 bounds, both required, from < to.
+  from: string;
+  to: string;
+}
+
+export interface FeedbackReportCount {
+  modelName: string;
+  modelVersion: string;
+  modality: string;
+  // Completed executions in the window.
+  completedCount: number;
+}
+
+export interface ListFeedbackReportCountsResponse {
+  from: string;
+  to: string;
+  models: FeedbackReportCount[];
 }
 
 export interface UpdateInferenceIngestionJobRequest {

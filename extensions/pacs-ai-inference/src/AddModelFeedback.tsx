@@ -17,6 +17,10 @@ import { GetInferenceAvailableModelsResponse } from '@pacs-ai/extension-core/src
 import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { AlertContext } from '@pacs-ai/extension-core/src/providers/AlertProvider';
+import {
+  withDefaultRejectReason,
+  type FeedbackQuestionnaire,
+} from '@pacs-ai/extension-core/src/feedback/defaultRejectQuestionnaire';
 
 interface AddModelFeedbackProps {
   title: string;
@@ -69,6 +73,19 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
     baseModelId && modelVersion ? `${baseModelId}-${modelVersion}` : baseModelId;
 
   const currentLanguage = i18n.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  const executionId = reportRef?.executionId || null;
+
+  // The questions asked for a vote. Thumbs down always starts with the default
+  // reason question, then any the model configures.
+  const approveQuestionnaires = selectedInferenceModel?.approveFeedbackQuestionnaires;
+  const rejectQuestionnaires = selectedInferenceModel?.rejectFeedbackQuestionnaires;
+  const questionnairesFor = useCallback(
+    (type: Exclude<FeedbackType, null>): FeedbackQuestionnaire[] =>
+      type === 'APPROVE'
+        ? ([...(approveQuestionnaires ?? [])] as FeedbackQuestionnaire[])
+        : (withDefaultRejectReason(rejectQuestionnaires) as FeedbackQuestionnaire[]),
+    [approveQuestionnaires, rejectQuestionnaires]
+  );
 
   // Refresh existing feedback from API
   const refreshExistingFeedback = useCallback(async () => {
@@ -81,6 +98,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
     try {
       const apiResponse = await inferenceRepository.GetModelFeedbackByModelID({
         modelId: feedbackModelId,
+        ...(executionId ? { executionId } : {}),
       });
       console.log('Existing model feedback:', apiResponse);
 
@@ -106,7 +124,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
       setExistingFeedbackId('');
       setCurrentFeedbackType(null);
     }
-  }, [feedbackModelId]);
+  }, [feedbackModelId, executionId]);
 
   // Submit feedback without questions (used when there are no questionnaires)
   const submitFeedbackWithoutQuestions = useCallback(
@@ -164,6 +182,25 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
     setPendingFeedbackType(null);
   }, []);
 
+  // Whether every required question of the vote has an answer.
+  const requiredAnswered = useCallback(
+    (type: Exclude<FeedbackType, null>) =>
+      questionnairesFor(type).every(question => {
+        if (!question.required) {
+          return true;
+        }
+        const upperType = question.type.toUpperCase();
+        if (upperType === 'RADIO') {
+          return !!questionRadioAnswers[question.id];
+        }
+        if (upperType === 'CHECKBOX') {
+          return (questionCheckboxAnswers[question.id] ?? []).length > 0;
+        }
+        return !!questionTextAnswers[question.id]?.trim();
+      }),
+    [questionnairesFor, questionCheckboxAnswers, questionRadioAnswers, questionTextAnswers]
+  );
+
   // Handle thumb up (approve) click
   const handleThumbUpClick = useCallback(async () => {
     if (isSubmitting) {
@@ -180,7 +217,10 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
 
       setIsSubmitting(true);
       try {
-        await inferenceRepository.RemoveModelFeedback({ modelId: feedbackModelId });
+        await inferenceRepository.RemoveModelFeedback({
+          modelId: feedbackModelId,
+          ...(executionId ? { executionId } : {}),
+        });
         await refreshExistingFeedback();
       } catch (error) {
         console.error('Error removing model feedback (APPROVE):', error);
@@ -200,11 +240,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
     }
 
     // otherwise, if there are no approve questionnaires, bypass modal and call API directly.
-    const approveQuestionnaires = selectedInferenceModel?.approveFeedbackQuestionnaires;
-    const hasApproveQuestions =
-      Array.isArray(approveQuestionnaires) && approveQuestionnaires.length > 0;
-
-    if (!hasApproveQuestions) {
+    if (questionnairesFor('APPROVE').length === 0) {
       await submitFeedbackWithoutQuestions('APPROVE');
       return;
     }
@@ -214,11 +250,12 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
     handleOpenModal();
   }, [
     currentFeedbackType,
+    executionId,
     feedbackModelId,
     handleOpenModal,
     isSubmitting,
+    questionnairesFor,
     refreshExistingFeedback,
-    selectedInferenceModel?.approveFeedbackQuestionnaires,
     submitFeedbackWithoutQuestions,
   ]);
 
@@ -232,6 +269,9 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
       }
       // use the pending intent (APPROVE / REJECT). Default to REJECT if somehow unset.
       const nextType: Exclude<FeedbackType, null> = pendingFeedbackType || 'REJECT';
+      if (!requiredAnswered(nextType)) {
+        return;
+      }
 
       if (!feedbackModelId) {
         // no modelId provided – just update local state.
@@ -243,17 +283,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
 
       setIsSubmitting(true);
       try {
-        type FeedbackQuestionnaire =
-          GetInferenceAvailableModelsResponse['approveFeedbackQuestionnaires'][number];
-
-        const rawQuestionnaires =
-          nextType === 'APPROVE'
-            ? selectedInferenceModel?.approveFeedbackQuestionnaires
-            : selectedInferenceModel?.rejectFeedbackQuestionnaires;
-
-        const questionnaires: FeedbackQuestionnaire[] = rawQuestionnaires
-          ? [...rawQuestionnaires]
-          : [];
+        const questionnaires = questionnairesFor(nextType);
 
         const modelFeedbackAnswersArray = questionnaires.reduce(
           (
@@ -377,11 +407,11 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
       questionRadioAnswers,
       questionTextAnswers,
       existingFeedbackId,
+      questionnairesFor,
       refreshExistingFeedback,
       reportRef,
+      requiredAnswered,
       selectedInferenceModel?.modelId,
-      selectedInferenceModel?.approveFeedbackQuestionnaires,
-      selectedInferenceModel?.rejectFeedbackQuestionnaires,
     ]
   );
 
@@ -402,7 +432,10 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
 
       setIsSubmitting(true);
       try {
-        await inferenceRepository.RemoveModelFeedback({ modelId: feedbackModelId });
+        await inferenceRepository.RemoveModelFeedback({
+          modelId: feedbackModelId,
+          ...(executionId ? { executionId } : {}),
+        });
         await refreshExistingFeedback();
       } catch (error) {
         console.error('Error removing model feedback (REJECT):', error);
@@ -421,27 +454,17 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
       return;
     }
 
-    // otherwise, if there are no reject questionnaires, bypass modal and call API directly.
-    const rejectQuestionnaires = selectedInferenceModel?.rejectFeedbackQuestionnaires;
-    const hasRejectQuestions =
-      Array.isArray(rejectQuestionnaires) && rejectQuestionnaires.length > 0;
-
-    if (!hasRejectQuestions) {
-      await submitFeedbackWithoutQuestions('REJECT');
-      return;
-    }
-
-    // fallback: open the modal with a REJECT intent; submit will create/update REJECT feedback.
+    // otherwise open the modal with a REJECT intent: the default reason question
+    // is always asked, and submit creates/updates the REJECT feedback.
     setPendingFeedbackType('REJECT');
     handleOpenModal();
   }, [
     currentFeedbackType,
+    executionId,
     feedbackModelId,
     handleOpenModal,
     isSubmitting,
     refreshExistingFeedback,
-    selectedInferenceModel?.rejectFeedbackQuestionnaires,
-    submitFeedbackWithoutQuestions,
   ]);
 
   // Handle text answer change
@@ -548,11 +571,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
                   </div>
                   <h3 className="text-xl font-semibold text-white">{title}</h3>
 
-                  {(
-                    (pendingFeedbackType === 'APPROVE'
-                      ? selectedInferenceModel?.approveFeedbackQuestionnaires
-                      : selectedInferenceModel?.rejectFeedbackQuestionnaires) || []
-                  ).map(question => {
+                  {questionnairesFor(pendingFeedbackType || 'REJECT').map(question => {
                     const isFrench = currentLanguage === 'fr';
                     const questionText = isFrench
                       ? question.questionFr || question.questionEn
@@ -641,6 +660,8 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
                                   key={option.id}
                                   type="button"
                                   onClick={() => handleRadioChange(question.id, option.id)}
+                                  role="radio"
+                                  aria-checked={isSelected}
                                   className="flex w-full items-center gap-2 text-left text-sm text-white"
                                 >
                                   <img
@@ -663,7 +684,10 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
                   })}
 
                   <div className="mt-7 flex justify-end gap-2">
-                    <Button className="h-[41px] rounded-lg">
+                    <Button
+                      className="h-[41px] rounded-lg"
+                      disabled={isSubmitting || !requiredAnswered(pendingFeedbackType || 'REJECT')}
+                    >
                       {isSubmitting ? '...' : t('Submit')}
                     </Button>
                   </div>
