@@ -111,6 +111,34 @@ describe('viewerTourService', () => {
     expect(mockCompleteViewerTour).toHaveBeenCalledTimes(2);
   });
 
+  it('records a completion that failed before the user was known, once the server answers', async () => {
+    // Codex review of #490: reset, reload with the API down, tour shown locally,
+    // completion fails with no known user; the server-synced marker from the
+    // reset stayed, so the tour came back once the API recovered.
+    mockGetViewerTour.mockResolvedValue(notCompleted);
+    await resetViewerTour();
+    let fresh: typeof import('./viewerTourService');
+    jest.isolateModules(() => {
+      fresh = require('./viewerTourService');
+    });
+
+    mockGetViewerTour.mockRejectedValue(apiError);
+    await expect(fresh!.shouldShowTour(VIEWER_TOUR_ID)).resolves.toBe(true);
+    mockCompleteViewerTour.mockRejectedValueOnce(apiError);
+    await fresh!.markTourShown(VIEWER_TOUR_ID);
+
+    // API back; server still says not completed.
+    mockGetViewerTour.mockResolvedValue(notCompleted);
+    mockCompleteViewerTour.mockResolvedValue(completed);
+    await expect(fresh!.shouldShowTour(VIEWER_TOUR_ID)).resolves.toBe(false);
+    expect(mockCompleteViewerTour).toHaveBeenCalledTimes(2);
+
+    // Recorded, and nothing left pending: a later reset from Settings on
+    // another device (server: not completed) shows the tour again here.
+    expect(localStorage.getItem('viewerTourPendingCompletion')).toBeNull();
+    await expect(fresh!.shouldShowTour(VIEWER_TOUR_ID)).resolves.toBe(true);
+  });
+
   it('keeps other tours on the local flag only', async () => {
     await expect(shouldShowTour('otherTour')).resolves.toBe(true);
     await markTourShown('otherTour');

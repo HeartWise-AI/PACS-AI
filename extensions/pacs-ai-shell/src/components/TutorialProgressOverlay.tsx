@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback, useContext, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useShellLocation, useShellNavigate } from '../navigation/routerLocation';
+import { whenViewerOnboardingIdle } from '../tour/viewerOnboardingGate';
 import { useTranslation } from 'react-i18next';
 import 'shepherd.js/dist/css/shepherd.css';
 import type { StepOptions, TourOptions } from 'shepherd.js';
@@ -439,6 +440,9 @@ const TutorialProgressOverlay: React.FC = () => {
     },
     [steps]
   );
+
+  const markStepCompletedRef = useRef(markStepCompleted);
+  markStepCompletedRef.current = markStepCompleted;
 
   const handleSurveyClose = useCallback(() => {
     setActiveSurvey(null);
@@ -963,11 +967,15 @@ const TutorialProgressOverlay: React.FC = () => {
 
     stepDefinitions.forEach(def => tour.addStep(def));
 
-    tour.on('complete', () => markStepCompleted(stepId));
-    tour.on('cancel', () => markStepCompleted(stepId));
+    // The latest markStepCompleted: a tour started before the progress
+    // loaded must not save the steps it captured then.
+    tour.on('complete', () => markStepCompletedRef.current(stepId));
+    tour.on('cancel', () => markStepCompletedRef.current(stepId));
 
     tour.start();
   };
+  const startTourForStepRef = useRef(startTourForStep);
+  startTourForStepRef.current = startTourForStep;
 
   /**
    * Run-inference outside the viewer: open the study list with a modality the
@@ -1097,9 +1105,11 @@ const TutorialProgressOverlay: React.FC = () => {
   }, [isInViewer, location.search, runInferencePending]);
 
   // Back in the viewer with the run-inference step pending: start its tour
-  // on the AI model button once the button is on screen.
+  // on the AI model button once the button is on screen, the saved progress
+  // is loaded (before that every step looks pending), and the viewer's own
+  // onboarding tour is not pending or on screen.
   useEffect(() => {
-    if (!isInViewer || getPendingTutorialStep() !== 'run-inference') {
+    if (!isInViewer || !progressLoaded || getPendingTutorialStep() !== 'run-inference') {
       return;
     }
     if (!runInferencePending) {
@@ -1107,17 +1117,19 @@ const TutorialProgressOverlay: React.FC = () => {
       return;
     }
     const controller = new AbortController();
-    waitForElement('[data-tour-id="ai-model-button"]', 60000, controller.signal).then(button => {
-      if (!button || controller.signal.aborted) {
-        return;
-      }
-      clearPendingTutorialStep();
-      startTourForStep('run-inference');
-    });
+    waitForElement('[data-tour-id="ai-model-button"]', 60000, controller.signal)
+      .then(button =>
+        button && !controller.signal.aborted ? whenViewerOnboardingIdle(controller.signal) : false
+      )
+      .then(ready => {
+        if (!ready || controller.signal.aborted) {
+          return;
+        }
+        clearPendingTutorialStep();
+        startTourForStepRef.current('run-inference');
+      });
     return () => controller.abort();
-    // startTourForStep is recreated each render; the effect keys on the route.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInViewer, location.pathname, location.search, runInferencePending]);
+  }, [isInViewer, location.pathname, location.search, progressLoaded, runInferencePending]);
 
   useEffect(() => () => guidedOpenAbortRef.current?.abort(), []);
 

@@ -162,7 +162,8 @@ function groupIndexes(group: string, indexes: ReadonlySet<number>): number[] | n
   for (const body of group.match(/[^[\]]+(?=\])/g) ?? []) {
     for (const part of body.split(',')) {
       const bounds = part.trim().split(/\s*[-–]\s*/);
-      if (bounds.some(bound => String(Number(bound)) !== bound)) {
+      // "[1-2-4]" is not a range: keep the group as text.
+      if (bounds.length > 2 || bounds.some(bound => String(Number(bound)) !== bound)) {
         return null;
       }
       const [start, end] = bounds.map(Number);

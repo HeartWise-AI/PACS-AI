@@ -44,10 +44,21 @@ function HeaderCitations({
   );
 }
 
+/**
+ * A block of the answer as its own Markdown document, followed by the link
+ * definitions of the whole answer so that "[text][ref]" resolves in any card.
+ * A definition renders nothing.
+ */
+const LinkDefinitions = React.createContext('');
+
+function withDefinitions(markdown: string, definitions: string): string {
+  return definitions ? `${markdown}\n\n${definitions}` : markdown;
+}
+
 // "1. ..." or "1) ...". At most three digits: "2024. ..." starts with a year.
 const NUMBERED_SOURCE = /^(\d{1,3})[.)]\s+(.*)$/;
 
-type SourceLine = { number: number; text: string } | { markdown: string };
+type SourceLine = { number: number; text: string; closed?: boolean } | { markdown: string };
 
 /**
  * Lines of a Sources card: numbered sources, and any other Markdown between
@@ -72,6 +83,15 @@ function sourceLines(body: string, byIndex: Map<number, ChatCitation>): SourceLi
       continue;
     }
     const markdown = row.replace(/^(\s*\d+)([.)])/, '$1\\$2');
+    // A line right under a source, with no blank line between, continues it:
+    // "5. [Guideline](" then "  https://...)" is one link.
+    if (last && 'number' in last && row.trim() && !last.closed) {
+      last.text += `\n${markdown}`;
+      continue;
+    }
+    if (last && 'number' in last && !row.trim()) {
+      last.closed = true;
+    }
     if (last && 'markdown' in last) {
       last.markdown += `\n${markdown}`;
     } else {
@@ -121,6 +141,7 @@ function SourcesBody({
   markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'];
   remarkPlugins: React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'];
 }) {
+  const definitions = React.useContext(LinkDefinitions);
   return (
     <>
       <CitationKey byIndex={byIndex} />
@@ -133,7 +154,7 @@ function SourcesBody({
               components={markdownComponents}
               remarkPlugins={remarkPlugins}
             >
-              {line.markdown}
+              {withDefinitions(line.markdown, definitions)}
             </ReactMarkdown>
           );
         }
@@ -154,7 +175,7 @@ function SourcesBody({
               components={markdownComponents}
               remarkPlugins={remarkPlugins}
             >
-              {line.text}
+              {withDefinitions(line.text, definitions)}
             </ReactMarkdown>
           </div>
         );
@@ -174,6 +195,7 @@ function CardItem({
   markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'];
   remarkPlugins: React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'];
 }) {
+  const definitions = React.useContext(LinkDefinitions);
   if (card.kind === 'summary') {
     return (
       <section
@@ -216,7 +238,7 @@ function CardItem({
           components={markdownComponents}
           remarkPlugins={remarkPlugins}
         >
-          {card.body}
+          {withDefinitions(card.body, definitions)}
         </ReactMarkdown>
       </section>
     );
@@ -268,7 +290,7 @@ function CardItem({
           components={markdownComponents}
           remarkPlugins={remarkPlugins}
         >
-          {card.body}
+          {withDefinitions(card.body, definitions)}
         </ReactMarkdown>
       )}
     </section>
@@ -285,46 +307,49 @@ export const StructuredAnswerCards: React.FC<StructuredAnswerCardsProps> = ({
     () => new Map(citations.map(citation => [citation.index, citation])),
     [citations]
   );
+  const definitions = structured.linkDefinitions.join('\n');
 
   return (
-    <div
-      className="chat-structured-answer"
-      data-cy="chat-structured-answer"
-    >
-      {structured.eyebrow && <div className="chat-answer-eyebrow">{structured.eyebrow}</div>}
-      {structured.leadBlocks.map((block, idx) => (
-        <ReactMarkdown
-          key={`lead-${idx}`}
-          className="markdown-content chat-card-markdown"
-          components={markdownComponents}
-          remarkPlugins={remarkPlugins}
-        >
-          {block}
-        </ReactMarkdown>
-      ))}
-      {structured.cards.map((card, idx) => (
-        <CardItem
-          key={`${card.kind}-${idx}-${card.title}`}
-          card={card}
-          byIndex={byIndex}
-          markdownComponents={markdownComponents}
-          remarkPlugins={remarkPlugins}
-        />
-      ))}
-      {structured.footerBlocks.length > 0 && (
-        <div className="chat-answer-footer">
-          {structured.footerBlocks.map((block, idx) => (
-            <ReactMarkdown
-              key={`footer-${idx}`}
-              className="markdown-content chat-card-markdown"
-              components={markdownComponents}
-              remarkPlugins={remarkPlugins}
-            >
-              {block}
-            </ReactMarkdown>
-          ))}
-        </div>
-      )}
-    </div>
+    <LinkDefinitions.Provider value={definitions}>
+      <div
+        className="chat-structured-answer"
+        data-cy="chat-structured-answer"
+      >
+        {structured.eyebrow && <div className="chat-answer-eyebrow">{structured.eyebrow}</div>}
+        {structured.leadBlocks.map((block, idx) => (
+          <ReactMarkdown
+            key={`lead-${idx}`}
+            className="markdown-content chat-card-markdown"
+            components={markdownComponents}
+            remarkPlugins={remarkPlugins}
+          >
+            {withDefinitions(block, definitions)}
+          </ReactMarkdown>
+        ))}
+        {structured.cards.map((card, idx) => (
+          <CardItem
+            key={`${card.kind}-${idx}-${card.title}`}
+            card={card}
+            byIndex={byIndex}
+            markdownComponents={markdownComponents}
+            remarkPlugins={remarkPlugins}
+          />
+        ))}
+        {structured.footerBlocks.length > 0 && (
+          <div className="chat-answer-footer">
+            {structured.footerBlocks.map((block, idx) => (
+              <ReactMarkdown
+                key={`footer-${idx}`}
+                className="markdown-content chat-card-markdown"
+                components={markdownComponents}
+                remarkPlugins={remarkPlugins}
+              >
+                {withDefinitions(block, definitions)}
+              </ReactMarkdown>
+            ))}
+          </div>
+        )}
+      </div>
+    </LinkDefinitions.Provider>
   );
 };

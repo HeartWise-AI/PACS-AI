@@ -17,6 +17,12 @@ export const VIEWER_TOUR_ID = 'basicViewerTour';
 const SHOWN_TOURS_KEY = 'shownTours';
 /** User ids whose viewer tour state has been reconciled with the server on this device. */
 const SERVER_SYNCED_USERS_KEY = 'viewerTourServerSyncedUsers';
+/**
+ * Set when the server could not be told that the viewer tour was shown and
+ * the user was not known yet (the API was down from the start of the page),
+ * so the next load can still record it once the server answers.
+ */
+const PENDING_COMPLETION_KEY = 'viewerTourPendingCompletion';
 
 let lastKnownUserId: string | null = null;
 
@@ -70,6 +76,26 @@ function unmarkServerSynced(userId: string): void {
   removeFromList(SERVER_SYNCED_USERS_KEY, userId);
 }
 
+function hasPendingCompletion(): boolean {
+  try {
+    return localStorage.getItem(PENDING_COMPLETION_KEY) === '1';
+  } catch (error) {
+    return false;
+  }
+}
+
+function setPendingCompletion(pending: boolean): void {
+  try {
+    if (pending) {
+      localStorage.setItem(PENDING_COMPLETION_KEY, '1');
+    } else {
+      localStorage.removeItem(PENDING_COMPLETION_KEY);
+    }
+  } catch (error) {
+    // storage unavailable; the server flag still applies
+  }
+}
+
 /**
  * Decide whether a tour should start. Resolves (never rejects) so callers can
  * always render the viewer.
@@ -97,14 +123,16 @@ export async function shouldShowTour(tourId: string): Promise<boolean> {
   if (state.viewerTourCompletedAt !== null && state.viewerTourCompletedAt !== undefined) {
     addToList(SHOWN_TOURS_KEY, tourId);
     markServerSynced(userId);
+    setPendingCompletion(false);
     return false;
   }
 
-  if (shownLocally && !isServerSynced(userId)) {
+  if (shownLocally && (!isServerSynced(userId) || hasPendingCompletion())) {
     // Legacy dismissal on this device: copy it to the account, don't show again.
     try {
       await userRepository.CompleteViewerTour();
       markServerSynced(userId);
+      setPendingCompletion(false);
     } catch (error) {
       // retried on the next viewer load; the local flag keeps the tour hidden
     }
@@ -133,12 +161,16 @@ export async function markTourShown(tourId: string): Promise<void> {
     if (userId) {
       markServerSynced(userId);
     }
+    setPendingCompletion(false);
   } catch (error) {
     // Server still says "not completed": force the next load on this device to
-    // migrate the local flag instead of showing the tour again.
+    // migrate the local flag instead of showing the tour again. The user may
+    // not be known yet (the API was down when the page loaded), so the
+    // pending completion is kept in storage as well.
     if (lastKnownUserId) {
       unmarkServerSynced(lastKnownUserId);
     }
+    setPendingCompletion(true);
   }
 }
 
@@ -149,6 +181,7 @@ export async function markTourShown(tourId: string): Promise<void> {
  */
 export async function resetViewerTour(): Promise<void> {
   removeFromList(SHOWN_TOURS_KEY, VIEWER_TOUR_ID);
+  setPendingCompletion(false);
   const response = await userRepository.ResetViewerTour();
   const userId = (response && response.data && response.data.userId) || lastKnownUserId;
   if (userId) {

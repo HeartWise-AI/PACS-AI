@@ -123,6 +123,14 @@ describe('citation markers in an answer', () => {
     expect(container.textContent).toContain('A [2, 3] and B 4[3].');
   });
 
+  it('keeps a range with more than two bounds as text', () => {
+    // Codex review of #548: "[1-2-4]" became chips 1 and 2 and dropped 4.
+    const { container } = renderMessage('A [1-2-4] and B [1-2].', CITATIONS);
+
+    expect(chips(container).map(chip => chip.textContent)).toEqual(['1', '2']);
+    expect(container.textContent).toContain('A [1-2-4] and B 12.');
+  });
+
   it('leaves a marker without a citation, and ordinary brackets, as text', () => {
     const { container } = renderMessage(
       'Seen in [3] and [1]. Published [2024], range [0], list [12], [01], [a] and array[x].',
