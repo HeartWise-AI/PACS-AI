@@ -15,13 +15,29 @@ export interface StructuredAnswer {
   leadBlocks: string[];
   cards: ParsedAnswerCard[];
   footerBlocks: string[];
+  /**
+   * Reference-style link definitions ("[acc]: https://...") of the whole
+   * answer. Each card is rendered as its own Markdown document, so every
+   * renderer gets these to resolve "[text][acc]" written in another card.
+   */
+  linkDefinitions: string[];
 }
 
 const BOLD_LINE = /^\*\*([^*\n]+)\*\*\s*$/;
-const SUMMARY_TITLE = /^(synthesis|synthèse|synthese|summary|résumé|resume)\b/i;
-const CAVEAT_TITLE =
-  /^(what cannot be decided|ce que ces données ne permettent pas|ce que ces donnees ne permettent pas|warnings?\b|avertissements?\b|limitations?\b|limites?\b|discordant)/i;
-const SOURCES_TITLE = /^sources\b/i;
+// The end of a title word. "\b" treats an accented letter as a non-word
+// character, so "Résumé" would never match "résumé\b".
+const WORD_END = String.raw`(?![\p{L}\p{N}_])`;
+const SUMMARY_TITLE = new RegExp(
+  `^(synthesis|synthèse|synthese|summary|résumé|resume)${WORD_END}`,
+  'iu'
+);
+const CAVEAT_TITLE = new RegExp(
+  `^(what cannot be decided|ce que ces données ne permettent pas|ce que ces donnees ne permettent pas|warnings?${WORD_END}|avertissements?${WORD_END}|limitations?${WORD_END}|limites?${WORD_END}|discordant)`,
+  'iu'
+);
+const SOURCES_TITLE = new RegExp(`^sources${WORD_END}`, 'iu');
+// A reference-style link definition line: "[label]: destination".
+const LINK_DEFINITION = /^ {0,3}\[[^\]\n]+\]:[ \t]*\S.*$/gm;
 const TRAILING_CITATIONS = /(?:\s*\[(\d+)\])+\s*$/;
 const SINGLE_CITATION = /\[(\d+)\]/g;
 const PROVENANCE_SUFFIX = /\s*\((AI estimates?|estimations? de l['’]IA)\)\s*$/i;
@@ -138,6 +154,7 @@ export function parseStructuredAnswer(text: string | undefined | null): Structur
   const leadBlocks: string[] = [];
   const cards: ParsedAnswerCard[] = [];
   const footerBlocks: string[] = [];
+  const linkDefinitions = trimmed.match(LINK_DEFINITION)?.map(line => line.trim()) ?? [];
   let seenSummary = false;
 
   for (const block of rawBlocks) {
@@ -163,9 +180,16 @@ export function parseStructuredAnswer(text: string | undefined | null): Structur
       continue;
     }
 
-    if (cards.length === 0) {
+    const current = cards[cards.length - 1];
+    if (!current) {
       leadBlocks.push(block);
+    } else if (current.kind === 'summary' || current.kind === 'section') {
+      // A further paragraph of a summary or section belongs to that card,
+      // until the next heading.
+      current.body = `${current.body}\n\n${block}`;
     } else {
+      // After the caveats or the sources: the closing remark of the answer,
+      // shown under every card.
       footerBlocks.push(block);
     }
   }
@@ -174,5 +198,5 @@ export function parseStructuredAnswer(text: string | undefined | null): Structur
     return null;
   }
 
-  return { eyebrow, leadBlocks, cards, footerBlocks };
+  return { eyebrow, leadBlocks, cards, footerBlocks, linkDefinitions };
 }

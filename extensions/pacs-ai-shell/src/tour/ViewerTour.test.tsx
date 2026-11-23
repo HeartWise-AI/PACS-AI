@@ -13,7 +13,15 @@ jest.mock('@pacs-ai/extension-core/src/service/viewerTourService', () => ({
   markTourShown: (...args) => mockMarkTourShown(...args),
 }));
 
+// eslint-disable-next-line import/first
+import Shepherd from 'shepherd.js';
+// eslint-disable-next-line import/first
 import ViewerTour from './ViewerTour';
+// eslint-disable-next-line import/first
+import { whenViewerOnboardingIdle } from './viewerOnboardingGate';
+
+// The tour Onboarding started, as Shepherd holds it.
+const shepherd = Shepherd as unknown as { activeTour: unknown };
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -45,6 +53,7 @@ describe('ViewerTour', () => {
   });
 
   afterEach(() => {
+    shepherd.activeTour = null;
     act(() => root.unmount());
     container.remove();
   });
@@ -94,5 +103,40 @@ describe('ViewerTour', () => {
     );
     expect(mockOnboarding).not.toHaveBeenCalled();
     expect(mockMarkTourShown).not.toHaveBeenCalled();
+  });
+  test('keeps the onboarding gate held while the tour Onboarding started is on screen', async () => {
+    // Codex review of #535: the checklist tour resumed in the viewer while
+    // Onboarding started its own tour, and both overlays stayed on screen.
+    const handlers: Record<string, () => void> = {};
+    const tour = {
+      on: jest.fn((event: string, handler: () => void) => (handlers[event] = handler)),
+      off: jest.fn(),
+    };
+    mockOnboarding.mockImplementation(() => {
+      shepherd.activeTour = tour;
+      return null;
+    });
+    const customizationService = createCustomizationService([viewerTour]);
+    let resolveUnseen: (tours: unknown[]) => void = () => undefined;
+    mockGetUnseenTours.mockReturnValue(new Promise(resolve => (resolveUnseen = resolve)));
+    let idle = false;
+
+    await render(customizationService);
+    whenViewerOnboardingIdle().then(() => (idle = true));
+    await act(async () => resolveUnseen([viewerTour]));
+    expect(idle).toBe(false);
+
+    await act(async () => handlers.inactive());
+    expect(idle).toBe(true);
+    mockOnboarding.mockImplementation(() => null);
+  });
+
+  test('frees the onboarding gate when no tour is left to show', async () => {
+    const customizationService = createCustomizationService([viewerTour]);
+    mockGetUnseenTours.mockResolvedValue([]);
+
+    await render(customizationService);
+
+    await expect(whenViewerOnboardingIdle()).resolves.toBe(true);
   });
 });

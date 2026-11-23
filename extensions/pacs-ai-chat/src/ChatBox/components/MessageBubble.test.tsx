@@ -246,4 +246,58 @@ describe('MessageBubble Markdown rendering', () => {
     expect(container.querySelectorAll('[data-cy="chat-section-card"]')).toHaveLength(1);
     expect(container.querySelectorAll('[data-cy="chat-caveats-card"]')).toHaveLength(1);
   });
+  it('recognises a French Résumé heading, alone or with pills', () => {
+    // Codex review of #539: "\b" after "é" never matched, so Résumé fell back to plain Markdown.
+    for (const heading of ['**Résumé**', '**Résumé — FEVG 55 %**']) {
+      const { container, unmount } = renderAssistantMessage(
+        `${heading}\n- Sténose IVA proximale 70 %.`
+      );
+      expect(container.querySelector('[data-cy="chat-summary-badge"]')?.textContent).toBe('Résumé');
+      unmount();
+    }
+  });
+
+  it('keeps further paragraphs of a summary in the summary card, before the next card', () => {
+    // Codex review of #539: the second paragraph was shown under every card.
+    const { container } = renderAssistantMessage(
+      '**Summary**\nInitial finding.\n\nAdditional explanation.\n\n**Limitations**\nCaution.'
+    );
+
+    const summary = container.querySelector('[data-cy="chat-summary-card"]');
+    expect(summary?.textContent).toContain('Additional explanation.');
+    expect(container.querySelector('[data-cy="chat-caveats-card"]')?.textContent).not.toContain(
+      'Additional explanation.'
+    );
+    expect(container.querySelector('.chat-answer-footer')).toBeNull();
+  });
+
+  it('resolves a reference-style link whose definition is in another block', () => {
+    // Codex review of #539: each card is its own Markdown document.
+    const { container } = renderAssistantMessage(
+      '**Summary**\nSee [guideline][acc].\n\n**Limitations**\nCaution.\n\n[acc]: https://example.org/guideline'
+    );
+
+    const link = container.querySelector('[data-cy="chat-summary-card"] a');
+    expect(link?.getAttribute('href')).toBe('https://example.org/guideline');
+    expect(container.textContent).not.toContain('[acc]');
+  });
+
+  it('keeps a source link written over two lines, and a reference link, in the Sources card', () => {
+    // Codex review of #543: each numbered source was parsed alone.
+    const { container } = renderAssistantMessage(
+      [
+        '**Summary**\n- Guidelines weigh PCI and CABG [5][6].',
+        '**Sources**\n5. [Guideline](\n  https://example.org/guideline)\n6. [Trial][t]\n\n[t]: https://example.org/trial',
+      ].join('\n\n'),
+      [
+        { index: 5, kind: 'web_source', title: 'Guideline', url: 'https://example.org/guideline' },
+        { index: 6, kind: 'web_source', title: 'Trial', url: 'https://example.org/trial' },
+      ]
+    );
+
+    const lines = container.querySelectorAll('[data-cy="chat-source-line"]');
+    expect(lines).toHaveLength(2);
+    expect(lines[0].querySelector('a')?.getAttribute('href')).toBe('https://example.org/guideline');
+    expect(lines[1].querySelector('a')?.getAttribute('href')).toBe('https://example.org/trial');
+  });
 });

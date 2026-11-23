@@ -17,6 +17,14 @@ export const VIEWER_TOUR_ID = 'basicViewerTour';
 const SHOWN_TOURS_KEY = 'shownTours';
 /** User ids whose viewer tour state has been reconciled with the server on this device. */
 const SERVER_SYNCED_USERS_KEY = 'viewerTourServerSyncedUsers';
+/**
+ * Set when the server could not be told that the viewer tour was shown, so
+ * the next load can still record it once the server answers, even when the
+ * user was not known yet (the API was down from the start of the page). It
+ * holds the account it belongs to (user id, else a fingerprint of the
+ * sign-in) so that another account signing in on this browser ignores it.
+ */
+const PENDING_COMPLETION_KEY = 'viewerTourPendingCompletion';
 
 let lastKnownUserId: string | null = null;
 
@@ -70,6 +78,77 @@ function unmarkServerSynced(userId: string): void {
   removeFromList(SERVER_SYNCED_USERS_KEY, userId);
 }
 
+/** A short fingerprint of the session token (the token itself is not copied). */
+function sessionFingerprint(): string | null {
+  let token: string | null = null;
+  try {
+    token = localStorage.getItem('sessionToken');
+  } catch (error) {
+    return null;
+  }
+  if (!token) {
+    return null;
+  }
+  // FNV-1a, 32 bit.
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < token.length; i += 1) {
+    hash ^= token.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+/**
+ * The account a pending completion belongs to: the user when known, else the
+ * current session (same sign-in, same account). Null when neither is known.
+ */
+function pendingOwner(userId: string | null): string | null {
+  if (userId) {
+    return `user:${userId}`;
+  }
+  const session = sessionFingerprint();
+  return session ? `session:${session}` : null;
+}
+
+function readPendingCompletion(): string | null {
+  try {
+    return localStorage.getItem(PENDING_COMPLETION_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+/** Whether this user (or this sign-in) has a completion still to record. */
+function hasPendingCompletion(userId: string): boolean {
+  const pending = readPendingCompletion();
+  return !!pending && (pending === pendingOwner(userId) || pending === pendingOwner(null));
+}
+
+function setPendingCompletion(userId: string | null): void {
+  const owner = pendingOwner(userId);
+  if (!owner) {
+    return;
+  }
+  try {
+    localStorage.setItem(PENDING_COMPLETION_KEY, owner);
+  } catch (error) {
+    // storage unavailable; the server flag still applies
+  }
+}
+
+/** Clears the pending completion when it belongs to this user or sign-in. */
+function clearPendingCompletion(userId: string | null): void {
+  const pending = readPendingCompletion();
+  if (!pending || (pending !== pendingOwner(userId) && pending !== pendingOwner(null))) {
+    return;
+  }
+  try {
+    localStorage.removeItem(PENDING_COMPLETION_KEY);
+  } catch (error) {
+    // storage unavailable
+  }
+}
+
 /**
  * Decide whether a tour should start. Resolves (never rejects) so callers can
  * always render the viewer.
@@ -97,14 +176,16 @@ export async function shouldShowTour(tourId: string): Promise<boolean> {
   if (state.viewerTourCompletedAt !== null && state.viewerTourCompletedAt !== undefined) {
     addToList(SHOWN_TOURS_KEY, tourId);
     markServerSynced(userId);
+    clearPendingCompletion(userId);
     return false;
   }
 
-  if (shownLocally && !isServerSynced(userId)) {
+  if (shownLocally && (!isServerSynced(userId) || hasPendingCompletion(userId))) {
     // Legacy dismissal on this device: copy it to the account, don't show again.
     try {
       await userRepository.CompleteViewerTour();
       markServerSynced(userId);
+      clearPendingCompletion(userId);
     } catch (error) {
       // retried on the next viewer load; the local flag keeps the tour hidden
     }
@@ -133,12 +214,16 @@ export async function markTourShown(tourId: string): Promise<void> {
     if (userId) {
       markServerSynced(userId);
     }
+    clearPendingCompletion(userId || lastKnownUserId);
   } catch (error) {
     // Server still says "not completed": force the next load on this device to
-    // migrate the local flag instead of showing the tour again.
+    // migrate the local flag instead of showing the tour again. The user may
+    // not be known yet (the API was down when the page loaded), so the
+    // pending completion is kept in storage as well.
     if (lastKnownUserId) {
       unmarkServerSynced(lastKnownUserId);
     }
+    setPendingCompletion(lastKnownUserId);
   }
 }
 
@@ -149,6 +234,7 @@ export async function markTourShown(tourId: string): Promise<void> {
  */
 export async function resetViewerTour(): Promise<void> {
   removeFromList(SHOWN_TOURS_KEY, VIEWER_TOUR_ID);
+  clearPendingCompletion(lastKnownUserId);
   const response = await userRepository.ResetViewerTour();
   const userId = (response && response.data && response.data.userId) || lastKnownUserId;
   if (userId) {
