@@ -398,6 +398,60 @@ export interface UpdateModelFeedbackRequest {
         },
       ]
     | null;
+  // The report the user was viewing when they set the vote (optional).
+  runId?: string | null;
+  executionId?: string | null;
+  studyServiceJobId?: string | null;
+}
+
+export interface ListModelFeedbackRequest {
+  // Matches either the versioned model id or the inference model id.
+  model?: string;
+  // RFC3339 bounds on the vote's last update.
+  from?: string;
+  to?: string;
+  feedbackType?: 'APPROVE' | 'REJECT';
+}
+
+export interface ModelFeedbackSummaryEntry {
+  modelId: string;
+  inferenceModelId: string;
+  version: string;
+  approveCount: number;
+  rejectCount: number;
+  // Unix seconds.
+  lastUpdatedAt: number;
+}
+
+export interface ModelFeedbackListAnswer {
+  questionnaireId: string;
+  questionnaireQuestion: string;
+  questionnaireAnswerIds: string[];
+  questionnaireAnswers: string[];
+}
+
+export interface ModelFeedbackListItem {
+  id: string;
+  userId: string;
+  userName: string | null;
+  userEmail: string | null;
+  inferenceModelId: string;
+  modelId: string;
+  modelVersion: string;
+  feedbackType: string;
+  // Unix seconds.
+  createdAt: number;
+  updatedAt: number;
+  runId: string;
+  executionId: string;
+  studyServiceJobId: string;
+  answers: ModelFeedbackListAnswer[];
+}
+
+export interface ListModelFeedbackResponse {
+  summary: ModelFeedbackSummaryEntry[];
+  items: ModelFeedbackListItem[];
+  truncated: boolean;
 }
 
 export interface UpdateInferenceIngestionJobRequest {

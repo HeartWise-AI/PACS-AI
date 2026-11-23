@@ -23,6 +23,8 @@ import {
   GetInferenceModelDeploymentOperationResponse,
   GetModelFeedbackByModelIDRequest,
   GetModelFeedbackByModelIDResponse,
+  ListModelFeedbackRequest,
+  ListModelFeedbackResponse,
   GetOnboardingModelQuestionnaireAnswersRequest,
   GetOnboardingModelQuestionnaireAnswersResponse,
   ImportInferenceIngestionJobsRequest,
@@ -297,6 +299,27 @@ const inferenceRepository = {
     return Api()
       .get(`/v1/inference/model/${request.modelId}/feedback`)
       .then((response: AxiosResponse<APIResponse<GetModelFeedbackByModelIDResponse>>) => {
+        const { data } = response;
+        return data;
+      })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /**
+   * List the tenant's model feedback (workspace owners and administrators).
+   *
+   * @param   {ListModelFeedbackRequest}  request
+   *
+   * @return  {Promise<APIResponse><ListModelFeedbackResponse>}
+   */
+  async ListModelFeedback(
+    request: ListModelFeedbackRequest = {}
+  ): Promise<APIResponse<ListModelFeedbackResponse>> {
+    return Api()
+      .get(`/v1/inference/model/feedback/list`, { params: request })
+      .then((response: AxiosResponse<APIResponse<ListModelFeedbackResponse>>) => {
         const { data } = response;
         return data;
       })

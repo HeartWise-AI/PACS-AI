@@ -10,6 +10,7 @@ import TenantHeader from './onboarding/components/TenantHeader';
 import DicomModalitiesSection from './sections/DicomModalitiesSection';
 import InferenceModelsSection from './sections/InferenceModelsSection';
 import IngestionJobsSection from './sections/IngestionJobsSection';
+import ModelFeedbackSection from './sections/ModelFeedbackSection';
 import OnboardingSection from './sections/OnboardingSection';
 import type { WorkspaceSettingsTabId } from './constants';
 
@@ -53,6 +54,12 @@ const WorkspaceSettingsPage = () => {
               <IngestionJobsSection
                 ingestion={ingestion}
                 dicomModalities={dicom.modalities}
+                availableModels={inference.availableModels}
+              />
+            </div>
+            <div {...panelProps('feedback')}>
+              <ModelFeedbackSection
+                active={activeTab === 'feedback'}
                 availableModels={inference.availableModels}
               />
             </div>

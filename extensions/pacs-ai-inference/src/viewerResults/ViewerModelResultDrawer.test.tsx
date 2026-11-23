@@ -30,6 +30,16 @@ jest.mock('../studyProcessing/modelResults/ModelResultRenderer', () => ({
   ModelResultRenderer: () => <div data-testid="structured-result" />,
 }));
 
+jest.mock('./ViewerModelResultFeedback', () => ({
+  __esModule: true,
+  default: ({ result }: { result: { runId: string | null } }) => (
+    <div
+      data-testid="viewer-model-result-feedback"
+      data-run-id={result.runId ?? ''}
+    />
+  ),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options: Record<string, unknown> = {}) => String(options.defaultValue ?? key),
@@ -138,6 +148,7 @@ describe('ViewerModelResultDrawer', () => {
     expect(iframe.getAttribute('sandbox')).toBe('allow-same-origin allow-scripts');
     expect(mockOpen).not.toHaveBeenCalled();
     expect(text(renderer!)).toContain('Run from viewer');
+    expect(oneByTestId(renderer!, 'viewer-model-result-feedback').dataset.runId).toBe('run-1');
     expect(text(renderer!)).toContain('1.3.0');
   });
 

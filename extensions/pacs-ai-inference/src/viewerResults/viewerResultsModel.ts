@@ -294,3 +294,50 @@ export function resolveResultSeriesScope(
     ? { kind: 'subset', used: used.length, total: used.length + unused, series }
     : { kind: 'all', series };
 }
+
+interface FeedbackQuestionnaireFields {
+  approveFeedbackQuestionnaires?: unknown[] | null;
+  rejectFeedbackQuestionnaires?: unknown[] | null;
+}
+
+export type FeedbackModel<T> = Partial<T> & {
+  modelId: string;
+  version: string;
+  approveFeedbackQuestionnaires: unknown[];
+  rejectFeedbackQuestionnaires: unknown[];
+};
+
+/**
+ * The model descriptor the feedback thumbs use for a stored result. Feedback
+ * records are keyed by the model-info id and version ("{modelId}-{version}"),
+ * so the id comes from the result's artifactModelId (not its Firestore
+ * registration id) and falls back to the matching available model; the
+ * questionnaires come from that available model. The match is the inverse of
+ * findLatestResultForModel: by container id, then model-info id, then model
+ * name and version, then model name. Returns null when no model-info id is
+ * known, so no thumbs are shown.
+ */
+export function resolveFeedbackModel<
+  T extends ViewerResultModelIdentity & FeedbackQuestionnaireFields,
+>(result: ViewerModelResult, availableModels: T[]): FeedbackModel<T> | null {
+  const models = availableModels ?? [];
+  const byName = models.filter(model => sameText(model.modelName, result.modelName));
+  const match =
+    models.find(model => sameText(model.containerId, result.containerId)) ??
+    models.find(model => sameText(model.modelId, result.artifactModelId)) ??
+    byName.find(model => sameText(model.version, result.modelVersion)) ??
+    byName[0];
+
+  const modelId = result.artifactModelId?.trim() || match?.modelId?.trim() || '';
+  if (!modelId) {
+    return null;
+  }
+
+  return {
+    ...match,
+    modelId,
+    version: result.modelVersion?.trim() || match?.version?.trim() || '',
+    approveFeedbackQuestionnaires: match?.approveFeedbackQuestionnaires ?? [],
+    rejectFeedbackQuestionnaires: match?.rejectFeedbackQuestionnaires ?? [],
+  } as FeedbackModel<T>;
+}
