@@ -81,5 +81,10 @@
   "RunningJobsCancelTooLate": "Already computing: it can no longer be cancelled.",
   "LookingForModels": "Looking for models…",
   "ModelsMayBeBusy": "A model busy with another exam can be missing for a moment.",
-  "TryAgain": "Try again"
+  "TryAgain": "Try again",
+  "Rate this model": "Rate this model",
+  "Add Feedback": "Add Feedback",
+  "Your feedback helps us improve this model": "Your feedback helps us improve this model",
+  "Enter your answer here": "Enter your answer here",
+  "Submit": "Submit"
 }

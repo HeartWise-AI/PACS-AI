@@ -81,5 +81,10 @@
   "RunningJobsCancelTooLate": "Calcul déjà en cours : annulation impossible.",
   "LookingForModels": "Recherche des modèles…",
   "ModelsMayBeBusy": "Un modèle occupé par un autre examen peut manquer un instant.",
-  "TryAgain": "Réessayer"
+  "TryAgain": "Réessayer",
+  "Rate this model": "Évaluer ce modèle",
+  "Add Feedback": "Ajouter une rétroaction",
+  "Your feedback helps us improve this model": "Votre rétroaction nous aide à améliorer ce modèle",
+  "Enter your answer here": "Entrez votre réponse ici",
+  "Submit": "Soumettre"
 }

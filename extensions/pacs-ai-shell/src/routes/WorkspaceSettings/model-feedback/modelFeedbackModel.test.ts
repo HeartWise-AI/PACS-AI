@@ -37,6 +37,7 @@ const labels = {
     modelId: 'Model ID',
     version: 'Version',
     vote: 'Vote',
+    reason: 'Rejection reason',
     userName: 'User name',
     userEmail: 'User email',
     userId: 'User ID',
@@ -47,6 +48,7 @@ const labels = {
   },
   vote: (type: string) => (type === 'APPROVE' ? 'Approved' : 'Rejected'),
   model: (id: string) => (id === 'deepcoro-info' ? 'DeepCORO-JEPA' : id),
+  reason: (entry: ModelFeedbackListItem) => (entry.feedbackType === 'REJECT' ? 'Other' : ''),
 };
 
 describe('modelLabel', () => {
@@ -147,6 +149,7 @@ describe('feedbackCSVRows', () => {
       'deepcoro-info-1.3.0',
       '1.3.0',
       'Rejected',
+      'Other',
       'Synthetic Reader',
       'reader@example.invalid',
       'user-1',
@@ -175,8 +178,8 @@ describe('feedbackCSVRows', () => {
       labels
     );
 
-    expect(rows[1][6]).toBe('\'=HYPERLINK("http://example.invalid")');
-    expect(rows[1][12]).toBe("'@SUM(A1): x");
+    expect(rows[1][7]).toBe('\'=HYPERLINK("http://example.invalid")');
+    expect(rows[1][13]).toBe("'@SUM(A1): x");
   });
 
   test('formats a vote without answers as empty', () => {
