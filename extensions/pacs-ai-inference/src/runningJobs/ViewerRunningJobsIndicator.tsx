@@ -35,6 +35,11 @@ export interface ViewerRunningJobsIndicatorProps {
   besideReadyNotice?: boolean;
   // A run requested from the viewer was cancelled from the card.
   onRunCancelled?: (run: PendingViewerModelRun) => void;
+  // A cancellation of a run requested from the viewer was sent, and its
+  // answer is awaited: polls must not report the run as failed meanwhile.
+  onRunCancelStarted?: (run: PendingViewerModelRun) => void;
+  // The cancellation failed or the run is still running: track it as before.
+  onRunCancelAbandoned?: (run: PendingViewerModelRun) => void;
   processingRepository?: StudyProcessingRunPollRepository &
     Partial<Pick<StudyProcessingRESTRepository, 'cancelProcessingRun'>>;
   processingPollIntervalMs?: number;
@@ -67,6 +72,8 @@ export function ViewerRunningJobsIndicator({
   foregroundRun,
   onOpenResult,
   onRunCancelled,
+  onRunCancelStarted,
+  onRunCancelAbandoned,
   besideReadyNotice,
   processingRepository,
   processingPollIntervalMs,
@@ -115,6 +122,10 @@ export function ViewerRunningJobsIndicator({
   pendingRunsRef.current = pendingRuns;
   const onRunCancelledRef = useRef(onRunCancelled);
   onRunCancelledRef.current = onRunCancelled;
+  const onRunCancelStartedRef = useRef(onRunCancelStarted);
+  onRunCancelStartedRef.current = onRunCancelStarted;
+  const onRunCancelAbandonedRef = useRef(onRunCancelAbandoned);
+  onRunCancelAbandonedRef.current = onRunCancelAbandoned;
   const defaultCancelRepository = useRef<Pick<
     StudyProcessingRESTRepository,
     'cancelProcessingRun'
@@ -128,17 +139,27 @@ export function ViewerRunningJobsIndicator({
         processingRepository?.cancelProcessingRun ??
         (defaultCancelRepository.current ??= createStudyProcessingRESTRepository())
           .cancelProcessingRun;
+      // Found before the request: a poll that sees the cancellation first
+      // must neither drop the run nor report it as failed.
+      const pending =
+        row.kind === 'model'
+          ? (pendingRunsRef.current.find(item => pendingRunRowId(item) === row.id) ?? null)
+          : null;
+      if (pending) {
+        onRunCancelStartedRef.current?.(pending);
+      }
+      let ended = false;
       try {
         const run = await cancelProcessingRun(row.cancelRunId);
-        const ended = run.phase === 'TERMINAL';
-        if (ended && row.kind === 'model') {
-          const pending = pendingRunsRef.current.find(item => pendingRunRowId(item) === row.id);
-          if (pending) {
-            onRunCancelledRef.current?.(pending);
-          }
+        ended = run.phase === 'TERMINAL';
+        if (ended && pending) {
+          onRunCancelledRef.current?.(pending);
         }
         return ended ? 'ended' : 'stillRunning';
       } finally {
+        if (pending && !ended) {
+          onRunCancelAbandonedRef.current?.(pending);
+        }
         // Whatever happened, the run is worth another look.
         setCancelAttempts(attempts => attempts + 1);
       }

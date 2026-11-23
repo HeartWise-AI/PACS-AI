@@ -203,6 +203,8 @@ export function ViewerModelResultsProvider({
   // Runs the user cancelled from the running-jobs indicator: a poll that was
   // already in flight must not report them as failed.
   const cancelledRunsRef = useRef(new WeakSet<PendingViewerModelRun>());
+  // Runs whose cancellation was sent from the card and not yet answered.
+  const cancellingRunsRef = useRef(new WeakSet<PendingViewerModelRun>());
 
   const alert = useCallback(
     (message: string, variant: 'error' | 'success' | 'info') => {
@@ -525,7 +527,8 @@ export function ViewerModelResultsProvider({
               status => {
                 statuses.set(run, status);
                 const failure = findPendingRunFailure(status, run);
-                if (failure) {
+                // A cancellation awaiting its answer settles the run itself.
+                if (failure && !cancellingRunsRef.current.has(run)) {
                   failed.set(run, failure);
                 }
               },
@@ -702,6 +705,11 @@ export function ViewerModelResultsProvider({
   // The indicator cancelled a pending run: stop tracking it, without the
   // "run failed" alert, and let its row end as cancelled.
   const handleRunCancelled = useCallback((run: PendingViewerModelRun) => {
+    cancellingRunsRef.current.delete(run);
+    if (cancelledRunsRef.current.has(run) || !pendingRunsRef.current.includes(run)) {
+      // Already settled (a result arrived, or it was cancelled before).
+      return;
+    }
     cancelledRunsRef.current.add(run);
     setPendingRuns(current => current.filter(item => item !== run));
     setEndedRuns(current =>
@@ -716,6 +724,13 @@ export function ViewerModelResultsProvider({
         },
       ].slice(-ENDED_RUNS_LIMIT)
     );
+  }, []);
+
+  const handleRunCancelStarted = useCallback((run: PendingViewerModelRun) => {
+    cancellingRunsRef.current.add(run);
+  }, []);
+  const handleRunCancelAbandoned = useCallback((run: PendingViewerModelRun) => {
+    cancellingRunsRef.current.delete(run);
   }, []);
 
   // The chat's citation chips ("[1]") open the cited result through this.
@@ -818,6 +833,8 @@ export function ViewerModelResultsProvider({
         foregroundRun={foregroundRunActive ? (foregroundRunRef.current?.run ?? null) : null}
         onOpenResult={openResult}
         onRunCancelled={handleRunCancelled}
+        onRunCancelStarted={handleRunCancelStarted}
+        onRunCancelAbandoned={handleRunCancelAbandoned}
         besideReadyNotice={canViewResults && readyResults.length > 0}
       />
     </ViewerModelResultsContext.Provider>
