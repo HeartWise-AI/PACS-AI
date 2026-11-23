@@ -13,32 +13,47 @@ import { accessForRole, normalizeUserAccess, type UserAccess } from './permissio
 type Listener = (access: UserAccess | null) => void;
 
 let current: UserAccess | null = null;
+/** Set when `current` came from the role-only fallback; such access is retried. */
+let currentIsFallback = false;
+/** How long a role-only fallback is served before the access endpoint is retried. */
+export const FALLBACK_RETRY_MS = 30_000;
+let fallbackLoadedAt = 0;
 let pending: Promise<UserAccess | null> | null = null;
 let generation = 0;
 const listeners = new Set<Listener>();
 
-function publish(access: UserAccess | null): void {
+function publish(access: UserAccess | null, fallback = false): void {
   current = access;
+  currentIsFallback = Boolean(access) && fallback;
+  fallbackLoadedAt = currentIsFallback ? Date.now() : 0;
   listeners.forEach(listener => listener(access));
 }
 
-async function fetchAccess(): Promise<UserAccess | null> {
+type FetchedAccess = { access: UserAccess | null; fallback: boolean };
+
+async function fetchAccess(): Promise<FetchedAccess> {
   try {
     const response = await userRepository.GetMyAccess();
     if (!response?.data) {
       throw new Error('empty access response');
     }
-    return normalizeUserAccess(response.data);
+    return { access: normalizeUserAccess(response.data), fallback: false };
   } catch (accessError) {
     void accessError;
+    // Role-only access keeps the page usable (older gateway, or a transient
+    // failure), but it is retried so a custom role is not lost for the session.
     try {
       const me = await userRepository.GetCurrentUser();
-      return accessForRole(me?.data?.role);
+      return { access: accessForRole(me?.data?.role), fallback: true };
     } catch (userError) {
       void userError;
-      return null;
+      return { access: null, fallback: false };
     }
   }
+}
+
+function fallbackExpired(): boolean {
+  return currentIsFallback && Date.now() - fallbackLoadedAt >= FALLBACK_RETRY_MS;
 }
 
 export function getCachedUserAccess(): UserAccess | null {
@@ -48,7 +63,7 @@ export function getCachedUserAccess(): UserAccess | null {
 /** Returns cached access, loading it the first time (or after `refresh`). */
 export function loadUserAccess(options?: { refresh?: boolean }): Promise<UserAccess | null> {
   if (!options?.refresh) {
-    if (current) {
+    if (current && !fallbackExpired()) {
       return Promise.resolve(current);
     }
     if (pending) {
@@ -56,10 +71,10 @@ export function loadUserAccess(options?: { refresh?: boolean }): Promise<UserAcc
     }
   }
   const requestGeneration = ++generation;
-  const request = fetchAccess().then(access => {
+  const request = fetchAccess().then(({ access, fallback }) => {
     if (requestGeneration === generation) {
       pending = null;
-      publish(access);
+      publish(access, fallback);
     }
     return access;
   });

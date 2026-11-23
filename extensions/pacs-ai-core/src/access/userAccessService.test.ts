@@ -1,6 +1,7 @@
 import userRepository from '../api/userRepository';
 import { clearAuthenticatedSession } from '../utils/authenticatedSession';
 import {
+  FALLBACK_RETRY_MS,
   clearUserAccess,
   getCachedUserAccess,
   loadUserAccess,
@@ -57,6 +58,27 @@ describe('userAccessService', () => {
     repo.GetCurrentUser.mockResolvedValue({ data: { role: 'ADMIN' } });
     const access = await loadUserAccess();
     expect(access?.isAdmin).toBe(true);
+  });
+
+  it('retries the access endpoint after a role-only fallback expires', async () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000);
+    repo.GetMyAccess.mockRejectedValueOnce({ errorCode: 'INTERNAL' });
+    repo.GetCurrentUser.mockResolvedValue({ data: { role: 'USER' } });
+    const fallback = await loadUserAccess();
+    expect(fallback?.permissions.has('feedback.view')).toBe(false);
+
+    repo.GetMyAccess.mockResolvedValue({
+      data: { role: 'USER', permissions: ['feedback.view'], allModels: true, modelIds: [] },
+    });
+    expect(await loadUserAccess()).toBe(fallback);
+    expect(repo.GetMyAccess).toHaveBeenCalledTimes(1);
+
+    now.mockReturnValue(1_000 + FALLBACK_RETRY_MS);
+    const recovered = await loadUserAccess();
+    expect(recovered?.permissions.has('feedback.view')).toBe(true);
+    expect(await loadUserAccess()).toBe(recovered);
+    expect(repo.GetMyAccess).toHaveBeenCalledTimes(2);
+    now.mockRestore();
   });
 
   it('returns null when nothing can be loaded', async () => {

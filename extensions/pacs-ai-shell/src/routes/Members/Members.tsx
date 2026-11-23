@@ -125,7 +125,10 @@ const MembersPage = () => {
       showAlert(response.message, 'success');
       clearSelectedUser();
       setIsOpenAddEditMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -165,7 +168,10 @@ const MembersPage = () => {
       const response = await userRepository.DeleteTenantUser({ userId: selectedUserToDelete.id });
       showAlert(response.message, 'success');
       setIsOpenDeleteMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -304,7 +310,10 @@ const MembersPage = () => {
       showAlert(response.message, 'success');
       clearSelectedUser();
       setIsOpenAddEditMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
