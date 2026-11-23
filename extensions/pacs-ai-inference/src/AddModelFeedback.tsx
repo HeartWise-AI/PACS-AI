@@ -22,11 +22,21 @@ interface AddModelFeedbackProps {
   title: string;
   // full inference model descriptor used by the feedback API and for questions
   selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
+  // The report the vote is given on, recorded with the vote when known.
+  reportRef?: {
+    runId?: string | null;
+    executionId?: string | null;
+    studyServiceJobId?: string | null;
+  };
 }
 
 type FeedbackType = 'APPROVE' | 'REJECT' | null;
 
-const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInferenceModel }) => {
+const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({
+  title,
+  selectedInferenceModel,
+  reportRef,
+}) => {
   const { t, i18n } = useTranslation('AIModelButton');
   const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || '';
@@ -113,6 +123,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
           inferenceModelId: selectedInferenceModel?.modelId,
           modelId: feedbackModelId,
           feedbackType: nextType,
+          ...reportRef,
           modelFeedbackAnswers: null,
         });
 
@@ -130,7 +141,13 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
         setIsSubmitting(false);
       }
     },
-    [existingFeedbackId, feedbackModelId, refreshExistingFeedback, selectedInferenceModel?.modelId]
+    [
+      existingFeedbackId,
+      feedbackModelId,
+      refreshExistingFeedback,
+      reportRef,
+      selectedInferenceModel?.modelId,
+    ]
   );
 
   // Handle opening the modal
@@ -321,6 +338,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
           inferenceModelId: selectedInferenceModel?.modelId,
           modelId: feedbackModelId,
           feedbackType: nextType,
+          ...reportRef,
           modelFeedbackAnswers:
             modelFeedbackAnswersArray.length > 0
               ? (modelFeedbackAnswersArray as [
@@ -360,6 +378,7 @@ const AddModelFeedback: React.FC<AddModelFeedbackProps> = ({ title, selectedInfe
       questionTextAnswers,
       existingFeedbackId,
       refreshExistingFeedback,
+      reportRef,
       selectedInferenceModel?.modelId,
       selectedInferenceModel?.approveFeedbackQuestionnaires,
       selectedInferenceModel?.rejectFeedbackQuestionnaires,

@@ -205,6 +205,7 @@ export const WORKSPACE_SETTINGS_TABS = [
   { id: 'dicom', labelKey: 'DICOM (Orthanc)' },
   { id: 'models', labelKey: 'Inference Models' },
   { id: 'ingestion', labelKey: 'Ingestion Jobs' },
+  { id: 'feedback', labelKey: 'Model Feedback' },
 ] as const;
 
 export type WorkspaceSettingsTabId = (typeof WORKSPACE_SETTINGS_TABS)[number]['id'];

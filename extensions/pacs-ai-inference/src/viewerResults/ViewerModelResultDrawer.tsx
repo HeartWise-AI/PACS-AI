@@ -8,6 +8,7 @@ import {
   isEmptyModelExecutionResult,
 } from '../studyProcessing/modelExecutionResultPresentation';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
+import ViewerModelResultFeedback from './ViewerModelResultFeedback';
 import { viewerResultKey } from './viewerResultsModel';
 import type { ResultSeriesScope, SelectedView, ViewerModelResult } from './types';
 
@@ -210,6 +211,7 @@ export function ViewerModelResultDrawer({
             )}
           </p>
         </div>
+        <ViewerModelResultFeedback result={result} />
         <button
           type="button"
           className="rounded-md border border-white/20 px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10"

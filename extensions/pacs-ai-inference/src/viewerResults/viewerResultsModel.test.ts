@@ -4,6 +4,7 @@ import {
   findLatestResultForModel,
   findPendingRunFailure,
   isResultForPendingRun,
+  resolveFeedbackModel,
   resolveResultSeriesScope,
 } from './viewerResultsModel';
 import type { PendingViewerModelRun, SelectedView, ViewerModelResult } from './types';
@@ -303,5 +304,89 @@ describe('resolveResultSeriesScope', () => {
   test('only reports the count when none of the used series is loaded', () => {
     expect(scope(['a', 'b'])).toEqual({ kind: 'count', used: 2, series: [] });
     expect(scope(['series-1'], [])).toEqual({ kind: 'count', used: 1, series: [] });
+  });
+});
+
+describe('resolveFeedbackModel', () => {
+  const approve = [{ id: 'q-approve' }];
+  const reject = [{ id: 'q-reject' }];
+  const models = [
+    {
+      modelId: 'deepcoro-info',
+      containerId: 'container-1',
+      modelName: 'DeepCORO-JEPA',
+      version: '1.3.0',
+      approveFeedbackQuestionnaires: approve,
+      rejectFeedbackQuestionnaires: reject,
+    },
+    {
+      modelId: 'echo-info',
+      containerId: 'container-2',
+      modelName: 'EchoPrime',
+      version: '2.0.0',
+      approveFeedbackQuestionnaires: [],
+      rejectFeedbackQuestionnaires: [],
+    },
+  ];
+
+  test('uses the artifact model id and the result version, the legacy feedback key', () => {
+    const model = resolveFeedbackModel(
+      result({ artifactModelId: 'deepcoro-info', modelId: 'firestore-id' }),
+      models
+    );
+
+    expect(model).toMatchObject({
+      modelId: 'deepcoro-info',
+      version: '1.3.0',
+      containerId: 'container-1',
+      rejectFeedbackQuestionnaires: reject,
+    });
+    expect(`${model!.modelId}-${model!.version}`).toBe('deepcoro-info-1.3.0');
+  });
+
+  test('falls back to the container match when the result has no artifact model id', () => {
+    const model = resolveFeedbackModel(
+      result({ modelName: 'Renamed', containerId: 'container-2', modelVersion: null }),
+      models
+    );
+
+    expect(model).toMatchObject({ modelId: 'echo-info', version: '2.0.0' });
+  });
+
+  test('falls back to the model name match', () => {
+    const model = resolveFeedbackModel(result({ modelName: 'EchoPrime', modelVersion: '9' }), [
+      ...models,
+      { ...models[1], modelId: 'echo-info-v9', version: '9' },
+    ]);
+
+    expect(model).toMatchObject({ modelId: 'echo-info-v9', version: '9' });
+  });
+
+  test('returns null when no model id is known', () => {
+    expect(resolveFeedbackModel(result({ modelName: 'Unknown' }), models)).toBeNull();
+    expect(resolveFeedbackModel(result({ modelName: 'Unknown' }), [])).toBeNull();
+  });
+
+  test('without a matching available model, keeps the thumbs and drops the questionnaires', () => {
+    const model = resolveFeedbackModel(
+      result({ modelName: 'Unknown', artifactModelId: 'retired-info' }),
+      models
+    );
+
+    expect(model).toEqual({
+      modelId: 'retired-info',
+      version: '1.3.0',
+      approveFeedbackQuestionnaires: [],
+      rejectFeedbackQuestionnaires: [],
+    });
+  });
+
+  test("keeps the result's version when the available model is newer", () => {
+    const model = resolveFeedbackModel(
+      result({ artifactModelId: 'deepcoro-info', modelVersion: '1.2.0' }),
+      models
+    );
+
+    expect(model).toMatchObject({ modelId: 'deepcoro-info', version: '1.2.0' });
   });
 });
