@@ -17,8 +17,13 @@ on:
 permissions:
   contents: read
 
+# A title or description edit must not cancel a queued or approved test run
+# for the same commit, so such edits get their own group and skip the job.
+# Edits that change the base branch still replace the previous run.
 concurrency:
-  group: pacs-self-hosted-pr-${{ github.event.pull_request.number }}
+  group: >-
+    pacs-self-hosted-pr-${{ github.event.pull_request.number }}${{
+    (github.event.action == 'edited' && !github.event.changes.base) && format('-edit-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
@@ -27,5 +32,6 @@ jobs:
     if: >-
       github.event.action != 'closed' &&
       github.event.action != 'converted_to_draft' &&
+      !(github.event.action == 'edited' && !github.event.changes.base) &&
       github.event.pull_request.draft == false
     uses: HeartWise-AI/PACS-AI/.github/workflows/pacs-ai-self-hosted-unit-tests.yml@main

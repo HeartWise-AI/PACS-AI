@@ -72,4 +72,8 @@ jobs:
             same PR branch. For any finding you disagree with or cannot safely fix, explain
             why in a PR comment. Post a concise per-comment summary with links to changes.
             Do not merge, deploy, expose secrets, or include private data in comments/logs.
-          claude_args: --max-turns 40
+          # Agent mode (an explicit prompt) takes tool permissions only from
+          # claude_args, so the unattended run must allow what the prompt asks for.
+          claude_args: >-
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(pnpm install:*),Bash(pnpm run:*),Bash(pnpm exec jest:*),Bash(npx jest:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment"

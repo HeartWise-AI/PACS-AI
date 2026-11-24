@@ -105,6 +105,23 @@ export function useModelDeploymentProgress({
           monitorsRef.current.delete(modelId);
           onTerminalRef.current(modelId, terminalProgress);
         },
+        onUnavailable: () => {
+          if (!valid()) {
+            return;
+          }
+          // A restored deployment that no longer exists must not keep the
+          // model marked as deploying or be restored again on the next visit.
+          removeStoredModelDeployment(tenantId, modelId);
+          monitorsRef.current.delete(modelId);
+          setDeployments(current => {
+            if (current[modelId]?.progress.deploymentId !== deploymentId) {
+              return current;
+            }
+            const next = { ...current };
+            delete next[modelId];
+            return next;
+          });
+        },
       });
       monitorsRef.current.set(modelId, monitor);
       monitor.start();
