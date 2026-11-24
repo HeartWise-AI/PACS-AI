@@ -199,6 +199,72 @@ describe('ViewerModelResultsProvider: run cancelled from the running-jobs card',
     expect(jobStates()).toEqual(['cancelled']);
   });
 
+  test('a poll that sees the cancellation before the answer does not report a failure', async () => {
+    const repo = repository();
+    await startQueuedRun(repo);
+    showAlert.mockClear();
+
+    // The server cancels at once, but its answer to the card arrives late.
+    let answerCancel!: (run: { id: string; phase: string; outcome: string }) => void;
+    mockCancelProcessingRun.mockReturnValue(
+      new Promise(resolve => {
+        answerCancel = resolve;
+      })
+    );
+    await click('running-jobs-cancel');
+    await click('running-jobs-cancel-yes');
+    await flush();
+
+    repo.loadRunStatus.mockResolvedValue(cancelledStatus);
+    await tick(1000);
+    expect(showAlert).not.toHaveBeenCalled();
+    expect(context!.getPendingRun(model)).not.toBeNull();
+
+    await act(async () => {
+      answerCancel({ id: 'run-2', phase: 'TERMINAL', outcome: 'CANCELLED' });
+    });
+    await flush();
+
+    expect(showAlert).not.toHaveBeenCalled();
+    expect(jobStates()).toEqual(['cancelled']);
+    expect(context!.getPendingRun(model)).toBeNull();
+  });
+
+  test('a run that fails while its cancellation is refused is reported once the answer arrives', async () => {
+    const repo = repository();
+    await startQueuedRun(repo);
+    showAlert.mockClear();
+
+    let refuseCancel!: (error: Error) => void;
+    mockCancelProcessingRun.mockReturnValue(
+      new Promise((_, reject) => {
+        refuseCancel = reject;
+      })
+    );
+    await click('running-jobs-cancel');
+    await click('running-jobs-cancel-yes');
+    await flush();
+
+    const failedStatus = {
+      phase: 'TERMINAL',
+      outcome: 'FAILED',
+      executions: [{ executionId: 'execution-2', status: 'failed' }],
+      cancellable: false,
+    };
+    repo.loadRunStatus.mockResolvedValue(failedStatus);
+    await tick(1000);
+    expect(showAlert).not.toHaveBeenCalled();
+
+    await act(async () => {
+      refuseCancel(Object.assign(new Error('x'), { status: 409 }));
+    });
+    await flush();
+    await tick(1000);
+
+    expect(showAlert).toHaveBeenCalledWith('ViewerRunEndedFailed:DeepCORO-JEPA', 'error');
+    expect(context!.getPendingRun(model)).toBeNull();
+  });
+
   test('keeps tracking the run when the cancellation fails', async () => {
     const repo = repository();
     mockCancelProcessingRun.mockRejectedValue(Object.assign(new Error('x'), { status: 503 }));

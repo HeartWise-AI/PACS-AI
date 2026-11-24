@@ -231,4 +231,36 @@ describe('useStudyProcessingRunPoll', () => {
     await advance(5000);
     expect(state!.run!.completedModels).toBe(5);
   });
+
+  test('retries a failed initial status check with backoff until it succeeds', async () => {
+    const repo = repository([summary()]);
+    repo.loadWorklistStudyStatuses
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'));
+    await render({ repository: repo });
+
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(1);
+    expect(state!.run).toBeNull();
+
+    await advance(5000);
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(2);
+    // Second failure: the next retry waits twice as long.
+    await advance(9999);
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(2);
+    await advance(1);
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(3);
+    expect(state!.run).toMatchObject({ id: 'auto-run-1', phase: 'PROCESSING' });
+  });
+
+  test('does not retry once a check succeeded without an active run', async () => {
+    const repo = repository([summary({ phase: 'TERMINAL', outcome: 'SUCCESS' })]);
+    repo.loadWorklistStudyStatuses.mockRejectedValueOnce(new Error('offline'));
+    await render({ repository: repo });
+    await advance(5000);
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(2);
+
+    await advance(120_000);
+    expect(repo.loadWorklistStudyStatuses).toHaveBeenCalledTimes(2);
+    expect(jest.getTimerCount()).toBe(0);
+  });
 });

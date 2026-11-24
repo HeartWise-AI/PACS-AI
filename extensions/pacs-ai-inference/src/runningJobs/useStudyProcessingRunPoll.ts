@@ -3,9 +3,14 @@ import {
   createStudyProcessingRESTRepository,
   type StudyProcessingRESTRepository,
 } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
-import type { ProcessingRun, StudyProcessingSummary } from '@pacs-ai/extension-core/src/studyProcessing/types';
+import type {
+  ProcessingRun,
+  StudyProcessingSummary,
+} from '@pacs-ai/extension-core/src/studyProcessing/types';
 
 export const STUDY_PROCESSING_RUN_POLL_INTERVAL_MS = 5_000;
+// Longest wait between retries of a status check that failed.
+export const STUDY_PROCESSING_RUN_RETRY_MAX_MS = 60_000;
 
 export type StudyProcessingRunPollRepository = Pick<
   StudyProcessingRESTRepository,
@@ -99,6 +104,9 @@ export function useStudyProcessingRunPoll({
   const uid = studyInstanceUID?.trim() || null;
   const visible = usePageVisible();
   const [state, setState] = useState<StudyProcessingRunPollState>(IDLE);
+  // Consecutive failed checks; a failed check is retried (with backoff) even
+  // when no active run is known, since the study's run is then unknown.
+  const [failedChecks, setFailedChecks] = useState(0);
   const stateRef = useRef(state);
   const generation = useRef(0);
   // Generation of the check in flight; one of a previous study does not count.
@@ -142,6 +150,7 @@ export function useStudyProcessingRunPoll({
         return;
       }
 
+      setFailedChecks(0);
       setState(previous => {
         if (run && isActive(run)) {
           return {
@@ -163,7 +172,11 @@ export function useStudyProcessingRunPoll({
         return previous;
       });
     } catch (error: unknown) {
-      // Transient failures are retried on the next check.
+      // Transient failures are retried: by the poll while a run is active,
+      // otherwise by the retry below.
+      if (requestGeneration === generation.current) {
+        setFailedChecks(count => count + 1);
+      }
     } finally {
       if (inFlight.current === requestGeneration) {
         inFlight.current = null;
@@ -175,6 +188,7 @@ export function useStudyProcessingRunPoll({
     generation.current += 1;
     stateRef.current = IDLE;
     setState(IDLE);
+    setFailedChecks(0);
   }, [uid, enabled]);
 
   useEffect(() => {
@@ -193,6 +207,20 @@ export function useStudyProcessingRunPoll({
     }, pollIntervalMs);
     return () => window.clearInterval(interval);
   }, [active, check, enabled, pollIntervalMs, uid, visible]);
+
+  useEffect(() => {
+    if (!enabled || !uid || !visible || active || failedChecks === 0) {
+      return undefined;
+    }
+    const delay = Math.min(
+      pollIntervalMs * 2 ** (failedChecks - 1),
+      Math.max(pollIntervalMs, STUDY_PROCESSING_RUN_RETRY_MAX_MS)
+    );
+    const timer = window.setTimeout(() => {
+      void check();
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [active, check, enabled, failedChecks, pollIntervalMs, uid, visible]);
 
   return enabled && uid ? state : IDLE;
 }

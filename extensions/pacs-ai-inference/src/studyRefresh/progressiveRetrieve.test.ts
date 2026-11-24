@@ -5,6 +5,7 @@ import {
   PENDING_RETRIEVE_MAX_AGE_MS,
   rememberPendingRetrieve,
   takePendingRetrieve,
+  takePendingRetrieveHandover,
 } from './progressiveRetrieve';
 
 const noWait = () => Promise.resolve();
@@ -73,7 +74,65 @@ describe('pending retrieve hand-over', () => {
   });
 });
 
+describe('handing a follow back', () => {
+  it('keeps the first hand-over time so an old retrieve still expires', () => {
+    const storage = memoryStorage();
+    rememberPendingRetrieve('1.2.3', ['b'], { storage, now: () => 1000 });
+    const handover = takePendingRetrieveHandover('1.2.3', { storage, now: () => 2000 });
+    expect(handover).toEqual({ jobIds: ['b'], at: 1000 });
+
+    rememberPendingRetrieve('1.2.3', handover!.jobIds, {
+      storage,
+      now: () => 5000,
+      at: handover!.at,
+    });
+    expect(
+      takePendingRetrieveHandover('1.2.3', {
+        storage,
+        now: () => 1000 + PENDING_RETRIEVE_MAX_AGE_MS + 1,
+      })
+    ).toBeNull();
+  });
+});
+
 describe('followPendingRetrieve', () => {
+  it('keeps following the other jobs after one fails', async () => {
+    const rounds = [
+      [
+        { id: 'b', progress: 40, state: 'Failure' },
+        { id: 'c', progress: 0, state: 'Running' },
+      ],
+      [
+        { id: 'b', progress: 40, state: 'Failure' },
+        { id: 'c', progress: 50, state: 'Running' },
+      ],
+      [
+        { id: 'b', progress: 40, state: 'Failure' },
+        { id: 'c', progress: 100, state: 'Success' },
+      ],
+    ];
+    let round = 0;
+    let clock = 0;
+    const loadJobs = jest.fn(() => Promise.resolve(rounds[Math.min(round++, rounds.length - 1)]));
+    const reload = jest.fn(() => Promise.resolve());
+
+    const outcome = await followPendingRetrieve({
+      jobIds: ['b', 'c'],
+      loadJobs,
+      reload,
+      wait: () => {
+        clock += 5000;
+        return Promise.resolve();
+      },
+      now: () => clock,
+    });
+
+    expect(outcome).toBe('failed');
+    expect(loadJobs).toHaveBeenCalledTimes(3);
+    // Series c arrived after b failed: the final reload shows it.
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it('reloads the series as more jobs complete, and once at the end', async () => {
     const rounds = [
       [

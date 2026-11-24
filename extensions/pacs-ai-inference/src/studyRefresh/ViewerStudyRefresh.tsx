@@ -10,7 +10,11 @@ import {
 import { useStudyGrowing } from './studyGrowingStore';
 import { useStudyRefresh } from './useStudyRefresh';
 import { createStudyRefreshRepository } from './studyRefreshRepository';
-import { followPendingRetrieve, takePendingRetrieve } from './progressiveRetrieve';
+import {
+  followPendingRetrieve,
+  rememberPendingRetrieve,
+  takePendingRetrieveHandover,
+} from './progressiveRetrieve';
 
 export { createStudyRefreshRepository } from './studyRefreshRepository';
 
@@ -50,19 +54,27 @@ export function ViewerStudyRefresh({ studyInstanceUID, dataSource }: ViewerStudy
     if (!uid || !canReloadStudySeries(dataSource)) {
       return undefined;
     }
-    const jobIds = takePendingRetrieve(uid);
-    if (!jobIds.length) {
+    const handover = takePendingRetrieveHandover(uid);
+    if (!handover) {
       return undefined;
     }
     let cancelled = false;
+    let finished = false;
     void followPendingRetrieve({
-      jobIds,
+      jobIds: handover.jobIds,
       loadJobs: repository.loadJobs,
       reload: () => reloadSeries(uid),
       isCancelled: () => cancelled,
+    }).then(outcome => {
+      finished = outcome !== 'cancelled';
     });
     return () => {
       cancelled = true;
+      // The study browser unmounts this when its panel closes: hand the jobs
+      // back so the follow resumes when it opens again.
+      if (!finished) {
+        rememberPendingRetrieve(uid, handover.jobIds, { at: handover.at });
+      }
     };
   }, [uid, dataSource, repository, reloadSeries]);
 

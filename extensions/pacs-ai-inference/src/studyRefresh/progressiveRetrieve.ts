@@ -18,6 +18,12 @@ export interface RetrieveJobRef {
 }
 
 const SUCCESS_STATE = 'Success';
+const FAILURE_STATE = 'Failure';
+
+// A job that will not move any more series: succeeded or failed.
+function isJobFinished(job: RetrieveJobInfo): boolean {
+  return job.state === FAILURE_STATE || job.state === SUCCESS_STATE || job.progress === 100;
+}
 
 /**
  * The jobs that must finish before the viewer can open: the first series.
@@ -85,13 +91,18 @@ function readAll(storage: Storage2): Record<string, PendingRetrieve> {
 export function rememberPendingRetrieve(
   studyInstanceUID: string,
   jobIds: readonly string[],
-  { storage = defaultStorage(), now = Date.now } = {}
+  {
+    storage = defaultStorage(),
+    now = Date.now,
+    // When the hand-over was first made; kept when it is handed back.
+    at = undefined as number | undefined,
+  } = {}
 ): void {
   if (!storage || !studyInstanceUID || !jobIds.length) {
     return;
   }
   const all = readAll(storage);
-  all[studyInstanceUID] = { jobIds: [...jobIds], at: now() };
+  all[studyInstanceUID] = { jobIds: [...jobIds], at: typeof at === 'number' ? at : now() };
   try {
     storage.setItem(PENDING_RETRIEVE_STORAGE_KEY, JSON.stringify(all));
   } catch (ignored) {
@@ -99,18 +110,28 @@ export function rememberPendingRetrieve(
   }
 }
 
-/** The jobs still moving a study's series, once; [] when there are none. */
-export function takePendingRetrieve(
+export interface PendingRetrieveHandover {
+  jobIds: string[];
+  // When the work list handed the jobs over.
+  at: number;
+}
+
+/**
+ * The hand-over of a study's remaining jobs, once; null when there is none or
+ * it is too old. Give it back with rememberPendingRetrieve (with its `at`)
+ * when following it stops before the jobs ended.
+ */
+export function takePendingRetrieveHandover(
   studyInstanceUID: string | null | undefined,
   { storage = defaultStorage(), now = Date.now } = {}
-): string[] {
+): PendingRetrieveHandover | null {
   if (!storage || !studyInstanceUID) {
-    return [];
+    return null;
   }
   const all = readAll(storage);
   const entry = all[studyInstanceUID];
   if (!entry) {
-    return [];
+    return null;
   }
   delete all[studyInstanceUID];
   try {
@@ -119,9 +140,17 @@ export function takePendingRetrieve(
     // ignore
   }
   const fresh = typeof entry.at === 'number' && now() - entry.at <= PENDING_RETRIEVE_MAX_AGE_MS;
-  return fresh && Array.isArray(entry.jobIds)
-    ? entry.jobIds.filter(id => typeof id === 'string')
-    : [];
+  const jobIds =
+    fresh && Array.isArray(entry.jobIds) ? entry.jobIds.filter(id => typeof id === 'string') : [];
+  return jobIds.length ? { jobIds, at: entry.at } : null;
+}
+
+/** The jobs still moving a study's series, once; [] when there are none. */
+export function takePendingRetrieve(
+  studyInstanceUID: string | null | undefined,
+  options: { storage?: Storage2 | null; now?: () => number } = {}
+): string[] {
+  return takePendingRetrieveHandover(studyInstanceUID, options)?.jobIds ?? [];
 }
 
 // --- the viewer following the rest of the retrieve ---------------------------
@@ -149,7 +178,8 @@ const defaultWait = (ms: number) => new Promise<void>(resolve => setTimeout(reso
 /**
  * Polls the remaining retrieve jobs and reloads the study's series each time
  * more of them are complete (at most every minReloadIntervalMs), and once at
- * the end, so every series that arrived is shown even when a job failed.
+ * the end, so every series that arrived is shown even when a job failed. A
+ * failed job does not end the follow while other jobs are still moving.
  */
 export async function followPendingRetrieve({
   jobIds,
@@ -195,7 +225,9 @@ export async function followPendingRetrieve({
     }
     if (jobs) {
       const summary = summarizeRetrieveJobs(jobs);
-      if (summary.done || summary.failed) {
+      // A failed job does not stop the others: follow them until every job
+      // has ended, then show what arrived.
+      if (summary.done || (jobs.length > 0 && jobs.every(isJobFinished))) {
         await safeReload();
         return summary.failed ? 'failed' : 'done';
       }
