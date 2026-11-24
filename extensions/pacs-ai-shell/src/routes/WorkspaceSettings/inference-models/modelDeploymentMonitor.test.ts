@@ -3,6 +3,7 @@ import type {
   InferenceModelDeploymentOperation,
 } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { createModelDeploymentMonitor } from './modelDeploymentMonitor';
+import { ModelDeploymentSSEError } from './modelDeploymentSSE';
 
 const operation = (
   sequence: number,
@@ -114,6 +115,53 @@ describe('model deployment monitor', () => {
     jest.advanceTimersByTime(4000);
     await flushPromises();
     expect(getOperation).toHaveBeenCalledTimes(pollsAfterReconnect);
+    monitor.stop();
+  });
+
+  test.each([403, 404, 410])(
+    'stops for good when the stream answers %s instead of retrying',
+    async status => {
+      const getOperation = jest.fn().mockResolvedValue(statusResponse(operation(1)));
+      const stream = jest.fn().mockRejectedValue(new ModelDeploymentSSEError('gone', status));
+      const onUnavailable = jest.fn();
+      const onConnectionMode = jest.fn();
+      const monitor = createModelDeploymentMonitor(
+        'model-1',
+        'deployment-1',
+        { onProgress: jest.fn(), onConnectionMode, onTerminal: jest.fn(), onUnavailable },
+        { getOperation, stream }
+      );
+
+      monitor.start();
+      await flushPromises();
+      jest.advanceTimersByTime(30_000);
+      await flushPromises();
+
+      expect(onUnavailable).toHaveBeenCalledWith(status);
+      expect(stream).toHaveBeenCalledTimes(1);
+      expect(onConnectionMode).not.toHaveBeenCalledWith('polling');
+      expect(getOperation).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  test('keeps retrying transient stream failures such as 503', async () => {
+    const getOperation = jest.fn().mockResolvedValue(statusResponse(operation(1)));
+    const stream = jest.fn().mockRejectedValue(new ModelDeploymentSSEError('busy', 503));
+    const onUnavailable = jest.fn();
+    const monitor = createModelDeploymentMonitor(
+      'model-1',
+      'deployment-1',
+      { onProgress: jest.fn(), onConnectionMode: jest.fn(), onTerminal: jest.fn(), onUnavailable },
+      { getOperation, stream, reconnectIntervalMs: 5000 }
+    );
+
+    monitor.start();
+    await flushPromises();
+    jest.advanceTimersByTime(5000);
+    await flushPromises();
+
+    expect(onUnavailable).not.toHaveBeenCalled();
+    expect(stream.mock.calls.length).toBeGreaterThanOrEqual(2);
     monitor.stop();
   });
 });

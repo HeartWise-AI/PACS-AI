@@ -2,9 +2,25 @@ import type { InferenceModelDeploymentEvent } from '@pacs-ai/extension-core/src/
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { operationDeploymentProgress, type ModelDeploymentConnectionMode } from './modelDeployment';
 import {
+  ModelDeploymentSSEError,
   streamModelDeploymentEvents,
   type StreamModelDeploymentEventsOptions,
 } from './modelDeploymentSSE';
+
+/**
+ * Statuses that will not change by retrying: the deployment does not exist
+ * (any more) or this session may not see it. 401 is left to the session
+ * handling, which signs the user out.
+ */
+const DEFINITIVE_STREAM_STATUSES = new Set([403, 404, 410]);
+
+export function isDefinitiveDeploymentStreamError(error: unknown): boolean {
+  return (
+    error instanceof ModelDeploymentSSEError &&
+    error.status !== null &&
+    DEFINITIVE_STREAM_STATUSES.has(error.status)
+  );
+}
 
 const DEFAULT_POLL_INTERVAL_MS = 2000;
 const DEFAULT_RECONNECT_INTERVAL_MS = 5000;
@@ -26,6 +42,8 @@ export interface ModelDeploymentMonitorCallbacks {
   onProgress(event: InferenceModelDeploymentEvent): void;
   onConnectionMode(mode: ModelDeploymentConnectionMode): void;
   onTerminal(event: InferenceModelDeploymentEvent): void;
+  /** The deployment is gone or forbidden; the monitor has stopped for good. */
+  onUnavailable?(status: number): void;
 }
 
 export interface ModelDeploymentMonitor {
@@ -135,8 +153,14 @@ export function createModelDeploymentMonitor(
       },
       onEvent: applyProgress,
     })
-      .catch(() => {
-        // Disconnections are expected during restarts and proxy timeouts.
+      .catch(error => {
+        // Disconnections are expected during restarts and proxy timeouts, so
+        // those are retried. A stale or forbidden deployment never recovers.
+        if (!stopped && !terminal && isDefinitiveDeploymentStreamError(error)) {
+          const status = (error as ModelDeploymentSSEError).status as number;
+          stop();
+          callbacks.onUnavailable?.(status);
+        }
       })
       .then(() => {
         if (!stopped && !terminal) {

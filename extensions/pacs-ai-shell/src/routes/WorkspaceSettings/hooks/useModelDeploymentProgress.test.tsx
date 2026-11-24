@@ -82,6 +82,26 @@ describe('useModelDeploymentProgress', () => {
     expect(onTerminal).toHaveBeenCalledWith('model-1', terminal);
   });
 
+  test('a restored deployment the server no longer has stops blocking the model', () => {
+    localStorage.setItem(
+      'pacs-ai:model-deployments:tenant-a',
+      JSON.stringify([{ modelId: 'model-1', deploymentId: 'deployment-stale' }])
+    );
+    const onTerminal = jest.fn();
+
+    act(() => {
+      renderer = render(<Consumer onTerminal={onTerminal} />);
+    });
+    expect(hookValue.isDeploying('model-1')).toBe(true);
+
+    act(() => callbacks.onUnavailable?.(404));
+
+    expect(hookValue.isDeploying('model-1')).toBe(false);
+    expect(hookValue.deployments['model-1']).toBeUndefined();
+    expect(loadStoredModelDeployments('tenant-a')).toEqual([]);
+    expect(onTerminal).not.toHaveBeenCalled();
+  });
+
   test('tracks the accepted deployment and prevents a duplicate submission', async () => {
     mockedRepository.DeployInferenceModelVersion.mockResolvedValue({
       success: true,

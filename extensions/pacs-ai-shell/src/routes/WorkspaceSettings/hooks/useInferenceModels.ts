@@ -59,6 +59,7 @@ export function useInferenceModels({ enabled = true }: UseInferenceModelsOptions
   const [selectedVersionId, setSelectedVersionId] = useState('');
   const [fetchingModelVersions, setFetchingModelVersions] = useState(false);
   const restoredDeploymentModalRef = useRef(false);
+  const versionsRequestRef = useRef(0);
 
   const clearSelectedInferenceModel = useCallback(() => {
     setSelectedInferenceModel(EMPTY_INFERENCE_MODEL);
@@ -242,12 +243,22 @@ export function useInferenceModels({ enabled = true }: UseInferenceModelsOptions
   };
 
   const fetchModelVersions = async (modelId: string) => {
+    // Only the newest request may update the modal: a slower answer for a
+    // model the user already left must not replace the current model's versions.
+    const request = ++versionsRequestRef.current;
+    const isCurrent = () => request === versionsRequestRef.current;
     setFetchingModelVersions(true);
     try {
       const response = await inferenceRepository.GetInferenceModelVersions(modelId);
+      if (!isCurrent()) {
+        return;
+      }
       setModelVersions(response.data);
       setSelectedVersionId(getDefaultDeployableVersionId(response.data));
     } catch (error) {
+      if (!isCurrent()) {
+        return;
+      }
       handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
       console.error('Error fetching inference model versions:', error);
       showAlert(error.message, 'error');
@@ -268,6 +279,8 @@ export function useInferenceModels({ enabled = true }: UseInferenceModelsOptions
 
   const closeModelVersionsModal = () => {
     restoredDeploymentModalRef.current = true;
+    versionsRequestRef.current += 1;
+    setFetchingModelVersions(false);
     setIsOpenModelVersionsModal(false);
     setVersionModel(null);
     setModelVersions([]);
@@ -282,6 +295,9 @@ export function useInferenceModels({ enabled = true }: UseInferenceModelsOptions
       if (progress.status === 'COMPLETED') {
         showAlert('Model deployment completed.', 'success');
         void fetchInferenceModels();
+        // The deployment may replace the container and version that the
+        // ingestion, feedback and roles tabs read from the available list.
+        void fetchAvailableInferenceModels();
         if (versionModel?.id === modelId) {
           void fetchModelVersions(modelId);
         }
