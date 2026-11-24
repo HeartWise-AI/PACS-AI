@@ -34,7 +34,7 @@
     "@ohif/core": "workspace:*",
     "@ohif/extension-cornerstone-dicom-sr": "workspace:*",
     "@ohif/extension-ultrasound-pleura-bline": "workspace:*",
-    "i18next": "19.9.2"
+    "i18next": "26.3.4"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
