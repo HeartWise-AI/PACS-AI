@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import TopNavigation from '../../components/TopNavigation';
 import { isAdminRole } from '../../components/TopNavigation/navigationModel';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
-import type { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import { Permission, can } from '@pacs-ai/extension-core/src/access/permissions';
+import { loadUserAccess } from '@pacs-ai/extension-core/src/access/userAccessService';
 import inferenceRepository from '@pacs-ai/extension-core/src/api/inferenceRepository';
 import { createStudyProcessingRESTRepository } from '@pacs-ai/extension-core/src/studyProcessing/restRepository';
 import { createViewerResultsRepository } from '@pacs-ai/extension-inference/src/viewerResults/viewerResultsRepository';
@@ -45,7 +46,7 @@ export interface AiPredictionsDependencies {
   // Retrieves exams whose images were removed from the local store; null
   // disables "Retrieve from PACS and open".
   retriever?: ExamRetriever | null;
-  loadCurrentUser?: () => Promise<{ id: string; role: string | null }>;
+  loadCurrentUser?: () => Promise<CurrentPredictionsUser>;
   loadAvailableModels?: () => Promise<{ modelName: string; containerId: string }[]>;
   loadUsers?: () => Promise<LaunchedByUser[]>;
   cancelRun?: (runId: string) => Promise<unknown>;
@@ -67,10 +68,20 @@ function defaultSaveFile(fileName: string, text: string) {
   setTimeout(() => window.URL.revokeObjectURL(url), 100);
 }
 
+type CurrentPredictionsUser = { id: string; role: string | null; canViewAll?: boolean };
+
 const defaults = {
   loadCurrentUser: async () => {
-    const response = await userRepository.GetCurrentUser();
-    return { id: response.data.id, role: response.data.role ?? null };
+    const [response, access] = await Promise.all([
+      userRepository.GetCurrentUser(),
+      loadUserAccess(),
+    ]);
+    const role = response.data.role ?? null;
+    return {
+      id: response.data.id,
+      role,
+      canViewAll: access ? can(access, Permission.RESULTS_VIEW_ALL) : isAdminRole(role),
+    };
   },
   loadAvailableModels: async () => {
     const response = await inferenceRepository.GetInferenceAvailableModels();
@@ -111,7 +122,7 @@ export function AiPredictionsPage(dependencies: AiPredictionsDependencies = {}) 
   const depsRef = useRef(deps);
   depsRef.current = deps;
 
-  const [user, setUser] = useState<{ id: string; role: string | null } | null>(null);
+  const [user, setUser] = useState<CurrentPredictionsUser | null>(null);
   const [userFailed, setUserFailed] = useState(false);
   const [filters, setFilters] = useState<PredictionsFilters>(DEFAULT_PREDICTIONS_FILTERS);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -127,7 +138,8 @@ export function AiPredictionsPage(dependencies: AiPredictionsDependencies = {}) 
   const results = useExecutionResults(t, dependencies.resultClient);
   const resultViewer = useModelExecutionResultViewer(null);
 
-  const roleCanViewAll = isAdminRole((user?.role ?? null) as UserRole | null);
+  // results.view_all (always held by OWNER/ADMIN) opens the all-users view.
+  const roleCanViewAll = user?.canViewAll ?? isAdminRole(user?.role ?? null);
 
   useEffect(() => {
     document.title = 'AI Predictions - PACS AI';

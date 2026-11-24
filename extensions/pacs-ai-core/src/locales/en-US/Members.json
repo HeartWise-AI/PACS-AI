@@ -49,5 +49,9 @@
   "Unknown": "Unknown",
   "Unable to update account access.": "Unable to update account access.",
   "Update member information.": "Update member information.",
-  "{{count}} / 500 characters": "{{count}} / 500 characters"
+  "{{count}} / 500 characters": "{{count}} / 500 characters",
+  "Custom role": "Custom role",
+  "None (use models and rate reports)": "None (use models and rate reports)",
+  "Create and edit roles in Workspace Settings → Roles.": "Create and edit roles in Workspace Settings → Roles.",
+  "Your role can invite members but cannot see the member list.": "Your role can invite members but cannot see the member list."
 }

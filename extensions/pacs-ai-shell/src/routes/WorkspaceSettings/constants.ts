@@ -206,14 +206,13 @@ export const WORKSPACE_SETTINGS_TABS = [
   { id: 'models', labelKey: 'Inference Models' },
   { id: 'ingestion', labelKey: 'Ingestion Jobs' },
   { id: 'feedback', labelKey: 'Model Feedback' },
+  { id: 'roles', labelKey: 'Roles' },
 ] as const;
 
 export type WorkspaceSettingsTabId = (typeof WORKSPACE_SETTINGS_TABS)[number]['id'];
 
 export const DEFAULT_WORKSPACE_SETTINGS_TAB: WorkspaceSettingsTabId = 'onboarding';
 
-export function isWorkspaceSettingsTabId(
-  value: string | null
-): value is WorkspaceSettingsTabId {
+export function isWorkspaceSettingsTabId(value: string | null): value is WorkspaceSettingsTabId {
   return WORKSPACE_SETTINGS_TABS.some(tab => tab.id === value);
 }

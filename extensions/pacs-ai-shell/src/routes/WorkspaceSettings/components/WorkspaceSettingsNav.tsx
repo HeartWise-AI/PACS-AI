@@ -1,19 +1,22 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  WORKSPACE_SETTINGS_TABS,
-  type WorkspaceSettingsTabId,
-} from '../constants';
+import { WORKSPACE_SETTINGS_TABS, type WorkspaceSettingsTabId } from '../constants';
 
 type WorkspaceSettingsNavProps = {
-  activeTab: WorkspaceSettingsTabId;
+  activeTab: WorkspaceSettingsTabId | null;
   onTabChange: (tab: WorkspaceSettingsTabId) => void;
+  /** Tabs the user may open; defaults to all. */
+  visibleTabs?: readonly WorkspaceSettingsTabId[];
 };
 
 const WorkspaceSettingsNav = ({
   activeTab,
   onTabChange,
+  visibleTabs,
 }: WorkspaceSettingsNavProps) => {
+  const tabs = visibleTabs
+    ? WORKSPACE_SETTINGS_TABS.filter(tab => visibleTabs.includes(tab.id))
+    : WORKSPACE_SETTINGS_TABS;
   const { t } = useTranslation('Common');
 
   return (
@@ -22,7 +25,7 @@ const WorkspaceSettingsNav = ({
       role="tablist"
       aria-label={t('Workspace Settings')}
     >
-      {WORKSPACE_SETTINGS_TABS.map(tab => {
+      {tabs.map(tab => {
         const isActive = tab.id === activeTab;
         return (
           <button

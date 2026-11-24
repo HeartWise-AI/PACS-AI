@@ -7,6 +7,11 @@ import Api from '../pacsAPIAxios';
 import {
   AddTenantUserRequest,
   AcceptPoliciesRequest,
+  AssignCustomRoleRequest,
+  CustomRoleResponse,
+  GetCustomRolesResponse,
+  UpsertCustomRoleRequest,
+  UserAccessResponse,
   ChangeTenantUserAccessRequest,
   ChangeTenantUserAccessResponse,
   ChangePasswordRequest,
@@ -30,7 +35,46 @@ import {
   VerifyEmailRequest,
 } from './userDTO';
 
+function unwrap<T>(promise: Promise<AxiosResponse<APIResponse<T>>>): Promise<APIResponse<T>> {
+  return promise
+    .then(response => response.data)
+    .catch((error: AxiosError<ErrorAPIResponse>) => {
+      const { response } = error;
+      throw response?.data !== undefined ? response.data : object;
+    });
+}
+
 const userRepository = {
+  /** Effective permissions and model access of the signed-in user. */
+  async GetMyAccess(): Promise<APIResponse<UserAccessResponse>> {
+    return unwrap(Api().get(`/v1/user/me/access`));
+  },
+  /** Custom roles of the tenant plus the permission catalog. */
+  async GetCustomRoles(): Promise<APIResponse<GetCustomRolesResponse>> {
+    return unwrap(Api().get(`/v1/user/roles`));
+  },
+  async CreateCustomRole(
+    request: UpsertCustomRoleRequest
+  ): Promise<APIResponse<CustomRoleResponse>> {
+    return unwrap(Api().post(`/v1/user/roles`, request));
+  },
+  async UpdateCustomRole(
+    roleId: string,
+    request: UpsertCustomRoleRequest
+  ): Promise<APIResponse<CustomRoleResponse>> {
+    return unwrap(Api().put(`/v1/user/roles/${encodeURIComponent(roleId)}`, request));
+  },
+  async DeleteCustomRole(roleId: string): Promise<APIResponse<void>> {
+    return unwrap(Api().delete(`/v1/user/roles/${encodeURIComponent(roleId)}`));
+  },
+  /** Assigns (or clears with "") the custom role of a USER account. */
+  async AssignCustomRole(request: AssignCustomRoleRequest): Promise<APIResponse<void>> {
+    return unwrap(
+      Api().put(`/v1/user/${encodeURIComponent(request.userId)}/custom-role`, {
+        customRoleId: request.customRoleId,
+      })
+    );
+  },
   /**
    * Add tenant user
    *

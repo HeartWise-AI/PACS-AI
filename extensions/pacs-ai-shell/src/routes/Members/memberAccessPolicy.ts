@@ -4,6 +4,8 @@ export interface MemberAccessIdentity {
   id: string;
   role: string;
   accessState?: string;
+  /** A USER whose custom role grants members.manage may manage other USERs. */
+  canManageMembers?: boolean;
 }
 
 export type MemberAccessRestriction =
@@ -57,6 +59,10 @@ export const getMemberAccessEligibility = (
   }
 
   if (actor.role === UserRole.ADMIN && target.role === UserRole.USER) {
+    return { allowed: true, restriction: 'ALLOWED' };
+  }
+
+  if (actor.role === UserRole.USER && actor.canManageMembers && target.role === UserRole.USER) {
     return { allowed: true, restriction: 'ALLOWED' };
   }
 

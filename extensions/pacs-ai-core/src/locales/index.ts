@@ -49,6 +49,7 @@ import en_US_Common from './en-US/Common.json';
 import en_US_HeaderPanel from './en-US/HeaderPanel.json';
 import en_US_Members from './en-US/Members.json';
 import en_US_ModelFeedback from './en-US/ModelFeedback.json';
+import en_US_Roles from './en-US/Roles.json';
 import en_US_Onboarding from './en-US/Onboarding.json';
 import en_US_ResultModal from './en-US/ResultModal.json';
 import en_US_Settings from './en-US/Settings.json';
@@ -90,6 +91,7 @@ import fr_MeasurementTable from './fr/MeasurementTable.json';
 import fr_Members from './fr/Members.json';
 import fr_Messages from './fr/Messages.json';
 import fr_ModelFeedback from './fr/ModelFeedback.json';
+import fr_Roles from './fr/Roles.json';
 import fr_Onboarding from './fr/Onboarding.json';
 import fr_ResultModal from './fr/ResultModal.json';
 import fr_Settings from './fr/Settings.json';
@@ -107,7 +109,7 @@ import zh_AIModelButton from './zh/AIModelButton.json';
 import zh_StoreFileButton from './zh/StoreFileButton.json';
 
 const locales: Record<string, Record<string, Record<string, unknown>>> = {
-  'ar': {
+  ar: {
     AIModelButton: ar_AIModelButton,
     AboutModal: ar_AboutModal,
     ChatBox: ar_ChatBox,
@@ -124,7 +126,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     TutorialProgressOverlay: ar_TutorialProgressOverlay,
     ViewportDownloadForm: ar_ViewportDownloadForm,
   },
-  'de': {
+  de: {
     AIModelButton: de_AIModelButton,
     ChatBox: de_ChatBox,
     Common: de_Common,
@@ -151,6 +153,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     HeaderPanel: en_US_HeaderPanel,
     Members: en_US_Members,
     ModelFeedback: en_US_ModelFeedback,
+    Roles: en_US_Roles,
     Onboarding: en_US_Onboarding,
     ResultModal: en_US_ResultModal,
     Settings: en_US_Settings,
@@ -161,7 +164,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     TopNavigation: en_US_TopNavigation,
     TutorialProgressOverlay: en_US_TutorialProgressOverlay,
   },
-  'es': {
+  es: {
     AIModelButton: es_AIModelButton,
     Buttons: es_Buttons,
     ChatBox: es_ChatBox,
@@ -181,7 +184,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     TutorialProgressOverlay: es_TutorialProgressOverlay,
     UserPreferencesModal: es_UserPreferencesModal,
   },
-  'fr': {
+  fr: {
     AIModelButton: fr_AIModelButton,
     AboutModal: fr_AboutModal,
     AiPredictions: fr_AiPredictions,
@@ -196,6 +199,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     Members: fr_Members,
     Messages: fr_Messages,
     ModelFeedback: fr_ModelFeedback,
+    Roles: fr_Roles,
     Onboarding: fr_Onboarding,
     ResultModal: fr_ResultModal,
     Settings: fr_Settings,
@@ -212,7 +216,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
   'test-LNG': {
     StudyList: test_LNG_StudyList,
   },
-  'zh': {
+  zh: {
     AIModelButton: zh_AIModelButton,
     StoreFileButton: zh_StoreFileButton,
   },

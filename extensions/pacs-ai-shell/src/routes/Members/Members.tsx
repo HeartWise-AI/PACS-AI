@@ -5,7 +5,11 @@ import { Button, Input, Typography } from '@pacs-ai/ui';
 import Table from '../../components/Table';
 import TopNavigation from '../../components/TopNavigation';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
-import { GetTenantUserEmailInvitesResponse, UserResponse, UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import {
+  GetTenantUserEmailInvitesResponse,
+  UserResponse,
+  UserRole,
+} from '@pacs-ai/extension-core/src/api/userDTO';
 import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import Modal from '../../components/Modal';
 import { AlertContext } from '../../alerts';
@@ -16,6 +20,10 @@ import chevronRight from '../../assets/pacs/icons/chevron-right.png';
 import MemberAccessManagement from './MemberAccessManagement';
 import MemberAccessStatusBadge from './MemberAccessStatusBadge';
 import { filterMembers } from './memberSearch';
+import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
+import { useUserAccess } from '@pacs-ai/extension-core/src/hooks/useUserAccess';
+import type { CustomRoleResponse } from '@pacs-ai/extension-core/src/api/userDTO';
+import { canAssignCustomRole, getCustomRoleChange, getCustomRoleName } from './memberCustomRoles';
 
 const userInvitesPerPage = 5;
 
@@ -28,6 +36,13 @@ const MembersPage = () => {
   const { t } = useTranslation('Members');
   const navigate = useNavigate();
   const [listOfUsers, setListOfUsers] = useState<MemberRow[]>([]);
+  const { access, loading: accessLoading, can } = useUserAccess();
+  const isAdminActor = Boolean(access?.isAdmin);
+  const canManageMembers = can(Permission.MEMBERS_MANAGE);
+  const canInviteMembers = can(Permission.MEMBERS_INVITE);
+  const [customRoles, setCustomRoles] = useState<CustomRoleResponse[]>([]);
+  const [editingCustomRoleId, setEditingCustomRoleId] = useState('');
+  const [originalCustomRoleId, setOriginalCustomRoleId] = useState('');
   const [searchValue, setSearchValue] = useState('');
   const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
   const [listOfDoctorSpecialities, setListOfDoctorSpecialities] = useState([]);
@@ -73,6 +88,7 @@ const MembersPage = () => {
     { text: t('ID'), value: 'id', align: 'left' },
     { text: t('Name'), value: 'name', align: 'left' },
     { text: t('Role'), value: 'role', align: 'center' },
+    { text: t('Custom role'), value: 'customRoleId', align: 'left' },
     { text: t('Email'), value: 'email', align: 'left' },
     { text: t('License No.'), value: 'licenseNo', align: 'left' },
     { text: t('Specialty'), value: 'specialty', align: 'left' },
@@ -109,7 +125,10 @@ const MembersPage = () => {
       showAlert(response.message, 'success');
       clearSelectedUser();
       setIsOpenAddEditMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -149,7 +168,10 @@ const MembersPage = () => {
       const response = await userRepository.DeleteTenantUser({ userId: selectedUserToDelete.id });
       showAlert(response.message, 'success');
       setIsOpenDeleteMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -233,10 +255,34 @@ const MembersPage = () => {
   }, [navigate, showAlert, tenantId]);
 
   useEffect(() => {
-    void getAllTenantUsers();
     void getCurrentUser();
     void getDoctorSpecialties();
-  }, [getAllTenantUsers, getCurrentUser, getDoctorSpecialties]);
+  }, [getCurrentUser, getDoctorSpecialties]);
+
+  // The member list needs members.manage; invite-only roles see invitations only.
+  useEffect(() => {
+    if (canManageMembers) {
+      void getAllTenantUsers();
+    }
+  }, [canManageMembers, getAllTenantUsers]);
+
+  useEffect(() => {
+    if (!canManageMembers) {
+      return;
+    }
+    let cancelled = false;
+    userRepository
+      .GetCustomRoles()
+      .then(response => {
+        if (!cancelled) {
+          setCustomRoles(response.data?.roles ?? []);
+        }
+      })
+      .catch(error => console.debug('Could not load custom roles', error));
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageMembers]);
 
   /**
    * Update tenant user
@@ -252,10 +298,22 @@ const MembersPage = () => {
         specialty: selectedUser.specialty,
       };
       const response = await userRepository.UpdateTenantUser(payload);
+      const customRoleChange = canAssignCustomRole(isAdminActor, selectedUser.role)
+        ? getCustomRoleChange(originalCustomRoleId, editingCustomRoleId, selectedUser.role)
+        : null;
+      if (customRoleChange !== null) {
+        await userRepository.AssignCustomRole({
+          userId: selectedUser.id,
+          customRoleId: customRoleChange,
+        });
+      }
       showAlert(response.message, 'success');
       clearSelectedUser();
       setIsOpenAddEditMemberModal(false);
-      getAllTenantUsers();
+      // Listing members needs members.manage; invite-only roles skip the refresh.
+      if (canManageMembers) {
+        getAllTenantUsers();
+      }
     } catch (error) {
       if (error.errorCode === Error.UNAUTHORIZED_ACCESS) {
         setTimeout(() => {
@@ -467,17 +525,18 @@ const MembersPage = () => {
     <div className="flex h-screen w-screen flex-col overflow-x-hidden bg-[#151815]">
       <TopNavigation title="Members" />
       <main className="ohif-scrollbar mx-auto min-h-0 w-full max-w-[1900px] grow overflow-y-auto px-4 pb-8 pt-5 sm:px-5 lg:px-7">
-          {/* filter container */}
-          <div className="flex justify-between rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            <Input
-              id="search"
-              placeholder={t('Search member name, email, license no., etc.')}
-              className="w-[70%] lg:w-[40%]"
-              type="text"
-              value={searchValue}
-              onChange={e => searchItems(e.target.value)}
-            />
-            <div className="flex shrink-0 gap-2">
+        {/* filter container */}
+        <div className="flex justify-between rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          <Input
+            id="search"
+            placeholder={t('Search member name, email, license no., etc.')}
+            className="w-[70%] lg:w-[40%]"
+            type="text"
+            value={searchValue}
+            onChange={e => searchItems(e.target.value)}
+          />
+          <div className="flex shrink-0 gap-2">
+            {canInviteMembers && (
               <button
                 disabled={false}
                 className="min-w-28 border-primary text-primary h-[51px] rounded-lg border px-3 disabled:cursor-not-allowed disabled:opacity-50"
@@ -489,6 +548,8 @@ const MembersPage = () => {
               >
                 {t('Invite')}
               </button>
+            )}
+            {canInviteMembers && (
               <Button
                 disabled={false}
                 className="min-w-36 h-[51px] rounded-lg !px-0"
@@ -498,518 +559,582 @@ const MembersPage = () => {
               >
                 {t('Add Member')}
               </Button>
-            </div>
-          </div>
-          {/* table container */}
-          <div className="mb-5 mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
-            {listOfUsers.length === 0 ? null : filteredItems && filteredItems.length > 0 ? (
-              <Table
-                headers={headers}
-                data={filteredItems}
-                className={'max-w-[170px]'}
-              >
-                {(cell, header, row) => {
-                  // id
-                  if (header.value === 'id') {
-                    return cell.slice(0, 4) + '...' + cell.slice(-4);
-                  }
-
-                  // role
-                  if (header.value === 'role') {
-                    let roleColorClass = '';
-                    if (cell === UserRole.USER) {
-                      roleColorClass = 'bg-[#3DA2FF] bg-opacity-20 text-[#3DA2FF]';
-                    }
-                    if (cell === UserRole.ADMIN) {
-                      roleColorClass = 'bg-[#33C9B7] bg-opacity-20 text-[#33C9B7]';
-                    }
-                    if (cell === UserRole.OWNER) {
-                      roleColorClass = 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]';
-                    }
-                    return (
-                      <div className={`rounded-full p-1 ${roleColorClass}`}>
-                        <span className="!capitalize">{cell}</span>
-                      </div>
-                    );
-                  }
-                  // speicalty
-                  if (header.value === 'specialty') {
-                    const foundSpecialty = listOfDoctorSpecialities.find(
-                      specialty => specialty.id.toLowerCase() === cell.toLowerCase()
-                    );
-                    return foundSpecialty ? foundSpecialty.name : '';
-                  }
-                  // email status
-                  if (header.value === 'isEmailVerified') {
-                    return (
-                      <div
-                        className={`rounded-full px-2 py-1 ${
-                          cell
-                            ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
-                            : 'bg-gray-300 bg-opacity-10 text-gray-500'
-                        }`}
-                      >
-                        {cell ? 'Verified' : 'Unverified'}
-                      </div>
-                    );
-                  }
-
-                  // account access status
-                  if (header.value === 'accessState') {
-                    return <MemberAccessStatusBadge accessState={cell} />;
-                  }
-
-                  // created at
-                  if (header.value === 'createdAt') {
-                    const date = new Date(cell * 1000);
-                    return date.toLocaleString('en-US', {
-                      month: 'short',
-                      day: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    });
-                  }
-
-                  // action
-                  if (header.value === 'action') {
-                    return (
-                      <MemberAccessManagement
-                        actor={currentUser}
-                        target={row}
-                        repository={userRepository}
-                        refreshMembers={() => getAllTenantUsers({ silent: true })}
-                        notify={showAlert}
-                        onUnauthorized={() => {
-                          setTimeout(() => {
-                            logoutUser(navigate, tenantId);
-                          }, 3000);
-                        }}
-                        onEdit={() => {
-                          setSelectedUser(row);
-                          setIsAddMember(false);
-                          setIsOpenAddEditMemberModal(true);
-                        }}
-                        onDelete={() => {
-                          setIsOpenDeleteMemberModal(true);
-                          setSelectedUserToDelete({ id: row.id });
-                        }}
-                      />
-                    );
-                  }
-                  return cell;
-                }}
-              </Table>
-            ) : (
-              <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
-            )}
-            {listOfUsers.length === 0 && (
-              <div
-                role="status"
-                className={`grid max-w-full animate-pulse grid-cols-7 gap-4`}
-              >
-                {Array.from({ length: 7 }, (_, c) => (
-                  <div key={c}>
-                    {Array.from({ length: 3 }, (_, r) => (
-                      <div key={r}>
-                        <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                        <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                        <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
-                        <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
             )}
           </div>
-          {/* invite modal */}
-          {isOpenInviteModal && (
-            <Modal
-              isOpen={isOpenInviteModal}
-              size="w-full max-w-[640px]"
-              isCloseable={true}
-              onClose={() => {
-                setIsOpenInviteModal(false);
-                setInviteEmail('');
-                setLoadingTenantEmailInvites(false);
-              }}
+        </div>
+        {/* table container */}
+        <div className="mb-5 mt-5 rounded-xl border border-white border-opacity-10 bg-white bg-opacity-[5%] p-5">
+          {!accessLoading && !canManageMembers && (
+            <p className="text-center text-white opacity-60">
+              {t('Your role can invite members but cannot see the member list.')}
+            </p>
+          )}
+          {listOfUsers.length === 0 ? null : filteredItems && filteredItems.length > 0 ? (
+            <Table
+              headers={headers}
+              data={filteredItems}
+              className={'max-w-[170px]'}
             >
-              <div className="relative">
-                <Typography
-                  variant="h6"
-                  className="font-light text-white"
-                >
-                  {t('Invite')}
-                </Typography>
-                <Typography
-                  variant="body"
-                  className="mt-2 font-light text-white text-opacity-50"
-                >
-                  {t('Enter email then hit send')}
-                </Typography>
+              {(cell, header, row) => {
+                // id
+                if (header.value === 'id') {
+                  return cell.slice(0, 4) + '...' + cell.slice(-4);
+                }
 
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    placeholder={t('Email')}
-                    className="h-[51px] w-full flex-1 sm:min-w-0"
-                    value={inviteEmail}
-                    onChange={e => setInviteEmail(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    disabled={isSendingInvite}
-                    className="h-[51px] shrink-0 rounded-lg bg-gradient-to-r from-[#d4f87a] to-[#c8f469] px-8 text-base font-medium text-[#151815] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => {
-                      void handleSendInvite();
-                    }}
-                  >
-                    {isSendingInvite ? '...' : t('Send')}
-                  </button>
+                // custom role
+                if (header.value === 'customRoleId') {
+                  const name = getCustomRoleName(customRoles, cell);
+                  return name ? (
+                    <span className="rounded-full bg-white bg-opacity-10 px-2 py-1 text-xs">
+                      {name}
+                    </span>
+                  ) : (
+                    <span className="text-white text-opacity-40">—</span>
+                  );
+                }
+
+                // role
+                if (header.value === 'role') {
+                  let roleColorClass = '';
+                  if (cell === UserRole.USER) {
+                    roleColorClass = 'bg-[#3DA2FF] bg-opacity-20 text-[#3DA2FF]';
+                  }
+                  if (cell === UserRole.ADMIN) {
+                    roleColorClass = 'bg-[#33C9B7] bg-opacity-20 text-[#33C9B7]';
+                  }
+                  if (cell === UserRole.OWNER) {
+                    roleColorClass = 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]';
+                  }
+                  return (
+                    <div className={`rounded-full p-1 ${roleColorClass}`}>
+                      <span className="!capitalize">{cell}</span>
+                    </div>
+                  );
+                }
+                // speicalty
+                if (header.value === 'specialty') {
+                  const foundSpecialty = listOfDoctorSpecialities.find(
+                    specialty => specialty.id.toLowerCase() === cell.toLowerCase()
+                  );
+                  return foundSpecialty ? foundSpecialty.name : '';
+                }
+                // email status
+                if (header.value === 'isEmailVerified') {
+                  return (
+                    <div
+                      className={`rounded-full px-2 py-1 ${
+                        cell
+                          ? 'bg-[#6ED47C] bg-opacity-20 text-[#6ED47C]'
+                          : 'bg-gray-300 bg-opacity-10 text-gray-500'
+                      }`}
+                    >
+                      {cell ? 'Verified' : 'Unverified'}
+                    </div>
+                  );
+                }
+
+                // account access status
+                if (header.value === 'accessState') {
+                  return <MemberAccessStatusBadge accessState={cell} />;
+                }
+
+                // created at
+                if (header.value === 'createdAt') {
+                  const date = new Date(cell * 1000);
+                  return date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                }
+
+                // action
+                if (header.value === 'action') {
+                  return (
+                    <MemberAccessManagement
+                      actor={currentUser ? { ...currentUser, canManageMembers } : null}
+                      target={row}
+                      repository={userRepository}
+                      refreshMembers={() => getAllTenantUsers({ silent: true })}
+                      notify={showAlert}
+                      onUnauthorized={() => {
+                        setTimeout(() => {
+                          logoutUser(navigate, tenantId);
+                        }, 3000);
+                      }}
+                      onEdit={() => {
+                        setSelectedUser(row);
+                        setOriginalCustomRoleId(row.customRoleId ?? '');
+                        setEditingCustomRoleId(row.customRoleId ?? '');
+                        setIsAddMember(false);
+                        setIsOpenAddEditMemberModal(true);
+                      }}
+                      onDelete={() => {
+                        setIsOpenDeleteMemberModal(true);
+                        setSelectedUserToDelete({ id: row.id });
+                      }}
+                    />
+                  );
+                }
+                return cell;
+              }}
+            </Table>
+          ) : (
+            <p className="text-center text-white opacity-60">{t('No Data Found')}</p>
+          )}
+          {listOfUsers.length === 0 && (accessLoading || canManageMembers) && (
+            <div
+              role="status"
+              className={`grid max-w-full animate-pulse grid-cols-7 gap-4`}
+            >
+              {Array.from({ length: 7 }, (_, c) => (
+                <div key={c}>
+                  {Array.from({ length: 3 }, (_, r) => (
+                    <div key={r}>
+                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-2 max-w-full rounded-full bg-gray-200 bg-opacity-30'></div>
+                      <div className='className="mb-2 mb-2 h-1 max-w-[70%] rounded-full bg-gray-200 bg-opacity-30'></div>
+                    </div>
+                  ))}
                 </div>
-                <div className="mt-8 overflow-x-auto border-none">
-                  <table className="w-full min-w-[480px] border-collapse text-left text-sm">
-                    <thead>
-                      <tr className="border-none text-white text-opacity-50">
-                        <th className="px-4 py-3 font-normal">{t('Name')}</th>
-                        <th className="px-4 py-3 text-center font-normal">{t('Status')}</th>
-                        <th className="px-4 py-3 text-center font-normal">{t('Action')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loadingTenantEmailInvites ? (
-                        Array.from({ length: userInvitesPerPage }, (_, i) => (
-                          <tr
-                            key={`sk-${i}`}
-                            className="border-none"
-                          >
-                            <td
-                              colSpan={3}
-                              className="px-4 py-3"
-                            >
-                              <div className="h-3 max-w-full animate-pulse rounded-full bg-white/10" />
-                            </td>
-                          </tr>
-                        ))
-                      ) : sortedTenantEmailInvites.length === 0 ? (
-                        <tr className="border-none">
+              ))}
+            </div>
+          )}
+        </div>
+        {/* invite modal */}
+        {isOpenInviteModal && (
+          <Modal
+            isOpen={isOpenInviteModal}
+            size="w-full max-w-[640px]"
+            isCloseable={true}
+            onClose={() => {
+              setIsOpenInviteModal(false);
+              setInviteEmail('');
+              setLoadingTenantEmailInvites(false);
+            }}
+          >
+            <div className="relative">
+              <Typography
+                variant="h6"
+                className="font-light text-white"
+              >
+                {t('Invite')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-2 font-light text-white text-opacity-50"
+              >
+                {t('Enter email then hit send')}
+              </Typography>
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder={t('Email')}
+                  className="h-[51px] w-full flex-1 sm:min-w-0"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                />
+                <button
+                  type="button"
+                  disabled={isSendingInvite}
+                  className="h-[51px] shrink-0 rounded-lg bg-gradient-to-r from-[#d4f87a] to-[#c8f469] px-8 text-base font-medium text-[#151815] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => {
+                    void handleSendInvite();
+                  }}
+                >
+                  {isSendingInvite ? '...' : t('Send')}
+                </button>
+              </div>
+              <div className="mt-8 overflow-x-auto border-none">
+                <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-none text-white text-opacity-50">
+                      <th className="px-4 py-3 font-normal">{t('Name')}</th>
+                      <th className="px-4 py-3 text-center font-normal">{t('Status')}</th>
+                      <th className="px-4 py-3 text-center font-normal">{t('Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingTenantEmailInvites ? (
+                      Array.from({ length: userInvitesPerPage }, (_, i) => (
+                        <tr
+                          key={`sk-${i}`}
+                          className="border-none"
+                        >
                           <td
                             colSpan={3}
-                            className="px-4 py-6 text-center text-white text-opacity-50"
+                            className="px-4 py-3"
                           >
-                            {t('No invitations yet')}
+                            <div className="h-3 max-w-full animate-pulse rounded-full bg-white/10" />
                           </td>
                         </tr>
-                      ) : (
-                        pagedTenantEmailInvites.map(invite => {
-                          const rowStatus = getInviteModalRowStatus(invite);
-                          return (
-                            <tr
-                              key={invite.id}
-                              className="border-none"
-                            >
-                              <td className="px-4 py-1 text-[13px]">
-                                <div className="flex min-w-0 items-center gap-3">
-                                  <span
-                                    className="truncate text-white"
-                                    title={invite.email}
-                                  >
-                                    {invite.email}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="flex justify-center px-4 py-1 text-[13px]">
-                                {rowStatus === 'expired' ? (
-                                  <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 font-medium text-[#FF3D3D]">
-                                    {t('Expired')}
-                                  </span>
-                                ) : (
-                                  <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 font-medium text-[#6ED47C]">
-                                    {t('Invite Sent')}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-4 py-1 text-[13px]">
-                                <div className="flex flex-wrap items-center justify-center gap-2">
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      resendingTenantInviteId === invite.id ||
-                                      removingTenantInviteId === invite.id
-                                    }
-                                    className="bg-primary/10 text-primary hover:bg-primary/20 min-w-[71px] rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                                    onClick={() => {
-                                      void handleResendTenantInvite(invite.id);
-                                    }}
-                                  >
-                                    {resendingTenantInviteId === invite.id ? '...' : t('Resend')}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      removingTenantInviteId === invite.id ||
-                                      resendingTenantInviteId === invite.id
-                                    }
-                                    className="min-w-[71px] rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20 disabled:cursor-not-allowed disabled:opacity-40"
-                                    onClick={() => {
-                                      void handleCancelTenantInvite(invite.id);
-                                    }}
-                                  >
-                                    {removingTenantInviteId === invite.id ? '...' : t('Cancel')}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {!loadingTenantEmailInvites && sortedTenantEmailInvites.length > 0 && (
-                  <div className="mt-6 flex items-center justify-center gap-1">
-                    <button
-                      type="button"
-                      disabled={inviteModalPage <= 1}
-                      className="mr-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label={t('Previous')}
-                      onClick={() => setInviteModalPage(p => Math.max(1, p - 1))}
-                    >
-                      <img
-                        src={chevronLeft}
-                        alt="Chevron left icon"
-                        className="w-5"
-                      />
-                    </button>
-                    {inviteModalVisiblePageNumbers.map(page => (
-                      <button
-                        key={page}
-                        type="button"
-                        onClick={() => setInviteModalPage(page)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                          inviteModalPage === page
-                            ? 'bg-[#c8f469] text-[#151815]'
-                            : 'text-white text-opacity-50 hover:text-opacity-80'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      disabled={inviteModalPage >= inviteModalTotalPages}
-                      className="ml-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label={t('Next')}
-                      onClick={() =>
-                        setInviteModalPage(p => Math.min(inviteModalTotalPages, p + 1))
-                      }
-                    >
-                      <img
-                        src={chevronRight}
-                        alt="Chevron right icon"
-                        className="w-5"
-                      />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </Modal>
-          )}
-
-          {/* add and edit member modal */}
-          {isOpenAddEditMemberModal && (
-            <Modal
-              isOpen={isOpenAddEditMemberModal}
-              size="max-w-[520px]"
-              isCloseable={true}
-              onClose={() => {
-                setIsAddMember(true);
-                setIsOpenAddEditMemberModal(false);
-                clearSelectedUser();
-              }}
-            >
-              <div className="relative">
-                <Typography
-                  variant="h6"
-                  className="font-light text-white"
-                >
-                  {t(isAddMember ? 'Add Member' : 'Edit Member')}
-                </Typography>
-                <Typography
-                  variant="body"
-                  className="mt-2 font-light text-white text-opacity-70"
-                >
-                  {t(isAddMember ? 'Add a new member.' : 'Update member information.')}
-                </Typography>
-                <Typography
-                  variant="body"
-                  className="mt-5 font-light text-white"
-                >
-                  {t('Personal Information')}
-                </Typography>
-                <div className="mt-4">
-                  <div className="flex gap-4">
-                    <Input
-                      id="firstname"
-                      placeholder={t('First Name')}
-                      className="mb-4 w-full"
-                      type="text"
-                      autoFocus
-                      value={selectedUser.firstName}
-                      onChange={e => {
-                        setSelectedUser({ ...selectedUser, firstName: e.target.value });
-                      }}
-                    />
-                    <Input
-                      id="lastname"
-                      placeholder={t('Last Name')}
-                      className="mb-4 w-full"
-                      type="text"
-                      value={selectedUser.lastName}
-                      onChange={e => {
-                        setSelectedUser({ ...selectedUser, lastName: e.target.value });
-                      }}
-                    />
-                  </div>
-                  <div className="relative">
-                    <select
-                      id="user-role"
-                      value={selectedUser.role}
-                      onChange={e =>
-                        setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
-                      }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
-                    >
-                      {Object.values(UserRole)
-                        .filter(role => role !== UserRole.OWNER)
-                        .map(role => (
-                          <option
-                            key={role}
-                            value={role}
-                            className="!cursor-pointer !bg-[#323631] !py-2"
+                      ))
+                    ) : sortedTenantEmailInvites.length === 0 ? (
+                      <tr className="border-none">
+                        <td
+                          colSpan={3}
+                          className="px-4 py-6 text-center text-white text-opacity-50"
+                        >
+                          {t('No invitations yet')}
+                        </td>
+                      </tr>
+                    ) : (
+                      pagedTenantEmailInvites.map(invite => {
+                        const rowStatus = getInviteModalRowStatus(invite);
+                        return (
+                          <tr
+                            key={invite.id}
+                            className="border-none"
                           >
-                            {role}
-                          </option>
-                        ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                      <img
-                        src={chevronDown}
-                        alt="Chevron down icon"
-                        className="w-5"
-                      />
-                    </div>
-                  </div>
+                            <td className="px-4 py-1 text-[13px]">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <span
+                                  className="truncate text-white"
+                                  title={invite.email}
+                                >
+                                  {invite.email}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="flex justify-center px-4 py-1 text-[13px]">
+                              {rowStatus === 'expired' ? (
+                                <span className="bg-[#FF3D3D]/15 inline-block rounded-full px-3 py-1 font-medium text-[#FF3D3D]">
+                                  {t('Expired')}
+                                </span>
+                              ) : (
+                                <span className="bg-[#6ED47C]/15 inline-block rounded-full px-3 py-1 font-medium text-[#6ED47C]">
+                                  {t('Invite Sent')}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-1 text-[13px]">
+                              <div className="flex flex-wrap items-center justify-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={
+                                    resendingTenantInviteId === invite.id ||
+                                    removingTenantInviteId === invite.id
+                                  }
+                                  className="bg-primary/10 text-primary hover:bg-primary/20 min-w-[71px] rounded-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                  onClick={() => {
+                                    void handleResendTenantInvite(invite.id);
+                                  }}
+                                >
+                                  {resendingTenantInviteId === invite.id ? '...' : t('Resend')}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    removingTenantInviteId === invite.id ||
+                                    resendingTenantInviteId === invite.id
+                                  }
+                                  className="min-w-[71px] rounded-lg bg-[#FF3D3D]/10 px-3 py-1.5 font-medium text-[#FF3D3D] transition-colors hover:bg-[#FF3D3D]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                  onClick={() => {
+                                    void handleCancelTenantInvite(invite.id);
+                                  }}
+                                >
+                                  {removingTenantInviteId === invite.id ? '...' : t('Cancel')}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-                  <Input
-                    id="email"
-                    disabled={!isAddMember}
-                    placeholder={t('Email')}
-                    className="mb-4 w-full"
-                    type="text"
-                    value={selectedUser.email}
-                    onChange={e => {
-                      setSelectedUser({ ...selectedUser, email: e.target.value.toLowerCase() });
-                    }}
-                    onKeyPress={e => e.key === ' ' && e.preventDefault()}
-                  />
-                  <Input
-                    id="licenseNo"
-                    placeholder={t('License No.')}
-                    className="mb-4 w-full"
-                    type="text"
-                    value={selectedUser.licenseNo}
-                    onChange={e => {
-                      setSelectedUser({ ...selectedUser, licenseNo: e.target.value });
-                    }}
-                  />
-                  <div className="relative">
-                    <select
-                      id="user-specialty"
-                      value={selectedUser.specialty}
-                      onChange={e =>
-                        setSelectedUser({ ...selectedUser, specialty: e.target.value as string })
-                      }
-                      className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+              {!loadingTenantEmailInvites && sortedTenantEmailInvites.length > 0 && (
+                <div className="mt-6 flex items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    disabled={inviteModalPage <= 1}
+                    className="mr-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={t('Previous')}
+                    onClick={() => setInviteModalPage(p => Math.max(1, p - 1))}
+                  >
+                    <img
+                      src={chevronLeft}
+                      alt="Chevron left icon"
+                      className="w-5"
+                    />
+                  </button>
+                  {inviteModalVisiblePageNumbers.map(page => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setInviteModalPage(page)}
+                      className={`flex h-5 w-5 items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                        inviteModalPage === page
+                          ? 'bg-[#c8f469] text-[#151815]'
+                          : 'text-white text-opacity-50 hover:text-opacity-80'
+                      }`}
                     >
-                      {Object.values(listOfDoctorSpecialities).map(specialty => (
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={inviteModalPage >= inviteModalTotalPages}
+                    className="ml-1 flex h-5 w-5 items-center justify-center rounded-md text-white text-opacity-50 hover:text-opacity-80 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={t('Next')}
+                    onClick={() => setInviteModalPage(p => Math.min(inviteModalTotalPages, p + 1))}
+                  >
+                    <img
+                      src={chevronRight}
+                      alt="Chevron right icon"
+                      className="w-5"
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
+          </Modal>
+        )}
+
+        {/* add and edit member modal */}
+        {isOpenAddEditMemberModal && (
+          <Modal
+            isOpen={isOpenAddEditMemberModal}
+            size="max-w-[520px]"
+            isCloseable={true}
+            onClose={() => {
+              setIsAddMember(true);
+              setIsOpenAddEditMemberModal(false);
+              clearSelectedUser();
+            }}
+          >
+            <div className="relative">
+              <Typography
+                variant="h6"
+                className="font-light text-white"
+              >
+                {t(isAddMember ? 'Add Member' : 'Edit Member')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-2 font-light text-white text-opacity-70"
+              >
+                {t(isAddMember ? 'Add a new member.' : 'Update member information.')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-5 font-light text-white"
+              >
+                {t('Personal Information')}
+              </Typography>
+              <div className="mt-4">
+                <div className="flex gap-4">
+                  <Input
+                    id="firstname"
+                    placeholder={t('First Name')}
+                    className="mb-4 w-full"
+                    type="text"
+                    autoFocus
+                    value={selectedUser.firstName}
+                    onChange={e => {
+                      setSelectedUser({ ...selectedUser, firstName: e.target.value });
+                    }}
+                  />
+                  <Input
+                    id="lastname"
+                    placeholder={t('Last Name')}
+                    className="mb-4 w-full"
+                    type="text"
+                    value={selectedUser.lastName}
+                    onChange={e => {
+                      setSelectedUser({ ...selectedUser, lastName: e.target.value });
+                    }}
+                  />
+                </div>
+                <div className="relative">
+                  <select
+                    id="user-role"
+                    disabled={!isAdminActor}
+                    value={selectedUser.role}
+                    onChange={e =>
+                      setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
+                    }
+                    className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                  >
+                    {Object.values(UserRole)
+                      .filter(role => role !== UserRole.OWNER)
+                      .map(role => (
                         <option
-                          key={specialty.id}
-                          value={specialty.id}
+                          key={role}
+                          value={role}
                           className="!cursor-pointer !bg-[#323631] !py-2"
                         >
-                          {specialty.name}
+                          {role}
                         </option>
                       ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                      <img
-                        src={chevronDown}
-                        alt="Chevron down icon"
-                        className="w-5"
-                      />
-                    </div>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <img
+                      src={chevronDown}
+                      alt="Chevron down icon"
+                      className="w-5"
+                    />
                   </div>
                 </div>
-                <div className="mt-2 flex w-full justify-end">
-                  <Button
-                    disabled={isAddingMember || isUpdatingMember}
-                    className="h-[41px] w-[111px] rounded-lg"
-                    onClick={isAddMember ? addTenantUser : udpateTenantUser}
+
+                {!isAddMember && canAssignCustomRole(isAdminActor, selectedUser.role) && (
+                  <div className="mb-4">
+                    <label
+                      htmlFor="user-custom-role"
+                      className="mb-1 block text-sm text-white text-opacity-70"
+                    >
+                      {t('Custom role')}
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="user-custom-role"
+                        value={editingCustomRoleId}
+                        onChange={e => setEditingCustomRoleId(e.target.value)}
+                        className="block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
+                      >
+                        <option
+                          value=""
+                          className="!cursor-pointer !bg-[#323631] !py-2"
+                        >
+                          {t('None (use models and rate reports)')}
+                        </option>
+                        {customRoles.map(role => (
+                          <option
+                            key={role.id}
+                            value={role.id}
+                            className="!cursor-pointer !bg-[#323631] !py-2"
+                          >
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <img
+                          src={chevronDown}
+                          alt="Chevron down icon"
+                          className="w-5"
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-white text-opacity-50">
+                      {t('Create and edit roles in Workspace Settings → Roles.')}
+                    </p>
+                  </div>
+                )}
+
+                <Input
+                  id="email"
+                  disabled={!isAddMember}
+                  placeholder={t('Email')}
+                  className="mb-4 w-full"
+                  type="text"
+                  value={selectedUser.email}
+                  onChange={e => {
+                    setSelectedUser({ ...selectedUser, email: e.target.value.toLowerCase() });
+                  }}
+                  onKeyPress={e => e.key === ' ' && e.preventDefault()}
+                />
+                <Input
+                  id="licenseNo"
+                  placeholder={t('License No.')}
+                  className="mb-4 w-full"
+                  type="text"
+                  value={selectedUser.licenseNo}
+                  onChange={e => {
+                    setSelectedUser({ ...selectedUser, licenseNo: e.target.value });
+                  }}
+                />
+                <div className="relative">
+                  <select
+                    id="user-specialty"
+                    value={selectedUser.specialty}
+                    onChange={e =>
+                      setSelectedUser({ ...selectedUser, specialty: e.target.value as string })
+                    }
+                    className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                   >
-                    {isAddingMember || isUpdatingMember ? '...' : t('Save')}
-                  </Button>
+                    {Object.values(listOfDoctorSpecialities).map(specialty => (
+                      <option
+                        key={specialty.id}
+                        value={specialty.id}
+                        className="!cursor-pointer !bg-[#323631] !py-2"
+                      >
+                        {specialty.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <img
+                      src={chevronDown}
+                      alt="Chevron down icon"
+                      className="w-5"
+                    />
+                  </div>
                 </div>
               </div>
-            </Modal>
-          )}
-
-          {/* delete member modal */}
-          {isOpenDeleteMemberModal && (
-            <Modal
-              isOpen={isOpenDeleteMemberModal}
-              size="min-w-[400px]"
-              isCloseable={true}
-              onClose={() => {
-                setIsOpenDeleteMemberModal(false);
-              }}
-            >
-              <div className="relative">
-                <Typography
-                  variant="h6"
-                  className="font-light text-white"
+              <div className="mt-2 flex w-full justify-end">
+                <Button
+                  disabled={isAddingMember || isUpdatingMember}
+                  className="h-[41px] w-[111px] rounded-lg"
+                  onClick={isAddMember ? addTenantUser : udpateTenantUser}
                 >
-                  {t('Delete Member')}
-                </Typography>
-                <Typography
-                  variant="body"
-                  className="mt-2 font-light text-white text-opacity-70"
-                >
-                  {t('Are you sure you want to delete this user?')}
-                </Typography>
-
-                <div className="mt-4 flex w-full justify-end">
-                  <button
-                    disabled={isDeletingMember}
-                    className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
-                    onClick={() => setIsOpenDeleteMemberModal(false)}
-                  >
-                    {isDeletingMember ? '...' : t('Cancel')}
-                  </button>
-                  <button
-                    disabled={isDeletingMember}
-                    className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
-                    onClick={deleteTenantUser}
-                  >
-                    {isDeletingMember ? '...' : t('Delete')}
-                  </button>
-                </div>
+                  {isAddingMember || isUpdatingMember ? '...' : t('Save')}
+                </Button>
               </div>
-            </Modal>
-          )}
+            </div>
+          </Modal>
+        )}
+
+        {/* delete member modal */}
+        {isOpenDeleteMemberModal && (
+          <Modal
+            isOpen={isOpenDeleteMemberModal}
+            size="min-w-[400px]"
+            isCloseable={true}
+            onClose={() => {
+              setIsOpenDeleteMemberModal(false);
+            }}
+          >
+            <div className="relative">
+              <Typography
+                variant="h6"
+                className="font-light text-white"
+              >
+                {t('Delete Member')}
+              </Typography>
+              <Typography
+                variant="body"
+                className="mt-2 font-light text-white text-opacity-70"
+              >
+                {t('Are you sure you want to delete this user?')}
+              </Typography>
+
+              <div className="mt-4 flex w-full justify-end">
+                <button
+                  disabled={isDeletingMember}
+                  className="h-[41px] w-[111px] rounded-lg bg-transparent text-gray-400"
+                  onClick={() => setIsOpenDeleteMemberModal(false)}
+                >
+                  {isDeletingMember ? '...' : t('Cancel')}
+                </button>
+                <button
+                  disabled={isDeletingMember}
+                  className="h-[41px] w-[111px] rounded-lg bg-red-700 text-white"
+                  onClick={deleteTenantUser}
+                >
+                  {isDeletingMember ? '...' : t('Delete')}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </main>
     </div>
   );

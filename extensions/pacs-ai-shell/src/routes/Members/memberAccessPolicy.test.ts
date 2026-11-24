@@ -13,6 +13,10 @@ describe('member access action eligibility', () => {
     [identity('owner', UserRole.OWNER), identity('user', UserRole.USER)],
     [identity('admin', UserRole.ADMIN), identity('user', UserRole.USER)],
     [identity('admin', UserRole.ADMIN), identity('user', UserRole.USER, UserAccessState.SUSPENDED)],
+    [
+      { ...identity('lead', UserRole.USER), canManageMembers: true },
+      identity('user', UserRole.USER),
+    ],
   ])('allows the supported actor and target hierarchy', (actor, target) => {
     expect(getMemberAccessEligibility(actor, target)).toEqual({
       allowed: true,
@@ -26,6 +30,11 @@ describe('member access action eligibility', () => {
     [identity('admin', UserRole.ADMIN), identity('owner', UserRole.OWNER), 'OWNER_TARGET'],
     [identity('admin-1', UserRole.ADMIN), identity('admin-2', UserRole.ADMIN), 'INSUFFICIENT_ROLE'],
     [identity('user-1', UserRole.USER), identity('user-2', UserRole.USER), 'INSUFFICIENT_ROLE'],
+    [
+      { ...identity('lead', UserRole.USER), canManageMembers: true },
+      identity('admin', UserRole.ADMIN),
+      'INSUFFICIENT_ROLE',
+    ],
     [
       identity('admin', UserRole.ADMIN, UserAccessState.SUSPENDED),
       identity('user', UserRole.USER),

@@ -135,8 +135,55 @@ export interface UserResponse {
   readonly isAccountDisabled: boolean;
   readonly isConsentSigned: boolean;
   readonly isAdminCreated: boolean;
+  /** Custom role assigned to a USER account ("" or absent = none). */
+  readonly customRoleId?: string;
   readonly createdAt: number;
   readonly updatedAt: number;
+}
+
+/** Effective permissions of the signed-in user (`GET /v1/user/me/access`). */
+export interface UserAccessResponse {
+  readonly role: UserRole;
+  readonly permissions: string[];
+  readonly allModels: boolean;
+  readonly modelIds: string[];
+  readonly customRole: { readonly id: string; readonly name: string } | null;
+}
+
+/** A tenant custom role (`/v1/user/roles`). */
+export interface CustomRoleResponse {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly permissions: string[];
+  readonly allModels: boolean;
+  readonly modelIds: string[];
+  readonly memberCount: number;
+  readonly createdAt: number;
+  readonly updatedAt: number;
+}
+
+export interface PermissionCatalogItem {
+  readonly id: string;
+  readonly baseline: boolean;
+}
+
+export interface GetCustomRolesResponse {
+  readonly roles: CustomRoleResponse[];
+  readonly permissions: PermissionCatalogItem[];
+}
+
+export interface UpsertCustomRoleRequest {
+  name: string;
+  description: string;
+  permissions: string[];
+  allModels: boolean;
+  modelIds: string[];
+}
+
+export interface AssignCustomRoleRequest {
+  userId: string;
+  customRoleId: string;
 }
 
 export interface UpdateTenantUserRequest {

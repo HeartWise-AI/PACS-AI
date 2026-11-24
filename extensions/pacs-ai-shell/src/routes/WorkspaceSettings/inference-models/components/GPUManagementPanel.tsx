@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAuthenticatedScope, getAuthenticatedScope } from '../../hooks/authenticatedScope';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import { Permission, can } from '@pacs-ai/extension-core/src/access/permissions';
+import { loadUserAccessForRole } from '@pacs-ai/extension-core/src/access/userAccessService';
 import type { InferenceGPUModel } from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { useGPUInventory } from '../../hooks/useGPUInventory';
 import type { UseInferenceModelsResult } from '../../hooks/useInferenceModels';
@@ -36,14 +38,18 @@ export default function GPUManagementPanel({ active, inference }: Props) {
     if (active && scope.authenticated) {
       userRepository
         .GetCurrentUser()
-        .then(response => {
-          if (!cancelled && scopeIsCurrent())
+        .then(async response => {
+          const role = response.data.role;
+          const access = await loadUserAccessForRole(role);
+          const canManageModels = access
+            ? can(access, Permission.MODELS_MANAGE)
+            : role === UserRole.OWNER || role === UserRole.ADMIN;
+          if (!cancelled && scopeIsCurrent()) {
             setAuthorization({
               scopeKey: scope.key,
-              allowed:
-                response.data.tenantId === scope.tenantId &&
-                (response.data.role === UserRole.OWNER || response.data.role === UserRole.ADMIN),
+              allowed: response.data.tenantId === scope.tenantId && canManageModels,
             });
+          }
         })
         .catch(() => {});
     }

@@ -4,6 +4,8 @@ import { useNotification } from '@ohif/ui-next';
 import usePathname from '../hooks/usePathname';
 import userRepository from '../api/userRepository';
 import { UserRole } from '../api/userDTO';
+import { Permission, can } from '../access/permissions';
+import { loadUserAccessForRole } from '../access/userAccessService';
 import {
   useCandidateProcessingPoll,
   ProcessingTransitionEvent,
@@ -252,6 +254,7 @@ function InferenceProcessingProvider({ children }: { children: React.ReactNode }
 
       try {
         const response = await userRepository.GetCurrentUser();
+        const access = await loadUserAccessForRole(response.data.role);
         if (!cancelled) {
           const nextIdentity = getStudyProcessingAuthIdentity(response.data);
           if (shouldClearStudyProcessingState(authenticatedIdentityRef.current, nextIdentity)) {
@@ -262,7 +265,11 @@ function InferenceProcessingProvider({ children }: { children: React.ReactNode }
           setStudyProcessingAuthIdentity(nextIdentity);
 
           const role = response.data.role;
-          const isAdmin = role === UserRole.ADMIN || role === UserRole.OWNER;
+          // processing.manage (always held by OWNER/ADMIN) may reprocess and
+          // receives workspace-wide processing notifications.
+          const isAdmin = access
+            ? can(access, Permission.PROCESSING_MANAGE)
+            : role === UserRole.ADMIN || role === UserRole.OWNER;
           audienceViewerRef.current = { ...audienceViewerRef.current, isAdmin };
           setCanViewProcessing(true);
           setCanMutateProcessing(isAdmin);

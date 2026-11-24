@@ -61,5 +61,8 @@
   "Reconnecting": "Reconnexion",
   "Created by": "Créé par",
   "Notifications": "Notifications",
-  "Model Feedback": "Rétroaction sur les modèles"
+  "Model Feedback": "Rétroaction sur les modèles",
+  "Roles": "Rôles",
+  "Your role does not include any workspace settings.": "Votre rôle n’inclut aucun réglage de l’espace de travail.",
+  "Loading...": "Chargement..."
 }

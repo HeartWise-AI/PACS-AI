@@ -1,17 +1,19 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  DEFAULT_WORKSPACE_SETTINGS_TAB,
-  isWorkspaceSettingsTabId,
-  type WorkspaceSettingsTabId,
-} from '../constants';
+import { WORKSPACE_SETTINGS_TABS, type WorkspaceSettingsTabId } from '../constants';
+import { resolveWorkspaceSettingsTab } from '../workspaceSettingsAccess';
 
-export function useWorkspaceSettingsTab() {
+const ALL_TAB_IDS = WORKSPACE_SETTINGS_TABS.map(tab => tab.id);
+
+/**
+ * Active tab from `?tab=`, limited to the tabs the user may open. Returns null
+ * when no tab is visible (no permission, or access still loading).
+ */
+export function useWorkspaceSettingsTab(
+  visibleTabs: readonly WorkspaceSettingsTabId[] = ALL_TAB_IDS
+) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab');
-  const activeTab = isWorkspaceSettingsTabId(tabParam)
-    ? tabParam
-    : DEFAULT_WORKSPACE_SETTINGS_TAB;
+  const activeTab = resolveWorkspaceSettingsTab(searchParams.get('tab'), visibleTabs);
 
   const setActiveTab = useCallback(
     (tab: WorkspaceSettingsTabId) => {

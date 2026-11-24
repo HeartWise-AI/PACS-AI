@@ -1,53 +1,71 @@
 import { UserRole } from '@pacs-ai/extension-core/src/api/userDTO';
+import { normalizeUserAccess } from '@pacs-ai/extension-core/src/access/permissions';
 import {
   getStudiesDestination,
   getTopNavigationItems,
   isTopNavigationItemActive,
 } from './navigationModel';
 
+const accessOf = (role: UserRole, permissions: string[] = []) =>
+  normalizeUserAccess({ role, permissions, allModels: true, modelIds: [], customRole: null });
+
 describe('top navigation model', () => {
   test('keeps clinical destinations and gates the admin console by role', () => {
-    expect(getTopNavigationItems('/', UserRole.USER).map(item => item.key)).toEqual([
+    expect(getTopNavigationItems('/', accessOf(UserRole.USER)).map(item => item.key)).toEqual([
       'studies',
       'ai-models',
       'ai-predictions',
     ]);
-    expect(getTopNavigationItems('/', UserRole.ADMIN).map(item => item.key)).toEqual([
+    expect(getTopNavigationItems('/', accessOf(UserRole.ADMIN)).map(item => item.key)).toEqual([
       'studies',
       'ai-models',
       'ai-predictions',
       'admin-console',
     ]);
-    expect(getTopNavigationItems('/', UserRole.OWNER).slice(-1)[0]).toMatchObject({
+    expect(getTopNavigationItems('/', accessOf(UserRole.OWNER)).slice(-1)[0]).toMatchObject({
       key: 'admin-console',
       opensInNewTab: true,
     });
   });
 
-  test('keeps the admin destinations together and gates the return action by role', () => {
-    expect(getTopNavigationItems('/admin/members', UserRole.USER).map(item => item.key)).toEqual([
-      'members',
-      'kibana-logs',
-      'workspace-settings',
-    ]);
-    expect(getTopNavigationItems('/admin/members', UserRole.ADMIN).map(item => item.key)).toEqual([
-      'members',
-      'kibana-logs',
-      'workspace-settings',
-      'launch-pacs-ai',
-    ]);
+  test('shows admins every admin destination and custom roles only theirs', () => {
+    expect(
+      getTopNavigationItems('/admin/members', accessOf(UserRole.USER)).map(item => item.key)
+    ).toEqual(['launch-pacs-ai']);
+    expect(
+      getTopNavigationItems('/admin/members', accessOf(UserRole.USER, ['members.invite'])).map(
+        item => item.key
+      )
+    ).toEqual(['members', 'launch-pacs-ai']);
+    expect(
+      getTopNavigationItems(
+        '/admin/members',
+        accessOf(UserRole.USER, ['feedback.view', 'logs.view'])
+      ).map(item => item.key)
+    ).toEqual(['kibana-logs', 'workspace-settings', 'launch-pacs-ai']);
+    expect(
+      getTopNavigationItems('/admin/members', accessOf(UserRole.ADMIN)).map(item => item.key)
+    ).toEqual(['members', 'kibana-logs', 'workspace-settings', 'launch-pacs-ai']);
   });
 
   test.each(['/', '/viewer', '/viewer/dicomweb', '/segmentation'])(
     'identifies %s as the studies location',
     pathname => {
-      const studies = getTopNavigationItems('/', UserRole.USER)[0];
+      const studies = getTopNavigationItems('/', accessOf(UserRole.USER))[0];
       expect(isTopNavigationItemActive(studies, pathname)).toBe(true);
     }
   );
 
+  test('opens the admin console on the first page a custom role may use', () => {
+    const item = getTopNavigationItems('/', accessOf(UserRole.USER, ['feedback.view'])).slice(
+      -1
+    )[0];
+    expect(item).toMatchObject({ key: 'admin-console', to: '/admin/workspace-settings' });
+    expect(getTopNavigationItems('/', null).map(i => i.key)).not.toContain('admin-console');
+  });
+
   test('links the AI Predictions page and marks it active there only', () => {
-    const predictions = getTopNavigationItems('/', UserRole.USER).find(
+    const predictions = getTopNavigationItems('/', accessOf(UserRole.USER)).find(
       item => item.key === 'ai-predictions'
     );
     expect(predictions).toMatchObject({ to: '/ai-predictions' });
