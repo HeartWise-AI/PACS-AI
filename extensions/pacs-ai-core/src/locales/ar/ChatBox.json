@@ -76,5 +76,13 @@
   "ClinicalNotes": "ملاحظات",
   "ClinicalSources": "المصادر",
   "ClinicalCopyDictation": "نسخ",
-  "ClinicalCopied": "تم النسخ"
+  "ClinicalCopied": "تم النسخ",
+  "HistoryTitle": "المحادثات السابقة حول هذه الدراسة",
+  "HistoryButton": "المحادثات السابقة حول هذه الدراسة",
+  "NewChat": "محادثة جديدة",
+  "HistoryEmpty": "لا توجد محادثات سابقة حول هذه الدراسة.",
+  "HistoryLoading": "جارٍ التحميل…",
+  "HistoryOneMessage": "رسالة واحدة",
+  "HistoryMessages": "{{count}} رسائل",
+  "HistoryCurrent": "الحالية"
 }

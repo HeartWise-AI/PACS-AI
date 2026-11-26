@@ -74,6 +74,50 @@ export interface GetChatProgressRequest {
   threadId: string;
 }
 
+// Chat history per study: the signed-in user's own threads about the open study.
+export interface ListChatThreadsRequest {
+  studyInstanceUID: string;
+  limit?: number;
+}
+
+export interface ChatThreadSummary {
+  thread_id: string;
+  title: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  // Naive local time of the chat service (same zone as the viewer at MHI).
+  last_message_at?: string | null;
+  message_count: number;
+}
+
+export interface ListChatThreadsResponse {
+  threads: ChatThreadSummary[];
+}
+
+export interface ChatHistoryMessage {
+  message_id: string;
+  role: 'user' | 'assistant';
+  // Text as stored, cardio-card blocks included.
+  content: string;
+  created_at?: string | null;
+  citations?: any[] | null;
+}
+
+export interface ChatHistoryVote {
+  message_id: string;
+  vote: 'up' | 'down';
+  category: string;
+  has_comment: boolean;
+}
+
+export interface ChatThreadHistory {
+  thread_id: string;
+  title: string;
+  study_instance_uid?: string | null;
+  messages: ChatHistoryMessage[];
+  feedback: ChatHistoryVote[];
+}
+
 export interface ChatProgressResponse extends ChatActivityResponse {
   thread_id: string;
   active: boolean;

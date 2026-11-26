@@ -24,6 +24,8 @@ export interface UseChatFeedbackResult {
   /** Save a reason and an optional comment with the current vote. */
   saveDetails: (message: Message, category: string, comment: string) => Promise<void>;
   reset: () => void;
+  /** Show the votes stored with a restored thread. */
+  restore: (entries: Record<string, ChatFeedbackEntry>) => void;
 }
 
 /**
@@ -110,6 +112,10 @@ export function useChatFeedback(threadId: string | null | undefined): UseChatFee
   );
 
   const reset = useCallback(() => setFeedback({}), []);
+  const restore = useCallback(
+    (entries: Record<string, ChatFeedbackEntry>) => setFeedback({ ...entries }),
+    []
+  );
 
-  return { feedback, toggle, saveDetails, reset };
+  return { feedback, toggle, saveDetails, reset, restore };
 }

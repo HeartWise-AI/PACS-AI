@@ -76,5 +76,13 @@
   "ClinicalNotes": "Notas",
   "ClinicalSources": "Fuentes",
   "ClinicalCopyDictation": "Copiar",
-  "ClinicalCopied": "Copiado"
+  "ClinicalCopied": "Copiado",
+  "HistoryTitle": "Conversaciones anteriores sobre este estudio",
+  "HistoryButton": "Conversaciones anteriores sobre este estudio",
+  "NewChat": "Nueva conversación",
+  "HistoryEmpty": "No hay conversaciones anteriores sobre este estudio.",
+  "HistoryLoading": "Cargando…",
+  "HistoryOneMessage": "1 mensaje",
+  "HistoryMessages": "{{count}} mensajes",
+  "HistoryCurrent": "actual"
 }

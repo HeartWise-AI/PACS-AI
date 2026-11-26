@@ -1,9 +1,10 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import SelectSeriesModal from '../seriesSelection/SelectSeriesModal';
 
 // Hooks
 import { useChatBox } from './hooks/useChatBox';
+import type { RestoredChat } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
 import { useResizable } from './hooks/useResizable';
@@ -12,6 +13,7 @@ import { getOpenStudyContext, openStudyMetadata } from './utils/getOpenStudyCont
 
 // Components
 import { ChatHeader } from './components/ChatHeader';
+import { ChatHistoryPanel } from './components/ChatHistoryPanel';
 import { SeriesCarousel } from './components/SeriesCarousel';
 import { MessageList } from './components/MessageList';
 import { InputArea } from './components/InputArea';
@@ -34,10 +36,23 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // Study open in the viewer, read fresh at thread creation and on every message.
   const getOpenStudy = useCallback(() => getOpenStudyContext(servicesManager), [servicesManager]);
 
+  // A stored thread restored (latest of the study on open, or picked in the history):
+  // its messages replace the chat box content and its thumbs show as selected.
+  const restoreFeedback = useRef<(entries: RestoredChat['feedback']) => void>(() => {});
+  const handleRestore = useCallback(
+    ({ messages: restored, feedback }: RestoredChat) => {
+      onMessagesChange(restored);
+      restoreFeedback.current(feedback);
+    },
+    [onMessagesChange]
+  );
+
   // Custom hooks
-  const chat = useChatBox(isOpen, messages.length, getOpenStudy);
+  const chat = useChatBox(isOpen, messages.length, getOpenStudy, handleRestore);
   // Thumbs up/down on answers, saved in the chat backend (PACS-448).
   const chatFeedback = useChatFeedback(chat.threadId);
+  restoreFeedback.current = chatFeedback.restore;
+  const [historyOpen, setHistoryOpen] = useState(false);
   const series = useSeriesSelection();
   const drag = useDraggable(isOpen);
   const resize = useResizable(isOpen, {
@@ -52,7 +67,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // Handle message submission
   const handleSubmit = useCallback(
     async (inputValue: string) => {
-      if (inputValue.trim() === '' || chat.isProcessing || !chat.threadId) return;
+      if (inputValue.trim() === '' || chat.isProcessing || chat.historyLoading || !chat.threadId) {
+        return;
+      }
 
       const savedInput = inputValue.trim();
 
@@ -165,13 +182,32 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     ]
   );
 
-  // Handle clear chat
+  // New chat: the current one stays stored and listed in the history.
   const handleClearChat = useCallback(async () => {
+    setHistoryOpen(false);
     series.resetSelection();
     chat.resetThread();
     chatFeedback.reset();
     onClearChat();
   }, [series, chat, chatFeedback, onClearChat]);
+
+  const handleToggleHistory = useCallback(() => {
+    if (!historyOpen) {
+      chat.refreshThreads();
+    }
+    setHistoryOpen(!historyOpen);
+  }, [chat, historyOpen]);
+
+  const handleSelectThread = useCallback(
+    async (storedThreadId: string) => {
+      // The restore replaces the feedback; on failure the current thread keeps its own.
+      if (await chat.openThread(storedThreadId)) {
+        series.resetSelection();
+        setHistoryOpen(false);
+      }
+    },
+    [chat, series]
+  );
 
   // Handle series selection from modal
   const handleSeriesSelected = useCallback(
@@ -304,7 +340,21 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             onAddSeries={() => series.setIsSeriesModalOpen(true)}
             onClearChat={handleClearChat}
             onClose={onClose}
+            onToggleHistory={getOpenStudy() ? handleToggleHistory : undefined}
+            historyOpen={historyOpen}
           />
+
+          {historyOpen && (
+            <ChatHistoryPanel
+              threads={chat.threads}
+              currentThreadId={chat.threadId}
+              loading={chat.historyLoading || chat.threadsLoading}
+              disabled={chat.isProcessing || chat.historyLoading || chat.threadCreationPending}
+              onSelect={handleSelectThread}
+              onNewChat={handleClearChat}
+              onClose={() => setHistoryOpen(false)}
+            />
+          )}
 
           <SeriesCarousel
             selectedSeries={series.selectedSeries}
@@ -330,7 +380,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
           <InputArea
             onSubmit={handleSubmit}
-            disabled={chat.isProcessing || !chat.threadId}
+            disabled={chat.isProcessing || chat.historyLoading || !chat.threadId}
             isProcessing={chat.isProcessing}
             threadId={chat.threadId}
             threadCreationPending={chat.threadCreationPending}

@@ -21,6 +21,9 @@ import {
   GetChatProgressRequest,
   ChatProgressResponse,
   ChatProgressError,
+  ListChatThreadsRequest,
+  ListChatThreadsResponse,
+  ChatThreadHistory,
 } from './orchestratorDTO';
 
 const orchestratorRepository = {
@@ -115,6 +118,39 @@ const orchestratorRepository = {
           message: body && typeof body === 'object' ? body.message : undefined,
         };
         throw failure;
+      });
+  },
+
+  /**
+   * The signed-in user's earlier chat threads about one study, latest first.
+   */
+  async ListChatThreads(
+    request: ListChatThreadsRequest
+  ): Promise<APIResponse<ListChatThreadsResponse>> {
+    return Api()
+      .get('/v1/orchestrator/threads', {
+        params: {
+          studyInstanceUID: request.studyInstanceUID,
+          ...(request.limit ? { limit: request.limit } : {}),
+        },
+      })
+      .then((response: AxiosResponse<APIResponse<ListChatThreadsResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * One of the signed-in user's threads: its messages and the user's votes.
+   */
+  async GetChatThreadHistory(request: GetThreadRequest): Promise<APIResponse<ChatThreadHistory>> {
+    return Api()
+      .get(`/v1/orchestrator/threads/${encodeURIComponent(request.threadId)}/messages`)
+      .then((response: AxiosResponse<APIResponse<ChatThreadHistory>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
       });
   },
 
