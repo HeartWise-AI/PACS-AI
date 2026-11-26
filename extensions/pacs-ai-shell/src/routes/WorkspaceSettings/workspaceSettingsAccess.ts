@@ -23,6 +23,7 @@ export function canOpenWorkspaceSettingsTab(
     case 'ingestion':
       return can(access, Permission.PROCESSING_MANAGE);
     case 'feedback':
+    case 'chat-feedback':
       return can(access, Permission.FEEDBACK_VIEW);
     case 'roles':
       return access.isAdmin;

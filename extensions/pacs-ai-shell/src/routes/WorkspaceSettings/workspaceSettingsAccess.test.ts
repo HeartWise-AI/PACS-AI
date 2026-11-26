@@ -16,6 +16,7 @@ describe('workspace settings access', () => {
       'models',
       'ingestion',
       'feedback',
+      'chat-feedback',
       'roles',
     ]);
   });
@@ -25,7 +26,7 @@ describe('workspace settings access', () => {
       getVisibleWorkspaceSettingsTabs(
         accessOf(UserRole.USER, ['feedback.view', 'processing.manage', 'members.manage'])
       )
-    ).toEqual(['ingestion', 'feedback']);
+    ).toEqual(['ingestion', 'feedback', 'chat-feedback']);
     expect(getVisibleWorkspaceSettingsTabs(accessOf(UserRole.USER))).toEqual([]);
     expect(getVisibleWorkspaceSettingsTabs(null)).toEqual([]);
   });
@@ -34,6 +35,9 @@ describe('workspace settings access', () => {
     expect(resolveWorkspaceSettingsTab('roles', ['onboarding', 'roles'])).toBe('roles');
     expect(resolveWorkspaceSettingsTab('roles', ['ingestion', 'feedback'])).toBe('ingestion');
     expect(resolveWorkspaceSettingsTab(null, ['onboarding', 'dicom'])).toBe('onboarding');
+    expect(resolveWorkspaceSettingsTab('chat-feedback', ['feedback', 'chat-feedback'])).toBe(
+      'chat-feedback'
+    );
     expect(resolveWorkspaceSettingsTab('bogus', [])).toBeNull();
   });
 });

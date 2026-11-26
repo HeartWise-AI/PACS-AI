@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import type { ChatActivity, Message } from '../types';
+import type { ChatFeedbackEntry } from '../hooks/useChatFeedback';
 import { MessageBubble } from './MessageBubble';
 import { EmptyState } from './EmptyState';
 
@@ -10,8 +11,9 @@ interface MessageListProps {
   // Live steps of the message in flight, shown in the thinking bubble.
   progress?: ChatActivity | null;
   onRetry: () => void;
-  messageFeedback: Record<string, 'up' | 'down' | null>;
-  onFeedback: (messageId: string, type: 'up' | 'down') => void;
+  messageFeedback: Record<string, ChatFeedbackEntry>;
+  onFeedback: (message: Message, type: 'up' | 'down') => void;
+  onFeedbackDetails?: (message: Message, category: string, comment: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -22,6 +24,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onRetry,
   messageFeedback,
   onFeedback,
+  onFeedbackDetails,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +48,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             progress={message.isThinking ? progress : null}
             feedback={messageFeedback[message.id]}
             onFeedback={onFeedback}
+            onFeedbackDetails={onFeedbackDetails}
           />
         ))
       )}

@@ -206,6 +206,7 @@ export const WORKSPACE_SETTINGS_TABS = [
   { id: 'models', labelKey: 'Inference Models' },
   { id: 'ingestion', labelKey: 'Ingestion Jobs' },
   { id: 'feedback', labelKey: 'Model Feedback' },
+  { id: 'chat-feedback', labelKey: 'Chat Feedback' },
   { id: 'roles', labelKey: 'Roles' },
 ] as const;
 

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ChatActivity, ChatCitation, Message } from '../types';
@@ -8,13 +9,17 @@ import { ThinkingIndicator } from './ThinkingIndicator';
 import { ActivitySummary } from './ActivitySummary';
 import { CitationChip } from './CitationChip';
 import { StructuredAnswerCards } from './StructuredAnswerCards';
+import { FeedbackReasonForm } from './FeedbackReasonForm';
+import type { ChatFeedbackEntry } from '../hooks/useChatFeedback';
 
 interface MessageBubbleProps {
   message: Message;
   // Live steps while this message is the thinking placeholder.
   progress?: ChatActivity | null;
-  feedback?: 'up' | 'down' | null;
-  onFeedback?: (messageId: string, type: 'up' | 'down') => void;
+  feedback?: ChatFeedbackEntry | null;
+  onFeedback?: (message: Message, type: 'up' | 'down') => void;
+  // Saves the reason and comment of a thumbs down.
+  onFeedbackDetails?: (message: Message, category: string, comment: string) => void;
 }
 
 const NO_CITATIONS: ChatCitation[] = [];
@@ -64,7 +69,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   progress = null,
   feedback,
   onFeedback,
+  onFeedbackDetails,
 }) => {
+  const { t } = useTranslation('ChatBox');
+  const vote = feedback?.vote ?? null;
   const isUser = message.sender === 'user';
   const isAssistant = message.sender === 'assistant';
   const citations = (isAssistant && message.citations) || NO_CITATIONS;
@@ -119,11 +127,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {isAssistant && !message.isThinking && onFeedback && (
             <div className="flex gap-2 text-gray-400">
               <button
-                onClick={() => onFeedback(message.id, 'up')}
+                type="button"
+                onClick={() => onFeedback(message, 'up')}
+                disabled={feedback?.status === 'saving'}
                 className={`transition-colors ${
-                  feedback === 'up' ? 'text-green-500' : 'hover:text-green-400'
+                  vote === 'up' ? 'text-green-500' : 'hover:text-green-400'
                 }`}
-                aria-label="Thumbs up"
+                aria-label={t('FeedbackThumbsUp')}
+                aria-pressed={vote === 'up'}
+                title={t('FeedbackThumbsUp')}
               >
                 <svg
                   className="h-4 w-4"
@@ -140,11 +152,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </svg>
               </button>
               <button
-                onClick={() => onFeedback(message.id, 'down')}
+                type="button"
+                onClick={() => onFeedback(message, 'down')}
+                disabled={feedback?.status === 'saving'}
                 className={`transition-colors ${
-                  feedback === 'down' ? 'text-red-500' : 'hover:text-red-400'
+                  vote === 'down' ? 'text-red-500' : 'hover:text-red-400'
                 }`}
-                aria-label="Thumbs down"
+                aria-label={t('FeedbackThumbsDown')}
+                aria-pressed={vote === 'down'}
+                title={t('FeedbackThumbsDown')}
               >
                 <svg
                   className="h-4 w-4"
@@ -163,6 +179,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           )}
         </div>
+        {isAssistant &&
+          feedback?.status === 'error' &&
+          !(vote === 'down' && message.backendMessageId) && (
+            <p
+              className="mt-1 text-xs text-red-300"
+              role="alert"
+            >
+              {t('FeedbackSaveError')}
+            </p>
+          )}
+        {isAssistant &&
+          vote === 'down' &&
+          message.backendMessageId &&
+          onFeedbackDetails &&
+          feedback && (
+            <FeedbackReasonForm
+              entry={feedback}
+              onSave={(category, comment) => onFeedbackDetails(message, category, comment)}
+            />
+          )}
       </div>
     </div>
   );

@@ -71,6 +71,12 @@ export interface Message {
   // What the "[n]" markers of this assistant message refer to. Not stored with
   // the conversation: a reloaded message has none and shows plain markers.
   citations?: ChatCitation[];
+  // Stored id of this answer in the chat backend; thumbs are saved against it.
+  // Absent with an older backend: the thumbs then stay local.
+  backendMessageId?: string;
+  // Thread (chat-backend conversation) the answer belongs to; kept with the
+  // answer so a vote still reaches it after the chat box is remounted.
+  backendThreadId?: string;
 }
 
 // Interface for the initial series selection prop for the modal
