@@ -7,6 +7,7 @@ import {
   formatRunDateTime,
   isSameResultRun,
   listResultRuns,
+  mergeResultRuns,
   newestCompletedAt,
   resultFromPendingRun,
 } from './viewerResultsModel';
@@ -87,6 +88,24 @@ describe('runs of a model', () => {
     expect(listResultRuns(null)).toEqual([]);
     expect(newestCompletedAt(reported)).toBe(viewerRerun.completedAt);
     expect(newestCompletedAt(null)).toBeNull();
+  });
+
+  test('adds the runs the backend does not list to the runs of their model', () => {
+    const alone = result();
+    const unlisted = result({
+      runId: 'run-viewer',
+      executionId: 'execution-viewer',
+      studyServiceJobId: null,
+      completedAt: '2026-11-26T09:16:15-05:00',
+      provisional: true,
+    });
+    const otherModel = { ...unlisted, modelName: 'CathEF-CLIP' };
+    const otherStudy = { ...unlisted, studyInstanceUID: '9.9.9' };
+    expect(mergeResultRuns(alone, [otherModel, unlisted, otherStudy])).toEqual([unlisted, alone]);
+    // A run the backend lists is not repeated.
+    expect(mergeResultRuns(reported, [unlisted])).toEqual([viewerRerun, autoRun]);
+    expect(mergeResultRuns(alone, [])).toEqual([alone]);
+    expect(mergeResultRuns(null, [unlisted])).toEqual([]);
   });
 
   test('finds the result of a run that is not the reported one', () => {

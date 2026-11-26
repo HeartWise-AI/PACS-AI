@@ -29,7 +29,7 @@ import {
   findResultGroup,
   findRunResult,
   isSameResultRun,
-  listResultRuns,
+  mergeResultRuns,
   newestCompletedAt,
   resolveResultSeriesScope,
   resultFromPendingRun,
@@ -191,6 +191,10 @@ export function ViewerModelResultsProvider({
   const [latestResults, setLatestResults] = useState<ViewerModelResult[]>([]);
   const [pendingRuns, setPendingRuns] = useState<PendingViewerModelRun[]>([]);
   const [readyResults, setReadyResults] = useState<ViewerModelResult[]>([]);
+  // Runs completed in this viewer session that the backend does not list (an
+  // api-pacs or study-service without the run list): kept so the user can
+  // still open them after looking at another run.
+  const [unlistedRuns, setUnlistedRuns] = useState<ViewerModelResult[]>([]);
   // For the running-jobs indicator only: the last polled detail of each
   // pending run, and the runs that ended recently.
   const [pendingRunStatuses, setPendingRunStatuses] = useState<
@@ -293,6 +297,7 @@ export function ViewerModelResultsProvider({
     setLatestResultsStatus('idle');
     setOpenedResult(null);
     setReadyResults([]);
+    setUnlistedRuns([]);
     void refreshLatestResults();
   }, [refreshLatestResults]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -312,8 +317,8 @@ export function ViewerModelResultsProvider({
 
   const getResultRuns = useCallback(
     (model: ViewerResultModelIdentity, forStudyInstanceUID?: string | null) =>
-      listResultRuns(getLatestResult(model, forStudyInstanceUID)),
-    [getLatestResult]
+      mergeResultRuns(getLatestResult(model, forStudyInstanceUID), unlistedRuns),
+    [getLatestResult, unlistedRuns]
   );
 
   const getPendingRun = useCallback(
@@ -651,6 +656,13 @@ export function ViewerModelResultsProvider({
         }
         ended.push({ run, outcome: 'completed', result, endedAt: now, foreground });
       });
+      const provisional = [...completed.values()].filter(result => result.provisional);
+      if (provisional.length) {
+        setUnlistedRuns(current => [
+          ...current.filter(item => !provisional.some(result => isSameResultRun(result, item))),
+          ...provisional,
+        ]);
+      }
       if (ready.length) {
         setReadyResults(current => [
           ...current.filter(
@@ -725,6 +737,16 @@ export function ViewerModelResultsProvider({
   // A result opened from a run that had just completed is replaced by the
   // listed one (selected views, video counts) once the backend reports it.
   useEffect(() => {
+    setUnlistedRuns(current => {
+      const kept = current.filter(
+        run =>
+          !findRunResult(
+            latestResults.filter(result => result.studyInstanceUID === run.studyInstanceUID),
+            { executionId: run.executionId, runId: run.runId, modelName: run.modelName }
+          )
+      );
+      return kept.length === current.length ? current : kept;
+    });
     setOpenedResult(current => {
       if (!current?.result.provisional) {
         return current;
@@ -748,9 +770,9 @@ export function ViewerModelResultsProvider({
     if (!opened) {
       return [];
     }
-    const runs = listResultRuns(findResultGroup(opened, latestResults));
+    const runs = mergeResultRuns(findResultGroup(opened, latestResults), unlistedRuns);
     return runs.some(run => isSameResultRun(run, opened)) ? runs : [opened, ...runs];
-  }, [openedResult, latestResults]);
+  }, [openedResult, latestResults, unlistedRuns]);
 
   const setResultMinimized = useCallback(
     (minimized: boolean) =>

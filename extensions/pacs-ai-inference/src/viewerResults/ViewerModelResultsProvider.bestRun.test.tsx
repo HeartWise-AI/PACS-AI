@@ -314,6 +314,23 @@ describe('a viewer rerun that is not the best run', () => {
       'execution-auto',
     ]);
 
+    // Looking at the reported run does not lose the run just completed: it
+    // stays offered in the drawer and in the menu.
+    act(() => mockSelectRun?.(legacyReported));
+    expect(context!.openedResult?.result.executionId).toBe('execution-auto');
+    expect(
+      mockDrawerRenders[mockDrawerRenders.length - 1].runs.map(item => item.executionId)
+    ).toEqual(['execution-viewer', 'execution-auto']);
+    expect(context!.getResultRuns(model).map(item => item.executionId)).toEqual([
+      'execution-viewer',
+      'execution-auto',
+    ]);
+    act(() => mockSelectRun?.(context!.getResultRuns(model)[0]));
+    expect(context!.openedResult?.result).toMatchObject({
+      executionId: 'execution-viewer',
+      provisional: true,
+    });
+
     // Once the backend lists the run, the opened result becomes the stored one.
     repo.loadLatestResults.mockResolvedValue([afterRerun]);
     await act(async () => {
@@ -324,6 +341,10 @@ describe('a viewer rerun that is not the best run', () => {
       studyServiceJobId: 'job-viewer',
     });
     expect(context!.openedResult?.result.provisional).toBeUndefined();
+    expect(context!.getResultRuns(model).map(item => item.studyServiceJobId)).toEqual([
+      'job-viewer',
+      'job-auto',
+    ]);
   });
 
   test('reads the results again when the run completed after they were loaded', async () => {

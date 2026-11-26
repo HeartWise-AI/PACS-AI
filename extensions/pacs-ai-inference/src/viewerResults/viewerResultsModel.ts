@@ -90,6 +90,30 @@ export function listResultRuns(result: ViewerModelResult | null): ViewerModelRes
   return [...result.runs].sort((left, right) => completedTime(right) - completedTime(left));
 }
 
+/**
+ * The runs of `reported`'s model with the `unlisted` ones of the same study
+ * and model added: runs that completed in this viewer session and that the
+ * backend does not list. Newest first.
+ */
+export function mergeResultRuns(
+  reported: ViewerModelResult | null,
+  unlisted: ViewerModelResult[]
+): ViewerModelResult[] {
+  const runs = listResultRuns(reported);
+  if (!reported) {
+    return runs;
+  }
+  const extra = unlisted.filter(
+    run =>
+      run.studyInstanceUID === reported.studyInstanceUID &&
+      run.modelName === reported.modelName &&
+      !runs.some(listed => isSameResultRun(listed, run))
+  );
+  return extra.length
+    ? [...runs, ...extra].sort((left, right) => completedTime(right) - completedTime(left))
+    : runs;
+}
+
 /** True when both results are the same run of the same study and model. */
 export function isSameResultRun(left: ViewerModelResult, right: ViewerModelResult): boolean {
   if (left.studyInstanceUID !== right.studyInstanceUID || left.modelName !== right.modelName) {
