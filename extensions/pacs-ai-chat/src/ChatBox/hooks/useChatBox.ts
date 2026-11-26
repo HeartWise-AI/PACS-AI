@@ -1,7 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
-import type { ChatActivity, ChatCitation, ModalityData } from '../types';
+import type { ChatThreadSummary } from '@pacs-ai/extension-core/src/api/orchestratorDTO';
+import type { ChatActivity, ChatCitation, Message, ModalityData } from '../types';
+import type { ChatFeedbackEntry } from './useChatFeedback';
 import { toCitations } from '../utils/citations';
+import { historyToFeedback, historyToMessages } from '../utils/chatHistory';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';
 import type { OpenStudyContext } from '../utils/getOpenStudyContext';
 
@@ -24,6 +27,15 @@ interface SendMessageResponse {
   // What the "[n]" markers of the answer refer to; absent when it has none.
   citations?: ChatCitation[];
 }
+
+// A restored thread: its messages and the signed-in user's votes on them.
+export interface RestoredChat {
+  messages: Message[];
+  feedback: Record<string, ChatFeedbackEntry>;
+}
+
+// Earlier threads listed for the open study.
+export const CHAT_HISTORY_LIMIT = 20;
 
 // Live progress is polled about once a second while a message is in flight.
 export const PROGRESS_POLL_INTERVAL_MS = 1000;
@@ -72,6 +84,14 @@ interface UseChatBoxReturn {
   setErrorDetails: (error: string) => void;
   handleRetryThreadCreation: () => void;
   resetThread: () => void;
+  // The signed-in user's earlier threads about the open study, latest first.
+  threads: ChatThreadSummary[];
+  // True while a stored thread is being opened.
+  historyLoading: boolean;
+  // Reload the list of earlier threads.
+  refreshThreads: () => Promise<ChatThreadSummary[] | null>;
+  // Open a stored thread and continue it; resolves false when it could not be loaded.
+  openThread: (threadId: string) => Promise<boolean>;
 }
 
 /**
@@ -102,7 +122,9 @@ async function attachOpenStudy(threadId: string, openStudy: OpenStudyContext | n
 export function useChatBox(
   isOpen: boolean,
   messagesLength: number,
-  getOpenStudy?: () => OpenStudyContext | null
+  getOpenStudy?: () => OpenStudyContext | null,
+  // Without it the chat box never restores a stored thread (always a new one).
+  onRestore?: (restored: RestoredChat) => void
 ): UseChatBoxReturn {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [threadCreationPending, setThreadCreationPending] = useState(false);
@@ -115,6 +137,12 @@ export function useChatBox(
   // Set once the backend answers that it has no progress endpoint.
   const progressUnsupported = useRef(false);
   const isMounted = useRef(true);
+  const [threads, setThreads] = useState<ChatThreadSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  // The latest stored thread is restored once per mount; "New chat" then starts fresh.
+  const restoreTried = useRef(false);
+  const onRestoreRef = useRef(onRestore);
+  onRestoreRef.current = onRestore;
 
   const stopProgressPolling = useCallback(() => {
     if (progressTimer.current !== null) {
@@ -189,10 +217,8 @@ export function useChatBox(
     };
   }, [stopProgressPolling]);
 
-  // Function to create a new thread
-  const createThread = useCallback(async () => {
-    if (threadCreationPending) return;
-
+  // Creates a new thread, without the pending guard (the initializer sets it first).
+  const startThread = useCallback(async () => {
     try {
       setThreadCreationPending(true);
       setIsLoading(true);
@@ -248,7 +274,67 @@ export function useChatBox(
     } finally {
       setIsLoading(false);
     }
-  }, [threadCreationPending, getOpenStudy]);
+  }, [getOpenStudy]);
+
+  // Function to create a new thread
+  const createThread = useCallback(async () => {
+    if (threadCreationPending) return;
+    await startThread();
+  }, [threadCreationPending, startThread]);
+
+  // The signed-in user's earlier threads about the open study (none without a study).
+  const refreshThreads = useCallback(async (): Promise<ChatThreadSummary[] | null> => {
+    const studyInstanceUID = getOpenStudy?.()?.studyInstanceUID;
+    if (!studyInstanceUID || typeof orchestratorRepository.ListChatThreads !== 'function') {
+      return null;
+    }
+    try {
+      const response = await orchestratorRepository.ListChatThreads({
+        studyInstanceUID,
+        limit: CHAT_HISTORY_LIMIT,
+      });
+      const list =
+        response?.success && Array.isArray(response.data?.threads) ? response.data.threads : [];
+      if (isMounted.current) {
+        setThreads(list);
+      }
+      return list;
+    } catch (error) {
+      // An older gateway or chat service: no history, chat works as before.
+      console.warn('Could not load the earlier chats of this study.');
+      return null;
+    }
+  }, [getOpenStudy]);
+
+  // Opens a stored thread: its messages and votes replace the chat box content.
+  const openThread = useCallback(async (storedThreadId: string): Promise<boolean> => {
+    if (!onRestoreRef.current) {
+      return false;
+    }
+    setHistoryLoading(true);
+    try {
+      const response = await orchestratorRepository.GetChatThreadHistory({
+        threadId: storedThreadId,
+      });
+      if (!response?.success || !response.data || !isMounted.current) {
+        return false;
+      }
+      onRestoreRef.current?.({
+        messages: historyToMessages(response.data),
+        feedback: historyToFeedback(response.data),
+      });
+      setErrorDetails('');
+      setThreadId(storedThreadId);
+      return true;
+    } catch (error) {
+      console.warn('Could not open the earlier chat.');
+      return false;
+    } finally {
+      if (isMounted.current) {
+        setHistoryLoading(false);
+      }
+    }
+  }, []);
 
   // Function to send a message to the backend
   const sendMessage = useCallback(
@@ -405,13 +491,34 @@ export function useChatBox(
     []
   );
 
-  // Initialize thread when chat opens or is reset
+  // Initialize the thread when the chat opens or is reset: once per mount, the
+  // user's latest thread about the open study is restored; otherwise (none, no
+  // study, an older backend, or after "New chat") a new thread is created.
   useEffect(() => {
-    if (isOpen && !threadId && messagesLength === 0 && !threadCreationPending) {
-      setThreadCreationPending(true);
-      createThread();
+    if (!isOpen || threadId || threadCreationPending) {
+      return;
     }
-  }, [isOpen, threadId, messagesLength, createThread, threadCreationPending]);
+    const restore = !restoreTried.current && !!onRestoreRef.current;
+    if (!restore && messagesLength > 0) {
+      return;
+    }
+    restoreTried.current = true;
+    setThreadCreationPending(true);
+    (async () => {
+      if (restore) {
+        setIsLoading(true);
+        const list = await refreshThreads();
+        const restored = list && list.length > 0 ? await openThread(list[0].thread_id) : false;
+        if (isMounted.current) {
+          setIsLoading(false);
+        }
+        if (restored || !isMounted.current) {
+          return;
+        }
+      }
+      await startThread();
+    })();
+  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, openThread, startThread]);
 
   // Reset thread creation pending when threadId is set
   useEffect(() => {
@@ -444,5 +551,9 @@ export function useChatBox(
     setErrorDetails,
     handleRetryThreadCreation,
     resetThread,
+    threads,
+    historyLoading,
+    refreshThreads,
+    openThread,
   };
 }

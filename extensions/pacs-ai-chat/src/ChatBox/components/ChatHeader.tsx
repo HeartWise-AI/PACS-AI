@@ -3,12 +3,23 @@ import { useTranslation } from 'react-i18next';
 
 interface ChatHeaderProps {
   onAddSeries: () => void;
+  // Starts a new chat; earlier chats stay stored and listed under the history button.
   onClearChat: () => void;
   onClose: () => void;
+  // Shows the earlier chats of the open study; no button without it.
+  onToggleHistory?: () => void;
+  historyOpen?: boolean;
 }
 
-export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat, onClose }) => {
+export const ChatHeader: React.FC<ChatHeaderProps> = ({
+  onAddSeries,
+  onClearChat,
+  onClose,
+  onToggleHistory,
+  historyOpen = false,
+}) => {
   const { t } = useTranslation();
+  const { t: tChat } = useTranslation('ChatBox');
 
   return (
     <div
@@ -38,12 +49,38 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
             />
           </svg>
         </button>
-        {/* Clear chat button */}
+        {/* Earlier chats of this study */}
+        {onToggleHistory && (
+          <button
+            onClick={onToggleHistory}
+            className={`text-white hover:text-gray-300 focus:outline-none ${historyOpen ? 'opacity-100' : ''}`}
+            aria-label={tChat('HistoryButton')}
+            aria-expanded={historyOpen}
+            title={tChat('HistoryButton')}
+            data-cy="chat-history-button"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        )}
+        {/* New chat (earlier chats stay stored) */}
         <button
           onClick={onClearChat}
           className="text-white hover:text-gray-300 focus:outline-none"
-          aria-label="Clear chat"
-          title={t('Clear chat history')}
+          aria-label={tChat('NewChat')}
+          title={tChat('NewChat')}
+          data-cy="chat-new-button"
         >
           <svg
             className="h-5 w-5"
@@ -55,7 +92,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ onAddSeries, onClearChat
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
             />
           </svg>
         </button>
