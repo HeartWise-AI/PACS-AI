@@ -67,7 +67,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   // Handle message submission
   const handleSubmit = useCallback(
     async (inputValue: string) => {
-      if (inputValue.trim() === '' || chat.isProcessing || !chat.threadId) return;
+      if (inputValue.trim() === '' || chat.isProcessing || chat.historyLoading || !chat.threadId) {
+        return;
+      }
 
       const savedInput = inputValue.trim();
 
@@ -198,13 +200,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   const handleSelectThread = useCallback(
     async (storedThreadId: string) => {
-      chatFeedback.reset();
+      // The restore replaces the feedback; on failure the current thread keeps its own.
       if (await chat.openThread(storedThreadId)) {
         series.resetSelection();
         setHistoryOpen(false);
       }
     },
-    [chat, chatFeedback, series]
+    [chat, series]
   );
 
   // Handle series selection from modal
@@ -378,7 +380,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
           <InputArea
             onSubmit={handleSubmit}
-            disabled={chat.isProcessing || !chat.threadId}
+            disabled={chat.isProcessing || chat.historyLoading || !chat.threadId}
             isProcessing={chat.isProcessing}
             threadId={chat.threadId}
             threadCreationPending={chat.threadCreationPending}

@@ -515,6 +515,11 @@ export function useChatBox(
         if (restored || !isMounted.current) {
           return;
         }
+        if (messagesLength > 0) {
+          // Messages kept from before a remount belong to a thread that could not be
+          // restored: clear them so the new thread does not look like their continuation.
+          onRestoreRef.current?.({ messages: [], feedback: {} });
+        }
       }
       await startThread();
     })();

@@ -146,6 +146,36 @@ describe('useChatBox chat history', () => {
     expect(result.current.threadId).toBe('latest');
   });
 
+  it('clears messages kept from a remount when no thread can be restored', async () => {
+    repository.ListChatThreads.mockResolvedValue({ success: true, data: { threads: [] } } as any);
+    const onRestore = jest.fn<void, [RestoredChat]>();
+    const { result } = renderHook(() => useChatBox(true, 3, () => OPEN_STUDY, onRestore));
+
+    await waitFor(() => expect(result.current.threadId).toBe('new-thread'));
+    expect(onRestore).toHaveBeenCalledWith({ messages: [], feedback: {} });
+  });
+
+  it('marks the history as loading while a thread is being opened', async () => {
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY, jest.fn()));
+    await waitFor(() => expect(result.current.threadId).toBe('latest'));
+
+    let release: (value: any) => void = () => undefined;
+    repository.GetChatThreadHistory.mockImplementationOnce(
+      () => new Promise(resolve => (release = resolve))
+    );
+    let pending: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      pending = result.current.openThread('older');
+    });
+    await waitFor(() => expect(result.current.historyLoading).toBe(true));
+    await act(async () => {
+      release(history('older'));
+      await pending;
+    });
+    expect(result.current.historyLoading).toBe(false);
+    expect(result.current.threadId).toBe('older');
+  });
+
   it('never restores without a restore handler (no history UI)', async () => {
     const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
     await waitFor(() => expect(result.current.threadId).toBe('new-thread'));
