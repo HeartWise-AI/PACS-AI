@@ -3,15 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
 import { Button, Input, Typography } from '@pacs-ai/ui';
-import i18n from '@ohif/i18n';
 import TopNavigation from '../../components/TopNavigation';
 import copyIcon from '../../assets/pacs/icons/copy-gradient.png';
-import chevronDown from '../../assets/pacs/icons/chevron-down.png';
 import { pacsAiLogoVertical as logoVertical } from '@pacs-ai/theme';
 import userRepository from '@pacs-ai/extension-core/src/api/userRepository';
 import { UserResponse } from '@pacs-ai/extension-core/src/api/userDTO';
 import { GetTenantInfoResponse } from '@pacs-ai/extension-core/src/api/tenantDTO';
-import { Error, Languages } from '@pacs-ai/extension-core/src/api/dto';
+import { Error } from '@pacs-ai/extension-core/src/api/dto';
 import { AlertContext } from '../../alerts';
 import Modal from '../../components/Modal';
 import tenantRepository from '@pacs-ai/extension-core/src/api/tenantRepository';
@@ -282,45 +280,7 @@ const SettingsPage = () => {
         <div className="pt-5">
           <h1 className="text-lg font-normal text-white">{t('Preferences')}</h1>
 
-          <div className="mt-2 flex items-center justify-between border-b border-white border-opacity-10 pb-5">
-            <div>
-              <h2 className="text-base font-light text-white">{t('Language')}</h2>
-              <h2 className="text-sm text-white text-opacity-70">
-                {t('Change your preferred language')}
-              </h2>
-            </div>
-            <div className="relative">
-              <select
-                id="language"
-                value={Languages[i18n.language.toLocaleUpperCase()]}
-                onChange={e => {
-                  const enumKey = Object.keys(Languages).find(
-                    key => Languages[key] === e.target.value
-                  );
-
-                  i18n.changeLanguage(enumKey.toLowerCase());
-                }}
-                className="mb-4 block h-[51px] w-[140px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 py-3 px-3 pr-8 text-lg leading-tight text-white focus:outline-none"
-              >
-                {Object.values(Languages).map(lang => (
-                  <option
-                    key={lang}
-                    value={Languages[lang]}
-                    className="!cursor-pointer !bg-[#323631] !py-2"
-                  >
-                    {lang}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <img
-                  src={chevronDown}
-                  alt="Chevron down icon"
-                  className="w-5"
-                />
-              </div>
-            </div>
-          </div>
+          {/* The language selector is in the top bar (AppLanguageSelect). */}
           <ViewerTourPreference
             t={t}
             showAlert={showAlert}

@@ -139,6 +139,8 @@ export interface MessageResponse {
     content: string;
     tool_results?: ToolResultResponse[];
     createdAt?: string;
+    // Answer language from the chat backend; absent with an older one.
+    metadata?: { response_language?: string; response_language_source?: string };
   };
   status: string;
   error?: string;
@@ -303,4 +305,9 @@ export interface ChatFeedbackCountsResponse {
   by_specialist: Array<ChatFeedbackUpDown & { specialist: string }>;
   by_skill: Array<ChatFeedbackUpDown & { skill: string }>;
   by_harness_version: Array<ChatFeedbackUpDown & { harness_version: string }>;
+}
+
+/** GET /v1/orchestrator/settings: the chat backend's default answer language. */
+export interface ChatSettingsResponse {
+  chat_default_language: 'fr' | 'en' | null;
 }

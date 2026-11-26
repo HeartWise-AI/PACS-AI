@@ -66,6 +66,39 @@ function useMarkdownRendering(citations: ChatCitation[]) {
   }, [citations]);
 }
 
+const ANSWER_LANGUAGE_SOURCE_KEYS: Record<string, string> = {
+  message_request: 'AnswerLanguageSourceRequest',
+  conversation_request: 'AnswerLanguageSourceRequest',
+  message_language: 'AnswerLanguageSourceTyped',
+  client: 'AnswerLanguageSourceClient',
+  conversation: 'AnswerLanguageSourceConversation',
+  default: 'AnswerLanguageSourceDefault',
+};
+
+/** Small FR / EN tag: the language the chat backend answered in, and why (tooltip). */
+const AnswerLanguageBadge: React.FC<{ language: 'en' | 'fr'; source?: string }> = ({
+  language,
+  source,
+}) => {
+  const { t } = useTranslation('ChatBox');
+  const sourceKey = source ? ANSWER_LANGUAGE_SOURCE_KEYS[source] : undefined;
+  const languageName = t(language === 'fr' ? 'AnswerLanguageFr' : 'AnswerLanguageEn');
+  // A reason the viewer does not know (a newer backend) is not shown as a raw code.
+  const title = sourceKey
+    ? t('AnswerLanguage', { language: languageName, source: t(sourceKey) })
+    : t('AnswerLanguageNoReason', { language: languageName });
+  return (
+    <span
+      className="rounded border border-current px-1 text-[10px] font-semibold uppercase leading-4"
+      data-testid="answer-language"
+      title={title}
+      aria-label={title}
+    >
+      {language}
+    </span>
+  );
+};
+
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   progress = null,
@@ -174,11 +207,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <ActivitySummary activity={message.activity} />
         )}
         <div className="mt-1 flex items-center justify-between">
-          <span className="text-xs opacity-70">
+          <span className="flex items-center gap-2 text-xs opacity-70">
             {message.timestamp.toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
             })}
+            {isAssistant && message.responseLanguage && (
+              <AnswerLanguageBadge
+                language={message.responseLanguage}
+                source={message.responseLanguageSource}
+              />
+            )}
           </span>
           {isAssistant && !message.isThinking && onFeedback && (
             <div className="flex gap-2 text-gray-400">

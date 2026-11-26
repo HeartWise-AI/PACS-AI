@@ -3,6 +3,7 @@ import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestrator
 import type { ChatThreadSummary } from '@pacs-ai/extension-core/src/api/orchestratorDTO';
 import type { ChatActivity, ChatCitation, Message, ModalityData } from '../types';
 import type { ChatFeedbackEntry } from './useChatFeedback';
+import { chatResponseLanguage } from '@pacs-ai/extension-core/src/service/appLanguage';
 import { toCitations } from '../utils/citations';
 import { historyToFeedback, historyToMessages } from '../utils/chatHistory';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';
@@ -26,6 +27,24 @@ interface SendMessageResponse {
   activity?: ChatActivity;
   // What the "[n]" markers of the answer refer to; absent when it has none.
   citations?: ChatCitation[];
+  // Answer language from the chat backend (message.metadata); absent with an older backend.
+  response_language?: 'en' | 'fr';
+  response_language_source?: string;
+}
+
+/** The answer language the chat backend reports in message.metadata, if any. */
+function toResponseLanguage(
+  metadata: { response_language?: unknown; response_language_source?: unknown } | undefined
+): Pick<SendMessageResponse, 'response_language' | 'response_language_source'> {
+  const language = metadata?.response_language;
+  if (language !== 'en' && language !== 'fr') {
+    return {};
+  }
+  const source = metadata?.response_language_source;
+  return {
+    response_language: language,
+    ...(typeof source === 'string' ? { response_language_source: source } : {}),
+  };
 }
 
 // A restored thread: its messages and the signed-in user's votes on them.
@@ -394,12 +413,16 @@ export function useChatBox(
         setProgress(null);
         startProgressPolling(currentThreadId);
 
+        // The app language (top bar) is the default for an unmarked question; the
+        // backend still answers a question in the language it is written in.
+        const responseLanguage = chatResponseLanguage();
         const response = await orchestratorRepository.CreateMessage({
           threadId: currentThreadId,
           message,
           metadata: {
             selectedSeries: selectedSeries,
             ...(studyContext || openStudyMetadata(getOpenStudy?.() ?? null) || {}),
+            ...(responseLanguage ? { response_language: responseLanguage } : {}),
           },
         });
 
@@ -423,6 +446,7 @@ export function useChatBox(
             tool_results: responseData.message?.tool_results || [],
             activity: toActivity(responseData.activity),
             citations: toCitations(responseData.citations),
+            ...toResponseLanguage(responseData.message?.metadata),
           };
         } else {
           throw new Error(response.message || 'Failed to send message');

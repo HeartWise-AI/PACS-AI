@@ -24,6 +24,7 @@ import {
   ListChatThreadsRequest,
   ListChatThreadsResponse,
   ChatThreadHistory,
+  ChatSettingsResponse,
 } from './orchestratorDTO';
 
 const orchestratorRepository = {
@@ -152,6 +153,16 @@ const orchestratorRepository = {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;
       });
+  },
+
+  /**
+   * Chat settings the viewer needs before the first message: the default answer
+   * language of the chat backend (CHAT_DEFAULT_LANGUAGE), null with an older one.
+   */
+  async GetChatSettings(): Promise<APIResponse<ChatSettingsResponse>> {
+    return Api()
+      .get('/v1/orchestrator/settings')
+      .then((response: AxiosResponse<APIResponse<ChatSettingsResponse>>) => response.data);
   },
 
   /**

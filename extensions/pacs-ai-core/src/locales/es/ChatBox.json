@@ -84,5 +84,14 @@
   "HistoryLoading": "Cargando…",
   "HistoryOneMessage": "1 mensaje",
   "HistoryMessages": "{{count}} mensajes",
-  "HistoryCurrent": "actual"
+  "HistoryCurrent": "actual",
+  "AnswerLanguage": "Idioma de la respuesta: {{language}} ({{source}})",
+  "AnswerLanguageEn": "inglés",
+  "AnswerLanguageFr": "francés",
+  "AnswerLanguageSourceRequest": "solicitado",
+  "AnswerLanguageSourceTyped": "idioma de la pregunta",
+  "AnswerLanguageSourceClient": "ajuste de idioma",
+  "AnswerLanguageSourceConversation": "igual que la conversación",
+  "AnswerLanguageSourceDefault": "predeterminado de este sitio",
+  "AnswerLanguageNoReason": "Idioma de la respuesta: {{language}}"
 }

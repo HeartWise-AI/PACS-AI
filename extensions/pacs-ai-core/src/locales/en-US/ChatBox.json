@@ -84,5 +84,14 @@
   "HistoryLoading": "Loading…",
   "HistoryOneMessage": "1 message",
   "HistoryMessages": "{{count}} messages",
-  "HistoryCurrent": "current"
+  "HistoryCurrent": "current",
+  "AnswerLanguage": "Answer language: {{language}} ({{source}})",
+  "AnswerLanguageEn": "English",
+  "AnswerLanguageFr": "French",
+  "AnswerLanguageSourceRequest": "requested",
+  "AnswerLanguageSourceTyped": "language of the question",
+  "AnswerLanguageSourceClient": "language setting",
+  "AnswerLanguageSourceConversation": "same as the conversation",
+  "AnswerLanguageSourceDefault": "default of this site",
+  "AnswerLanguageNoReason": "Answer language: {{language}}"
 }

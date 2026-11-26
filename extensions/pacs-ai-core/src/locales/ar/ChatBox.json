@@ -84,5 +84,14 @@
   "HistoryLoading": "جارٍ التحميل…",
   "HistoryOneMessage": "رسالة واحدة",
   "HistoryMessages": "{{count}} رسائل",
-  "HistoryCurrent": "الحالية"
+  "HistoryCurrent": "الحالية",
+  "AnswerLanguage": "لغة الإجابة: {{language}} ({{source}})",
+  "AnswerLanguageEn": "الإنجليزية",
+  "AnswerLanguageFr": "الفرنسية",
+  "AnswerLanguageSourceRequest": "مطلوبة",
+  "AnswerLanguageSourceTyped": "لغة السؤال",
+  "AnswerLanguageSourceClient": "إعداد اللغة",
+  "AnswerLanguageSourceConversation": "مثل المحادثة",
+  "AnswerLanguageSourceDefault": "الافتراضية لهذا الموقع",
+  "AnswerLanguageNoReason": "لغة الإجابة: {{language}}"
 }
