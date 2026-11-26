@@ -473,6 +473,43 @@ describe('resolveResultInput', () => {
     expect(input?.modality).toBe('XA');
   });
 
+  test('times the selected clip, matched by SOP, not the first clip of its series', () => {
+    const clip = (sop: string, time: string) =>
+      cine('series-7', 7, time, {
+        instances: [
+          {
+            SOPInstanceUID: sop,
+            StudyDate: '20230123',
+            AcquisitionDate: '20230123',
+            AcquisitionTime: time,
+          },
+        ],
+      });
+    const input = resolveResultInput(
+      // The view records only its SOP.
+      result({ selectedViews: [view({ sopInstanceUID: 'sop-b' })] }),
+      [clip('sop-a', '100000'), clip('sop-b', '110000')]
+    );
+    expect(input?.source).toBe('views');
+    expect(input?.series.map(series => [series.seriesNumber, series.acquiredAt])).toEqual([
+      ['7', '2023-01-23 11:00'],
+    ]);
+
+    const all = resolveResultInput(result({}), [clip('sop-a', '100000'), clip('sop-b', '110000')]);
+    expect([all?.acquiredFrom, all?.acquiredTo]).toEqual(['2023-01-23 10:00', '2023-01-23 11:00']);
+  });
+
+  test('describes ECG waveforms, which have no image frames', () => {
+    const ecg = cine('ecg-1', 3, '080000', {
+      Modality: 'ECG',
+      numImageFrames: 0,
+      isMultiFrame: false,
+    });
+    const input = resolveResultInput(result({ modality: 'ecg' }), [ecg, ...loaded]);
+    expect(input?.series.map(series => series.seriesNumber)).toEqual(['3']);
+    expect(input?.modality).toBe('ECG');
+  });
+
   test('is null when nothing of the study is loaded', () => {
     expect(resolveResultInput(result({}), [])).toBeNull();
   });

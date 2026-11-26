@@ -648,10 +648,11 @@ function seriesNumberOrder(series: ResultInputSeries): number {
 
 /**
  * The input a stored result was computed from, described from the DICOM
- * metadata loaded in the viewer: the views the model selected when it
- * recorded them, else the series the run was dispatched with, else every
- * eligible series of the model's modality. Returns null when none of the
- * study's series are loaded and the run names none.
+ * metadata loaded in the viewer: the clips the model selected when it
+ * recorded them (matched by SOP Instance UID first, like the view badges),
+ * else the series the run was dispatched with, else every eligible series of
+ * the model's modality. Returns null when none of the study's series are
+ * loaded and the run names none.
  */
 export function resolveResultInput(
   result: Pick<
@@ -660,61 +661,83 @@ export function resolveResultInput(
   >,
   displaySets: InputDisplaySet[]
 ): ResultInput | null {
-  const bySeries = new Map<string, InputDisplaySet>();
-  displaySets.forEach(displaySet => {
-    const uid = displaySet?.SeriesInstanceUID;
-    if (uid && displaySet.StudyInstanceUID === result.studyInstanceUID && !bySeries.has(uid)) {
-      bySeries.set(uid, displaySet);
-    }
+  const studySets = displaySets.filter(
+    displaySet =>
+      !!displaySet?.SeriesInstanceUID && displaySet.StudyInstanceUID === result.studyInstanceUID
+  );
+  // Every display set of a series: a series can hold several cine clips.
+  const bySeries = new Map<string, InputDisplaySet[]>();
+  studySets.forEach(displaySet => {
+    const uid = displaySet.SeriesInstanceUID as string;
+    bySeries.set(uid, [...(bySeries.get(uid) ?? []), displaySet]);
   });
 
   const unique = (uids: Array<string | null | undefined>) => [
     ...new Set(uids.filter((uid): uid is string => !!uid)),
   ];
-  const viewSeries = unique((result.selectedViews ?? []).map(view => view.seriesInstanceUID));
-  const dispatched = unique(result.dispatchSeriesInstanceUIDs ?? []);
   const wanted = RESULT_DICOM_MODALITIES[(result.modality ?? '').trim().toLowerCase()];
   const modalityOf = (displaySet: InputDisplaySet) =>
     (displaySet.Modality || displaySet.modality || '').toUpperCase();
+  // Waveforms (ECG) have no frames; the cine checks only apply to images.
+  const eligible = (displaySet: InputDisplaySet) =>
+    !displaySet.excludeFromThumbnailBrowser &&
+    (!wanted || wanted.includes(modalityOf(displaySet))) &&
+    (modalityOf(displaySet) === 'ECG' || isInferenceSeriesEligible(displaySet));
 
+  // Clips used per series; undefined = every clip of the series.
+  const clips = new Map<string, InputDisplaySet[] | undefined>();
   let source: ResultInput['source'];
   let uids: string[];
+  const views = result.selectedViews ?? [];
+  const viewClips = views.map(
+    view => findDisplaySetsForSelectedView(view, studySets as never) as InputDisplaySet[]
+  );
+  const viewSeries = unique(
+    views.map((view, index) => view.seriesInstanceUID ?? viewClips[index][0]?.SeriesInstanceUID)
+  );
+  const dispatched = unique(result.dispatchSeriesInstanceUIDs ?? []);
   if (viewSeries.length) {
     source = 'views';
     uids = viewSeries;
+    viewClips.flat().forEach(clip => {
+      const uid = clip.SeriesInstanceUID as string;
+      const used = clips.get(uid) ?? [];
+      if (!used.includes(clip)) {
+        clips.set(uid, [...used, clip]);
+      }
+    });
   } else if (dispatched.length) {
     source = 'dispatched';
     uids = dispatched;
   } else {
     source = 'all';
-    uids = [...bySeries.entries()]
-      .filter(
-        ([, displaySet]) =>
-          !displaySet.excludeFromThumbnailBrowser &&
-          isInferenceSeriesEligible(displaySet) &&
-          (!wanted || wanted.includes(modalityOf(displaySet)))
-      )
-      .map(([uid]) => uid);
+    uids = [...bySeries.entries()].filter(([, sets]) => sets.some(eligible)).map(([uid]) => uid);
+    uids.forEach(uid => clips.set(uid, bySeries.get(uid)?.filter(eligible)));
   }
   if (!uids.length) {
     return null;
   }
 
-  const loaded = uids.map(uid => bySeries.get(uid)).filter(Boolean) as InputDisplaySet[];
-  const series = loaded
-    .map(displaySet => ({
-      seriesInstanceUID: displaySet.SeriesInstanceUID as string,
-      seriesNumber: textOrNull(displaySet.SeriesNumber),
-      description: textOrNull(displaySet.SeriesDescription) ?? textOrNull(displaySet.description),
-      acquiredAt: seriesAcquiredAt(displaySet),
-    }))
+  const loadedUIDs = uids.filter(uid => bySeries.has(uid));
+  const timesOf = (uid: string) =>
+    (clips.get(uid) ?? bySeries.get(uid) ?? [])
+      .map(seriesAcquiredAt)
+      .filter((time): time is string => !!time)
+      .sort();
+  const series = loadedUIDs
+    .map(uid => {
+      const [first] = bySeries.get(uid) as InputDisplaySet[];
+      return {
+        seriesInstanceUID: uid,
+        seriesNumber: textOrNull(first.SeriesNumber),
+        description: textOrNull(first.SeriesDescription) ?? textOrNull(first.description),
+        acquiredAt: timesOf(uid)[0] ?? null,
+      };
+    })
     .sort((left, right) => seriesNumberOrder(left) - seriesNumberOrder(right));
-  const times = series
-    .map(item => item.acquiredAt)
-    .filter(Boolean)
-    .sort() as string[];
-  const modalities = unique(loaded.map(modalityOf));
-  const studyDisplaySet = loaded[0] ?? bySeries.values().next().value;
+  const times = loadedUIDs.flatMap(timesOf).sort();
+  const modalities = unique(loadedUIDs.map(uid => modalityOf(bySeries.get(uid)[0])));
+  const studyDisplaySet = bySeries.get(loadedUIDs[0])?.[0] ?? studySets[0];
   const studyInstance = studyDisplaySet?.instance ?? studyDisplaySet?.instances?.[0];
 
   return {
