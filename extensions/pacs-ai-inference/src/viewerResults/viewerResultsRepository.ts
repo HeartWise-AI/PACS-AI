@@ -13,6 +13,7 @@ interface HTTPResponse<T> {
 export interface ViewerResultsHTTPClient {
   get<T>(url: string): Promise<HTTPResponse<T>>;
   post<T>(url: string, body?: unknown): Promise<HTTPResponse<T>>;
+  delete?<T>(url: string): Promise<HTTPResponse<T>>;
 }
 
 export interface ViewerModelReport {
@@ -36,6 +37,12 @@ export interface ViewerResultsRepository {
   loadReport(result: ViewerModelResult): Promise<ViewerModelReport>;
   runModel(request: RunViewerModelRequest): Promise<ViewerModelRun>;
   loadRunStatus(runId: string): Promise<ViewerModelRunStatus>;
+  // Run labels (PACS-447). Each returns the run's labels after the change.
+  // Optional so that older test doubles and backends keep working.
+  addRunLabel?(run: ViewerModelResult, label: string): Promise<string[]>;
+  removeRunLabel?(run: ViewerModelResult, label: string): Promise<string[]>;
+  // Labels used in the workspace, most recently used first, for suggestions.
+  loadRunLabelSuggestions?(): Promise<string[]>;
 }
 
 export class ViewerResultsRequestError extends Error {
@@ -162,6 +169,29 @@ export function mapDispatchSeriesInstanceUIDs(value: unknown): string[] | null |
   return uids.length ? [...new Set(uids)] : null;
 }
 
+/** Labels as sent by the backend: trimmed, non-empty, without case-insensitive repeats. */
+export function mapRunLabels(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  value.forEach(item => {
+    const label =
+      typeof item === 'string'
+        ? item
+        : isRecord(item) && typeof item.label === 'string'
+          ? item.label
+          : null;
+    const normalized = label?.split(/\s+/).filter(Boolean).join(' ');
+    if (normalized && !seen.has(normalized.toLocaleLowerCase())) {
+      seen.add(normalized.toLocaleLowerCase());
+      labels.push(normalized);
+    }
+  });
+  return labels;
+}
+
 // A recorded count, null when the backend sends null, undefined when it does
 // not report the field (or sends something else).
 function mapCount(value: unknown): number | null | undefined {
@@ -187,6 +217,7 @@ export function mapViewerModelResult(
   }
 
   const inputVideoCount = mapCount(value.inputVideoCount);
+  const labels = mapRunLabels(value.labels);
   const eligibleVideoCount = mapCount(value.eligibleVideoCount);
   const runs =
     !listedRun && Array.isArray(value.runs)
@@ -215,7 +246,19 @@ export function mapViewerModelResult(
     ...(eligibleVideoCount !== undefined ? { eligibleVideoCount } : {}),
     ...(runs.length ? { runs } : {}),
     ...(listedRun && typeof value.bestRun === 'boolean' ? { bestRun: value.bestRun } : {}),
+    ...(labels !== undefined ? { labels } : {}),
   };
+}
+
+function runLabelsPath(run: ViewerModelResult): string {
+  return `/v1/inference/worklist/studies/${encodedIdentifier(
+    run.studyInstanceUID,
+    'Study Instance UID'
+  )}/jobs/${encodedIdentifier(run.studyServiceJobId, 'Study service job ID')}/labels`;
+}
+
+function labelsOf(body: unknown): string[] {
+  return mapRunLabels(isRecord(body) ? body.labels : null) ?? [];
 }
 
 function mapViewerModelRun(value: unknown): ViewerModelRun {
@@ -307,6 +350,39 @@ export function createViewerResultsRepository(
       } catch (error: unknown) {
         throw requestError(error, 'Unable to start the model run.');
       }
+    },
+
+    async addRunLabel(run: ViewerModelResult, label: string): Promise<string[]> {
+      try {
+        const response = await client.post<unknown>(runLabelsPath(run), { label });
+        return labelsOf(unwrap(response.data));
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to add the label.');
+      }
+    },
+
+    async removeRunLabel(run: ViewerModelResult, label: string): Promise<string[]> {
+      const path = `${runLabelsPath(run)}?label=${encodeURIComponent(label.trim())}`;
+      try {
+        if (!client.delete) {
+          throw new ViewerResultsRequestError('Removing labels is not supported.', 405);
+        }
+        const response = await client.delete<unknown>(path);
+        return labelsOf(unwrap(response.data));
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to remove the label.');
+      }
+    },
+
+    async loadRunLabelSuggestions(): Promise<string[]> {
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>('/v1/inference/worklist/run-labels');
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load the labels.');
+      }
+      return mapRunLabels(isRecord(body) ? body.labels : null) ?? [];
     },
 
     async loadRunStatus(runId: string): Promise<ViewerModelRunStatus> {
