@@ -224,7 +224,9 @@ export function useChatBox(
   }, [stopProgressPolling]);
 
   // Creates a new thread, without the pending guard (the initializer sets it first).
-  const startThread = useCallback(async () => {
+  // A creation superseded by a newer chat action (New chat, a thread opened) is dropped.
+  const startThread = useCallback(async (token: number) => {
+    const current = () => isMounted.current && token === chatSeq.current;
     try {
       setThreadCreationPending(true);
       setIsLoading(true);
@@ -235,12 +237,18 @@ export function useChatBox(
       const metadata = openStudyMetadata(openStudy);
       const response = await orchestratorRepository.CreateThread(metadata ? { metadata } : {});
 
+      if (!current()) {
+        return;
+      }
       if (response.success && response.data) {
         const newThreadId = response.data.thread_id;
 
         if (newThreadId) {
           console.log('Thread created with ID:', newThreadId);
           await attachOpenStudy(newThreadId, openStudy);
+          if (!current()) {
+            return;
+          }
           setThreadId(newThreadId);
           setErrorDetails('');
         } else {
@@ -254,6 +262,9 @@ export function useChatBox(
       }
     } catch (error: any) {
       console.error('Error creating thread:', error);
+      if (!current()) {
+        return;
+      }
 
       let errorMessage = 'Unknown error occurred while creating thread';
       if (error.message) {
@@ -278,14 +289,16 @@ export function useChatBox(
         setThreadCreationPending(false);
       }
     } finally {
-      setIsLoading(false);
+      if (current()) {
+        setIsLoading(false);
+      }
     }
   }, [getOpenStudy]);
 
   // Function to create a new thread
   const createThread = useCallback(async () => {
     if (threadCreationPending) return;
-    await startThread();
+    await startThread(++chatSeq.current);
   }, [threadCreationPending, startThread]);
 
   // The signed-in user's earlier threads about the open study (none without a study).
@@ -546,7 +559,7 @@ export function useChatBox(
           onRestoreRef.current?.({ messages: [], feedback: {} });
         }
       }
-      await startThread();
+      await startThread(token);
     })();
   }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread]);
 

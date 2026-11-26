@@ -194,6 +194,23 @@ describe('useChatBox chat history', () => {
     expect(result.current.threadId).toBe('new-thread');
   });
 
+  it('drops a thread creation superseded by an earlier thread opened meanwhile', async () => {
+    repository.ListChatThreads.mockResolvedValue({ success: true, data: { threads: [] } } as any);
+    let release: (value: any) => void = () => undefined;
+    repository.CreateThread.mockImplementationOnce(() => new Promise(resolve => (release = resolve)));
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY, jest.fn()));
+    await waitFor(() => expect(repository.CreateThread).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      await result.current.openThread('older');
+    });
+    expect(result.current.threadId).toBe('older');
+    await act(async () => {
+      release({ success: true, data: { thread_id: 'late-thread' } });
+    });
+    expect(result.current.threadId).toBe('older');
+  });
+
   it('never restores without a restore handler (no history UI)', async () => {
     const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
     await waitFor(() => expect(result.current.threadId).toBe('new-thread'));
