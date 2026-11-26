@@ -13,6 +13,7 @@ import TenantHeader from './onboarding/components/TenantHeader';
 import DicomModalitiesSection from './sections/DicomModalitiesSection';
 import InferenceModelsSection from './sections/InferenceModelsSection';
 import IngestionJobsSection from './sections/IngestionJobsSection';
+import ChatFeedbackSection from './sections/ChatFeedbackSection';
 import ModelFeedbackSection from './sections/ModelFeedbackSection';
 import OnboardingSection from './sections/OnboardingSection';
 import RolesSection from './sections/RolesSection';
@@ -110,6 +111,11 @@ const WorkspaceSettingsPage = () => {
                 availableModels={inference.availableModels}
                 tenantName={onboarding.tenantInfo.name}
               />
+            </div>
+          )}
+          {isVisible('chat-feedback') && (
+            <div {...panelProps('chat-feedback')}>
+              <ChatFeedbackSection active={activeTab === 'chat-feedback'} />
             </div>
           )}
           {isVisible('roles') && (

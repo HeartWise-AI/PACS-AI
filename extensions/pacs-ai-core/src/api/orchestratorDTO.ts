@@ -101,6 +101,9 @@ export interface MessageResponse {
   // What the assistant used to answer; absent with an older backend.
   activity?: ChatActivityResponse | null;
 
+  // Stored id of the answer in the chat backend; chat feedback targets it.
+  assistant_message_id?: string;
+
   // Legacy fields for backward compatibility
   message_id?: string;
   content?: string;
@@ -145,14 +148,110 @@ export interface ThreadResponse {
   metadata?: Record<string, any>;
 }
 
-// Feedback DTOs
-export interface SubmitFeedbackRequest {
+// Chat answer feedback (PACS-448)
+export type ChatFeedbackVote = 'up' | 'down';
+
+/** Reasons the chat backend accepts for each vote (medical-agent CATEGORIES). */
+export const CHAT_FEEDBACK_CATEGORIES: Record<ChatFeedbackVote, readonly string[]> = {
+  up: ['accurate', 'helpful_recommendation', 'good_evidence', 'other'],
+  down: [
+    'wrong_value_or_measurement',
+    'wrong_patient_or_study',
+    'unsupported_claim',
+    'missing_detail',
+    'wrong_recommendation',
+    'tool_failed_or_wrong_tool',
+    'too_slow',
+    'formatting_or_language',
+    'privacy_concern',
+    'other',
+  ],
+};
+
+export interface SubmitChatFeedbackRequest {
   threadId: string;
+  // The stored id of the answer (MessageResponse.assistant_message_id).
   messageId: string;
-  feedback: 'up' | 'down';
+  vote: ChatFeedbackVote;
+  category: string;
+  comment?: string;
 }
 
-export interface FeedbackResponse {
-  success: boolean;
-  message?: string;
+export interface ChatFeedbackSaved {
+  ok: boolean;
+  feedback_id: string;
+  message_id: string;
+  vote: ChatFeedbackVote;
+  category: string;
+  submission_version: number;
+}
+
+export interface RemoveChatFeedbackRequest {
+  threadId: string;
+  messageId: string;
+}
+
+export interface ListChatFeedbackRequest {
+  rating?: ChatFeedbackVote;
+  category?: string;
+  study?: string;
+  // YYYY-MM-DD, both inclusive; `days` counts back from today when no `from`.
+  from?: string;
+  to?: string;
+  days?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ChatFeedbackItem {
+  feedback_id: string;
+  conversation_id: string;
+  message_id: string;
+  user_id: string;
+  vote: ChatFeedbackVote;
+  category: string;
+  comment: string | null;
+  client: string | null;
+  submission_version: number;
+  created_at: string | null;
+  updated_at: string | null;
+  question: string;
+  answer: string;
+  question_at?: string | null;
+  answer_at?: string | null;
+  study_instance_uid: string | null;
+  tenant_id: string | null;
+  model: string | null;
+  skill: string | null;
+  harness_version: string | null;
+  git_sha: string | null;
+  app_version: string | null;
+  origin: string | null;
+  specialists: string[];
+  tool_count: number;
+  // Sealed with a key this server does not hold: listed without content.
+  sealed_elsewhere: boolean;
+}
+
+export interface ListChatFeedbackResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  items: ChatFeedbackItem[];
+}
+
+export interface ChatFeedbackUpDown {
+  up: number;
+  down: number;
+}
+
+export interface ChatFeedbackCountsResponse {
+  range: { since: string | null; until: string | null };
+  totals: ChatFeedbackUpDown & { with_comment: number; total: number };
+  by_day: Array<ChatFeedbackUpDown & { date: string }>;
+  by_week: Array<ChatFeedbackUpDown & { week_start: string }>;
+  by_category: Array<{ vote: ChatFeedbackVote; category: string; count: number }>;
+  by_specialist: Array<ChatFeedbackUpDown & { specialist: string }>;
+  by_skill: Array<ChatFeedbackUpDown & { skill: string }>;
+  by_harness_version: Array<ChatFeedbackUpDown & { harness_version: string }>;
 }

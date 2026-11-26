@@ -7,6 +7,8 @@ import type { OpenStudyContext } from '../utils/getOpenStudyContext';
 
 interface SendMessageResponse {
   message_id?: string;
+  // Stored id of the answer in the chat backend (chat feedback targets it).
+  assistant_message_id?: string;
   response_id?: string;
   content: string;
   role: string;
@@ -277,6 +279,7 @@ export function useChatBox(
 
           return {
             message_id: responseData.message_id,
+            assistant_message_id: responseData.assistant_message_id,
             response_id: responseData.response_id,
             content: responseText,
             role: responseData.message?.role || 'assistant',

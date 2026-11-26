@@ -48,6 +48,7 @@ import en_US_ChatBox from './en-US/ChatBox.json';
 import en_US_Common from './en-US/Common.json';
 import en_US_HeaderPanel from './en-US/HeaderPanel.json';
 import en_US_Members from './en-US/Members.json';
+import en_US_ChatFeedback from './en-US/ChatFeedback.json';
 import en_US_ModelFeedback from './en-US/ModelFeedback.json';
 import en_US_Roles from './en-US/Roles.json';
 import en_US_Onboarding from './en-US/Onboarding.json';
@@ -90,6 +91,7 @@ import fr_HeaderPanel from './fr/HeaderPanel.json';
 import fr_MeasurementTable from './fr/MeasurementTable.json';
 import fr_Members from './fr/Members.json';
 import fr_Messages from './fr/Messages.json';
+import fr_ChatFeedback from './fr/ChatFeedback.json';
 import fr_ModelFeedback from './fr/ModelFeedback.json';
 import fr_Roles from './fr/Roles.json';
 import fr_Onboarding from './fr/Onboarding.json';
@@ -152,6 +154,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     Common: en_US_Common,
     HeaderPanel: en_US_HeaderPanel,
     Members: en_US_Members,
+    ChatFeedback: en_US_ChatFeedback,
     ModelFeedback: en_US_ModelFeedback,
     Roles: en_US_Roles,
     Onboarding: en_US_Onboarding,
@@ -198,6 +201,7 @@ const locales: Record<string, Record<string, Record<string, unknown>>> = {
     MeasurementTable: fr_MeasurementTable,
     Members: fr_Members,
     Messages: fr_Messages,
+    ChatFeedback: fr_ChatFeedback,
     ModelFeedback: fr_ModelFeedback,
     Roles: fr_Roles,
     Onboarding: fr_Onboarding,

@@ -12,8 +12,12 @@ import {
   UploadDicomPayloadRequestFlat,
   DicomPayloadResponse,
   StudyData,
-  SubmitFeedbackRequest,
-  FeedbackResponse,
+  SubmitChatFeedbackRequest,
+  ChatFeedbackSaved,
+  RemoveChatFeedbackRequest,
+  ListChatFeedbackRequest,
+  ListChatFeedbackResponse,
+  ChatFeedbackCountsResponse,
   GetChatProgressRequest,
   ChatProgressResponse,
   ChatProgressError,
@@ -159,21 +163,63 @@ const orchestratorRepository = {
   },
 
   /**
-   * Submit feedback for a message (thumbs up/down)
-   *
-   * @param   {SubmitFeedbackRequest}  request
-   *
-   * @return  {Promise<APIResponse<FeedbackResponse>>}
+   * Save the caller's thumbs up/down on one chat answer (create or replace).
    */
-  async SubmitFeedback(request: SubmitFeedbackRequest): Promise<APIResponse<FeedbackResponse>> {
+  async SubmitChatFeedback(
+    request: SubmitChatFeedbackRequest
+  ): Promise<APIResponse<ChatFeedbackSaved>> {
+    const { threadId, messageId, vote, category, comment } = request;
     return Api()
-      .post(`/v1/orchestrator/threads/${request.threadId}/messages/${request.messageId}/feedback`, {
-        feedback: request.feedback,
-      })
-      .then((response: AxiosResponse<APIResponse<FeedbackResponse>>) => {
-        const { data } = response;
-        return data;
-      })
+      .put(
+        `/v1/orchestrator/threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(messageId)}/feedback`,
+        { vote, category, ...(comment ? { comment } : {}) }
+      )
+      .then((response: AxiosResponse<APIResponse<ChatFeedbackSaved>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * Remove the caller's vote on one chat answer.
+   */
+  async RemoveChatFeedback(request: RemoveChatFeedbackRequest): Promise<APIResponse<unknown>> {
+    return Api()
+      .delete(
+        `/v1/orchestrator/threads/${encodeURIComponent(request.threadId)}/messages/${encodeURIComponent(request.messageId)}/feedback`
+      )
+      .then((response: AxiosResponse<APIResponse<unknown>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * The workspace's votes on chat answers, thumbs down first (feedback.view).
+   */
+  async ListChatFeedback(
+    request: ListChatFeedbackRequest
+  ): Promise<APIResponse<ListChatFeedbackResponse>> {
+    return Api()
+      .get(`/v1/inference/chat/feedback/list`, { params: request })
+      .then((response: AxiosResponse<APIResponse<ListChatFeedbackResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * Counts of the workspace's votes on chat answers (feedback.view).
+   */
+  async CountChatFeedback(
+    request: Pick<ListChatFeedbackRequest, 'study' | 'from' | 'to' | 'days'>
+  ): Promise<APIResponse<ChatFeedbackCountsResponse>> {
+    return Api()
+      .get(`/v1/inference/chat/feedback/counts`, { params: request })
+      .then((response: AxiosResponse<APIResponse<ChatFeedbackCountsResponse>>) => response.data)
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

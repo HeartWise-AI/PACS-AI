@@ -1,13 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import SelectSeriesModal from '../seriesSelection/SelectSeriesModal';
-import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
 
 // Hooks
 import { useChatBox } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
 import { useResizable } from './hooks/useResizable';
+import { useChatFeedback } from './hooks/useChatFeedback';
 import { getOpenStudyContext, openStudyMetadata } from './utils/getOpenStudyContext';
 
 // Components
@@ -31,14 +31,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const { selectedModalities = {} } = useStudyContext();
   const chatboxRef = useRef<HTMLDivElement>(null);
 
-  // State for message feedback (thumbs up/down)
-  const [messageFeedback, setMessageFeedback] = useState<Record<string, 'up' | 'down' | null>>({});
-
   // Study open in the viewer, read fresh at thread creation and on every message.
   const getOpenStudy = useCallback(() => getOpenStudyContext(servicesManager), [servicesManager]);
 
   // Custom hooks
   const chat = useChatBox(isOpen, messages.length, getOpenStudy);
+  // Thumbs up/down on answers, saved in the chat backend (PACS-448).
+  const chatFeedback = useChatFeedback(chat.threadId);
   const series = useSeriesSelection();
   const drag = useDraggable(isOpen);
   const resize = useResizable(isOpen, {
@@ -49,45 +48,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     defaultWidth: 400,
     defaultHeight: 650,
   });
-
-  // Handle feedback for assistant messages
-  // const handleFeedback = useCallback(
-  //   async (messageId: string, type: 'up' | 'down') => {
-  //     const currentFeedback = messageFeedback[messageId];
-  //     const newFeedback = currentFeedback === type ? null : type;
-
-  //     // Optimistically update UI
-  //     setMessageFeedback(prev => ({
-  //       ...prev,
-  //       [messageId]: newFeedback,
-  //     }));
-
-  //     // Only send to API if we have a threadId and feedback is being set (not cleared)
-  //     if (chat.threadId && newFeedback) {
-  //       try {
-  //         await orchestratorRepository.SubmitFeedback({
-  //           threadId: chat.threadId,
-  //           messageId,
-  //           feedback: newFeedback,
-  //         });
-  //       } catch (error) {
-  //         console.error('Failed to submit feedback:', error);
-  //         // Revert on error
-  //         setMessageFeedback(prev => ({
-  //           ...prev,
-  //           [messageId]: currentFeedback,
-  //         }));
-  //       }
-  //     }
-  //   },
-  //   [chat.threadId, messageFeedback]
-  // );
-  const handleFeedback = useCallback((messageId: string, type: 'up' | 'down') => {
-    setMessageFeedback(prev => ({
-      ...prev,
-      [messageId]: prev[messageId] === type ? null : type,
-    }));
-  }, []);
 
   // Handle message submission
   const handleSubmit = useCallback(
@@ -137,6 +97,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         if (responseData && responseData.content) {
           const assistantMessage: Message = {
             id: responseData.response_id || (Date.now() + 2).toString(),
+            ...(responseData.assistant_message_id
+              ? { backendMessageId: responseData.assistant_message_id }
+              : {}),
             text: responseData.content.trim(),
             sender: 'assistant',
             timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
@@ -203,9 +166,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const handleClearChat = useCallback(async () => {
     series.resetSelection();
     chat.resetThread();
-    setMessageFeedback({}); // Clear feedback state
+    chatFeedback.reset();
     onClearChat();
-  }, [series, chat, onClearChat]);
+  }, [series, chat, chatFeedback, onClearChat]);
 
   // Handle series selection from modal
   const handleSeriesSelected = useCallback(
@@ -357,8 +320,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             errorDetails={chat.errorDetails}
             progress={chat.progress}
             onRetry={chat.handleRetryThreadCreation}
-            messageFeedback={messageFeedback}
-            onFeedback={handleFeedback}
+            messageFeedback={chatFeedback.feedback}
+            onFeedback={chatFeedback.toggle}
+            onFeedbackDetails={chatFeedback.saveDetails}
           />
 
           <InputArea
