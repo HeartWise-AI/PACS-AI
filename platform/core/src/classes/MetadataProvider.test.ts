@@ -1,4 +1,4 @@
-import metadataProvider from './MetadataProvider';
+import metadataProvider, { normalizeVOILUTFunction } from './MetadataProvider';
 
 beforeEach(() => {
   (
@@ -78,5 +78,38 @@ describe('MetadataProvider', () => {
       SOPInstanceUID: 'sop-frame',
       frameNumber: '3',
     });
+  });
+});
+
+describe('MetadataProvider voiLutModule', () => {
+  const instance = (VOILUTFunction?: unknown) => ({
+    WindowCenter: '125',
+    WindowWidth: '143',
+    ...(VOILUTFunction === undefined ? {} : { VOILUTFunction }),
+  });
+
+  it('returns the VOI LUT function as a one-element array so createImage reads the whole value', () => {
+    const module = metadataProvider.getTagFromInstance('voiLutModule', instance('SIGMOID'));
+    expect(module.voiLUTFunction).toEqual(['SIGMOID']);
+    // dicom-image-loader createImage uses voiLUTFunction[0]
+    expect(module.voiLUTFunction[0]).toBe('SIGMOID');
+    expect(module.windowCenter).toEqual([125]);
+    expect(module.windowWidth).toEqual([143]);
+  });
+
+  it('normalizes multi-valued, padded or lower-case values and drops unknown ones', () => {
+    expect(normalizeVOILUTFunction(['LINEAR_EXACT', 'SIGMOID'])).toBe('LINEAR_EXACT');
+    expect(normalizeVOILUTFunction(' sigmoid ')).toBe('SIGMOID');
+    expect(normalizeVOILUTFunction('UNKNOWN')).toBeUndefined();
+    expect(normalizeVOILUTFunction(undefined)).toBeUndefined();
+    expect(
+      metadataProvider.getTagFromInstance('voiLutModule', instance()).voiLUTFunction
+    ).toBeUndefined();
+    expect(
+      metadataProvider.getTagFromInstance('voiLutModule', {
+        ...instance('SIGMOID'),
+        WindowWidth: '0',
+      }).voiLUTFunction
+    ).toBeUndefined();
   });
 });
