@@ -4,7 +4,9 @@ import {
   findLatestResultForModel,
   findPendingRunFailure,
   isResultForPendingRun,
+  formatDicomTime,
   resolveFeedbackModel,
+  resolveResultInput,
   resolveResultSeriesScope,
 } from './viewerResultsModel';
 import type { PendingViewerModelRun, SelectedView, ViewerModelResult } from './types';
@@ -388,5 +390,135 @@ describe('resolveFeedbackModel', () => {
     );
 
     expect(model).toMatchObject({ modelId: 'deepcoro-info', version: '1.2.0' });
+  });
+});
+
+describe('resolveResultInput', () => {
+  const cine = (
+    series: string,
+    number: number,
+    time: string,
+    extra: Record<string, unknown> = {}
+  ) => ({
+    StudyInstanceUID: '1.2.3',
+    SeriesInstanceUID: series,
+    Modality: 'XA',
+    SeriesNumber: number,
+    SeriesDescription: `Run ${number}`,
+    numImageFrames: 60,
+    isMultiFrame: true,
+    instances: [
+      {
+        StudyDate: '20230123',
+        AcquisitionDate: '20230123',
+        AcquisitionTime: time,
+        SeriesTime: '235959',
+      },
+    ],
+    ...extra,
+  });
+  const loaded = [
+    cine('series-5', 5, '102047.000000'),
+    cine('series-2', 2, '100221.000000'),
+    cine('series-9', 9, '104512'),
+    cine('ivus-1', 1, '090000', { Modality: 'IVUS' }),
+    cine('report-1', 10, '110000', { SeriesDescription: 'Rapport final' }),
+    cine('other-study', 11, '090000', { StudyInstanceUID: '9.9.9' }),
+  ];
+
+  test('describes a single selected view series with study date and acquisition time', () => {
+    const input = resolveResultInput(
+      result({
+        selectedViews: [view({ seriesInstanceUID: 'series-5' })],
+        dispatchSeriesInstanceUIDs: ['series-2', 'series-5'],
+      }),
+      loaded
+    );
+    expect(input).toEqual({
+      source: 'views',
+      series: [
+        {
+          seriesInstanceUID: 'series-5',
+          seriesNumber: '5',
+          description: 'Run 5',
+          acquiredAt: '2023-01-23 10:20',
+        },
+      ],
+      seriesCount: 1,
+      modality: 'XA',
+      studyDate: '2023-01-23',
+      acquiredFrom: '2023-01-23 10:20',
+      acquiredTo: '2023-01-23 10:20',
+    });
+  });
+
+  test('uses the dispatched series, ordered by number, when no views are recorded', () => {
+    const input = resolveResultInput(
+      result({ dispatchSeriesInstanceUIDs: ['series-9', 'series-2', 'unloaded'] }),
+      loaded
+    );
+    expect(input?.source).toBe('dispatched');
+    expect(input?.seriesCount).toBe(3);
+    expect(input?.series.map(series => series.seriesNumber)).toEqual(['2', '9']);
+    expect([input?.acquiredFrom, input?.acquiredTo]).toEqual([
+      '2023-01-23 10:02',
+      '2023-01-23 10:45',
+    ]);
+  });
+
+  test('falls back to every eligible series of the model modality', () => {
+    const input = resolveResultInput(result({ dispatchSeriesInstanceUIDs: null }), loaded);
+    expect(input?.source).toBe('all');
+    expect(input?.series.map(series => series.seriesNumber)).toEqual(['2', '5', '9']);
+    expect(input?.modality).toBe('XA');
+  });
+
+  test('times the selected clip, matched by SOP, not the first clip of its series', () => {
+    const clip = (sop: string, time: string) =>
+      cine('series-7', 7, time, {
+        instances: [
+          {
+            SOPInstanceUID: sop,
+            StudyDate: '20230123',
+            AcquisitionDate: '20230123',
+            AcquisitionTime: time,
+          },
+        ],
+      });
+    const input = resolveResultInput(
+      // The view records only its SOP.
+      result({ selectedViews: [view({ sopInstanceUID: 'sop-b' })] }),
+      [clip('sop-a', '100000'), clip('sop-b', '110000')]
+    );
+    expect(input?.source).toBe('views');
+    expect(input?.series.map(series => [series.seriesNumber, series.acquiredAt])).toEqual([
+      ['7', '2023-01-23 11:00'],
+    ]);
+
+    const all = resolveResultInput(result({}), [clip('sop-a', '100000'), clip('sop-b', '110000')]);
+    expect([all?.acquiredFrom, all?.acquiredTo]).toEqual(['2023-01-23 10:00', '2023-01-23 11:00']);
+  });
+
+  test('describes ECG waveforms, which have no image frames', () => {
+    const ecg = cine('ecg-1', 3, '080000', {
+      Modality: 'ECG',
+      numImageFrames: 0,
+      isMultiFrame: false,
+    });
+    const input = resolveResultInput(result({ modality: 'ecg' }), [ecg, ...loaded]);
+    expect(input?.series.map(series => series.seriesNumber)).toEqual(['3']);
+    expect(input?.modality).toBe('ECG');
+  });
+
+  test('is null when nothing of the study is loaded', () => {
+    expect(resolveResultInput(result({}), [])).toBeNull();
+  });
+
+  test('reads DICOM times with or without separators and rejects junk', () => {
+    expect(formatDicomTime('102047.000000')).toBe('10:20');
+    expect(formatDicomTime('10:20:47')).toBe('10:20');
+    expect(formatDicomTime('10')).toBe('10:00');
+    expect(formatDicomTime('9999')).toBeNull();
+    expect(formatDicomTime(undefined)).toBeNull();
   });
 });

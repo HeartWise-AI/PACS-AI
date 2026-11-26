@@ -3,6 +3,8 @@ import type {
   PendingRunEnd,
   PendingRunFailure,
   PendingViewerModelRun,
+  ResultInput,
+  ResultInputSeries,
   ResultSeriesInfo,
   ResultSeriesScope,
   SelectedView,
@@ -567,6 +569,186 @@ export function resolveResultSeriesScope(
   return unused
     ? { kind: 'subset', used: used.length, total: used.length + unused, series }
     : { kind: 'all', series };
+}
+
+// DICOM modalities of the series a model of a given result modality reads.
+const RESULT_DICOM_MODALITIES: Record<string, string[]> = {
+  angiogram: ['XA'],
+  angiography: ['XA'],
+  xa: ['XA'],
+  echo: ['US'],
+  echocardiogram: ['US'],
+  us: ['US'],
+  ecg: ['ECG'],
+  ct: ['CT'],
+  mr: ['MR'],
+};
+
+interface InputInstance {
+  StudyDate?: unknown;
+  SeriesDate?: unknown;
+  SeriesTime?: unknown;
+  AcquisitionDate?: unknown;
+  AcquisitionTime?: unknown;
+  AcquisitionDateTime?: unknown;
+  ContentDate?: unknown;
+  ContentTime?: unknown;
+}
+
+interface InputDisplaySet extends SeriesScopeDisplaySet, InputInstance {
+  instance?: InputInstance;
+  instances?: Array<InputInstance | undefined>;
+}
+
+function firstText(value: unknown): string | null {
+  return textOrNull(Array.isArray(value) ? value[0] : value);
+}
+
+/** DICOM DA ("20230123") as "2023-01-23". */
+export function formatDicomDate(value: unknown): string | null {
+  const digits = (firstText(value) ?? '').replace(/[^0-9]/g, '');
+  return digits.length >= 8
+    ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+    : null;
+}
+
+/** DICOM TM ("102047.000000", "10:20:47") as "10:20". */
+export function formatDicomTime(value: unknown): string | null {
+  const match = /^(\d{2}):?(\d{2})?/.exec(firstText(value) ?? '');
+  if (!match || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59) {
+    return null;
+  }
+  return `${match[1]}:${match[2] ?? '00'}`;
+}
+
+function dicomDateTime(date: unknown, time: unknown): string | null {
+  const day = formatDicomDate(date);
+  const clock = formatDicomTime(time);
+  return day && clock ? `${day} ${clock}` : null;
+}
+
+// Acquisition date and time of a series: its acquisition, else its content,
+// else the series date and time.
+function seriesAcquiredAt(displaySet: InputDisplaySet): string | null {
+  const instance = displaySet.instance ?? displaySet.instances?.[0] ?? {};
+  const pick = (key: keyof InputInstance) => instance[key] ?? displaySet[key];
+  const combined = firstText(pick('AcquisitionDateTime'));
+  return (
+    dicomDateTime(pick('AcquisitionDate'), pick('AcquisitionTime')) ??
+    (combined ? dicomDateTime(combined.slice(0, 8), combined.slice(8)) : null) ??
+    dicomDateTime(pick('ContentDate'), pick('ContentTime')) ??
+    dicomDateTime(pick('SeriesDate'), pick('SeriesTime'))
+  );
+}
+
+function seriesNumberOrder(series: ResultInputSeries): number {
+  const number = Number(series.seriesNumber);
+  return Number.isFinite(number) ? number : Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * The input a stored result was computed from, described from the DICOM
+ * metadata loaded in the viewer: the clips the model selected when it
+ * recorded them (matched by SOP Instance UID first, like the view badges),
+ * else the series the run was dispatched with, else every eligible series of
+ * the model's modality. Returns null when none of the study's series are
+ * loaded and the run names none.
+ */
+export function resolveResultInput(
+  result: Pick<
+    ViewerModelResult,
+    'studyInstanceUID' | 'modality' | 'selectedViews' | 'dispatchSeriesInstanceUIDs'
+  >,
+  displaySets: InputDisplaySet[]
+): ResultInput | null {
+  const studySets = displaySets.filter(
+    displaySet =>
+      !!displaySet?.SeriesInstanceUID && displaySet.StudyInstanceUID === result.studyInstanceUID
+  );
+  // Every display set of a series: a series can hold several cine clips.
+  const bySeries = new Map<string, InputDisplaySet[]>();
+  studySets.forEach(displaySet => {
+    const uid = displaySet.SeriesInstanceUID as string;
+    bySeries.set(uid, [...(bySeries.get(uid) ?? []), displaySet]);
+  });
+
+  const unique = (uids: Array<string | null | undefined>) => [
+    ...new Set(uids.filter((uid): uid is string => !!uid)),
+  ];
+  const wanted = RESULT_DICOM_MODALITIES[(result.modality ?? '').trim().toLowerCase()];
+  const modalityOf = (displaySet: InputDisplaySet) =>
+    (displaySet.Modality || displaySet.modality || '').toUpperCase();
+  // Waveforms (ECG) have no frames; the cine checks only apply to images.
+  const eligible = (displaySet: InputDisplaySet) =>
+    !displaySet.excludeFromThumbnailBrowser &&
+    (!wanted || wanted.includes(modalityOf(displaySet))) &&
+    (modalityOf(displaySet) === 'ECG' || isInferenceSeriesEligible(displaySet));
+
+  // Clips used per series; undefined = every clip of the series.
+  const clips = new Map<string, InputDisplaySet[] | undefined>();
+  let source: ResultInput['source'];
+  let uids: string[];
+  const views = result.selectedViews ?? [];
+  const viewClips = views.map(
+    view => findDisplaySetsForSelectedView(view, studySets as never) as InputDisplaySet[]
+  );
+  const viewSeries = unique(
+    views.map((view, index) => view.seriesInstanceUID ?? viewClips[index][0]?.SeriesInstanceUID)
+  );
+  const dispatched = unique(result.dispatchSeriesInstanceUIDs ?? []);
+  if (viewSeries.length) {
+    source = 'views';
+    uids = viewSeries;
+    viewClips.flat().forEach(clip => {
+      const uid = clip.SeriesInstanceUID as string;
+      const used = clips.get(uid) ?? [];
+      if (!used.includes(clip)) {
+        clips.set(uid, [...used, clip]);
+      }
+    });
+  } else if (dispatched.length) {
+    source = 'dispatched';
+    uids = dispatched;
+  } else {
+    source = 'all';
+    uids = [...bySeries.entries()].filter(([, sets]) => sets.some(eligible)).map(([uid]) => uid);
+    uids.forEach(uid => clips.set(uid, bySeries.get(uid)?.filter(eligible)));
+  }
+  if (!uids.length) {
+    return null;
+  }
+
+  const loadedUIDs = uids.filter(uid => bySeries.has(uid));
+  const timesOf = (uid: string) =>
+    (clips.get(uid) ?? bySeries.get(uid) ?? [])
+      .map(seriesAcquiredAt)
+      .filter((time): time is string => !!time)
+      .sort();
+  const series = loadedUIDs
+    .map(uid => {
+      const [first] = bySeries.get(uid) as InputDisplaySet[];
+      return {
+        seriesInstanceUID: uid,
+        seriesNumber: textOrNull(first.SeriesNumber),
+        description: textOrNull(first.SeriesDescription) ?? textOrNull(first.description),
+        acquiredAt: timesOf(uid)[0] ?? null,
+      };
+    })
+    .sort((left, right) => seriesNumberOrder(left) - seriesNumberOrder(right));
+  const times = loadedUIDs.flatMap(timesOf).sort();
+  const modalities = unique(loadedUIDs.map(uid => modalityOf(bySeries.get(uid)[0])));
+  const studyDisplaySet = bySeries.get(loadedUIDs[0])?.[0] ?? studySets[0];
+  const studyInstance = studyDisplaySet?.instance ?? studyDisplaySet?.instances?.[0];
+
+  return {
+    source,
+    series,
+    seriesCount: uids.length,
+    modality: modalities.length === 1 ? modalities[0] : wanted?.length === 1 ? wanted[0] : null,
+    studyDate: formatDicomDate(studyInstance?.StudyDate ?? studyDisplaySet?.StudyDate),
+    acquiredFrom: times[0] ?? null,
+    acquiredTo: times[times.length - 1] ?? null,
+  };
 }
 
 interface FeedbackQuestionnaireFields {

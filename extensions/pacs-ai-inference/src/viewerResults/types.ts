@@ -60,6 +60,33 @@ export interface ResultSeriesInfo {
   description: string | null;
 }
 
+// The input a result was computed from, as the viewer can describe it from the
+// DICOM metadata it has loaded: shown first in the result drawer.
+export interface ResultInputSeries {
+  seriesInstanceUID: string;
+  seriesNumber: string | null;
+  description: string | null;
+  // "YYYY-MM-DD HH:MM" from the series' acquisition date and time.
+  acquiredAt: string | null;
+}
+
+export interface ResultInput {
+  // views: the views the model selected; dispatched: the series the run was
+  // given; all: every eligible series of the model's modality.
+  source: 'views' | 'dispatched' | 'all';
+  // The input series the viewer has loaded, by series number.
+  series: ResultInputSeries[];
+  // How many series the run used (may exceed the loaded ones).
+  seriesCount: number;
+  // DICOM modality of the input series, when known ("XA").
+  modality: string | null;
+  // "YYYY-MM-DD".
+  studyDate: string | null;
+  // Earliest and latest acquisition of the input series, "YYYY-MM-DD HH:MM".
+  acquiredFrom: string | null;
+  acquiredTo: string | null;
+}
+
 // Which series a stored result covers, compared with the series loaded in the
 // viewer. `series` lists the used series the viewer knows, for display.
 export type ResultSeriesScope =

@@ -3,7 +3,7 @@ import { TextDecoder } from 'util';
 import { act, fireEvent, render as rtlRender, type RenderResult } from '@testing-library/react';
 import { ViewerModelResultDrawer } from './ViewerModelResultDrawer';
 import { ViewerResultsRequestError, type ViewerResultsRepository } from './viewerResultsRepository';
-import type { ResultSeriesScope, ViewerModelResult } from './types';
+import type { ResultInput, ResultSeriesScope, ViewerModelResult } from './types';
 
 // jsdom does not provide TextDecoder, which the report decoder uses.
 Object.assign(globalThis, { TextDecoder: globalThis.TextDecoder ?? TextDecoder });
@@ -111,13 +111,15 @@ describe('ViewerModelResultDrawer', () => {
     viewerResult: ViewerModelResult,
     repo: ViewerResultsRepository,
     seriesScope?: ResultSeriesScope | null,
-    runs?: ViewerModelResult[]
+    runs?: ViewerModelResult[],
+    input?: ResultInput | null
   ) {
     await act(async () => {
       renderer = rtlRender(
         <ViewerModelResultDrawer
           result={viewerResult}
           seriesScope={seriesScope}
+          input={input}
           runs={runs}
           onSelectRun={onSelectRun}
           repository={repo}
@@ -138,6 +140,62 @@ describe('ViewerModelResultDrawer', () => {
   afterEach(() => {
     renderer?.unmount();
     renderer = null;
+  });
+
+  test('states the input series, study date and acquisition time first', async () => {
+    const input: ResultInput = {
+      source: 'views',
+      series: [
+        {
+          seriesInstanceUID: 's5',
+          seriesNumber: '5',
+          description: 'FL - CTO',
+          acquiredAt: '2023-01-23 10:20',
+        },
+      ],
+      seriesCount: 1,
+      modality: 'XA',
+      studyDate: '2023-01-23',
+      acquiredFrom: '2023-01-23 10:20',
+      acquiredTo: '2023-01-23 10:20',
+    };
+    await render(result({ reportAvailable: false }), repository(jest.fn()), null, [], input);
+    expect(oneByTestId(renderer!, 'viewer-model-result-input').textContent).toBe(
+      'Input: Series 5 – FL - CTO · Study 2023-01-23 · Acquired 2023-01-23 10:20'
+    );
+  });
+
+  test('summarizes several input series with their acquisition time range', async () => {
+    const input: ResultInput = {
+      source: 'all',
+      series: ['2', '7', '9'].map(number => ({
+        seriesInstanceUID: `s${number}`,
+        seriesNumber: number,
+        description: null,
+        acquiredAt: null,
+      })),
+      seriesCount: 3,
+      modality: 'XA',
+      studyDate: '2023-01-23',
+      acquiredFrom: '2023-01-23 10:02',
+      acquiredTo: '2023-01-23 10:45',
+    };
+    await render(result({ reportAvailable: false }), repository(jest.fn()), null, [], input);
+    expect(oneByTestId(renderer!, 'viewer-model-result-input').textContent).toBe(
+      'Input: All XA series (3) · Study 2023-01-23 · Acquired 10:02–10:45'
+    );
+    await render(result({ reportAvailable: false }), repository(jest.fn()), null, [], {
+      ...input,
+      source: 'dispatched',
+    });
+    expect(byTestId(renderer!, 'viewer-model-result-input').pop()?.textContent).toBe(
+      'Input: 3 series: 2, 7, 9 · Study 2023-01-23 · Acquired 10:02–10:45'
+    );
+  });
+
+  test('omits the input line when the viewer cannot describe the input', async () => {
+    await render(result({ reportAvailable: false }), repository(jest.fn()));
+    expect(byTestId(renderer!, 'viewer-model-result-input')).toHaveLength(0);
   });
 
   test('shows the stored HTML report in the sandboxed iframe', async () => {
