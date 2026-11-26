@@ -84,5 +84,13 @@
   "HistoryLoading": "Wird geladen…",
   "HistoryOneMessage": "1 Nachricht",
   "HistoryMessages": "{{count}} Nachrichten",
-  "HistoryCurrent": "aktuell"
+  "HistoryCurrent": "aktuell",
+  "AnswerLanguage": "Antwortsprache: {{language}} ({{source}})",
+  "AnswerLanguageEn": "Englisch",
+  "AnswerLanguageFr": "Französisch",
+  "AnswerLanguageSourceRequest": "angefordert",
+  "AnswerLanguageSourceTyped": "Sprache der Frage",
+  "AnswerLanguageSourceClient": "Spracheinstellung",
+  "AnswerLanguageSourceConversation": "wie im Gespräch",
+  "AnswerLanguageSourceDefault": "Standard dieser Installation"
 }

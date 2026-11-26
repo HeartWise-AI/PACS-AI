@@ -84,5 +84,13 @@
   "HistoryLoading": "Chargement…",
   "HistoryOneMessage": "1 message",
   "HistoryMessages": "{{count}} messages",
-  "HistoryCurrent": "en cours"
+  "HistoryCurrent": "en cours",
+  "AnswerLanguage": "Langue de la réponse : {{language}} ({{source}})",
+  "AnswerLanguageEn": "anglais",
+  "AnswerLanguageFr": "français",
+  "AnswerLanguageSourceRequest": "demandée",
+  "AnswerLanguageSourceTyped": "langue de la question",
+  "AnswerLanguageSourceClient": "réglage de langue",
+  "AnswerLanguageSourceConversation": "comme la conversation",
+  "AnswerLanguageSourceDefault": "par défaut sur ce site"
 }

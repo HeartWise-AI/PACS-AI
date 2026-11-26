@@ -77,6 +77,10 @@ export interface Message {
   // Thread (chat-backend conversation) the answer belongs to; kept with the
   // answer so a vote still reaches it after the chat box is remounted.
   backendThreadId?: string;
+  // Language the chat backend answered in and why (message_request,
+  // conversation_request, message_language, client, conversation or default).
+  responseLanguage?: 'en' | 'fr';
+  responseLanguageSource?: string;
 }
 
 // Interface for the initial series selection prop for the modal

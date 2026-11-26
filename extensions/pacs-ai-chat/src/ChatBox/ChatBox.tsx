@@ -125,6 +125,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
             ...(responseData.activity?.steps?.length ? { activity: responseData.activity } : {}),
             ...(responseData.citations?.length ? { citations: responseData.citations } : {}),
+            ...(responseData.response_language
+              ? {
+                  responseLanguage: responseData.response_language,
+                  responseLanguageSource: responseData.response_language_source,
+                }
+              : {}),
           };
 
           // Filter out the thinking message and add the real response

@@ -73,6 +73,38 @@ describe('useChatBox open-study context', () => {
     });
   });
 
+  it('reads the answer language from message.metadata and ignores unknown values', async () => {
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
+    await waitFor(() => expect(result.current.threadId).toBe('thread-1'));
+    repository.CreateMessage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        message: {
+          role: 'assistant',
+          content: 'Réponse',
+          metadata: { response_language: 'fr', response_language_source: 'message_request' },
+        },
+      },
+    } as any);
+    let answer: Awaited<ReturnType<typeof result.current.sendMessage>> | undefined;
+    await act(async () => {
+      answer = await result.current.sendMessage('thread-1', 'en français', []);
+    });
+    expect(answer?.response_language).toBe('fr');
+    expect(answer?.response_language_source).toBe('message_request');
+
+    repository.CreateMessage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        message: { role: 'assistant', content: 'ok', metadata: { response_language: 'de' } },
+      },
+    } as any);
+    await act(async () => {
+      answer = await result.current.sendMessage('thread-1', 'hello', []);
+    });
+    expect(answer?.response_language).toBeUndefined();
+  });
+
   it('lets an explicit study context override the open study', async () => {
     const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
     await waitFor(() => expect(result.current.threadId).toBe('thread-1'));
