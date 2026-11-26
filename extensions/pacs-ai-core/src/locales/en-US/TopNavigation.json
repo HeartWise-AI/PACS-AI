@@ -3,6 +3,8 @@
   "Admin Console": "Admin Console",
   "AI Models": "AI Models",
   "AI Predictions": "AI Predictions",
+  "App language": "Language",
+  "App language help": "Language of the app and of chat answers. A question written in another language is answered in that language.",
   "Backend": "Backend",
   "Close navigation menu": "Close navigation menu",
   "Coming soon": "Coming soon",

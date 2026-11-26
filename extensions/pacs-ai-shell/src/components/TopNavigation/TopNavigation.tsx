@@ -12,6 +12,7 @@ import { logoutUser } from '@pacs-ai/extension-core/src/service/userService';
 import { useUserAccess } from '@pacs-ai/extension-core/src/hooks/useUserAccess';
 import { pacsAiIconLogo as logoIcon } from '@pacs-ai/theme';
 import InferenceNotificationsBell from '@pacs-ai/extension-inference/src/InferenceNotificationsBell';
+import { AppLanguageSelect } from './AppLanguageSelect';
 import {
   getStudiesDestination,
   getTopNavigationItems,
@@ -321,6 +322,7 @@ export function TopNavigation({ title, accessory }: TopNavigationProps) {
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           {accessory}
+          <AppLanguageSelect />
           <InferenceNotificationsBell />
 
           <div className="relative hidden lg:block">

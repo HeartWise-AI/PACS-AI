@@ -3,6 +3,7 @@ import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestrator
 import type { ChatThreadSummary } from '@pacs-ai/extension-core/src/api/orchestratorDTO';
 import type { ChatActivity, ChatCitation, Message, ModalityData } from '../types';
 import type { ChatFeedbackEntry } from './useChatFeedback';
+import { chatResponseLanguage } from '@pacs-ai/extension-core/src/service/appLanguage';
 import { toCitations } from '../utils/citations';
 import { historyToFeedback, historyToMessages } from '../utils/chatHistory';
 import { openStudyMetadata } from '../utils/getOpenStudyContext';
@@ -412,12 +413,16 @@ export function useChatBox(
         setProgress(null);
         startProgressPolling(currentThreadId);
 
+        // The app language (top bar) is the default for an unmarked question; the
+        // backend still answers a question in the language it is written in.
+        const responseLanguage = chatResponseLanguage();
         const response = await orchestratorRepository.CreateMessage({
           threadId: currentThreadId,
           message,
           metadata: {
             selectedSeries: selectedSeries,
             ...(studyContext || openStudyMetadata(getOpenStudy?.() ?? null) || {}),
+            ...(responseLanguage ? { response_language: responseLanguage } : {}),
           },
         });
 

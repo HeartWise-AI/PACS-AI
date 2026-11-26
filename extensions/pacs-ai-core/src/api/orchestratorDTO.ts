@@ -304,3 +304,8 @@ export interface ChatFeedbackCountsResponse {
   by_skill: Array<ChatFeedbackUpDown & { skill: string }>;
   by_harness_version: Array<ChatFeedbackUpDown & { harness_version: string }>;
 }
+
+/** GET /v1/orchestrator/settings: the chat backend's default answer language. */
+export interface ChatSettingsResponse {
+  chat_default_language: 'fr' | 'en' | null;
+}

@@ -11,6 +11,11 @@ jest.mock('@pacs-ai/extension-core/src/api/orchestratorRepository', () => ({
   },
 }));
 
+const mockResponseLanguage = jest.fn((): 'en' | 'fr' | undefined => undefined);
+jest.mock('@pacs-ai/extension-core/src/service/appLanguage', () => ({
+  chatResponseLanguage: () => mockResponseLanguage(),
+}));
+
 const repository = orchestratorRepository as jest.Mocked<typeof orchestratorRepository>;
 
 const OPEN_STUDY = {
@@ -103,6 +108,27 @@ describe('useChatBox open-study context', () => {
       answer = await result.current.sendMessage('thread-1', 'hello', []);
     });
     expect(answer?.response_language).toBeUndefined();
+  });
+
+  it('sends the app language (top bar) with the message when it is known', async () => {
+    mockResponseLanguage.mockReturnValueOnce('fr');
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
+    await waitFor(() => expect(result.current.threadId).toBe('thread-1'));
+
+    await act(async () => {
+      await result.current.sendMessage('thread-1', 'DeepCORO-JEPA LAD', []);
+    });
+
+    expect(repository.CreateMessage).toHaveBeenCalledWith({
+      threadId: 'thread-1',
+      message: 'DeepCORO-JEPA LAD',
+      metadata: {
+        selectedSeries: [],
+        studyInstanceUID: '2.25.4242',
+        modality: 'XA',
+        response_language: 'fr',
+      },
+    });
   });
 
   it('lets an explicit study context override the open study', async () => {
