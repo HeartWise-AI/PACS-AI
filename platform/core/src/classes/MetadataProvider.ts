@@ -11,6 +11,21 @@ import combineFrameInstance from '../utils/combineFrameInstance';
 const { calibratedPixelSpacingMetadataProvider, getPixelSpacingInformation } = utilities;
 const { getUriModule } = csMetadataUtilities;
 
+const VALID_VOI_LUT_FUNCTIONS = ['LINEAR', 'LINEAR_EXACT', 'SIGMOID'];
+
+/**
+ * Returns the first VOI LUT Function (0028,1056) value as a known enumerated
+ * string, or undefined when it is missing or not one cornerstone supports.
+ */
+export function normalizeVOILUTFunction(value: unknown): string | undefined {
+  const first = Array.isArray(value) ? value[0] : value;
+  if (typeof first !== 'string') {
+    return undefined;
+  }
+  const normalized = first.trim().toUpperCase();
+  return VALID_VOI_LUT_FUNCTIONS.includes(normalized) ? normalized : undefined;
+}
+
 class MetadataProvider {
   private readonly imageURIToUIDs: Map<string, any> = new Map();
   // Can be used to store custom metadata for a specific type.
@@ -211,10 +226,15 @@ class MetadataProvider {
         const windowCenter = Array.isArray(WindowCenter) ? WindowCenter : [WindowCenter];
         const windowWidth = Array.isArray(WindowWidth) ? WindowWidth : [WindowWidth];
 
+        const voiLUTFunction = normalizeVOILUTFunction(VOILUTFunction);
         metadata = {
           windowCenter: toNumber(windowCenter),
           windowWidth: toNumber(windowWidth),
-          voiLUTFunction: VOILUTFunction,
+          // The dicom-image-loader's createImage reads voiLUTFunction[0], like
+          // windowCenter/windowWidth. A plain string such as 'SIGMOID' would
+          // become 'S', and the viewport then throws 'Invalid VOI LUT function'
+          // and never renders (seen on XA cines that carry VOILUTFunction).
+          voiLUTFunction: voiLUTFunction ? [voiLUTFunction] : undefined,
         };
 
         break;
