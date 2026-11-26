@@ -46,7 +46,9 @@ const CARD_BLOCK = /\n*```cardio-card[ \t]*\n([\s\S]*?)\n```[ \t]*/g;
 const PART_SEPARATOR = /\n{2,}---\n{2,}/;
 
 const strings = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && !!item.trim()) : [];
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && !!item.trim())
+    : [];
 
 export function readCard(raw: string): ClinicalCardData | null {
   let value: unknown;
@@ -67,7 +69,9 @@ export function readCard(raw: string): ClinicalCardData | null {
     const medications = Array.isArray(card.medications)
       ? (card.medications as unknown[]).filter(
           (item): item is ClinicalMedication =>
-            !!item && typeof item === 'object' && typeof (item as ClinicalMedication).drug === 'string'
+            !!item &&
+            typeof item === 'object' &&
+            typeof (item as ClinicalMedication).drug === 'string'
         )
       : [];
     return {
@@ -114,7 +118,9 @@ export function splitClinicalCards(text: string | undefined | null): ClinicalPar
   for (const part of text.trim().split(PART_SEPARATOR)) {
     const blocks = [...part.matchAll(CARD_BLOCK)];
     const markdown = withoutCardBlocks(part).trim();
-    const cards = blocks.map(block => readCard(block[1])).filter((card): card is ClinicalCardData => !!card);
+    const cards = blocks
+      .map(block => readCard(block[1]))
+      .filter((card): card is ClinicalCardData => !!card);
     if (cards.length === 0) {
       if (markdown) {
         parts.push({ kind: 'markdown', text: markdown });

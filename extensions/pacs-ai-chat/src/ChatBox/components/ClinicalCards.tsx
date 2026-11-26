@@ -16,7 +16,11 @@ type MarkdownProps = {
   remarkPlugins: React.ComponentProps<typeof ReactMarkdown>['remarkPlugins'];
 };
 
-function Inline({ text, markdownComponents, remarkPlugins }: Omit<MarkdownProps, 'citations'> & { text: string }) {
+function Inline({
+  text,
+  markdownComponents,
+  remarkPlugins,
+}: Omit<MarkdownProps, 'citations'> & { text: string }) {
   return (
     <ReactMarkdown
       className="markdown-content chat-card-markdown chat-clinical-inline"
@@ -46,7 +50,9 @@ function Bullets({ items, ...markdown }: Omit<MarkdownProps, 'citations'> & { it
 function CardSources({ indexes, citations }: { indexes: number[]; citations: ChatCitation[] }) {
   const { t } = useTranslation('ChatBox');
   const byIndex = new Map(citations.map(citation => [citation.index, citation]));
-  const cited = indexes.map(index => byIndex.get(index)).filter((item): item is ChatCitation => !!item);
+  const cited = indexes
+    .map(index => byIndex.get(index))
+    .filter((item): item is ChatCitation => !!item);
   if (cited.length === 0) {
     return null;
   }
@@ -82,12 +88,20 @@ function CardSources({ indexes, citations }: { indexes: number[]; citations: Cha
   );
 }
 
-export function RecommendationCard({ card, citations, ...markdown }: MarkdownProps & { card: ManagementCardData }) {
+export function RecommendationCard({
+  card,
+  citations,
+  ...markdown
+}: MarkdownProps & { card: ManagementCardData }) {
   const { t } = useTranslation('ChatBox');
   const medications = card.medications ?? [];
   const details: [string, string, string[]][] = [
     ['strategy', t('ClinicalStrategy', { defaultValue: 'Strategy' }), card.strategy ?? []],
-    ['alternatives', t('ClinicalAlternatives', { defaultValue: 'Alternatives' }), card.alternatives ?? []],
+    [
+      'alternatives',
+      t('ClinicalAlternatives', { defaultValue: 'Alternatives' }),
+      card.alternatives ?? [],
+    ],
     ['checks', t('ClinicalChecks', { defaultValue: 'Check before acting' }), card.checks ?? []],
     ['follow_up', t('ClinicalFollowUp', { defaultValue: 'Follow-up' }), card.follow_up ?? []],
   ];
@@ -107,7 +121,9 @@ export function RecommendationCard({ card, citations, ...markdown }: MarkdownPro
       aria-label={t('ClinicalRecommendation', { defaultValue: 'Recommendation' })}
     >
       <div className="chat-summary-header">
-        <span className="chat-summary-badge">{t('ClinicalRecommendation', { defaultValue: 'Recommendation' })}</span>
+        <span className="chat-summary-badge">
+          {t('ClinicalRecommendation', { defaultValue: 'Recommendation' })}
+        </span>
       </div>
       <div data-cy="chat-recommendation-summary">
         <Bullets
@@ -173,7 +189,11 @@ export function RecommendationCard({ card, citations, ...markdown }: MarkdownPro
   );
 }
 
-export function DictationCard({ card, citations: _citations, ...markdown }: MarkdownProps & { card: DictationCardData }) {
+export function DictationCard({
+  card,
+  citations: _citations,
+  ...markdown
+}: MarkdownProps & { card: DictationCardData }) {
   const { t } = useTranslation('ChatBox');
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
@@ -181,7 +201,7 @@ export function DictationCard({ card, citations: _citations, ...markdown }: Mark
       await navigator.clipboard.writeText(dictationText(card));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } catch (_error) {
       setCopied(false);
     }
   };
@@ -199,7 +219,9 @@ export function DictationCard({ card, citations: _citations, ...markdown }: Mark
           data-cy="chat-dictation-copy"
           onClick={copy}
         >
-          {copied ? t('ClinicalCopied', { defaultValue: 'Copied' }) : t('ClinicalCopyDictation', { defaultValue: 'Copy' })}
+          {copied
+            ? t('ClinicalCopied', { defaultValue: 'Copied' })
+            : t('ClinicalCopyDictation', { defaultValue: 'Copy' })}
         </button>
       </div>
       {card.sections.map((section, idx) => (

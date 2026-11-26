@@ -96,21 +96,37 @@ describe('MessageBubble Markdown rendering', () => {
       { index: 1, kind: 'model_result', modelName: 'DeepCORO-JEPA' },
       { index: 2, kind: 'model_result', modelName: 'DeepCORO-CTO' },
       { index: 3, kind: 'model_result', modelName: 'DeepCORO-SYNTAX' },
-      { index: 5, kind: 'web_source', title: '2021 ACC/AHA/SCAI Guideline', url: 'https://www.ahajournals.org/doi/10.1161/CIR.0000000000001038' },
-      { index: 6, kind: 'web_source', title: 'Chronic Total Occlusions', url: 'https://pubmed.ncbi.nlm.nih.gov/40649068/' },
+      {
+        index: 5,
+        kind: 'web_source',
+        title: '2021 ACC/AHA/SCAI Guideline',
+        url: 'https://www.ahajournals.org/doi/10.1161/CIR.0000000000001038',
+      },
+      {
+        index: 6,
+        kind: 'web_source',
+        title: 'Chronic Total Occlusions',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/40649068/',
+      },
     ]);
 
     const summaryCard = container.querySelector('[data-cy="chat-summary-card"]');
     expect(summaryCard).not.toBeNull();
-    expect(summaryCard?.querySelector('[data-cy="chat-summary-badge"]')?.textContent).toBe('Synthesis');
-    const pills = Array.from(summaryCard?.querySelectorAll('.chat-summary-pill') || []).map(el => el.textContent);
+    expect(summaryCard?.querySelector('[data-cy="chat-summary-badge"]')?.textContent).toBe(
+      'Synthesis'
+    );
+    const pills = Array.from(summaryCard?.querySelectorAll('.chat-summary-pill') || []).map(
+      el => el.textContent
+    );
     expect(pills).toEqual([
       '3 vessels with significant disease',
       '3 CTO (Proximal LCx (LCx); Mid LCx (LCx); Mid RCA (RCA))',
       'SYNTAX 23.7 (Intermediate (23-32))',
       'LVEF 55% (preserved)',
     ]);
-    expect(summaryCard?.querySelectorAll('[data-cy="chat-citation-chip"]').length).toBeGreaterThanOrEqual(3);
+    expect(
+      summaryCard?.querySelectorAll('[data-cy="chat-citation-chip"]').length
+    ).toBeGreaterThanOrEqual(3);
 
     const sectionCards = container.querySelectorAll('[data-cy="chat-section-card"]');
     expect(sectionCards).toHaveLength(2);
@@ -338,9 +354,9 @@ describe('MessageBubble clinical cards', () => {
     const { container } = renderAssistantMessage(text, citations);
     const recommendation = container.querySelector('[data-cy="chat-recommendation-card"]');
     expect(recommendation).not.toBeNull();
-    expect(recommendation?.querySelector('[data-cy="chat-recommendation-summary"]')?.textContent).toContain(
-      'Procedure for the lesion'
-    );
+    expect(
+      recommendation?.querySelector('[data-cy="chat-recommendation-summary"]')?.textContent
+    ).toContain('Procedure for the lesion');
     const rows = recommendation?.querySelectorAll('[data-cy="chat-medications-table"] tbody tr');
     expect(rows).toHaveLength(2);
     expect(rows?.[0].textContent).toContain('X mg');
@@ -354,7 +370,9 @@ describe('MessageBubble clinical cards', () => {
   });
 
   it('falls back to Markdown when a card block cannot be read', () => {
-    const { container } = renderAssistantMessage('**Summary**\n- a\n\n```cardio-card\n{not json\n```');
+    const { container } = renderAssistantMessage(
+      '**Summary**\n- a\n\n```cardio-card\n{not json\n```'
+    );
     expect(container.querySelector('[data-cy="chat-recommendation-card"]')).toBeNull();
     expect(container.textContent).toContain('a');
     expect(container.textContent).not.toContain('not json');
