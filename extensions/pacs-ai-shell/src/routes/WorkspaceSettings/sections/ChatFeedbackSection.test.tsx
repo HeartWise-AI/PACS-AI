@@ -203,5 +203,8 @@ describe('ChatFeedbackSection', () => {
     expect(() => formatTime('2026-11-26T15:01:00', 'en-US@POSIX')).not.toThrow();
     expect(formatTime('2026-11-26T15:01:00', 'en-US@POSIX')).toContain('2026');
     expect(formatTime(null, 'fr')).toBe('—');
+    // Naive backend times are wall-clock times, shown as they are.
+    const shown = formatTime('2026-11-26T11:17:38', 'en');
+    expect(shown).toMatch(/11:17/);
   });
 });
