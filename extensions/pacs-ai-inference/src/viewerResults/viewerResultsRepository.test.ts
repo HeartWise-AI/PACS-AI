@@ -323,6 +323,12 @@ describe('viewer results repository', () => {
           outcome: 'FAILED',
           executions: [
             { executionId: 'execution-2', status: 'failed', errorMessage: 'boom' },
+            {
+              executionId: 'execution-3',
+              status: 'skipped',
+              skipReason: { code: 'NO_USABLE_DICOM', message: 'No diagnostic videos' },
+              completedAt: '2026-11-26T09:09:42-05:00',
+            },
             null,
           ],
         },
@@ -335,7 +341,24 @@ describe('viewer results repository', () => {
     expect(status).toEqual({
       phase: 'TERMINAL',
       outcome: 'FAILED',
-      executions: [{ executionId: 'execution-2', status: 'failed' }],
+      executions: [
+        {
+          executionId: 'execution-2',
+          status: 'failed',
+          errorMessage: 'boom',
+          skipReasonCode: null,
+          skipReasonMessage: null,
+          completedAt: null,
+        },
+        {
+          executionId: 'execution-3',
+          status: 'skipped',
+          errorMessage: null,
+          skipReasonCode: 'NO_USABLE_DICOM',
+          skipReasonMessage: 'No diagnostic videos',
+          completedAt: '2026-11-26T09:09:42-05:00',
+        },
+      ],
     });
   });
 

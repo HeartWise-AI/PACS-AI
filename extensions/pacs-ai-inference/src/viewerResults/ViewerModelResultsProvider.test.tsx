@@ -597,7 +597,7 @@ describe('ViewerModelResultsProvider', () => {
 
       await tick(1000);
 
-      expect(outcome()).toEqual({ status: 'failed' });
+      expect(outcome()).toEqual({ status: 'failed', failure: status, reason: null });
       expect(showAlert).toHaveBeenCalledWith(message, 'error');
       expect(context!.getPendingRun(model)).toBeNull();
       expect(context!.openedResult).toBeNull();

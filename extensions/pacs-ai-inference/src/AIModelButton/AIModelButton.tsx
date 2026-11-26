@@ -27,7 +27,11 @@ import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableMo
 import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
 import { addSegmentationFromLabelmap } from '../utils/addSegmentation';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
-import { viewerModelKey } from '../viewerResults/viewerResultsModel';
+import {
+  formatRunDateTime,
+  isSameResultRun,
+  viewerModelKey,
+} from '../viewerResults/viewerResultsModel';
 
 const baseClasses = 'relative overflow-hidden rounded-lg p-1 ml-2';
 const backgroundClass = 'bg-gradient-to-r from-[rgba(108,105,244,1)] to-[rgba(62,241,209,1)]';
@@ -294,8 +298,8 @@ const AIModelButton = ({
     </div>
   );
 
-  const formatResultDate = (completedAt: string | null) =>
-    completedAt ? new Date(completedAt).toLocaleDateString() : '';
+  // Date and time: a study often has several runs of a model on the same day.
+  const formatResultDate = (completedAt: string | null) => formatRunDateTime(completedAt);
 
   // With several exams open, one block per exam, each offering only the
   // models of its modality and showing that exam's results.
@@ -316,6 +320,11 @@ const AIModelButton = ({
     const latestScope = latestResult
       ? (viewerResults?.getResultSeriesScope?.(latestResult) ?? null)
       : null;
+    // "View result" opens the default (best) run. When a newer run exists,
+    // typically the user's own rerun on fewer series, it gets its own button.
+    const newestRun = viewerResults?.getResultRuns?.(model, studyUID)?.[0] ?? null;
+    const newerRun =
+      latestResult && newestRun && !isSameResultRun(newestRun, latestResult) ? newestRun : null;
     const modelKey = `${studyUID ?? ''}|${viewerModelKey(model)}`;
     const modelLabel = `${t(model.modelName)} (${model.version}-${model.outputMode})`;
 
@@ -372,6 +381,21 @@ const AIModelButton = ({
                     {` · ${t('ViewerResultSeriesCount', { used: latestScope.used })}`}
                   </span>
                 )}
+              </button>
+            )}
+            {newerRun && (
+              <button
+                type="button"
+                className="hover:bg-primary whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+                onClick={() => {
+                  setIsOpen(false);
+                  viewerResults?.openResult(newerRun);
+                }}
+                data-testid="ai-model-latest-run"
+              >
+                {t('ViewerViewLatestRun', {
+                  date: formatResultDate(newerRun.completedAt),
+                })}
               </button>
             )}
             {pendingRun ? (

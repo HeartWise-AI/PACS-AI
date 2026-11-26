@@ -151,7 +151,7 @@ describe('findPendingRunFailure', () => {
 
   test('reports the failed, cancelled or skipped execution of the run', () => {
     expect(findPendingRunFailure(status('failed'), pending)).toBe('failed');
-    expect(findPendingRunFailure(status('cancelled'), pending)).toBe('failed');
+    expect(findPendingRunFailure(status('cancelled'), pending)).toBe('cancelled');
     expect(findPendingRunFailure(status('skipped'), pending)).toBe('skipped');
   });
 

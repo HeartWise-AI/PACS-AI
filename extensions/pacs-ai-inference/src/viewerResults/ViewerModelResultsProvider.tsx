@@ -24,14 +24,21 @@ import {
 import {
   findDisplaySetsForSelectedView,
   findLatestResultForModel,
-  findPendingRunFailure,
-  isResultForPendingRun,
+  findPendingRunEnd,
+  findResultForPendingRun,
+  findResultGroup,
+  findRunResult,
+  isSameResultRun,
+  listResultRuns,
+  newestCompletedAt,
   resolveResultSeriesScope,
+  resultFromPendingRun,
   viewerModelKey,
   viewerResultKey,
 } from './viewerResultsModel';
 import type {
   EndedViewerModelRun,
+  PendingRunEnd,
   PendingRunFailure,
   PendingViewerModelRun,
   ResultSeriesScope,
@@ -72,7 +79,8 @@ export interface StartManagedRunRequest {
 export type ForegroundRunOutcome =
   | { status: 'fallback' }
   | { status: 'completed'; result: ViewerModelResult }
-  | { status: 'failed' }
+  // The run ended without a result; `reason` is the backend's explanation.
+  | { status: 'failed'; failure: PendingRunFailure; reason: string | null }
   | { status: 'timedOut' }
   | { status: 'dismissed' };
 
@@ -91,6 +99,12 @@ export interface ViewerModelResultsContextValue {
     model: ViewerResultModelIdentity,
     studyInstanceUID?: string | null
   ) => ViewerModelResult | null;
+  // The model's completed runs for the study, newest first. getLatestResult
+  // returns the default one (the best run); the others stay reachable here.
+  getResultRuns: (
+    model: ViewerResultModelIdentity,
+    studyInstanceUID?: string | null
+  ) => ViewerModelResult[];
   // Which of the study's loaded series the result's run used; null when the
   // backend does not report it.
   getResultSeriesScope: (result: ViewerModelResult) => ResultSeriesScope | null;
@@ -296,6 +310,12 @@ export function ViewerModelResultsProvider({
     [canViewResults, latestResults, studyInstanceUID]
   );
 
+  const getResultRuns = useCallback(
+    (model: ViewerResultModelIdentity, forStudyInstanceUID?: string | null) =>
+      listResultRuns(getLatestResult(model, forStudyInstanceUID)),
+    [getLatestResult]
+  );
+
   const getPendingRun = useCallback(
     (model: ViewerResultModelIdentity, forStudyInstanceUID?: string | null) => {
       const study = forStudyInstanceUID?.trim() || studyInstanceUID?.trim();
@@ -351,7 +371,7 @@ export function ViewerModelResultsProvider({
         name?: string | null,
         version?: string | null
       ) => {
-        const baseline = findLatestResultForModel(
+        const reported = findLatestResultForModel(
           model,
           latestResultsRef.current.filter(result => result.studyInstanceUID === runStudyInstanceUID)
         );
@@ -365,7 +385,10 @@ export function ViewerModelResultsProvider({
           runId,
           executionId,
           requestedAt: Date.now(),
-          baselineCompletedAt: baseline?.completedAt ?? null,
+          // The newest of the model's runs, not the reported (best) one: the
+          // run's result is recognized as the one completed after it.
+          baselineCompletedAt: newestCompletedAt(reported),
+          seriesInstanceUIDs: seriesInstanceUIDs?.length ? [...seriesInstanceUIDs] : null,
         };
         setPendingRuns(current => [
           ...current.filter(
@@ -393,8 +416,16 @@ export function ViewerModelResultsProvider({
         const errorCode = requestError?.errorCode ?? null;
         const status = requestError?.status ?? null;
         if (errorCode === VIEWER_RESULTS_ERROR_CODES.runAlreadyActive) {
-          // Track the run that is already active so its result is offered too.
-          queue(null, null);
+          // Track the run that is already active so its result is offered
+          // too, unless it is already tracked: a second click on Run must not
+          // replace the run that carries the ids with one that has none.
+          const tracked = pendingRunsRef.current.some(
+            item =>
+              item.key === viewerModelKey(model) && item.studyInstanceUID === runStudyInstanceUID
+          );
+          if (!tracked) {
+            queue(null, null);
+          }
           throw new ViewerResultsRequestError(t('ViewerRunAlreadyActive'), status, errorCode);
         }
         if (errorCode === VIEWER_RESULTS_ERROR_CODES.studyNotAvailableLocally) {
@@ -467,18 +498,62 @@ export function ViewerModelResultsProvider({
     try {
       const studies = [...new Set(pending.map(run => run.studyInstanceUID))];
       const resultsByStudy = new Map<string, ViewerModelResult[]>();
-      await Promise.all(
-        studies.map(uid =>
-          repository.loadLatestResults(uid).then(
-            results => {
-              resultsByStudy.set(uid, results);
-            },
-            () => {
-              // Transient failures are retried on the next tick.
-            }
-          )
+      const loadStudyResults = (uid: string) =>
+        repository.loadLatestResults(uid).then(
+          results => {
+            resultsByStudy.set(uid, results);
+          },
+          () => {
+            // Transient failures are retried on the next tick.
+          }
+        );
+
+      // The run detail says when a run has ended and how. The latest results
+      // cannot: they report the model's best run, which stays an earlier run
+      // when that one used more videos than the run just requested.
+      const statuses = new Map<PendingViewerModelRun, ViewerModelRunStatus>();
+      const ends = new Map<PendingViewerModelRun, PendingRunEnd>();
+      await Promise.all([
+        ...studies.map(loadStudyResults),
+        ...pending
+          .filter(run => run.runId)
+          .map(run =>
+            repository.loadRunStatus(run.runId as string).then(
+              status => {
+                statuses.set(run, status);
+                const end = findPendingRunEnd(status, run);
+                if (end) {
+                  ends.set(run, end);
+                }
+              },
+              (error: unknown) => {
+                // A run the backend no longer knows will never report anything;
+                // other failures keep the run tracked until it times out.
+                if (
+                  error instanceof ViewerResultsRequestError &&
+                  error.status === 404 &&
+                  error.errorCode
+                ) {
+                  ends.set(run, { kind: 'failed', reason: null });
+                }
+              }
+            )
+          ),
+      ]);
+
+      const storedResult = (run: PendingViewerModelRun) =>
+        findResultForPendingRun(run, resultsByStudy.get(run.studyInstanceUID) ?? []);
+      // A run that completed after its study's results were read is listed
+      // by a second read.
+      const unlisted = studies.filter(uid =>
+        pending.some(
+          run =>
+            run.studyInstanceUID === uid &&
+            ends.get(run)?.kind === 'completed' &&
+            !storedResult(run)
         )
       );
+      await Promise.all(unlisted.map(loadStudyResults));
 
       // Replace the reloaded open exams' results; keep the other exams' ones.
       const reloadedOpenStudies = openStudyUIDs.filter(uid => resultsByStudy.has(uid));
@@ -493,19 +568,48 @@ export function ViewerModelResultsProvider({
 
       const now = Date.now();
       const completed = new Map<PendingViewerModelRun, ViewerModelResult>();
+      const failed = new Map<
+        PendingViewerModelRun,
+        { failure: PendingRunFailure; reason: string | null }
+      >();
       const timedOut: PendingViewerModelRun[] = [];
-      const unresolved = pending.filter(run => {
-        const result = findLatestResultForModel(
-          {
-            modelId: run.modelId,
-            containerId: run.containerId,
-            modelName: run.modelName,
-            version: run.modelVersion,
-          },
-          resultsByStudy.get(run.studyInstanceUID) ?? []
-        );
-        if (result && isResultForPendingRun(result, run)) {
-          completed.set(run, result);
+      const stillPending = pending.filter(run => {
+        const end = ends.get(run);
+        const stored = storedResult(run);
+        if (stored) {
+          completed.set(run, stored);
+          return false;
+        }
+        if (end?.kind === 'completed') {
+          // Completed, but not listed by this backend: open the run's own
+          // report from its ids instead of waiting for the reported result
+          // to change, which it never does when an earlier run stays best.
+          const execution = statuses.get(run)?.executions;
+          const provisional = resultFromPendingRun(
+            {
+              ...run,
+              executionId:
+                run.executionId ?? (execution?.length === 1 ? execution[0].executionId : null),
+            },
+            end.completedAt,
+            findLatestResultForModel(
+              {
+                modelId: run.modelId,
+                containerId: run.containerId,
+                modelName: run.modelName,
+                version: run.modelVersion,
+              },
+              resultsByStudy.get(run.studyInstanceUID) ?? []
+            )
+          );
+          if (provisional) {
+            completed.set(run, provisional);
+            return false;
+          }
+        }
+        // A cancellation awaiting its answer settles the run itself.
+        if (end && end.kind !== 'completed' && !cancellingRunsRef.current.has(run)) {
+          failed.set(run, { failure: end.kind, reason: end.reason });
           return false;
         }
         if (now - run.requestedAt > maxPendingMs) {
@@ -515,30 +619,6 @@ export function ViewerModelResultsProvider({
         return true;
       });
 
-      // The latest results only list completed runs, so a run that failed or
-      // was skipped is recognized from its run detail (known run id only).
-      const failed = new Map<PendingViewerModelRun, PendingRunFailure>();
-      const statuses = new Map<PendingViewerModelRun, ViewerModelRunStatus>();
-      await Promise.all(
-        unresolved
-          .filter(run => run.runId)
-          .map(run =>
-            repository.loadRunStatus(run.runId as string).then(
-              status => {
-                statuses.set(run, status);
-                const failure = findPendingRunFailure(status, run);
-                // A cancellation awaiting its answer settles the run itself.
-                if (failure && !cancellingRunsRef.current.has(run)) {
-                  failed.set(run, failure);
-                }
-              },
-              () => {
-                // Without the run detail the run is tracked until it times out.
-              }
-            )
-          )
-      );
-      const stillPending = unresolved.filter(run => !failed.has(run));
       // A run whose detail could not be loaded this time keeps its last one.
       setPendingRunStatuses(current => {
         const next = new Map<PendingViewerModelRun, ViewerModelRunStatus>();
@@ -579,17 +659,25 @@ export function ViewerModelResultsProvider({
           ...ready,
         ]);
       }
-      failed.forEach((failure, run) => {
+      failed.forEach(({ failure, reason }, run) => {
         if (cancelledRunsRef.current.has(run)) {
           return;
         }
-        const foreground = settleForegroundRun(run, { status: 'failed' });
-        ended.push({ run, outcome: failure, result: null, endedAt: now, foreground });
+        const foreground = settleForegroundRun(run, { status: 'failed', failure, reason });
+        ended.push({ run, outcome: failure, reason, result: null, endedAt: now, foreground });
+        const messageKey =
+          failure === 'cancelled'
+            ? 'ViewerRunEndedCancelled'
+            : failure === 'skipped'
+              ? reason
+                ? 'ViewerRunEndedSkippedReason'
+                : 'ViewerRunEndedSkipped'
+              : reason
+                ? 'ViewerRunEndedFailedReason'
+                : 'ViewerRunEndedFailed';
         alert(
-          t(failure === 'skipped' ? 'ViewerRunEndedSkipped' : 'ViewerRunEndedFailed', {
-            modelName: run.modelName,
-          }),
-          'error'
+          t(messageKey, { modelName: run.modelName, reason }),
+          failure === 'cancelled' ? 'info' : 'error'
         );
       });
       timedOut.forEach(run => {
@@ -633,6 +721,36 @@ export function ViewerModelResultsProvider({
   );
 
   const closeResult = useCallback(() => setOpenedResult(null), []);
+
+  // A result opened from a run that had just completed is replaced by the
+  // listed one (selected views, video counts) once the backend reports it.
+  useEffect(() => {
+    setOpenedResult(current => {
+      if (!current?.result.provisional) {
+        return current;
+      }
+      const listed = findRunResult(
+        latestResults.filter(result => result.studyInstanceUID === current.result.studyInstanceUID),
+        {
+          executionId: current.result.executionId,
+          runId: current.result.runId,
+          modelName: current.result.modelName,
+        }
+      );
+      return listed ? { ...current, result: listed } : current;
+    });
+  }, [latestResults]);
+
+  // The runs offered in the open drawer: the opened result's model's runs,
+  // with the opened result itself when the backend does not list it.
+  const openedRuns = useMemo(() => {
+    const opened = openedResult?.result;
+    if (!opened) {
+      return [];
+    }
+    const runs = listResultRuns(findResultGroup(opened, latestResults));
+    return runs.some(run => isSameResultRun(run, opened)) ? runs : [opened, ...runs];
+  }, [openedResult, latestResults]);
 
   const setResultMinimized = useCallback(
     (minimized: boolean) =>
@@ -769,6 +887,7 @@ export function ViewerModelResultsProvider({
       latestResultsStatus,
       refreshLatestResults,
       getLatestResult,
+      getResultRuns,
       getResultSeriesScope,
       getPendingRun,
       startManagedRun,
@@ -786,6 +905,7 @@ export function ViewerModelResultsProvider({
       latestResultsStatus,
       refreshLatestResults,
       getLatestResult,
+      getResultRuns,
       getResultSeriesScope,
       getPendingRun,
       startManagedRun,
@@ -808,6 +928,8 @@ export function ViewerModelResultsProvider({
         <ViewerModelResultDrawer
           result={openedResult.result}
           seriesScope={getResultSeriesScope(openedResult.result)}
+          runs={openedRuns}
+          onSelectRun={openResult}
           repository={repository}
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}

@@ -391,6 +391,48 @@ describe('AIModelButton runs', () => {
     expect(all('[data-testid="ai-model-result-subset"]')).toHaveLength(0);
     expect(all('[data-testid="ai-model-previous-result"]')).toHaveLength(1);
   });
+
+  test('offers the newest run next to the default result when it is not the best run', () => {
+    const bestRun = {
+      studyInstanceUID: '1.2.3',
+      modelName: 'DeepCORO-JEPA',
+      runId: 'run-auto',
+      executionId: 'execution-auto',
+      completedAt: '2026-11-26T08:41:20-05:00',
+    };
+    const rerun = { ...bestRun, runId: 'run-viewer', executionId: 'execution-viewer' };
+    const provider = viewerResults({
+      getLatestResult: jest.fn().mockReturnValue(bestRun),
+      getResultRuns: jest.fn().mockReturnValue([rerun, bestRun]),
+    });
+    mount(provider);
+
+    const latest = all('[data-testid="ai-model-latest-run"]');
+    expect(latest).toHaveLength(1);
+    act(() => {
+      fireEvent.click(latest[0]);
+    });
+    expect(provider.openResult).toHaveBeenCalledWith(rerun);
+  });
+
+  test('shows no latest-run button when the default result is the newest run', () => {
+    const only = {
+      studyInstanceUID: '1.2.3',
+      modelName: 'DeepCORO-JEPA',
+      runId: 'run-auto',
+      executionId: 'execution-auto',
+      completedAt: '2026-11-26T08:41:20-05:00',
+    };
+    mount(
+      viewerResults({
+        getLatestResult: jest.fn().mockReturnValue(only),
+        getResultRuns: jest.fn().mockReturnValue([only]),
+      })
+    );
+
+    expect(all('[data-testid="ai-model-latest-run"]')).toHaveLength(0);
+    expect(all('[data-testid="ai-model-previous-result"]')).toHaveLength(1);
+  });
 });
 
 describe('AIModelButton model list', () => {
