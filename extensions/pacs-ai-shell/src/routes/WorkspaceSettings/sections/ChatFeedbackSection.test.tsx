@@ -3,7 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { fireEvent } from '@testing-library/react';
 import type { ChatFeedbackItem } from '@pacs-ai/extension-core/src/api/orchestratorDTO';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
-import ChatFeedbackSection, { viewerStudyHref } from './ChatFeedbackSection';
+import ChatFeedbackSection, { formatTime, viewerStudyHref } from './ChatFeedbackSection';
 
 jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
 jest.mock('react-i18next', () => ({
@@ -197,5 +197,11 @@ describe('ChatFeedbackSection', () => {
 
   it('escapes the study UID in the viewer link', () => {
     expect(viewerStudyHref('1.2&x=3')).toBe('/viewer?StudyInstanceUIDs=1.2%26x%3D3');
+  });
+
+  it('formats times even when the browser language is not a valid Intl tag', () => {
+    expect(() => formatTime('2026-11-26T15:01:00', 'en-US@POSIX')).not.toThrow();
+    expect(formatTime('2026-11-26T15:01:00', 'en-US@POSIX')).toContain('2026');
+    expect(formatTime(null, 'fr')).toBe('—');
   });
 });
