@@ -149,6 +149,7 @@ export function useChatBox(
   const chatSeq = useRef(0);
   const listSeq = useRef(0);
   const [threadsLoading, setThreadsLoading] = useState(false);
+  const threadIdRef = useRef<string | null>(null);
 
   const stopProgressPolling = useCallback(() => {
     if (progressTimer.current !== null) {
@@ -351,6 +352,7 @@ export function useChatBox(
         feedback: historyToFeedback(response.data),
       });
       setErrorDetails('');
+      setIsLoading(false);
       setThreadId(storedThreadId);
       return true;
     } catch (error) {
@@ -363,9 +365,18 @@ export function useChatBox(
     }
   }, []);
 
-  // Opens a stored thread picked in the history.
+  // Opens a stored thread picked in the history. If it cannot be opened while no
+  // thread is active, thread creation starts again (the attempt superseded it).
   const openThread = useCallback(
-    (storedThreadId: string) => loadThread(storedThreadId, ++chatSeq.current),
+    async (storedThreadId: string) => {
+      const token = ++chatSeq.current;
+      const opened = await loadThread(storedThreadId, token);
+      if (!opened && isMounted.current && token === chatSeq.current && !threadIdRef.current) {
+        setIsLoading(false);
+        setThreadCreationPending(false);
+      }
+      return opened;
+    },
     [loadThread]
   );
 
@@ -562,6 +573,8 @@ export function useChatBox(
       await startThread(token);
     })();
   }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread]);
+
+  threadIdRef.current = threadId;
 
   // Reset thread creation pending when threadId is set
   useEffect(() => {

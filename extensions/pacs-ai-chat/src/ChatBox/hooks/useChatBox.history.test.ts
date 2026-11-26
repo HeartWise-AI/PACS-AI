@@ -211,6 +211,24 @@ describe('useChatBox chat history', () => {
     expect(result.current.threadId).toBe('older');
   });
 
+  it('creates a thread again when a switch fails while none is active', async () => {
+    repository.ListChatThreads.mockResolvedValue({ success: true, data: { threads: [] } } as any);
+    let release: (value: any) => void = () => undefined;
+    repository.CreateThread.mockImplementationOnce(() => new Promise(resolve => (release = resolve)));
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY, jest.fn()));
+    await waitFor(() => expect(repository.CreateThread).toHaveBeenCalledTimes(1));
+
+    repository.GetChatThreadHistory.mockRejectedValueOnce({ status: 404 });
+    await act(async () => {
+      await result.current.openThread('gone');
+    });
+    await act(async () => {
+      release({ success: true, data: { thread_id: 'dropped' } });
+    });
+    await waitFor(() => expect(result.current.threadId).toBe('new-thread'));
+    expect(repository.CreateThread).toHaveBeenCalledTimes(2);
+  });
+
   it('never restores without a restore handler (no history UI)', async () => {
     const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
     await waitFor(() => expect(result.current.threadId).toBe('new-thread'));

@@ -349,7 +349,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               threads={chat.threads}
               currentThreadId={chat.threadId}
               loading={chat.historyLoading || chat.threadsLoading}
-              disabled={chat.isProcessing || chat.historyLoading}
+              disabled={chat.isProcessing || chat.historyLoading || chat.threadCreationPending}
               onSelect={handleSelectThread}
               onNewChat={handleClearChat}
               onClose={() => setHistoryOpen(false)}
