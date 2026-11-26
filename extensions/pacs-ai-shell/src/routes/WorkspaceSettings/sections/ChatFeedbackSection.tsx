@@ -37,8 +37,10 @@ export function formatTime(value: string | null | undefined, language?: string):
   if (!value) {
     return '—';
   }
-  // The chat backend stores naive server times (UTC).
-  const date = new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`);
+  // The chat backend stores naive wall-clock times of the hospital's database
+  // (America/Toronto on MHI), the same zone as the readers: read them as local
+  // time, and only convert values that carry an offset.
+  const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleString(displayLocale(language), { dateStyle: 'medium', timeStyle: 'short' });
