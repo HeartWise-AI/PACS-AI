@@ -64,6 +64,14 @@ describe('useChatFeedback', () => {
     expect(result.current.feedback['local-1']).toMatchObject({ vote: null, status: 'error' });
   });
 
+  it('uses the thread kept on the answer after the chat box was remounted', async () => {
+    const { result } = renderHook(() => useChatFeedback(null));
+    await act(() => result.current.toggle({ ...answer, backendThreadId: 'thread-old' }, 'up'));
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({ threadId: 'thread-old', messageId: 'answer-uuid' })
+    );
+  });
+
   it('keeps the thumb locally when the answer has no stored id', async () => {
     const { result } = renderHook(() => useChatFeedback('thread-1'));
     await act(() => result.current.toggle({ ...answer, backendMessageId: undefined }, 'up'));

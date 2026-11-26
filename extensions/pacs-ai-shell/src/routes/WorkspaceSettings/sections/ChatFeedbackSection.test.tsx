@@ -160,6 +160,35 @@ describe('ChatFeedbackSection', () => {
     expect(countChatFeedback).toHaveBeenLastCalledWith({ days: 90, study: '1.2.3.4' });
   });
 
+  it('loads the next page with an advancing offset and appends it', async () => {
+    listChatFeedback.mockReset().mockResolvedValueOnce({
+      data: { total: 3, limit: 50, offset: 0, items: [item(), item({ feedback_id: 'fb-2' })] },
+    });
+    await render();
+    listChatFeedback.mockResolvedValueOnce({
+      data: {
+        total: 3,
+        limit: 50,
+        offset: 2,
+        items: [item({ feedback_id: 'fb-3', question: 'Third question' })],
+      },
+    });
+    const more = Array.from(container.querySelectorAll('button')).find(
+      button => button.textContent === 'ShowMore'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(more);
+    });
+    expect(listChatFeedback).toHaveBeenLastCalledWith({ days: 90, limit: 50, offset: 2 });
+    expect(container.querySelectorAll('button[aria-expanded]')).toHaveLength(3);
+    expect(container.textContent).toContain('Third question');
+    expect(
+      Array.from(container.querySelectorAll('button')).some(
+        button => button.textContent === 'ShowMore'
+      )
+    ).toBe(false);
+  });
+
   it('says when the chat service is not connected', async () => {
     listChatFeedback.mockRejectedValue({ errorCode: 'chat_feedback_not_configured' });
     await render();

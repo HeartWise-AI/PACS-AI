@@ -45,7 +45,8 @@ export function useChatFeedback(threadId: string | null | undefined): UseChatFee
       const previous = latest.current[message.id] ?? { vote: null, status: 'idle' as const };
       const next = previous.vote === vote ? null : vote;
       const target = message.backendMessageId;
-      if (!target || !threadId) {
+      const thread = message.backendThreadId || threadId;
+      if (!target || !thread) {
         update(message.id, { vote: next, status: 'idle' });
         return;
       }
@@ -53,7 +54,7 @@ export function useChatFeedback(threadId: string | null | undefined): UseChatFee
       try {
         if (next) {
           await orchestratorRepository.SubmitChatFeedback({
-            threadId,
+            threadId: thread,
             messageId: target,
             vote: next,
             category: DEFAULT_CHAT_FEEDBACK_CATEGORY,
@@ -64,7 +65,7 @@ export function useChatFeedback(threadId: string | null | undefined): UseChatFee
             status: 'saved',
           });
         } else {
-          await orchestratorRepository.RemoveChatFeedback({ threadId, messageId: target });
+          await orchestratorRepository.RemoveChatFeedback({ threadId: thread, messageId: target });
           update(message.id, { vote: null, status: 'idle' });
         }
       } catch (error) {
@@ -79,14 +80,15 @@ export function useChatFeedback(threadId: string | null | undefined): UseChatFee
     async (message: Message, category: string, comment: string) => {
       const current = latest.current[message.id];
       const target = message.backendMessageId;
-      if (!current?.vote || !target || !threadId) {
+      const thread = message.backendThreadId || threadId;
+      if (!current?.vote || !target || !thread) {
         return;
       }
       const trimmed = comment.trim();
       update(message.id, { ...current, status: 'saving' });
       try {
         await orchestratorRepository.SubmitChatFeedback({
-          threadId,
+          threadId: thread,
           messageId: target,
           vote: current.vote,
           category,

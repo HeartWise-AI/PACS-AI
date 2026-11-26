@@ -11,8 +11,6 @@ import { handleUnauthorizedAccess } from '../utils';
 import { useAuthenticatedScope } from './authenticatedScope';
 
 export const CHAT_FEEDBACK_PAGE_SIZE = 50;
-// The gateway returns at most 200 votes per request.
-export const CHAT_FEEDBACK_MAX_ITEMS = 200;
 
 export interface ChatFeedbackQuery {
   days: number;
@@ -57,28 +55,39 @@ export function useChatFeedbackReview({
   const [counts, setCounts] = useState<ChatFeedbackCountsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ChatFeedbackLoadError>(null);
-  const [pages, setPages] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
   const requestRef = useRef(0);
   const { days, rating, study } = query;
 
-  // A new query starts again from the first page.
-  useEffect(() => setPages(1), [days, rating, study]);
+  const filters = useCallback(() => {
+    const studyFilter = study.trim();
+    return { days, ...(studyFilter ? { study: studyFilter } : {}) };
+  }, [days, study]);
 
+  // Latest alert and navigation, read when a request fails; not effect dependencies, since
+  // AlertContext and useNavigate may return new values on every render.
+  const onFailure = useRef<(failure: unknown) => void>(() => undefined);
+  onFailure.current = (failure: unknown) => {
+    handleUnauthorizedAccess(failure ?? {}, showAlert, navigate, tenantId);
+    console.error('Error fetching chat feedback:', failure);
+    setError(errorKind(failure));
+  };
+  const fail = useCallback((failure: unknown) => onFailure.current(failure), []);
+
+  // First page and counts, again whenever the query changes or on refresh.
   useEffect(() => {
     if (!active) {
       return;
     }
     const requestId = ++requestRef.current;
-    const studyFilter = study.trim();
-    const common = { days, ...(studyFilter ? { study: studyFilter } : {}) };
+    const common = filters();
     setLoading(true);
     setError(null);
     Promise.all([
       orchestratorRepository.ListChatFeedback({
         ...common,
         ...(rating ? { rating } : {}),
-        limit: Math.min(CHAT_FEEDBACK_PAGE_SIZE * pages, CHAT_FEEDBACK_MAX_ITEMS),
+        limit: CHAT_FEEDBACK_PAGE_SIZE,
         offset: 0,
       }),
       orchestratorRepository.CountChatFeedback(common),
@@ -92,20 +101,16 @@ export function useChatFeedbackReview({
         setCounts(summary?.data ?? null);
       })
       .catch(failure => {
-        if (requestId !== requestRef.current) {
-          return;
+        if (requestId === requestRef.current) {
+          fail(failure);
         }
-        handleUnauthorizedAccess(failure ?? {}, showAlert, navigate, tenantId);
-        console.error('Error fetching chat feedback:', failure);
-        setError(errorKind(failure));
       })
       .finally(() => {
         if (requestId === requestRef.current) {
           setLoading(false);
         }
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- showAlert from AlertContext is unstable
-  }, [active, days, rating, study, pages, reloadKey, tenantId]);
+  }, [active, filters, rating, reloadKey, fail]);
 
   useEffect(
     () => () => {
@@ -115,7 +120,40 @@ export function useChatFeedbackReview({
   );
 
   const refresh = useCallback(() => setReloadKey(key => key + 1), []);
-  const loadMore = useCallback(() => setPages(n => n + 1), []);
+
+  // The next page, appended to the votes already shown.
+  const loadMore = useCallback(() => {
+    const requestId = ++requestRef.current;
+    setLoading(true);
+    orchestratorRepository
+      .ListChatFeedback({
+        ...filters(),
+        ...(rating ? { rating } : {}),
+        limit: CHAT_FEEDBACK_PAGE_SIZE,
+        offset: items.length,
+      })
+      .then(list => {
+        if (requestId !== requestRef.current) {
+          return;
+        }
+        const seen = new Set(items.map(item => item.feedback_id));
+        setItems([
+          ...items,
+          ...(list?.data?.items ?? []).filter(item => !seen.has(item.feedback_id)),
+        ]);
+        setTotal(list?.data?.total ?? 0);
+      })
+      .catch(failure => {
+        if (requestId === requestRef.current) {
+          fail(failure);
+        }
+      })
+      .finally(() => {
+        if (requestId === requestRef.current) {
+          setLoading(false);
+        }
+      });
+  }, [filters, rating, items, fail]);
 
   return {
     items,
@@ -123,7 +161,7 @@ export function useChatFeedbackReview({
     counts,
     loading,
     error,
-    hasMore: items.length < total && items.length < CHAT_FEEDBACK_MAX_ITEMS,
+    hasMore: items.length < total,
     loadMore,
     refresh,
   };

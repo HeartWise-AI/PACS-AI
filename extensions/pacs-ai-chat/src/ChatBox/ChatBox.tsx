@@ -98,7 +98,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           const assistantMessage: Message = {
             id: responseData.response_id || (Date.now() + 2).toString(),
             ...(responseData.assistant_message_id
-              ? { backendMessageId: responseData.assistant_message_id }
+              ? {
+                  backendMessageId: responseData.assistant_message_id,
+                  backendThreadId: chat.threadId,
+                }
               : {}),
             text: responseData.content.trim(),
             sender: 'assistant',
