@@ -162,9 +162,20 @@ export function mapDispatchSeriesInstanceUIDs(value: unknown): string[] | null |
   return uids.length ? [...new Set(uids)] : null;
 }
 
+// A recorded count, null when the backend sends null, undefined when it does
+// not report the field (or sends something else).
+function mapCount(value: unknown): number | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
 export function mapViewerModelResult(
   value: unknown,
-  studyInstanceUID: string
+  studyInstanceUID: string,
+  // Set when mapping one of a result's listed runs, which have no runs.
+  listedRun = false
 ): ViewerModelResult | null {
   if (!isRecord(value)) {
     return null;
@@ -174,6 +185,15 @@ export function mapViewerModelResult(
   if (!modelName) {
     return null;
   }
+
+  const inputVideoCount = mapCount(value.inputVideoCount);
+  const eligibleVideoCount = mapCount(value.eligibleVideoCount);
+  const runs =
+    !listedRun && Array.isArray(value.runs)
+      ? value.runs
+          .map(run => mapViewerModelResult(run, studyInstanceUID, true))
+          .filter((run): run is ViewerModelResult => run !== null)
+      : [];
 
   return {
     studyInstanceUID,
@@ -191,6 +211,10 @@ export function mapViewerModelResult(
     selectedViews: mapSelectedViews(value.selectedViews),
     reportAvailable: value.reportAvailable === true,
     dispatchSeriesInstanceUIDs: mapDispatchSeriesInstanceUIDs(value.dispatchSeriesInstanceUIDs),
+    ...(inputVideoCount !== undefined ? { inputVideoCount } : {}),
+    ...(eligibleVideoCount !== undefined ? { eligibleVideoCount } : {}),
+    ...(runs.length ? { runs } : {}),
+    ...(listedRun && typeof value.bestRun === 'boolean' ? { bestRun: value.bestRun } : {}),
   };
 }
 
@@ -299,10 +323,17 @@ export function createViewerResultsRepository(
       return {
         phase: isRecord(body) ? optionalString(body.phase) : null,
         outcome: isRecord(body) ? optionalString(body.outcome) : null,
-        executions: executions.filter(isRecord).map(execution => ({
-          executionId: optionalString(execution.executionId),
-          status: optionalString(execution.status),
-        })),
+        executions: executions.filter(isRecord).map(execution => {
+          const skipReason = isRecord(execution.skipReason) ? execution.skipReason : null;
+          return {
+            executionId: optionalString(execution.executionId),
+            status: optionalString(execution.status),
+            errorMessage: optionalString(execution.errorMessage),
+            skipReasonCode: optionalString(skipReason?.code),
+            skipReasonMessage: optionalString(skipReason?.message),
+            completedAt: optionalString(execution.completedAt),
+          };
+        }),
         ...(isRecord(body) && typeof body.cancellable === 'boolean'
           ? { cancellable: body.cancellable }
           : {}),

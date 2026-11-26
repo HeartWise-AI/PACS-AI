@@ -35,6 +35,20 @@ export interface ViewerModelResult {
   // was recorded and the run used every series of the modality; undefined
   // means the backend does not report it.
   dispatchSeriesInstanceUIDs?: string[] | null;
+  // Videos the run was given and the ones it could use; null when the run
+  // recorded none, undefined when the backend does not report them.
+  inputVideoCount?: number | null;
+  eligibleVideoCount?: number | null;
+  // The model's completed runs for the study, newest first, this result's own
+  // run included. Present on a result reported by latest-results (the default,
+  // "best" run); absent on a listed run and when the backend lists no runs.
+  runs?: ViewerModelResult[];
+  // On a listed run: whether it is the run reported by default (the one that
+  // used the most eligible videos; the newest on a tie or unknown count).
+  bestRun?: boolean;
+  // True for a result built from a run that has just completed, before the
+  // backend lists it: enough to open its report, replaced once it is listed.
+  provisional?: boolean;
 }
 
 export interface ResultSeriesInfo {
@@ -53,16 +67,32 @@ export type ResultSeriesScope =
 
 // The part of a processing run's detail used to notice that a pending run
 // ended without producing a result.
+export interface ViewerModelRunExecution {
+  executionId: string | null;
+  status: string | null;
+  // Why the execution produced no result, when the backend says so.
+  errorMessage?: string | null;
+  skipReasonCode?: string | null;
+  skipReasonMessage?: string | null;
+  completedAt?: string | null;
+}
+
 export interface ViewerModelRunStatus {
   phase: string | null;
   outcome: string | null;
-  executions: Array<{ executionId: string | null; status: string | null }>;
+  executions: ViewerModelRunExecution[];
   // True while the run can still be cancelled; absent when the backend does
   // not report it.
   cancellable?: boolean;
 }
 
-export type PendingRunFailure = 'failed' | 'skipped';
+export type PendingRunFailure = 'failed' | 'skipped' | 'cancelled';
+
+// How a pending run ended according to its run detail. `reason` is the
+// backend's explanation (skip reason, error message) when it gives one.
+export type PendingRunEnd =
+  | { kind: 'completed'; completedAt: string | null }
+  | { kind: PendingRunFailure; reason: string | null };
 
 export interface ViewerModelRun {
   runId: string;
@@ -102,6 +132,8 @@ export interface PendingViewerModelRun {
   // The newest result known for the model when the run was requested, used
   // to recognize the run's result when the backend omits run identifiers.
   baselineCompletedAt: string | null;
+  // Series the run was requested with; null when none were picked.
+  seriesInstanceUIDs?: string[] | null;
 }
 
 // How a run requested from the viewer ended, kept briefly for the running-jobs
@@ -110,7 +142,9 @@ export interface PendingViewerModelRun {
 export interface EndedViewerModelRun {
   run: PendingViewerModelRun;
   // 'cancelled': the user cancelled the run from the running-jobs indicator.
-  outcome: 'completed' | PendingRunFailure | 'cancelled';
+  outcome: 'completed' | PendingRunFailure;
+  // Why a run that produced no result ended, when the backend says so.
+  reason?: string | null;
   result: ViewerModelResult | null;
   endedAt: number;
   foreground: boolean;

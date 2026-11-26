@@ -105,17 +105,21 @@ const oneByTestId = (renderer: RenderResult, id: string) => {
 describe('ViewerModelResultDrawer', () => {
   let renderer: RenderResult | null = null;
   const onSelectView = jest.fn(() => true);
+  const onSelectRun = jest.fn();
 
   async function render(
     viewerResult: ViewerModelResult,
     repo: ViewerResultsRepository,
-    seriesScope?: ResultSeriesScope | null
+    seriesScope?: ResultSeriesScope | null,
+    runs?: ViewerModelResult[]
   ) {
     await act(async () => {
       renderer = rtlRender(
         <ViewerModelResultDrawer
           result={viewerResult}
           seriesScope={seriesScope}
+          runs={runs}
+          onSelectRun={onSelectRun}
           repository={repo}
           onClose={jest.fn()}
           onMinimize={jest.fn()}
@@ -128,6 +132,7 @@ describe('ViewerModelResultDrawer', () => {
   beforeEach(() => {
     mockOpen.mockReset();
     onSelectView.mockClear();
+    onSelectRun.mockClear();
   });
 
   afterEach(() => {
@@ -276,6 +281,131 @@ describe('ViewerModelResultDrawer', () => {
       const [scope] = scopeNode();
       expect(flat(scope)).toBe('4 series');
       expect(renderer!.container.querySelectorAll('[role="tooltip"]')).toHaveLength(0);
+    });
+  });
+  describe('run switcher', () => {
+    const autoRun = result({
+      runId: 'run-auto',
+      executionId: 'execution-auto',
+      completedAt: '2026-11-26T08:41:20-05:00',
+      trigger: 'AUTO',
+      dispatchSeriesInstanceUIDs: null,
+      eligibleVideoCount: 4,
+      inputVideoCount: 5,
+      bestRun: true,
+    });
+    const rerun = result({
+      runId: 'run-viewer',
+      executionId: 'execution-viewer',
+      completedAt: '2026-11-26T09:16:15-05:00',
+      trigger: 'VIEWER_REQUEST',
+      dispatchSeriesInstanceUIDs: ['series-1'],
+      eligibleVideoCount: 1,
+      inputVideoCount: 1,
+      bestRun: false,
+    });
+    const when = (iso: string) =>
+      new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    const report = () =>
+      jest.fn().mockResolvedValue({ htmlBase64: 'PGI+b2s8L2I+', contentType: 'text/html' });
+    const runButtons = () => byTestId(renderer!, 'viewer-model-result-run');
+
+    test('lists both runs with date, trigger, series and video counts, and marks the best one', async () => {
+      await render(rerun, repository(report()), null, [rerun, autoRun]);
+
+      expect(oneByTestId(renderer!, 'viewer-model-result-runs').textContent).toContain(
+        'Runs of this model (2)'
+      );
+      const [first, second] = runButtons();
+      expect(first.textContent).toBe(
+        `${when('2026-11-26T09:16:15-05:00')} · Viewer rerun · 1 series · Videos used: 1`
+      );
+      expect(second.textContent).toBe(
+        `${when('2026-11-26T08:41:20-05:00')} · Auto · All series · Videos used: 4 of 5Best run`
+      );
+      expect(first.getAttribute('aria-checked')).toBe('true');
+      expect(first.getAttribute('data-run-best')).toBe('false');
+      expect(first.getAttribute('data-run-trigger')).toBe('VIEWER_REQUEST');
+      expect(second.getAttribute('aria-checked')).toBe('false');
+      expect(second.getAttribute('data-run-best')).toBe('true');
+      expect(byTestId(renderer!, 'viewer-model-result-run-best')).toHaveLength(1);
+    });
+
+    test('switches to the run the user picks and ignores the one already shown', async () => {
+      await render(rerun, repository(report()), null, [rerun, autoRun]);
+      const [shown, other] = runButtons();
+
+      act(() => {
+        fireEvent.click(shown);
+      });
+      expect(onSelectRun).not.toHaveBeenCalled();
+      act(() => {
+        fireEvent.click(other);
+      });
+      expect(onSelectRun).toHaveBeenCalledWith(autoRun);
+    });
+
+    test('loads the report and the feedback of the run that is shown', async () => {
+      const loadReport = report();
+      const repo = repository(loadReport);
+      await render(rerun, repo, null, [rerun, autoRun]);
+      expect(loadReport).toHaveBeenLastCalledWith(rerun);
+      expect(
+        oneByTestId(renderer!, 'viewer-model-result-feedback').getAttribute('data-run-id')
+      ).toBe('run-viewer');
+
+      await act(async () => {
+        renderer!.rerender(
+          <ViewerModelResultDrawer
+            result={autoRun}
+            runs={[rerun, autoRun]}
+            onSelectRun={onSelectRun}
+            repository={repo}
+            onClose={jest.fn()}
+            onMinimize={jest.fn()}
+            onSelectView={onSelectView}
+          />
+        );
+      });
+
+      expect(loadReport).toHaveBeenCalledTimes(2);
+      expect(loadReport).toHaveBeenLastCalledWith(autoRun);
+      expect(
+        oneByTestId(renderer!, 'viewer-model-result-feedback').getAttribute('data-run-id')
+      ).toBe('run-auto');
+      expect(runButtons().map(button => button.getAttribute('aria-checked'))).toEqual([
+        'false',
+        'true',
+      ]);
+    });
+
+    test('does not load the report again when a just-completed run becomes the listed result', async () => {
+      const loadReport = report();
+      const repo = repository(loadReport);
+      const provisional = { ...rerun, studyServiceJobId: null, provisional: true };
+      await render(provisional, repo, null, [provisional, autoRun]);
+
+      await act(async () => {
+        renderer!.rerender(
+          <ViewerModelResultDrawer
+            result={{ ...rerun, studyServiceJobId: 'job-viewer' }}
+            runs={[rerun, autoRun]}
+            repository={repo}
+            onClose={jest.fn()}
+            onMinimize={jest.fn()}
+            onSelectView={onSelectView}
+          />
+        );
+      });
+
+      expect(loadReport).toHaveBeenCalledTimes(1);
+    });
+
+    test('shows no switcher for a model with a single run', async () => {
+      await render(autoRun, repository(report()), null, [autoRun]);
+      expect(byTestId(renderer!, 'viewer-model-result-runs')).toHaveLength(0);
+      await render(autoRun, repository(report()));
+      expect(byTestId(renderer!, 'viewer-model-result-runs')).toHaveLength(0);
     });
   });
 });

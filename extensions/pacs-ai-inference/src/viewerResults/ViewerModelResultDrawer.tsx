@@ -9,13 +9,23 @@ import {
 } from '../studyProcessing/modelExecutionResultPresentation';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
 import ViewerModelResultFeedback from './ViewerModelResultFeedback';
-import { viewerResultKey } from './viewerResultsModel';
+import {
+  describeResultRun,
+  formatRunDateTime,
+  isSameResultRun,
+  viewerResultKey,
+  type ResultRunTrigger,
+} from './viewerResultsModel';
 import type { ResultSeriesScope, SelectedView, ViewerModelResult } from './types';
 
 export interface ViewerModelResultDrawerProps {
   result: ViewerModelResult;
   // Which series the run used; absent or null when it is not known.
   seriesScope?: ResultSeriesScope | null;
+  // The model's completed runs for the study, newest first, `result` among
+  // them. With more than one the drawer offers to switch between them.
+  runs?: ViewerModelResult[];
+  onSelectRun?: (run: ViewerModelResult) => void;
   repository: ViewerResultsRepository;
   onClose: () => void;
   onMinimize: () => void;
@@ -40,6 +50,14 @@ const LEGACY_TRIGGER_LABEL = {
   defaultValue: 'Automatic (legacy)',
 };
 
+const RUN_TRIGGER_LABELS: Record<ResultRunTrigger, { key: string; defaultValue: string }> = {
+  auto: { key: 'ViewerRunTriggerAuto', defaultValue: 'Auto' },
+  viewer: { key: 'ViewerRunTriggerViewer', defaultValue: 'Viewer rerun' },
+  manual: { key: 'ViewerRunTriggerManual', defaultValue: 'Reprocess' },
+  imported: { key: 'ViewerRunTriggerImported', defaultValue: 'Imported' },
+  legacy: { key: 'ViewerRunTriggerLegacy', defaultValue: 'Auto (legacy)' },
+};
+
 function canLoadReport(result: ViewerModelResult): boolean {
   return (
     result.reportAvailable && (!!(result.runId && result.executionId) || !!result.studyServiceJobId)
@@ -49,13 +67,20 @@ function canLoadReport(result: ViewerModelResult): boolean {
 export function ViewerModelResultDrawer({
   result,
   seriesScope = null,
+  runs = [],
+  onSelectRun,
   repository,
   onClose,
   onMinimize,
   onSelectView,
 }: ViewerModelResultDrawerProps) {
   const { t } = useTranslation('AIModelButton');
-  const resultKey = viewerResultKey(result);
+  // The run and execution identify what is shown: a result first opened from
+  // its run ids and then replaced by the listed one is not loaded twice.
+  const resultKey =
+    result.runId && result.executionId
+      ? JSON.stringify([result.studyInstanceUID, result.runId, result.executionId])
+      : viewerResultKey(result);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [report, setReport] = useState<ReportState>(() =>
     canLoadReport(result) ? { status: 'loading' } : { status: 'none' }
@@ -132,6 +157,46 @@ export function ViewerModelResultDrawer({
     series => series.seriesNumber || series.description
   );
   const failurePresentation = getModelExecutionResultFailurePresentation(structuredState.failure);
+
+  const runLabel = (run: ViewerModelResult) => {
+    const description = describeResultRun(run, runs);
+    const trigger = RUN_TRIGGER_LABELS[description.trigger];
+    const series =
+      description.series === 'all'
+        ? t('ViewerResultSeriesAll', { defaultValue: 'All series' })
+        : description.series !== null
+          ? t('ViewerResultSeriesCount', {
+              used: description.series,
+              defaultValue: `${description.series} series`,
+            })
+          : null;
+    const videos =
+      description.eligibleVideoCount === null
+        ? null
+        : description.inputVideoCount !== null &&
+            description.inputVideoCount !== description.eligibleVideoCount
+          ? t('ViewerRunVideosOf', {
+              used: description.eligibleVideoCount,
+              total: description.inputVideoCount,
+              defaultValue: `Videos used: ${description.eligibleVideoCount} of ${description.inputVideoCount}`,
+            })
+          : t('ViewerRunVideos', {
+              used: description.eligibleVideoCount,
+              defaultValue: `Videos used: ${description.eligibleVideoCount}`,
+            });
+    return {
+      best: description.best,
+      text: [
+        formatRunDateTime(description.completedTime),
+        t(trigger.key, { defaultValue: trigger.defaultValue }),
+        series,
+        videos,
+        description.version ? `v${description.version}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    };
+  };
 
   return (
     <aside
@@ -230,6 +295,76 @@ export function ViewerModelResultDrawer({
           {t('ViewerResultClose', { defaultValue: 'Close' })}
         </button>
       </header>
+
+      {runs.length > 1 && (
+        <section
+          className="border-b border-white/10 px-5 py-3"
+          data-testid="viewer-model-result-runs"
+        >
+          <h3
+            id="viewer-model-result-runs-title"
+            className="text-sm font-semibold"
+          >
+            {t('ViewerRunsTitle', {
+              count: runs.length,
+              defaultValue: `Runs of this model (${runs.length})`,
+            })}
+          </h3>
+          <ul
+            role="radiogroup"
+            aria-labelledby="viewer-model-result-runs-title"
+            className="ohif-scrollbar mt-2 flex max-h-40 flex-col gap-1 overflow-y-auto"
+          >
+            {runs.map(run => {
+              const label = runLabel(run);
+              const selected = isSameResultRun(run, result);
+              return (
+                <li key={viewerResultKey(run)}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    className={`flex w-full items-center gap-2 rounded-md border px-2 py-1 text-left text-xs ${
+                      selected
+                        ? 'border-[#3ef1d1] bg-[#3ef1d1]/10 text-white'
+                        : 'border-white/15 text-[#c5cbc5] hover:bg-white/10'
+                    }`}
+                    onClick={() => {
+                      if (!selected) {
+                        onSelectRun?.(run);
+                      }
+                    }}
+                    data-testid="viewer-model-result-run"
+                    data-run-selected={selected}
+                    data-run-best={label.best}
+                    data-run-trigger={run.trigger ?? ''}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        selected ? 'bg-[#3ef1d1]' : 'border border-white/40'
+                      }`}
+                    />
+                    <span className="min-w-0 grow truncate">{label.text}</span>
+                    {label.best && (
+                      <span
+                        className="shrink-0 rounded border border-[#3ef1d1]/60 px-1.5 py-0.5 font-semibold text-[#3ef1d1]"
+                        title={t('ViewerRunBestHint', {
+                          defaultValue:
+                            'Shown by default: the run that used the most eligible videos (the newest on a tie).',
+                        })}
+                        data-testid="viewer-model-result-run-best"
+                      >
+                        {t('ViewerRunBest', { defaultValue: 'Best run' })}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section
         className="border-b border-white/10 px-5 py-3"
