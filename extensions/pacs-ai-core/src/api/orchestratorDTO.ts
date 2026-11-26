@@ -211,6 +211,8 @@ export interface ChatFeedbackItem {
   vote: ChatFeedbackVote;
   category: string;
   comment: string | null;
+  // A comment was submitted (even when this server cannot open it).
+  has_comment?: boolean;
   client: string | null;
   submission_version: number;
   created_at: string | null;
@@ -238,6 +240,8 @@ export interface ListChatFeedbackResponse {
   limit: number;
   offset: number;
   items: ChatFeedbackItem[];
+  // The chat backend stopped reading at its scan cap: counts may be partial.
+  truncated?: boolean;
 }
 
 export interface ChatFeedbackUpDown {
@@ -247,6 +251,7 @@ export interface ChatFeedbackUpDown {
 
 export interface ChatFeedbackCountsResponse {
   range: { since: string | null; until: string | null };
+  truncated?: boolean;
   totals: ChatFeedbackUpDown & { with_comment: number; total: number };
   by_day: Array<ChatFeedbackUpDown & { date: string }>;
   by_week: Array<ChatFeedbackUpDown & { week_start: string }>;
