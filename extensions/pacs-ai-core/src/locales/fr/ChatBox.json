@@ -62,5 +62,19 @@
   "FeedbackReason_other": "Autre",
   "FeedbackReason_accurate": "Exacte",
   "FeedbackReason_helpful_recommendation": "Recommandation utile",
-  "FeedbackReason_good_evidence": "Bonnes données probantes"
+  "FeedbackReason_good_evidence": "Bonnes données probantes",
+  "ClinicalRecommendation": "Recommandation",
+  "ClinicalStrategy": "Stratégie",
+  "ClinicalAlternatives": "Alternatives",
+  "ClinicalChecks": "À vérifier avant d'agir",
+  "ClinicalFollowUp": "Suivi",
+  "ClinicalMedications": "Médicaments",
+  "ClinicalDrug": "Médicament",
+  "ClinicalLoadingDose": "Dose de charge",
+  "ClinicalMaintenance": "Entretien",
+  "ClinicalDuration": "Durée",
+  "ClinicalNotes": "Remarques",
+  "ClinicalSources": "Sources",
+  "ClinicalCopyDictation": "Copier",
+  "ClinicalCopied": "Copié"
 }

@@ -62,5 +62,19 @@
   "FeedbackReason_other": "أخرى",
   "FeedbackReason_accurate": "دقيقة",
   "FeedbackReason_helpful_recommendation": "توصية مفيدة",
-  "FeedbackReason_good_evidence": "أدلة جيدة"
+  "FeedbackReason_good_evidence": "أدلة جيدة",
+  "ClinicalRecommendation": "التوصية",
+  "ClinicalStrategy": "الاستراتيجية",
+  "ClinicalAlternatives": "البدائل",
+  "ClinicalChecks": "تحقق قبل التصرف",
+  "ClinicalFollowUp": "المتابعة",
+  "ClinicalMedications": "الأدوية",
+  "ClinicalDrug": "الدواء",
+  "ClinicalLoadingDose": "الجرعة التحميلية",
+  "ClinicalMaintenance": "جرعة المداومة",
+  "ClinicalDuration": "المدة",
+  "ClinicalNotes": "ملاحظات",
+  "ClinicalSources": "المصادر",
+  "ClinicalCopyDictation": "نسخ",
+  "ClinicalCopied": "تم النسخ"
 }
