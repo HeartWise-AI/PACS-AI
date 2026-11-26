@@ -24,7 +24,16 @@ export function viewerStudyHref(studyInstanceUID: string): string {
   return `/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUID)}`;
 }
 
-function formatTime(value: string | null | undefined, language?: string): string {
+/**
+ * A locale Intl always accepts. i18n.language can be a browser tag such as
+ * "en-US@POSIX" that Intl rejects (RangeError), as the Model Feedback dashboard
+ * also avoids.
+ */
+export function displayLocale(language?: string): string {
+  return language?.toLowerCase().startsWith('fr') ? 'fr-CA' : 'en-CA';
+}
+
+export function formatTime(value: string | null | undefined, language?: string): string {
   if (!value) {
     return '—';
   }
@@ -32,7 +41,7 @@ function formatTime(value: string | null | undefined, language?: string): string
   const date = new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`);
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' });
+    : date.toLocaleString(displayLocale(language), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 function VoteBadge({ vote }: { vote: ChatFeedbackVote }) {
@@ -144,10 +153,13 @@ function Summary({ counts }: { counts: ChatFeedbackCountsResponse }) {
             rows={counts.by_week.map(row => ({
               key: row.week_start,
               label: t('WeekOf', {
-                date: new Date(`${row.week_start}T12:00:00Z`).toLocaleDateString(i18n?.language, {
-                  month: 'short',
-                  day: 'numeric',
-                }),
+                date: new Date(`${row.week_start}T12:00:00Z`).toLocaleDateString(
+                  displayLocale(i18n?.language),
+                  {
+                    month: 'short',
+                    day: 'numeric',
+                  }
+                ),
               }),
               up: row.up,
               down: row.down,
