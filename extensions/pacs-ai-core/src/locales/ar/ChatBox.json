@@ -92,5 +92,6 @@
   "AnswerLanguageSourceTyped": "لغة السؤال",
   "AnswerLanguageSourceClient": "إعداد اللغة",
   "AnswerLanguageSourceConversation": "مثل المحادثة",
-  "AnswerLanguageSourceDefault": "الافتراضية لهذا الموقع"
+  "AnswerLanguageSourceDefault": "الافتراضية لهذا الموقع",
+  "AnswerLanguageNoReason": "لغة الإجابة: {{language}}"
 }

@@ -82,10 +82,11 @@ const AnswerLanguageBadge: React.FC<{ language: 'en' | 'fr'; source?: string }> 
 }) => {
   const { t } = useTranslation('ChatBox');
   const sourceKey = source ? ANSWER_LANGUAGE_SOURCE_KEYS[source] : undefined;
-  const title = t('AnswerLanguage', {
-    language: t(language === 'fr' ? 'AnswerLanguageFr' : 'AnswerLanguageEn'),
-    source: sourceKey ? t(sourceKey) : source || '',
-  });
+  const languageName = t(language === 'fr' ? 'AnswerLanguageFr' : 'AnswerLanguageEn');
+  // A reason the viewer does not know (a newer backend) is not shown as a raw code.
+  const title = sourceKey
+    ? t('AnswerLanguage', { language: languageName, source: t(sourceKey) })
+    : t('AnswerLanguageNoReason', { language: languageName });
   return (
     <span
       className="rounded border border-current px-1 text-[10px] font-semibold uppercase leading-4"

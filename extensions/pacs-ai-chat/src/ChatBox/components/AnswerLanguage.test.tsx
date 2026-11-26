@@ -41,6 +41,20 @@ describe('MessageBubble answer language', () => {
     );
   });
 
+  it('never shows a reason code it does not know', () => {
+    const { getAllByTestId } = render(
+      <>
+        <MessageBubble
+          message={{ ...base, responseLanguage: 'fr', responseLanguageSource: 'some_new_reason' }}
+        />
+        <MessageBubble message={{ ...base, id: 'no-source', responseLanguage: 'en' }} />
+      </>
+    );
+    const [unknown, missing] = getAllByTestId('answer-language');
+    expect(unknown.getAttribute('title')).toBe('Answer language: French');
+    expect(missing.getAttribute('title')).toBe('Answer language: English');
+  });
+
   it('shows nothing for an older backend or a user message', () => {
     expect(render(<MessageBubble message={base} />).queryByTestId('answer-language')).toBeNull();
     expect(

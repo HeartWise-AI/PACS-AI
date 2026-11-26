@@ -139,6 +139,8 @@ export interface MessageResponse {
     content: string;
     tool_results?: ToolResultResponse[];
     createdAt?: string;
+    // Answer language from the chat backend; absent with an older one.
+    metadata?: { response_language?: string; response_language_source?: string };
   };
   status: string;
   error?: string;

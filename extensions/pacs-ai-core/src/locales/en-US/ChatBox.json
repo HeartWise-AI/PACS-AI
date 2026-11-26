@@ -92,5 +92,6 @@
   "AnswerLanguageSourceTyped": "language of the question",
   "AnswerLanguageSourceClient": "language setting",
   "AnswerLanguageSourceConversation": "same as the conversation",
-  "AnswerLanguageSourceDefault": "default of this site"
+  "AnswerLanguageSourceDefault": "default of this site",
+  "AnswerLanguageNoReason": "Answer language: {{language}}"
 }

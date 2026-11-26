@@ -92,5 +92,6 @@
   "AnswerLanguageSourceTyped": "Sprache der Frage",
   "AnswerLanguageSourceClient": "Spracheinstellung",
   "AnswerLanguageSourceConversation": "wie im Gespräch",
-  "AnswerLanguageSourceDefault": "Standard dieser Installation"
+  "AnswerLanguageSourceDefault": "Standard dieser Installation",
+  "AnswerLanguageNoReason": "Antwortsprache: {{language}}"
 }
