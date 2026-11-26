@@ -46,6 +46,9 @@ export interface ViewerModelResult {
   // On a listed run: whether it is the run reported by default (the one that
   // used the most eligible videos; the newest on a tie or unknown count).
   bestRun?: boolean;
+  // Free-text labels of the run as typed, oldest first ("DIAGNOSTIC",
+  // "post PCI"). Undefined when the backend does not report labels.
+  labels?: string[];
   // True for a result built from a run that has just completed, before the
   // backend lists it: enough to open its report, replaced once it is listed.
   provisional?: boolean;

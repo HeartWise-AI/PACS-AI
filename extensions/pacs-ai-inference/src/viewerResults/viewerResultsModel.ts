@@ -615,3 +615,95 @@ export function resolveFeedbackModel<
     rejectFeedbackQuestionnaires: match?.rejectFeedbackQuestionnaires ?? [],
   } as FeedbackModel<T>;
 }
+
+// --- Run labels (PACS-447) ----------------------------------------------------
+
+/** Longest label, in characters, once trimmed (the backend applies the same rule). */
+export const RUN_LABEL_MAX_LENGTH = 40;
+
+/** Labels offered before the workspace has used any. */
+export const DEFAULT_RUN_LABEL_SUGGESTIONS = ['DIAGNOSTIC', 'POST-PCI', 'PRE-PCI', 'LEFT', 'RIGHT'];
+
+/**
+ * A label as stored: trimmed, inner whitespace collapsed. Null when the text
+ * cannot be a label (empty, longer than RUN_LABEL_MAX_LENGTH, control characters).
+ */
+export function normalizeRunLabel(text: string | null | undefined): string | null {
+  const label = (text ?? '').split(/\s+/).filter(Boolean).join(' ');
+  if (!label || [...label].length > RUN_LABEL_MAX_LENGTH) {
+    return null;
+  }
+  // eslint-disable-next-line no-control-regex
+  return /[\u0000-\u001f\u007f-\u009f]/.test(label) ? null : label;
+}
+
+/** Labels are matched without case, as the backend does. */
+export function sameRunLabel(left: string, right: string): boolean {
+  return left.trim().toLocaleLowerCase() === right.trim().toLocaleLowerCase();
+}
+
+export function runHasLabel(run: ViewerModelResult, label: string): boolean {
+  return (run.labels ?? []).some(item => sameRunLabel(item, label));
+}
+
+/** Every label carried by the runs, once each, in the order first met. */
+export function collectRunLabels(runs: ViewerModelResult[]): string[] {
+  const labels: string[] = [];
+  runs.forEach(run =>
+    (run.labels ?? []).forEach(label => {
+      if (!labels.some(known => sameRunLabel(known, label))) {
+        labels.push(label);
+      }
+    })
+  );
+  return labels;
+}
+
+/**
+ * The run shown by default among the runs carrying `label`, with the backend's
+ * best-run rule: the most eligible videos; the newest on a tie, or when a
+ * labelled run recorded no count. Null when no run carries the label.
+ */
+export function bestRunWithLabel(
+  runs: ViewerModelResult[],
+  label: string
+): ViewerModelResult | null {
+  const labelled = runs.filter(run => runHasLabel(run, label));
+  if (!labelled.length) {
+    return null;
+  }
+  const counts = labelled.map(run => run.eligibleVideoCount);
+  if (counts.some(count => typeof count !== 'number')) {
+    return newest(labelled);
+  }
+  const most = Math.max(...(counts as number[]));
+  return newest(labelled.filter(run => run.eligibleVideoCount === most));
+}
+
+/** `results` with the labels of `run` (wherever it is listed) replaced by `labels`. */
+export function withRunLabels(
+  results: ViewerModelResult[],
+  run: ViewerModelResult,
+  labels: string[]
+): ViewerModelResult[] {
+  const relabel = (item: ViewerModelResult): ViewerModelResult =>
+    isSameResultRun(item, run) ? { ...item, labels } : item;
+  return results.map(result => {
+    const updated = relabel(result);
+    return result.runs ? { ...updated, runs: result.runs.map(relabel) } : updated;
+  });
+}
+
+/** Suggestions for a new label: the workspace's labels first, then the defaults, minus `current`. */
+export function runLabelSuggestions(workspaceLabels: string[], current: string[]): string[] {
+  const suggestions: string[] = [];
+  [...workspaceLabels, ...DEFAULT_RUN_LABEL_SUGGESTIONS].forEach(label => {
+    if (
+      !current.some(item => sameRunLabel(item, label)) &&
+      !suggestions.some(item => sameRunLabel(item, label))
+    ) {
+      suggestions.push(label);
+    }
+  });
+  return suggestions;
+}

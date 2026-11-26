@@ -30,6 +30,7 @@ import {
   findRunResult,
   isSameResultRun,
   mergeResultRuns,
+  withRunLabels,
   newestCompletedAt,
   resolveResultSeriesScope,
   resultFromPendingRun,
@@ -55,6 +56,8 @@ import {
 import { resolveCitationResultActions } from './chatCitations';
 import { getSafeCustomization } from '@pacs-ai/extension-core/src/ohifCompat/customization';
 import { getActiveDisplaySets } from '@pacs-ai/extension-core/src/ohifCompat/displaySets';
+import { getCachedUserAccess } from '@pacs-ai/extension-core/src/access/userAccessService';
+import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
@@ -182,6 +185,11 @@ export function ViewerModelResultsProvider({
   const canViewResults = !!inferenceProcessing?.canViewStudyProcessingRunHistory;
   // Queued runs are only useful when their result can be viewed afterwards.
   const canRunManaged = canViewResults && !!inferenceProcessing?.canUseStudyProcessingREST;
+  // Run labels can be changed with models.use (the backend also checks the
+  // run's model). Access not loaded yet: let the backend decide.
+  const cachedAccess = getCachedUserAccess();
+  const canEditLabels =
+    canViewResults && (!cachedAccess || cachedAccess.permissions.has(Permission.MODELS_USE));
   const repository = useMemo(
     () => providedRepository ?? createViewerResultsRepository(),
     [providedRepository]
@@ -734,6 +742,18 @@ export function ViewerModelResultsProvider({
 
   const closeResult = useCallback(() => setOpenedResult(null), []);
 
+  // A run's labels changed in the drawer: shown at once everywhere the run is
+  // listed, without waiting for the next latest-results refresh.
+  const handleRunLabelsChanged = useCallback((run: ViewerModelResult, labels: string[]) => {
+    setLatestResults(current => withRunLabels(current, run, labels));
+    setUnlistedRuns(current => withRunLabels(current, run, labels));
+    setOpenedResult(current =>
+      current && isSameResultRun(current.result, run)
+        ? { ...current, result: { ...current.result, labels } }
+        : current
+    );
+  }, []);
+
   // A result opened from a run that had just completed is replaced by the
   // listed one (selected views, video counts) once the backend reports it.
   useEffect(() => {
@@ -952,6 +972,8 @@ export function ViewerModelResultsProvider({
           seriesScope={getResultSeriesScope(openedResult.result)}
           runs={openedRuns}
           onSelectRun={openResult}
+          canEditLabels={canEditLabels}
+          onRunLabelsChanged={handleRunLabelsChanged}
           repository={repository}
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}

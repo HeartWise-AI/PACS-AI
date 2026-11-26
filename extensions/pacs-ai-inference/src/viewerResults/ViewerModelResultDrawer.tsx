@@ -9,10 +9,15 @@ import {
 } from '../studyProcessing/modelExecutionResultPresentation';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
 import ViewerModelResultFeedback from './ViewerModelResultFeedback';
+import ViewerRunLabels from './ViewerRunLabels';
 import {
+  bestRunWithLabel,
+  collectRunLabels,
   describeResultRun,
   formatRunDateTime,
   isSameResultRun,
+  runHasLabel,
+  sameRunLabel,
   viewerResultKey,
   type ResultRunTrigger,
 } from './viewerResultsModel';
@@ -26,6 +31,11 @@ export interface ViewerModelResultDrawerProps {
   // them. With more than one the drawer offers to switch between them.
   runs?: ViewerModelResult[];
   onSelectRun?: (run: ViewerModelResult) => void;
+  // Whether the user may add and remove run labels (models.use); the backend
+  // also checks access to the run's model.
+  canEditLabels?: boolean;
+  // Called with a run's labels after the user changed them.
+  onRunLabelsChanged?: (run: ViewerModelResult, labels: string[]) => void;
   repository: ViewerResultsRepository;
   onClose: () => void;
   onMinimize: () => void;
@@ -69,6 +79,8 @@ export function ViewerModelResultDrawer({
   seriesScope = null,
   runs = [],
   onSelectRun,
+  canEditLabels = false,
+  onRunLabelsChanged,
   repository,
   onClose,
   onMinimize,
@@ -157,6 +169,25 @@ export function ViewerModelResultDrawer({
     series => series.seriesNumber || series.description
   );
   const failurePresentation = getModelExecutionResultFailurePresentation(structuredState.failure);
+
+  // Run labels: filtering the run list by a label also shows that label's
+  // default run (best-run rule among the labelled runs).
+  const runLabels = useMemo(() => collectRunLabels(runs), [runs]);
+  const [labelFilter, setLabelFilter] = useState<string | null>(null);
+  const activeLabelFilter =
+    labelFilter && runLabels.some(label => sameRunLabel(label, labelFilter)) ? labelFilter : null;
+  const visibleRuns = activeLabelFilter
+    ? runs.filter(run => runHasLabel(run, activeLabelFilter))
+    : runs;
+  const selectLabel = (label: string | null) => {
+    setLabelFilter(label);
+    if (label && !runHasLabel(result, label)) {
+      const best = bestRunWithLabel(runs, label);
+      if (best) {
+        onSelectRun?.(best);
+      }
+    }
+  };
 
   const runLabel = (run: ViewerModelResult) => {
     const description = describeResultRun(run, runs);
@@ -275,6 +306,14 @@ export function ViewerModelResultDrawer({
               </>
             )}
           </p>
+          {result.labels !== undefined && (
+            <ViewerRunLabels
+              run={result}
+              repository={repository}
+              canEdit={canEditLabels}
+              onLabelsChanged={onRunLabelsChanged}
+            />
+          )}
         </div>
         <ViewerModelResultFeedback result={result} />
         <button
@@ -310,12 +349,47 @@ export function ViewerModelResultDrawer({
               defaultValue: `Runs of this model (${runs.length})`,
             })}
           </h3>
+          {runLabels.length > 0 && (
+            <div
+              role="group"
+              aria-label={t('ViewerRunLabelFilter', { defaultValue: 'Show runs with label' })}
+              className="mt-2 flex flex-wrap items-center gap-1.5 text-xs"
+              data-testid="viewer-run-label-filter"
+            >
+              <span className="text-[#c5cbc5]">
+                {t('ViewerRunLabelFilter', { defaultValue: 'Show runs with label' })}
+              </span>
+              {[null, ...runLabels].map(label => {
+                const active =
+                  label === null
+                    ? activeLabelFilter === null
+                    : !!activeLabelFilter && sameRunLabel(label, activeLabelFilter);
+                return (
+                  <button
+                    key={label ?? ''}
+                    type="button"
+                    aria-pressed={active}
+                    className={`rounded-full border px-2 py-0.5 font-semibold ${
+                      active
+                        ? 'border-[#3ef1d1] bg-[#3ef1d1]/20 text-white'
+                        : 'border-white/20 text-[#c5cbc5] hover:bg-white/10'
+                    }`}
+                    onClick={() => selectLabel(label)}
+                    data-testid="viewer-run-label-filter-option"
+                    data-label={label ?? ''}
+                  >
+                    {label ?? t('ViewerRunLabelFilterAll', { defaultValue: 'All' })}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <ul
             role="radiogroup"
             aria-labelledby="viewer-model-result-runs-title"
             className="ohif-scrollbar mt-2 flex max-h-40 flex-col gap-1 overflow-y-auto"
           >
-            {runs.map(run => {
+            {visibleRuns.map(run => {
               const label = runLabel(run);
               const selected = isSameResultRun(run, result);
               return (
@@ -346,6 +420,15 @@ export function ViewerModelResultDrawer({
                       }`}
                     />
                     <span className="min-w-0 grow truncate">{label.text}</span>
+                    {(run.labels ?? []).map(runLabelText => (
+                      <span
+                        key={runLabelText}
+                        className="shrink-0 rounded-full border border-white/25 px-1.5 py-0.5 text-[11px] text-white/80"
+                        data-testid="viewer-model-result-run-label"
+                      >
+                        {runLabelText}
+                      </span>
+                    ))}
                     {label.best && (
                       <span
                         className="shrink-0 rounded border border-[#3ef1d1]/60 px-1.5 py-0.5 font-semibold text-[#3ef1d1]"
