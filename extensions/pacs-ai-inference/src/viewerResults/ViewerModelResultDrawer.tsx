@@ -181,11 +181,10 @@ export function ViewerModelResultDrawer({
     : runs;
   const selectLabel = (label: string | null) => {
     setLabelFilter(label);
-    if (label && !runHasLabel(result, label)) {
-      const best = bestRunWithLabel(runs, label);
-      if (best) {
-        onSelectRun?.(best);
-      }
+    // The label's default run, whichever run is shown now.
+    const best = label ? bestRunWithLabel(runs, label) : null;
+    if (best && !isSameResultRun(best, result)) {
+      onSelectRun?.(best);
     }
   };
 

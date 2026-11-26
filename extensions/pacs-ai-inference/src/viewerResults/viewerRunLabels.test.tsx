@@ -311,6 +311,28 @@ describe('run labels in the result drawer', () => {
     expect(screen.getAllByTestId('viewer-model-result-run')).toHaveLength(3);
   });
 
+  test("a label's default run is opened even when the shown run carries the label", () => {
+    const { onSelectRun } = renderDrawer({ result: postPci });
+    const postFilter = screen
+      .getAllByTestId('viewer-run-label-filter-option')
+      .find(option => option.getAttribute('data-label') === 'POST-PCI') as HTMLElement;
+
+    fireEvent.click(postFilter);
+
+    expect(onSelectRun).toHaveBeenCalledWith(postPciOlder);
+  });
+
+  test('nothing is reopened when the shown run is already the label default', () => {
+    const { onSelectRun } = renderDrawer({ result: postPciOlder });
+    const postFilter = screen
+      .getAllByTestId('viewer-run-label-filter-option')
+      .find(option => option.getAttribute('data-label') === 'POST-PCI') as HTMLElement;
+
+    fireEvent.click(postFilter);
+
+    expect(onSelectRun).not.toHaveBeenCalled();
+  });
+
   test('a backend without labels shows no label controls', () => {
     const { labels: _labels, ...unlabelled } = autoRun;
     renderDrawer({
