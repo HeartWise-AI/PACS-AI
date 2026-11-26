@@ -60,8 +60,8 @@
   "ViewerRunTriggerManual": "Reprocesado",
   "ViewerRunTriggerImported": "Importado",
   "ViewerRunTriggerLegacy": "Auto (antiguo)",
-  "ViewerRunVideos": "{{used}} vídeos usados",
-  "ViewerRunVideosOf": "{{used}} de {{total}} vídeos usados",
+  "ViewerRunVideos": "Vídeos usados: {{used}}",
+  "ViewerRunVideosOf": "Vídeos usados: {{used}} de {{total}}",
   "LookingForModels": "Buscando modelos…",
   "ModelsMayBeBusy": "Un modelo ocupado con otro estudio puede faltar un momento.",
   "TryAgain": "Reintentar"

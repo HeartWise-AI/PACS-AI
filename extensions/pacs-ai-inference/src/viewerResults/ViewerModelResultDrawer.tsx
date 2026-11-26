@@ -178,11 +178,11 @@ export function ViewerModelResultDrawer({
           ? t('ViewerRunVideosOf', {
               used: description.eligibleVideoCount,
               total: description.inputVideoCount,
-              defaultValue: `${description.eligibleVideoCount} of ${description.inputVideoCount} videos used`,
+              defaultValue: `Videos used: ${description.eligibleVideoCount} of ${description.inputVideoCount}`,
             })
           : t('ViewerRunVideos', {
               used: description.eligibleVideoCount,
-              defaultValue: `${description.eligibleVideoCount} videos used`,
+              defaultValue: `Videos used: ${description.eligibleVideoCount}`,
             });
     return {
       best: description.best,

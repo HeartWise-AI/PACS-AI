@@ -60,8 +60,8 @@
   "ViewerRunTriggerManual": "إعادة معالجة",
   "ViewerRunTriggerImported": "مستورد",
   "ViewerRunTriggerLegacy": "تلقائي (قديم)",
-  "ViewerRunVideos": "{{used}} مقاطع مستخدمة",
-  "ViewerRunVideosOf": "{{used}} من {{total}} مقاطع مستخدمة",
+  "ViewerRunVideos": "المقاطع المستخدمة: {{used}}",
+  "ViewerRunVideosOf": "المقاطع المستخدمة: {{used}} من {{total}}",
   "LookingForModels": "جارٍ البحث عن النماذج…",
   "ModelsMayBeBusy": "قد يغيب نموذج مشغول بفحص آخر لحظةً.",
   "TryAgain": "إعادة المحاولة"

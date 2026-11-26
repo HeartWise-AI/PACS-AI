@@ -318,10 +318,10 @@ describe('ViewerModelResultDrawer', () => {
       );
       const [first, second] = runButtons();
       expect(first.textContent).toBe(
-        `${when('2026-11-26T09:16:15-05:00')} · Viewer rerun · 1 series · 1 videos used`
+        `${when('2026-11-26T09:16:15-05:00')} · Viewer rerun · 1 series · Videos used: 1`
       );
       expect(second.textContent).toBe(
-        `${when('2026-11-26T08:41:20-05:00')} · Auto · All series · 4 of 5 videos usedBest run`
+        `${when('2026-11-26T08:41:20-05:00')} · Auto · All series · Videos used: 4 of 5Best run`
       );
       expect(first.getAttribute('aria-checked')).toBe('true');
       expect(first.getAttribute('data-run-best')).toBe('false');

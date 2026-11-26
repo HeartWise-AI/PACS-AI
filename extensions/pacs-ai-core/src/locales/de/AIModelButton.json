@@ -60,8 +60,8 @@
   "ViewerRunTriggerManual": "Neuverarbeitung",
   "ViewerRunTriggerImported": "Importiert",
   "ViewerRunTriggerLegacy": "Auto (alt)",
-  "ViewerRunVideos": "{{used}} Videos verwendet",
-  "ViewerRunVideosOf": "{{used}} von {{total}} Videos verwendet",
+  "ViewerRunVideos": "Verwendete Videos: {{used}}",
+  "ViewerRunVideosOf": "Verwendete Videos: {{used}} von {{total}}",
   "LookingForModels": "Modelle werden gesucht…",
   "ModelsMayBeBusy": "Ein Modell, das gerade ein anderes Exam bearbeitet, kann kurz fehlen.",
   "TryAgain": "Erneut versuchen"
