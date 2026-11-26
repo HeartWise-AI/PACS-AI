@@ -226,10 +226,15 @@ class MetadataProvider {
         const windowCenter = Array.isArray(WindowCenter) ? WindowCenter : [WindowCenter];
         const windowWidth = Array.isArray(WindowWidth) ? WindowWidth : [WindowWidth];
 
-        const voiLUTFunction = normalizeVOILUTFunction(VOILUTFunction);
+        const widths = toNumber(windowWidth);
+        // Without a window the function is meaningless; cornerstone's volume
+        // VOI default would also pass it on alone when the width is 0.
+        const voiLUTFunction = Number([widths].flat()[0])
+          ? normalizeVOILUTFunction(VOILUTFunction)
+          : undefined;
         metadata = {
           windowCenter: toNumber(windowCenter),
-          windowWidth: toNumber(windowWidth),
+          windowWidth: widths,
           // The dicom-image-loader's createImage reads voiLUTFunction[0], like
           // windowCenter/windowWidth. A plain string such as 'SIGMOID' would
           // become 'S', and the viewport then throws 'Invalid VOI LUT function'

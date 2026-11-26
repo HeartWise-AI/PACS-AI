@@ -105,5 +105,11 @@ describe('MetadataProvider voiLutModule', () => {
     expect(
       metadataProvider.getTagFromInstance('voiLutModule', instance()).voiLUTFunction
     ).toBeUndefined();
+    expect(
+      metadataProvider.getTagFromInstance('voiLutModule', {
+        ...instance('SIGMOID'),
+        WindowWidth: '0',
+      }).voiLUTFunction
+    ).toBeUndefined();
   });
 });
