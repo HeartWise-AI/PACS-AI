@@ -6,9 +6,6 @@ import type { ChatFeedbackEntry } from '../hooks/useChatFeedback';
 import type { Message } from '../types';
 import { toCitations } from './citations';
 
-// Reason saved with a thumb before the clinician picks one (see useChatFeedback).
-const DEFAULT_CATEGORY = 'other';
-
 /**
  * A chat-service time as a Date. The service stores naive local times (no
  * zone), which the browser reads as its own local time; a time with a zone
@@ -44,8 +41,9 @@ export function historyToMessages(history: ChatThreadHistory): Message[] {
 
 /**
  * The signed-in user's votes on a thread, keyed like the chat box keys them
- * (a restored answer's id is its stored id). A thumbs down whose reason was
- * given (a category other than the default, or a comment) does not ask again.
+ * (a restored answer's id is its stored id). A restored vote never asks for
+ * its reason again: a reason "other" without comment cannot be told apart
+ * from no reason, and toggling the thumb asks again when wanted.
  */
 export function historyToFeedback(history: ChatThreadHistory): Record<string, ChatFeedbackEntry> {
   const entries: Record<string, ChatFeedbackEntry> = {};
@@ -57,7 +55,7 @@ export function historyToFeedback(history: ChatThreadHistory): Record<string, Ch
       vote: vote.vote,
       category: vote.category,
       status: 'saved',
-      detailsSaved: vote.vote === 'up' || vote.has_comment || vote.category !== DEFAULT_CATEGORY,
+      detailsSaved: true,
     };
   }
   return entries;

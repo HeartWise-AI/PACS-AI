@@ -25,7 +25,7 @@ describe('chat history mapping', () => {
     expect(messages[1]).toMatchObject({ id: 'a', sender: 'assistant', text: 'A', backendMessageId: 'a', backendThreadId: 't' });
   });
 
-  it('asks again for the reason of a thumbs down saved without one', () => {
+  it('shows restored votes as saved without asking for their reason again', () => {
     const feedback = historyToFeedback({
       thread_id: 't',
       title: 'x',
@@ -37,7 +37,7 @@ describe('chat history mapping', () => {
         { message_id: 'a4', vote: 'maybe', category: 'other', has_comment: false },
       ],
     } as any);
-    expect(feedback.a1).toMatchObject({ vote: 'down', status: 'saved', detailsSaved: false });
+    expect(feedback.a1).toMatchObject({ vote: 'down', status: 'saved', detailsSaved: true });
     expect(feedback.a2.detailsSaved).toBe(true);
     expect(feedback.a3).toMatchObject({ vote: 'up', detailsSaved: true });
     expect(feedback.a4).toBeUndefined();

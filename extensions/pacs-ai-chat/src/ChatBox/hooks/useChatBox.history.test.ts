@@ -176,6 +176,24 @@ describe('useChatBox chat history', () => {
     expect(result.current.threadId).toBe('older');
   });
 
+  it('lets "New chat" win over a restore still in flight', async () => {
+    let release: (value: any) => void = () => undefined;
+    repository.GetChatThreadHistory.mockImplementationOnce(
+      () => new Promise(resolve => (release = resolve))
+    );
+    const onRestore = jest.fn<void, [RestoredChat]>();
+    const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY, onRestore));
+    await waitFor(() => expect(repository.GetChatThreadHistory).toHaveBeenCalledTimes(1));
+
+    act(() => result.current.resetThread());
+    await waitFor(() => expect(result.current.threadId).toBe('new-thread'));
+    await act(async () => {
+      release(history('latest'));
+    });
+    expect(onRestore).not.toHaveBeenCalled();
+    expect(result.current.threadId).toBe('new-thread');
+  });
+
   it('never restores without a restore handler (no history UI)', async () => {
     const { result } = renderHook(() => useChatBox(true, 0, () => OPEN_STUDY));
     await waitFor(() => expect(result.current.threadId).toBe('new-thread'));

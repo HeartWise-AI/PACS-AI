@@ -88,6 +88,8 @@ interface UseChatBoxReturn {
   threads: ChatThreadSummary[];
   // True while a stored thread is being opened.
   historyLoading: boolean;
+  // True while the list of earlier threads is being loaded.
+  threadsLoading: boolean;
   // Reload the list of earlier threads.
   refreshThreads: () => Promise<ChatThreadSummary[] | null>;
   // Open a stored thread and continue it; resolves false when it could not be loaded.
@@ -143,6 +145,10 @@ export function useChatBox(
   const restoreTried = useRef(false);
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
+  // Bumped by every chat action (restore, open, New chat): late results of older ones are ignored.
+  const chatSeq = useRef(0);
+  const listSeq = useRef(0);
+  const [threadsLoading, setThreadsLoading] = useState(false);
 
   const stopProgressPolling = useCallback(() => {
     if (progressTimer.current !== null) {
@@ -283,11 +289,14 @@ export function useChatBox(
   }, [threadCreationPending, startThread]);
 
   // The signed-in user's earlier threads about the open study (none without a study).
+  // Only the latest of overlapping refreshes updates the list.
   const refreshThreads = useCallback(async (): Promise<ChatThreadSummary[] | null> => {
     const studyInstanceUID = getOpenStudy?.()?.studyInstanceUID;
     if (!studyInstanceUID || typeof orchestratorRepository.ListChatThreads !== 'function') {
       return null;
     }
+    const token = ++listSeq.current;
+    setThreadsLoading(true);
     try {
       const response = await orchestratorRepository.ListChatThreads({
         studyInstanceUID,
@@ -295,7 +304,7 @@ export function useChatBox(
       });
       const list =
         response?.success && Array.isArray(response.data?.threads) ? response.data.threads : [];
-      if (isMounted.current) {
+      if (isMounted.current && token === listSeq.current) {
         setThreads(list);
       }
       return list;
@@ -303,11 +312,16 @@ export function useChatBox(
       // An older gateway or chat service: no history, chat works as before.
       console.warn('Could not load the earlier chats of this study.');
       return null;
+    } finally {
+      if (isMounted.current && token === listSeq.current) {
+        setThreadsLoading(false);
+      }
     }
   }, [getOpenStudy]);
 
-  // Opens a stored thread: its messages and votes replace the chat box content.
-  const openThread = useCallback(async (storedThreadId: string): Promise<boolean> => {
+  // Loads a stored thread and, unless a newer chat action (New chat, another
+  // thread) superseded it meanwhile, replaces the chat box content with it.
+  const loadThread = useCallback(async (storedThreadId: string, token: number): Promise<boolean> => {
     if (!onRestoreRef.current) {
       return false;
     }
@@ -316,7 +330,7 @@ export function useChatBox(
       const response = await orchestratorRepository.GetChatThreadHistory({
         threadId: storedThreadId,
       });
-      if (!response?.success || !response.data || !isMounted.current) {
+      if (!response?.success || !response.data || !isMounted.current || token !== chatSeq.current) {
         return false;
       }
       onRestoreRef.current?.({
@@ -330,11 +344,17 @@ export function useChatBox(
       console.warn('Could not open the earlier chat.');
       return false;
     } finally {
-      if (isMounted.current) {
+      if (isMounted.current && token === chatSeq.current) {
         setHistoryLoading(false);
       }
     }
   }, []);
+
+  // Opens a stored thread picked in the history.
+  const openThread = useCallback(
+    (storedThreadId: string) => loadThread(storedThreadId, ++chatSeq.current),
+    [loadThread]
+  );
 
   // Function to send a message to the backend
   const sendMessage = useCallback(
@@ -504,15 +524,20 @@ export function useChatBox(
     }
     restoreTried.current = true;
     setThreadCreationPending(true);
+    const token = ++chatSeq.current;
     (async () => {
       if (restore) {
         setIsLoading(true);
         const list = await refreshThreads();
-        const restored = list && list.length > 0 ? await openThread(list[0].thread_id) : false;
+        const restored =
+          token === chatSeq.current && list && list.length > 0
+            ? await loadThread(list[0].thread_id, token)
+            : false;
         if (isMounted.current) {
           setIsLoading(false);
         }
-        if (restored || !isMounted.current) {
+        // Restored, unmounted, or superseded (New chat / another thread picked meanwhile).
+        if (restored || !isMounted.current || token !== chatSeq.current) {
           return;
         }
         if (messagesLength > 0) {
@@ -523,7 +548,7 @@ export function useChatBox(
       }
       await startThread();
     })();
-  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, openThread, startThread]);
+  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread]);
 
   // Reset thread creation pending when threadId is set
   useEffect(() => {
@@ -538,8 +563,13 @@ export function useChatBox(
     createThread();
   }, [createThread]);
 
+  // New chat: supersedes a restore or an open still in flight, then a new thread is created.
   const resetThread = useCallback(() => {
+    chatSeq.current += 1;
+    restoreTried.current = true;
+    setHistoryLoading(false);
     setThreadId(null);
+    setThreadCreationPending(false);
   }, []);
 
   return {
@@ -558,6 +588,7 @@ export function useChatBox(
     resetThread,
     threads,
     historyLoading,
+    threadsLoading,
     refreshThreads,
     openThread,
   };

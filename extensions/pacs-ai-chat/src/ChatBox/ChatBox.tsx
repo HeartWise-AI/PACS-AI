@@ -340,7 +340,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             onAddSeries={() => series.setIsSeriesModalOpen(true)}
             onClearChat={handleClearChat}
             onClose={onClose}
-            onToggleHistory={handleToggleHistory}
+            onToggleHistory={getOpenStudy() ? handleToggleHistory : undefined}
             historyOpen={historyOpen}
           />
 
@@ -348,7 +348,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             <ChatHistoryPanel
               threads={chat.threads}
               currentThreadId={chat.threadId}
-              loading={chat.historyLoading}
+              loading={chat.historyLoading || chat.threadsLoading}
               disabled={chat.isProcessing || chat.historyLoading}
               onSelect={handleSelectThread}
               onNewChat={handleClearChat}
