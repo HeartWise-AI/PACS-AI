@@ -302,6 +302,67 @@ export const chatBoxStyles = `
     line-height: 1.3;
     color: rgba(255, 255, 255, 0.92);
   }
+  /* Management recommendation and dictation cards */
+  .chat-clinical-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .chat-clinical-list {
+    list-style: disc;
+    padding-left: 1.1rem;
+    margin: 0;
+  }
+  .chat-clinical-list li {
+    margin: 0.15rem 0;
+  }
+  .chat-clinical-inline p {
+    margin: 0;
+    display: inline;
+  }
+  .chat-clinical-table td,
+  .chat-clinical-table th {
+    white-space: normal;
+    vertical-align: top;
+    font-size: 0.78rem;
+  }
+  .chat-clinical-details {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 0.35rem;
+  }
+  .chat-clinical-details > summary {
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.25rem;
+  }
+  .chat-clinical-copy {
+    font-size: 0.72rem;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 0.375rem;
+    padding: 0.1rem 0.5rem;
+  }
+  .chat-clinical-copy:hover {
+    border-color: #C8F469;
+    color: #C8F469;
+  }
+  .chat-dictation-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .chat-dictation-section .chat-clinical-inline p {
+    display: block;
+    white-space: pre-wrap;
+  }
+  .chat-dictation-footer {
+    font-size: 0.72rem;
+    font-style: italic;
+    opacity: 0.7;
+  }
   .chat-section-card {
     background-color: rgba(20, 23, 21, 0.68);
     border: 1px solid rgba(255, 255, 255, 0.13);

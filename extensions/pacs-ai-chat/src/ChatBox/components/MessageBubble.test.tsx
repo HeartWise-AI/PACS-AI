@@ -301,3 +301,62 @@ describe('MessageBubble Markdown rendering', () => {
     expect(lines[1].querySelector('a')?.getAttribute('href')).toBe('https://example.org/trial');
   });
 });
+
+describe('MessageBubble clinical cards', () => {
+  const management = {
+    type: 'management',
+    summary: ['Procedure for the lesion [1]', 'Drug A and drug B [2]'],
+    strategy: ['Within 24 h [1]'],
+    medications: [
+      { drug: 'Drug A', loading_dose: 'X mg', maintenance: 'Y mg daily', duration: '12 months' },
+      { drug: 'Drug B', maintenance: 'Z mg daily', notes: 'alternative C if contraindicated' },
+    ],
+    checks: ['If condition, then other drug'],
+  };
+  const dictation = {
+    type: 'dictation',
+    title: 'Dictation',
+    sections: [
+      { label: 'Indication', body: '50-year-old man.' },
+      { label: 'Recommendations', body: '1. Procedure.\n2. Drug A X mg.' },
+    ],
+    footer: 'Draft for review.',
+  };
+  const text =
+    '**Summary**\n- Procedure for the lesion [1]\n\n**Sources**\n1. [One](https://example.org/1)\n2. [Two](https://example.org/2)\n\n' +
+    '```cardio-card\n' +
+    JSON.stringify(management) +
+    '\n```\n\n---\n\n**Dictation**\n\n**Indication:** 50-year-old man.\n\n```cardio-card\n' +
+    JSON.stringify(dictation) +
+    '\n```';
+  const citations = [
+    { index: 1, kind: 'web_source' as const, title: 'One', url: 'https://example.org/1' },
+    { index: 2, kind: 'web_source' as const, title: 'Two', url: 'https://example.org/2' },
+  ];
+
+  it('renders a recommendation card with a medications table and a dictation card', () => {
+    const { container } = renderAssistantMessage(text, citations);
+    const recommendation = container.querySelector('[data-cy="chat-recommendation-card"]');
+    expect(recommendation).not.toBeNull();
+    expect(recommendation?.querySelector('[data-cy="chat-recommendation-summary"]')?.textContent).toContain(
+      'Procedure for the lesion'
+    );
+    const rows = recommendation?.querySelectorAll('[data-cy="chat-medications-table"] tbody tr');
+    expect(rows).toHaveLength(2);
+    expect(rows?.[0].textContent).toContain('X mg');
+    expect(recommendation?.querySelector('[data-cy="chat-recommendation-checks"]')).not.toBeNull();
+    const dictationCard = container.querySelector('[data-cy="chat-dictation-card"]');
+    expect(dictationCard?.textContent).toContain('Recommendations');
+    expect(dictationCard?.querySelector('[data-cy="chat-dictation-copy"]')).not.toBeNull();
+    // The card blocks are never shown as code.
+    expect(container.textContent).not.toContain('cardio-card');
+    expect(container.textContent).not.toContain('"type"');
+  });
+
+  it('falls back to Markdown when a card block cannot be read', () => {
+    const { container } = renderAssistantMessage('**Summary**\n- a\n\n```cardio-card\n{not json\n```');
+    expect(container.querySelector('[data-cy="chat-recommendation-card"]')).toBeNull();
+    expect(container.textContent).toContain('a');
+    expect(container.textContent).not.toContain('not json');
+  });
+});

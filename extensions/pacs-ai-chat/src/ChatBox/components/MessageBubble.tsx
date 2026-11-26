@@ -5,6 +5,8 @@ import remarkGfm from 'remark-gfm';
 import type { ChatActivity, ChatCitation, Message } from '../types';
 import { CITATION_INDEX_ATTRIBUTE, remarkCitationMarkers } from '../utils/citations';
 import { parseStructuredAnswer } from '../utils/structuredAnswer';
+import { splitClinicalCards, withoutCardBlocks } from '../utils/clinicalCards';
+import { DictationCard, RecommendationCard } from './ClinicalCards';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ActivitySummary } from './ActivitySummary';
 import { CitationChip } from './CitationChip';
@@ -77,26 +79,80 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isAssistant = message.sender === 'assistant';
   const citations = (isAssistant && message.citations) || NO_CITATIONS;
   const markdown = useMarkdownRendering(citations);
-  const structured = useMemo(
-    () => (isAssistant && !message.isThinking ? parseStructuredAnswer(message.text) : null),
+  const clinical = useMemo(
+    () => (isAssistant && !message.isThinking ? splitClinicalCards(message.text) : null),
     [isAssistant, message.isThinking, message.text]
   );
+  const structured = useMemo(
+    () =>
+      isAssistant && !message.isThinking && !clinical
+        ? parseStructuredAnswer(withoutCardBlocks(message.text || ''))
+        : null,
+    [isAssistant, message.isThinking, message.text, clinical]
+  );
+  const wide = !!(structured || clinical);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`${structured ? 'max-w-[94%]' : 'max-w-[80%]'} rounded-lg px-4 py-2 ${
+        className={`${wide ? 'max-w-[94%]' : 'max-w-[80%]'} rounded-lg px-4 py-2 ${
           isUser
             ? 'bg-gradient-to-r from-[rgba(100,180,100,0.7)] to-[rgba(180,230,100,0.7)] text-white'
             : 'bg-[#333633] text-white'
         }`}
       >
-        <div className={structured ? 'text-sm' : 'whitespace-pre-wrap text-sm'}>
+        <div className={wide ? 'text-sm' : 'whitespace-pre-wrap text-sm'}>
           {message.isThinking ? (
             <ThinkingIndicator
               activity={progress}
               startedAt={message.timestamp}
             />
+          ) : clinical ? (
+            <div
+              className="chat-structured-answer"
+              data-cy="chat-clinical-answer"
+            >
+              {clinical.map((part, idx) => {
+                if (part.kind === 'card') {
+                  return part.card.type === 'management' ? (
+                    <RecommendationCard
+                      key={`card-${idx}`}
+                      card={part.card}
+                      citations={citations}
+                      markdownComponents={markdown.components}
+                      remarkPlugins={markdown.remarkPlugins}
+                    />
+                  ) : (
+                    <DictationCard
+                      key={`card-${idx}`}
+                      card={part.card}
+                      citations={citations}
+                      markdownComponents={markdown.components}
+                      remarkPlugins={markdown.remarkPlugins}
+                    />
+                  );
+                }
+                const partStructured = parseStructuredAnswer(part.text);
+                return partStructured ? (
+                  <StructuredAnswerCards
+                    key={`part-${idx}`}
+                    structured={partStructured}
+                    citations={citations}
+                    markdownComponents={markdown.components}
+                    remarkPlugins={markdown.remarkPlugins}
+                  />
+                ) : (
+                  <ReactMarkdown
+                    key={`part-${idx}`}
+                    className="markdown-content"
+                    components={markdown.components}
+                    remarkPlugins={markdown.remarkPlugins}
+                  >
+                    {part.text}
+                  </ReactMarkdown>
+                );
+              })}
+            </div>
           ) : structured ? (
             <StructuredAnswerCards
               structured={structured}
@@ -110,7 +166,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               components={markdown.components}
               remarkPlugins={markdown.remarkPlugins}
             >
-              {message.text?.trim() || ''}
+              {withoutCardBlocks(message.text || '').trim()}
             </ReactMarkdown>
           )}
         </div>
