@@ -3,6 +3,8 @@ import type {
   PendingRunEnd,
   PendingRunFailure,
   PendingViewerModelRun,
+  ResultInput,
+  ResultInputSeries,
   ResultSeriesInfo,
   ResultSeriesScope,
   SelectedView,
@@ -567,6 +569,163 @@ export function resolveResultSeriesScope(
   return unused
     ? { kind: 'subset', used: used.length, total: used.length + unused, series }
     : { kind: 'all', series };
+}
+
+// DICOM modalities of the series a model of a given result modality reads.
+const RESULT_DICOM_MODALITIES: Record<string, string[]> = {
+  angiogram: ['XA'],
+  angiography: ['XA'],
+  xa: ['XA'],
+  echo: ['US'],
+  echocardiogram: ['US'],
+  us: ['US'],
+  ecg: ['ECG'],
+  ct: ['CT'],
+  mr: ['MR'],
+};
+
+interface InputInstance {
+  StudyDate?: unknown;
+  SeriesDate?: unknown;
+  SeriesTime?: unknown;
+  AcquisitionDate?: unknown;
+  AcquisitionTime?: unknown;
+  AcquisitionDateTime?: unknown;
+  ContentDate?: unknown;
+  ContentTime?: unknown;
+}
+
+interface InputDisplaySet extends SeriesScopeDisplaySet, InputInstance {
+  instance?: InputInstance;
+  instances?: Array<InputInstance | undefined>;
+}
+
+function firstText(value: unknown): string | null {
+  return textOrNull(Array.isArray(value) ? value[0] : value);
+}
+
+/** DICOM DA ("20230123") as "2023-01-23". */
+export function formatDicomDate(value: unknown): string | null {
+  const digits = (firstText(value) ?? '').replace(/[^0-9]/g, '');
+  return digits.length >= 8
+    ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+    : null;
+}
+
+/** DICOM TM ("102047.000000", "10:20:47") as "10:20". */
+export function formatDicomTime(value: unknown): string | null {
+  const match = /^(\d{2}):?(\d{2})?/.exec(firstText(value) ?? '');
+  if (!match || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59) {
+    return null;
+  }
+  return `${match[1]}:${match[2] ?? '00'}`;
+}
+
+function dicomDateTime(date: unknown, time: unknown): string | null {
+  const day = formatDicomDate(date);
+  const clock = formatDicomTime(time);
+  return day && clock ? `${day} ${clock}` : null;
+}
+
+// Acquisition date and time of a series: its acquisition, else its content,
+// else the series date and time.
+function seriesAcquiredAt(displaySet: InputDisplaySet): string | null {
+  const instance = displaySet.instance ?? displaySet.instances?.[0] ?? {};
+  const pick = (key: keyof InputInstance) => instance[key] ?? displaySet[key];
+  const combined = firstText(pick('AcquisitionDateTime'));
+  return (
+    dicomDateTime(pick('AcquisitionDate'), pick('AcquisitionTime')) ??
+    (combined ? dicomDateTime(combined.slice(0, 8), combined.slice(8)) : null) ??
+    dicomDateTime(pick('ContentDate'), pick('ContentTime')) ??
+    dicomDateTime(pick('SeriesDate'), pick('SeriesTime'))
+  );
+}
+
+function seriesNumberOrder(series: ResultInputSeries): number {
+  const number = Number(series.seriesNumber);
+  return Number.isFinite(number) ? number : Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * The input a stored result was computed from, described from the DICOM
+ * metadata loaded in the viewer: the views the model selected when it
+ * recorded them, else the series the run was dispatched with, else every
+ * eligible series of the model's modality. Returns null when none of the
+ * study's series are loaded and the run names none.
+ */
+export function resolveResultInput(
+  result: Pick<
+    ViewerModelResult,
+    'studyInstanceUID' | 'modality' | 'selectedViews' | 'dispatchSeriesInstanceUIDs'
+  >,
+  displaySets: InputDisplaySet[]
+): ResultInput | null {
+  const bySeries = new Map<string, InputDisplaySet>();
+  displaySets.forEach(displaySet => {
+    const uid = displaySet?.SeriesInstanceUID;
+    if (uid && displaySet.StudyInstanceUID === result.studyInstanceUID && !bySeries.has(uid)) {
+      bySeries.set(uid, displaySet);
+    }
+  });
+
+  const unique = (uids: Array<string | null | undefined>) => [
+    ...new Set(uids.filter((uid): uid is string => !!uid)),
+  ];
+  const viewSeries = unique((result.selectedViews ?? []).map(view => view.seriesInstanceUID));
+  const dispatched = unique(result.dispatchSeriesInstanceUIDs ?? []);
+  const wanted = RESULT_DICOM_MODALITIES[(result.modality ?? '').trim().toLowerCase()];
+  const modalityOf = (displaySet: InputDisplaySet) =>
+    (displaySet.Modality || displaySet.modality || '').toUpperCase();
+
+  let source: ResultInput['source'];
+  let uids: string[];
+  if (viewSeries.length) {
+    source = 'views';
+    uids = viewSeries;
+  } else if (dispatched.length) {
+    source = 'dispatched';
+    uids = dispatched;
+  } else {
+    source = 'all';
+    uids = [...bySeries.entries()]
+      .filter(
+        ([, displaySet]) =>
+          !displaySet.excludeFromThumbnailBrowser &&
+          isInferenceSeriesEligible(displaySet) &&
+          (!wanted || wanted.includes(modalityOf(displaySet)))
+      )
+      .map(([uid]) => uid);
+  }
+  if (!uids.length) {
+    return null;
+  }
+
+  const loaded = uids.map(uid => bySeries.get(uid)).filter(Boolean) as InputDisplaySet[];
+  const series = loaded
+    .map(displaySet => ({
+      seriesInstanceUID: displaySet.SeriesInstanceUID as string,
+      seriesNumber: textOrNull(displaySet.SeriesNumber),
+      description: textOrNull(displaySet.SeriesDescription) ?? textOrNull(displaySet.description),
+      acquiredAt: seriesAcquiredAt(displaySet),
+    }))
+    .sort((left, right) => seriesNumberOrder(left) - seriesNumberOrder(right));
+  const times = series
+    .map(item => item.acquiredAt)
+    .filter(Boolean)
+    .sort() as string[];
+  const modalities = unique(loaded.map(modalityOf));
+  const studyDisplaySet = loaded[0] ?? bySeries.values().next().value;
+  const studyInstance = studyDisplaySet?.instance ?? studyDisplaySet?.instances?.[0];
+
+  return {
+    source,
+    series,
+    seriesCount: uids.length,
+    modality: modalities.length === 1 ? modalities[0] : wanted?.length === 1 ? wanted[0] : null,
+    studyDate: formatDicomDate(studyInstance?.StudyDate ?? studyDisplaySet?.StudyDate),
+    acquiredFrom: times[0] ?? null,
+    acquiredTo: times[times.length - 1] ?? null,
+  };
 }
 
 interface FeedbackQuestionnaireFields {

@@ -21,12 +21,15 @@ import {
   viewerResultKey,
   type ResultRunTrigger,
 } from './viewerResultsModel';
-import type { ResultSeriesScope, SelectedView, ViewerModelResult } from './types';
+import type { ResultInput, ResultSeriesScope, SelectedView, ViewerModelResult } from './types';
 
 export interface ViewerModelResultDrawerProps {
   result: ViewerModelResult;
   // Which series the run used; absent or null when it is not known.
   seriesScope?: ResultSeriesScope | null;
+  // The series, study date and acquisition time the result was computed
+  // from, shown first; null when the viewer cannot describe it.
+  input?: ResultInput | null;
   // The model's completed runs for the study, newest first, `result` among
   // them. With more than one the drawer offers to switch between them.
   runs?: ViewerModelResult[];
@@ -77,6 +80,7 @@ function canLoadReport(result: ViewerModelResult): boolean {
 export function ViewerModelResultDrawer({
   result,
   seriesScope = null,
+  input = null,
   runs = [],
   onSelectRun,
   canEditLabels = false,
@@ -228,6 +232,67 @@ export function ViewerModelResultDrawer({
     };
   };
 
+  // "Input: Series 5 – FL - CTO · Study 2023-01-23 · Acquired 2023-01-23 10:20"
+  const inputText = (() => {
+    if (!input) {
+      return null;
+    }
+    const numbers = input.series.map(series => series.seriesNumber).filter(Boolean) as string[];
+    let seriesText: string;
+    if (input.source === 'all') {
+      seriesText = t('ViewerResultInputAllSeries', {
+        count: input.seriesCount,
+        modality: input.modality ?? '',
+        defaultValue: `All ${input.modality ?? ''} series (${input.seriesCount})`,
+      }).replace(/\s+/g, ' ');
+    } else if (input.seriesCount === 1 && input.series.length === 1) {
+      const [only] = input.series;
+      seriesText = [
+        only.seriesNumber
+          ? t('ViewerResultInputSeriesOne', {
+              number: only.seriesNumber,
+              defaultValue: `Series ${only.seriesNumber}`,
+            })
+          : null,
+        only.description,
+      ]
+        .filter(Boolean)
+        .join(' – ');
+    } else if (numbers.length && numbers.length === input.seriesCount) {
+      const shown =
+        numbers.length > 8 ? `${numbers.slice(0, 8).join(', ')}, …` : numbers.join(', ');
+      seriesText = t('ViewerResultInputSeriesMany', {
+        count: input.seriesCount,
+        numbers: shown,
+        defaultValue: `${input.seriesCount} series: ${shown}`,
+      });
+    } else {
+      seriesText = t('ViewerResultInputSeriesCount', {
+        count: input.seriesCount,
+        defaultValue: `${input.seriesCount} series`,
+      });
+    }
+    const { acquiredFrom: from, acquiredTo: to, studyDate } = input;
+    const acquired = !from
+      ? null
+      : from === to || !to
+        ? from
+        : from.slice(0, 10) === to.slice(0, 10)
+          ? `${from.slice(0, 10) === studyDate ? '' : `${from.slice(0, 10)} `}${from.slice(11)}–${to.slice(11)}`
+          : `${from} – ${to}`;
+    return [
+      seriesText || null,
+      studyDate
+        ? t('ViewerResultInputStudyDate', { date: studyDate, defaultValue: `Study ${studyDate}` })
+        : null,
+      acquired
+        ? t('ViewerResultInputAcquired', { time: acquired, defaultValue: `Acquired ${acquired}` })
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  })();
+
   return (
     <aside
       role="dialog"
@@ -255,6 +320,17 @@ export function ViewerModelResultDrawer({
               </span>
             )}
           </h2>
+          {inputText && (
+            <p
+              className="mt-1 text-sm text-white"
+              data-testid="viewer-model-result-input"
+            >
+              <span className="font-semibold text-[#3ef1d1]">
+                {t('ViewerResultInputLabel', { defaultValue: 'Input' })}:
+              </span>{' '}
+              {inputText}
+            </p>
+          )}
           <p className="mt-1 text-sm text-[#c5cbc5]">
             {result.completedAt && new Date(result.completedAt).toLocaleString()}
             {` · ${trigger ? t(trigger.key, { defaultValue: trigger.defaultValue }) : result.trigger}`}

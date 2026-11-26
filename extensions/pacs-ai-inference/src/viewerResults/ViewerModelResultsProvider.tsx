@@ -32,6 +32,7 @@ import {
   mergeResultRuns,
   withRunLabels,
   newestCompletedAt,
+  resolveResultInput,
   resolveResultSeriesScope,
   resultFromPendingRun,
   viewerModelKey,
@@ -970,6 +971,10 @@ export function ViewerModelResultsProvider({
         <ViewerModelResultDrawer
           result={openedResult.result}
           seriesScope={getResultSeriesScope(openedResult.result)}
+          input={resolveResultInput(
+            openedResult.result,
+            getActiveDisplaySets(servicesManager.services.displaySetService)
+          )}
           runs={openedRuns}
           onSelectRun={openResult}
           canEditLabels={canEditLabels}
