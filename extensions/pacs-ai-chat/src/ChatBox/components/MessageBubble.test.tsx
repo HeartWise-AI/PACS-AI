@@ -357,9 +357,11 @@ describe('MessageBubble clinical cards', () => {
     expect(
       recommendation?.querySelector('[data-cy="chat-recommendation-summary"]')?.textContent
     ).toContain('Procedure for the lesion');
-    const rows = recommendation?.querySelectorAll('[data-cy="chat-medications-table"] tbody tr');
+    const rows = recommendation?.querySelectorAll('[data-cy="chat-medication-row"]');
     expect(rows).toHaveLength(2);
     expect(rows?.[0].textContent).toContain('X mg');
+    // A dose that is not given is left out, not shown empty.
+    expect(rows?.[1].textContent).not.toContain('Loading dose');
     expect(recommendation?.querySelector('[data-cy="chat-recommendation-checks"]')).not.toBeNull();
     const dictationCard = container.querySelector('[data-cy="chat-dictation-card"]');
     expect(dictationCard?.textContent).toContain('Recommendations');

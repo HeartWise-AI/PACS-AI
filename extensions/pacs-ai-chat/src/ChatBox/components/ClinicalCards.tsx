@@ -133,36 +133,50 @@ export function RecommendationCard({
       </div>
       {medications.length > 0 && (
         <div
-          className="markdown-table-wrapper"
-          role="region"
+          className="chat-clinical-medications"
+          data-cy="chat-medications"
+          role="list"
           aria-label={t('ClinicalMedications', { defaultValue: 'Medications' })}
-          tabIndex={0}
         >
-          <table
-            className="chat-clinical-table"
-            data-cy="chat-medications-table"
-          >
-            <thead>
-              <tr>
-                <th>{t('ClinicalDrug', { defaultValue: 'Drug' })}</th>
-                <th>{t('ClinicalLoadingDose', { defaultValue: 'Loading dose' })}</th>
-                <th>{t('ClinicalMaintenance', { defaultValue: 'Maintenance' })}</th>
-                <th>{t('ClinicalDuration', { defaultValue: 'Duration' })}</th>
-                <th>{t('ClinicalNotes', { defaultValue: 'Notes' })}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {medications.map((item, idx) => (
-                <tr key={`${idx}-${item.drug}`}>
-                  <td>{cell(item.drug)}</td>
-                  <td>{cell(item.loading_dose)}</td>
-                  <td>{cell(item.maintenance)}</td>
-                  <td>{cell(item.duration)}</td>
-                  <td>{cell(item.notes)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {medications.map((item, idx) => (
+            <div
+              key={`${idx}-${item.drug}`}
+              className="chat-clinical-medication"
+              data-cy="chat-medication-row"
+              role="listitem"
+            >
+              <div className="chat-clinical-drug">{cell(item.drug)}</div>
+              <dl className="chat-clinical-doses">
+                {(
+                  [
+                    [
+                      'loading',
+                      t('ClinicalLoadingDose', { defaultValue: 'Loading dose' }),
+                      item.loading_dose,
+                    ],
+                    [
+                      'maintenance',
+                      t('ClinicalMaintenance', { defaultValue: 'Maintenance' }),
+                      item.maintenance,
+                    ],
+                    [
+                      'duration',
+                      t('ClinicalDuration', { defaultValue: 'Duration' }),
+                      item.duration,
+                    ],
+                    ['notes', t('ClinicalNotes', { defaultValue: 'Notes' }), item.notes],
+                  ] as [string, string, string | null | undefined][]
+                )
+                  .filter(([, , value]) => !!value)
+                  .map(([key, label, value]) => (
+                    <React.Fragment key={key}>
+                      <dt>{label}</dt>
+                      <dd>{cell(value)}</dd>
+                    </React.Fragment>
+                  ))}
+              </dl>
+            </div>
+          ))}
         </div>
       )}
       {details

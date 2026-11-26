@@ -320,11 +320,34 @@ export const chatBoxStyles = `
     margin: 0;
     display: inline;
   }
-  .chat-clinical-table td,
-  .chat-clinical-table th {
-    white-space: normal;
-    vertical-align: top;
+  .chat-clinical-medications {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .chat-clinical-medication {
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.375rem;
+    padding: 0.35rem 0.5rem;
+  }
+  .chat-clinical-drug {
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+  }
+  .chat-clinical-doses {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 0.5rem;
+    row-gap: 0.1rem;
+    margin: 0;
     font-size: 0.78rem;
+  }
+  .chat-clinical-doses dt {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .chat-clinical-doses dd {
+    margin: 0;
   }
   .chat-clinical-details {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
