@@ -137,6 +137,9 @@ export function ViewerModelResultDrawer({
     !!result.studyServiceJobId &&
     (report.status === 'none' || report.status === 'error');
   const jobResult = useStoredJobResult(repository, result, loadsJobResult);
+  // A stored result that is empty ({} or []) has no details to show.
+  const jobResultShown =
+    jobResult.status === 'ready' && !isEmptyModelExecutionResult(jobResult.result.result);
   const showsMeasured =
     MEASURED_FIRST_MODELS.has(result.modelName) &&
     !!measuredResult &&
@@ -646,7 +649,7 @@ export function ViewerModelResultDrawer({
             data-testid="viewer-model-result-report"
           />
         )}
-        {report.status === 'error' && !hasExecution && jobResult.status !== 'ready' && (
+        {report.status === 'error' && !hasExecution && !jobResultShown && (
           <p
             role="alert"
             className="px-5 py-5 text-sm text-[#ffb0b0]"
@@ -671,21 +674,19 @@ export function ViewerModelResultDrawer({
             {t('ViewerResultLoading', { defaultValue: 'Loading result…' })}
           </p>
         )}
-        {loadsJobResult &&
-          jobResult.status === 'ready' &&
-          !isEmptyModelExecutionResult(jobResult.result.result) && (
-            <div
-              className="px-5 py-5"
-              data-testid="viewer-model-result-job-result"
-            >
-              <ModelResultRenderer result={jobResult.result} />
-            </div>
-          )}
+        {loadsJobResult && jobResultShown && jobResult.status === 'ready' && (
+          <div
+            className="px-5 py-5"
+            data-testid="viewer-model-result-job-result"
+          >
+            <ModelResultRenderer result={jobResult.result} />
+          </div>
+        )}
         {showStructured &&
           !hasExecution &&
           report.status === 'none' &&
           jobResult.status !== 'loading' &&
-          jobResult.status !== 'ready' && (
+          !jobResultShown && (
             <p
               className="px-5 py-5 text-sm text-[#c5cbc5]"
               data-testid="viewer-model-result-no-details"

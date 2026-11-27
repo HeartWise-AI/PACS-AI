@@ -203,6 +203,72 @@ describe('AIModelButton runs', () => {
     }
   });
 
+  describe('stored study-service results (echo SR measurements)', () => {
+    const srResult = {
+      studyInstanceUID: 'tte',
+      modelName: 'echo-sr-measurements',
+      modelVersion: '1.0.0',
+      studyServiceJobId: 'job-sr',
+      completedAt: '2026-11-10T10:00:00Z',
+    };
+    const echoModel = {
+      ...model,
+      modelId: 'panecho',
+      containerId: 'container-echo',
+      modelName: 'PanEcho',
+      supportedDicomModalities: ['US'],
+    };
+    const tteOpen = {
+      US: { modality: 'US', studies: [{ studyInstanceUID: 'tte', date: '2026-10-09' }] },
+    };
+
+    afterEach(() => {
+      mockStudyContext.selectedModalities = { XA: { modality: 'XA' } };
+    });
+
+    test('are listed in the exam block next to the echo models, once', () => {
+      mockStudyContext.selectedModalities = tteOpen;
+      const openResult = jest.fn();
+      mount(
+        viewerResults({
+          openResult,
+          getStudyServiceResults: jest.fn((study: string) => (study === 'tte' ? [srResult] : [])),
+          getOpenStudyServiceResults: jest.fn(() => [srResult]),
+        }),
+        [echoModel]
+      );
+
+      const rows = all('[data-testid="ai-model-study-service-result"]');
+      expect(rows).toHaveLength(1);
+      expect(rows[0].textContent).toContain('EchoSrTitle');
+      // Shown inside the model section, not repeated in the unlisted block.
+      expect(all('[data-testid="ai-model-study-service-results"]')).toHaveLength(0);
+      act(() => {
+        fireEvent.click(rows[0].querySelector('button')!);
+      });
+      expect(openResult).toHaveBeenCalledWith(srResult);
+    });
+
+    test('are listed even when no echo model is available', () => {
+      mockStudyContext.selectedModalities = tteOpen;
+      mount(
+        viewerResults({
+          getStudyServiceResults: jest.fn(() => [srResult]),
+          getOpenStudyServiceResults: jest.fn(() => [srResult]),
+        }),
+        [model]
+      );
+
+      const block = all('[data-testid="ai-model-study-service-results"]');
+      expect(block).toHaveLength(1);
+      expect(
+        block[0].querySelectorAll('[data-testid="ai-model-study-service-result"]')
+      ).toHaveLength(1);
+      // The "no models" notice stays for the models themselves.
+      expect(all('[data-testid="ai-model-menu-empty"]')).toHaveLength(1);
+    });
+  });
+
   test('Apply opens the series pop-up instead of queueing a run', () => {
     const provider = viewerResults();
     mount(provider);

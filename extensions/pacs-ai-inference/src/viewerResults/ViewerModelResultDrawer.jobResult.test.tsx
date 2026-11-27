@@ -124,6 +124,28 @@ describe('ViewerModelResultDrawer stored job results', () => {
     expect(byTestId(renderer!, 'viewer-model-result-no-details')).toHaveLength(1);
   });
 
+  test.each([[{}], [[]]])(
+    'says details are unavailable for an empty stored result %j',
+    async empty => {
+      const loadJobResult = jest.fn().mockResolvedValue({
+        runId: '',
+        executionId: '',
+        studyInstanceUID: '1.2.3',
+        modelName: 'echo-sr-measurements',
+        modelVersion: '1.0.0',
+        status: 'completed',
+        completedAt: '',
+        result: empty,
+      });
+      await render(result(), repository({ loadJobResult }));
+
+      expect(loadJobResult).toHaveBeenCalledTimes(1);
+      expect(byTestId(renderer!, 'structured-result')).toHaveLength(0);
+      expect(byTestId(renderer!, 'viewer-model-result-job-result')).toHaveLength(0);
+      expect(byTestId(renderer!, 'viewer-model-result-no-details')).toHaveLength(1);
+    }
+  );
+
   test('shows the measured SR values first in the PanEcho drawer', async () => {
     const loadJobResult = jest.fn().mockResolvedValue({
       runId: '',

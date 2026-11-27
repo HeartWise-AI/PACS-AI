@@ -135,6 +135,9 @@ export interface ViewerModelResultsContextValue {
   // SR measurements) for one open exam; the primary exam when omitted.
   // Optional so that test doubles of the context keep working.
   getStudyServiceResults?: (studyInstanceUID?: string | null) => ViewerModelResult[];
+  // The same results for every open exam, whether or not a model of its
+  // modality is available (the menu lists them even then).
+  getOpenStudyServiceResults?: () => ViewerModelResult[];
 }
 
 const ViewerModelResultsContext = createContext<ViewerModelResultsContextValue | null>(null);
@@ -344,6 +347,14 @@ export function ViewerModelResultsProvider({
       );
     },
     [canViewResults, latestResults, studyInstanceUID]
+  );
+
+  const getOpenStudyServiceResults = useCallback(
+    () =>
+      canViewResults
+        ? latestResults.filter(result => STUDY_SERVICE_RESULT_MODELS.has(result.modelName))
+        : [],
+    [canViewResults, latestResults]
   );
 
   const getResultRuns = useCallback(
@@ -964,6 +975,7 @@ export function ViewerModelResultsProvider({
       openedResult,
       loadSelectedView,
       getStudyServiceResults,
+      getOpenStudyServiceResults,
     }),
     [
       canViewResults,
@@ -983,6 +995,7 @@ export function ViewerModelResultsProvider({
       openedResult,
       loadSelectedView,
       getStudyServiceResults,
+      getOpenStudyServiceResults,
     ]
   );
 
