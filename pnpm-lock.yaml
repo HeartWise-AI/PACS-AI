@@ -181,21 +181,21 @@ overrides:
   tapable: 2.2.2
   '@cornerstonejs/codec-openjpeg': 1.3.0
   node-forge: 1.4.0
-  qs: 6.14.1
+  qs: 6.17.1
   lodash: 4.18.1
   lodash-es: 4.18.1
   diff: 5.2.2
   webpack: 5.105.0
   tar: 7.5.22
-  serialize-javascript: 7.0.4
+  serialize-javascript: 7.1.4
   svgo@>= 1.0.0 <2.8.4: 2.8.4
   svgo@>=3.0.0 <3.3.5: 3.3.5
   flatted: 3.4.2
   handlebars: 4.7.9
-  protobufjs: 7.6.1
+  protobufjs: 7.6.6
   tmp: 0.2.7
   shell-quote: 1.12.0
-  fast-uri@>=3.0.0 <3.1.8: 3.1.8
+  fast-uri@>=3.0.0 <3.1.9: 3.1.9
   '@babel/plugin-transform-modules-systemjs': 7.29.4
   sharp@<0.35.5: 0.35.5
   tslib: 2.8.1
@@ -208,10 +208,10 @@ overrides:
   picomatch@>=4.0.0 <4.0.4: 4.0.4
   websocket-driver@<0.7.5: 0.7.5
   adm-zip@<0.6.1: 0.6.1
-  brace-expansion@<1.1.20: 1.1.20
-  brace-expansion@>=2.0.0 <2.1.6: 2.1.6
+  brace-expansion@<1.1.22: 1.1.22
+  brace-expansion@>=2.0.0 <2.1.8: 2.1.8
   brace-expansion@>=3.0.0 <3.0.3: 3.0.6
-  brace-expansion@>=4.0.0 <5.0.11: 5.0.11
+  brace-expansion@>=4.0.0 <5.0.13: 5.0.13
   joi@>=17.2.0 <17.13.9: 17.13.9
   js-yaml@>=3.0.0 <3.15.2: 3.15.2
   js-yaml@>=4.0.0 <4.3.2: 4.3.2
@@ -227,6 +227,8 @@ overrides:
   '@grpc/grpc-js@<1.13.6': 1.13.7
   minimatch@>=9.0.0 <9.0.7: 9.0.9
   '@itk-wasm/dam': '-'
+  fflate@>=0.7.0 <0.7.5: 0.7.5
+  '@remix-run/router@<1.23.3': 1.23.4
   http-cache-semantics@<4.3.0: 4.3.0
   follow-redirects@>=1.16.0 <1.16.2: 1.16.2
   launch-editor@<2.14.2: 2.14.2
@@ -563,11 +565,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       cross-env:
         specifier: 7.0.3
@@ -603,11 +605,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       cross-env:
         specifier: 7.0.3
@@ -652,11 +654,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       cross-env:
         specifier: 7.0.3
@@ -863,11 +865,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       cross-env:
         specifier: 7.0.3
@@ -1121,11 +1123,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@ohif/mode-basic':
         specifier: workspace:*
@@ -1188,11 +1190,11 @@ importers:
         specifier: ^3.39.3
         version: 3.39.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-select:
         specifier: 5.7.4
         version: 5.7.4(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
@@ -1240,8 +1242,8 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@testing-library/react':
         specifier: 13.4.0
@@ -1354,11 +1356,11 @@ importers:
         specifier: 12.3.1
         version: 12.3.1(i18next@26.7.2(typescript@5.5.4))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@babel/core':
         specifier: 7.29.7
@@ -1982,11 +1984,11 @@ importers:
         specifier: 10.0.1
         version: 10.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router:
-        specifier: 6.30.3
-        version: 6.30.3(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react@18.3.1)
       react-router-dom:
-        specifier: 6.30.3
-        version: 6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 6.30.6
+        version: 6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       shepherd.js:
         specifier: 15.3.0
         version: 15.3.0
@@ -5130,9 +5132,6 @@ packages:
   '@protobufjs/float@1.0.2':
     resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
 
-  '@protobufjs/inquire@1.1.2':
-    resolution: {integrity: sha512-pa0vFRuws4wkvaXKK1uXZMAwAX4/t8ANaJo45iw/oQHNQ9q5xUzwgFmVJGXiga2BeN+zpX7Vf9vmsiIa2J+MUw==}
-
   '@protobufjs/path@1.1.2':
     resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
 
@@ -5690,8 +5689,8 @@ packages:
   '@react-dnd/shallowequal@2.0.0':
     resolution: {integrity: sha512-Pc/AFTdwZwEKJxFJvlxrSmGe/di+aAOBn60sremrpLo6VI/6cmiUYNNwlI5KNYttg7uypzA3ILPMPgxB2GYZEg==}
 
-  '@remix-run/router@1.23.2':
-    resolution: {integrity: sha512-Ic6m2U/rMjTkhERIa/0ZtXJP17QUi2CbWE7cqx4J58M8aA3QTfW+2UlQ4psvTX9IO1RfNVhK3pcpdjej7L+t2w==}
+  '@remix-run/router@1.23.4':
+    resolution: {integrity: sha512-q7j5geK7xs3UJSdm9/iytUNclBnLmYx1EnSeCFXHPeutdqgIMeFeHtUZgS3EhlKxdBEAu8OwtJCwmLrEzpSs7Q==}
     engines: {node: '>=14.0.0'}
 
   '@rollup/plugin-babel@5.3.1':
@@ -7196,15 +7195,11 @@ packages:
     resolution: {integrity: sha512-2hCgjEmP8YLWQ130n2FerGv7rYpfBmnmp9Uy2Le1vge6X3gZIfSmEzP5QTDElFxcvVcXlEn8Aq6MU/PZygIOog==}
     engines: {node: '>=14.16'}
 
-  brace-expansion@1.1.20:
-    resolution: {integrity: sha512-5/qk29RyvatwgzNMrvGjkIhKYzpJ0OUnPK+9TU+zS/CMJqzmb+UD0irWu42JfpUvO636fxd8IstgiydZRM/76A==}
+  brace-expansion@1.1.22:
+    resolution: {integrity: sha512-CKLDTuSsN0+r1ThM0WkzzBI7dnPI6xEGfa/JnVYIK9JNBA1N1NyPwXVHor//NKD/y3sDxp764sZdLhFK7pH8XQ==}
 
-  brace-expansion@2.1.6:
-    resolution: {integrity: sha512-pi/WFpBvCBmB/NsURt7hW5sDvuOqvJaDMDai7CrlT9xoehzWRzo/dhQRKqOhpPvlnicVaTzHCbzGnnTgpvMTFw==}
-
-  brace-expansion@5.0.11:
-    resolution: {integrity: sha512-awigjhi6cLTh90bdw6+QJ9CtmJmyYhEIi70iCbc8Rozn04Fw9FeQIBjv/E22FFGuCGx1bLJyUfB64x/szUSXUg==}
-    engines: {node: 20 || >=22}
+  brace-expansion@2.1.8:
+    resolution: {integrity: sha512-BnlDzDYQoplTsZSvPi86CNzmbcb07X8ufR8fk1zivaiEJlXJkiq1MQyDCVmlWcsWbj6aWXqHnrwwevbrm/Saig==}
 
   brace-expansion@5.0.13:
     resolution: {integrity: sha512-Vh3dmFbc4wZeox7M9I/0L9GfFd83Su4+yCck/OF9Gi/P/dAHn0RT7X4K9R7gMNMhDck3DvhR6QXsnQdjjgwNvQ==}
@@ -8812,8 +8807,8 @@ packages:
   fast-png@6.4.0:
     resolution: {integrity: sha512-kAqZq1TlgBjZcLr5mcN6NP5Rv4V2f22z00c3g8vRrwkcqjerx7BEhPbOnWCPqaHUl2XWQBJQvOT/FQhdMT7X/Q==}
 
-  fast-uri@3.1.8:
-    resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
+  fast-uri@3.1.9:
+    resolution: {integrity: sha512-hS/0Wt3Ya043oKXs0sIxrMpKQITXhMLIrVAKKXi4gozGC9v7YRWVnXIZzjNPTO02M9BdxLCWqK1yRXgNziVyJQ==}
 
   fastq@1.20.1:
     resolution: {integrity: sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw==}
@@ -8848,8 +8843,8 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
-  fflate@0.7.3:
-    resolution: {integrity: sha512-0Zz1jOzJWERhyhsimS54VTqOteCNwRtIlh8isdL0AXLo0g7xNTfTL7oWrkmCnPhZGocKIkWHBistBrrpoNH3aw==}
+  fflate@0.7.5:
+    resolution: {integrity: sha512-QieYf//cis6ywHNi5qW1+PXPQ4bC+XVJAtS4AXIML8P76GroEiOxm/oQtn1f02UkJY1+KsXMJcC+R2v/Eg4G3g==}
 
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
@@ -12374,8 +12369,8 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  protobufjs@7.6.1:
-    resolution: {integrity: sha512-4K0myLaWL5EteuSAro91EGFgcfVgxb64Jx+7oDAY6GOkXD4M69yuSEljNcInGVCA5sOPxmZ/EqDLj2x0Q0+Ygg==}
+  protobufjs@7.6.6:
+    resolution: {integrity: sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==}
     engines: {node: '>=12.0.0'}
 
   protocol-buffers-schema@3.6.1:
@@ -12425,8 +12420,8 @@ packages:
     resolution: {integrity: sha512-KTqnxsgGiQ6ZAzZCVlJH5eOjSnvlyEgx1m8bkRJfOhmGRqfo5KLvmAlACQkrjEtOQ4B7wF9TdSLIs9O90MX9xA==}
     engines: {node: '>=16.0.0'}
 
-  qs@6.14.1:
-    resolution: {integrity: sha512-4EK3+xJl8Ts67nLYNwqw/dsFVnCf+qR7RgXSK9jEEm9unao3njwMDdmsdvoKBKHzxd7tCYz5e5M+SnMjdtXGQQ==}
+  qs@6.17.1:
+    resolution: {integrity: sha512-jd3COkaKVgGUW+ZHyEHCG9bH7RoaaiWuMgzsIBjUMVjLAaWGWpoUAVwljVvBHxRu/2qEHnadLGZrkutYUBPQJA==}
     engines: {node: '>=0.6'}
 
   query-string@10.0.0:
@@ -12692,8 +12687,8 @@ packages:
     peerDependencies:
       react: '>=15'
 
-  react-router-dom@6.30.3:
-    resolution: {integrity: sha512-pxPcv1AczD4vso7G4Z3TKcvlxK7g7TNt3/FNGMhfqyntocvYKj+GCatfigGDjbLozC4baguJ0ReCigoDJXb0ag==}
+  react-router-dom@6.30.6:
+    resolution: {integrity: sha512-0RHKZz7wwffvkU+2MFVT2NnjK44ssLEV+m0CAJaS2Ksmorrwj7WxH00jO0SOCW26/tINUnJHToXblDs33I38YQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: '>=16.8'
@@ -12704,8 +12699,8 @@ packages:
     peerDependencies:
       react: '>=15'
 
-  react-router@6.30.3:
-    resolution: {integrity: sha512-XRnlbKMTmktBkjCLE8/XcZFlnHvr2Ltdr1eJX4idL55/9BbORzyZEaIkBFDhFGCEWBBItsVrDxwx3gnisMitdw==}
+  react-router@6.30.6:
+    resolution: {integrity: sha512-5HfK7k5im7LTOB0EqCQmfvy4C13G92Ssj1VTmouTK3AJvyjKTnFuCV0vcMAD/JS+JC4DvDIBRrlAeJIFjh5VWg==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: '>=16.8'
@@ -13152,8 +13147,8 @@ packages:
     resolution: {integrity: sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==}
     engines: {node: '>= 0.8.0'}
 
-  serialize-javascript@7.0.4:
-    resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
+  serialize-javascript@7.1.4:
+    resolution: {integrity: sha512-FqlEuoTq/zRmA4Lg6aOqyH3lCHbUtCB0bmHCeFniX2GBdDqMJM3FwdvEhlE5Pim1dlt2FfBdVPmUNNiGhhKqpw==}
     engines: {node: '>=20.0.0'}
 
   serve-handler@6.1.7:
@@ -13252,6 +13247,10 @@ packages:
 
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
+    engines: {node: '>= 0.4'}
+
+  side-channel@1.1.1:
+    resolution: {integrity: sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==}
     engines: {node: '>= 0.4'}
 
   signal-exit@3.0.7:
@@ -16234,7 +16233,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       mime-types: 2.1.35
       performance-now: 2.1.0
-      qs: 6.14.1
+      qs: 6.17.1
       safe-buffer: 5.2.1
       tough-cookie: 5.1.2
       tunnel-agent: 0.6.0
@@ -17681,7 +17680,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.6.1
+      protobufjs: 7.6.6
       yargs: 17.7.2
 
   '@hapi/hoek@9.3.0': {}
@@ -18173,7 +18172,7 @@ snapshots:
       commander: 8.3.0
       d3-scale: 4.0.2
       fast-deep-equal: 3.1.3
-      fflate: 0.7.3
+      fflate: 0.7.5
       gl-matrix: 3.4.3
       seedrandom: 3.0.5
       shelljs: 0.8.5
@@ -18447,8 +18446,6 @@ snapshots:
       '@protobufjs/aspromise': 1.1.2
 
   '@protobufjs/float@1.0.2': {}
-
-  '@protobufjs/inquire@1.1.2': {}
 
   '@protobufjs/path@1.1.2': {}
 
@@ -19024,7 +19021,7 @@ snapshots:
 
   '@react-dnd/shallowequal@2.0.0': {}
 
-  '@remix-run/router@1.23.2': {}
+  '@remix-run/router@1.23.4': {}
 
   '@rollup/plugin-babel@5.3.1(@babel/core@7.29.7(supports-color@8.1.1))(@types/babel__core@7.20.5)(rollup@2.80.0)(supports-color@8.1.1)':
     dependencies:
@@ -19055,7 +19052,7 @@ snapshots:
 
   '@rollup/plugin-terser@0.4.4(rollup@2.80.0)':
     dependencies:
-      serialize-javascript: 7.0.4
+      serialize-javascript: 7.1.4
       smob: 1.6.1
       terser: 5.47.1
     optionalDependencies:
@@ -20161,7 +20158,7 @@ snapshots:
   ajv@8.20.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.8
+      fast-uri: 3.1.9
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -20627,7 +20624,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.14.1
+      qs: 6.17.1
       raw-body: 2.5.3
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -20663,18 +20660,14 @@ snapshots:
       widest-line: 4.0.1
       wrap-ansi: 8.1.0
 
-  brace-expansion@1.1.20:
+  brace-expansion@1.1.22:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@2.1.6:
+  brace-expansion@2.1.8:
     dependencies:
       balanced-match: 1.0.2
-
-  brace-expansion@5.0.11:
-    dependencies:
-      balanced-match: 4.0.4
 
   brace-expansion@5.0.13:
     dependencies:
@@ -21162,7 +21155,7 @@ snapshots:
       globby: 13.2.2
       normalize-path: 3.0.0
       schema-utils: 4.3.3
-      serialize-javascript: 7.0.4
+      serialize-javascript: 7.1.4
       webpack: 5.105.0(@swc/core@1.15.13(@swc/helpers@0.5.21))
 
   core-js-compat@3.49.0:
@@ -21339,7 +21332,7 @@ snapshots:
       jest-worker: 29.7.0
       postcss: 8.5.26
       schema-utils: 4.3.3
-      serialize-javascript: 7.0.4
+      serialize-javascript: 7.1.4
       webpack: 5.105.0(@swc/core@1.15.13(@swc/helpers@0.5.21))
     optionalDependencies:
       clean-css: 5.3.3
@@ -22635,7 +22628,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.13
       proxy-addr: 2.0.8
-      qs: 6.14.1
+      qs: 6.17.1
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.2(supports-color@8.1.1)
@@ -22694,7 +22687,7 @@ snapshots:
       iobuffer: 5.4.0
       pako: 2.1.0
 
-  fast-uri@3.1.8: {}
+  fast-uri@3.1.9: {}
 
   fastq@1.20.1:
     dependencies:
@@ -22729,7 +22722,7 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
 
-  fflate@0.7.3: {}
+  fflate@0.7.5: {}
 
   fflate@0.8.3: {}
 
@@ -25610,7 +25603,7 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.11
+      brace-expansion: 5.0.13
 
   minimatch@11.0.9:
     dependencies:
@@ -25619,15 +25612,15 @@ snapshots:
 
   minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.20
+      brace-expansion: 1.1.22
 
   minimatch@5.1.9:
     dependencies:
-      brace-expansion: 2.1.6
+      brace-expansion: 2.1.8
 
   minimatch@9.0.9:
     dependencies:
-      brace-expansion: 2.1.6
+      brace-expansion: 2.1.8
 
   minimist@1.2.8: {}
 
@@ -25870,7 +25863,7 @@ snapshots:
       base64-js: 1.5.1
       core-js: 3.45.1
       crypto-js: 4.2.0
-      serialize-javascript: 7.0.4
+      serialize-javascript: 7.1.4
 
   ol@10.9.0:
     dependencies:
@@ -25912,7 +25905,7 @@ snapshots:
       long: 5.3.2
       onnxruntime-common: 1.17.1
       platform: 1.3.6
-      protobufjs: 7.6.1
+      protobufjs: 7.6.6
 
   open@10.2.0:
     dependencies:
@@ -27308,7 +27301,7 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  protobufjs@7.6.1:
+  protobufjs@7.6.6:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -27316,7 +27309,6 @@ snapshots:
       '@protobufjs/eventemitter': 1.1.1
       '@protobufjs/fetch': 1.1.1
       '@protobufjs/float': 1.0.2
-      '@protobufjs/inquire': 1.1.2
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.1
@@ -27373,9 +27365,10 @@ snapshots:
 
   pvutils@1.1.5: {}
 
-  qs@6.14.1:
+  qs@6.17.1:
     dependencies:
-      side-channel: 1.1.0
+      es-define-property: 1.0.1
+      side-channel: 1.1.1
 
   query-string@10.0.0:
     dependencies:
@@ -27678,12 +27671,12 @@ snapshots:
       tiny-invariant: 1.3.3
       tiny-warning: 1.0.3
 
-  react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-router-dom@6.30.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@remix-run/router': 1.23.2
+      '@remix-run/router': 1.23.4
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      react-router: 6.30.3(react@18.3.1)
+      react-router: 6.30.6(react@18.3.1)
 
   react-router@5.3.4(react@18.3.1):
     dependencies:
@@ -27698,9 +27691,9 @@ snapshots:
       tiny-invariant: 1.3.3
       tiny-warning: 1.0.3
 
-  react-router@6.30.3(react@18.3.1):
+  react-router@6.30.6(react@18.3.1):
     dependencies:
-      '@remix-run/router': 1.23.2
+      '@remix-run/router': 1.23.4
       react: 18.3.1
 
   react-select@5.7.4(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1):
@@ -28289,7 +28282,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  serialize-javascript@7.0.4: {}
+  serialize-javascript@7.1.4: {}
 
   serve-handler@6.1.7:
     dependencies:
@@ -28444,6 +28437,14 @@ snapshots:
       side-channel-map: 1.0.1
 
   side-channel@1.1.0:
+    dependencies:
+      es-errors: 1.3.0
+      object-inspect: 1.13.4
+      side-channel-list: 1.0.1
+      side-channel-map: 1.0.1
+      side-channel-weakmap: 1.0.2
+
+  side-channel@1.1.1:
     dependencies:
       es-errors: 1.3.0
       object-inspect: 1.13.4
@@ -28974,7 +28975,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
-      serialize-javascript: 7.0.4
+      serialize-javascript: 7.1.4
       terser: 5.47.1
       webpack: 5.105.0(@swc/core@1.15.13(@swc/helpers@0.5.21))
     optionalDependencies:
@@ -29390,7 +29391,7 @@ snapshots:
   url@0.11.4:
     dependencies:
       punycode: 1.4.1
-      qs: 6.14.1
+      qs: 6.17.1
 
   use-callback-ref@1.3.3(@types/react@18.3.23)(react@18.3.1):
     dependencies:
