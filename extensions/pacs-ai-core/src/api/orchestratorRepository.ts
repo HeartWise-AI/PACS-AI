@@ -18,6 +18,7 @@ import {
   ListChatFeedbackRequest,
   ListChatFeedbackResponse,
   ChatFeedbackCountsResponse,
+  ChatFeedbackDetail,
   GetChatProgressRequest,
   ChatProgressResponse,
   ChatProgressError,
@@ -252,6 +253,19 @@ const orchestratorRepository = {
     return Api()
       .get(`/v1/inference/chat/feedback/list`, { params: request })
       .then((response: AxiosResponse<APIResponse<ListChatFeedbackResponse>>) => response.data)
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+
+  /**
+   * One vote with the tool calls behind the rated answer (feedback.view).
+   */
+  async GetChatFeedback(feedbackId: string): Promise<APIResponse<ChatFeedbackDetail>> {
+    return Api()
+      .get(`/v1/inference/chat/feedback/${encodeURIComponent(feedbackId)}`)
+      .then((response: AxiosResponse<APIResponse<ChatFeedbackDetail>>) => response.data)
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

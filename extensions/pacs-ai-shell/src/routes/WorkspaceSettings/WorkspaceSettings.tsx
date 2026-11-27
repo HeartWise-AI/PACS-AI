@@ -115,7 +115,10 @@ const WorkspaceSettingsPage = () => {
           )}
           {isVisible('chat-feedback') && (
             <div {...panelProps('chat-feedback')}>
-              <ChatFeedbackSection active={activeTab === 'chat-feedback'} />
+              <ChatFeedbackSection
+                active={activeTab === 'chat-feedback'}
+                showRaw={Boolean(access?.isAdmin)}
+              />
             </div>
           )}
           {isVisible('roles') && (

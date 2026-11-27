@@ -254,6 +254,9 @@ export interface ChatFeedbackItem {
   conversation_id: string;
   message_id: string;
   user_id: string;
+  // From the workspace's user directory (api-pacs), when the voter is found.
+  user_name?: string | null;
+  user_email?: string | null;
   vote: ChatFeedbackVote;
   category: string;
   comment: string | null;
@@ -281,6 +284,52 @@ export interface ChatFeedbackItem {
   sealed_elsewhere: boolean;
 }
 
+/**
+ * One tool call behind a rated answer, redacted by the chat backend (no DICOM
+ * UID or patient field). Fields an old turn did not record are null.
+ */
+export interface ChatFeedbackToolCall {
+  seq: number;
+  parent_seq: number | null;
+  depth: number;
+  agent: string | null;
+  specialist: string | null;
+  tool: string;
+  origin: string | null;
+  status: 'ok' | 'error' | 'incomplete' | string | null;
+  duration_ms: number | null;
+  offset_ms: number | null;
+  model: string | null;
+  args_summary: string;
+  run_selection: string | null;
+  input: string | null;
+  result_summary: string | null;
+  error: string | null;
+  result_truncated: boolean;
+  arguments: Record<string, unknown>;
+}
+
+/** GET /v1/inference/chat/feedback/{id}: one vote with its tool calls (null: trace not available). */
+export interface ChatFeedbackDetail extends ChatFeedbackItem {
+  tool_calls: ChatFeedbackToolCall[] | null;
+}
+
+export interface ChatFeedbackToolStats {
+  calls: number;
+  errors: number;
+  error_rate: number | null;
+  median_ms: number | null;
+  timed_calls: number;
+}
+
+export interface ChatFeedbackToolUsage {
+  totals: Record<
+    ChatFeedbackVote,
+    ChatFeedbackToolStats & { turns: number; turns_with_trace: number }
+  >;
+  by_tool: Array<{ tool: string } & Record<ChatFeedbackVote, ChatFeedbackToolStats>>;
+}
+
 export interface ListChatFeedbackResponse {
   total: number;
   limit: number;
@@ -305,6 +354,8 @@ export interface ChatFeedbackCountsResponse {
   by_specialist: Array<ChatFeedbackUpDown & { specialist: string }>;
   by_skill: Array<ChatFeedbackUpDown & { skill: string }>;
   by_harness_version: Array<ChatFeedbackUpDown & { harness_version: string }>;
+  // Absent from an older chat backend.
+  tool_usage?: ChatFeedbackToolUsage;
 }
 
 /** GET /v1/orchestrator/settings: the chat backend's default answer language. */
