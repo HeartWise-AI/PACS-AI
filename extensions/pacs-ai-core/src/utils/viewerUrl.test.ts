@@ -106,6 +106,11 @@ describe('the shared "open this study" link', () => {
     expect(toStudyOpenPath('/viewer?StudyInstanceUIDs=1.2.3&patientId=MRN1&modalitiesInStudy=XA')).toBe(
       '/open-study?StudyInstanceUIDs=1.2.3&modalitiesInStudy=XA'
     );
+    expect(
+      toStudyOpenPath(
+        '/viewer?StudyInstanceUIDs=1.2.3&initialSeriesInstanceUID=4.5&hangingprotocolId=mpr&PatientName=X'
+      )
+    ).toBe('/open-study?StudyInstanceUIDs=1.2.3&initialSeriesInstanceUID=4.5&hangingprotocolId=mpr');
     expect(toStudyOpenPath('/viewer?foo=1')).toBe('/viewer?foo=1');
     expect(toStudyOpenPath('/ai-predictions')).toBe('/ai-predictions');
     expect(toStudyOpenPath('/')).toBe('/');

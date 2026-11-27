@@ -11,7 +11,7 @@ import { rememberPendingRetrieve } from '@pacs-ai/extension-inference/src/studyR
 import {
   markViewerStudyRetrieved,
   studyInstanceUIDsFromSearch,
-  viewerPathForStudy,
+  studySearchKeepingOptions,
 } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 
 type Phase =
@@ -50,8 +50,11 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
   const params = new URLSearchParams(location.search);
   const studyInstanceUIDs = studyInstanceUIDsFromSearch(params);
   const studiesKey = studyInstanceUIDs?.join(',') ?? '';
-  const modalitiesInStudy = params.get('modalitiesInStudy');
-  const studyDate = params.get('studyDate');
+  // Viewer options of the link (modalitiesInStudy, studyDate, initial series
+  // or instance, hanging protocol) go on to the viewer; patient keys never do.
+  const viewerSearch = studyInstanceUIDs
+    ? studySearchKeepingOptions(studyInstanceUIDs, location.search)
+    : '';
 
   useEffect(() => {
     const uids = studiesKey ? studiesKey.split(',') : [];
@@ -77,6 +80,9 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
                 percent === null ? null : Math.floor((index * 100 + percent) / uids.length),
             }),
           isCancelled: () => cancelled,
+          // The viewer follows the series still arriving for the first study
+          // only (study browser); the others are opened once complete.
+          openOnFirstSeries: index === 0,
         });
         if (cancelled || outcome.status === 'cancelled') {
           return;
@@ -90,13 +96,13 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
       // The viewer reloads the series still arriving (progressiveRetrieve).
       handovers.forEach(([uid, jobIds]) => rememberPendingRetrieve(uid, jobIds));
       markViewerStudyRetrieved(uids);
-      navigate(viewerPathForStudy(uids, { modalitiesInStudy, studyDate }), { replace: true });
+      navigate(`/viewer?${viewerSearch}`, { replace: true });
     };
     run().catch(() => !cancelled && setPhase({ status: 'failed', reason: 'retrieveFailed' }));
     return () => {
       cancelled = true;
     };
-  }, [studiesKey, modalitiesInStudy, studyDate, attempt, navigate]);
+  }, [studiesKey, viewerSearch, attempt, navigate]);
 
   return (
     <div

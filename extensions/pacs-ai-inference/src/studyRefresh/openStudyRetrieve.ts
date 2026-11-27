@@ -121,6 +121,9 @@ export interface PrepareStudyOptions {
   now?: () => number;
   sessionStorage?: Pick<Storage, 'getItem' | 'setItem'> | null;
   localStorage?: Pick<Storage, 'getItem'> | null;
+  // True (default): resolve once the first series is stored, as the work
+  // list does. False: wait for every series.
+  openOnFirstSeries?: boolean;
 }
 
 const defaultWait = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -143,6 +146,7 @@ export async function prepareStudyForViewer({
   now = Date.now,
   sessionStorage,
   localStorage,
+  openOnFirstSeries = true,
 }: PrepareStudyOptions): Promise<OpenStudyOutcome> {
   // remainingJobIds: retrieval jobs still moving series when the wait is given
   // up; the viewer follows them if the partial copy is opened.
@@ -224,7 +228,15 @@ export async function prepareStudyForViewer({
       unfinished = stillMoving(infos);
       const summary = summarizeRetrieveJobs(infos);
       onProgress?.(summary.overallProgress);
-      if (summary.done || isReadyToOpen(infos, firstIds)) {
+      // Waiting for every series: a job that failed will not move any more.
+      const allFinished =
+        !openOnFirstSeries &&
+        infos.length > 0 &&
+        infos.every(job => job.progress === 100 || job.state === 'Success' || job.state === 'Failure');
+      if (allFinished && !summary.done) {
+        return storedFallback('retrieveFailed');
+      }
+      if (summary.done || (openOnFirstSeries && isReadyToOpen(infos, firstIds))) {
         const remainingJobIds = summary.done
           ? []
           : infos

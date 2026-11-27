@@ -65,6 +65,57 @@ describe('prepareStudyForViewer (the work list open, for every study link)', () 
     expect(repo.isStored).not.toHaveBeenCalled();
   });
 
+  it('can wait for every series (studies after the first of a selection)', async () => {
+    const polls = [
+      [
+        { id: 'a', progress: 100, state: 'Success' },
+        { id: 'b', progress: 10, state: 'Running' },
+      ],
+      [
+        { id: 'a', progress: 100, state: 'Success' },
+        { id: 'b', progress: 100, state: 'Success' },
+      ],
+    ];
+    const repo = repository({
+      retrieveStudy: jest.fn(async () => [
+        { id: 'a', order: 0 },
+        { id: 'b', order: 1 },
+      ]),
+      loadJobs: jest.fn(async () => polls.shift() ?? []),
+    });
+    expect(
+      await prepareStudyForViewer({
+        studyInstanceUID: UID,
+        repository: repo,
+        openOnFirstSeries: false,
+        wait: noWait,
+        sessionStorage: memory(),
+        localStorage: memory(),
+      })
+    ).toEqual({ status: 'open', remainingJobIds: [], modalityId: 'PACS_QUERY' });
+    expect(repo.loadJobs).toHaveBeenCalledTimes(2);
+
+    // A later series failed: what arrived is opened, nothing left to follow.
+    const partial = repository({
+      retrieveStudy: jest.fn(async () => [{ id: 'a', order: 0 }, { id: 'b', order: 1 }]),
+      loadJobs: jest.fn(async () => [
+        { id: 'a', progress: 100, state: 'Success' },
+        { id: 'b', progress: 30, state: 'Failure' },
+      ]),
+      isStored: jest.fn(async () => true),
+    });
+    expect(
+      await prepareStudyForViewer({
+        studyInstanceUID: UID,
+        repository: partial,
+        openOnFirstSeries: false,
+        wait: noWait,
+        sessionStorage: memory(),
+        localStorage: memory(),
+      })
+    ).toEqual({ status: 'open', remainingJobIds: [], modalityId: null });
+  });
+
   it('opens at once when the local copy is already complete (no jobs)', async () => {
     const repo = repository();
     const outcome = await prepareStudyForViewer({

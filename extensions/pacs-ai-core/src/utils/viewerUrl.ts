@@ -144,8 +144,27 @@ export function studyInstanceUIDsFromSearch(search: string | URLSearchParams): s
 }
 
 /**
+ * The query string of the viewer (or of /open-study) for these studies with
+ * the other parameters of a link kept, patient identifiers dropped: viewer
+ * options such as initialSeriesInstanceUID, initialSOPInstanceUID or
+ * hangingprotocolId still apply.
+ */
+export function studySearchKeepingOptions(
+  studyInstanceUIDs: readonly string[],
+  search: string | URLSearchParams
+): string {
+  const kept = withoutPatientIdentifiers(search);
+  kept.delete('StudyInstanceUIDs');
+  kept.delete('studyInstanceUIDs');
+  const params = new URLSearchParams({ StudyInstanceUIDs: studyInstanceUIDs.join(',') });
+  kept.forEach((value, key) => params.append(key, value));
+  return params.toString();
+}
+
+/**
  * A return path such as the sign-in handoff's `/viewer?StudyInstanceUIDs=…`
- * as the open-study link (patient identifiers dropped); other paths unchanged.
+ * as the open-study link (patient identifiers dropped, viewer options kept);
+ * other paths unchanged.
  */
 export function toStudyOpenPath(path: string): string {
   const [pathname, search = ''] = path.split('?', 2);
@@ -156,11 +175,7 @@ export function toStudyOpenPath(path: string): string {
   if (!uids) {
     return path;
   }
-  const params = new URLSearchParams(search);
-  return studyOpenPath(uids, {
-    modalitiesInStudy: params.get('modalitiesInStudy'),
-    studyDate: params.get('studyDate'),
-  });
+  return `${OPEN_STUDY_PATH}?${studySearchKeepingOptions(uids, search)}`;
 }
 
 // --- links that reach /viewer directly (bookmarks, history, old links) ------

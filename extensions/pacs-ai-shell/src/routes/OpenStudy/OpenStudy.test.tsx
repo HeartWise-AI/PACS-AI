@@ -120,6 +120,18 @@ test('a multi-study link retrieves each study and opens them together', async ()
   ]);
 });
 
+test('viewer options of the link reach the viewer, patient keys do not', async () => {
+  renderAt(
+    '/open-study?StudyInstanceUIDs=1.2.3&initialSOPInstanceUID=9.9&hangingprotocolId=mpr&mrn=7',
+    repo()
+  );
+  await waitFor(() =>
+    expect(screen.getByTestId('location').textContent).toBe(
+      '/viewer?StudyInstanceUIDs=1.2.3&initialSOPInstanceUID=9.9&hangingprotocolId=mpr'
+    )
+  );
+});
+
 test('a link without a study UID says so and retrieves nothing', async () => {
   const repository = repo();
   renderAt('/open-study?patientId=MRN1', repository);
