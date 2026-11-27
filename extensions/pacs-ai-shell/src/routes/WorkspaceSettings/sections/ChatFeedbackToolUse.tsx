@@ -250,8 +250,11 @@ export function ToolUseSection({
   );
 }
 
+/** "50% (2)": error rate with the error count; n/a without calls. */
 function pct(stats: ChatFeedbackToolStats, na: string): string {
-  return stats.error_rate === null ? na : `${(stats.error_rate * 100).toFixed(0)}%`;
+  return stats.error_rate === null
+    ? na
+    : `${(stats.error_rate * 100).toFixed(0)}% (${stats.errors})`;
 }
 
 /** Calls per tool, error rate and median latency for up- vs down-voted answers. */
@@ -291,7 +294,7 @@ export function ToolUsageCard({ usage }: { usage: ChatFeedbackToolUsage }) {
                 >
                   ▲ {t('ToolUsageCalls')}
                 </th>
-                <th className="py-1 pr-3 font-normal">▲ {t('ToolUsageErrors')}</th>
+                <th className="py-1 pr-3 font-normal">▲ {t('ToolUsageErrorRate')}</th>
                 <th className="py-1 pr-3 font-normal">▲ {t('ToolUsageMedian')}</th>
                 <th
                   className="py-1 pr-3 font-normal"
@@ -299,7 +302,7 @@ export function ToolUsageCard({ usage }: { usage: ChatFeedbackToolUsage }) {
                 >
                   ▼ {t('ToolUsageCalls')}
                 </th>
-                <th className="py-1 pr-3 font-normal">▼ {t('ToolUsageErrors')}</th>
+                <th className="py-1 pr-3 font-normal">▼ {t('ToolUsageErrorRate')}</th>
                 <th className="py-1 font-normal">▼ {t('ToolUsageMedian')}</th>
               </tr>
             </thead>

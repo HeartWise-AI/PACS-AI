@@ -73,5 +73,6 @@
   "ToolUsageErrors": "Errors",
   "ToolUsageMedian": "Median",
   "ToolUsageEmpty": "No tool calls recorded for these votes.",
-  "ToolUsageTotals": "▲ {{upCalls}} calls · {{upErrors}} errors · median {{upMedian}}  |  ▼ {{downCalls}} calls · {{downErrors}} errors · median {{downMedian}}"
+  "ToolUsageTotals": "▲ {{upCalls}} calls · {{upErrors}} errors · median {{upMedian}}  |  ▼ {{downCalls}} calls · {{downErrors}} errors · median {{downMedian}}",
+  "ToolUsageErrorRate": "Error rate"
 }

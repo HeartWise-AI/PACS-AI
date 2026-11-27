@@ -283,7 +283,8 @@ describe('ChatFeedbackSection', () => {
     const card = container.querySelector('[data-cy="chat-feedback-tool-usage"]');
     expect(card?.textContent).toContain('firecrawl_search');
     expect(card?.textContent).toContain('2.53 s');
-    expect(card?.textContent).toContain('0%');
+    expect(card?.textContent).toContain('0% (0)');
+    expect(card?.textContent).toContain('ToolUsageErrorRate');
     expect(card?.textContent).toContain('ToolNotAvailable');
   });
 

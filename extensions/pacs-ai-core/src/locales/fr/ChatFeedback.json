@@ -73,5 +73,6 @@
   "ToolUsageErrors": "Erreurs",
   "ToolUsageMedian": "Médiane",
   "ToolUsageEmpty": "Aucun appel d’outil enregistré pour ces votes.",
-  "ToolUsageTotals": "▲ {{upCalls}} appels · {{upErrors}} erreurs · médiane {{upMedian}}  |  ▼ {{downCalls}} appels · {{downErrors}} erreurs · médiane {{downMedian}}"
+  "ToolUsageTotals": "▲ {{upCalls}} appels · {{upErrors}} erreurs · médiane {{upMedian}}  |  ▼ {{downCalls}} appels · {{downErrors}} erreurs · médiane {{downMedian}}",
+  "ToolUsageErrorRate": "Taux d’erreur"
 }
