@@ -129,6 +129,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 {linkedDICOMModalityWithEnabledCStore && (
                   <StoreFileButton
                     iframeRef={iframeRef}
+                    html={parsedHTML}
                     encodedData={data.htmlBase64}
                     modelName={modelName}
                     modelVersion={modelVersion}

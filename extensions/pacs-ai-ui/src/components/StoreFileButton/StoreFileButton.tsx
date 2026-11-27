@@ -9,8 +9,29 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
 
+// The displayed report runs in an opaque-origin sandbox the viewer cannot read,
+// so the capture lays the same markup out in a frame that is same-origin but
+// has scripts disabled. html2canvas clones into a frame nested inside it, which
+// inherits that sandbox, so none of the report's scripts or handlers run.
+const loadCaptureFrame = (html: string, width: number): Promise<HTMLIFrameElement> =>
+  new Promise(resolve => {
+    const frame = document.createElement('iframe');
+    frame.setAttribute('sandbox', 'allow-same-origin');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.position = 'fixed';
+    frame.style.left = '-10000px';
+    frame.style.top = '0';
+    frame.style.border = '0';
+    frame.style.width = `${width}px`;
+    frame.style.height = '100vh';
+    frame.onload = () => resolve(frame);
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+  });
+
 const StoreFileButton = ({
   iframeRef,
+  html = '',
   encodedData = '',
   modelName = '',
   modelVersion = '',
@@ -36,12 +57,14 @@ const StoreFileButton = ({
   // handle confirm
   const handleConfirm = async () => {
     setLoading(true);
+    let captureFrame: HTMLIFrameElement | null = null;
     try {
       const iframe = iframeRef.current;
       if (!iframe) {
         throw new Error('Iframe not found');
       }
-      const iframeDoc = iframe.contentWindow?.document;
+      captureFrame = await loadCaptureFrame(html, iframe.clientWidth);
+      const iframeDoc = captureFrame.contentWindow?.document;
       if (!iframeDoc) {
         throw new Error('Cannot access iframe document');
       }
@@ -106,6 +129,7 @@ const StoreFileButton = ({
       console.error(error);
       showAlert(error.message, 'error');
     } finally {
+      captureFrame?.remove();
       handleClose();
       setLoading(false);
     }

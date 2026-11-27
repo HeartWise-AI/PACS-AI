@@ -17,16 +17,20 @@ interface WebappOutputModeModalProps {
   selectedInferenceModel?: GetInferenceAvailableModelsResponse | null;
 }
 
+// The model's web app is untrusted. Without allow-same-origin the frame gets an
+// opaque origin, so its scripts cannot read the viewer's storage, cookies or DOM.
+const WEBAPP_IFRAME_SANDBOX = 'allow-scripts allow-forms';
+
 // Handle iframe load and send message
-const handleIframeLoad = (data: string) => {
-  const iframe = document.getElementById('myIframe') as HTMLIFrameElement;
-  if (iframe && iframe.contentWindow) {
+const handleIframeLoad = (iframe: HTMLIFrameElement, data: string) => {
+  if (iframe.contentWindow) {
     // data to send to the iframe
     const message = {
       type: 'data',
       text: data,
     };
-    // send the message
+    // An opaque origin cannot be named as a target origin, so '*' is the only
+    // value that reaches the sandboxed frame.
     iframe.contentWindow.postMessage(message, '*');
   }
 };
@@ -115,7 +119,8 @@ const WebappOutputModeModal: React.FC<WebappOutputModeModalProps> = ({
                   src={`${process.env.APP_PUBLIC_API_URL}/proxy/docker-inference/${containerName}${data.webappPath}`}
                   style={{ width: '100%', height: '100vh', border: 'none' }}
                   title="Webapp Content"
-                  onLoad={() => handleIframeLoad(data.webappDataBase64)}
+                  sandbox={WEBAPP_IFRAME_SANDBOX}
+                  onLoad={event => handleIframeLoad(event.currentTarget, data.webappDataBase64)}
                 ></iframe>
               )}
             </div>
