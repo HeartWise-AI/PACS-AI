@@ -29,8 +29,8 @@
     "test:unit:ci": "echo 'platform/i18n: missing unit tests'"
   },
   "peerDependencies": {
-    "i18next": "19.9.2",
-    "i18next-browser-languagedetector": "3.1.1",
+    "i18next": "26.7.2",
+    "i18next-browser-languagedetector": "8.3.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1"
@@ -43,8 +43,8 @@
   },
   "devDependencies": {
     "cross-env": "7.0.3",
-    "i18next": "19.9.2",
-    "i18next-browser-languagedetector": "3.1.1",
+    "i18next": "26.7.2",
+    "i18next-browser-languagedetector": "8.3.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1",

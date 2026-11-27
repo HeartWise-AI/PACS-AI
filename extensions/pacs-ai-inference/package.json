@@ -20,7 +20,7 @@
     "@ohif/core": "workspace:*",
     "@ohif/extension-default": "workspace:*",
     "@ohif/ui-next": "workspace:*",
-    "i18next": "19.9.2",
+    "i18next": "26.7.2",
     "react": "18.3.1",
     "react-dnd": "14.0.2",
     "react-dom": "18.3.1",
