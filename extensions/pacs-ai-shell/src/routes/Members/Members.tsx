@@ -18,6 +18,7 @@ import chevronDown from '../../assets/pacs/icons/chevron-down.png';
 import chevronLeft from '../../assets/pacs/icons/chevron-left.png';
 import chevronRight from '../../assets/pacs/icons/chevron-right.png';
 import MemberAccessManagement from './MemberAccessManagement';
+import { assignableMemberRoles } from './memberAccessPolicy';
 import MemberAccessStatusBadge from './MemberAccessStatusBadge';
 import { filterMembers } from './memberSearch';
 import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
@@ -964,7 +965,12 @@ const MembersPage = () => {
                     className="mb-4 block h-[51px] w-full cursor-pointer appearance-none rounded-lg border-2 border-none bg-white bg-opacity-10 px-3 py-3 pr-8 text-lg leading-tight text-white focus:outline-none"
                   >
                     {Object.values(UserRole)
-                      .filter(role => role !== UserRole.OWNER)
+                      .filter(
+                        role =>
+                          role !== UserRole.OWNER &&
+                          (role === selectedUser.role ||
+                            assignableMemberRoles(currentUser?.role).includes(role))
+                      )
                       .map(role => (
                         <option
                           key={role}

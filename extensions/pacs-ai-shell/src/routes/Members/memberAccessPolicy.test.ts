@@ -57,3 +57,27 @@ describe('member access action eligibility', () => {
     ).toMatchObject({ allowed: false, restriction: 'UNKNOWN_TARGET_STATE' });
   });
 });
+
+describe('member account management (owner is absolute)', () => {
+  const { canManageMemberAccount, assignableMemberRoles } = jest.requireActual('./memberAccessPolicy');
+  test.each([
+    [identity('owner', UserRole.OWNER), identity('admin', UserRole.ADMIN), true],
+    [identity('owner', UserRole.OWNER), identity('user', UserRole.USER), true],
+    [identity('owner', UserRole.OWNER), identity('owner', UserRole.OWNER), false],
+    [identity('owner-1', UserRole.OWNER), identity('owner-2', UserRole.OWNER), false],
+    [identity('admin', UserRole.ADMIN), identity('owner', UserRole.OWNER), false],
+    [identity('admin', UserRole.ADMIN), identity('admin-2', UserRole.ADMIN), false],
+    [identity('admin', UserRole.ADMIN), identity('user', UserRole.USER), true],
+    [{ ...identity('lead', UserRole.USER), canManageMembers: true }, identity('owner', UserRole.OWNER), false],
+    [{ ...identity('lead', UserRole.USER), canManageMembers: true }, identity('user', UserRole.USER), true],
+    [identity('user', UserRole.USER), identity('user-2', UserRole.USER), false],
+  ])('%#: actor %j on target %j -> %s', (actor, target, expected) => {
+    expect(canManageMemberAccount(actor, target)).toBe(expected);
+  });
+
+  test('only the owner can grant ADMIN and nobody grants OWNER', () => {
+    expect(assignableMemberRoles(UserRole.OWNER)).toEqual([UserRole.ADMIN, UserRole.USER]);
+    expect(assignableMemberRoles(UserRole.ADMIN)).toEqual([UserRole.USER]);
+    expect(assignableMemberRoles(UserRole.USER)).toEqual([UserRole.USER]);
+  });
+});
