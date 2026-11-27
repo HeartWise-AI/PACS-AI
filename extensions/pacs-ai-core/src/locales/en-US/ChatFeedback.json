@@ -74,5 +74,8 @@
   "ToolUsageMedian": "Median",
   "ToolUsageEmpty": "No tool calls recorded for these votes.",
   "ToolUsageTotals": "▲ {{upCalls}} calls · {{upErrors}} errors · median {{upMedian}}  |  ▼ {{downCalls}} calls · {{downErrors}} errors · median {{downMedian}}",
-  "ToolUsageErrorRate": "Error rate"
+  "ToolUsageErrorRate": "Error rate",
+  "TurnStatus_error": "Error",
+  "TurnStatus_timeout": "Timed out",
+  "TurnError": "What failed"
 }

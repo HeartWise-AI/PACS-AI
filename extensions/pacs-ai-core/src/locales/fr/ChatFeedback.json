@@ -74,5 +74,8 @@
   "ToolUsageMedian": "Médiane",
   "ToolUsageEmpty": "Aucun appel d’outil enregistré pour ces votes.",
   "ToolUsageTotals": "▲ {{upCalls}} appels · {{upErrors}} erreurs · médiane {{upMedian}}  |  ▼ {{downCalls}} appels · {{downErrors}} erreurs · médiane {{downMedian}}",
-  "ToolUsageErrorRate": "Taux d’erreur"
+  "ToolUsageErrorRate": "Taux d’erreur",
+  "TurnStatus_error": "Erreur",
+  "TurnStatus_timeout": "Délai dépassé",
+  "TurnError": "Ce qui a échoué"
 }

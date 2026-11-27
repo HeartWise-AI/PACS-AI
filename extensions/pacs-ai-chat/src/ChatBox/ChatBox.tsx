@@ -3,7 +3,7 @@ import useStudyContext from '@pacs-ai/extension-core/src/hooks/useStudyContext';
 import SelectSeriesModal from '../seriesSelection/SelectSeriesModal';
 
 // Hooks
-import { useChatBox } from './hooks/useChatBox';
+import { CHAT_TURN_IN_PROGRESS, useChatBox } from './hooks/useChatBox';
 import type { RestoredChat } from './hooks/useChatBox';
 import { useSeriesSelection } from './hooks/useSeriesSelection';
 import { useDraggable } from './hooks/useDraggable';
@@ -95,6 +95,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       const messagesWithThinking = [...messages, userMessage, thinkingMessage];
       onMessagesChange(messagesWithThinking);
 
+      const threadAtSend = chat.threadId;
       try {
         // Explicitly selected series define the study; otherwise the open study.
         const studyContext =
@@ -104,11 +105,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
         // Send the message to the backend
         const responseData = await chat.sendMessage(
-          chat.threadId,
+          threadAtSend,
           savedInput,
           series.selectedSeries,
           studyContext
         );
+
+        // The user started a new chat (or opened another one) meanwhile: this
+        // answer stays stored in its own thread and is not shown here.
+        if (responseData?.superseded) {
+          return;
+        }
 
         // Remove thinking message and add the assistant's response
         if (responseData && responseData.content) {
@@ -117,11 +124,16 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             ...(responseData.assistant_message_id
               ? {
                   backendMessageId: responseData.assistant_message_id,
-                  backendThreadId: chat.threadId,
+                  backendThreadId: threadAtSend,
                 }
               : {}),
             text: responseData.content.trim(),
             sender: 'assistant',
+            // A turn the chat backend answered with a timeout or an error:
+            // stored (it can be voted on) and the question can be asked again.
+            ...(responseData.status === 'timeout' || responseData.status === 'error'
+              ? { status: 'error' as const, retryText: savedInput }
+              : {}),
             timestamp: responseData.completed_at ? new Date(responseData.completed_at) : new Date(),
             ...(responseData.activity?.steps?.length ? { activity: responseData.activity } : {}),
             ...(responseData.citations?.length ? { citations: responseData.citations } : {}),
@@ -152,21 +164,33 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       } catch (error: any) {
         console.error('Error handling message submission:', error);
 
-        let errorMessage = 'Unknown error';
-        if (error.message) {
-          errorMessage = error.message;
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response?.data?.error) {
-          errorMessage = error.response.data.error;
+        let errorText: string;
+        if (error?.errorCode === CHAT_TURN_IN_PROGRESS) {
+          errorText =
+            'The previous answer in this chat is still being written. Wait for it, or start a new chat.';
+        } else {
+          let errorMessage = 'Unknown error';
+          if (error.message) {
+            errorMessage = error.message;
+          } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+          }
+          errorText = /try again/i.test(errorMessage)
+            ? `Error: ${errorMessage}`
+            : `Error: ${errorMessage.replace(/\.$/, '')}. Please try again.`;
         }
 
-        // Add error message, replacing the thinking message
+        // Add error message, replacing the thinking message. Nothing was stored
+        // for it in the chat backend, so it offers "Try again" instead of thumbs.
         const errorMessageObj: Message = {
           id: (Date.now() + 2).toString(),
-          text: `Error: ${errorMessage}. Please try again.`,
+          text: errorText,
           sender: 'assistant',
           timestamp: new Date(),
+          status: 'error',
+          retryText: savedInput,
         };
 
         // Filter out the thinking message and add the error message
@@ -382,6 +406,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             messageFeedback={chatFeedback.feedback}
             onFeedback={chatFeedback.toggle}
             onFeedbackDetails={chatFeedback.saveDetails}
+            onRetryMessage={
+              chat.isProcessing || chat.historyLoading || !chat.threadId ? undefined : handleSubmit
+            }
           />
 
           <InputArea

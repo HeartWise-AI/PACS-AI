@@ -81,6 +81,8 @@ export interface Message {
   // conversation_request, message_language, client, conversation or default).
   responseLanguage?: 'en' | 'fr';
   responseLanguageSource?: string;
+  // The question to send again from a failed answer ("Try again").
+  retryText?: string;
 }
 
 // Interface for the initial series selection prop for the modal

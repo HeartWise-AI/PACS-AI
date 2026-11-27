@@ -93,5 +93,6 @@
   "AnswerLanguageSourceClient": "réglage de langue",
   "AnswerLanguageSourceConversation": "comme la conversation",
   "AnswerLanguageSourceDefault": "par défaut sur ce site",
-  "AnswerLanguageNoReason": "Langue de la réponse : {{language}}"
+  "AnswerLanguageNoReason": "Langue de la réponse : {{language}}",
+  "RetryQuestion": "Réessayer"
 }

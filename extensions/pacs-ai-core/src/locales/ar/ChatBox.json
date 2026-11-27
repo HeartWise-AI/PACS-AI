@@ -93,5 +93,6 @@
   "AnswerLanguageSourceClient": "إعداد اللغة",
   "AnswerLanguageSourceConversation": "مثل المحادثة",
   "AnswerLanguageSourceDefault": "الافتراضية لهذا الموقع",
-  "AnswerLanguageNoReason": "لغة الإجابة: {{language}}"
+  "AnswerLanguageNoReason": "لغة الإجابة: {{language}}",
+  "RetryQuestion": "أعد المحاولة"
 }

@@ -14,6 +14,8 @@ interface MessageListProps {
   messageFeedback: Record<string, ChatFeedbackEntry>;
   onFeedback: (message: Message, type: 'up' | 'down') => void;
   onFeedbackDetails?: (message: Message, category: string, comment: string) => void;
+  // Sends the question of a failed answer again; absent while the chat is busy.
+  onRetryMessage?: (question: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -25,6 +27,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   messageFeedback,
   onFeedback,
   onFeedbackDetails,
+  onRetryMessage,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +52,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             feedback={messageFeedback[message.id]}
             onFeedback={onFeedback}
             onFeedbackDetails={onFeedbackDetails}
+            onRetryMessage={onRetryMessage}
           />
         ))
       )}

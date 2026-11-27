@@ -103,3 +103,50 @@ describe('MessageBubble thumbs', () => {
     expect(onFeedback).toHaveBeenCalledWith(answer, 'up');
   });
 });
+
+describe('MessageBubble on a failed answer', () => {
+  it('offers "Try again" and no thumbs for an error nothing was stored for', () => {
+    const onRetry = jest.fn();
+    const onFeedback = jest.fn();
+    const { getByText, queryByLabelText } = render(
+      <MessageBubble
+        message={{
+          id: 'err-1',
+          sender: 'assistant',
+          text: 'The previous answer in this chat is still being written. Wait for it, or start a new chat.',
+          timestamp: new Date('2026-11-27T12:00:00Z'),
+          status: 'error',
+          retryText: 'Summarize all findings',
+        }}
+        onFeedback={onFeedback}
+        onRetryMessage={onRetry}
+      />
+    );
+    expect(queryByLabelText('FeedbackThumbsDown')).toBeNull();
+    fireEvent.click(getByText('RetryQuestion'));
+    expect(onRetry).toHaveBeenCalledWith('Summarize all findings');
+  });
+
+  it('keeps the thumbs on a stored error answer so the vote is saved', () => {
+    const onFeedback = jest.fn();
+    const stored: Message = {
+      id: 'err-2',
+      backendMessageId: 'answer-err',
+      sender: 'assistant',
+      text: 'This answer could not be completed because of a server error.',
+      timestamp: new Date('2026-11-27T12:00:00Z'),
+      status: 'error',
+      retryText: 'q',
+    };
+    const { getByLabelText, getByText } = render(
+      <MessageBubble
+        message={stored}
+        onFeedback={onFeedback}
+        onRetryMessage={jest.fn()}
+      />
+    );
+    fireEvent.click(getByLabelText('FeedbackThumbsDown'));
+    expect(onFeedback).toHaveBeenCalledWith(stored, 'down');
+    expect(getByText('RetryQuestion')).toBeTruthy();
+  });
+});

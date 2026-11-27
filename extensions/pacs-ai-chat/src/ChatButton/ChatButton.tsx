@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import ChatBox from '../ChatBox';
+import { getOpenStudyContext } from '../ChatBox/utils/getOpenStudyContext';
 
 // Import the Message interface from ChatBox
 interface Message {
@@ -18,12 +19,32 @@ interface ChatButtonProps {
 const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
   const { t } = useTranslation();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [viewportChangeCounter, setViewportChangeCounter] = useState(0);
+  // The chat box is remounted only when the open study changes, never on a mere
+  // viewport or display-set change: a remount dropped the thread in use and the
+  // answer in flight, so the next question went to another thread (busy, 409).
+  const [chatStudyKey, setChatStudyKey] = useState<string>(() => {
+    try {
+      return getOpenStudyContext(servicesManager)?.studyInstanceUID || '';
+    } catch {
+      return '';
+    }
+  });
   // Add state for chat messages
   const [messages, setMessages] = useState<Message[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Listen for viewport changes to update the series information
+  const refreshChatStudy = useCallback(() => {
+    let studyInstanceUID = '';
+    try {
+      studyInstanceUID = getOpenStudyContext(servicesManager)?.studyInstanceUID || '';
+    } catch {
+      studyInstanceUID = '';
+    }
+    // Keep the chat (and its thread) until the viewer knows which study is open.
+    setChatStudyKey(previous => studyInstanceUID || previous);
+  }, [servicesManager]);
+
+  // Listen for viewport changes to follow the open study
   useEffect(() => {
     if (!servicesManager?.services) {
       console.warn('servicesManager or services not available for viewport tracking');
@@ -43,8 +64,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
       const viewportSubscription = viewportGridService.subscribe(
         viewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED,
         () => {
-          console.log('Viewport change detected');
-          setViewportChangeCounter(prev => prev + 1);
+          refreshChatStudy();
         }
       );
       unsubscribeViewport = viewportSubscription.unsubscribe;
@@ -59,8 +79,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
         const displaySetSubscription = displaySetService.subscribe(
           displaySetService.EVENTS.DISPLAY_SETS_CHANGED,
           () => {
-            console.log('Display set change detected');
-            setViewportChangeCounter(prev => prev + 1);
+            refreshChatStudy();
           }
         );
         unsubscribeDisplaySet = displaySetSubscription.unsubscribe;
@@ -78,7 +97,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
         unsubscribeDisplaySet();
       }
     };
-  }, [servicesManager]);
+  }, [servicesManager, refreshChatStudy]);
 
   // Handle keyboard shortcut to toggle chat (Ctrl+/)
   useEffect(() => {
@@ -96,7 +115,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
   const toggleChat = () => {
     // Force a refresh of series info when opening
     if (!isChatOpen) {
-      setViewportChangeCounter(prev => prev + 1);
+      refreshChatStudy();
     }
     setIsChatOpen(prev => !prev);
   };
@@ -137,7 +156,7 @@ const ChatButton: React.FC<ChatButtonProps> = ({ servicesManager }) => {
 
       {createPortal(
         <ChatBox
-          key={`chat-box-${viewportChangeCounter}`}
+          key={`chat-box-${chatStudyKey}`}
           isOpen={isChatOpen}
           onClose={toggleChat}
           servicesManager={servicesManager}

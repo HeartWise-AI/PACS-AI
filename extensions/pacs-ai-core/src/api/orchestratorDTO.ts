@@ -280,6 +280,10 @@ export interface ChatFeedbackItem {
   origin: string | null;
   specialists: string[];
   tool_count: number;
+  // "error" or "timeout" when the rated answer is the message of a failed turn,
+  // with the (redacted) error the chat recorded. Absent with an older backend.
+  turn_status?: string | null;
+  turn_error?: string | null;
   // Sealed with a key this server does not hold: listed without content.
   sealed_elsewhere: boolean;
 }
