@@ -1,6 +1,10 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import type { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import type {
+  GetInferenceAvailableModelsResponse,
+  GetInferenceIngestionJobsResponse,
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import IngestionJobsTable from './IngestionJobsTable';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -10,8 +14,6 @@ jest.mock('./IngestionJobActionButton', () => ({
   __esModule: true,
   default: () => null,
 }));
-
-import IngestionJobsTable from './IngestionJobsTable';
 
 const baseJob: GetInferenceIngestionJobsResponse = {
   id: 'job-1',
@@ -41,7 +43,11 @@ describe('IngestionJobsTable notifications', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   });
 
-  function render(jobs: GetInferenceIngestionJobsResponse[], togglingNotificationsJobId = '') {
+  function render(
+    jobs: GetInferenceIngestionJobsResponse[],
+    togglingNotificationsJobId = '',
+    upgradeTargets: ReadonlyMap<string, GetInferenceAvailableModelsResponse> = new Map()
+  ) {
     act(() => {
       root.render(
         <IngestionJobsTable
@@ -56,6 +62,7 @@ describe('IngestionJobsTable notifications', () => {
           usersById={new Map([['user-a', { name: 'Synthetic Admin', email: 'a@example.invalid' }]])}
           togglingNotificationsJobId={togglingNotificationsJobId}
           onToggleNotifications={onToggleNotifications}
+          upgradeTargets={upgradeTargets}
         />
       );
     });
@@ -105,5 +112,25 @@ describe('IngestionJobsTable notifications', () => {
   it('disables the switch while its update is saving', () => {
     render([baseJob], 'job-1');
     expect(toggle('job-1').disabled).toBe(true);
+  });
+
+  it('shows the currently deployed version when an upgrade is available', () => {
+    render(
+      [{ ...baseJob, status: 'STOPPED' }],
+      '',
+      new Map([
+        [
+          'job-1',
+          {
+            modelId: 'model-1',
+            registrationId: 'registration-1',
+            modelName: 'Model',
+            version: '2.0.0',
+            containerId: 'container-2',
+          } as GetInferenceAvailableModelsResponse,
+        ],
+      ])
+    );
+    expect(container.textContent).toContain('Upgrade available: 2.0.0');
   });
 });

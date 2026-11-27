@@ -37,6 +37,7 @@ import {
   StopInferenceIngestionJobRequest,
   StopInferenceModelContainerRequest,
   UpdateInferenceIngestionJobRequest,
+  UpgradeInferenceIngestionJobRequest,
   UpdateInferenceModelRequest,
   UpdateModelFeedbackRequest,
 } from './inferenceDTO';
@@ -627,6 +628,20 @@ const inferenceRepository = {
         const { data } = response;
         return data;
       })
+      .catch((error: AxiosError<ErrorAPIResponse>) => {
+        const { response } = error;
+        throw response?.data !== undefined ? response.data : object;
+      });
+  },
+  /** Retarget a stopped ingestion job to its model's current managed deployment. */
+  async UpgradeInferenceIngestionJob(
+    request: UpgradeInferenceIngestionJobRequest
+  ): Promise<APIResponse<void>> {
+    return Api()
+      .post(`/v1/inference/ingestion/job/${request.id}/upgrade`, {
+        expectedModelVersion: request.expectedModelVersion,
+      })
+      .then((response: AxiosResponse<APIResponse<void>>) => response.data)
       .catch((error: AxiosError<ErrorAPIResponse>) => {
         const { response } = error;
         throw response?.data !== undefined ? response.data : object;

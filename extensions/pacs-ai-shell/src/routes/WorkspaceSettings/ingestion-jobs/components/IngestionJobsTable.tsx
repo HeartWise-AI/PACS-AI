@@ -5,7 +5,10 @@ import Table from '../../../../components/Table';
 import playIcon from '../../../../assets/pacs/icons/play.png';
 import refreshIcon from '../../../../assets/pacs/icons/refresh.png';
 import stopIcon from '../../../../assets/pacs/icons/stop.png';
-import { GetInferenceIngestionJobsResponse } from '@pacs-ai/extension-core/src/api/inferenceDTO';
+import {
+  GetInferenceAvailableModelsResponse,
+  GetInferenceIngestionJobsResponse,
+} from '@pacs-ai/extension-core/src/api/inferenceDTO';
 import { getIngestionJobHeaders, InferenceContainerStatus } from '../../constants';
 import { getContainerStatusColor } from '../../utils';
 import IngestionJobActionButton from './IngestionJobActionButton';
@@ -30,6 +33,9 @@ type IngestionJobsTableProps = {
   usersById?: ReadonlyMap<string, Pick<UserResponse, 'name' | 'email'>>;
   togglingNotificationsJobId?: string;
   onToggleNotifications?: (row: GetInferenceIngestionJobsResponse, enabled: boolean) => void;
+  upgradeTargets?: ReadonlyMap<string, GetInferenceAvailableModelsResponse>;
+  upgradingJobId?: string;
+  onUpgrade?: (row: GetInferenceIngestionJobsResponse) => void;
 };
 
 const NO_USERS: ReadonlyMap<string, Pick<UserResponse, 'name' | 'email'>> = new Map();
@@ -46,6 +52,9 @@ const IngestionJobsTable = ({
   usersById = NO_USERS,
   togglingNotificationsJobId = '',
   onToggleNotifications,
+  upgradeTargets = new Map(),
+  upgradingJobId = '',
+  onUpgrade,
 }: IngestionJobsTableProps) => {
   const { t } = useTranslation('Common');
   const headers = getIngestionJobHeaders(t);
@@ -87,11 +96,19 @@ const IngestionJobsTable = ({
           return <div className="w-[120px] font-mono text-sm text-white">{row.id}</div>;
         }
         if (header.value === 'model') {
+          const upgrade = upgradeTargets.get(row.id);
           return (
-            <div className="w-[260px] space-x-1 text-white">
-              <span>{row.modelName}</span>
-              <span>-</span>
-              <span>{row.modelVersion}</span>
+            <div className="w-[260px] text-white">
+              <div className="space-x-1">
+                <span>{row.modelName}</span>
+                <span>-</span>
+                <span>{row.modelVersion}</span>
+              </div>
+              {upgrade && (
+                <div className="text-primary mt-1 text-xs">
+                  {t('Upgrade available')}: {upgrade.version}
+                </div>
+              )}
             </div>
           );
         }
@@ -196,6 +213,9 @@ const IngestionJobsTable = ({
                 row={row}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                upgradeVersion={upgradeTargets.get(row.id)?.version}
+                upgradeDisabled={running || upgradingJobId === row.id}
+                onUpgrade={onUpgrade}
               />
             </div>
           );
