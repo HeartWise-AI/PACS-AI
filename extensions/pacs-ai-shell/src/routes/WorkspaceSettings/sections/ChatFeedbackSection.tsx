@@ -260,6 +260,15 @@ export function ChatFeedbackRow({
         onClick={() => setOpen(value => !value)}
       >
         <VoteBadge vote={item.vote} />
+        {item.turn_status && item.turn_status !== 'success' && (
+          <span
+            className="rounded px-1.5 py-0.5 text-xs font-medium"
+            data-cy="chat-feedback-turn-status"
+            style={{ color: '#ff8a8a', backgroundColor: 'rgba(255, 138, 138, 0.12)' }}
+          >
+            {t(`TurnStatus_${item.turn_status}`, { defaultValue: item.turn_status })}
+          </span>
+        )}
         <span className="text-sm text-white/80">{tChat(`FeedbackReason_${item.category}`)}</span>
         <span className="min-w-0 flex-1 truncate text-sm text-white/60">
           {item.question || (item.sealed_elsewhere ? t('SealedElsewhere') : '')}
@@ -289,6 +298,17 @@ export function ChatFeedbackRow({
                   {item.answer}
                 </div>
               </Field>
+              {item.turn_error && (
+                <Field label={t('TurnError')}>
+                  <p
+                    className="whitespace-pre-wrap break-words"
+                    data-cy="chat-feedback-turn-error"
+                    style={{ color: '#ff8a8a' }}
+                  >
+                    {item.turn_error}
+                  </p>
+                </Field>
+              )}
             </>
           )}
           <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

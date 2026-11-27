@@ -381,6 +381,31 @@ describe('ChatFeedbackSection', () => {
     expect(container.textContent).toContain('NotConfigured');
   });
 
+  it('marks a vote on a failed turn with its status and what failed', async () => {
+    listChatFeedback.mockReset().mockResolvedValue({
+      data: {
+        total: 2,
+        limit: 50,
+        offset: 0,
+        items: [
+          item({
+            feedback_id: 'fb-error',
+            answer: 'This answer could not be completed because of a server error.',
+            turn_status: 'error',
+            turn_error: 'RuntimeError: upstream failed',
+          }),
+          item({ feedback_id: 'fb-ok', vote: 'down', turn_status: 'success', turn_error: null }),
+        ],
+      },
+    });
+    await render();
+    expect(container.querySelectorAll('[data-cy="chat-feedback-turn-status"]')).toHaveLength(1);
+    expect(container.textContent).toContain('TurnStatus_error');
+    const error = container.querySelectorAll('[data-cy="chat-feedback-turn-error"]');
+    expect(error).toHaveLength(1);
+    expect(error[0].textContent).toBe('RuntimeError: upstream failed');
+  });
+
   it('escapes the study UID in the viewer link', () => {
     expect(viewerStudyHref('1.2&x=3')).toBe('/viewer?StudyInstanceUIDs=1.2%26x%3D3');
   });
