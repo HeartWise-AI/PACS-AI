@@ -1,6 +1,8 @@
 // Shared by the predict HTML output modal and the stored-result viewer so
 // both decode and sandbox model-generated HTML reports the same way.
-export const HTML_REPORT_IFRAME_SANDBOX = 'allow-same-origin allow-scripts';
+// Never add allow-same-origin: combined with allow-scripts it gives the report
+// the viewer's origin, and with it the session token and the viewer's DOM.
+export const HTML_REPORT_IFRAME_SANDBOX = 'allow-scripts';
 
 export function decodeBase64HTML(htmlBase64: string): string {
   // Decode base64 to binary string, then convert to Uint8Array more efficiently

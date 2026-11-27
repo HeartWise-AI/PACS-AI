@@ -208,7 +208,7 @@ describe('ViewerModelResultDrawer', () => {
     const iframe = oneByTestId(renderer!, 'viewer-model-result-report');
     expect(iframe.tagName).toBe('IFRAME');
     expect(iframe.getAttribute('srcdoc')).toBe('<h1>Report</h1>');
-    expect(iframe.getAttribute('sandbox')).toBe('allow-same-origin allow-scripts');
+    expect(iframe.getAttribute('sandbox')).toBe('allow-scripts');
     expect(mockOpen).not.toHaveBeenCalled();
     expect(text(renderer!)).toContain('Run from viewer');
     expect(oneByTestId(renderer!, 'viewer-model-result-feedback').dataset.runId).toBe('run-1');

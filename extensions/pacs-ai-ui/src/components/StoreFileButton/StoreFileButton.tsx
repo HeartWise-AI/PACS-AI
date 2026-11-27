@@ -9,8 +9,25 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
 
+// No allow-scripts: the report's own script must never run with the viewer's
+// origin. allow-same-origin only lets html2canvas read the rendered document.
+const SNAPSHOT_FRAME_SANDBOX = 'allow-same-origin';
+const SNAPSHOT_FRAME_WIDTH = 1024;
+
+const renderSnapshotFrame = (html: string): Promise<HTMLIFrameElement> =>
+  new Promise(resolve => {
+    const frame = document.createElement('iframe');
+    frame.setAttribute('sandbox', SNAPSHOT_FRAME_SANDBOX);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.tabIndex = -1;
+    frame.style.cssText = `position:fixed;top:0;left:-${SNAPSHOT_FRAME_WIDTH * 2}px;width:${SNAPSHOT_FRAME_WIDTH}px;height:${window.innerHeight}px;border:0;`;
+    frame.addEventListener('load', () => resolve(frame), { once: true });
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+  });
+
 const StoreFileButton = ({
-  iframeRef,
+  html = '',
   encodedData = '',
   modelName = '',
   modelVersion = '',
@@ -36,12 +53,10 @@ const StoreFileButton = ({
   // handle confirm
   const handleConfirm = async () => {
     setLoading(true);
+    let snapshotFrame: HTMLIFrameElement | null = null;
     try {
-      const iframe = iframeRef.current;
-      if (!iframe) {
-        throw new Error('Iframe not found');
-      }
-      const iframeDoc = iframe.contentWindow?.document;
+      snapshotFrame = await renderSnapshotFrame(html);
+      const iframeDoc = snapshotFrame.contentDocument;
       if (!iframeDoc) {
         throw new Error('Cannot access iframe document');
       }
@@ -106,6 +121,7 @@ const StoreFileButton = ({
       console.error(error);
       showAlert(error.message, 'error');
     } finally {
+      snapshotFrame?.remove();
       handleClose();
       setLoading(false);
     }
