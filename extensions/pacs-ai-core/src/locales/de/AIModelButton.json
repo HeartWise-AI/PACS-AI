@@ -44,6 +44,8 @@
   "ViewerRunQuotaExceeded": "Inferenzkontingent erschöpft oder zu viele aktive Ausführungen. Bitte später erneut versuchen.",
   "ViewerResultTriggerAutoLegacy": "Automatisch (Altbestand)",
   "ViewerReportFallbackNote": "Der Bericht konnte nicht erstellt werden; das gespeicherte Ergebnis wird angezeigt.",
+  "ViewerReportLoading": "Bericht wird geladen…",
+  "ViewerReportRetry": "Erneut laden",
   "ViewerResultSeriesAll": "Alle Serien",
   "ViewerResultSeriesSubset": "{{used}} von {{total}} Serien",
   "ViewerResultSeriesCount": "{{used}} Serie(n)",

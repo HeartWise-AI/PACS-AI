@@ -230,6 +230,30 @@ describe('viewer results repository', () => {
     expect(error).toMatchObject({ status: 404, errorCode: 'REPORT_NOT_AVAILABLE' });
   });
 
+  test('marks a report request that got no response', async () => {
+    const http = client();
+    // axios network error: no response; a thrown non-object (the prop-types
+    // shim seen in the console) is treated the same way.
+    http.get.mockRejectedValueOnce({ message: 'Network Error', code: 'ERR_NETWORK' });
+    http.get.mockRejectedValueOnce(function shim() {});
+    http.get.mockRejectedValueOnce(httpError(503));
+    const repository = createViewerResultsRepository(http);
+    const result = { studyInstanceUID: '1', runId: 'r', executionId: 'e' } as ViewerModelResult;
+
+    await expect(repository.loadReport(result)).rejects.toMatchObject({
+      status: null,
+      noResponse: true,
+    });
+    await expect(repository.loadReport(result)).rejects.toMatchObject({
+      status: null,
+      noResponse: true,
+    });
+    await expect(repository.loadReport(result)).rejects.toMatchObject({
+      status: 503,
+      noResponse: false,
+    });
+  });
+
   test('starts a managed run without series when none are selected', async () => {
     const http = client();
     http.post.mockResolvedValue({

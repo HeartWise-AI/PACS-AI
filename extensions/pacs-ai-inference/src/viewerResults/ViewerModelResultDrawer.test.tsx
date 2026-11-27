@@ -264,6 +264,117 @@ describe('ViewerModelResultDrawer', () => {
     expect(oneByTestId(renderer!, 'viewer-model-result-report-fallback')).toBeTruthy();
   });
 
+  describe('report retry', () => {
+    const networkError = () => new ViewerResultsRequestError('x', null, null, null, true);
+    const ok = { htmlBase64: btoa('<h1>Report</h1>'), contentType: 'text/html' };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    async function advance(ms: number) {
+      await act(async () => {
+        jest.advanceTimersByTime(ms);
+      });
+    }
+
+    test('retries a network error and shows the report, saying "Loading report…" meanwhile', async () => {
+      const loadReport = jest
+        .fn()
+        .mockRejectedValueOnce(networkError())
+        .mockRejectedValueOnce(new ViewerResultsRequestError('x', 502))
+        .mockResolvedValue(ok);
+      await render(result(), repository(loadReport));
+
+      expect(loadReport).toHaveBeenCalledTimes(1);
+      expect(oneByTestId(renderer!, 'viewer-model-result-loading').textContent).toBe(
+        'Loading report…'
+      );
+      expect(byTestId(renderer!, 'viewer-model-result-report-fallback')).toHaveLength(0);
+      expect(mockOpen).not.toHaveBeenCalled();
+
+      await advance(1000);
+      expect(loadReport).toHaveBeenCalledTimes(2);
+      expect(oneByTestId(renderer!, 'viewer-model-result-loading').textContent).toBe(
+        'Loading report…'
+      );
+
+      await advance(2000);
+      expect(loadReport).toHaveBeenCalledTimes(3);
+      expect(oneByTestId(renderer!, 'viewer-model-result-report').getAttribute('srcdoc')).toBe(
+        '<h1>Report</h1>'
+      );
+      expect(mockOpen).not.toHaveBeenCalled();
+    });
+
+    test('falls back to the stored result after 1 s, 2 s and 4 s retries, and Retry loads it again', async () => {
+      const loadReport = jest.fn().mockRejectedValue(new ViewerResultsRequestError('x', 503));
+      await render(result(), repository(loadReport));
+
+      await advance(1000);
+      await advance(2000);
+      expect(loadReport).toHaveBeenCalledTimes(3);
+      expect(byTestId(renderer!, 'viewer-model-result-report-fallback')).toHaveLength(0);
+      await advance(4000);
+      expect(loadReport).toHaveBeenCalledTimes(4);
+      expect(oneByTestId(renderer!, 'viewer-model-result-report-fallback')).toBeTruthy();
+      expect(mockOpen).toHaveBeenCalled();
+
+      loadReport.mockResolvedValue(ok);
+      await act(async () => {
+        fireEvent.click(oneByTestId(renderer!, 'viewer-model-result-report-retry'));
+      });
+      expect(loadReport).toHaveBeenCalledTimes(5);
+      expect(oneByTestId(renderer!, 'viewer-model-result-report')).toBeTruthy();
+      expect(byTestId(renderer!, 'viewer-model-result-report-fallback')).toHaveLength(0);
+    });
+
+    test('does not retry when the backend says there is no report', async () => {
+      const loadReport = jest
+        .fn()
+        .mockRejectedValue(new ViewerResultsRequestError('x', 404, 'REPORT_NOT_AVAILABLE'));
+      await render(result(), repository(loadReport));
+      await advance(10000);
+
+      expect(loadReport).toHaveBeenCalledTimes(1);
+      expect(oneByTestId(renderer!, 'viewer-model-result-report-fallback')).toBeTruthy();
+    });
+
+    test('stops retrying when the drawer closes', async () => {
+      const loadReport = jest.fn().mockRejectedValue(networkError());
+      await render(result(), repository(loadReport));
+      renderer!.unmount();
+      renderer = null;
+      await act(async () => {
+        jest.advanceTimersByTime(10000);
+      });
+
+      expect(loadReport).toHaveBeenCalledTimes(1);
+    });
+
+    test('offers Retry when a run without execution ids cannot load its report', async () => {
+      const loadReport = jest.fn().mockRejectedValue(networkError());
+      await render(
+        result({ runId: null, executionId: null, studyServiceJobId: 'job-1' }),
+        repository(loadReport)
+      );
+      await advance(1000);
+      await advance(2000);
+      await advance(4000);
+      expect(loadReport).toHaveBeenCalledTimes(4);
+      expect(text(renderer!)).toContain('The report could not be loaded.');
+
+      loadReport.mockResolvedValue(ok);
+      await act(async () => {
+        fireEvent.click(oneByTestId(renderer!, 'viewer-model-result-report-retry'));
+      });
+      expect(oneByTestId(renderer!, 'viewer-model-result-report')).toBeTruthy();
+    });
+  });
+
   test('labels results without an api-pacs run as legacy automatic', async () => {
     await render(result({ trigger: null, reportAvailable: false }), repository(jest.fn()));
 

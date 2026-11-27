@@ -50,18 +50,22 @@ export class ViewerResultsRequestError extends Error {
   readonly errorCode: string | null;
   // api-pacs `message` of a coded error response, when present.
   readonly serverMessage: string | null;
+  // The request got no HTTP response at all (network error, aborted request).
+  readonly noResponse: boolean;
 
   constructor(
     message: string,
     status: number | null,
     errorCode: string | null = null,
-    serverMessage: string | null = null
+    serverMessage: string | null = null,
+    noResponse = false
   ) {
     super(message);
     this.name = 'ViewerResultsRequestError';
     this.status = status;
     this.errorCode = errorCode;
     this.serverMessage = serverMessage;
+    this.noResponse = noResponse;
   }
 }
 
@@ -113,7 +117,8 @@ function requestError(error: unknown, fallbackMessage: string): ViewerResultsReq
     fallbackMessage,
     status,
     errorCode,
-    errorCode ? optionalString(body?.message) : null
+    errorCode ? optionalString(body?.message) : null,
+    response === null
   );
 }
 

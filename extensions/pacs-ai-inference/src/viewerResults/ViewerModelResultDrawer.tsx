@@ -8,6 +8,7 @@ import {
   isEmptyModelExecutionResult,
 } from '../studyProcessing/modelExecutionResultPresentation';
 import type { ViewerResultsRepository } from './viewerResultsRepository';
+import { loadReportWithRetry } from './reportRetry';
 import ViewerModelResultFeedback from './ViewerModelResultFeedback';
 import ViewerRunLabels from './ViewerRunLabels';
 import {
@@ -101,6 +102,8 @@ export function ViewerModelResultDrawer({
   const [report, setReport] = useState<ReportState>(() =>
     canLoadReport(result) ? { status: 'loading' } : { status: 'none' }
   );
+  // Incremented by the Retry button to request the report again.
+  const [reportAttempt, setReportAttempt] = useState(0);
   const structured = useModelExecutionResultViewer(resultKey);
   const hasExecution = !!(result.runId && result.executionId);
   const showStructured = report.status === 'none' || (report.status === 'error' && hasExecution);
@@ -116,9 +119,17 @@ export function ViewerModelResultDrawer({
     }
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     setReport({ status: 'loading' });
-    repository
-      .loadReport(result)
+    // Network errors and 5xx are retried (1 s, 2 s, 4 s) before the drawer
+    // falls back to the stored result.
+    loadReportWithRetry(() => repository.loadReport(result), {
+      wait: ms =>
+        new Promise<void>(resolve => {
+          retryTimer = setTimeout(resolve, ms);
+        }),
+      isCancelled: () => cancelled,
+    })
       .then(loaded => {
         if (!cancelled) {
           setReport({ status: 'ready', html: decodeBase64HTML(loaded.htmlBase64) });
@@ -131,10 +142,15 @@ export function ViewerModelResultDrawer({
       });
     return () => {
       cancelled = true;
+      if (retryTimer !== undefined) {
+        clearTimeout(retryTimer);
+      }
     };
     // The key captures every field the request depends on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repository, resultKey]);
+  }, [repository, resultKey, reportAttempt]);
+
+  const retryReport = () => setReportAttempt(attempt => attempt + 1);
 
   const { open: openStructured } = structured;
   useEffect(() => {
@@ -574,7 +590,9 @@ export function ViewerModelResultDrawer({
             className="px-5 py-5 text-sm text-[#c5cbc5]"
             data-testid="viewer-model-result-loading"
           >
-            {t('ViewerResultLoading', { defaultValue: 'Loading result…' })}
+            {report.status === 'loading'
+              ? t('ViewerReportLoading', { defaultValue: 'Loading report…' })
+              : t('ViewerResultLoading', { defaultValue: 'Loading result…' })}
           </p>
         )}
         {report.status === 'ready' && (
@@ -592,6 +610,14 @@ export function ViewerModelResultDrawer({
             className="px-5 py-5 text-sm text-[#ffb0b0]"
           >
             {t('ViewerReportUnavailable', { defaultValue: 'The report could not be loaded.' })}
+            <button
+              type="button"
+              className="ml-3 rounded-md border border-current px-3 py-1 text-xs font-bold hover:bg-white/10"
+              onClick={retryReport}
+              data-testid="viewer-model-result-report-retry"
+            >
+              {t('ViewerReportRetry', { defaultValue: 'Retry' })}
+            </button>
           </p>
         )}
         {showStructured && !hasExecution && report.status === 'none' && (
@@ -608,12 +634,22 @@ export function ViewerModelResultDrawer({
           <div className="px-5 py-5">
             {report.status === 'error' && (
               <p
-                className="mb-4 text-xs text-[#c5cbc5]"
+                className="mb-4 flex flex-wrap items-center gap-3 text-xs text-[#c5cbc5]"
                 data-testid="viewer-model-result-report-fallback"
               >
-                {t('ViewerReportFallbackNote', {
-                  defaultValue: 'The report could not be rendered; showing the stored result.',
-                })}
+                <span>
+                  {t('ViewerReportFallbackNote', {
+                    defaultValue: 'The report could not be rendered; showing the stored result.',
+                  })}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border border-current px-3 py-1 font-bold hover:bg-white/10"
+                  onClick={retryReport}
+                  data-testid="viewer-model-result-report-retry"
+                >
+                  {t('ViewerReportRetry', { defaultValue: 'Retry' })}
+                </button>
               </p>
             )}
             {structuredState.status === 'ready' &&
