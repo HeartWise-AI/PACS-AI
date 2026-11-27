@@ -1,4 +1,14 @@
+# Access log without patient identifiers: the viewer URL carries patientId and
+# StudyInstanceUIDs in its query string, and every asset request repeats it in
+# the Referer. Log the requested path only, no query string and no Referer.
+map $request_uri $request_path_only {
+  "~^(?<path_only>[^?]*)" $path_only;
+}
+log_format no_query '$remote_addr - $remote_user [$time_local] "$request_method $request_path_only $server_protocol" '
+                    '$status $body_bytes_sent "$http_user_agent" "$http_x_forwarded_for"';
+
 server {
+  access_log /var/log/nginx/access.log no_query;
   gzip_static  always;
   gzip_proxied expired no-cache no-store private auth;
   gunzip       on;
