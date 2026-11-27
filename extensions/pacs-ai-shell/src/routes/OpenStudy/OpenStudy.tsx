@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   createOpenStudyRepository,
@@ -10,6 +10,7 @@ import {
 import { rememberPendingRetrieve } from '@pacs-ai/extension-inference/src/studyRefresh/progressiveRetrieve';
 import {
   markViewerStudyRetrieved,
+  routerBasename,
   studyInstanceUIDsFromSearch,
   studySearchKeepingOptions,
 } from '@pacs-ai/extension-core/src/utils/viewerUrl';
@@ -21,6 +22,20 @@ type Phase =
 export interface OpenStudyProps {
   // Tests inject the api-pacs calls.
   repository?: OpenStudyRepository;
+  // Opens the viewer path (router-relative). Default: a full page load.
+  openViewer?: (path: string) => void;
+}
+
+/**
+ * The viewer is opened with a full page load. OHIF keeps the study metadata
+ * it fetched for the page's lifetime (retrieveStudyMetadata's promise cache,
+ * DicomMetadataStore); a study it looked up before the retrieve (a /viewer
+ * link that hit "not available") would otherwise stay empty, and the viewer
+ * does not reload a study in place. sessionStorage (the pending retrieve
+ * hand-over) survives the load.
+ */
+export function openViewerWithPageLoad(path: string, win: Window = window): void {
+  win.location.replace(`${routerBasename(win)}${path}`);
 }
 
 const FAILURE_KEYS: Record<OpenStudyFailure | 'missing', string> = {
@@ -36,9 +51,11 @@ const FAILURE_KEYS: Record<OpenStudyFailure | 'missing', string> = {
  * is stored), then replaces itself with the viewer. Links to a study from
  * anywhere in PACS-AI come here (see utils/viewerUrl studyOpenPath).
  */
-export default function OpenStudy({ repository }: OpenStudyProps = {}) {
+export default function OpenStudy({
+  repository,
+  openViewer = openViewerWithPageLoad,
+}: OpenStudyProps = {}) {
   const { t } = useTranslation('StudyList');
-  const navigate = useNavigate();
   const location = useLocation();
   const [phase, setPhase] = useState<Phase>({ status: 'working', percent: null });
   const [attempt, setAttempt] = useState(0);
@@ -96,13 +113,13 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
       // The viewer reloads the series still arriving (progressiveRetrieve).
       handovers.forEach(([uid, jobIds]) => rememberPendingRetrieve(uid, jobIds));
       markViewerStudyRetrieved(uids);
-      navigate(`/viewer?${viewerSearch}`, { replace: true });
+      openViewer(`/viewer?${viewerSearch}`);
     };
     run().catch(() => !cancelled && setPhase({ status: 'failed', reason: 'retrieveFailed' }));
     return () => {
       cancelled = true;
     };
-  }, [studiesKey, viewerSearch, attempt, navigate]);
+  }, [studiesKey, viewerSearch, attempt, openViewer]);
 
   return (
     <div

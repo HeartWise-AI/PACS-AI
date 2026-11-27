@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import OpenStudy from './OpenStudy';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import OpenStudy, { openViewerWithPageLoad } from './OpenStudy';
 import type { OpenStudyRepository } from '@pacs-ai/extension-inference/src/studyRefresh/openStudyRetrieve';
 import { PENDING_RETRIEVE_STORAGE_KEY } from '@pacs-ai/extension-inference/src/studyRefresh/progressiveRetrieve';
 import { takeViewerStudyToRetrieve, recordViewerStudyRequest } from '@pacs-ai/extension-core/src/utils/viewerUrl';
@@ -17,13 +17,25 @@ function LocationProbe() {
   return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
+// The page opens the viewer with a full page load; here the router stands in.
+function RoutedOpenStudy({ repository }: { repository: OpenStudyRepository }) {
+  const navigate = useNavigate();
+  const openViewer = React.useCallback((to: string) => navigate(to, { replace: true }), [navigate]);
+  return (
+    <OpenStudy
+      repository={repository}
+      openViewer={openViewer}
+    />
+  );
+}
+
 function renderAt(path: string, repository: OpenStudyRepository) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route
           path="/open-study"
-          element={<OpenStudy repository={repository} />}
+          element={<RoutedOpenStudy repository={repository} />}
         />
         <Route
           path="*"
@@ -138,4 +150,22 @@ test('a link without a study UID says so and retrieves nothing', async () => {
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('OpenStudyMissing'));
   expect(screen.queryByRole('button', { name: 'OpenStudyTryAgain' })).toBeNull();
   expect(repository.loadModalities).not.toHaveBeenCalled();
+});
+
+test('opens the viewer with a full page load under the router basename', () => {
+  const replace = jest.fn();
+  openViewerWithPageLoad('/viewer?StudyInstanceUIDs=1.2', {
+    config: { routerBasename: '/base/' },
+    location: { replace },
+  } as unknown as Window);
+  expect(replace).toHaveBeenCalledWith('/base/viewer?StudyInstanceUIDs=1.2');
+  openViewerWithPageLoad('/viewer?StudyInstanceUIDs=1.2', { location: { replace } } as unknown as Window);
+  expect(replace).toHaveBeenLastCalledWith('/viewer?StudyInstanceUIDs=1.2');
+  // routerBasename unset: the PUBLIC_URL fallback, as OHIF's router uses.
+  openViewerWithPageLoad('/viewer?StudyInstanceUIDs=1.2', {
+    config: {},
+    PUBLIC_URL: '/pacs/',
+    location: { replace },
+  } as unknown as Window);
+  expect(replace).toHaveBeenLastCalledWith('/pacs/viewer?StudyInstanceUIDs=1.2');
 });

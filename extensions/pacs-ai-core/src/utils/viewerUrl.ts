@@ -298,11 +298,19 @@ export function markViewerStudyRetrieved(
 
 let viewerRequestTrackingInstalled = false;
 
-/** The browser path relative to the router basename (window.config.routerBasename). */
+/**
+ * The router basename as OHIF resolves it (appInit / utils/publicUrl):
+ * window.config.routerBasename, else window.PUBLIC_URL, else "/"; without
+ * the trailing slash ("" at the root).
+ */
+export function routerBasename(win: Window = window): string {
+  const w = win as unknown as { config?: { routerBasename?: string | null }; PUBLIC_URL?: string };
+  return String(w.config?.routerBasename || w.PUBLIC_URL || '/').replace(/\/+$/, '');
+}
+
+/** The browser path relative to the router basename. */
 export function routerPathname(pathname: string, win: Window = window): string {
-  const basename = String(
-    ((win as unknown as { config?: { routerBasename?: string } }).config?.routerBasename) || ''
-  ).replace(/\/$/, '');
+  const basename = routerBasename(win);
   if (basename && (pathname === basename || pathname.startsWith(`${basename}/`))) {
     return pathname.slice(basename.length) || '/';
   }
