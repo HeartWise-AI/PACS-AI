@@ -46,8 +46,17 @@ const orchestratorRepository = {
         return data;
       })
       .catch((error: AxiosError<ErrorAPIResponse>) => {
+        // Keep the HTTP status (absent for a network error): the chat box
+        // decides from it whether to retry. A proxy error page (HTML) has no
+        // JSON body to spread.
         const { response } = error;
-        throw response?.data !== undefined ? response.data : object;
+        const body = response?.data;
+        const json = body && typeof body === 'object' ? body : {};
+        throw {
+          ...json,
+          message: (json as ErrorAPIResponse).message || error.message,
+          status: response?.status,
+        };
       });
   },
 

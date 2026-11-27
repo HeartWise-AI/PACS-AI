@@ -7,6 +7,12 @@ map $request_uri $request_path_only {
 log_format no_query '$remote_addr - $remote_user [$time_local] "$request_method $request_path_only $server_protocol" '
                     '$status $body_bytes_sent "$http_user_agent" "$http_x_forwarded_for"';
 
+# Referrer-Policy strict-origin: requests made by the viewer page (API calls,
+# DICOMweb, images) carry only "https://<host>/" in the Referer, never the
+# viewer path and query string (StudyInstanceUIDs, formerly patientId). The API
+# is on the same origin, so strict-origin-when-cross-origin or same-origin would
+# still send the full URL to it; no-referrer would also turn the Origin header
+# of same-origin POSTs into "null". Nothing on the backend checks the Referer.
 server {
   access_log /var/log/nginx/access.log no_query;
   listen ${SSL_PORT} ssl http2 default_server;
@@ -20,6 +26,7 @@ server {
     add_header Cache-Control "no-store, no-cache, must-revalidate" always;
     add_header Cloudflare-CDN-Cache-Control "no-store" always;
     add_header Cross-Origin-Resource-Policy same-origin always;
+    add_header Referrer-Policy strict-origin always;
   }
 
   location = ${PUBLIC_URL}index.html {
@@ -28,6 +35,7 @@ server {
     add_header Cache-Control "no-store, no-cache, must-revalidate" always;
     add_header Cloudflare-CDN-Cache-Control "no-store" always;
     add_header Cross-Origin-Resource-Policy same-origin always;
+    add_header Referrer-Policy strict-origin always;
   }
 
   location ~* "^${PUBLIC_URL}(app-config\.js|env-config\.js|version\.json|manifest\.json|init-service-worker\.js|sw\.js)$" {
@@ -36,6 +44,7 @@ server {
     add_header Cache-Control "no-store, no-cache, must-revalidate" always;
     add_header Cloudflare-CDN-Cache-Control "no-store" always;
     add_header Cross-Origin-Resource-Policy same-origin always;
+    add_header Referrer-Policy strict-origin always;
   }
 
   location ~* "\.[0-9a-f]{8,}\.(css|js|mjs|wasm|woff|woff2|ttf|eot|png|jpg|jpeg|gif|svg)$" {
@@ -44,6 +53,7 @@ server {
     add_header Cache-Control "public, max-age=31536000, immutable" always;
     add_header Cloudflare-CDN-Cache-Control "public, max-age=31536000, immutable" always;
     add_header Cross-Origin-Resource-Policy same-origin always;
+    add_header Referrer-Policy strict-origin always;
   }
 
   location / {
@@ -53,6 +63,7 @@ server {
     add_header Cache-Control "no-store, no-cache, must-revalidate" always;
     add_header Cloudflare-CDN-Cache-Control "no-store" always;
     add_header Cross-Origin-Resource-Policy same-origin always;
+    add_header Referrer-Policy strict-origin always;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -61,5 +72,6 @@ server {
   error_page   500 502 503 504  /50x.html;
   location = /50x.html {
     root   /usr/share/nginx/html;
+    add_header Referrer-Policy strict-origin always;
   }
 }

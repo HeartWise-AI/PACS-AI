@@ -20,6 +20,7 @@ import { InputArea } from './components/InputArea';
 
 // Styles & Types
 import { chatBoxStyles } from './ChatBox.styles';
+import { isolateChatKeyEvent } from './utils/keyboardIsolation';
 import type { ChatBoxProps, Message, ModalityData } from './types';
 
 const ChatBox: React.FC<ChatBoxProps> = ({
@@ -319,6 +320,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         cursor: drag.isDragging ? 'grabbing' : resize.isResizing ? 'nwse-resize' : 'auto',
       }}
       onMouseDown={drag.handleMouseDown}
+      // Keys typed in any chat field stay in the chat box (no viewer hotkeys).
+      onKeyDown={isolateChatKeyEvent}
+      onKeyUp={isolateChatKeyEvent}
+      onKeyPress={isolateChatKeyEvent}
     >
       {isOpen && (
         <>

@@ -13,6 +13,7 @@ import { ViewerModelResultsProvider } from '@pacs-ai/extension-inference/src/vie
 import TopNavigation from '../components/TopNavigation';
 import { AlertContext } from '../alerts';
 import { loadViewerModels } from './loadViewerModels';
+import { stripPatientIdentifiersFromAddressBar } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 import ViewerTour from '../tour/ViewerTour';
 import PacsAiViewerHeader from './PacsAiViewerHeader';
 import { SidePanelWithServices, useResizablePanels } from './upstreamLayoutPieces';
@@ -72,6 +73,9 @@ function PacsAiViewerLayout({
   // Set page title
   useEffect(() => {
     document.title = 'Viewer - PACS AI';
+    // Old links and bookmarks may still carry patientId/patientName: the viewer
+    // ignores them; take them out of the address bar and history entry too.
+    stripPatientIdentifiersFromAddressBar();
   }, []);
 
   const [

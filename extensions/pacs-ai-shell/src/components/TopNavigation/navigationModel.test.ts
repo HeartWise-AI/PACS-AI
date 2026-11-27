@@ -80,7 +80,16 @@ describe('top navigation model', () => {
         '/viewer',
         '?StudyInstanceUIDs=1.2.3&PatientName=Smith&ModalitiesInStudy=CT'
       )
-    ).toBe('/?PatientName=Smith&ModalitiesInStudy=CT');
+    ).toBe('/?ModalitiesInStudy=CT');
     expect(getStudiesDestination('/ai-models', '?PatientName=Smith')).toBe('/');
+  });
+
+  test('drops patient identifiers of old viewer links from the way back to the work list', () => {
+    expect(
+      getStudiesDestination(
+        '/viewer',
+        '?StudyInstanceUIDs=1.2.3&modalitiesInStudy=XA&patientId=MRN001&studyDate=20261127'
+      )
+    ).toBe('/?modalitiesInStudy=XA&studyDate=20261127');
   });
 });

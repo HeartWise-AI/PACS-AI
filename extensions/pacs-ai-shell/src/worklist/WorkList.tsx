@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createSearchParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
 import { DateRangePicker } from 'react-dates';
 import { useQuery } from 'react-query';
@@ -73,6 +73,7 @@ import {
   updateSubmittedWorklistSearchPage,
   type WorklistSearchFilters,
 } from '@pacs-ai/extension-core/src/utils/worklistSearchSession';
+import { viewerSearchForStudy } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 
 function WorkList() {
   const { t } = useTranslation('StudyList');
@@ -782,19 +783,10 @@ function WorkList() {
     setIsOpenOrthancServiceModal(true);
 
     let jobInfoResponse;
-    // create query params from the filter state
-    const viewStudyParams = Object.keys(studyListFilter).reduce((acc, key) => {
-      if (studyListFilter[key] && key !== 'modalityId') {
-        acc[key] = studyListFilter[key].replace(/\*/g, ''); // removing the asterisks for cleaner URL
-      }
-      return acc;
-    }, {});
-    // remove empty fields
-    Object.keys(viewStudyParams).forEach(
-      key => !viewStudyParams[key] && delete viewStudyParams[key]
-    );
-
-    const searchParams = createSearchParams(viewStudyParams);
+    // The viewer URL carries the study and non-identifying filters only (no
+    // patientId/patientName: they ended up in browser history and, through the
+    // Referer, in server logs). The search itself is kept in session storage.
+    const viewerSearch = viewerSearchForStudy(studyInstanceUID, studyListFilter);
 
     // the viewer's "Refresh study from PACS" retrieves from the same modality
     rememberStudySourceModality(studyInstanceUID, selectedDICOMModality?.value);
@@ -816,10 +808,10 @@ function WorkList() {
       const openViewer = (remainingJobIds: string[]) => {
         rememberPendingRetrieve(studyInstanceUID, remainingJobIds);
         if (type === 'viewer') {
-          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+          navigate(`/viewer?${viewerSearch}`);
         }
         if (type === 'segmentation') {
-          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+          navigate(`/segmentation?${viewerSearch}`);
         }
       };
 
@@ -863,10 +855,10 @@ function WorkList() {
     } catch (error) {
       if (error.errorCode === Error.DUPLICATE_RECORD) {
         if (type === 'viewer') {
-          navigate(`/viewer?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+          navigate(`/viewer?${viewerSearch}`);
         }
         if (type === 'segmentation') {
-          navigate(`/segmentation?StudyInstanceUIDs=${studyInstanceUID}&${searchParams}`);
+          navigate(`/segmentation?${viewerSearch}`);
         }
       }
 

@@ -36,6 +36,37 @@ interface SendMessageResponse {
   superseded?: boolean;
 }
 
+// Creating a thread is retried with exponential backoff and jitter while the
+// chat backend is down or restarting (5xx, 409, 429, network error): 1 s, 2 s,
+// 4 s, 8 s ... capped at 30 s, at most THREAD_CREATE_MAX_ATTEMPTS requests.
+// Then the chat shows "unavailable" with a Retry button. Before this, a failed
+// creation was retried immediately and the viewer sent ~230 requests a minute
+// to a restarting medical-agent.
+export const THREAD_CREATE_MAX_ATTEMPTS = 5;
+export const THREAD_RETRY_BASE_MS = 1000;
+export const THREAD_RETRY_MAX_MS = 30000;
+export const CHAT_UNAVAILABLE_MESSAGE = 'The chat is unavailable right now. Please retry.';
+
+/** Delay before retry number `attempt` (0 = first retry): exponential, capped, 50-100 % jitter. */
+export function threadRetryDelay(attempt: number, random: () => number = Math.random): number {
+  const capped = Math.min(THREAD_RETRY_MAX_MS, THREAD_RETRY_BASE_MS * 2 ** Math.max(0, attempt));
+  return Math.round(capped * (0.5 + 0.5 * random()));
+}
+
+function errorStatus(error: any): number | undefined {
+  const status = error?.status ?? error?.response?.status;
+  return typeof status === 'number' ? status : undefined;
+}
+
+/** Server errors, conflicts, rate limits and network errors are retried; other 4xx are not. */
+export function isRetryableThreadError(error: any): boolean {
+  const status = errorStatus(error);
+  if (status === undefined) {
+    return true; // no HTTP answer: network error, proxy restarting
+  }
+  return status >= 500 || status === 409 || status === 429;
+}
+
 /** Error code of the gateway when the thread is still writing its previous answer. */
 export const CHAT_TURN_IN_PROGRESS = 'chat_turn_in_progress';
 
@@ -120,6 +151,9 @@ interface UseChatBoxReturn {
   // older backend, or the progress endpoint failing): show the plain indicator.
   progress: ChatActivity | null;
   threadCreationPending: boolean;
+  // Thread creation failed for good (retries exhausted or a non-retryable
+  // error): the chat shows the error with a Retry button and sends nothing.
+  threadUnavailable: boolean;
   createThread: () => Promise<void>;
   sendMessage: (
     threadId: string,
@@ -182,6 +216,16 @@ export function useChatBox(
 ): UseChatBoxReturn {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [threadCreationPending, setThreadCreationPending] = useState(false);
+  const [threadUnavailable, setThreadUnavailable] = useState(false);
+  // Failed thread creations in a row, and the timer of the next retry.
+  const threadAttempts = useRef(0);
+  const threadRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearThreadRetry = useCallback(() => {
+    if (threadRetryTimer.current !== null) {
+      clearTimeout(threadRetryTimer.current);
+      threadRetryTimer.current = null;
+    }
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string>('');
@@ -289,13 +333,41 @@ export function useChatBox(
     return () => {
       isMounted.current = false;
       stopProgressPolling();
+      clearThreadRetry();
     };
-  }, [stopProgressPolling]);
+  }, [stopProgressPolling, clearThreadRetry]);
 
   // Creates a new thread, without the pending guard (the initializer sets it first).
   // A creation superseded by a newer chat action (New chat, a thread opened) is dropped.
   const startThread = useCallback(async (token: number) => {
     const current = () => isMounted.current && token === chatSeq.current;
+    // A failed creation: retried later (the pending flag stays set until the
+    // retry is due, so the initializer does not fire again at once), or, once
+    // the attempts are used up or for a non-retryable error, the chat is shown
+    // as unavailable until the user presses Retry.
+    const failThread = (message: string, retryable: boolean) => {
+      threadAttempts.current += 1;
+      clearThreadRetry();
+      if (retryable && threadAttempts.current < THREAD_CREATE_MAX_ATTEMPTS) {
+        const delay = threadRetryDelay(threadAttempts.current - 1);
+        console.log(
+          `Chat thread creation failed (attempt ${threadAttempts.current}/${THREAD_CREATE_MAX_ATTEMPTS}), retrying in ${delay} ms`
+        );
+        setErrorDetails('');
+        threadRetryTimer.current = setTimeout(() => {
+          threadRetryTimer.current = null;
+          if (current()) {
+            setThreadCreationPending(false);
+          }
+        }, delay);
+        return;
+      }
+      setThreadUnavailable(true);
+      setErrorDetails(
+        retryable ? `${CHAT_UNAVAILABLE_MESSAGE} (${message})` : message
+      );
+      setThreadCreationPending(false);
+    };
     try {
       setThreadCreationPending(true);
       setIsLoading(true);
@@ -318,17 +390,18 @@ export function useChatBox(
           if (!current()) {
             return;
           }
+          threadAttempts.current = 0;
+          setThreadUnavailable(false);
           setThreadId(newThreadId);
           rememberLastThread(openStudy?.studyInstanceUID, newThreadId);
           setErrorDetails('');
         } else {
           console.error('Thread ID not found in response:', response);
-          setErrorDetails('Thread ID not found in server response');
+          failThread('Thread ID not found in server response', false);
         }
       } else {
         console.error('Invalid response format:', response);
-        const errorMsg = response.message || 'Invalid response format from server';
-        setErrorDetails(errorMsg);
+        failThread(response.message || 'Invalid response format from server', false);
       }
     } catch (error: any) {
       console.error('Error creating thread:', error);
@@ -337,33 +410,26 @@ export function useChatBox(
       }
 
       let errorMessage = 'Unknown error occurred while creating thread';
-      if (error.message) {
+      if (error?.message) {
         errorMessage = error.message;
-      } else if (error.response?.data?.message) {
+      } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
+      } else if (error?.response?.data?.error) {
         errorMessage = error.response.data.error;
-      } else if (error.response?.statusText) {
+      } else if (error?.response?.statusText) {
         errorMessage = `HTTP Error: ${error.response.statusText}`;
+      } else if (errorStatus(error) !== undefined) {
+        errorMessage = `HTTP ${errorStatus(error)}`;
       }
 
-      setErrorDetails(errorMessage);
-
-      if (error.response?.status >= 500 || error.code === 'NETWORK_ERROR') {
-        console.log('Network or server error detected, will retry in 3 seconds...');
-        setTimeout(() => {
-          setThreadCreationPending(false);
-          setErrorDetails('');
-        }, 3000);
-      } else {
-        setThreadCreationPending(false);
-      }
+      failThread(errorMessage, isRetryableThreadError(error));
     } finally {
-      if (current()) {
+      // Keep the spinner while a retry is scheduled.
+      if (current() && threadRetryTimer.current === null) {
         setIsLoading(false);
       }
     }
-  }, [getOpenStudy]);
+  }, [getOpenStudy, clearThreadRetry]);
 
   // Function to create a new thread
   const createThread = useCallback(async () => {
@@ -630,7 +696,7 @@ export function useChatBox(
   // user's latest thread about the open study is restored; otherwise (none, no
   // study, an older backend, or after "New chat") a new thread is created.
   useEffect(() => {
-    if (!isOpen || threadId || threadCreationPending) {
+    if (!isOpen || threadId || threadCreationPending || threadUnavailable) {
       return;
     }
     const restore = !restoreTried.current && !!onRestoreRef.current;
@@ -667,7 +733,7 @@ export function useChatBox(
       }
       await startThread(token);
     })();
-  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread, getOpenStudy]);
+  }, [isOpen, threadId, messagesLength, threadCreationPending, threadUnavailable, refreshThreads, loadThread, startThread, getOpenStudy]);
 
   threadIdRef.current = threadId;
 
@@ -678,11 +744,16 @@ export function useChatBox(
     }
   }, [threadId]);
 
+  // Retry button: a fresh series of attempts.
   const handleRetryThreadCreation = useCallback(() => {
+    clearThreadRetry();
+    threadAttempts.current = 0;
+    setThreadUnavailable(false);
+    setErrorDetails('');
     setThreadCreationPending(false);
     setThreadId(null);
     createThread();
-  }, [createThread]);
+  }, [createThread, clearThreadRetry]);
 
   // New chat: supersedes a restore or an open still in flight, then a new thread is created.
   // A message still running stays in its own thread (stored there, listed in the
@@ -690,11 +761,14 @@ export function useChatBox(
   const resetThread = useCallback(() => {
     chatSeq.current += 1;
     releaseTurn();
+    clearThreadRetry();
+    threadAttempts.current = 0;
+    setThreadUnavailable(false);
     restoreTried.current = true;
     setHistoryLoading(false);
     setThreadId(null);
     setThreadCreationPending(false);
-  }, [releaseTurn]);
+  }, [releaseTurn, clearThreadRetry]);
 
   return {
     threadId,
@@ -704,6 +778,7 @@ export function useChatBox(
     thinkingMessageId,
     progress,
     threadCreationPending,
+    threadUnavailable,
     createThread,
     sendMessage,
     uploadDicomPayload,
