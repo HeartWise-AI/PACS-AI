@@ -1,6 +1,6 @@
 import {
   autoplayViewport,
-  preferCineRate,
+  preferSeriesFrameRate,
   preferredFrameRate,
   shouldAutoplay,
   startCineAutoplay,
@@ -73,11 +73,57 @@ describe('cine autoplay for US and XA', () => {
 
   test("gives OHIF's player the frame time of the Cine Rate", () => {
     const displaySet: any = { instance: { CineRate: 15 }, FrameRate: 33.33 };
-    preferCineRate(displaySet);
+    preferSeriesFrameRate(displaySet);
     expect(Math.round(1000 / displaySet.FrameRate)).toBe(15);
     const withoutCineRate: any = { FrameRate: 33.33 };
-    preferCineRate(withoutCineRate);
+    preferSeriesFrameRate(withoutCineRate);
     expect(withoutCineRate.FrameRate).toBe(33.33);
+  });
+
+  test('Shimadzu XA (Frame Time Vector only) plays at 7.5 fps, not 24', () => {
+    const shimadzu: any = {
+      Modality: 'XA',
+      instance: {
+        FrameTimeVector: ['0.00', '133.00', '133.00', '134.00'],
+        RecommendedDisplayFrameRate: 7,
+      },
+    };
+    expect(preferredFrameRate(shimadzu)).toBe(7.5);
+    preferSeriesFrameRate(shimadzu);
+    // OHIF's player computes 1000 / FrameRate and keeps one decimal under 10 fps
+    expect(Math.round((1000 / shimadzu.FrameRate) * 10) / 10).toBe(7.5);
+
+    const withoutVector: any = { Modality: 'XA', instance: { RecommendedDisplayFrameRate: 7 } };
+    expect(preferredFrameRate(withoutVector)).toBe(7);
+    preferSeriesFrameRate(withoutVector);
+    expect(1000 / withoutVector.FrameRate).toBeCloseTo(7, 6);
+  });
+
+  test('keeps IVUS Cine Rate and echo/XA Frame Time; other modalities keep OHIF', () => {
+    const ivus: any = {
+      Modality: 'IVUS',
+      instance: { CineRate: '29', FrameTime: 34.48 },
+      FrameRate: 34.48,
+    };
+    expect(preferredFrameRate(ivus)).toBe(29);
+    preferSeriesFrameRate(ivus);
+    expect(Math.round(1000 / ivus.FrameRate)).toBe(29);
+
+    const echo: any = { Modality: 'US', instance: { FrameTime: 19.5 }, FrameRate: 19.5 };
+    expect(preferredFrameRate(echo)).toBe(51);
+    preferSeriesFrameRate(echo);
+    expect(echo.FrameRate).toBe(19.5);
+
+    const philipsXA: any = {
+      Modality: 'XA',
+      instance: { FrameTime: '133.33' },
+      FrameRate: '133.33',
+    };
+    expect(preferredFrameRate(philipsXA)).toBe(7.5);
+
+    const mr: any = { Modality: 'MR', instance: { FrameTimeVector: [0, 100, 100] } };
+    preferSeriesFrameRate(mr);
+    expect(mr.FrameRate).toBeUndefined();
   });
 
   test('turns cine on and plays an XA viewport at its rate', () => {
