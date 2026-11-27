@@ -44,6 +44,8 @@
   "ViewerRunQuotaExceeded": "تم استنفاد حصة الاستدلال أو هناك عدد كبير من عمليات التشغيل النشطة. حاول لاحقًا.",
   "ViewerResultTriggerAutoLegacy": "تلقائي (قديم)",
   "ViewerReportFallbackNote": "تعذر إنشاء التقرير؛ يتم عرض النتيجة المخزنة.",
+  "ViewerReportLoading": "جارٍ تحميل التقرير…",
+  "ViewerReportRetry": "إعادة المحاولة",
   "ViewerResultSeriesAll": "جميع السلاسل",
   "ViewerResultSeriesSubset": "{{used}} من {{total}} سلاسل",
   "ViewerResultSeriesCount": "السلاسل: {{used}}",

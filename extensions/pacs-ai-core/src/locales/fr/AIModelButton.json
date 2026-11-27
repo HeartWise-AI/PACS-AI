@@ -44,6 +44,8 @@
   "ViewerRunQuotaExceeded": "Quota d'inférence épuisé ou trop d'exécutions actives. Réessayez plus tard.",
   "ViewerResultTriggerAutoLegacy": "Automatique (ancien)",
   "ViewerReportFallbackNote": "Le rapport n'a pas pu être généré ; affichage du résultat enregistré.",
+  "ViewerReportLoading": "Chargement du rapport…",
+  "ViewerReportRetry": "Réessayer",
   "ViewerResultSeriesAll": "Toutes les séries",
   "ViewerResultSeriesSubset": "{{used}} sur {{total}} séries",
   "ViewerResultSeriesCount": "{{used}} série(s)",

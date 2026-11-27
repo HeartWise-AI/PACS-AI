@@ -44,6 +44,8 @@
   "ViewerRunQuotaExceeded": "Inference allowance exhausted or too many runs active. Try again later.",
   "ViewerResultTriggerAutoLegacy": "Automatic (legacy)",
   "ViewerReportFallbackNote": "The report could not be rendered; showing the stored result.",
+  "ViewerReportLoading": "Loading report…",
+  "ViewerReportRetry": "Retry",
   "ViewerResultSeriesAll": "All series",
   "ViewerResultSeriesSubset": "{{used}} of {{total}} series",
   "ViewerResultSeriesCount": "{{used}} series",
