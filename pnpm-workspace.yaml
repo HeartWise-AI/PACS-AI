@@ -118,6 +118,22 @@ overrides:
   'proxy-addr@>=1.1.0 <2.0.8': 2.0.8
   'source-map-js@>=1.0.0 <1.2.2': 1.2.2
   'tinypool@<2.1.2': 2.2.0
+  # Dependabot 2026-11-27. undici and @grpc/grpc-js reach the tree only through
+  # firebase's Node entry points (the browser bundle uses fetch/webchannel), but
+  # pin patched lines anyway: undici 6.29.1 fixes GHSA-2m5v-pch6-74hx,
+  # GHSA-qrxm-fqhp-jwvm, GHSA-rfgv-xxqx-mfg5, GHSA-vxpw-j846-p89q,
+  # GHSA-vrm6-8vpv-qv8q, GHSA-v9p9-hfj2-hcw8, GHSA-f269-vfmq-vjvj; grpc-js 1.13.6+
+  # fixes GHSA-m9gg-hp2v-232j / GHSA-f596-whhp-79r4.
+  'undici@>=4.0.0 <6.29.1': 6.29.1
+  '@grpc/grpc-js@<1.13.6': 1.13.7
+  # minimatch 9.0.3 comes from @typescript-eslint (lint only); 9.0.9 fixes
+  # GHSA-7r86-cg39-jmmj (ReDoS).
+  'minimatch@>=9.0.0 <9.0.7': 9.0.9
+  # decompress@4.2.1 (GHSA-mp2f-45pm-3cg9, GHSA-hrh2-vp3x-79xf; no patched 4.x)
+  # arrives only via itk-wasm > @itk-wasm/dam, the data-asset CLI that itk-wasm's
+  # own build scripts (src/cli/pnpm-script.js) use. The viewer bundle never
+  # imports it, so drop it from the tree.
+  '@itk-wasm/dam': '-'
   'http-cache-semantics@<4.3.0': 4.3.0
   'follow-redirects@>=1.16.0 <1.16.2': 1.16.2
   'launch-editor@<2.14.2': 2.14.2
