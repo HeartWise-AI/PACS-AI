@@ -27,6 +27,8 @@ import useAvailableModels from '@pacs-ai/extension-core/src/hooks/useAvailableMo
 import { pacsAiModelsService } from '@pacs-ai/extension-core/src/services/PacsAiModelsService';
 import { addSegmentationFromLabelmap } from '../utils/addSegmentation';
 import { useViewerModelResults } from '../viewerResults/ViewerModelResultsProvider';
+import { ECHO_SR_MODEL_NAME } from '../studyProcessing/modelResults/echoSrContract';
+import type { ViewerModelResult } from '../viewerResults/types';
 import {
   formatRunDateTime,
   isSameResultRun,
@@ -425,6 +427,64 @@ const AIModelButton = ({
     );
   };
 
+  // Results study-service computes itself (echo SR measurements): not a
+  // model of the menu, so they get their own "view" row in the exam's block.
+  const studyServiceRows = (results: ViewerModelResult[], shown: Set<string>) =>
+    results
+      .filter(result => {
+        const key = `${result.studyInstanceUID}|${result.modelName}`;
+        if (shown.has(key)) {
+          return false;
+        }
+        shown.add(key);
+        return true;
+      })
+      .map(result => (
+        <li
+          key={`study-service-${result.studyInstanceUID}-${result.modelName}`}
+          className="flex flex-col gap-1 p-1"
+          data-testid="ai-model-study-service-result"
+        >
+          <h1 className="whitespace-nowrap px-1 text-sm">
+            {result.modelName === ECHO_SR_MODEL_NAME
+              ? t('StudyList:EchoSrTitle', { defaultValue: 'Echo measurements (SR)' })
+              : result.modelName}
+          </h1>
+          <div className="flex items-center gap-2 px-1">
+            <button
+              type="button"
+              className="hover:bg-primary whitespace-nowrap rounded bg-white/10 px-2 py-1 text-xs hover:text-black"
+              onClick={() => {
+                setIsOpen(false);
+                viewerResults?.openResult(result);
+              }}
+            >
+              {t('ViewerViewResult', { date: formatResultDate(result.completedAt) })}
+            </button>
+          </div>
+        </li>
+      ));
+  const renderStudyServiceRows = (studyUID: string | null, shown: Set<string>) =>
+    studyServiceRows(viewerResults?.getStudyServiceResults?.(studyUID) ?? [], shown);
+  const shownStudyServiceResults = new Set<string>();
+  // Stored results of open exams that no model section shows: no model of
+  // their modality is available (none registered, or all busy). Called after
+  // the sections have rendered, so it lists only what they left out.
+  const renderUnlistedStudyServiceResults = () => {
+    const rows = studyServiceRows(
+      viewerResults?.getOpenStudyServiceResults?.() ?? [],
+      shownStudyServiceResults
+    );
+    return rows.length ? (
+      <ul
+        className="mb-1 flex flex-col gap-1 rounded-lg bg-[#4C504B] py-2 text-sm text-white"
+        data-testid="ai-model-study-service-results"
+      >
+        {rows}
+      </ul>
+    ) : null;
+  };
+
   // add segmentation
   const addSegmentation = async data => {
     try {
@@ -535,13 +595,16 @@ const AIModelButton = ({
                         {aiModelMenuSectionTitle(section)}
                       </li>
                     )}
+                    {renderStudyServiceRows(section.studyInstanceUID, shownStudyServiceResults)}
                     {section.models.map((model, index) =>
                       renderModelRow(model, index, section.studyInstanceUID)
                     )}
                   </React.Fragment>
                 ))}
               </ul>
-            ) : (
+            ) : null}
+            {renderUnlistedStudyServiceResults()}
+            {menuSections.length ? null : (
               <div
                 className="flex flex-col gap-1 rounded-lg bg-[#4C504B] p-2 text-center text-sm text-white"
                 data-testid="ai-model-menu-empty"

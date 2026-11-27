@@ -60,8 +60,12 @@ import { getActiveDisplaySets } from '@pacs-ai/extension-core/src/ohifCompat/dis
 import { getCachedUserAccess } from '@pacs-ai/extension-core/src/access/userAccessService';
 import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
+import { ECHO_SR_MODEL_NAME } from '../studyProcessing/modelResults/echoSrContract';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
+
+// Results study-service computes itself, listed apart from the models.
+export const STUDY_SERVICE_RESULT_MODELS = new Set([ECHO_SR_MODEL_NAME]);
 
 export type LatestResultsStatus = 'idle' | 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -127,6 +131,13 @@ export interface ViewerModelResultsContextValue {
   setResultMinimized: (minimized: boolean) => void;
   openedResult: OpenViewerModelResult | null;
   loadSelectedView: (view: SelectedView) => boolean;
+  // Results study-service computes itself (no registered model, e.g. the echo
+  // SR measurements) for one open exam; the primary exam when omitted.
+  // Optional so that test doubles of the context keep working.
+  getStudyServiceResults?: (studyInstanceUID?: string | null) => ViewerModelResult[];
+  // The same results for every open exam, whether or not a model of its
+  // modality is available (the menu lists them even then).
+  getOpenStudyServiceResults?: () => ViewerModelResult[];
 }
 
 const ViewerModelResultsContext = createContext<ViewerModelResultsContextValue | null>(null);
@@ -322,6 +333,28 @@ export function ViewerModelResultsProvider({
       );
     },
     [canViewResults, latestResults, studyInstanceUID]
+  );
+
+  const getStudyServiceResults = useCallback(
+    (forStudyInstanceUID?: string | null) => {
+      if (!canViewResults) {
+        return [];
+      }
+      const study = forStudyInstanceUID?.trim() || studyInstanceUID?.trim();
+      return latestResults.filter(
+        result =>
+          result.studyInstanceUID === study && STUDY_SERVICE_RESULT_MODELS.has(result.modelName)
+      );
+    },
+    [canViewResults, latestResults, studyInstanceUID]
+  );
+
+  const getOpenStudyServiceResults = useCallback(
+    () =>
+      canViewResults
+        ? latestResults.filter(result => STUDY_SERVICE_RESULT_MODELS.has(result.modelName))
+        : [],
+    [canViewResults, latestResults]
   );
 
   const getResultRuns = useCallback(
@@ -941,6 +974,8 @@ export function ViewerModelResultsProvider({
       setResultMinimized,
       openedResult,
       loadSelectedView,
+      getStudyServiceResults,
+      getOpenStudyServiceResults,
     }),
     [
       canViewResults,
@@ -959,6 +994,8 @@ export function ViewerModelResultsProvider({
       setResultMinimized,
       openedResult,
       loadSelectedView,
+      getStudyServiceResults,
+      getOpenStudyServiceResults,
     ]
   );
 
@@ -983,6 +1020,13 @@ export function ViewerModelResultsProvider({
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}
           onSelectView={loadSelectedView}
+          measuredResult={
+            latestResults.find(
+              item =>
+                item.modelName === ECHO_SR_MODEL_NAME &&
+                item.studyInstanceUID === openedResult.result.studyInstanceUID
+            ) ?? null
+          }
         />
       )}
       {canViewResults && (

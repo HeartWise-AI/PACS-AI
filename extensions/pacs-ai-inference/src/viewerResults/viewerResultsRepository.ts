@@ -1,4 +1,5 @@
 import Api from '@pacs-ai/extension-core/src/pacsAPIAxios';
+import type { ModelExecutionResult } from '@pacs-ai/extension-core/src/studyProcessing/types';
 import type {
   SelectedView,
   ViewerModelResult,
@@ -35,6 +36,10 @@ export interface RunViewerModelRequest {
 export interface ViewerResultsRepository {
   loadLatestResults(studyInstanceUID: string): Promise<ViewerModelResult[]>;
   loadReport(result: ViewerModelResult): Promise<ViewerModelReport>;
+  // Stored result JSON of a study-service job that has no api-pacs run
+  // (automatic legacy runs, study-service results such as echo-sr-measurements).
+  // Optional so that older test doubles keep working.
+  loadJobResult?(result: ViewerModelResult): Promise<ModelExecutionResult>;
   runModel(request: RunViewerModelRequest): Promise<ViewerModelRun>;
   loadRunStatus(runId: string): Promise<ViewerModelRunStatus>;
   // Run labels (PACS-447). Each returns the run's labels after the change.
@@ -331,6 +336,33 @@ export function createViewerResultsRepository(
       return {
         htmlBase64,
         contentType: (isRecord(body) && optionalString(body.contentType)) || 'text/html',
+      };
+    },
+
+    async loadJobResult(result: ViewerModelResult): Promise<ModelExecutionResult> {
+      const path = `/v1/inference/worklist/studies/${encodedIdentifier(
+        result.studyInstanceUID,
+        'Study Instance UID'
+      )}/jobs/${encodedIdentifier(result.studyServiceJobId, 'Study service job ID')}/result`;
+      let body: unknown;
+      try {
+        const response = await client.get<unknown>(path);
+        body = unwrap(response.data);
+      } catch (error: unknown) {
+        throw requestError(error, 'Unable to load the stored result.');
+      }
+      if (!isRecord(body) || !('result' in body)) {
+        throw new ViewerResultsRequestError('The stored result is empty.', null);
+      }
+      return {
+        runId: '',
+        executionId: '',
+        studyInstanceUID: optionalString(body.studyInstanceUID) ?? result.studyInstanceUID,
+        modelName: optionalString(body.modelName) ?? result.modelName,
+        modelVersion: optionalString(body.modelVersion) ?? result.modelVersion,
+        status: 'completed',
+        completedAt: optionalString(body.completedAt) ?? result.completedAt ?? '',
+        result: body.result,
       };
     },
 

@@ -60,8 +60,14 @@ import {
   parseEchoPrimeResultPayload,
 } from './echoPrimeContract';
 import {
+  ECHO_SR_MODEL_NAME,
+  isSupportedEchoSrVersion,
+  type EchoSrResultPayload,
+  parseEchoSrResultPayload,
+} from './echoSrContract';
+import {
   PAN_ECHO_MODEL_NAME,
-  PAN_ECHO_SUPPORTED_MODEL_VERSIONS,
+  isSupportedPanEchoVersion,
   type PanEchoResultPayload,
   parsePanEchoResultPayload,
 } from './panEchoContract';
@@ -116,6 +122,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'echoprime';
       payload: EchoPrimeResultPayload;
+    }
+  | {
+      kind: 'echo-sr';
+      payload: EchoSrResultPayload;
     }
   | {
       kind: 'unsupported';
@@ -226,8 +236,7 @@ const deepRVAdapter: ModelResultRendererAdapter = {
 
 const panEchoAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
-    modelName === PAN_ECHO_MODEL_NAME &&
-    PAN_ECHO_SUPPORTED_MODEL_VERSIONS.some(version => version === modelVersion),
+    modelName === PAN_ECHO_MODEL_NAME && isSupportedPanEchoVersion(modelVersion),
   resolve: ({ result }) => {
     const payload = parsePanEchoResultPayload(result);
     return payload ? { kind: 'panecho', payload } : null;
@@ -244,6 +253,15 @@ const echoPrimeAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const echoSrAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === ECHO_SR_MODEL_NAME && isSupportedEchoSrVersion(modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseEchoSrResultPayload(result);
+    return payload ? { kind: 'echo-sr', payload } : null;
+  },
+};
+
 const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   cardioSyntaxAdapter,
   cathEfClipAdapter,
@@ -256,6 +274,7 @@ const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   deepRVAdapter,
   panEchoAdapter,
   echoPrimeAdapter,
+  echoSrAdapter,
 ];
 
 export function resolveModelResultRenderer(

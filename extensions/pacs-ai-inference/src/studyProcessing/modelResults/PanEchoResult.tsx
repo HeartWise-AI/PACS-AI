@@ -5,7 +5,11 @@ import {
   type EchoModelResultMetadataProps,
 } from './EchoModelResultMetadata';
 import {
+  PAN_ECHO_AS_KEY,
+  PAN_ECHO_AV_VMAX_KEY,
   PAN_ECHO_OUTPUTS,
+  getPanEchoAorticScreening,
+  type PanEchoAorticScreening,
   type PanEchoOutputDefinition,
   type PanEchoOutputGroup,
   type PanEchoResultPayload,
@@ -64,21 +68,26 @@ function formatValue(value: unknown, unit?: string): string {
   return '—';
 }
 
+// Shown in the aortic stenosis screening block, never as a diagnosis row.
+const SCREENING_KEYS = new Set([PAN_ECHO_AS_KEY, PAN_ECHO_AV_VMAX_KEY]);
+
 export function getPanEchoDisplayRows(payload: PanEchoResultPayload): PanEchoDisplayRow[] {
   const documentedKeys = new Set(PAN_ECHO_OUTPUTS.map(output => output.key));
-  const documentedRows = PAN_ECHO_OUTPUTS.flatMap(output => {
-    const hasPrediction = Object.prototype.hasOwnProperty.call(payload.predictions, output.key);
-    const hasDiagnosis = Object.prototype.hasOwnProperty.call(payload.diagnoses, output.key);
-    return hasPrediction || hasDiagnosis
-      ? [
-          {
-            ...output,
-            value: payload.predictions[output.key],
-            classification: classificationFromDiagnosis(payload.diagnoses[output.key]),
-          },
-        ]
-      : [];
-  });
+  const documentedRows = PAN_ECHO_OUTPUTS.filter(output => !SCREENING_KEYS.has(output.key)).flatMap(
+    output => {
+      const hasPrediction = Object.prototype.hasOwnProperty.call(payload.predictions, output.key);
+      const hasDiagnosis = Object.prototype.hasOwnProperty.call(payload.diagnoses, output.key);
+      return hasPrediction || hasDiagnosis
+        ? [
+            {
+              ...output,
+              value: payload.predictions[output.key],
+              classification: classificationFromDiagnosis(payload.diagnoses[output.key]),
+            },
+          ]
+        : [];
+    }
+  );
 
   const additionalKeys = Array.from(
     new Set([...Object.keys(payload.predictions), ...Object.keys(payload.diagnoses)])
@@ -98,9 +107,60 @@ export function getPanEchoDisplayRows(payload: PanEchoResultPayload): PanEchoDis
   ];
 }
 
+function percent(value: number | null): string {
+  return value === null ? '—' : `${Math.round(value * 100)} %`;
+}
+
+export function PanEchoAorticScreeningBlock({ screening }: { screening: PanEchoAorticScreening }) {
+  const { t } = useTranslation('StudyList');
+  return (
+    <section
+      aria-labelledby="panecho-as-screening-title"
+      className="mb-5 rounded-lg border border-amber-400/40 bg-amber-500/[0.06] px-4 py-3"
+      data-testid="panecho-as-screening"
+    >
+      <h4
+        id="panecho-as-screening-title"
+        className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-200"
+      >
+        {t('PanEchoAsScreeningTitle', { defaultValue: 'Aortic stenosis: AI screening scores' })}
+      </h4>
+      <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div data-testid="panecho-as-severe">
+          <dt className="text-xs font-semibold text-[#c5cbc5]">
+            {t('PanEchoAsSevere', { defaultValue: 'P(severe AS)' })}
+          </dt>
+          <dd className="text-lg font-bold tabular-nums text-white">{percent(screening.severe)}</dd>
+        </div>
+        <div data-testid="panecho-as-any">
+          <dt className="text-xs font-semibold text-[#c5cbc5]">
+            {t('PanEchoAsAny', { defaultValue: 'P(any AS)' })}
+          </dt>
+          <dd className="text-lg font-bold tabular-nums text-white">{percent(screening.any)}</dd>
+        </div>
+        <div data-testid="panecho-av-vmax-estimate">
+          <dt className="text-xs font-semibold text-[#c5cbc5]">
+            {t('PanEchoAvVmaxEstimate', { defaultValue: 'AV peak velocity (AI estimate)' })}
+          </dt>
+          <dd className="text-lg font-bold tabular-nums text-white">
+            {screening.vmaxEstimate === null ? '—' : `${screening.vmaxEstimate.toFixed(1)} m/s`}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-xs leading-5 text-amber-100">
+        {t('PanEchoAsScreeningNote', {
+          defaultValue:
+            'Screening scores, not a diagnosis. PanEcho reads the 2D clips only, without the Doppler spectra: the AV peak velocity is an AI estimate that under-estimates severe AS, and a low score does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area).',
+        })}
+      </p>
+    </section>
+  );
+}
+
 export function PanEchoResult({ payload, modelName, modelVersion, status }: PanEchoResultProps) {
   const { t } = useTranslation('StudyList');
   const rows = getPanEchoDisplayRows(payload);
+  const screening = getPanEchoAorticScreening(payload.predictions);
 
   return (
     <section
@@ -126,6 +186,8 @@ export function PanEchoResult({ payload, modelName, modelVersion, status }: PanE
           })}
         </p>
       </header>
+
+      {screening && <PanEchoAorticScreeningBlock screening={screening} />}
 
       {rows.length === 0 ? (
         <p

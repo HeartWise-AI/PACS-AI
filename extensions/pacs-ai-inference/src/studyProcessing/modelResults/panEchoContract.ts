@@ -4,6 +4,63 @@ export const PAN_ECHO_MODEL_NAME = 'PanEcho';
 // 1.4.0 with the same JSON output shape, so both are intentionally explicit.
 export const PAN_ECHO_SUPPORTED_MODEL_VERSIONS = ['1.0.0', '1.4.0'] as const;
 
+// 1.1.x (MHI release line, same JSON output) and 1.2.x (view selection, same
+// JSON output) are matched by release line.
+export const PAN_ECHO_SUPPORTED_RELEASE_LINES = ['1.1', '1.2'] as const;
+
+export function isSupportedPanEchoVersion(version: string | null | undefined): boolean {
+  if (typeof version !== 'string') {
+    return false;
+  }
+  const trimmed = version.trim();
+  if (PAN_ECHO_SUPPORTED_MODEL_VERSIONS.some(supported => supported === trimmed)) {
+    return true;
+  }
+  const match = trimmed.match(/^(\d+\.\d+)\.\d+$/);
+  return !!match && PAN_ECHO_SUPPORTED_RELEASE_LINES.some(line => line === match[1]);
+}
+
+// The aortic stenosis head and the AV peak velocity regression are not shown as
+// a diagnosis: PanEcho reads 2D clips only and under-grades severe AS. They are
+// shown as screening scores and an AI estimate (see getPanEchoAorticScreening).
+export const PAN_ECHO_AS_KEY = 'Aortic valve stenosis';
+export const PAN_ECHO_AV_VMAX_KEY = 'Aortic valve peak velocity';
+// Head order of the AS classifier (PanEcho tasks.pkl class_names).
+export const PAN_ECHO_AS_CLASSES = ['Mild|Moderate', 'None', 'Severe'] as const;
+
+export interface PanEchoAorticScreening {
+  // P(Severe) and P(Mild|Moderate) + P(Severe), 0..1; null when not returned.
+  severe: number | null;
+  any: number | null;
+  // AI-estimated AV peak velocity (m/s); null when not returned.
+  vmaxEstimate: number | null;
+}
+
+function probability(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+    ? value
+    : null;
+}
+
+export function getPanEchoAorticScreening(
+  predictions: Record<string, unknown>
+): PanEchoAorticScreening | null {
+  const scores = predictions[PAN_ECHO_AS_KEY];
+  const vmax = predictions[PAN_ECHO_AV_VMAX_KEY];
+  let severe: number | null = null;
+  let any: number | null = null;
+  if (Array.isArray(scores) && scores.length === PAN_ECHO_AS_CLASSES.length) {
+    const mildModerate = probability(scores[0]);
+    severe = probability(scores[2]);
+    any = mildModerate !== null && severe !== null ? Math.min(1, mildModerate + severe) : null;
+  }
+  const vmaxEstimate = typeof vmax === 'number' && Number.isFinite(vmax) ? vmax : null;
+  if (severe === null && any === null && vmaxEstimate === null) {
+    return null;
+  }
+  return { severe, any, vmaxEstimate };
+}
+
 export type PanEchoOutputGroup = 'leftVentricle' | 'rightHeart' | 'atria' | 'valves' | 'other';
 
 export interface PanEchoOutputDefinition {
