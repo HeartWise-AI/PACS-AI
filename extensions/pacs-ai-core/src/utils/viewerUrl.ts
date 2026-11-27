@@ -298,6 +298,17 @@ export function markViewerStudyRetrieved(
 
 let viewerRequestTrackingInstalled = false;
 
+/** The browser path relative to the router basename (window.config.routerBasename). */
+export function routerPathname(pathname: string, win: Window = window): string {
+  const basename = String(
+    ((win as unknown as { config?: { routerBasename?: string } }).config?.routerBasename) || ''
+  ).replace(/\/$/, '');
+  if (basename && (pathname === basename || pathname.startsWith(`${basename}/`))) {
+    return pathname.slice(basename.length) || '/';
+  }
+  return pathname;
+}
+
 /**
  * Follows navigation (popstate and React Router's pushState/replaceState,
  * see hooks/usePathname) and records each study route request.
@@ -308,7 +319,8 @@ export function installViewerStudyRequestTracking(win: Window = window): void {
   }
   viewerRequestTrackingInstalled = true;
   installLocationChangeEvents();
-  const record = () => recordViewerStudyRequest(win.location.pathname, win.location.search);
+  const record = () =>
+    recordViewerStudyRequest(routerPathname(win.location.pathname, win), win.location.search);
   win.addEventListener('popstate', record);
   win.addEventListener(LOCATION_CHANGE_EVENT, record);
   record();

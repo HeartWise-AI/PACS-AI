@@ -2,6 +2,7 @@ import {
   installViewerStudyRequestTracking,
   markViewerStudyRetrieved,
   recordViewerStudyRequest,
+  routerPathname,
   stripPatientIdentifiersFromAddressBar,
   studyInstanceUIDsFromSearch,
   studyOpenPath,
@@ -159,6 +160,14 @@ describe('the shared "open this study" link', () => {
     recordViewerStudyRequest('/notfoundstudy', '', { storage, now });
     recordViewerStudyRequest('/ai-predictions', '', { storage, now });
     expect(takeViewerStudyToRetrieve({ storage, now })).toEqual(['3.3', '4.4']);
+  });
+
+  it('reads paths relative to the router basename', () => {
+    const win = { config: { routerBasename: '/ohif-viewer/' } } as unknown as Window;
+    expect(routerPathname('/ohif-viewer/viewer', win)).toBe('/viewer');
+    expect(routerPathname('/ohif-viewer', win)).toBe('/');
+    expect(routerPathname('/ohif-viewerX/viewer', win)).toBe('/ohif-viewerX/viewer');
+    expect(routerPathname('/viewer', { config: {} } as unknown as Window)).toBe('/viewer');
   });
 
   it('records /viewer requests made through history navigation', () => {
