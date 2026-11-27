@@ -46,7 +46,10 @@ function WrappedCinePlayer({
       if (displaySet.FrameRate) {
         // displaySet.FrameRate corresponds to DICOM tag (0018,1063) which is defined as the the frame time in milliseconds
         // So a bit of math to get the actual frame rate.
-        frameRate = Math.round(1000 / displaySet.FrameRate);
+        // PACS-AI: keep one decimal under 10 fps (133 ms -> 7.5 fps, not 8);
+        // pacs-ai-shell's cineFrameRate.ts rounds the same way.
+        const fps = 1000 / displaySet.FrameRate;
+        frameRate = fps >= 10 ? Math.round(fps) : Math.round(fps * 10) / 10;
         isPlaying ||= !!appConfig.autoPlayCine;
       }
 

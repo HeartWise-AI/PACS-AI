@@ -10,6 +10,7 @@ export {
   startCineAutoplay,
   stopCineAutoplay,
 } from './cineAutoplay';
+export { cineFrameRate, resolveFrameRate, roundFrameRate } from './cineFrameRate';
 export { default as PacsAiCinePlayer, applyPacsAiCinePlayer } from './PacsAiCinePlayer';
 export { startDisplaySetOrder, stopDisplaySetOrder } from './displaySetOrder';
 export {
