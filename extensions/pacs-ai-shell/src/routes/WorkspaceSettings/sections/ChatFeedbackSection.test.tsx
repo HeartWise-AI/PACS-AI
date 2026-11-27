@@ -305,8 +305,8 @@ describe('ChatFeedbackSection', () => {
     expect(text).toContain('The LAD value is wrong');
     expect(text).toContain('FeedbackReason_wrong_value_or_measurement');
     expect(text).toContain('angiogram-agent');
-    const link = container.querySelector('a[href^="/viewer"]');
-    expect(link?.getAttribute('href')).toBe('/viewer?StudyInstanceUIDs=1.2.3.4');
+    const link = container.querySelector('a[href^="/open-study"]');
+    expect(link?.getAttribute('href')).toBe('/open-study?StudyInstanceUIDs=1.2.3.4');
     // The thumbs up row starts collapsed and expands on click.
     const toggles = Array.from(
       container.querySelectorAll('button[data-cy="chat-feedback-row-toggle"]')
@@ -407,7 +407,7 @@ describe('ChatFeedbackSection', () => {
   });
 
   it('escapes the study UID in the viewer link', () => {
-    expect(viewerStudyHref('1.2&x=3')).toBe('/viewer?StudyInstanceUIDs=1.2%26x%3D3');
+    expect(viewerStudyHref('1.2&x=3')).toBe('/open-study?StudyInstanceUIDs=1.2%26x%3D3');
   });
 
   it('formats times even when the browser language is not a valid Intl tag', () => {

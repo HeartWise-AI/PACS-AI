@@ -1,3 +1,5 @@
+import { studyOpenPath } from '@pacs-ai/extension-core/src/utils/viewerUrl';
+
 export const PROCESSING_NOTIFICATION_STUDY_PARAM = 'processingStudyInstanceUID';
 
 export function buildProcessingNotificationWorklistPath(studyInstanceUID: string): string {
@@ -21,7 +23,12 @@ export function findProcessingNotificationStudyPage(
   return Math.floor(studyIndex / itemsPerPage) + 1;
 }
 
-/** Viewer deep link for the study a processing notification is about. */
+/**
+ * Link that opens the study a processing notification is about. It goes
+ * through /open-study, which retrieves the study from the PACS when the local
+ * store no longer has it (as the work list does) and remounts the viewer when
+ * the bell is used from inside it.
+ */
 export function buildProcessingNotificationViewerPath(studyInstanceUID: string): string {
-  return `/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUID)}`;
+  return studyOpenPath(studyInstanceUID);
 }

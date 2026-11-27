@@ -12,6 +12,7 @@ import PacsAiShellProviders from './providers/PacsAiShellProviders';
 import { getPacsAiNotFoundRoute, getPacsAiRoutes } from './routes/pacsAiRoutes';
 import getToolbarModule from './toolbar/getToolbarModule';
 import { enterPacsAiViewerBehaviour, exitPacsAiViewerBehaviour } from './viewerBehaviour';
+import { installViewerStudyRequestTracking } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 
 export {
   enterPacsAiViewerBehaviour,
@@ -78,6 +79,9 @@ const pacsAiShellExtension = {
   }) {
     stopRouteErrorNotifications();
     turnOffOhifStudyList(appConfig);
+    // A /viewer link to a study the local store no longer has gets one retrieve
+    // (see routes/NotFoundStudy).
+    installViewerStudyRequestTracking();
     serviceProvidersManager.registerProvider(PACS_AI_SHELL_PROVIDER, PacsAiShellProviders);
 
     // The stock modes still registered render our layout (modes/pacs-ai

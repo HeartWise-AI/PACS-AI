@@ -246,7 +246,7 @@ describe('AI Predictions page', () => {
     expect(within(row).getByText('in progress')).toBeTruthy();
     expect(within(row).getByText('Automatic')).toBeTruthy();
     expect(within(row).getByRole('link', { name: 'Open exam' }).getAttribute('href')).toBe(
-      `/viewer?StudyInstanceUIDs=${encodeURIComponent(STUDY)}`
+      `/open-study?StudyInstanceUIDs=${encodeURIComponent(STUDY)}`
     );
   });
 
@@ -506,7 +506,7 @@ describe('AI Predictions page', () => {
     expect(screen.getByTestId('location').textContent).toBe('/ai-predictions');
     await act(async () => finish(true));
     expect(screen.getByTestId('location').textContent).toBe(
-      `/viewer?StudyInstanceUIDs=${encodeURIComponent(STUDY)}`
+      `/open-study?StudyInstanceUIDs=${encodeURIComponent(STUDY)}`
     );
   });
 

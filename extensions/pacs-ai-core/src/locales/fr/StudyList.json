@@ -366,5 +366,12 @@
   "Segmentation": "Segmentation",
   "Searching for data": "Recherche de données",
   "searchStudyListInfo": "Aucune donnée trouvée. Veuillez rechercher par nom du patient, MRN, plage de dates, description, modalité ou numéro d'accès.",
-  "Tools": "Outils"
+  "Tools": "Outils",
+  "OpenStudyRetrieving": "Récupération de l'étude depuis le PACS…",
+  "OpenStudyMissing": "Ce lien ne désigne aucune étude.",
+  "OpenStudyNoSource": "Cette étude n'est plus stockée sur ce serveur et aucune source PACS n'est configurée pour la récupérer. Choisissez une modalité DICOM dans la liste des études, puis réessayez.",
+  "OpenStudyRetrieveFailed": "L'étude n'a pas pu être récupérée depuis le PACS.",
+  "OpenStudyTimedOut": "La récupération de l'étude depuis le PACS prend trop de temps.",
+  "OpenStudyTryAgain": "Réessayer",
+  "OpenStudyBackToList": "Retour à la liste des études"
 }

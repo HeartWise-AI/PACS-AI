@@ -13,7 +13,7 @@ import { ModelExecutionResultDrawer } from '@pacs-ai/extension-inference/src/stu
 import { useModelExecutionResultViewer } from '@pacs-ai/extension-inference/src/studyProcessing/useModelExecutionResultViewer';
 import type { ModelExecutionResultClient } from '@pacs-ai/extension-inference/src/studyProcessing/executionResultClient';
 import { createStudyRefreshRepository } from '@pacs-ai/extension-inference/src/studyRefresh/studyRefreshRepository';
-import { buildProcessingNotificationViewerPath } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
+import { studyOpenPath } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 import { BUTTON_CLASS, ExamRow, type PredictionsActions } from './ExamRow';
 import { CompareDialog, RawDataDialog } from './PredictionDialogs';
 import { PredictionsFiltersBar, type LaunchedByUser } from './PredictionsFiltersBar';
@@ -257,7 +257,7 @@ export function AiPredictionsPage(dependencies: AiPredictionsDependencies = {}) 
           .then(history => history.executions),
       retriever: retrieverRef.current,
       openExam: studyInstanceUID =>
-        navigate(buildProcessingNotificationViewerPath(studyInstanceUID)),
+        navigate(studyOpenPath(studyInstanceUID)),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [results, resultViewer.open, runnable, state.reload, navigate]

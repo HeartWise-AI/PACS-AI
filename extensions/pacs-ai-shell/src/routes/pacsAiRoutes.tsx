@@ -14,6 +14,7 @@ import Settings from './Settings';
 import TenantNotFound from './TenantNotFound';
 import WorkspaceSettings from './WorkspaceSettings';
 import NotFoundStudy from './NotFoundStudy';
+import OpenStudy from './OpenStudy';
 import NotFound from './NotFound';
 import { HandoffLink, HandoffSignIn } from './Handoff';
 import PacsAiErrorBoundary from '../components/PacsAiErrorBoundary';
@@ -68,6 +69,8 @@ export function getPacsAiRoutes(): PacsAiRoute[] {
     pacsAiRoute('/reset-password', ResetPassword),
     pacsAiRoute('/ai-models', AIModels),
     pacsAiRoute('/ai-predictions', AiPredictions),
+    // Every "open this study" link: retrieve from the PACS if needed, then the viewer.
+    pacsAiRoute('/open-study', OpenStudy),
     pacsAiRoute('/admin/members', Members),
     pacsAiRoute('/admin/workspace-settings', WorkspaceSettings),
     pacsAiRoute('/admin/kibana-logs', KibanaLogs),

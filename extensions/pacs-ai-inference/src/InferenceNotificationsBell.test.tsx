@@ -76,9 +76,10 @@ describe('InferenceNotificationsBell', () => {
       fireEvent.click(notificationButton as HTMLButtonElement);
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/viewer?StudyInstanceUIDs=study-1');
+    // Through /open-study: retrieved from the PACS first when the cache no longer has it.
+    expect(mockNavigate).toHaveBeenCalledWith('/open-study?StudyInstanceUIDs=study-1');
     expect(buildProcessingNotificationViewerPath('1.2.840/a b')).toBe(
-      '/viewer?StudyInstanceUIDs=1.2.840%2Fa%20b'
+      '/open-study?StudyInstanceUIDs=1.2.840%2Fa+b'
     );
     expect(mockInferenceProcessingContext.setBellOpen).toHaveBeenCalledWith(false);
   });

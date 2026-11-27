@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { buildProcessingNotificationViewerPath } from '@pacs-ai/extension-inference/src/processingNotificationNavigation';
+import { studyOpenPath } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 import type { ExecutionResults, KeyResultState } from './useExecutionResults';
 import { ExamRetrievalError, type ExamRetriever } from './examRetrieval';
 import {
@@ -747,7 +747,7 @@ export function ExamRow({
             />
           ) : (
             <Link
-              to={buildProcessingNotificationViewerPath(exam.studyInstanceUID)}
+              to={studyOpenPath(exam.studyInstanceUID)}
               className={OPEN_LINK_CLASS}
             >
               {t('Open exam')}

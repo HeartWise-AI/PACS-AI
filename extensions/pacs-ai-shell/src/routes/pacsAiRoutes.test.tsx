@@ -21,6 +21,7 @@ jest.mock('./Settings', () => () => {
 });
 jest.mock('./TenantNotFound', () => page('tenant-not-found'));
 jest.mock('./WorkspaceSettings', () => page('workspace-settings'));
+jest.mock('./OpenStudy', () => page('open-study'));
 
 import { getPacsAiNotFoundRoute, getPacsAiRoutes } from './pacsAiRoutes';
 
@@ -41,6 +42,7 @@ describe('PACS-AI custom routes', () => {
       ['/reset-password', true],
       ['/ai-models', true],
       ['/ai-predictions', true],
+      ['/open-study', true],
       ['/admin/members', true],
       ['/admin/workspace-settings', true],
       ['/admin/kibana-logs', true],
