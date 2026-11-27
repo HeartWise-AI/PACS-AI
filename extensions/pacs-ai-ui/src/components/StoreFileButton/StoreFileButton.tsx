@@ -9,8 +9,46 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
 
+// No allow-scripts: the report's own script must never run with the viewer's
+// origin. allow-same-origin only lets html2canvas read the rendered document.
+const SNAPSHOT_FRAME_SANDBOX = 'allow-same-origin';
+const SNAPSHOT_FRAME_WIDTH = 1024;
+// A report resource that never finishes loading must not leave Write to Study
+// spinning: capture whatever has been laid out by then.
+const SNAPSHOT_LOAD_TIMEOUT_MS = 10000;
+
+// Lays the report out at the size it is displayed at (falls back to 1024px wide)
+// so responsive CSS gives the stored PDF the layout the user saw.
+const renderSnapshotFrame = (
+  html: string,
+  size: { width?: number; height?: number } = {}
+): Promise<HTMLIFrameElement> =>
+  new Promise(resolve => {
+    const width = size.width || SNAPSHOT_FRAME_WIDTH;
+    const height = size.height || window.innerHeight;
+    const frame = document.createElement('iframe');
+    frame.setAttribute('sandbox', SNAPSHOT_FRAME_SANDBOX);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.tabIndex = -1;
+    frame.style.cssText = `position:fixed;top:0;left:-${width * 2}px;width:${width}px;height:${height}px;border:0;`;
+    const timer = window.setTimeout(() => resolve(frame), SNAPSHOT_LOAD_TIMEOUT_MS);
+    frame.addEventListener(
+      'load',
+      () => {
+        window.clearTimeout(timer);
+        resolve(frame);
+      },
+      { once: true }
+    );
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+  });
+
 const StoreFileButton = ({
-  iframeRef,
+  html = '',
+  // Optional: the displayed report frame, used only for its size. Its document is
+  // cross-origin (opaque sandbox) and is never read.
+  iframeRef = null,
   encodedData = '',
   modelName = '',
   modelVersion = '',
@@ -36,12 +74,14 @@ const StoreFileButton = ({
   // handle confirm
   const handleConfirm = async () => {
     setLoading(true);
+    let snapshotFrame: HTMLIFrameElement | null = null;
     try {
-      const iframe = iframeRef.current;
-      if (!iframe) {
-        throw new Error('Iframe not found');
-      }
-      const iframeDoc = iframe.contentWindow?.document;
+      const displayed = iframeRef?.current;
+      snapshotFrame = await renderSnapshotFrame(html, {
+        width: displayed?.clientWidth,
+        height: displayed?.clientHeight,
+      });
+      const iframeDoc = snapshotFrame.contentDocument;
       if (!iframeDoc) {
         throw new Error('Cannot access iframe document');
       }
@@ -106,6 +146,7 @@ const StoreFileButton = ({
       console.error(error);
       showAlert(error.message, 'error');
     } finally {
+      snapshotFrame?.remove();
       handleClose();
       setLoading(false);
     }

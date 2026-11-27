@@ -40,7 +40,9 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   const [parsedHTML, setParsedHTML] = useState<string>('');
   const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
     useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
-  const iframeRef = useRef(null);
+  // Only used to size the Write to Study snapshot; the report document itself is
+  // in an opaque-origin sandbox and cannot be read from here.
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -128,6 +130,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 )}
                 {linkedDICOMModalityWithEnabledCStore && (
                   <StoreFileButton
+                    html={parsedHTML}
                     iframeRef={iframeRef}
                     encodedData={data.htmlBase64}
                     modelName={modelName}
