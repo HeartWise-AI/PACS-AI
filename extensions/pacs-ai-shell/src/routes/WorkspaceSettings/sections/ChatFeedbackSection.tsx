@@ -13,11 +13,28 @@ import {
   cardTitleClassName,
 } from '../model-feedback/components/dashboardTheme';
 import { useChatFeedbackReview } from '../hooks/useChatFeedbackReview';
+import { ToolUsageCard, ToolUseSection } from './ChatFeedbackToolUse';
 
 const RANGE_DAYS = [7, 30, 90, 365] as const;
 
 const selectClassName =
   'h-[38px] min-w-[150px] rounded-lg border border-white/15 bg-[#1B1F1B] px-3 text-sm text-white focus:border-[#C8F469] focus:outline-none';
+
+/** The voter as the Members page names them: name, else email, else the raw id. */
+export function voterLabel(item: Pick<ChatFeedbackItem, 'user_id' | 'user_name' | 'user_email'>): {
+  primary: string;
+  secondary: string | null;
+} {
+  const name = item.user_name?.trim();
+  const email = item.user_email?.trim();
+  if (name) {
+    return { primary: name, secondary: email || null };
+  }
+  if (email) {
+    return { primary: email, secondary: null };
+  }
+  return { primary: item.user_id, secondary: null };
+}
 
 /** The viewer page of a study discussed in the chat. */
 export function viewerStudyHref(studyInstanceUID: string): string {
@@ -206,6 +223,7 @@ function Summary({ counts }: { counts: ChatFeedbackCountsResponse }) {
           />
         </div>
       </div>
+      {counts.tool_usage && <ToolUsageCard usage={counts.tool_usage} />}
     </div>
   );
 }
@@ -219,16 +237,24 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function ChatFeedbackRow({ item }: { item: ChatFeedbackItem }) {
+export function ChatFeedbackRow({
+  item,
+  showRaw = false,
+}: {
+  item: ChatFeedbackItem;
+  showRaw?: boolean;
+}) {
   const { t, i18n } = useTranslation('ChatFeedback');
   const { t: tChat } = useTranslation('ChatBox');
   const [open, setOpen] = useState(item.vote === 'down');
   const detailsId = `chat-feedback-${item.feedback_id}`;
+  const voter = voterLabel(item);
   return (
     <li className="rounded-lg border border-white/10 bg-white/[0.02]">
       <button
         type="button"
         className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left"
+        data-cy="chat-feedback-row-toggle"
         aria-expanded={open}
         aria-controls={detailsId}
         onClick={() => setOpen(value => !value)}
@@ -290,7 +316,15 @@ export function ChatFeedbackRow({ item }: { item: ChatFeedbackItem }) {
               )}
             </Field>
             <Field label={t('User')}>
-              <span className="break-all">{item.user_id}</span>
+              <span
+                className="break-all"
+                title={item.user_id}
+              >
+                {voter.primary}
+              </span>
+              {voter.secondary && (
+                <span className="block break-all text-xs text-white/50">{voter.secondary}</span>
+              )}
             </Field>
             <Field label={t('Specialists')}>
               {item.specialists.length ? item.specialists.join(', ') : t('NoSpecialist')}
@@ -298,13 +332,26 @@ export function ChatFeedbackRow({ item }: { item: ChatFeedbackItem }) {
             <Field label={t('Model')}>{item.model || '—'}</Field>
             <Field label={t('Harness')}>{item.harness_version || '—'}</Field>
           </dl>
+          {!item.sealed_elsewhere && (
+            <ToolUseSection
+              feedbackId={item.feedback_id}
+              toolCount={item.tool_count}
+              showRaw={showRaw}
+            />
+          )}
         </div>
       )}
     </li>
   );
 }
 
-const ChatFeedbackSection = ({ active }: { active: boolean }) => {
+const ChatFeedbackSection = ({
+  active,
+  showRaw = false,
+}: {
+  active: boolean;
+  showRaw?: boolean;
+}) => {
   const { t } = useTranslation('ChatFeedback');
   const [days, setDays] = useState<number>(90);
   const [rating, setRating] = useState<ChatFeedbackVote | ''>('');
@@ -414,6 +461,7 @@ const ChatFeedbackSection = ({ active }: { active: boolean }) => {
               <ChatFeedbackRow
                 key={item.feedback_id}
                 item={item}
+                showRaw={showRaw}
               />
             ))}
           </ul>

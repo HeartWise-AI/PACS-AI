@@ -3,7 +3,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { fireEvent } from '@testing-library/react';
 import type { ChatFeedbackItem } from '@pacs-ai/extension-core/src/api/orchestratorDTO';
 import orchestratorRepository from '@pacs-ai/extension-core/src/api/orchestratorRepository';
-import ChatFeedbackSection, { formatTime, viewerStudyHref } from './ChatFeedbackSection';
+import ChatFeedbackSection, {
+  formatTime,
+  viewerStudyHref,
+  voterLabel,
+} from './ChatFeedbackSection';
 
 jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
 jest.mock('react-i18next', () => ({
@@ -16,11 +20,59 @@ jest.mock('react-i18next', () => ({
 jest.mock('@pacs-ai/extension-core/src/service/userService', () => ({ logoutUser: jest.fn() }));
 jest.mock('@pacs-ai/extension-core/src/api/orchestratorRepository', () => ({
   __esModule: true,
-  default: { ListChatFeedback: jest.fn(), CountChatFeedback: jest.fn() },
+  default: {
+    ListChatFeedback: jest.fn(),
+    CountChatFeedback: jest.fn(),
+    GetChatFeedback: jest.fn(),
+  },
 }));
 
 const listChatFeedback = orchestratorRepository.ListChatFeedback as jest.Mock;
 const countChatFeedback = orchestratorRepository.CountChatFeedback as jest.Mock;
+const getChatFeedback = orchestratorRepository.GetChatFeedback as jest.Mock;
+
+const toolCalls = [
+  {
+    seq: 0,
+    parent_seq: null,
+    depth: 0,
+    agent: 'supervisor',
+    specialist: 'angiogram-agent',
+    tool: 'task',
+    origin: 'model',
+    status: 'ok',
+    duration_ms: 52088,
+    offset_ms: 0,
+    model: null,
+    args_summary: 'description=Read the LAD',
+    run_selection: null,
+    input: null,
+    result_summary: 'LAD 70%. · 2 citations',
+    error: null,
+    result_truncated: false,
+    arguments: { subagent_type: 'angiogram-agent', description: 'Read the LAD' },
+  },
+  {
+    seq: 1,
+    parent_seq: 0,
+    depth: 1,
+    agent: 'angiogram-agent',
+    specialist: null,
+    tool: 'deepcoro_jepa',
+    origin: 'model',
+    status: 'error',
+    duration_ms: 171,
+    offset_ms: 500,
+    model: 'claude-haiku-5-5',
+    args_summary: 'study_uid=[redacted]',
+    run_selection: 'run=last → run 3 of 3 (last)',
+    input: 'Series 5 – LCA · study 2026-01-02',
+    result_summary: null,
+    error: 'TimeoutError: slow',
+    result_truncated: false,
+    arguments: { study_uid: '[redacted]', run: 'last' },
+  },
+];
 
 function item(overrides: Partial<ChatFeedbackItem> = {}): ChatFeedbackItem {
   return {
@@ -90,6 +142,7 @@ describe('ChatFeedbackSection', () => {
       },
     });
     countChatFeedback.mockReset().mockResolvedValue({ data: counts });
+    getChatFeedback.mockReset().mockResolvedValue({ data: { ...item(), tool_calls: toolCalls } });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -100,11 +153,140 @@ describe('ChatFeedbackSection', () => {
     container.remove();
   });
 
-  async function render(active = true) {
+  async function render(active = true, showRaw = false) {
     await act(async () => {
-      root.render(<ChatFeedbackSection active={active} />);
+      root.render(
+        <ChatFeedbackSection
+          active={active}
+          showRaw={showRaw}
+        />
+      );
     });
   }
+
+  it('lists the tool calls of an opened vote in order, with run, input, status and n/a', async () => {
+    await render();
+    expect(getChatFeedback).toHaveBeenCalledWith('fb-1');
+    const calls = Array.from(container.querySelectorAll('[data-cy="chat-feedback-tool-call"]'));
+    expect(calls).toHaveLength(2);
+    expect(calls[0].textContent).toContain('Supervisor');
+    expect(calls[0].textContent).toContain('ToolSpecialist');
+    expect(calls[0].textContent).toContain('52.1 s');
+    expect(calls[0].textContent).toContain('ToolModel: ToolNotAvailable');
+    expect(calls[1].textContent).toContain('deepcoro_jepa');
+    expect(calls[1].textContent).toContain('171 ms');
+    expect(calls[1].textContent).toContain('ToolStatus_error');
+    expect(calls[1].textContent).toContain('run=last → run 3 of 3 (last)');
+    expect(calls[1].textContent).toContain('Series 5 – LCA');
+    expect(calls[1].textContent).toContain('TimeoutError: slow');
+    expect(calls[1].textContent).toContain('claude-haiku-5-5');
+    // No raw JSON for non-admins.
+    expect(container.textContent).not.toContain('ToolUseShowRaw');
+  });
+
+  it('shows the raw JSON toggle to admins and collapses the tool section', async () => {
+    await render(true, true);
+    const rawButton = Array.from(container.querySelectorAll('button')).find(
+      button => button.textContent === 'ToolUseShowRaw'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(rawButton);
+    });
+    expect(container.querySelector('[data-cy="chat-feedback-tool-raw"]')?.textContent).toContain(
+      '"tool": "deepcoro_jepa"'
+    );
+    const toolToggle = container.querySelector(
+      '[data-cy="chat-feedback-tool-use"] button[aria-expanded]'
+    ) as HTMLButtonElement;
+    expect(toolToggle.getAttribute('aria-expanded')).toBe('true');
+    await act(async () => {
+      fireEvent.click(toolToggle);
+    });
+    expect(container.querySelectorAll('[data-cy="chat-feedback-tool-call"]')).toHaveLength(0);
+  });
+
+  it('says when a turn made no tool call or its trace is unavailable', async () => {
+    getChatFeedback.mockResolvedValueOnce({ data: { ...item(), tool_calls: [] } });
+    await render();
+    expect(container.textContent).toContain('ToolUseNone');
+    getChatFeedback.mockResolvedValueOnce({
+      data: { ...item({ feedback_id: 'fb-2' }), tool_calls: null },
+    });
+    const toggles = Array.from(
+      container.querySelectorAll('button[data-cy="chat-feedback-row-toggle"]')
+    );
+    await act(async () => {
+      fireEvent.click(toggles[1]);
+    });
+    expect(container.textContent).toContain('ToolUseUnavailable');
+  });
+
+  it('names the voter from the user directory and falls back to the id', async () => {
+    listChatFeedback.mockReset().mockResolvedValue({
+      data: {
+        total: 1,
+        limit: 50,
+        offset: 0,
+        items: [item({ user_name: 'Alice Martin', user_email: 'alice@example.org' })],
+      },
+    });
+    await render();
+    expect(container.textContent).toContain('Alice Martin');
+    expect(container.textContent).toContain('alice@example.org');
+    expect(container.textContent).not.toContain('user-1');
+    expect(voterLabel({ user_id: 'uid-1', user_name: null, user_email: null })).toEqual({
+      primary: 'uid-1',
+      secondary: null,
+    });
+    expect(voterLabel({ user_id: 'uid-1', user_email: 'a@b.c' })).toEqual({
+      primary: 'a@b.c',
+      secondary: null,
+    });
+  });
+
+  it('shows the tool usage card with calls, error rate and median per vote', async () => {
+    countChatFeedback.mockReset().mockResolvedValue({
+      data: {
+        ...counts,
+        tool_usage: {
+          totals: {
+            up: {
+              calls: 21,
+              errors: 0,
+              error_rate: 0,
+              median_ms: 2571,
+              timed_calls: 21,
+              turns: 2,
+              turns_with_trace: 2,
+            },
+            down: {
+              calls: 0,
+              errors: 0,
+              error_rate: null,
+              median_ms: null,
+              timed_calls: 0,
+              turns: 1,
+              turns_with_trace: 1,
+            },
+          },
+          by_tool: [
+            {
+              tool: 'firecrawl_search',
+              up: { calls: 8, errors: 0, error_rate: 0, median_ms: 2526, timed_calls: 8 },
+              down: { calls: 0, errors: 0, error_rate: null, median_ms: null, timed_calls: 0 },
+            },
+          ],
+        },
+      },
+    });
+    await render();
+    const card = container.querySelector('[data-cy="chat-feedback-tool-usage"]');
+    expect(card?.textContent).toContain('firecrawl_search');
+    expect(card?.textContent).toContain('2.53 s');
+    expect(card?.textContent).toContain('0% (0)');
+    expect(card?.textContent).toContain('ToolUsageErrorRate');
+    expect(card?.textContent).toContain('ToolNotAvailable');
+  });
 
   it('does not load while the tab is hidden', async () => {
     await render(false);
@@ -126,7 +308,9 @@ describe('ChatFeedbackSection', () => {
     const link = container.querySelector('a[href^="/viewer"]');
     expect(link?.getAttribute('href')).toBe('/viewer?StudyInstanceUIDs=1.2.3.4');
     // The thumbs up row starts collapsed and expands on click.
-    const toggles = Array.from(container.querySelectorAll('button[aria-expanded]'));
+    const toggles = Array.from(
+      container.querySelectorAll('button[data-cy="chat-feedback-row-toggle"]')
+    );
     expect(toggles.map(button => button.getAttribute('aria-expanded'))).toEqual(['true', 'false']);
     await act(async () => {
       fireEvent.click(toggles[1]);
@@ -180,7 +364,9 @@ describe('ChatFeedbackSection', () => {
       fireEvent.click(more);
     });
     expect(listChatFeedback).toHaveBeenLastCalledWith({ days: 90, limit: 50, offset: 2 });
-    expect(container.querySelectorAll('button[aria-expanded]')).toHaveLength(3);
+    expect(container.querySelectorAll('button[data-cy="chat-feedback-row-toggle"]')).toHaveLength(
+      3
+    );
     expect(container.textContent).toContain('Third question');
     expect(
       Array.from(container.querySelectorAll('button')).some(
