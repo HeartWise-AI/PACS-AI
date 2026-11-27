@@ -108,6 +108,18 @@ test('shows why a study cannot be opened, with a retry and a way back', async ()
   );
 });
 
+test('a multi-study link retrieves each study and opens them together', async () => {
+  const repository = repo();
+  renderAt('/open-study?StudyInstanceUIDs=1.2.3,4.5.6', repository);
+  await waitFor(() =>
+    expect(screen.getByTestId('location').textContent).toBe('/viewer?StudyInstanceUIDs=1.2.3%2C4.5.6')
+  );
+  expect((repository.retrieveStudy as jest.Mock).mock.calls.map(([r]) => r.studyInstanceUID)).toEqual([
+    '1.2.3',
+    '4.5.6',
+  ]);
+});
+
 test('a link without a study UID says so and retrieves nothing', async () => {
   const repository = repo();
   renderAt('/open-study?patientId=MRN1', repository);

@@ -3,7 +3,7 @@ import {
   markViewerStudyRetrieved,
   recordViewerStudyRequest,
   stripPatientIdentifiersFromAddressBar,
-  studyInstanceUIDFromSearch,
+  studyInstanceUIDsFromSearch,
   studyOpenPath,
   takeViewerStudyToRetrieve,
   toStudyOpenPath,
@@ -83,11 +83,23 @@ describe('the shared "open this study" link', () => {
     );
   });
 
-  it('reads the first study UID of a query string and rejects anything else', () => {
-    expect(studyInstanceUIDFromSearch('?StudyInstanceUIDs=1.2.3,4.5.6')).toBe('1.2.3');
-    expect(studyInstanceUIDFromSearch('studyInstanceUIDs=7.8')).toBe('7.8');
-    expect(studyInstanceUIDFromSearch('StudyInstanceUIDs=1.2%26x%3D3')).toBeNull();
-    expect(studyInstanceUIDFromSearch('patientId=1')).toBeNull();
+  it('reads every study UID of a query string, as OHIF does, and rejects anything else', () => {
+    expect(studyInstanceUIDsFromSearch('?StudyInstanceUIDs=1.2.3,4.5.6')).toEqual(['1.2.3', '4.5.6']);
+    expect(
+      studyInstanceUIDsFromSearch('StudyInstanceUIDs=1.2.3&StudyInstanceUIDs=7.8&StudyInstanceUIDs=1.2.3')
+    ).toEqual(['1.2.3', '7.8']);
+    expect(studyInstanceUIDsFromSearch('studyInstanceUIDs=7.8')).toEqual(['7.8']);
+    expect(studyInstanceUIDsFromSearch('StudyInstanceUIDs=1.2%26x%3D3')).toBeNull();
+    expect(studyInstanceUIDsFromSearch('StudyInstanceUIDs=1.2,x')).toBeNull();
+    expect(studyInstanceUIDsFromSearch('patientId=1')).toBeNull();
+  });
+
+  it('keeps a multi-study selection in both links', () => {
+    expect(studyOpenPath(['1.2', '3.4'])).toBe('/open-study?StudyInstanceUIDs=1.2%2C3.4');
+    expect(viewerPathForStudy(['1.2', '3.4'])).toBe('/viewer?StudyInstanceUIDs=1.2%2C3.4');
+    expect(toStudyOpenPath('/viewer?StudyInstanceUIDs=1.2&StudyInstanceUIDs=3.4')).toBe(
+      '/open-study?StudyInstanceUIDs=1.2%2C3.4'
+    );
   });
 
   it('turns a handoff /viewer return path into the open-study link, without patient keys', () => {
@@ -108,14 +120,14 @@ describe('the shared "open this study" link', () => {
 
     recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.2.3', { storage, now });
     t += 5_000;
-    expect(takeViewerStudyToRetrieve({ storage, now })).toBe('1.2.3');
+    expect(takeViewerStudyToRetrieve({ storage, now })).toEqual(['1.2.3']);
     // The open flow sent the viewer back to the same study and it is still missing.
     recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.2.3', { storage, now });
     expect(takeViewerStudyToRetrieve({ storage, now })).toBeNull();
     // Much later the study may be retrieved again.
     t += VIEWER_RETRIEVE_RETRY_WINDOW_MS + 1;
     recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.2.3', { storage, now });
-    expect(takeViewerStudyToRetrieve({ storage, now })).toBe('1.2.3');
+    expect(takeViewerStudyToRetrieve({ storage, now })).toEqual(['1.2.3']);
   });
 
   it('ignores a stale request and a study /open-study just retrieved', () => {
@@ -126,9 +138,22 @@ describe('the shared "open this study" link', () => {
     t += VIEWER_REQUEST_MAX_AGE_MS + 1;
     expect(takeViewerStudyToRetrieve({ storage, now })).toBeNull();
 
-    markViewerStudyRetrieved('4.5.6', { storage, now });
+    markViewerStudyRetrieved(['4.5.6'], { storage, now });
     recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=4.5.6', { storage, now });
     expect(takeViewerStudyToRetrieve({ storage, now })).toBeNull();
+  });
+
+  it('never recovers a study other than the one that failed (another study route came after)', () => {
+    const storage = memory();
+    const now = () => 9_000_000;
+    recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.1', { storage, now });
+    recordViewerStudyRequest('/segmentation', '?StudyInstanceUIDs=2.2', { storage, now });
+    expect(takeViewerStudyToRetrieve({ storage, now })).toBeNull();
+    // Pages without studies leave the record alone.
+    recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=3.3,4.4', { storage, now });
+    recordViewerStudyRequest('/notfoundstudy', '', { storage, now });
+    recordViewerStudyRequest('/ai-predictions', '', { storage, now });
+    expect(takeViewerStudyToRetrieve({ storage, now })).toEqual(['3.3', '4.4']);
   });
 
   it('records /viewer requests made through history navigation', () => {
@@ -136,9 +161,9 @@ describe('the shared "open this study" link', () => {
     window.history.pushState({}, '', '/');
     installViewerStudyRequestTracking();
     window.history.pushState({}, '', '/viewer?StudyInstanceUIDs=1.2.840.99');
-    expect(JSON.parse(window.sessionStorage.getItem(VIEWER_REQUEST_STORAGE_KEY) || '{}').uid).toBe(
-      '1.2.840.99'
-    );
+    expect(JSON.parse(window.sessionStorage.getItem(VIEWER_REQUEST_STORAGE_KEY) || '{}').uids).toEqual([
+      '1.2.840.99',
+    ]);
     window.history.pushState({}, '', '/');
   });
 });

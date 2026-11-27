@@ -144,7 +144,12 @@ export async function prepareStudyForViewer({
   sessionStorage,
   localStorage,
 }: PrepareStudyOptions): Promise<OpenStudyOutcome> {
-  const storedFallback = async (reason: OpenStudyFailure): Promise<OpenStudyOutcome> => {
+  // remainingJobIds: retrieval jobs still moving series when the wait is given
+  // up; the viewer follows them if the partial copy is opened.
+  const storedFallback = async (
+    reason: OpenStudyFailure,
+    remainingJobIds: string[] = []
+  ): Promise<OpenStudyOutcome> => {
     let stored = false;
     try {
       stored = await repository.isStored(studyInstanceUID);
@@ -156,7 +161,7 @@ export async function prepareStudyForViewer({
       return { status: 'cancelled' };
     }
     return stored
-      ? { status: 'open', remainingJobIds: [], modalityId: null }
+      ? { status: 'open', remainingJobIds, modalityId: null }
       : { status: 'failed', reason };
   };
 
@@ -193,6 +198,13 @@ export async function prepareStudyForViewer({
   const firstIds = firstSeriesJobIds(jobs);
   const startedAt = now();
   let statusFailures = 0;
+  // Jobs not yet finished, as last seen (all of them before the first answer).
+  let unfinished = jobIds;
+  const stillMoving = (infos: readonly RetrieveJobInfo[]) =>
+    infos
+      .filter(job => job.state !== 'Success' && job.state !== 'Failure' && job.progress !== 100)
+      .map(job => job.id)
+      .filter((id): id is string => !!id);
   onProgress?.(0);
   for (;;) {
     let infos: readonly RetrieveJobInfo[] | null = null;
@@ -202,13 +214,14 @@ export async function prepareStudyForViewer({
     } catch (error: unknown) {
       statusFailures += 1;
       if (statusFailures >= MAX_STATUS_FAILURES) {
-        return storedFallback('retrieveFailed');
+        return storedFallback('retrieveFailed', unfinished);
       }
     }
     if (isCancelled()) {
       return { status: 'cancelled' };
     }
     if (infos) {
+      unfinished = stillMoving(infos);
       const summary = summarizeRetrieveJobs(infos);
       onProgress?.(summary.overallProgress);
       if (summary.done || isReadyToOpen(infos, firstIds)) {
@@ -222,11 +235,11 @@ export async function prepareStudyForViewer({
       }
       // The first series will not arrive: open what the store has, if anything.
       if (infos.some(job => firstIds.includes(job.id as string) && job.state === 'Failure')) {
-        return storedFallback('retrieveFailed');
+        return storedFallback('retrieveFailed', unfinished);
       }
     }
     if (now() - startedAt >= timeoutMs) {
-      return storedFallback('timedOut');
+      return storedFallback('timedOut', unfinished);
     }
     await wait(intervalMs);
   }

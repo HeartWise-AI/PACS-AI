@@ -10,7 +10,7 @@ import {
 import { rememberPendingRetrieve } from '@pacs-ai/extension-inference/src/studyRefresh/progressiveRetrieve';
 import {
   markViewerStudyRetrieved,
-  studyInstanceUIDFromSearch,
+  studyInstanceUIDsFromSearch,
   viewerPathForStudy,
 } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 
@@ -48,24 +48,36 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
   }
 
   const params = new URLSearchParams(location.search);
-  const studyInstanceUID = studyInstanceUIDFromSearch(params);
+  const studyInstanceUIDs = studyInstanceUIDsFromSearch(params);
+  const studiesKey = studyInstanceUIDs?.join(',') ?? '';
   const modalitiesInStudy = params.get('modalitiesInStudy');
   const studyDate = params.get('studyDate');
 
   useEffect(() => {
-    if (!studyInstanceUID) {
+    const uids = studiesKey ? studiesKey.split(',') : [];
+    if (!uids.length) {
       setPhase({ status: 'failed', reason: 'missing' });
       return undefined;
     }
     let cancelled = false;
     setPhase({ status: 'working', percent: null });
-    prepareStudyForViewer({
-      studyInstanceUID,
-      repository: repositoryRef.current as OpenStudyRepository,
-      onProgress: percent => !cancelled && setPhase({ status: 'working', percent }),
-      isCancelled: () => cancelled,
-    }).then(
-      outcome => {
+
+    // Each study of the selection (usually one), in turn.
+    const run = async () => {
+      const handovers: Array<[string, string[]]> = [];
+      for (let index = 0; index < uids.length; index++) {
+        const outcome = await prepareStudyForViewer({
+          studyInstanceUID: uids[index],
+          repository: repositoryRef.current as OpenStudyRepository,
+          onProgress: percent =>
+            !cancelled &&
+            setPhase({
+              status: 'working',
+              percent:
+                percent === null ? null : Math.floor((index * 100 + percent) / uids.length),
+            }),
+          isCancelled: () => cancelled,
+        });
         if (cancelled || outcome.status === 'cancelled') {
           return;
         }
@@ -73,19 +85,18 @@ export default function OpenStudy({ repository }: OpenStudyProps = {}) {
           setPhase({ status: 'failed', reason: outcome.reason });
           return;
         }
-        // The viewer reloads the series still arriving (progressiveRetrieve).
-        rememberPendingRetrieve(studyInstanceUID, outcome.remainingJobIds);
-        markViewerStudyRetrieved(studyInstanceUID);
-        navigate(viewerPathForStudy(studyInstanceUID, { modalitiesInStudy, studyDate }), {
-          replace: true,
-        });
-      },
-      () => !cancelled && setPhase({ status: 'failed', reason: 'retrieveFailed' })
-    );
+        handovers.push([uids[index], outcome.remainingJobIds]);
+      }
+      // The viewer reloads the series still arriving (progressiveRetrieve).
+      handovers.forEach(([uid, jobIds]) => rememberPendingRetrieve(uid, jobIds));
+      markViewerStudyRetrieved(uids);
+      navigate(viewerPathForStudy(uids, { modalitiesInStudy, studyDate }), { replace: true });
+    };
+    run().catch(() => !cancelled && setPhase({ status: 'failed', reason: 'retrieveFailed' }));
     return () => {
       cancelled = true;
     };
-  }, [studyInstanceUID, modalitiesInStudy, studyDate, attempt, navigate]);
+  }, [studiesKey, modalitiesInStudy, studyDate, attempt, navigate]);
 
   return (
     <div

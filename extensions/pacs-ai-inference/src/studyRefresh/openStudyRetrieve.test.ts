@@ -171,6 +171,49 @@ describe('prepareStudyForViewer (the work list open, for every study link)', () 
     ).toEqual({ status: 'failed', reason: 'timedOut' });
   });
 
+  it('opening a partial copy after a failure hands the still-running jobs to the viewer', async () => {
+    const repo = repository({
+      retrieveStudy: jest.fn(async () => [
+        { id: 'a', order: 0 },
+        { id: 'b', order: 1 },
+        { id: 'c', order: 2 },
+      ]),
+      loadJobs: jest.fn(async () => [
+        { id: 'a', progress: 30, state: 'Failure' },
+        { id: 'b', progress: 40, state: 'Running' },
+        { id: 'c', progress: 100, state: 'Success' },
+      ]),
+      isStored: jest.fn(async () => true),
+    });
+    expect(
+      await prepareStudyForViewer({
+        studyInstanceUID: UID,
+        repository: repo,
+        wait: noWait,
+        sessionStorage: memory(),
+        localStorage: memory(),
+      })
+    ).toEqual({ status: 'open', remainingJobIds: ['b'], modalityId: null });
+
+    // Status unreadable three times: every job is handed over.
+    const blind = repository({
+      retrieveStudy: jest.fn(async () => [{ id: 'a', order: 0 }, { id: 'b', order: 1 }]),
+      loadJobs: jest.fn(async () => {
+        throw new Error('502');
+      }),
+      isStored: jest.fn(async () => true),
+    });
+    expect(
+      await prepareStudyForViewer({
+        studyInstanceUID: UID,
+        repository: blind,
+        wait: noWait,
+        sessionStorage: memory(),
+        localStorage: memory(),
+      })
+    ).toEqual({ status: 'open', remainingJobIds: ['a', 'b'], modalityId: null });
+  });
+
   it('stops quietly when the page is left', async () => {
     let cancelled = false;
     const repo = repository({

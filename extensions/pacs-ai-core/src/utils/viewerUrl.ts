@@ -95,42 +95,52 @@ export function stripPatientIdentifiersFromAddressBar(win: Window = window): boo
  */
 export const OPEN_STUDY_PATH = '/open-study';
 
-const STUDY_UIDS_KEY = 'StudyInstanceUIDs';
+type Filters = Record<string, string | undefined | null>;
 
-function studyParams(
-  studyInstanceUID: string,
-  filters: Record<string, string | undefined | null> = {}
-): string {
-  return viewerSearchForStudy(studyInstanceUID.trim(), filters);
+function studyParams(studyInstanceUIDs: string | readonly string[], filters: Filters = {}): string {
+  const uids = (typeof studyInstanceUIDs === 'string' ? [studyInstanceUIDs] : studyInstanceUIDs)
+    .map(uid => uid.trim())
+    .filter(Boolean);
+  // One parameter, comma-separated, as OHIF's DICOMweb data source reads it.
+  return viewerSearchForStudy(uids.join(','), filters);
 }
 
 /**
  * The link that opens a study from anywhere in PACS-AI (notifications, AI
  * Predictions, feedback tabs, sign-in handoff): `/open-study?StudyInstanceUIDs=…`.
- * Only the study UID and non-identifying filters go in the URL.
+ * Only the study UIDs and non-identifying filters go in the URL.
  */
-export function studyOpenPath(
-  studyInstanceUID: string,
-  filters: Record<string, string | undefined | null> = {}
-): string {
-  return `${OPEN_STUDY_PATH}?${studyParams(studyInstanceUID, filters)}`;
+export function studyOpenPath(studyInstanceUIDs: string | readonly string[], filters: Filters = {}): string {
+  return `${OPEN_STUDY_PATH}?${studyParams(studyInstanceUIDs, filters)}`;
 }
 
-/** The viewer page itself, once the study is in the local store. */
+/** The viewer page itself, once the studies are in the local store. */
 export function viewerPathForStudy(
-  studyInstanceUID: string,
-  filters: Record<string, string | undefined | null> = {}
+  studyInstanceUIDs: string | readonly string[],
+  filters: Filters = {}
 ): string {
-  return `/viewer?${studyParams(studyInstanceUID, filters)}`;
+  return `/viewer?${studyParams(studyInstanceUIDs, filters)}`;
 }
 
-/** The first study UID of a viewer or open-study query string, or null. */
-export function studyInstanceUIDFromSearch(search: string | URLSearchParams): string | null {
+const DICOM_UID = /^[0-9.]{1,64}$/;
+
+/**
+ * Every study UID of a viewer or open-study query string (repeated and
+ * comma-separated `StudyInstanceUIDs`, as OHIF reads them), in order, without
+ * duplicates. Null when there is none or one is not a DICOM UID.
+ */
+export function studyInstanceUIDsFromSearch(search: string | URLSearchParams): string[] | null {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search;
-  // OHIF accepts a comma-separated list; the open flow handles one study.
-  const raw = params.get(STUDY_UIDS_KEY) ?? params.get('studyInstanceUIDs') ?? '';
-  const first = raw.split(',')[0]?.trim() ?? '';
-  return /^[0-9.]{1,64}$/.test(first) ? first : null;
+  const uids = params
+    .getAll('StudyInstanceUIDs')
+    .concat(params.getAll('studyInstanceUIDs'))
+    .flatMap(value => value.split(','))
+    .map(uid => uid.trim())
+    .filter(Boolean);
+  if (!uids.length || !uids.every(uid => DICOM_UID.test(uid))) {
+    return null;
+  }
+  return uids.filter((uid, index) => uids.indexOf(uid) === index);
 }
 
 /**
@@ -142,12 +152,12 @@ export function toStudyOpenPath(path: string): string {
   if (pathname !== '/viewer' && pathname !== '/viewer/') {
     return path;
   }
-  const uid = studyInstanceUIDFromSearch(search);
-  if (!uid) {
+  const uids = studyInstanceUIDsFromSearch(search);
+  if (!uids) {
     return path;
   }
   const params = new URLSearchParams(search);
-  return studyOpenPath(uid, {
+  return studyOpenPath(uids, {
     modalitiesInStudy: params.get('modalitiesInStudy'),
     studyDate: params.get('studyDate'),
   });
@@ -156,14 +166,14 @@ export function toStudyOpenPath(path: string): string {
 // --- links that reach /viewer directly (bookmarks, history, old links) ------
 
 /**
- * A study the viewer was asked for, so that the "not available" page can try
- * the retrieve once (OHIF sends it there without the UID).
+ * The studies the last study route was asked for, so that the "not available"
+ * page can try the retrieve once (OHIF sends it there without the UIDs).
  */
 export const VIEWER_REQUEST_STORAGE_KEY = 'pacsai.viewerStudyRequest';
 const VIEWER_RETRIEVE_ATTEMPTS_KEY = 'pacsai.viewerStudyRetrieveAttempts';
 // A request older than this is not the one the "not available" page is about.
 export const VIEWER_REQUEST_MAX_AGE_MS = 2 * 60_000;
-// The retrieve is tried at most once per study in this window (no loop).
+// The retrieve is tried at most once per selection in this window (no loop).
 export const VIEWER_RETRIEVE_RETRY_WINDOW_MS = 10 * 60_000;
 
 type SessionStore = Pick<Storage, 'getItem' | 'setItem'>;
@@ -176,75 +186,95 @@ function sessionStore(): SessionStore | null {
   }
 }
 
-/** Records the study of a `/viewer` URL (no-op for other paths). */
+const attemptKey = (uids: readonly string[]) => uids.join(',');
+
+/**
+ * Records the studies of a route that opens studies. Only `/viewer` requests
+ * can be recovered; any other study route (e.g. `/segmentation`) replaces the
+ * record with one that cannot, so the "not available" page never opens a
+ * study other than the one that failed.
+ */
 export function recordViewerStudyRequest(
   pathname: string,
   search: string,
   { storage = sessionStore(), now = Date.now } = {}
 ): void {
-  if (!storage || !/^\/viewer\/?$/.test(pathname)) {
+  if (!storage || pathname === '/notfoundstudy' || pathname === OPEN_STUDY_PATH) {
     return;
   }
-  const uid = studyInstanceUIDFromSearch(search);
-  if (!uid) {
+  const params = new URLSearchParams(search);
+  if (!params.has('StudyInstanceUIDs') && !params.has('studyInstanceUIDs')) {
     return;
   }
+  const uids = /^\/viewer\/?$/.test(pathname) ? studyInstanceUIDsFromSearch(params) : null;
   try {
-    storage.setItem(VIEWER_REQUEST_STORAGE_KEY, JSON.stringify({ uid, at: now() }));
+    storage.setItem(VIEWER_REQUEST_STORAGE_KEY, JSON.stringify({ uids, at: now() }));
   } catch {
     // Without storage the "not available" page shows its message as before.
   }
 }
 
+function readAttempts(storage: SessionStore, now: () => number): Record<string, number> {
+  try {
+    const parsed = JSON.parse(storage.getItem(VIEWER_RETRIEVE_ATTEMPTS_KEY) || '{}');
+    return Object.fromEntries(
+      Object.entries(parsed && typeof parsed === 'object' ? parsed : {}).filter(
+        ([, at]) => typeof at === 'number' && now() - at < VIEWER_RETRIEVE_RETRY_WINDOW_MS
+      )
+    ) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
 /**
- * The study the "not available" page should retrieve, once: the last
- * `/viewer` request if it is recent and was not retried lately. Marks it
- * as retried.
+ * The studies the "not available" page should retrieve, once: those of the
+ * last `/viewer` request if it is recent and was not retried lately. Marks
+ * them as retried.
  */
 export function takeViewerStudyToRetrieve({
   storage = sessionStore(),
   now = Date.now,
-}: { storage?: SessionStore | null; now?: () => number } = {}): string | null {
+}: { storage?: SessionStore | null; now?: () => number } = {}): string[] | null {
   if (!storage) {
     return null;
   }
   try {
     const request = JSON.parse(storage.getItem(VIEWER_REQUEST_STORAGE_KEY) || 'null');
-    const uid = typeof request?.uid === 'string' ? request.uid : null;
-    if (!uid || typeof request.at !== 'number' || now() - request.at > VIEWER_REQUEST_MAX_AGE_MS) {
+    const uids: unknown = request?.uids;
+    if (
+      !Array.isArray(uids) ||
+      !uids.length ||
+      !uids.every(uid => typeof uid === 'string' && DICOM_UID.test(uid)) ||
+      typeof request.at !== 'number' ||
+      now() - request.at > VIEWER_REQUEST_MAX_AGE_MS
+    ) {
       return null;
     }
-    const attempts: Record<string, number> = JSON.parse(
-      storage.getItem(VIEWER_RETRIEVE_ATTEMPTS_KEY) || '{}'
-    );
-    const last = attempts?.[uid];
-    if (typeof last === 'number' && now() - last < VIEWER_RETRIEVE_RETRY_WINDOW_MS) {
+    const attempts = readAttempts(storage, now);
+    const key = attemptKey(uids);
+    if (key in attempts) {
       return null;
     }
-    const kept = Object.fromEntries(
-      Object.entries(attempts || {}).filter(
-        ([, at]) => typeof at === 'number' && now() - at < VIEWER_RETRIEVE_RETRY_WINDOW_MS
-      )
-    );
-    kept[uid] = now();
-    storage.setItem(VIEWER_RETRIEVE_ATTEMPTS_KEY, JSON.stringify(kept));
-    return uid;
+    attempts[key] = now();
+    storage.setItem(VIEWER_RETRIEVE_ATTEMPTS_KEY, JSON.stringify(attempts));
+    return uids as string[];
   } catch {
     return null;
   }
 }
 
-/** Marks a study as just retrieved by /open-study (the viewer gets no second try). */
+/** Marks studies as just retrieved by /open-study (the viewer gets no second try). */
 export function markViewerStudyRetrieved(
-  studyInstanceUID: string,
+  studyInstanceUIDs: readonly string[],
   { storage = sessionStore(), now = Date.now } = {}
 ): void {
-  if (!storage) {
+  if (!storage || !studyInstanceUIDs.length) {
     return;
   }
   try {
-    const attempts = JSON.parse(storage.getItem(VIEWER_RETRIEVE_ATTEMPTS_KEY) || '{}') || {};
-    attempts[studyInstanceUID] = now();
+    const attempts = readAttempts(storage, now);
+    attempts[attemptKey(studyInstanceUIDs)] = now();
     storage.setItem(VIEWER_RETRIEVE_ATTEMPTS_KEY, JSON.stringify(attempts));
   } catch {
     // ignore
@@ -255,7 +285,7 @@ let viewerRequestTrackingInstalled = false;
 
 /**
  * Follows navigation (popstate and React Router's pushState/replaceState,
- * see hooks/usePathname) and records each `/viewer` study request.
+ * see hooks/usePathname) and records each study route request.
  */
 export function installViewerStudyRequestTracking(win: Window = window): void {
   if (viewerRequestTrackingInstalled || typeof win === 'undefined') {

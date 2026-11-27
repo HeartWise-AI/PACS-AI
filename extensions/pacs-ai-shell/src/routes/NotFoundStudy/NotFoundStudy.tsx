@@ -18,15 +18,15 @@ import {
  */
 const NotFoundStudy = () => {
   const navigate = useNavigate();
-  const [retryUID] = useState(() => takeViewerStudyToRetrieve());
+  const [retryUIDs] = useState(() => takeViewerStudyToRetrieve());
 
   useEffect(() => {
-    if (retryUID) {
-      navigate(studyOpenPath(retryUID), { replace: true });
+    if (retryUIDs) {
+      navigate(studyOpenPath(retryUIDs), { replace: true });
     }
-  }, [retryUID, navigate]);
+  }, [retryUIDs, navigate]);
 
-  if (retryUID) {
+  if (retryUIDs) {
     return null;
   }
 

@@ -37,6 +37,13 @@ test('a /viewer link to a study no longer cached is retrieved once through /open
   );
 });
 
+test('a failure after a /segmentation open does not reopen the earlier /viewer study', () => {
+  recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.1');
+  recordViewerStudyRequest('/segmentation', '?StudyInstanceUIDs=2.2');
+  renderPage();
+  expect(screen.getByTestId('location').textContent).toBe('/notfoundstudy');
+});
+
 test('after that attempt (or without a recent request) the message is shown', () => {
   recordViewerStudyRequest('/viewer', '?StudyInstanceUIDs=1.2.3');
   const first = renderPage();
