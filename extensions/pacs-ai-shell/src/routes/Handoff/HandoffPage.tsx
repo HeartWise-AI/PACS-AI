@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { toStudyOpenPath } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button, Typography } from '@pacs-ai/ui';
@@ -39,7 +40,10 @@ const stripFragment = () => {
   }
 };
 
-const safePath = (path?: string) => (path && isSafeReturnPath(path) ? path : '/');
+// A study link (`/viewer?StudyInstanceUIDs=…`) goes through /open-study, which
+// retrieves the study from the PACS when the local store no longer has it.
+const safePath = (path?: string) =>
+  path && isSafeReturnPath(path) ? toStudyOpenPath(path) : '/';
 
 type Status = 'working' | 'confirm' | 'error';
 

@@ -92,7 +92,7 @@ test('handoff exchanges the code, stores the session and continues like a login'
   expect(window.location.hash).toBe('');
   expect(localStorage.getItem('sessionToken')).toBe('s-1');
   expect(localStorage.getItem('tenantId')).toBe('t1');
-  expect(mockNavigateAfterAuth.mock.calls[0][2]).toBe('/viewer?StudyInstanceUIDs=1.2');
+  expect(mockNavigateAfterAuth.mock.calls[0][2]).toBe('/open-study?StudyInstanceUIDs=1.2');
 });
 
 test('handoff refuses an unsafe return path', async () => {
@@ -153,7 +153,7 @@ test('link asks a signed-in user to confirm, then links and continues', async ()
   fireEvent.click(screen.getByTestId('handoff-link-confirm'));
 
   await waitFor(() =>
-    expect(screen.getByTestId('location').textContent).toContain('/viewer?StudyInstanceUIDs=1.2')
+    expect(screen.getByTestId('location').textContent).toContain('/open-study?StudyInstanceUIDs=1.2')
   );
   expect(mockLink).toHaveBeenCalledWith(CODE);
   expect(sessionStorage.getItem(LINK_CODE_STORAGE_KEY)).toBeNull();

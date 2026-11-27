@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-const LOCATION_CHANGE_EVENT = 'pacs-ai:locationchange';
+export const LOCATION_CHANGE_EVENT = 'pacs-ai:locationchange';
 let historyPatched = false;
 
 /**

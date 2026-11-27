@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { studyOpenPath } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 import { useTranslation } from 'react-i18next';
 import refreshIcon from '../../../assets/pacs/icons/refresh.png';
 import type {
@@ -36,9 +37,9 @@ export function voterLabel(item: Pick<ChatFeedbackItem, 'user_id' | 'user_name' 
   return { primary: item.user_id, secondary: null };
 }
 
-/** The viewer page of a study discussed in the chat. */
+/** Opens a study discussed in the chat (retrieved from the PACS if needed). */
 export function viewerStudyHref(studyInstanceUID: string): string {
-  return `/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUID)}`;
+  return studyOpenPath(studyInstanceUID);
 }
 
 /**

@@ -375,5 +375,12 @@
   "Segmentation": "Segmentation",
   "Searching for data": "Searching for data",
   "searchStudyListInfo": "No data found. Please search by patient name, MRN, date range, description, modality, or accession number.",
-  "Tools": "Tools"
+  "Tools": "Tools",
+  "OpenStudyRetrieving": "Retrieving the study from the PACS…",
+  "OpenStudyMissing": "This link does not name a study.",
+  "OpenStudyNoSource": "This study is no longer stored on this server and no PACS source is set up to retrieve it. Choose a DICOM modality in the study list, then try again.",
+  "OpenStudyRetrieveFailed": "The study could not be retrieved from the PACS.",
+  "OpenStudyTimedOut": "Retrieving the study from the PACS is taking too long.",
+  "OpenStudyTryAgain": "Try again",
+  "OpenStudyBackToList": "Back to the study list"
 }

@@ -358,5 +358,12 @@
   "ProcessingVersionLabel": "Test Version",
   "ProcessingViewerHint": "Test Select a study before opening viewer",
   "ProcessingPrimaryNavigation": "Test Primary navigation",
-  "Studies": "Test Studies"
+  "Studies": "Test Studies",
+  "OpenStudyRetrieving": "Test OpenStudyRetrieving",
+  "OpenStudyMissing": "Test OpenStudyMissing",
+  "OpenStudyNoSource": "Test OpenStudyNoSource",
+  "OpenStudyRetrieveFailed": "Test OpenStudyRetrieveFailed",
+  "OpenStudyTimedOut": "Test OpenStudyTimedOut",
+  "OpenStudyTryAgain": "Test OpenStudyTryAgain",
+  "OpenStudyBackToList": "Test OpenStudyBackToList"
 }
