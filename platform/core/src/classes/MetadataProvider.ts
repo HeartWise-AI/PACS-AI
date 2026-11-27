@@ -26,6 +26,37 @@ export function normalizeVOILUTFunction(value: unknown): string | undefined {
   return VALID_VOI_LUT_FUNCTIONS.includes(normalized) ? normalized : undefined;
 }
 
+const firstValue = (value: unknown): unknown => (Array.isArray(value) ? value[0] : value);
+const upperString = (value: unknown): string =>
+  typeof firstValue(value) === 'string' ? (firstValue(value) as string).trim().toUpperCase() : '';
+
+/**
+ * Photometric Interpretation (0028,0004) the image loader should decode with.
+ *
+ * Intravascular ultrasound exported as lossy JPEG and then decompressed
+ * (Lossy Image Compression Method ISO_10918_1, e.g. Philips I2 via the
+ * archive) keeps PhotometricInterpretation RGB while the pixel bytes are
+ * still YCbCr: every grey pixel arrives as (Y, 128, 128) and draws as a
+ * teal background with salmon speckle. Decoding those as YBR_FULL gives the
+ * real greyscale image. Echo series with the same headers are true RGB, so
+ * the rule is limited to Modality IVUS. Everything else is returned as is.
+ */
+export function normalizePhotometricInterpretation(instance: Record<string, unknown>): unknown {
+  const pmi = instance?.PhotometricInterpretation;
+  if (
+    upperString(pmi) === 'RGB' &&
+    upperString(instance.Modality) === 'IVUS' &&
+    Number(firstValue(instance.SamplesPerPixel)) === 3 &&
+    Number(firstValue(instance.BitsAllocated)) === 8 &&
+    [instance.LossyImageCompressionMethod]
+      .flat()
+      .some(method => upperString(method) === 'ISO_10918_1')
+  ) {
+    return 'YBR_FULL';
+  }
+  return pmi;
+}
+
 class MetadataProvider {
   private readonly imageURIToUIDs: Map<string, any> = new Map();
   // Can be used to store custom metadata for a specific type.
@@ -180,7 +211,7 @@ class MetadataProvider {
       case WADO_IMAGE_LOADER_TAGS.IMAGE_PIXEL_MODULE:
         metadata = {
           samplesPerPixel: toNumber(instance.SamplesPerPixel),
-          photometricInterpretation: instance.PhotometricInterpretation,
+          photometricInterpretation: normalizePhotometricInterpretation(instance),
           rows: toNumber(instance.Rows),
           columns: toNumber(instance.Columns),
           bitsAllocated: toNumber(instance.BitsAllocated),

@@ -7,18 +7,27 @@ export const CINE_PLAYER_CUSTOMIZATION = 'cinePlayer';
 /** Class the stylesheet next to this file keys on. */
 export const PACS_AI_CINE_PLAYER_CLASS = 'pacs-ai-cine-player';
 
+/** Tailwind top/bottom classes OHIF passes; the stylesheet places the player. */
+const VERTICAL_PLACEMENT = /^-?(top|bottom)-/;
+
 /**
  * The cine player OHIF renders in each viewport (the `cinePlayer`
- * customization), as PACS-AI styled it: our grey bar, white "FPS", and the
- * player placed `bottom-8` instead of OHIF's `bottom-3`. Same props as
- * @ohif/ui-next's CinePlayer; the colours were edits in ui-next's
- * CinePlayer.tsx and the position an edit in the cornerstone extension's
- * CinePlayer.tsx before P2.6.
+ * customization), as PACS-AI styles it: our grey bar, white "FPS", and the
+ * player at the bottom centre of the viewport, between the bottom-left
+ * (W/L) and bottom-right (frame) overlays, faded until hovered or focused.
+ *
+ * @ohif/ui-next's CinePlayer root always carries `top-10`; OHIF's cornerstone
+ * extension adds `bottom-3`. With both set the root stretched over the whole
+ * viewport height and the bar showed at the top, over the image. The
+ * wrapper drops OHIF's vertical placement classes and the stylesheet next to
+ * this file sets top/bottom instead. Same props as @ohif/ui-next's
+ * CinePlayer.
  */
 function PacsAiCinePlayer({ className = '', ...props }: { className?: string; [key: string]: any }) {
-  const placed = className.split(/\s+/).includes('bottom-3')
-    ? className.replace(/(^|\s)bottom-3(?=\s|$)/, '$1bottom-8')
-    : className;
+  const placed = className
+    .split(/\s+/)
+    .filter(name => name && !VERTICAL_PLACEMENT.test(name))
+    .join(' ');
   // The props OHIF's cornerstone CinePlayer passes to the `cinePlayer`
   // customization, unchanged.
   const cinePlayerProps = {
