@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import closeIcon from './assets/icons/close-inactive.png';
 import {
@@ -40,6 +40,9 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
   const [parsedHTML, setParsedHTML] = useState<string>('');
   const [linkedDICOMModalityWithEnabledCStore, setLinkedDICOMModalityWithEnabledCStore] =
     useState<GetLnkedDICOMModalityWithEnabledCStoreResponse | null>(null);
+  // Only used to size the Write to Study snapshot; the report document itself is
+  // in an opaque-origin sandbox and cannot be read from here.
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -128,6 +131,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 {linkedDICOMModalityWithEnabledCStore && (
                   <StoreFileButton
                     html={parsedHTML}
+                    iframeRef={iframeRef}
                     encodedData={data.htmlBase64}
                     modelName={modelName}
                     modelVersion={modelVersion}
@@ -144,6 +148,7 @@ const HTMLOutputModeModal: React.FC<HTMLOutputModeModalProps> = ({
                 </div>
               ) : (
                 <iframe
+                  ref={iframeRef}
                   srcDoc={parsedHTML}
                   className="h-full w-full bg-white"
                   title="HTML Content"

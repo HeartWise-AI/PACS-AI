@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import React from 'react';
@@ -58,6 +58,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 // Obvious placeholder. The report tries to read whatever the viewer stored under this key.
+jest.setTimeout(60000);
+
 const SESSION_TOKEN_KEY = 'sessionToken';
 const SESSION_TOKEN_VALUE = 'PLACEHOLDER_SESSION_TOKEN';
 
@@ -103,8 +105,23 @@ function repositoryReturning(htmlBase64: string): ViewerResultsHTTPClient {
   };
 }
 
+// The browser probe needs a real Chrome. CHROME_PATH wins; otherwise the usual
+// install locations are tried. Without one, only the sandbox attribute is checked.
+function findChrome(): string | null {
+  const candidates = [
+    process.env.CHROME_PATH,
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ].filter(Boolean) as string[];
+  return candidates.find(candidate => existsSync(candidate)) ?? null;
+}
+
+const CHROME = findChrome();
+
 function dumpDom(pagePath: string, profile: string): Promise<{ stdout: string; stderr: string }> {
-  const chrome = process.env.CHROME_PATH || 'google-chrome';
+  const chrome = CHROME as string;
   return new Promise(resolve => {
     const child = spawn(
       chrome,
@@ -193,6 +210,16 @@ async function probeReportFrame(iframe: Element): Promise<string> {
 }
 
 async function expectReportCannotReadSession(iframe: Element) {
+  // allow-scripts together with allow-same-origin gives the report the viewer's
+  // origin; an unsandboxed frame is worse. Neither may ever be rendered.
+  const sandbox = iframe.getAttribute('sandbox');
+  expect(sandbox).not.toBeNull();
+  const tokens = (sandbox ?? '').split(/\s+/).filter(Boolean);
+  expect(tokens).not.toContain('allow-same-origin');
+  if (!CHROME) {
+    console.warn('htmlReportSandbox: no Chrome found (set CHROME_PATH); browser probe skipped');
+    return;
+  }
   const outcome = await probeReportFrame(iframe);
   expect(outcome).not.toBe('PENDING');
   expect(outcome.startsWith('READ:')).toBe(false);
