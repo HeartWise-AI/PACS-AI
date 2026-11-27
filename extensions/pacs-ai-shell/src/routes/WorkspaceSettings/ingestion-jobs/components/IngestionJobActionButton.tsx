@@ -8,9 +8,19 @@ type IngestionJobActionButtonProps = {
   row: GetInferenceIngestionJobsResponse;
   onEdit: (row: GetInferenceIngestionJobsResponse) => void;
   onDelete: (jobId: string) => void;
+  upgradeVersion?: string;
+  upgradeDisabled?: boolean;
+  onUpgrade?: (row: GetInferenceIngestionJobsResponse) => void;
 };
 
-const IngestionJobActionButton = ({ row, onEdit, onDelete }: IngestionJobActionButtonProps) => {
+const IngestionJobActionButton = ({
+  row,
+  onEdit,
+  onDelete,
+  upgradeVersion,
+  upgradeDisabled = false,
+  onUpgrade,
+}: IngestionJobActionButtonProps) => {
   const { t } = useTranslation('Common');
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef(null);
@@ -62,6 +72,20 @@ const IngestionJobActionButton = ({ row, onEdit, onDelete }: IngestionJobActionB
             style={getDropdownPosition()}
           >
             <ul className="py-2 text-sm text-white">
+              {upgradeVersion && onUpgrade && (
+                <li>
+                  <button
+                    disabled={upgradeDisabled}
+                    className="text-primary block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={() => {
+                      onUpgrade(row);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {t('Upgrade')} → {upgradeVersion}
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   className="block w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-700"

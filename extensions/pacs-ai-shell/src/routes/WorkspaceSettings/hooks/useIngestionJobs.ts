@@ -1,4 +1,12 @@
-import { useCallback, useContext, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { AlertContext } from '../../../alerts';
@@ -64,6 +72,24 @@ export function useIngestionJobs({
   const ingestionJobsCsvInputRef = useRef<HTMLInputElement>(null);
   const [usersById, setUsersById] = useState<ReadonlyMap<string, UserResponse>>(new Map());
   const [togglingNotificationsJobId, setTogglingNotificationsJobId] = useState('');
+  const [selectedIngestionJobToUpgrade, setSelectedIngestionJobToUpgrade] =
+    useState<GetInferenceIngestionJobsResponse | null>(null);
+  const [upgradingIngestionJobId, setUpgradingIngestionJobId] = useState('');
+
+  const ingestionJobUpgradeTargets = useMemo(() => {
+    const targets = new Map<string, GetInferenceAvailableModelsResponse>();
+    for (const job of jobs) {
+      const current = availableModels.find(
+        model =>
+          (model.registrationId === job.modelId || model.modelId === job.modelId) &&
+          model.version !== job.modelVersion
+      );
+      if (current) {
+        targets.set(job.id, current);
+      }
+    }
+    return targets;
+  }, [availableModels, jobs]);
 
   const resetIngestionJobForm = useCallback(() => {
     setNewJobModel(null);
@@ -392,6 +418,41 @@ export function useIngestionJobs({
     setSelectedIngestionJobId('');
   };
 
+  const openUpgradeJobModal = (job: GetInferenceIngestionJobsResponse) => {
+    if (ingestionJobUpgradeTargets.has(job.id)) {
+      setSelectedIngestionJobToUpgrade(job);
+    }
+  };
+
+  const closeUpgradeJobModal = () => {
+    if (!upgradingIngestionJobId) {
+      setSelectedIngestionJobToUpgrade(null);
+    }
+  };
+
+  const upgradeIngestionJob = async () => {
+    const job = selectedIngestionJobToUpgrade;
+    if (!job) {
+      return;
+    }
+    setUpgradingIngestionJobId(job.id);
+    try {
+      const response = await inferenceRepository.UpgradeInferenceIngestionJob({
+        id: job.id,
+        expectedModelVersion: job.modelVersion,
+      });
+      showAlert(response.message, 'success');
+      setSelectedIngestionJobToUpgrade(null);
+      await fetchIngestionJobs();
+    } catch (error) {
+      handleUnauthorizedAccess(error, showAlert, navigate, tenantId);
+      console.error(`Error upgrading ingestion job: ${error}`);
+      showAlert(error.message, 'error');
+    } finally {
+      setUpgradingIngestionJobId('');
+    }
+  };
+
   const handleStartStop = (jobId: string, running: boolean) => {
     setSelectedIngestionJobToStartStop(jobId);
     if (running) {
@@ -448,6 +509,12 @@ export function useIngestionJobs({
     usersById,
     togglingNotificationsJobId,
     setIngestionJobNotifications,
+    ingestionJobUpgradeTargets,
+    selectedIngestionJobToUpgrade,
+    upgradingIngestionJobId,
+    openUpgradeJobModal,
+    closeUpgradeJobModal,
+    upgradeIngestionJob,
   };
 }
 

@@ -208,6 +208,7 @@ export interface GetInferenceAvailableModelsResponse {
   ];
   containerId: string;
   containerName: string;
+  registrationId?: string;
   modelName: string;
   version: string;
   dicomTargetLevel: string;
@@ -490,6 +491,11 @@ export interface UpdateInferenceIngestionJobRequest {
   studyTimeEnd?: string;
   /** Omit to keep the stored value. */
   notificationsEnabled?: boolean;
+}
+
+export interface UpgradeInferenceIngestionJobRequest {
+  id: string;
+  expectedModelVersion: string;
 }
 
 export type CandidateProcessingStatus =

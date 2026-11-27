@@ -8,6 +8,7 @@ import type { UseIngestionJobsResult } from '../hooks/useIngestionJobs';
 import AddEditIngestionJobModal from '../ingestion-jobs/components/AddEditIngestionJobModal';
 import IngestionJobsTable from '../ingestion-jobs/components/IngestionJobsTable';
 import RemoveIngestionJobModal from '../ingestion-jobs/components/RemoveIngestionJobModal';
+import UpgradeIngestionJobModal from '../ingestion-jobs/components/UpgradeIngestionJobModal';
 
 type IngestionJobsSectionProps = {
   ingestion: UseIngestionJobsResult;
@@ -39,9 +40,7 @@ const IngestionJobsSection = ({
                 alt="Refresh icon"
                 className={`${ingestion.loading ? 'animate-spin' : ''} h-4 w-4`}
               />
-              <span
-                className={`text-white ${ingestion.loading ? 'opacity-40' : ''} text-[14px]`}
-              >
+              <span className={`text-white ${ingestion.loading ? 'opacity-40' : ''} text-[14px]`}>
                 {t('Refresh')}
               </span>
             </button>
@@ -82,6 +81,9 @@ const IngestionJobsSection = ({
           togglingNotificationsJobId={ingestion.togglingNotificationsJobId}
           onToggleNotifications={ingestion.setIngestionJobNotifications}
           onDelete={ingestion.openRemoveJobModal}
+          upgradeTargets={ingestion.ingestionJobUpgradeTargets}
+          upgradingJobId={ingestion.upgradingIngestionJobId}
+          onUpgrade={ingestion.openUpgradeJobModal}
         />
       </div>
 
@@ -121,6 +123,19 @@ const IngestionJobsSection = ({
         isDeleting={ingestion.isDeletingIngestionJob}
         onClose={ingestion.closeRemoveJobModal}
         onConfirm={ingestion.deleteIngestionJob}
+      />
+
+      <UpgradeIngestionJobModal
+        job={ingestion.selectedIngestionJobToUpgrade}
+        targetVersion={
+          ingestion.selectedIngestionJobToUpgrade
+            ? ingestion.ingestionJobUpgradeTargets.get(ingestion.selectedIngestionJobToUpgrade.id)
+                ?.version
+            : undefined
+        }
+        isUpgrading={Boolean(ingestion.upgradingIngestionJobId)}
+        onClose={ingestion.closeUpgradeJobModal}
+        onConfirm={ingestion.upgradeIngestionJob}
       />
     </>
   );
