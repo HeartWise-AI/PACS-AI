@@ -56,3 +56,66 @@ describe('PanEchoResult', () => {
     expect(rendered).toContain('Future echo classification');
   });
 });
+
+describe('PanEcho aortic stenosis screening', () => {
+  const asPayload = {
+    diagnosis: JSON.stringify({
+      'Aortic valve stenosis': 'None',
+      'Aortic valve peak velocity': '2.4 m/s (Normal)',
+      'Left ventricular (LV) ejection fraction': '60.0 % (Normal)',
+    }),
+    predictions: {
+      'Aortic valve stenosis': [0.37, 0.43, 0.2],
+      'Aortic valve peak velocity': 2.4,
+      'Left ventricular (LV) ejection fraction': 60,
+    },
+  };
+
+  test.each(['1.1.1', '1.2.0'])('PanEcho %s has a structured template', version => {
+    const { resolveModelResultRenderer } = jest.requireActual('./modelResultRendererRegistry');
+    expect(
+      resolveModelResultRenderer({ modelName: 'PanEcho', modelVersion: version, result: asPayload })
+        .kind
+    ).toBe('panecho');
+  });
+
+  test('shows screening scores and the Vmax estimate instead of the argmax class', () => {
+    const payload = parsePanEchoResultPayload(asPayload)!;
+    const { container } = render(
+      <PanEchoResult
+        payload={payload}
+        modelName="PanEcho"
+        modelVersion="1.1.1"
+        status="completed"
+      />
+    );
+    const screening = container.querySelector('[data-testid="panecho-as-screening"]')!;
+
+    expect(container.querySelector('[data-testid="panecho-as-severe"]')?.textContent).toContain(
+      '20 %'
+    );
+    expect(container.querySelector('[data-testid="panecho-as-any"]')?.textContent).toContain(
+      '57 %'
+    );
+    expect(
+      container.querySelector('[data-testid="panecho-av-vmax-estimate"]')?.textContent
+    ).toContain('AI estimate');
+    expect(
+      container.querySelector('[data-testid="panecho-av-vmax-estimate"]')?.textContent
+    ).toContain('2.4 m/s');
+    expect(screening.textContent).toContain('Screening scores, not a diagnosis');
+    expect(screening.textContent).toContain('under-estimates severe AS');
+    // The argmax label is never shown as a finding.
+    expect(
+      container.querySelector('[data-testid="panecho-output-Aortic valve stenosis"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="panecho-output-Aortic valve peak velocity"]')
+    ).toBeNull();
+    expect(
+      container.querySelector(
+        '[data-testid="panecho-output-Left ventricular (LV) ejection fraction"]'
+      )
+    ).not.toBeNull();
+  });
+});

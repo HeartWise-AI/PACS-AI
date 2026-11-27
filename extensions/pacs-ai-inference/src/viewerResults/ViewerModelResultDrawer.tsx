@@ -11,6 +11,12 @@ import type { ViewerResultsRepository } from './viewerResultsRepository';
 import { loadReportWithRetry } from './reportRetry';
 import ViewerModelResultFeedback from './ViewerModelResultFeedback';
 import ViewerRunLabels from './ViewerRunLabels';
+import { useStoredJobResult } from './useStoredJobResult';
+import { EchoSrCompactSummary } from '../studyProcessing/modelResults/EchoSrResult';
+import {
+  ECHO_SR_MODEL_NAME,
+  parseEchoSrResultPayload,
+} from '../studyProcessing/modelResults/echoSrContract';
 import {
   bestRunWithLabel,
   collectRunLabels,
@@ -44,6 +50,22 @@ export interface ViewerModelResultDrawerProps {
   onClose: () => void;
   onMinimize: () => void;
   onSelectView: (view: SelectedView) => boolean;
+  // The study's echo-sr-measurements result, when it has one: its measured
+  // values are shown first in the PanEcho and EchoPrime drawers.
+  measuredResult?: ViewerModelResult | null;
+}
+
+// Echo AI models whose drawer shows the measured SR values first.
+const MEASURED_FIRST_MODELS = new Set(['PanEcho', 'EchoPrime']);
+
+// The drawer title: study-service results get a readable name.
+export function viewerResultTitle(
+  modelName: string,
+  t: (key: string, options: { defaultValue: string }) => string
+): string {
+  return modelName === ECHO_SR_MODEL_NAME
+    ? t('StudyList:EchoSrTitle', { defaultValue: 'Echo measurements (SR)' })
+    : modelName;
 }
 
 type ReportState =
@@ -90,6 +112,7 @@ export function ViewerModelResultDrawer({
   onClose,
   onMinimize,
   onSelectView,
+  measuredResult = null,
 }: ViewerModelResultDrawerProps) {
   const { t } = useTranslation('AIModelButton');
   // The run and execution identify what is shown: a result first opened from
@@ -107,6 +130,20 @@ export function ViewerModelResultDrawer({
   const structured = useModelExecutionResultViewer(resultKey);
   const hasExecution = !!(result.runId && result.executionId);
   const showStructured = report.status === 'none' || (report.status === 'error' && hasExecution);
+  // A study-service job without an api-pacs run: its stored JSON comes from
+  // the job-result endpoint once the report is known to be unavailable.
+  const loadsJobResult =
+    !hasExecution &&
+    !!result.studyServiceJobId &&
+    (report.status === 'none' || report.status === 'error');
+  const jobResult = useStoredJobResult(repository, result, loadsJobResult);
+  const showsMeasured =
+    MEASURED_FIRST_MODELS.has(result.modelName) &&
+    !!measuredResult &&
+    measuredResult.studyInstanceUID === result.studyInstanceUID;
+  const measuredJob = useStoredJobResult(repository, measuredResult, showsMeasured);
+  const measuredPayload =
+    measuredJob.status === 'ready' ? parseEchoSrResultPayload(measuredJob.result.result) : null;
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -329,7 +366,7 @@ export function ViewerModelResultDrawer({
             id="viewer-model-result-title"
             className="text-lg font-bold"
           >
-            {result.modelName}
+            {viewerResultTitle(result.modelName, t)}
             {result.modelVersion && (
               <span className="ml-2 text-sm font-normal text-[#c5cbc5]">
                 v{result.modelVersion}
@@ -583,6 +620,11 @@ export function ViewerModelResultDrawer({
       </section>
 
       <div className="ohif-scrollbar min-h-0 grow overflow-y-auto">
+        {measuredPayload && (
+          <div className="px-5 pt-4">
+            <EchoSrCompactSummary payload={measuredPayload} />
+          </div>
+        )}
         {(report.status === 'loading' ||
           (showStructured && structuredState.status === 'loading')) && (
           <p
@@ -604,7 +646,7 @@ export function ViewerModelResultDrawer({
             data-testid="viewer-model-result-report"
           />
         )}
-        {report.status === 'error' && !hasExecution && (
+        {report.status === 'error' && !hasExecution && jobResult.status !== 'ready' && (
           <p
             role="alert"
             className="px-5 py-5 text-sm text-[#ffb0b0]"
@@ -620,16 +662,39 @@ export function ViewerModelResultDrawer({
             </button>
           </p>
         )}
-        {showStructured && !hasExecution && report.status === 'none' && (
+        {loadsJobResult && jobResult.status === 'loading' && (
           <p
+            role="status"
             className="px-5 py-5 text-sm text-[#c5cbc5]"
-            data-testid="viewer-model-result-no-details"
+            data-testid="viewer-model-result-loading"
           >
-            {t('ViewerResultDetailsUnavailable', {
-              defaultValue: 'Result details are not available for this run.',
-            })}
+            {t('ViewerResultLoading', { defaultValue: 'Loading result…' })}
           </p>
         )}
+        {loadsJobResult &&
+          jobResult.status === 'ready' &&
+          !isEmptyModelExecutionResult(jobResult.result.result) && (
+            <div
+              className="px-5 py-5"
+              data-testid="viewer-model-result-job-result"
+            >
+              <ModelResultRenderer result={jobResult.result} />
+            </div>
+          )}
+        {showStructured &&
+          !hasExecution &&
+          report.status === 'none' &&
+          jobResult.status !== 'loading' &&
+          jobResult.status !== 'ready' && (
+            <p
+              className="px-5 py-5 text-sm text-[#c5cbc5]"
+              data-testid="viewer-model-result-no-details"
+            >
+              {t('ViewerResultDetailsUnavailable', {
+                defaultValue: 'Result details are not available for this run.',
+              })}
+            </p>
+          )}
         {showStructured && hasExecution && (
           <div className="px-5 py-5">
             {report.status === 'error' && (

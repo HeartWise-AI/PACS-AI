@@ -60,8 +60,12 @@ import { getActiveDisplaySets } from '@pacs-ai/extension-core/src/ohifCompat/dis
 import { getCachedUserAccess } from '@pacs-ai/extension-core/src/access/userAccessService';
 import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
+import { ECHO_SR_MODEL_NAME } from '../studyProcessing/modelResults/echoSrContract';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
+
+// Results study-service computes itself, listed apart from the models.
+export const STUDY_SERVICE_RESULT_MODELS = new Set([ECHO_SR_MODEL_NAME]);
 
 export type LatestResultsStatus = 'idle' | 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -127,6 +131,10 @@ export interface ViewerModelResultsContextValue {
   setResultMinimized: (minimized: boolean) => void;
   openedResult: OpenViewerModelResult | null;
   loadSelectedView: (view: SelectedView) => boolean;
+  // Results study-service computes itself (no registered model, e.g. the echo
+  // SR measurements) for one open exam; the primary exam when omitted.
+  // Optional so that test doubles of the context keep working.
+  getStudyServiceResults?: (studyInstanceUID?: string | null) => ViewerModelResult[];
 }
 
 const ViewerModelResultsContext = createContext<ViewerModelResultsContextValue | null>(null);
@@ -319,6 +327,20 @@ export function ViewerModelResultsProvider({
       return findLatestResultForModel(
         model,
         latestResults.filter(result => result.studyInstanceUID === study)
+      );
+    },
+    [canViewResults, latestResults, studyInstanceUID]
+  );
+
+  const getStudyServiceResults = useCallback(
+    (forStudyInstanceUID?: string | null) => {
+      if (!canViewResults) {
+        return [];
+      }
+      const study = forStudyInstanceUID?.trim() || studyInstanceUID?.trim();
+      return latestResults.filter(
+        result =>
+          result.studyInstanceUID === study && STUDY_SERVICE_RESULT_MODELS.has(result.modelName)
       );
     },
     [canViewResults, latestResults, studyInstanceUID]
@@ -941,6 +963,7 @@ export function ViewerModelResultsProvider({
       setResultMinimized,
       openedResult,
       loadSelectedView,
+      getStudyServiceResults,
     }),
     [
       canViewResults,
@@ -959,6 +982,7 @@ export function ViewerModelResultsProvider({
       setResultMinimized,
       openedResult,
       loadSelectedView,
+      getStudyServiceResults,
     ]
   );
 
@@ -983,6 +1007,13 @@ export function ViewerModelResultsProvider({
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}
           onSelectView={loadSelectedView}
+          measuredResult={
+            latestResults.find(
+              item =>
+                item.modelName === ECHO_SR_MODEL_NAME &&
+                item.studyInstanceUID === openedResult.result.studyInstanceUID
+            ) ?? null
+          }
         />
       )}
       {canViewResults && (

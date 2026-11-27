@@ -11,6 +11,7 @@ import { DeepCoroSyntaxResult } from './DeepCoroSyntaxResult';
 import { DeepRVClipResult } from './DeepRVClipResult';
 import { DeepRVResult } from './DeepRVResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
+import { EchoSrResult } from './EchoSrResult';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
 import { resolveModelResultRenderer } from './modelResultRendererRegistry';
@@ -106,6 +107,14 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
           modelName={result.modelName}
           modelVersion={result.modelVersion}
           status={result.status}
+        />
+      );
+      break;
+    case 'echo-sr':
+      customResult = (
+        <EchoSrResult
+          payload={resolved.payload}
+          modelVersion={result.modelVersion}
         />
       );
       break;
