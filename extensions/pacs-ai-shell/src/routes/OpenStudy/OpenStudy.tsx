@@ -10,6 +10,7 @@ import {
 import { rememberPendingRetrieve } from '@pacs-ai/extension-inference/src/studyRefresh/progressiveRetrieve';
 import {
   markViewerStudyRetrieved,
+  routerBasename,
   studyInstanceUIDsFromSearch,
   studySearchKeepingOptions,
 } from '@pacs-ai/extension-core/src/utils/viewerUrl';
@@ -34,10 +35,7 @@ export interface OpenStudyProps {
  * hand-over) survives the load.
  */
 export function openViewerWithPageLoad(path: string, win: Window = window): void {
-  const basename = String(
-    ((win as unknown as { config?: { routerBasename?: string } }).config?.routerBasename) || ''
-  ).replace(/\/$/, '');
-  win.location.replace(`${basename}${path}`);
+  win.location.replace(`${routerBasename(win)}${path}`);
 }
 
 const FAILURE_KEYS: Record<OpenStudyFailure | 'missing', string> = {

@@ -2,6 +2,7 @@ import {
   installViewerStudyRequestTracking,
   markViewerStudyRetrieved,
   recordViewerStudyRequest,
+  routerBasename,
   routerPathname,
   stripPatientIdentifiersFromAddressBar,
   studyInstanceUIDsFromSearch,
@@ -168,6 +169,11 @@ describe('the shared "open this study" link', () => {
     expect(routerPathname('/ohif-viewer', win)).toBe('/');
     expect(routerPathname('/ohif-viewerX/viewer', win)).toBe('/ohif-viewerX/viewer');
     expect(routerPathname('/viewer', { config: {} } as unknown as Window)).toBe('/viewer');
+    // No routerBasename: OHIF falls back to PUBLIC_URL.
+    const sub = { config: { routerBasename: null }, PUBLIC_URL: '/pacs/' } as unknown as Window;
+    expect(routerBasename(sub)).toBe('/pacs');
+    expect(routerPathname('/pacs/viewer', sub)).toBe('/viewer');
+    expect(routerBasename({} as Window)).toBe('');
   });
 
   it('records /viewer requests made through history navigation', () => {

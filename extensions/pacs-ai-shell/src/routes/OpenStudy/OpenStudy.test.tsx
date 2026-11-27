@@ -161,4 +161,11 @@ test('opens the viewer with a full page load under the router basename', () => {
   expect(replace).toHaveBeenCalledWith('/base/viewer?StudyInstanceUIDs=1.2');
   openViewerWithPageLoad('/viewer?StudyInstanceUIDs=1.2', { location: { replace } } as unknown as Window);
   expect(replace).toHaveBeenLastCalledWith('/viewer?StudyInstanceUIDs=1.2');
+  // routerBasename unset: the PUBLIC_URL fallback, as OHIF's router uses.
+  openViewerWithPageLoad('/viewer?StudyInstanceUIDs=1.2', {
+    config: {},
+    PUBLIC_URL: '/pacs/',
+    location: { replace },
+  } as unknown as Window);
+  expect(replace).toHaveBeenLastCalledWith('/pacs/viewer?StudyInstanceUIDs=1.2');
 });
