@@ -20,13 +20,13 @@
     "@ohif/core": "workspace:*",
     "@ohif/extension-default": "workspace:*",
     "@ohif/ui-next": "workspace:*",
-    "i18next": "19.9.2",
+    "i18next": "26.7.2",
     "react": "18.3.1",
     "react-dnd": "14.0.2",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1",
-    "react-router": "6.30.3",
-    "react-router-dom": "6.30.3"
+    "react-router": "6.30.6",
+    "react-router-dom": "6.30.6"
   },
   "dependencies": {
     "@pacs-ai/extension-chat": "workspace:*",

@@ -25,4 +25,21 @@ describe('@pacs-ai/extension-core locales', () => {
     await i18n.changeLanguage('fr');
     expect(panelLabels()).toEqual(['Études', 'Mesures']);
   });
+
+  test('plural keys use the i18next v4 suffixes (_one/_other)', async () => {
+    const i18n = require('@ohif/i18n').default;
+    await i18n.initializing;
+    require('./index');
+    await i18n.changeLanguage('en-US');
+    expect(i18n.t('StudyList:ProcessingNotificationsCount', { count: 1 })).toBe('1 notification');
+    expect(i18n.t('StudyList:ProcessingNotificationsCount', { count: 3 })).toBe('3 notifications');
+  });
+
+  test('addResourceBundle(deep, overwrite) cannot corrupt inherited built-ins (GHSA-6jcc-5g8w-32mx)', async () => {
+    const i18n = require('@ohif/i18n').default;
+    await i18n.initializing;
+    i18n.addResourceBundle('en-US', 'GhsaProbe', { hasOwnProperty: { call: 'corrupted' } }, true, true);
+    expect(typeof Object.prototype.hasOwnProperty.call).toBe('function');
+    expect(Object.prototype.hasOwnProperty.call({ a: 1 }, 'a')).toBe(true);
+  });
 });

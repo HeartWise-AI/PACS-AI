@@ -18,7 +18,7 @@
     "@ohif/core": "workspace:*",
     "@ohif/i18n": "workspace:*",
     "@ohif/ui-next": "workspace:*",
-    "i18next": "19.9.2",
+    "i18next": "26.7.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "12.3.1"
