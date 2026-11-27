@@ -2,7 +2,8 @@
  * Model output is embedded in the viewer origin.
  *
  * These checks fail while that document can read localStorage.sessionToken
- * or the web app frame is posted with targetOrigin '*'. They pass once the
+ * or the web app frame is posted with targetOrigin '*' while it shares the
+ * viewer origin. They pass once the
  * framed model document cannot read the parent token and the web app frame
  * is not posted to every origin.
  *
@@ -40,6 +41,12 @@ const ATTACK_DOCUMENT = `<!DOCTYPE html>
     error = String(e);
   }
   window.parent.postMessage({ type: 'exfil', value: value, error: error }, '*');
+  // The web app must still get the model output the viewer posts after load.
+  window.addEventListener('message', function (event) {
+    if (event.data && event.data.type === 'data') {
+      window.parent.postMessage({ type: 'received', text: String(event.data.text) }, '*');
+    }
+  });
 </script>
 </body>
 </html>
@@ -172,11 +179,13 @@ function pageHtml(securityCase) {
   localStorage.setItem('sessionToken', ${JSON.stringify(PLACEHOLDER_SESSION_TOKEN)});
   window.__exfil = [];
   window.__targets = [];
+  window.__received = [];
   window.addEventListener('message', function (event) {
     var data = event.data;
     if (!data || typeof data !== 'object') return;
     if (data.type === 'exfil') window.__exfil.push(data);
     if (data.type === 'observed-target') window.__targets.push(String(data.targetOrigin));
+    if (data.type === 'received') window.__received.push(String(data.text));
   });
   (function () {
     var desc = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
@@ -202,7 +211,7 @@ function pageHtml(securityCase) {
       }
     });
   })();
-  window.__SECURITY_CASE = ${JSON.stringify(securityCase)};
+  window.__SECURITY_CASE = ${JSON.stringify(securityCase).replace(/</g, '\\u003c')};
 </script>
 <script src="/harness.js"></script>
 </body>
@@ -289,15 +298,27 @@ async function openCase(page, origin, securityCase) {
   await page
     .waitForFunction(
       () =>
-        window.__exfil.length > 0 || document.querySelector('iframe')?.getAttribute('sandbox') === '',
+        window.__exfil.length > 0 ||
+        document.querySelector('iframe')?.getAttribute('sandbox') === '',
       null,
       { timeout: 10000 }
     )
     .catch(() => {});
+  if (securityCase.mode === 'webapp') {
+    // The viewer posts the model output on the frame's load event.
+    await page
+      .waitForFunction(() => window.__received.length > 0, null, { timeout: 5000 })
+      .catch(() => {});
+  }
   return page.evaluate(() => {
     const iframe = document.querySelector('iframe');
     if (!iframe) {
-      return { missing: true, exfil: window.__exfil, targets: window.__targets };
+      return {
+        missing: true,
+        exfil: window.__exfil,
+        targets: window.__targets,
+        received: window.__received,
+      };
     }
     const sandboxAttr = iframe.getAttribute('sandbox');
     const tokens = new Set((sandboxAttr ?? '').split(/\s+/).filter(Boolean));
@@ -322,6 +343,7 @@ async function openCase(page, origin, securityCase) {
       canReadParentStorage: scripts && sameOriginToken && documentOrigin === location.origin,
       exfil: window.__exfil,
       targets: window.__targets,
+      received: window.__received,
     };
   });
 }
@@ -340,7 +362,12 @@ function assertIsolated(name, observed) {
   if (stolen) {
     failures.push(`${name}: the model document read localStorage.sessionToken`);
   }
-  if (!observed.canReadParentStorage && !stolen && (observed.exfil || []).length === 0 && observed.scripts) {
+  if (
+    !observed.canReadParentStorage &&
+    !stolen &&
+    (observed.exfil || []).length === 0 &&
+    observed.scripts
+  ) {
     failures.push(`${name}: the model document did not report whether it could read the token`);
   }
   return failures;
@@ -352,25 +379,25 @@ async function main() {
   const container = await startContainer();
   const holder = { bundle: Buffer.from('') };
   const viewer = http.createServer((req, res) => {
-      const url = new URL(req.url, 'http://127.0.0.1');
-      const pathname = url.pathname;
-      if (pathname === '/harness.js') {
-        res.writeHead(200, { 'Content-Type': 'text/javascript' });
-        res.end(holder.bundle);
-        return;
-      }
-      if (pathname === '/' && url.searchParams.has('case')) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(pageHtml(JSON.parse(url.searchParams.get('case'))));
-        return;
-      }
-      if (pathname.startsWith('/api/proxy/docker-inference/')) {
-        proxyToContainer(req, res, container.port);
-        return;
-      }
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('not found');
-    });
+    const url = new URL(req.url, 'http://127.0.0.1');
+    const pathname = url.pathname;
+    if (pathname === '/harness.js') {
+      res.writeHead(200, { 'Content-Type': 'text/javascript' });
+      res.end(holder.bundle);
+      return;
+    }
+    if (pathname === '/' && url.searchParams.has('case')) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(pageHtml(JSON.parse(url.searchParams.get('case'))));
+      return;
+    }
+    if (pathname.startsWith('/api/proxy/docker-inference/')) {
+      proxyToContainer(req, res, container.port);
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('not found');
+  });
   const port = await listen(viewer);
   const apiUrl = `http://127.0.0.1:${port}/api`;
   holder.bundle = await buildHarness(apiUrl, esbuild);
@@ -392,7 +419,9 @@ async function main() {
     proxyFailures.push(`model document is served without the inference proxy (${direct.status})`);
   }
   if (new URL(iframeUrl).origin !== origin) {
-    proxyFailures.push(`iframe URL origin ${new URL(iframeUrl).origin} is not the viewer origin ${origin}`);
+    proxyFailures.push(
+      `iframe URL origin ${new URL(iframeUrl).origin} is not the viewer origin ${origin}`
+    );
   }
 
   const data = predictData();
@@ -444,11 +473,22 @@ async function main() {
   if (!webapp.missing && targets.length === 0) {
     failures.push('webapp output modal: did not observe postMessage targetOrigin');
   }
-  if (targets.some(target => target === '*')) {
-    failures.push("webapp output modal: postMessage targetOrigin is '*'");
+  // An opaque-origin frame can only be reached with targetOrigin '*'. That is
+  // acceptable only while the frame is sandboxed without allow-same-origin.
+  if (targets.some(target => target === '*') && webapp.sameOriginToken) {
+    failures.push("webapp output modal: postMessage targetOrigin is '*' to a same-origin frame");
+  }
+  if (!webapp.missing && !(webapp.received || []).includes(WEBAPP_DATA)) {
+    failures.push('webapp output modal: the web app did not receive the model output message');
   }
 
-  console.log(JSON.stringify({ iframeUrl, proxied: { status: proxied.status, csp: proxied.csp }, webapp, html, report }, null, 2));
+  console.log(
+    JSON.stringify(
+      { iframeUrl, proxied: { status: proxied.status, csp: proxied.csp }, webapp, html, report },
+      null,
+      2
+    )
+  );
   if (failures.length) {
     console.error(failures.map(failure => `FAIL ${failure}`).join('\n'));
     process.exitCode = 1;
