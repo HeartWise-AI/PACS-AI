@@ -93,13 +93,13 @@ describe('TopNavigation', () => {
   afterEach(() => localStorage.clear());
 
   test('shows stable clinical destinations and identifies the active route', async () => {
-    renderNavigation('/viewer?StudyInstanceUIDs=1.2.3&PatientName=Smith', 'Viewer');
+    renderNavigation('/viewer?StudyInstanceUIDs=1.2.3&PatientName=Smith&modalitiesInStudy=XA', 'Viewer');
     await screen.findByText('Ada Clinician');
 
     const desktopNavigation = screen.getByTestId('desktop-navigation');
     const studies = within(desktopNavigation).getByRole('link', { name: 'Studies' });
     expect(studies.getAttribute('aria-current')).toBe('page');
-    expect(studies.getAttribute('href')).toBe('/?PatientName=Smith');
+    expect(studies.getAttribute('href')).toBe('/?modalitiesInStudy=XA');
     const predictions = within(desktopNavigation).getByRole('link', { name: 'AI Predictions' });
     expect(predictions.getAttribute('href')).toBe('/ai-predictions');
     expect(predictions.getAttribute('aria-current')).toBeNull();

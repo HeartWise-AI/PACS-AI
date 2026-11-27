@@ -8,6 +8,7 @@ import {
   WORKSPACE_SETTINGS_PERMISSIONS,
   type UserAccess,
 } from '@pacs-ai/extension-core/src/access/permissions';
+import { withoutPatientIdentifiers } from '@pacs-ai/extension-core/src/utils/viewerUrl';
 
 export { isAdminRole };
 
@@ -103,7 +104,8 @@ export const getStudiesDestination = (pathname: string, search: string): string 
     return '/';
   }
 
-  const searchParams = new URLSearchParams(search);
+  // Patient identifiers never go back into a URL (old viewer links carried them).
+  const searchParams = withoutPatientIdentifiers(search);
   searchParams.delete('StudyInstanceUIDs');
   const retainedSearch = searchParams.toString();
   return retainedSearch ? `/?${retainedSearch}` : '/';
