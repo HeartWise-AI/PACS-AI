@@ -30,6 +30,39 @@ interface SendMessageResponse {
   // Answer language from the chat backend (message.metadata); absent with an older backend.
   response_language?: 'en' | 'fr';
   response_language_source?: string;
+  // True when the chat moved on (New chat, another thread, the chat box closed
+  // for good) while this answer was running: the answer stays stored in its own
+  // thread and must not be shown in the current chat.
+  superseded?: boolean;
+}
+
+/** Error code of the gateway when the thread is still writing its previous answer. */
+export const CHAT_TURN_IN_PROGRESS = 'chat_turn_in_progress';
+
+// The thread the user last created, opened or wrote in, per study: restored
+// first when the chat box opens again, even when it has no message yet.
+const LAST_THREAD_KEY = 'pacsAiChat.lastThread.';
+
+export function rememberLastThread(studyInstanceUID: string | undefined, threadId: string) {
+  if (!studyInstanceUID) {
+    return;
+  }
+  try {
+    window.localStorage.setItem(LAST_THREAD_KEY + studyInstanceUID, threadId);
+  } catch {
+    // Storage blocked: the latest thread of the study is restored instead.
+  }
+}
+
+export function lastThreadOf(studyInstanceUID: string | undefined): string | null {
+  if (!studyInstanceUID) {
+    return null;
+  }
+  try {
+    return window.localStorage.getItem(LAST_THREAD_KEY + studyInstanceUID);
+  } catch {
+    return null;
+  }
 }
 
 /** The answer language the chat backend reports in message.metadata, if any. */
@@ -169,6 +202,22 @@ export function useChatBox(
   const listSeq = useRef(0);
   const [threadsLoading, setThreadsLoading] = useState(false);
   const threadIdRef = useRef<string | null>(null);
+  // Bumped by every message sent and by every chat change (New chat, a thread
+  // opened): the answer of an older message no longer updates the chat box.
+  const turnSeq = useRef(0);
+
+  // The message in flight (if any) no longer belongs to the chat on screen: it
+  // finishes into its own thread, and the input is free for the new chat.
+  const releaseTurn = useCallback(() => {
+    turnSeq.current += 1;
+    if (progressTimer.current !== null) {
+      clearInterval(progressTimer.current);
+      progressTimer.current = null;
+    }
+    setProgress(null);
+    setIsProcessing(false);
+    setIsLoading(false);
+  }, []);
 
   const stopProgressPolling = useCallback(() => {
     if (progressTimer.current !== null) {
@@ -270,6 +319,7 @@ export function useChatBox(
             return;
           }
           setThreadId(newThreadId);
+          rememberLastThread(openStudy?.studyInstanceUID, newThreadId);
           setErrorDetails('');
         } else {
           console.error('Thread ID not found in response:', response);
@@ -390,13 +440,17 @@ export function useChatBox(
     async (storedThreadId: string) => {
       const token = ++chatSeq.current;
       const opened = await loadThread(storedThreadId, token);
+      if (opened) {
+        releaseTurn();
+        rememberLastThread(getOpenStudy?.()?.studyInstanceUID, storedThreadId);
+      }
       if (!opened && isMounted.current && token === chatSeq.current && !threadIdRef.current) {
         setIsLoading(false);
         setThreadCreationPending(false);
       }
       return opened;
     },
-    [loadThread]
+    [loadThread, releaseTurn, getOpenStudy]
   );
 
   // Function to send a message to the backend
@@ -407,6 +461,10 @@ export function useChatBox(
       selectedSeries: string[],
       studyContext?: Record<string, string>
     ): Promise<SendMessageResponse> => {
+      const turn = ++turnSeq.current;
+      // Still the chat on screen: not replaced by New chat or another thread, not unmounted.
+      const current = () => isMounted.current && turn === turnSeq.current;
+      rememberLastThread(getOpenStudy?.()?.studyInstanceUID, currentThreadId);
       try {
         setIsLoading(true);
         setIsProcessing(true);
@@ -426,6 +484,9 @@ export function useChatBox(
           },
         });
 
+        if (!current()) {
+          return { content: '', role: 'assistant', thread_id: currentThreadId, superseded: true };
+        }
         if (response.success) {
           const responseData = response.data;
           const responseText = responseData.message?.content || responseData.response || '';
@@ -451,9 +512,15 @@ export function useChatBox(
         } else {
           throw new Error(response.message || 'Failed to send message');
         }
+      } catch (error) {
+        if (!current()) {
+          return { content: '', role: 'assistant', thread_id: currentThreadId, superseded: true };
+        }
+        throw error;
       } finally {
-        stopProgressPolling();
-        if (isMounted.current) {
+        // An older message ending must not stop the polling or free the input of the current one.
+        if (current()) {
+          stopProgressPolling();
           setProgress(null);
           setIsLoading(false);
           setIsProcessing(false);
@@ -577,10 +644,14 @@ export function useChatBox(
       if (restore) {
         setIsLoading(true);
         const list = await refreshThreads();
-        const restored =
-          token === chatSeq.current && list && list.length > 0
-            ? await loadThread(list[0].thread_id, token)
-            : false;
+        // The thread the user last created, opened or wrote in (kept even with no
+        // message yet, e.g. right after New chat); else the latest one with messages.
+        const last = lastThreadOf(getOpenStudy?.()?.studyInstanceUID);
+        let restored =
+          !!last && token === chatSeq.current ? await loadThread(last, token) : false;
+        if (!restored && token === chatSeq.current && list && list.length > 0) {
+          restored = await loadThread(list[0].thread_id, token);
+        }
         if (isMounted.current) {
           setIsLoading(false);
         }
@@ -596,7 +667,7 @@ export function useChatBox(
       }
       await startThread(token);
     })();
-  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread]);
+  }, [isOpen, threadId, messagesLength, threadCreationPending, refreshThreads, loadThread, startThread, getOpenStudy]);
 
   threadIdRef.current = threadId;
 
@@ -614,13 +685,16 @@ export function useChatBox(
   }, [createThread]);
 
   // New chat: supersedes a restore or an open still in flight, then a new thread is created.
+  // A message still running stays in its own thread (stored there, listed in the
+  // history); its answer is not shown in the new chat and does not block its input.
   const resetThread = useCallback(() => {
     chatSeq.current += 1;
+    releaseTurn();
     restoreTried.current = true;
     setHistoryLoading(false);
     setThreadId(null);
     setThreadCreationPending(false);
-  }, []);
+  }, [releaseTurn]);
 
   return {
     threadId,

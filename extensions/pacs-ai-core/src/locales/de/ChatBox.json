@@ -93,5 +93,6 @@
   "AnswerLanguageSourceClient": "Spracheinstellung",
   "AnswerLanguageSourceConversation": "wie im Gespräch",
   "AnswerLanguageSourceDefault": "Standard dieser Installation",
-  "AnswerLanguageNoReason": "Antwortsprache: {{language}}"
+  "AnswerLanguageNoReason": "Antwortsprache: {{language}}",
+  "RetryQuestion": "Erneut versuchen"
 }

@@ -44,6 +44,7 @@ function history(threadId: string) {
 describe('useChatBox chat history', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.localStorage.clear();
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
     jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     repository.CreateThread.mockResolvedValue({ success: true, data: { thread_id: 'new-thread' } } as any);

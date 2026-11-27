@@ -22,6 +22,7 @@ interface MessageBubbleProps {
   onFeedback?: (message: Message, type: 'up' | 'down') => void;
   // Saves the reason and comment of a thumbs down.
   onFeedbackDetails?: (message: Message, category: string, comment: string) => void;
+  onRetryMessage?: (question: string) => void;
 }
 
 const NO_CITATIONS: ChatCitation[] = [];
@@ -105,6 +106,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   feedback,
   onFeedback,
   onFeedbackDetails,
+  onRetryMessage,
 }) => {
   const { t } = useTranslation('ChatBox');
   const vote = feedback?.vote ?? null;
@@ -219,7 +221,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               />
             )}
           </span>
-          {isAssistant && !message.isThinking && onFeedback && (
+          {isAssistant && !message.isThinking && message.retryText && onRetryMessage && (
+            <button
+              type="button"
+              data-cy="chat-retry-button"
+              onClick={() => onRetryMessage(message.retryText as string)}
+              className="rounded border border-white/30 px-2 py-0.5 text-xs text-gray-200 hover:bg-white/10"
+            >
+              {t('RetryQuestion')}
+            </button>
+          )}
+          {/* A local error (nothing stored for it) cannot be voted on: it offers "Try again". */}
+          {isAssistant &&
+            !message.isThinking &&
+            onFeedback &&
+            !(message.status === 'error' && !message.backendMessageId) && (
             <div className="flex gap-2 text-gray-400">
               <button
                 type="button"
