@@ -53,5 +53,6 @@
   "Custom role": "Custom role",
   "None (use models and rate reports)": "None (use models and rate reports)",
   "Create and edit roles in Workspace Settings → Roles.": "Create and edit roles in Workspace Settings → Roles.",
-  "Your role can invite members but cannot see the member list.": "Your role can invite members but cannot see the member list."
+  "Your role can invite members but cannot see the member list.": "Your role can invite members but cannot see the member list.",
+  "Only the workspace owner can change this member": "Only the workspace owner can change this member"
 }

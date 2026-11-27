@@ -58,11 +58,28 @@ describe('member actions menu', () => {
     [member('same', UserRole.ADMIN), member('same', UserRole.USER)],
     [member('admin', UserRole.ADMIN), member('owner', UserRole.OWNER)],
     [member('admin-1', UserRole.ADMIN), member('admin-2', UserRole.ADMIN)],
-  ])('hides access controls for restricted self, owner, and peer targets', (actor, target) => {
-    renderMenu(actor, target);
+    [member('owner', UserRole.OWNER), member('owner', UserRole.OWNER)],
+    [{ ...member('lead', UserRole.USER), canManageMembers: true }, member('owner', UserRole.OWNER)],
+    [{ ...member('lead', UserRole.USER), canManageMembers: true }, member('admin', UserRole.ADMIN)],
+  ])('offers no edit, delete or access action on self, owner, and peer rows', (actor, target) => {
+    render(
+      React.createElement(MemberActionsMenu, {
+        actor,
+        target,
+        onEdit: jest.fn(),
+        onDelete: jest.fn(),
+        onAccessChange: jest.fn(),
+      })
+    );
 
-    expect(screen.queryByRole('menuitem', { name: 'Suspend access' })).toBeNull();
-    expect(screen.queryByRole('menuitem', { name: 'Reactivate access' })).toBeNull();
+    expect(screen.queryByRole('button', { name: `Actions for ${target.name}` })).toBeNull();
+    expect(screen.getByTestId('member-actions-unavailable')).toBeTruthy();
+  });
+
+  test('the owner can still edit an admin', () => {
+    renderMenu(member('owner', UserRole.OWNER), member('admin', UserRole.ADMIN));
+    expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeTruthy();
   });
 
   test('closes on Escape and returns focus to the trigger', () => {

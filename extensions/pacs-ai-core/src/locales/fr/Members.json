@@ -53,5 +53,6 @@
   "Custom role": "Rôle personnalisé",
   "None (use models and rate reports)": "Aucun (utiliser les modèles et évaluer les rapports)",
   "Create and edit roles in Workspace Settings → Roles.": "Créez et modifiez les rôles dans Réglages de l’espace de travail → Rôles.",
-  "Your role can invite members but cannot see the member list.": "Votre rôle permet d’inviter des membres, mais pas de voir la liste des membres."
+  "Your role can invite members but cannot see the member list.": "Votre rôle permet d’inviter des membres, mais pas de voir la liste des membres.",
+  "Only the workspace owner can change this member": "Seul le propriétaire de l'espace de travail peut modifier ce membre"
 }

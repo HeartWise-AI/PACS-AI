@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { UserAccessState } from '@pacs-ai/extension-core/src/api/userDTO';
 import dotsVertical from '../../assets/pacs/icons/dots-vertical-inactive.png';
 import type { MemberAccessAction } from './MemberAccessConfirmationDialog';
-import { getMemberAccessEligibility, type MemberAccessIdentity } from './memberAccessPolicy';
+import {
+  canManageMemberAccount,
+  getMemberAccessEligibility,
+  type MemberAccessIdentity,
+} from './memberAccessPolicy';
 
 export interface MemberActionsTarget extends MemberAccessIdentity {
   name: string;
@@ -40,6 +44,7 @@ export default function MemberActionsMenu({
         ? 'reactivate'
         : null;
   const showAccessAction = eligibility.allowed && accessAction !== null;
+  const canManageMember = canManageMemberAccount(actor, target);
 
   useLayoutEffect(() => {
     if (!isOpen || !triggerRef.current) {
@@ -150,6 +155,18 @@ export default function MemberActionsMenu({
       )}
     </div>
   );
+
+  if (!canManageMember) {
+    return (
+      <div
+        className="relative flex items-center justify-center text-white text-opacity-40"
+        data-testid="member-actions-unavailable"
+        title={t('Only the workspace owner can change this member')}
+      >
+        —
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex items-center justify-center">
