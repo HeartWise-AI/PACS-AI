@@ -1,4 +1,7 @@
-import metadataProvider, { normalizeVOILUTFunction } from './MetadataProvider';
+import metadataProvider, {
+  normalizePhotometricInterpretation,
+  normalizeVOILUTFunction,
+} from './MetadataProvider';
 
 beforeEach(() => {
   (
@@ -111,5 +114,77 @@ describe('MetadataProvider voiLutModule', () => {
         WindowWidth: '0',
       }).voiLUTFunction
     ).toBeUndefined();
+  });
+});
+
+describe('MetadataProvider imagePixelModule photometric interpretation', () => {
+  // Headers of an IVUS cine that was lossy-JPEG compressed and decompressed
+  // upstream: still labelled RGB, but the bytes are YCbCr.
+  const ivus = (overrides: Record<string, unknown> = {}) => ({
+    Modality: 'IVUS',
+    SOPClassUID: '1.2.840.10008.5.1.4.1.1.3.1',
+    PhotometricInterpretation: 'RGB',
+    SamplesPerPixel: 3,
+    PlanarConfiguration: 0,
+    BitsAllocated: 8,
+    BitsStored: 8,
+    HighBit: 7,
+    PixelRepresentation: 0,
+    Rows: 512,
+    Columns: 512,
+    NumberOfFrames: 1543,
+    LossyImageCompression: '01',
+    LossyImageCompressionMethod: 'ISO_10918_1',
+    ...overrides,
+  });
+
+  it('decodes a decompressed lossy-JPEG IVUS labelled RGB as YBR_FULL', () => {
+    const module = metadataProvider.getTagFromInstance('imagePixelModule', ivus());
+    expect(module.photometricInterpretation).toBe('YBR_FULL');
+    expect(module.planarConfiguration).toBe(0);
+    expect(module.samplesPerPixel).toBe(3);
+    expect(
+      normalizePhotometricInterpretation(
+        ivus({ LossyImageCompressionMethod: ['ISO_10918_1'], SamplesPerPixel: ['3'] })
+      )
+    ).toBe('YBR_FULL');
+    expect(
+      normalizePhotometricInterpretation(
+        ivus({ LossyImageCompressionMethod: ['ISO_14495_1', 'ISO_10918_1'] })
+      )
+    ).toBe('YBR_FULL');
+  });
+
+  it('leaves echo, XA and IVUS without lossy-JPEG history unchanged', () => {
+    // echo with the same headers (GE Vivid, Philips EPIQ) is true RGB
+    expect(normalizePhotometricInterpretation(ivus({ Modality: 'US' }))).toBe('RGB');
+    expect(normalizePhotometricInterpretation(ivus({ LossyImageCompressionMethod: undefined }))).toBe(
+      'RGB'
+    );
+    expect(
+      normalizePhotometricInterpretation(ivus({ LossyImageCompressionMethod: 'ISO_14495_1' }))
+    ).toBe('RGB');
+    expect(normalizePhotometricInterpretation(ivus({ PhotometricInterpretation: 'YBR_FULL_422' }))).toBe(
+      'YBR_FULL_422'
+    );
+    expect(
+      normalizePhotometricInterpretation(
+        ivus({ PhotometricInterpretation: 'MONOCHROME2', SamplesPerPixel: 1 })
+      )
+    ).toBe('MONOCHROME2');
+    expect(normalizePhotometricInterpretation(ivus({ BitsAllocated: 16 }))).toBe('RGB');
+    const xa = {
+      Modality: 'XA',
+      PhotometricInterpretation: 'MONOCHROME2',
+      SamplesPerPixel: 1,
+      BitsAllocated: 16,
+    };
+    expect(
+      metadataProvider.getTagFromInstance('imagePixelModule', xa).photometricInterpretation
+    ).toBe('MONOCHROME2');
+    expect(
+      metadataProvider.getTagFromInstance('imagePixelModule', ivus({ Modality: 'US' }))
+        .photometricInterpretation
+    ).toBe('RGB');
   });
 });

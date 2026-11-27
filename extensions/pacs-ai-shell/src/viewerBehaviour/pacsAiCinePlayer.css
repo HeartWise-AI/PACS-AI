@@ -1,10 +1,39 @@
 /*
- * PACS-AI colours of @ohif/ui-next's CinePlayer (see PacsAiCinePlayer.tsx).
- * The player's root element carries .pacs-ai-cine-player; its first child is
- * the bar.
+ * PACS-AI look and placement of @ohif/ui-next's CinePlayer (see
+ * PacsAiCinePlayer.tsx). The player's root element carries
+ * .pacs-ai-cine-player; its first child is the bar.
  */
+
+/*
+ * Bottom centre of the viewport, clear of the image's top half and between
+ * the bottom-left and bottom-right overlays. `div.` outranks ui-next's
+ * `top-10` utility on the same element.
+ */
+div.pacs-ai-cine-player {
+  top: auto;
+  bottom: 0.375rem;
+  max-width: calc(100% - 1rem);
+}
+
 .pacs-ai-cine-player > div:first-child {
-  background-color: #4c504b;
+  background-color: rgb(76 80 75 / 0.85);
+  gap: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  opacity: 0.45;
+  transition: opacity 150ms ease-in-out;
+}
+
+/* fully visible while used */
+.pacs-ai-cine-player > div:first-child:hover,
+.pacs-ai-cine-player > div:first-child:focus-within,
+.pacs-ai-cine-player:has([data-state='open']) > div:first-child {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .pacs-ai-cine-player > div:first-child {
+    opacity: 0.8;
+  }
 }
 
 /* "FPS" next to the frame rate */
