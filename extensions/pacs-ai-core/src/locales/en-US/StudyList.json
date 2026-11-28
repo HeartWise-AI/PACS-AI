@@ -416,5 +416,9 @@
   "PanEchoAsSevere": "P(severe AS)",
   "PanEchoAsAny": "P(any AS)",
   "PanEchoAvVmaxEstimate": "AV peak velocity (AI estimate)",
-  "PanEchoAsScreeningNote": "Screening scores, not a diagnosis. PanEcho reads the 2D clips only, without the Doppler spectra: the AV peak velocity is an AI estimate that under-estimates severe AS, and a low score does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area)."
+  "PanEchoAsScreeningNote": "Screening scores, not a diagnosis. PanEcho reads the 2D clips only, without the Doppler spectra: the AV peak velocity is an AI estimate that under-estimates severe AS, and a low score does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area).",
+  "EchoAlignResearchBanner": "Research use only — EchoAlign (CC BY-NC 4.0), not for clinical decisions",
+  "ProcessingEchoAlignTitle": "EchoAlign measurements and findings",
+  "EchoAlignAsScreeningNote": "Screening scores, not a diagnosis. EchoAlign reads the 2D and colour clips, without the Doppler spectra: the AV peak velocity and gradients are AI estimates compressed towards the middle of the range, and on MHI the severe grade was never called. Use the measured Doppler values (Vmax, mean gradient, valve area).",
+  "ProcessingEchoAlignAssistiveNote": "AI-generated research estimates (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Not validated for clinical use; review the complete study."
 }

@@ -407,5 +407,9 @@
   "PanEchoAsSevere": "P(SA sévère)",
   "PanEchoAsAny": "P(toute SA)",
   "PanEchoAvVmaxEstimate": "Vitesse de pointe aortique (estimation IA)",
-  "PanEchoAsScreeningNote": "Scores de dépistage, pas un diagnostic. PanEcho lit seulement les clips 2D, sans les spectres Doppler : la vitesse de pointe aortique est une estimation de l'IA qui sous-estime la SA sévère, et un score bas n'exclut pas une sténose aortique. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire)."
+  "PanEchoAsScreeningNote": "Scores de dépistage, pas un diagnostic. PanEcho lit seulement les clips 2D, sans les spectres Doppler : la vitesse de pointe aortique est une estimation de l'IA qui sous-estime la SA sévère, et un score bas n'exclut pas une sténose aortique. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire).",
+  "EchoAlignResearchBanner": "Recherche seulement — EchoAlign (CC BY-NC 4.0), pas pour des décisions cliniques",
+  "ProcessingEchoAlignTitle": "Mesures et résultats EchoAlign",
+  "EchoAlignAsScreeningNote": "Scores de dépistage, pas un diagnostic. EchoAlign lit les clips 2D et couleur, sans les spectres Doppler : la vitesse de pointe aortique et les gradients sont des estimations de l'IA resserrées vers le milieu de l'échelle, et à l'ICM le grade sévère n'a jamais été attribué. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire).",
+  "ProcessingEchoAlignAssistiveNote": "Estimations de recherche générées par l'IA (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Non validées pour un usage clinique ; revoir l'examen complet."
 }

@@ -13,6 +13,7 @@ import ViewerModelResultFeedback from './ViewerModelResultFeedback';
 import ViewerRunLabels from './ViewerRunLabels';
 import { useStoredJobResult } from './useStoredJobResult';
 import { EchoSrCompactSummary } from '../studyProcessing/modelResults/EchoSrResult';
+import { ECHO_ALIGN_MODEL_NAME } from '../studyProcessing/modelResults/echoAlignContract';
 import {
   ECHO_SR_MODEL_NAME,
   parseEchoSrResultPayload,
@@ -56,7 +57,10 @@ export interface ViewerModelResultDrawerProps {
 }
 
 // Echo AI models whose drawer shows the measured SR values first.
-const MEASURED_FIRST_MODELS = new Set(['PanEcho', 'EchoPrime']);
+const MEASURED_FIRST_MODELS = new Set(['PanEcho', 'EchoPrime', ECHO_ALIGN_MODEL_NAME]);
+// Shown with their structured template like PanEcho, even when the model can render
+// an HTML report: EchoAlign's drawer matches PanEcho's (plus the research banner).
+const STRUCTURED_FIRST_MODELS = new Set([ECHO_ALIGN_MODEL_NAME]);
 
 // The drawer title: study-service results get a readable name.
 export function viewerResultTitle(
@@ -96,7 +100,9 @@ const RUN_TRIGGER_LABELS: Record<ResultRunTrigger, { key: string; defaultValue: 
 
 function canLoadReport(result: ViewerModelResult): boolean {
   return (
-    result.reportAvailable && (!!(result.runId && result.executionId) || !!result.studyServiceJobId)
+    result.reportAvailable &&
+    !STRUCTURED_FIRST_MODELS.has(result.modelName) &&
+    (!!(result.runId && result.executionId) || !!result.studyServiceJobId)
   );
 }
 

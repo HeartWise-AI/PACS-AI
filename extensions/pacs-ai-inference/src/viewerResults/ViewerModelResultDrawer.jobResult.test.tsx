@@ -197,4 +197,41 @@ describe('ViewerModelResultDrawer stored job results', () => {
     expect(loadJobResult).not.toHaveBeenCalled();
     expect(byTestId(renderer!, 'echo-sr-compact')).toHaveLength(0);
   });
+
+  test('shows EchoAlign with its structured template, not the HTML report, with the SR first', async () => {
+    const loadReport = jest
+      .fn()
+      .mockResolvedValue({ htmlBase64: 'PGgxPg==', contentType: 'text/html' });
+    const loadJobResult = jest.fn(async (job: ViewerModelResult) => ({
+      runId: '',
+      executionId: '',
+      studyInstanceUID: '1.2.3',
+      modelName: job.modelName,
+      modelVersion: job.modelVersion,
+      status: 'completed',
+      completedAt: '2026-11-27T10:00:00Z',
+      result:
+        job.modelName === 'echo-sr-measurements'
+          ? echoSrResultFixtures.severeGe
+          : { predictions: {} },
+    }));
+    await render(
+      result({
+        modelName: 'EchoAlign (research use only)',
+        modelVersion: '0.1.2',
+        studyServiceJobId: 'job-ea',
+        reportAvailable: true,
+      }),
+      repository({ loadReport, loadJobResult }),
+      result()
+    );
+
+    expect(loadReport).not.toHaveBeenCalled();
+    expect(byTestId(renderer!, 'viewer-model-result-report')).toHaveLength(0);
+    const models = byTestId(renderer!, 'structured-result').map(element =>
+      element.getAttribute('data-model')
+    );
+    expect(models).toContain('EchoAlign (research use only)');
+    expect(loadJobResult).toHaveBeenCalledTimes(2);
+  });
 });

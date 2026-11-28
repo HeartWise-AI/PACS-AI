@@ -66,6 +66,12 @@ import {
   parseEchoSrResultPayload,
 } from './echoSrContract';
 import {
+  ECHO_ALIGN_MODEL_NAME,
+  isSupportedEchoAlignVersion,
+  type EchoAlignResultPayload,
+  parseEchoAlignResultPayload,
+} from './echoAlignContract';
+import {
   PAN_ECHO_MODEL_NAME,
   isSupportedPanEchoVersion,
   type PanEchoResultPayload,
@@ -118,6 +124,10 @@ export type ResolvedModelResultRenderer =
   | {
       kind: 'panecho';
       payload: PanEchoResultPayload;
+    }
+  | {
+      kind: 'echoalign';
+      payload: EchoAlignResultPayload;
     }
   | {
       kind: 'echoprime';
@@ -243,6 +253,15 @@ const panEchoAdapter: ModelResultRendererAdapter = {
   },
 };
 
+const echoAlignAdapter: ModelResultRendererAdapter = {
+  matches: ({ modelName, modelVersion }) =>
+    modelName === ECHO_ALIGN_MODEL_NAME && isSupportedEchoAlignVersion(modelVersion),
+  resolve: ({ result }) => {
+    const payload = parseEchoAlignResultPayload(result);
+    return payload ? { kind: 'echoalign', payload } : null;
+  },
+};
+
 const echoPrimeAdapter: ModelResultRendererAdapter = {
   matches: ({ modelName, modelVersion }) =>
     modelName === ECHO_PRIME_MODEL_NAME &&
@@ -273,6 +292,7 @@ const modelResultRendererAdapters: readonly ModelResultRendererAdapter[] = [
   deepRVClipAdapter,
   deepRVAdapter,
   panEchoAdapter,
+  echoAlignAdapter,
   echoPrimeAdapter,
   echoSrAdapter,
 ];
@@ -299,7 +319,9 @@ export function resolveModelResultRenderer(
   }
 
   const knownEchoModel =
-    context.modelName === PAN_ECHO_MODEL_NAME || context.modelName === ECHO_PRIME_MODEL_NAME;
+    context.modelName === PAN_ECHO_MODEL_NAME ||
+    context.modelName === ECHO_PRIME_MODEL_NAME ||
+    context.modelName === ECHO_ALIGN_MODEL_NAME;
   if (knownEchoModel) {
     return {
       kind: 'unsupported',
