@@ -1,0 +1,2266 @@
+{
+  "schema": "echo-report-thresholds/1",
+  "version": "2026-11-28.1",
+  "description": "Structured echo report: section order, SR routing by Finding Site, guideline cut-offs for measured values, and the AI findings that count as positive. Same file in PanEcho, EchoAlign, the PACS-AI viewer and CardioAgent; bump the version on every change.",
+  "references": {
+    "ase2015": "Lang RM et al. Recommendations for cardiac chamber quantification by echocardiography in adults: an update from the ASE and the EACVI. J Am Soc Echocardiogr 2015;28:1-39.",
+    "ase2016": "Nagueh SF et al. Recommendations for the evaluation of left ventricular diastolic function by echocardiography: an update from the ASE and the EACVI. J Am Soc Echocardiogr 2016;29:277-314.",
+    "ase2017as": "Baumgartner H et al. Recommendations on the echocardiographic assessment of aortic valve stenosis: a focused update from the EACVI and the ASE. J Am Soc Echocardiogr 2017;30:372-392.",
+    "ase2017regurg": "Zoghbi WA et al. Recommendations for noninvasive evaluation of native valvular regurgitation: a report from the ASE. J Am Soc Echocardiogr 2017;30:303-371.",
+    "ase2009stenosis": "Baumgartner H et al. Echocardiographic assessment of valve stenosis: EAE/ASE recommendations for clinical practice. J Am Soc Echocardiogr 2009;22:1-23.",
+    "rudski2010": "Rudski LG et al. Guidelines for the echocardiographic assessment of the right heart in adults: a report from the ASE. J Am Soc Echocardiogr 2010;23:685-713.",
+    "acc2020valve": "Otto CM et al. 2020 ACC/AHA guideline for the management of patients with valvular heart disease. Circulation 2021;143:e72-e227.",
+    "acc2020hcm": "Ommen SR et al. 2020 AHA/ACC guideline for the diagnosis and treatment of patients with hypertrophic cardiomyopathy. Circulation 2020;142:e558-e631.",
+    "esc2022ph": "Humbert M et al. 2022 ESC/ERS guidelines for the diagnosis and treatment of pulmonary hypertension. Eur Heart J 2022;43:3618-3731.",
+    "esc2024aorta": "Mazzolai L et al. 2024 ESC guidelines for the management of peripheral arterial and aortic diseases. Eur Heart J 2024;45:3538-3700.",
+    "ase2015strain": "Voigt JU et al. Definitions for a common standard for 2D speckle tracking echocardiography: consensus document of the EACVI/ASE/Industry Task Force. J Am Soc Echocardiogr 2015;28:183-193."
+  },
+  "sections": [
+    {
+      "id": "lv",
+      "en": "Left ventricle",
+      "fr": "Ventricule gauche"
+    },
+    {
+      "id": "rv",
+      "en": "Right ventricle",
+      "fr": "Ventricule droit"
+    },
+    {
+      "id": "atria",
+      "en": "Atria",
+      "fr": "Oreillettes"
+    },
+    {
+      "id": "av",
+      "group": "valves",
+      "en": "Aortic valve",
+      "fr": "Valve aortique"
+    },
+    {
+      "id": "mv",
+      "group": "valves",
+      "en": "Mitral valve",
+      "fr": "Valve mitrale"
+    },
+    {
+      "id": "tv",
+      "group": "valves",
+      "en": "Tricuspid valve",
+      "fr": "Valve tricuspide"
+    },
+    {
+      "id": "pv",
+      "group": "valves",
+      "en": "Pulmonic valve",
+      "fr": "Valve pulmonaire"
+    },
+    {
+      "id": "aorta",
+      "en": "Aorta",
+      "fr": "Aorte"
+    },
+    {
+      "id": "other",
+      "en": "Pericardium and other",
+      "fr": "Péricarde et autres"
+    }
+  ],
+  "groups": {
+    "valves": {
+      "en": "Valves",
+      "fr": "Valves"
+    }
+  },
+  "structures": [
+    {
+      "id": "lv",
+      "section": "lv",
+      "en": "Left ventricle",
+      "fr": "Ventricule gauche"
+    },
+    {
+      "id": "rv",
+      "section": "rv",
+      "en": "Right ventricle",
+      "fr": "Ventricule droit"
+    },
+    {
+      "id": "la",
+      "section": "atria",
+      "en": "Left atrium",
+      "fr": "Oreillette gauche"
+    },
+    {
+      "id": "ra",
+      "section": "atria",
+      "en": "Right atrium",
+      "fr": "Oreillette droite"
+    },
+    {
+      "id": "av",
+      "section": "av",
+      "en": "Aortic valve",
+      "fr": "Valve aortique"
+    },
+    {
+      "id": "mv",
+      "section": "mv",
+      "en": "Mitral valve",
+      "fr": "Valve mitrale"
+    },
+    {
+      "id": "tv",
+      "section": "tv",
+      "en": "Tricuspid valve",
+      "fr": "Valve tricuspide"
+    },
+    {
+      "id": "pv",
+      "section": "pv",
+      "en": "Pulmonic valve",
+      "fr": "Valve pulmonaire"
+    },
+    {
+      "id": "aorta",
+      "section": "aorta",
+      "en": "Aorta",
+      "fr": "Aorte"
+    },
+    {
+      "id": "pericardium",
+      "section": "other",
+      "en": "Pericardium",
+      "fr": "Péricarde"
+    },
+    {
+      "id": "other",
+      "section": "other",
+      "en": "Other",
+      "fr": "Autres"
+    }
+  ],
+  "srRouting": {
+    "comment": "Each SR measurement goes to a section by its Finding Site; measurementOverrides (matched on the measurement name, case-insensitive substring) win over the site. Sites not listed and not matched by a pattern go to 'other'; ignoredSites are not shown.",
+    "sites": {
+      "left ventricle": "lv",
+      "left ventricle outflow tract": "lv",
+      "left ventricular outflow tract": "lv",
+      "medial mitral annulus": "lv",
+      "lateral mitral annulus": "lv",
+      "pulmonary venous structure": "lv",
+      "right ventricle": "rv",
+      "left atrium": "atria",
+      "right atrium": "atria",
+      "vena cava": "atria",
+      "inferior vena cava": "atria",
+      "aortic valve": "av",
+      "mitral valve": "mv",
+      "tricuspid valve": "tv",
+      "pulmonic valve": "pv",
+      "pulmonary valve": "pv",
+      "pulmonary artery": "pv",
+      "main pulmonary artery": "pv",
+      "aorta": "aorta",
+      "aortic root": "aorta",
+      "ascending aorta": "aorta",
+      "descending aorta": "aorta",
+      "aortic arch": "aorta",
+      "sinus of valsalva": "aorta",
+      "pericardium": "other"
+    },
+    "sitePatterns": [
+      {
+        "contains": "left ventricle",
+        "section": "lv"
+      },
+      {
+        "contains": "intraventricular septum",
+        "section": "lv"
+      },
+      {
+        "contains": "right ventricle",
+        "section": "rv"
+      }
+    ],
+    "measurementOverrides": [
+      {
+        "contains": "tricuspid annular plane systolic excursion",
+        "section": "rv"
+      },
+      {
+        "contains": "wall motion score",
+        "section": "lv"
+      },
+      {
+        "contains": "e-wave peak velocity",
+        "site": "mitral valve",
+        "section": "lv"
+      },
+      {
+        "contains": "a-wave peak velocity",
+        "site": "mitral valve",
+        "section": "lv"
+      },
+      {
+        "contains": "e to a ratio",
+        "site": "mitral valve",
+        "section": "lv"
+      },
+      {
+        "contains": "deceleration time",
+        "site": "mitral valve",
+        "section": "lv"
+      },
+      {
+        "contains": "annulus e velocity",
+        "site": "mitral valve",
+        "section": "lv"
+      }
+    ],
+    "ignoredSites": [
+      "patient",
+      "unspecified"
+    ]
+  },
+  "metrics": {
+    "comment": "How each graded value is read from the echo-sr-measurements result: a summary key, or measurements matched by site and exact measurement name (case-insensitive). 'antegrade' drops regurgitant-flow entries. 'prefer' picks the first entry whose method contains the word. scale multiplies the value.",
+    "lvef": {
+      "summary": "lvef",
+      "label": {
+        "en": "LVEF",
+        "fr": "FEVG"
+      },
+      "unit": "%",
+      "digits": 0
+    },
+    "lvidd": {
+      "site": [
+        "left ventricle"
+      ],
+      "measurement": [
+        "left ventricle internal end diastolic dimension"
+      ],
+      "label": {
+        "en": "LVIDd",
+        "fr": "DTDVG"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "lvedv": {
+      "site": [
+        "left ventricle"
+      ],
+      "measurement": [
+        "left ventricular end diastolic volume"
+      ],
+      "prefer": [
+        "biplane"
+      ],
+      "label": {
+        "en": "LVEDV",
+        "fr": "VTDVG"
+      },
+      "unit": "mL",
+      "digits": 0
+    },
+    "ivsd": {
+      "site": [
+        "left ventricle"
+      ],
+      "measurement": [
+        "interventricular septum diastolic thickness"
+      ],
+      "label": {
+        "en": "IVSd",
+        "fr": "SIVd"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "lvpwd": {
+      "site": [
+        "left ventricle"
+      ],
+      "measurement": [
+        "left ventricle posterior wall diastolic thickness"
+      ],
+      "label": {
+        "en": "LVPWd",
+        "fr": "PPVGd"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "gls": {
+      "site": [
+        "left ventricle"
+      ],
+      "measurement": [
+        "global peak longitudinal strain"
+      ],
+      "abs": true,
+      "label": {
+        "en": "GLS",
+        "fr": "SLG"
+      },
+      "unit": "%",
+      "digits": 1
+    },
+    "wmsi": {
+      "measurement": [
+        "lv wall motion score index"
+      ],
+      "label": {
+        "en": "WMSI",
+        "fr": "IMS"
+      },
+      "unit": "",
+      "digits": 2
+    },
+    "eOverEPrime": {
+      "summary": "eOverEPrime",
+      "label": {
+        "en": "E/e'",
+        "fr": "E/e'"
+      },
+      "unit": "",
+      "digits": 1
+    },
+    "lvotPeakGradient": {
+      "site": [
+        "left ventricle outflow tract",
+        "left ventricular outflow tract"
+      ],
+      "measurement": [
+        "peak gradient"
+      ],
+      "antegrade": true,
+      "max": true,
+      "label": {
+        "en": "LVOT peak gradient",
+        "fr": "gradient maximal CCVG"
+      },
+      "unit": "mmHg",
+      "digits": 0
+    },
+    "tapse": {
+      "summary": "tapse",
+      "label": {
+        "en": "TAPSE",
+        "fr": "TAPSE"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "rvSPrime": {
+      "site": [
+        "right ventricle"
+      ],
+      "measurement": [
+        "peak tissue velocity"
+      ],
+      "label": {
+        "en": "RV S'",
+        "fr": "S' VD"
+      },
+      "unit": "cm/s",
+      "digits": 1
+    },
+    "rvBasal": {
+      "site": [
+        "right ventricle"
+      ],
+      "measurementPrefix": "right ventricular base minor axis",
+      "label": {
+        "en": "RV basal diameter",
+        "fr": "diamètre basal VD"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "laVolume": {
+      "site": [
+        "left atrium"
+      ],
+      "measurement": [
+        "left atrium systolic volume"
+      ],
+      "prefer": [
+        "biplane"
+      ],
+      "label": {
+        "en": "LA volume",
+        "fr": "volume OG"
+      },
+      "unit": "mL",
+      "digits": 0
+    },
+    "laviReported": {
+      "measurement": [
+        "left atrial end systolic volume index"
+      ],
+      "label": {
+        "en": "LAVI",
+        "fr": "VOGi"
+      },
+      "unit": "mL/m²",
+      "digits": 0
+    },
+    "raArea": {
+      "site": [
+        "right atrium"
+      ],
+      "measurement": [
+        "right atrium systolic area"
+      ],
+      "label": {
+        "en": "RA area",
+        "fr": "surface OD"
+      },
+      "unit": "cm²",
+      "digits": 0
+    },
+    "ivc": {
+      "site": [
+        "vena cava",
+        "inferior vena cava"
+      ],
+      "measurement": [
+        "inferior vena cava diameter"
+      ],
+      "label": {
+        "en": "IVC",
+        "fr": "VCI"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "avPht": {
+      "site": [
+        "aortic valve"
+      ],
+      "measurement": [
+        "pressure half-time"
+      ],
+      "label": {
+        "en": "AR pressure half-time",
+        "fr": "PHT de l'IA"
+      },
+      "unit": "ms",
+      "digits": 0
+    },
+    "mvMeanGradient": {
+      "site": [
+        "mitral valve"
+      ],
+      "measurement": [
+        "mean gradient"
+      ],
+      "antegrade": true,
+      "max": true,
+      "label": {
+        "en": "MV mean gradient",
+        "fr": "gradient moyen mitral"
+      },
+      "unit": "mmHg",
+      "digits": 1
+    },
+    "trPeakGradient": {
+      "summary": "trPeakGradient",
+      "label": {
+        "en": "TR peak gradient",
+        "fr": "gradient IT"
+      },
+      "unit": "mmHg",
+      "digits": 0
+    },
+    "pvPeakGradient": {
+      "site": [
+        "pulmonic valve",
+        "pulmonary valve"
+      ],
+      "measurement": [
+        "peak gradient"
+      ],
+      "antegrade": true,
+      "max": true,
+      "label": {
+        "en": "PV peak gradient",
+        "fr": "gradient maximal pulmonaire"
+      },
+      "unit": "mmHg",
+      "digits": 0
+    },
+    "aorticRoot": {
+      "site": [
+        "aorta",
+        "aortic root",
+        "sinus of valsalva"
+      ],
+      "measurement": [
+        "diameter",
+        "aortic root diameter"
+      ],
+      "label": {
+        "en": "Aortic root",
+        "fr": "racine aortique"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "ascendingAorta": {
+      "site": [
+        "aorta",
+        "ascending aorta"
+      ],
+      "measurement": [
+        "ascending aortic diameter"
+      ],
+      "label": {
+        "en": "Ascending aorta",
+        "fr": "aorte ascendante"
+      },
+      "unit": "cm",
+      "digits": 1
+    },
+    "bsa": {
+      "site": [
+        "patient"
+      ],
+      "measurement": [
+        "body surface area"
+      ],
+      "scale": 0.0001,
+      "label": {
+        "en": "BSA",
+        "fr": "SC"
+      },
+      "unit": "m²",
+      "digits": 2
+    }
+  },
+  "derivedMetrics": {
+    "comment": "Indexed values computed when the SR has the volume and the body surface area (BSA, m²).",
+    "lavi": {
+      "prefer": "laviReported",
+      "numerator": "laVolume",
+      "denominator": "bsa",
+      "label": {
+        "en": "LAVI",
+        "fr": "VOGi"
+      },
+      "unit": "mL/m²",
+      "digits": 0
+    },
+    "lvedvi": {
+      "numerator": "lvedv",
+      "denominator": "bsa",
+      "label": {
+        "en": "LVEDV index",
+        "fr": "VTDVG indexé"
+      },
+      "unit": "mL/m²",
+      "digits": 0
+    },
+    "lvWall": {
+      "maxOf": [
+        "ivsd",
+        "lvpwd"
+      ],
+      "label": {
+        "en": "max wall thickness",
+        "fr": "épaisseur pariétale max"
+      },
+      "unit": "cm",
+      "digits": 1
+    }
+  },
+  "measuredRules": [
+    {
+      "id": "lvSize",
+      "concept": "lvSize",
+      "structure": "lv",
+      "metric": "lvidd",
+      "compare": "gt",
+      "cuts": {
+        "male": [
+          5.8,
+          6.3,
+          6.8
+        ],
+        "female": [
+          5.2,
+          5.6,
+          6.1
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "Mild LV dilation",
+          "fr": "Dilatation VG légère"
+        },
+        {
+          "en": "Moderate LV dilation",
+          "fr": "Dilatation VG modérée"
+        },
+        {
+          "en": "Severe LV dilation",
+          "fr": "Dilatation VG sévère"
+        }
+      ]
+    },
+    {
+      "id": "lvSizeVolume",
+      "concept": "lvSize",
+      "structure": "lv",
+      "metric": "lvedvi",
+      "compare": "gt",
+      "cuts": {
+        "male": [
+          74
+        ],
+        "female": [
+          61
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "LV dilation (end-diastolic volume index)",
+          "fr": "Dilatation VG (volume télédiastolique indexé)"
+        }
+      ]
+    },
+    {
+      "id": "lvh",
+      "concept": "lvh",
+      "structure": "lv",
+      "metric": "lvWall",
+      "compare": "gt",
+      "cuts": {
+        "male": [
+          1.0,
+          1.3,
+          1.6
+        ],
+        "female": [
+          0.9,
+          1.2,
+          1.5
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "Mild LV hypertrophy (wall thickness)",
+          "fr": "HVG légère (épaisseur pariétale)"
+        },
+        {
+          "en": "Moderate LV hypertrophy (wall thickness)",
+          "fr": "HVG modérée (épaisseur pariétale)"
+        },
+        {
+          "en": "Severe LV hypertrophy (wall thickness)",
+          "fr": "HVG sévère (épaisseur pariétale)"
+        }
+      ]
+    },
+    {
+      "id": "lvef",
+      "concept": "lvSystolic",
+      "structure": "lv",
+      "metric": "lvef",
+      "compare": "lt",
+      "cuts": {
+        "any": [
+          50,
+          40,
+          30
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "Mildly reduced LVEF",
+          "fr": "FEVG légèrement réduite"
+        },
+        {
+          "en": "Moderately reduced LVEF",
+          "fr": "FEVG modérément réduite"
+        },
+        {
+          "en": "Severely reduced LVEF",
+          "fr": "FEVG sévèrement réduite"
+        }
+      ]
+    },
+    {
+      "id": "gls",
+      "concept": "gls",
+      "structure": "lv",
+      "metric": "gls",
+      "compare": "lt",
+      "cuts": {
+        "any": [
+          16
+        ]
+      },
+      "ref": "ase2015strain",
+      "labels": [
+        {
+          "en": "Reduced global longitudinal strain",
+          "fr": "Strain longitudinal global réduit"
+        }
+      ]
+    },
+    {
+      "id": "wma",
+      "concept": "wma",
+      "structure": "lv",
+      "metric": "wmsi",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          1.0
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "Regional wall motion abnormality",
+          "fr": "Anomalie de la cinétique segmentaire"
+        }
+      ]
+    },
+    {
+      "id": "fillingPressure",
+      "concept": "diastolic",
+      "structure": "lv",
+      "metric": "eOverEPrime",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          14
+        ]
+      },
+      "ref": "ase2016",
+      "labels": [
+        {
+          "en": "Elevated E/e' (> 14): raised LV filling pressure likely",
+          "fr": "E/e' élevé (> 14) : pressions de remplissage VG probablement élevées"
+        }
+      ]
+    },
+    {
+      "id": "lvotObstruction",
+      "concept": "lvot",
+      "structure": "lv",
+      "metric": "lvotPeakGradient",
+      "compare": "ge",
+      "cuts": {
+        "any": [
+          30,
+          50
+        ]
+      },
+      "ref": "acc2020hcm",
+      "labels": [
+        {
+          "en": "LVOT gradient ≥ 30 mmHg (obstruction)",
+          "fr": "Gradient CCVG ≥ 30 mmHg (obstruction)"
+        },
+        {
+          "en": "LVOT gradient ≥ 50 mmHg (significant obstruction)",
+          "fr": "Gradient CCVG ≥ 50 mmHg (obstruction significative)"
+        }
+      ]
+    },
+    {
+      "id": "rvTapse",
+      "concept": "rvSystolic",
+      "structure": "rv",
+      "metric": "tapse",
+      "compare": "lt",
+      "cuts": {
+        "any": [
+          1.7
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "RV systolic dysfunction (TAPSE < 1.7 cm)",
+          "fr": "Dysfonction systolique VD (TAPSE < 1,7 cm)"
+        }
+      ]
+    },
+    {
+      "id": "rvSPrime",
+      "concept": "rvSystolic",
+      "structure": "rv",
+      "metric": "rvSPrime",
+      "compare": "lt",
+      "cuts": {
+        "any": [
+          9.5
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "RV systolic dysfunction (S' < 9.5 cm/s)",
+          "fr": "Dysfonction systolique VD (S' < 9,5 cm/s)"
+        }
+      ]
+    },
+    {
+      "id": "rvSize",
+      "concept": "rvSize",
+      "structure": "rv",
+      "metric": "rvBasal",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          4.1
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "RV dilation (basal diameter > 4.1 cm)",
+          "fr": "Dilatation VD (diamètre basal > 4,1 cm)"
+        }
+      ]
+    },
+    {
+      "id": "laSize",
+      "concept": "laSize",
+      "structure": "la",
+      "metric": "lavi",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          34,
+          41,
+          48
+        ]
+      },
+      "ref": "ase2015",
+      "labels": [
+        {
+          "en": "Mild LA enlargement",
+          "fr": "Dilatation OG légère"
+        },
+        {
+          "en": "Moderate LA enlargement",
+          "fr": "Dilatation OG modérée"
+        },
+        {
+          "en": "Severe LA enlargement",
+          "fr": "Dilatation OG sévère"
+        }
+      ]
+    },
+    {
+      "id": "raSize",
+      "concept": "raSize",
+      "structure": "ra",
+      "metric": "raArea",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          18
+        ]
+      },
+      "ref": "rudski2010",
+      "labels": [
+        {
+          "en": "RA enlargement (area > 18 cm²)",
+          "fr": "Dilatation OD (surface > 18 cm²)"
+        }
+      ]
+    },
+    {
+      "id": "ivc",
+      "concept": "raPressure",
+      "structure": "ra",
+      "metric": "ivc",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          2.1
+        ]
+      },
+      "ref": "rudski2010",
+      "labels": [
+        {
+          "en": "Dilated IVC (> 2.1 cm): raised RA pressure possible",
+          "fr": "VCI dilatée (> 2,1 cm) : pression OD possiblement élevée"
+        }
+      ]
+    },
+    {
+      "id": "aorticStenosis",
+      "concept": "as",
+      "structure": "av",
+      "metric": "asGrading",
+      "ref": "ase2017as",
+      "comment": "Graded by echo-sr-measurements (asGrading): severe Vmax >= 4.0 m/s or MG >= 40 mmHg; moderate Vmax 3.0-3.9 or MG 20-39; mild Vmax 2.6-2.9; AVA < 1.0 cm² with non-severe gradients = discordant.",
+      "labels": [
+        {
+          "en": "Mild aortic stenosis",
+          "fr": "Sténose aortique légère"
+        },
+        {
+          "en": "Moderate aortic stenosis",
+          "fr": "Sténose aortique modérée"
+        },
+        {
+          "en": "Severe aortic stenosis",
+          "fr": "Sténose aortique sévère"
+        }
+      ],
+      "discordantLabel": {
+        "en": "AVA < 1.0 cm² with non-severe gradients (discordant: consider low-flow, low-gradient AS)",
+        "fr": "Surface < 1,0 cm² avec gradients non sévères (discordant : envisager une SA à bas débit, bas gradient)"
+      }
+    },
+    {
+      "id": "aorticRegurgitationPht",
+      "concept": "ar",
+      "structure": "av",
+      "metric": "avPht",
+      "compare": "lt",
+      "cuts": {
+        "any": [
+          200
+        ]
+      },
+      "ref": "ase2017regurg",
+      "labels": [
+        {
+          "en": "Short AR pressure half-time (< 200 ms): severe aortic regurgitation possible",
+          "fr": "PHT de l'IA courte (< 200 ms) : insuffisance aortique sévère possible"
+        }
+      ]
+    },
+    {
+      "id": "mitralGradient",
+      "concept": "ms",
+      "structure": "mv",
+      "metric": "mvMeanGradient",
+      "compare": "ge",
+      "cuts": {
+        "any": [
+          5,
+          10
+        ]
+      },
+      "ref": "ase2009stenosis",
+      "labels": [
+        {
+          "en": "Elevated mitral mean gradient (≥ 5 mmHg): mitral stenosis possible",
+          "fr": "Gradient moyen mitral élevé (≥ 5 mmHg) : sténose mitrale possible"
+        },
+        {
+          "en": "High mitral mean gradient (≥ 10 mmHg): severe mitral stenosis possible",
+          "fr": "Gradient moyen mitral très élevé (≥ 10 mmHg) : sténose mitrale sévère possible"
+        }
+      ]
+    },
+    {
+      "id": "trGradient",
+      "concept": "trGradient",
+      "structure": "tv",
+      "metric": "trPeakGradient",
+      "compare": "gt",
+      "cuts": {
+        "any": [
+          35,
+          50
+        ]
+      },
+      "ref": "rudski2010",
+      "labels": [
+        {
+          "en": "Elevated TR gradient (> 35 mmHg): pulmonary hypertension possible",
+          "fr": "Gradient IT élevé (> 35 mmHg) : hypertension pulmonaire possible"
+        },
+        {
+          "en": "High TR gradient (> 50 mmHg): pulmonary hypertension likely",
+          "fr": "Gradient IT très élevé (> 50 mmHg) : hypertension pulmonaire probable"
+        }
+      ]
+    },
+    {
+      "id": "pulmonicGradient",
+      "concept": "ps",
+      "structure": "pv",
+      "metric": "pvPeakGradient",
+      "compare": "ge",
+      "cuts": {
+        "any": [
+          36,
+          64
+        ]
+      },
+      "ref": "ase2009stenosis",
+      "labels": [
+        {
+          "en": "Pulmonic valve gradient ≥ 36 mmHg (moderate stenosis range)",
+          "fr": "Gradient pulmonaire ≥ 36 mmHg (sténose modérée)"
+        },
+        {
+          "en": "Pulmonic valve gradient ≥ 64 mmHg (severe stenosis range)",
+          "fr": "Gradient pulmonaire ≥ 64 mmHg (sténose sévère)"
+        }
+      ]
+    },
+    {
+      "id": "aorticRoot",
+      "concept": "aorticRoot",
+      "structure": "aorta",
+      "metric": "aorticRoot",
+      "compare": "ge",
+      "cuts": {
+        "any": [
+          4.0,
+          4.5,
+          5.0
+        ]
+      },
+      "ref": "esc2024aorta",
+      "labels": [
+        {
+          "en": "Dilated aortic root (≥ 4.0 cm)",
+          "fr": "Racine aortique dilatée (≥ 4,0 cm)"
+        },
+        {
+          "en": "Dilated aortic root (≥ 4.5 cm)",
+          "fr": "Racine aortique dilatée (≥ 4,5 cm)"
+        },
+        {
+          "en": "Aortic root aneurysm (≥ 5.0 cm)",
+          "fr": "Anévrisme de la racine aortique (≥ 5,0 cm)"
+        }
+      ]
+    },
+    {
+      "id": "ascendingAorta",
+      "concept": "ascendingAorta",
+      "structure": "aorta",
+      "metric": "ascendingAorta",
+      "compare": "ge",
+      "cuts": {
+        "any": [
+          4.0,
+          4.5,
+          5.0
+        ]
+      },
+      "ref": "esc2024aorta",
+      "labels": [
+        {
+          "en": "Dilated ascending aorta (≥ 4.0 cm)",
+          "fr": "Aorte ascendante dilatée (≥ 4,0 cm)"
+        },
+        {
+          "en": "Dilated ascending aorta (≥ 4.5 cm)",
+          "fr": "Aorte ascendante dilatée (≥ 4,5 cm)"
+        },
+        {
+          "en": "Ascending aortic aneurysm (≥ 5.0 cm)",
+          "fr": "Anévrisme de l'aorte ascendante (≥ 5,0 cm)"
+        }
+      ]
+    }
+  ],
+  "aiRules": {
+    "comment": "AI findings that count as positive at the model's released or calibrated threshold. kind: multiclass (positive when the called class is in 'positive'; probability = sum of the positive classes), binary (PanEcho: positive when the released 0.5 rule calls 'positiveLabel'; probability of that label from binaryProbabilities when present), classification (EchoAlign: positive when called at the released threshold), ordinal (EchoAlign: positive when the grade is in 'positive'), regression (positive by the measured rule 'rule' applied to the AI estimate; band = MAE against the MHI SR), asCalibrated (PanEcho 1.1.3+ MHI-calibrated label).",
+    "PanEcho": [
+      {
+        "key": "LV size",
+        "kind": "multiclass",
+        "concept": "lvSize",
+        "structure": "lv",
+        "classes": [
+          "Mildly Increased",
+          "Moderately|Severely Increased",
+          "Normal"
+        ],
+        "positive": {
+          "Mildly Increased": {
+            "en": "Mild LV dilation",
+            "fr": "Dilatation VG légère"
+          },
+          "Moderately|Severely Increased": {
+            "en": "Moderate or severe LV dilation",
+            "fr": "Dilatation VG modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "Moderate or greater LV hypertrophy (increased wall thickness)",
+        "kind": "binary",
+        "concept": "lvh",
+        "structure": "lv",
+        "positiveLabel": "Moderately|severely increased",
+        "positiveIndex": 0,
+        "text": {
+          "en": "Moderate or severe LV hypertrophy",
+          "fr": "HVG modérée ou sévère"
+        }
+      },
+      {
+        "key": "Any level of LV hypertrophy (increased wall thickness)",
+        "kind": "binary",
+        "concept": "lvh",
+        "structure": "lv",
+        "positiveLabel": "Increased",
+        "positiveIndex": 0,
+        "text": {
+          "en": "LV hypertrophy",
+          "fr": "Hypertrophie VG"
+        }
+      },
+      {
+        "key": "LV systolic function",
+        "kind": "multiclass",
+        "concept": "lvSystolic",
+        "structure": "lv",
+        "classes": [
+          "Mildly Decreased",
+          "Moderately|Severely Decreased",
+          "Normal|Hyperdynamic"
+        ],
+        "positive": {
+          "Mildly Decreased": {
+            "en": "Mildly reduced LV systolic function",
+            "fr": "Fonction systolique VG légèrement réduite"
+          },
+          "Moderately|Severely Decreased": {
+            "en": "Moderately or severely reduced LV systolic function",
+            "fr": "Fonction systolique VG modérément ou sévèrement réduite"
+          }
+        }
+      },
+      {
+        "key": "Left ventricular (LV) ejection fraction",
+        "kind": "regression",
+        "concept": "lvSystolic",
+        "structure": "lv",
+        "rule": "lvef",
+        "unit": "%",
+        "digits": 0,
+        "band": 9.7
+      },
+      {
+        "key": "LV wall motion abnormalities",
+        "kind": "binary",
+        "concept": "wma",
+        "structure": "lv",
+        "positiveLabel": "Present",
+        "positiveIndex": 1,
+        "text": {
+          "en": "Regional wall motion abnormality",
+          "fr": "Anomalie de la cinétique segmentaire"
+        }
+      },
+      {
+        "key": "LV diastolic function",
+        "kind": "multiclass",
+        "concept": "diastolic",
+        "structure": "lv",
+        "classes": [
+          "Mild|Indeterminate",
+          "Moderate|Severe",
+          "Normal"
+        ],
+        "positive": {
+          "Moderate|Severe": {
+            "en": "Moderate or severe LV diastolic dysfunction",
+            "fr": "Dysfonction diastolique VG modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "E/e' ratio",
+        "kind": "regression",
+        "concept": "diastolic",
+        "structure": "lv",
+        "rule": "fillingPressure",
+        "unit": "",
+        "digits": 1,
+        "band": 2.1
+      },
+      {
+        "key": "Elevated LV outflow tract pressure",
+        "kind": "binary",
+        "concept": "lvot",
+        "structure": "lv",
+        "positiveLabel": "1.0",
+        "positiveIndex": 1,
+        "text": {
+          "en": "Elevated LVOT gradient",
+          "fr": "Gradient CCVG élevé"
+        }
+      },
+      {
+        "key": "RV size",
+        "kind": "multiclass",
+        "concept": "rvSize",
+        "structure": "rv",
+        "classes": [
+          "Mildly Increased",
+          "Moderately|Severely Increased",
+          "Normal"
+        ],
+        "positive": {
+          "Mildly Increased": {
+            "en": "Mild RV dilation",
+            "fr": "Dilatation VD légère"
+          },
+          "Moderately|Severely Increased": {
+            "en": "Moderate or severe RV dilation",
+            "fr": "Dilatation VD modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "RV systolic function",
+        "kind": "binary",
+        "concept": "rvSystolic",
+        "structure": "rv",
+        "positiveLabel": "Decreased",
+        "positiveIndex": 0,
+        "text": {
+          "en": "RV systolic dysfunction",
+          "fr": "Dysfonction systolique VD"
+        }
+      },
+      {
+        "key": "Tricuspid annular plane systolic excursion",
+        "kind": "regression",
+        "concept": "rvSystolic",
+        "structure": "rv",
+        "rule": "rvTapse",
+        "unit": "cm",
+        "digits": 1,
+        "band": 0.35
+      },
+      {
+        "key": "Left atrial (LA) size",
+        "kind": "multiclass",
+        "concept": "laSize",
+        "structure": "la",
+        "classes": [
+          "Mildly Dilated",
+          "Moderately|Severely Dilated",
+          "Normal"
+        ],
+        "positive": {
+          "Mildly Dilated": {
+            "en": "Mild LA enlargement",
+            "fr": "Dilatation OG légère"
+          },
+          "Moderately|Severely Dilated": {
+            "en": "Moderate or severe LA enlargement",
+            "fr": "Dilatation OG modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "Right atrial (RA) size",
+        "kind": "binary",
+        "concept": "raSize",
+        "structure": "ra",
+        "positiveLabel": "Dilated",
+        "positiveIndex": 0,
+        "text": {
+          "en": "RA enlargement",
+          "fr": "Dilatation OD"
+        }
+      },
+      {
+        "key": "Elevated RA pressure",
+        "kind": "binary",
+        "concept": "raPressure",
+        "structure": "ra",
+        "positiveLabel": "1.0",
+        "positiveIndex": 1,
+        "text": {
+          "en": "Elevated RA pressure (≥ 8 mmHg)",
+          "fr": "Pression OD élevée (≥ 8 mmHg)"
+        }
+      },
+      {
+        "key": "Aortic valve stenosis",
+        "kind": "asCalibrated",
+        "concept": "as",
+        "structure": "av",
+        "positiveLabels": [
+          "Significant AS likely, severe possible",
+          "Significant AS likely"
+        ],
+        "text": {
+          "Significant AS likely, severe possible": {
+            "en": "Significant aortic stenosis likely, severe possible",
+            "fr": "Sténose aortique significative probable, sévère possible"
+          },
+          "Significant AS likely": {
+            "en": "Significant (moderate or severe) aortic stenosis likely",
+            "fr": "Sténose aortique significative (modérée ou sévère) probable"
+          }
+        }
+      },
+      {
+        "key": "Bicuspid aortic valve",
+        "kind": "binary",
+        "concept": "bicuspid",
+        "structure": "av",
+        "positiveLabel": "Bicuspid",
+        "positiveIndex": 0,
+        "text": {
+          "en": "Bicuspid aortic valve",
+          "fr": "Valve aortique bicuspide"
+        }
+      },
+      {
+        "key": "Aortic valve regurgitation",
+        "kind": "multiclass",
+        "concept": "ar",
+        "structure": "av",
+        "classes": [
+          "Mild",
+          "Moderate|Severe",
+          "None|Trace"
+        ],
+        "positive": {
+          "Moderate|Severe": {
+            "en": "Moderate or severe aortic regurgitation",
+            "fr": "Insuffisance aortique modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "Mitral valve stenosis",
+        "kind": "binary",
+        "concept": "ms",
+        "structure": "mv",
+        "positiveLabel": "Mild|Moderate|Severe",
+        "positiveIndex": 0,
+        "text": {
+          "en": "Mitral stenosis",
+          "fr": "Sténose mitrale"
+        }
+      },
+      {
+        "key": "Mitral valve regurgitation",
+        "kind": "multiclass",
+        "concept": "mr",
+        "structure": "mv",
+        "classes": [
+          "Mild",
+          "Moderate|Severe",
+          "None|Trace"
+        ],
+        "positive": {
+          "Moderate|Severe": {
+            "en": "Moderate or severe mitral regurgitation",
+            "fr": "Insuffisance mitrale modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "Tricuspid valve regurgitation",
+        "kind": "multiclass",
+        "concept": "tr",
+        "structure": "tv",
+        "classes": [
+          "Mild",
+          "Moderate|Severe",
+          "None|Trace"
+        ],
+        "positive": {
+          "Moderate|Severe": {
+            "en": "Moderate or severe tricuspid regurgitation",
+            "fr": "Insuffisance tricuspide modérée ou sévère"
+          }
+        }
+      },
+      {
+        "key": "Tricuspid valve peak gradient",
+        "kind": "regression",
+        "concept": "trGradient",
+        "structure": "tv",
+        "rule": "trGradient",
+        "unit": "mmHg",
+        "digits": 0,
+        "band": 7.2
+      },
+      {
+        "key": "Transverse aortic root diameter",
+        "kind": "regression",
+        "concept": "aorticRoot",
+        "structure": "aorta",
+        "rule": "aorticRoot",
+        "unit": "cm",
+        "digits": 1,
+        "band": 0.45
+      },
+      {
+        "key": "Pericardial effusion",
+        "kind": "binary",
+        "concept": "pericardialEffusion",
+        "structure": "pericardium",
+        "positiveLabel": "mild_mod_severe",
+        "positiveIndex": 0,
+        "text": {
+          "en": "Pericardial effusion (mild or larger)",
+          "fr": "Épanchement péricardique (léger ou plus)"
+        }
+      }
+    ],
+    "EchoAlign": [
+      {
+        "key": "lv_enlargement_grade",
+        "kind": "ordinal",
+        "concept": "lvSize",
+        "structure": "lv",
+        "positive": {
+          "mild_enlargement": {
+            "en": "Mild LV dilation",
+            "fr": "Dilatation VG légère"
+          },
+          "moderate_enlargement": {
+            "en": "Moderate LV dilation",
+            "fr": "Dilatation VG modérée"
+          },
+          "severe_enlargement": {
+            "en": "Severe LV dilation",
+            "fr": "Dilatation VG sévère"
+          }
+        }
+      },
+      {
+        "key": "lvh_grade",
+        "kind": "ordinal",
+        "concept": "lvh",
+        "structure": "lv",
+        "positive": {
+          "mild": {
+            "en": "Mild LV hypertrophy",
+            "fr": "HVG légère"
+          },
+          "moderate": {
+            "en": "Moderate LV hypertrophy",
+            "fr": "HVG modérée"
+          },
+          "severe": {
+            "en": "Severe LV hypertrophy",
+            "fr": "HVG sévère"
+          }
+        }
+      },
+      {
+        "key": "lv_systolic_dysfunction_grade",
+        "kind": "ordinal",
+        "concept": "lvSystolic",
+        "structure": "lv",
+        "positive": {
+          "mildly_reduced": {
+            "en": "Mildly reduced LV systolic function",
+            "fr": "Fonction systolique VG légèrement réduite"
+          },
+          "moderately_reduced": {
+            "en": "Moderately reduced LV systolic function",
+            "fr": "Fonction systolique VG modérément réduite"
+          },
+          "severely_reduced": {
+            "en": "Severely reduced LV systolic function",
+            "fr": "Fonction systolique VG sévèrement réduite"
+          }
+        }
+      },
+      {
+        "key": "ejection_fraction",
+        "kind": "regression",
+        "concept": "lvSystolic",
+        "structure": "lv",
+        "rule": "lvef",
+        "unit": "%",
+        "digits": 0,
+        "band": 9.5
+      },
+      {
+        "key": "rwma",
+        "kind": "classification",
+        "concept": "wma",
+        "structure": "lv",
+        "text": {
+          "en": "Regional wall motion abnormality",
+          "fr": "Anomalie de la cinétique segmentaire"
+        }
+      },
+      {
+        "key": "septal_motion_abnormality",
+        "kind": "classification",
+        "concept": "septalMotion",
+        "structure": "lv",
+        "text": {
+          "en": "Septal motion abnormality",
+          "fr": "Anomalie de la cinétique septale"
+        }
+      },
+      {
+        "key": "lv_diastolic_dysfunction_grade",
+        "kind": "ordinal",
+        "concept": "diastolic",
+        "structure": "lv",
+        "positive": {
+          "grade_ii": {
+            "en": "Grade II LV diastolic dysfunction",
+            "fr": "Dysfonction diastolique VG de grade II"
+          },
+          "grade_iii": {
+            "en": "Grade III LV diastolic dysfunction",
+            "fr": "Dysfonction diastolique VG de grade III"
+          }
+        }
+      },
+      {
+        "key": "rv_enlargement",
+        "kind": "classification",
+        "concept": "rvSize",
+        "structure": "rv",
+        "text": {
+          "en": "RV dilation",
+          "fr": "Dilatation VD"
+        }
+      },
+      {
+        "key": "rv_systolic_dysfunction",
+        "kind": "classification",
+        "concept": "rvSystolic",
+        "structure": "rv",
+        "text": {
+          "en": "RV systolic dysfunction",
+          "fr": "Dysfonction systolique VD"
+        }
+      },
+      {
+        "key": "la_enlargement_grade",
+        "kind": "ordinal",
+        "concept": "laSize",
+        "structure": "la",
+        "positive": {
+          "mild": {
+            "en": "Mild LA enlargement",
+            "fr": "Dilatation OG légère"
+          },
+          "moderate": {
+            "en": "Moderate LA enlargement",
+            "fr": "Dilatation OG modérée"
+          },
+          "severe": {
+            "en": "Severe LA enlargement",
+            "fr": "Dilatation OG sévère"
+          }
+        }
+      },
+      {
+        "key": "ra_enlargement",
+        "kind": "classification",
+        "concept": "raSize",
+        "structure": "ra",
+        "text": {
+          "en": "RA enlargement",
+          "fr": "Dilatation OD"
+        }
+      },
+      {
+        "key": "elevated_ra_pressure",
+        "kind": "classification",
+        "concept": "raPressure",
+        "structure": "ra",
+        "text": {
+          "en": "Elevated RA pressure",
+          "fr": "Pression OD élevée"
+        }
+      },
+      {
+        "key": "aortic_stenosis_classification",
+        "kind": "classification",
+        "concept": "as",
+        "structure": "av",
+        "text": {
+          "en": "Moderate or severe aortic stenosis suspected",
+          "fr": "Sténose aortique modérée ou sévère suspectée"
+        }
+      },
+      {
+        "key": "bicuspid_av",
+        "kind": "classification",
+        "concept": "bicuspid",
+        "structure": "av",
+        "text": {
+          "en": "Bicuspid aortic valve",
+          "fr": "Valve aortique bicuspide"
+        }
+      },
+      {
+        "key": "aortic_regurgitation_grade",
+        "kind": "ordinal",
+        "concept": "ar",
+        "structure": "av",
+        "positive": {
+          "moderate": {
+            "en": "Moderate aortic regurgitation",
+            "fr": "Insuffisance aortique modérée"
+          },
+          "severe": {
+            "en": "Severe aortic regurgitation",
+            "fr": "Insuffisance aortique sévère"
+          }
+        }
+      },
+      {
+        "key": "mitral_stenosis",
+        "kind": "classification",
+        "concept": "ms",
+        "structure": "mv",
+        "text": {
+          "en": "Mitral stenosis",
+          "fr": "Sténose mitrale"
+        }
+      },
+      {
+        "key": "mitral_regurgitation_grade",
+        "kind": "ordinal",
+        "concept": "mr",
+        "structure": "mv",
+        "positive": {
+          "moderate": {
+            "en": "Moderate mitral regurgitation",
+            "fr": "Insuffisance mitrale modérée"
+          },
+          "severe": {
+            "en": "Severe mitral regurgitation",
+            "fr": "Insuffisance mitrale sévère"
+          }
+        }
+      },
+      {
+        "key": "mitral_valve_prolapse",
+        "kind": "classification",
+        "concept": "mvp",
+        "structure": "mv",
+        "text": {
+          "en": "Mitral valve prolapse",
+          "fr": "Prolapsus valvulaire mitral"
+        }
+      },
+      {
+        "key": "tricuspid_regurgitation_grade",
+        "kind": "ordinal",
+        "concept": "tr",
+        "structure": "tv",
+        "positive": {
+          "moderate": {
+            "en": "Moderate tricuspid regurgitation",
+            "fr": "Insuffisance tricuspide modérée"
+          },
+          "severe": {
+            "en": "Severe tricuspid regurgitation",
+            "fr": "Insuffisance tricuspide sévère"
+          }
+        }
+      },
+      {
+        "key": "pulmonary_hypertension_grade",
+        "kind": "ordinal",
+        "concept": "trGradient",
+        "structure": "tv",
+        "positive": {
+          "moderate": {
+            "en": "Moderate pulmonary hypertension suspected",
+            "fr": "Hypertension pulmonaire modérée suspectée"
+          },
+          "severe": {
+            "en": "Severe pulmonary hypertension suspected",
+            "fr": "Hypertension pulmonaire sévère suspectée"
+          }
+        }
+      },
+      {
+        "key": "aortic_root_dilation",
+        "kind": "classification",
+        "concept": "aorticRoot",
+        "structure": "aorta",
+        "text": {
+          "en": "Dilated aortic root",
+          "fr": "Racine aortique dilatée"
+        }
+      },
+      {
+        "key": "ascending_aorta_dilation",
+        "kind": "classification",
+        "concept": "ascendingAorta",
+        "structure": "aorta",
+        "text": {
+          "en": "Dilated ascending aorta",
+          "fr": "Aorte ascendante dilatée"
+        }
+      },
+      {
+        "key": "atrial_fibrillation",
+        "kind": "classification",
+        "concept": "af",
+        "structure": "other",
+        "text": {
+          "en": "Atrial fibrillation",
+          "fr": "Fibrillation auriculaire"
+        }
+      }
+    ]
+  },
+  "strings": {
+    "measured": {
+      "en": "measured",
+      "fr": "mesuré"
+    },
+    "aiEstimate": {
+      "en": "AI estimate",
+      "fr": "estimation IA"
+    },
+    "threshold": {
+      "en": "threshold",
+      "fr": "seuil"
+    },
+    "conclusionTitle": {
+      "en": "Conclusion / Relevant findings",
+      "fr": "Conclusion / Résultats pertinents"
+    },
+    "noAbnormality": {
+      "en": "No significant abnormality detected (measured + AI)",
+      "fr": "Aucune anomalie significative détectée (mesures + IA)"
+    },
+    "discordantAiNegative": {
+      "en": "discordant: not flagged by the AI estimate",
+      "fr": "discordant : non signalé par l'estimation IA"
+    },
+    "discordantMeasuredNormal": {
+      "en": "AI estimate flags it ({ai}) but the measured values are normal ({measured}): discordant, the measured values prevail",
+      "fr": "l'estimation IA le signale ({ai}) mais les valeurs mesurées sont normales ({measured}) : discordant, les mesures prévalent"
+    },
+    "sexUnknown": {
+      "en": "Patient sex unknown: male cut-offs used for sex-specific thresholds (fewer false positives).",
+      "fr": "Sexe inconnu : seuils masculins utilisés pour les seuils selon le sexe (moins de faux positifs)."
+    },
+    "measuredSource": {
+      "en": "Measured values come from the sonographer's DICOM SR; graded by guideline cut-offs, not a physician interpretation.",
+      "fr": "Les valeurs mesurées viennent du SR DICOM de l'échographiste ; classées selon les seuils des lignes directrices, pas une interprétation médicale."
+    }
+  },
+  "aiDisplay": {
+    "comment": "Every AI output shown in the section bodies, in display order. band = mean absolute error against the MHI SR (PanEcho: panecho-calib, 392 studies, 1.1.x input; EchoAlign: 356-study benchmark / locked test), shown as ± band.",
+    "PanEcho": [
+      {
+        "key": "LV internal diameter at diastole",
+        "section": "lv",
+        "en": "LV internal diameter at diastole",
+        "fr": "Diamètre interne VG en diastole",
+        "unit": "cm",
+        "band": 0.44
+      },
+      {
+        "key": "LV internal diameter at systole",
+        "section": "lv",
+        "en": "LV internal diameter at systole",
+        "fr": "Diamètre interne VG en systole",
+        "unit": "cm",
+        "band": 0.44
+      },
+      {
+        "key": "LV end-diastolic volume",
+        "section": "lv",
+        "en": "LV end-diastolic volume",
+        "fr": "Volume télédiastolique VG",
+        "unit": "mL",
+        "band": 23.1
+      },
+      {
+        "key": "LV end-systolic volume",
+        "section": "lv",
+        "en": "LV end-systolic volume",
+        "fr": "Volume télésystolique VG",
+        "unit": "mL",
+        "band": 21.6
+      },
+      {
+        "key": "LV size",
+        "section": "lv",
+        "en": "LV size",
+        "fr": "Taille du VG"
+      },
+      {
+        "key": "LV intraventricular septum thickness at diastole",
+        "section": "lv",
+        "en": "Septal thickness at diastole",
+        "fr": "Épaisseur septale en diastole",
+        "unit": "cm",
+        "band": 0.14
+      },
+      {
+        "key": "LV posterior wall thickness at diastole",
+        "section": "lv",
+        "en": "Posterior wall thickness at diastole",
+        "fr": "Épaisseur de la paroi postérieure en diastole",
+        "unit": "cm",
+        "band": 0.12
+      },
+      {
+        "key": "Any level of LV hypertrophy (increased wall thickness)",
+        "section": "lv",
+        "en": "LV hypertrophy",
+        "fr": "Hypertrophie VG"
+      },
+      {
+        "key": "Moderate or greater LV hypertrophy (increased wall thickness)",
+        "section": "lv",
+        "en": "Moderate or greater LV hypertrophy",
+        "fr": "HVG modérée ou plus"
+      },
+      {
+        "key": "Left ventricular (LV) ejection fraction",
+        "section": "lv",
+        "en": "LV ejection fraction",
+        "fr": "Fraction d'éjection VG",
+        "unit": "%",
+        "band": 9.7
+      },
+      {
+        "key": "LV systolic function",
+        "section": "lv",
+        "en": "LV systolic function",
+        "fr": "Fonction systolique VG"
+      },
+      {
+        "key": "Global longitudinal strain",
+        "section": "lv",
+        "en": "Global longitudinal strain (absolute)",
+        "fr": "Strain longitudinal global (absolu)",
+        "unit": "%",
+        "band": 2.2
+      },
+      {
+        "key": "LV stroke volume",
+        "section": "lv",
+        "en": "LV stroke volume",
+        "fr": "Volume d'éjection systolique VG",
+        "unit": "mL",
+        "band": 11.7
+      },
+      {
+        "key": "LV wall motion abnormalities",
+        "section": "lv",
+        "en": "LV wall motion abnormalities",
+        "fr": "Anomalies de la cinétique VG"
+      },
+      {
+        "key": "LV diastolic function",
+        "section": "lv",
+        "en": "LV diastolic function",
+        "fr": "Fonction diastolique VG"
+      },
+      {
+        "key": "E/e' ratio",
+        "section": "lv",
+        "en": "E/e' ratio",
+        "fr": "Rapport E/e'",
+        "unit": "",
+        "band": 2.1
+      },
+      {
+        "key": "LV outflow tract diameter",
+        "section": "lv",
+        "en": "LV outflow tract diameter",
+        "fr": "Diamètre de la CCVG",
+        "unit": "cm",
+        "band": 0.24
+      },
+      {
+        "key": "Elevated LV outflow tract pressure",
+        "section": "lv",
+        "en": "Elevated LV outflow tract gradient",
+        "fr": "Gradient CCVG élevé"
+      },
+      {
+        "key": "RV size",
+        "section": "rv",
+        "en": "RV size",
+        "fr": "Taille du VD"
+      },
+      {
+        "key": "RV internal diameter at diastole",
+        "section": "rv",
+        "en": "RV internal diameter at diastole",
+        "fr": "Diamètre interne VD en diastole",
+        "unit": "cm",
+        "band": 0.63
+      },
+      {
+        "key": "RV systolic function",
+        "section": "rv",
+        "en": "RV systolic function",
+        "fr": "Fonction systolique VD"
+      },
+      {
+        "key": "Tricuspid annular plane systolic excursion",
+        "section": "rv",
+        "en": "TAPSE",
+        "fr": "TAPSE",
+        "unit": "cm",
+        "band": 0.35
+      },
+      {
+        "key": "RV systolic excursion velocity (RV S')",
+        "section": "rv",
+        "en": "RV S'",
+        "fr": "S' VD",
+        "unit": "cm/s",
+        "band": 2.5
+      },
+      {
+        "key": "Right ventricular (RV) systolic pressure",
+        "section": "rv",
+        "en": "RV systolic pressure",
+        "fr": "Pression systolique VD",
+        "unit": "mmHg",
+        "band": 6.9
+      },
+      {
+        "key": "Left atrial (LA) size",
+        "section": "atria",
+        "en": "Left atrial size",
+        "fr": "Taille de l'OG"
+      },
+      {
+        "key": "LA internal diameter at systole",
+        "section": "atria",
+        "en": "LA internal diameter at systole",
+        "fr": "Diamètre interne OG en systole",
+        "unit": "cm",
+        "band": 0.4
+      },
+      {
+        "key": "LA volume",
+        "section": "atria",
+        "en": "LA volume",
+        "fr": "Volume OG",
+        "unit": "mL",
+        "band": 16.7
+      },
+      {
+        "key": "Right atrial (RA) size",
+        "section": "atria",
+        "en": "Right atrial size",
+        "fr": "Taille de l'OD"
+      },
+      {
+        "key": "RA major dimension",
+        "section": "atria",
+        "en": "RA major dimension",
+        "fr": "Grand axe OD",
+        "unit": "cm"
+      },
+      {
+        "key": "Elevated RA pressure",
+        "section": "atria",
+        "en": "Elevated RA pressure",
+        "fr": "Pression OD élevée"
+      },
+      {
+        "key": "Bicuspid aortic valve",
+        "section": "av",
+        "en": "Bicuspid aortic valve",
+        "fr": "Valve aortique bicuspide"
+      },
+      {
+        "key": "Aortic valve regurgitation",
+        "section": "av",
+        "en": "Aortic valve regurgitation",
+        "fr": "Insuffisance aortique"
+      },
+      {
+        "key": "Mitral valve stenosis",
+        "section": "mv",
+        "en": "Mitral valve stenosis",
+        "fr": "Sténose mitrale"
+      },
+      {
+        "key": "Mitral valve regurgitation",
+        "section": "mv",
+        "en": "Mitral valve regurgitation",
+        "fr": "Insuffisance mitrale"
+      },
+      {
+        "key": "Tricuspid valve regurgitation",
+        "section": "tv",
+        "en": "Tricuspid valve regurgitation",
+        "fr": "Insuffisance tricuspide"
+      },
+      {
+        "key": "Tricuspid valve peak gradient",
+        "section": "tv",
+        "en": "Tricuspid valve peak gradient",
+        "fr": "Gradient maximal tricuspide",
+        "unit": "mmHg",
+        "band": 7.2
+      },
+      {
+        "key": "Transverse aortic root diameter",
+        "section": "aorta",
+        "en": "Aortic root diameter",
+        "fr": "Diamètre de la racine aortique",
+        "unit": "cm",
+        "band": 0.45
+      },
+      {
+        "key": "Pericardial effusion",
+        "section": "other",
+        "en": "Pericardial effusion",
+        "fr": "Épanchement péricardique"
+      }
+    ],
+    "EchoAlign": [
+      {
+        "key": "lv_enlargement_grade",
+        "section": "lv",
+        "en": "LV size",
+        "fr": "Taille du VG"
+      },
+      {
+        "key": "lvh_grade",
+        "section": "lv",
+        "en": "LV hypertrophy",
+        "fr": "Hypertrophie VG"
+      },
+      {
+        "key": "ejection_fraction",
+        "section": "lv",
+        "en": "LV ejection fraction",
+        "fr": "Fraction d'éjection VG",
+        "unit": "%",
+        "band": 9.5
+      },
+      {
+        "key": "lv_systolic_dysfunction_grade",
+        "section": "lv",
+        "en": "LV systolic function",
+        "fr": "Fonction systolique VG"
+      },
+      {
+        "key": "rwma",
+        "section": "lv",
+        "en": "LV wall motion abnormalities",
+        "fr": "Anomalies de la cinétique VG"
+      },
+      {
+        "key": "septal_motion_abnormality",
+        "section": "lv",
+        "en": "Septal motion abnormality",
+        "fr": "Anomalie de la cinétique septale"
+      },
+      {
+        "key": "lv_diastolic_dysfunction_grade",
+        "section": "lv",
+        "en": "LV diastolic function",
+        "fr": "Fonction diastolique VG"
+      },
+      {
+        "key": "rv_enlargement",
+        "section": "rv",
+        "en": "RV size",
+        "fr": "Taille du VD"
+      },
+      {
+        "key": "rv_systolic_dysfunction",
+        "section": "rv",
+        "en": "RV systolic function",
+        "fr": "Fonction systolique VD"
+      },
+      {
+        "key": "rvsp",
+        "section": "rv",
+        "en": "RV systolic pressure",
+        "fr": "Pression systolique VD",
+        "unit": "mmHg",
+        "band": 26.5
+      },
+      {
+        "key": "pa_pressure",
+        "section": "rv",
+        "en": "Pulmonary artery pressure",
+        "fr": "Pression artérielle pulmonaire",
+        "unit": "mmHg"
+      },
+      {
+        "key": "pulmonary_hypertension_grade",
+        "section": "rv",
+        "en": "Pulmonary hypertension",
+        "fr": "Hypertension pulmonaire"
+      },
+      {
+        "key": "la_enlargement_grade",
+        "section": "atria",
+        "en": "Left atrial size",
+        "fr": "Taille de l'OG"
+      },
+      {
+        "key": "lavi",
+        "section": "atria",
+        "en": "LA volume index",
+        "fr": "Volume OG indexé",
+        "unit": "mL/m²",
+        "band": 15.9
+      },
+      {
+        "key": "ra_enlargement",
+        "section": "atria",
+        "en": "Right atrial size",
+        "fr": "Taille de l'OD"
+      },
+      {
+        "key": "elevated_ra_pressure",
+        "section": "atria",
+        "en": "Elevated RA pressure",
+        "fr": "Pression OD élevée"
+      },
+      {
+        "key": "ivc_dilation",
+        "section": "atria",
+        "en": "IVC dilation",
+        "fr": "Dilatation de la VCI"
+      },
+      {
+        "key": "bicuspid_av",
+        "section": "av",
+        "en": "Bicuspid aortic valve",
+        "fr": "Valve aortique bicuspide"
+      },
+      {
+        "key": "transaortic_mean_gradient",
+        "section": "av",
+        "en": "Aortic valve mean gradient",
+        "fr": "Gradient moyen aortique",
+        "unit": "mmHg",
+        "band": 12.5
+      },
+      {
+        "key": "transaortic_peak_gradient",
+        "section": "av",
+        "en": "Aortic valve peak gradient",
+        "fr": "Gradient maximal aortique",
+        "unit": "mmHg",
+        "band": 16.9
+      },
+      {
+        "key": "aortic_sclerosis",
+        "section": "av",
+        "en": "Aortic valve sclerosis",
+        "fr": "Sclérose valvulaire aortique"
+      },
+      {
+        "key": "aortic_valve_replacement",
+        "section": "av",
+        "en": "Aortic valve replacement",
+        "fr": "Prothèse valvulaire aortique"
+      },
+      {
+        "key": "aortic_regurgitation_grade",
+        "section": "av",
+        "en": "Aortic valve regurgitation",
+        "fr": "Insuffisance aortique"
+      },
+      {
+        "key": "mitral_stenosis",
+        "section": "mv",
+        "en": "Mitral valve stenosis",
+        "fr": "Sténose mitrale"
+      },
+      {
+        "key": "mitral_regurgitation_grade",
+        "section": "mv",
+        "en": "Mitral valve regurgitation",
+        "fr": "Insuffisance mitrale"
+      },
+      {
+        "key": "mitral_calcification_grade",
+        "section": "mv",
+        "en": "Mitral annular calcification",
+        "fr": "Calcification de l'anneau mitral"
+      },
+      {
+        "key": "mitral_valve_prolapse",
+        "section": "mv",
+        "en": "Mitral valve prolapse",
+        "fr": "Prolapsus valvulaire mitral"
+      },
+      {
+        "key": "tricuspid_regurgitation_grade",
+        "section": "tv",
+        "en": "Tricuspid valve regurgitation",
+        "fr": "Insuffisance tricuspide"
+      },
+      {
+        "key": "pulmonic_regurgitation",
+        "section": "pv",
+        "en": "Pulmonic valve regurgitation",
+        "fr": "Insuffisance pulmonaire"
+      },
+      {
+        "key": "aortic_root_dimension",
+        "section": "aorta",
+        "en": "Aortic root diameter",
+        "fr": "Diamètre de la racine aortique",
+        "unit": "cm",
+        "band": 0.57
+      },
+      {
+        "key": "aortic_root_dilation",
+        "section": "aorta",
+        "en": "Aortic root dilation",
+        "fr": "Dilatation de la racine aortique"
+      },
+      {
+        "key": "ascending_aorta_dilation",
+        "section": "aorta",
+        "en": "Ascending aorta dilation",
+        "fr": "Dilatation de l'aorte ascendante"
+      },
+      {
+        "key": "atrial_fibrillation",
+        "section": "other",
+        "en": "Atrial fibrillation",
+        "fr": "Fibrillation auriculaire"
+      },
+      {
+        "key": "pacemaker",
+        "section": "other",
+        "en": "Pacemaker",
+        "fr": "Stimulateur cardiaque"
+      }
+    ]
+  },
+  "asScreening": {
+    "vmaxBand": {
+      "PanEcho": 0.68,
+      "EchoAlign": 1.14
+    },
+    "comment": "AV Vmax AI estimate MAE vs measured: PanEcho 1.1.3 corrected 0.68 m/s (locked test); EchoAlign raw 1.14 m/s (356 studies)."
+  }
+}
