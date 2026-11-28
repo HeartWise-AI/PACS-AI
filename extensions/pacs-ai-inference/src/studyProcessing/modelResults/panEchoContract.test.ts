@@ -23,12 +23,12 @@ describe('PanEcho result contract', () => {
   );
 
   test('tolerates malformed and missing optional diagnosis data', () => {
-    expect(parsePanEchoResultPayload({ diagnosis: '{bad json', predictions: {} })).toEqual({
+    expect(parsePanEchoResultPayload({ diagnosis: '{bad json', predictions: {} })).toMatchObject({
       diagnosis: '{bad json',
       diagnoses: {},
       predictions: {},
     });
-    expect(parsePanEchoResultPayload({ predictions: { value: null } })).toEqual({
+    expect(parsePanEchoResultPayload({ predictions: { value: null } })).toMatchObject({
       diagnosis: null,
       diagnoses: {},
       predictions: { value: null },

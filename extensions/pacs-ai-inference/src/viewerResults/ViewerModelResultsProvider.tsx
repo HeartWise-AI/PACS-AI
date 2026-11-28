@@ -60,6 +60,7 @@ import { getActiveDisplaySets } from '@pacs-ai/extension-core/src/ohifCompat/dis
 import { getCachedUserAccess } from '@pacs-ai/extension-core/src/access/userAccessService';
 import { Permission } from '@pacs-ai/extension-core/src/access/permissions';
 import ViewerModelResultDrawer from './ViewerModelResultDrawer';
+import { patientSexFromDisplaySets } from './patientSex';
 import { ECHO_SR_MODEL_NAME } from '../studyProcessing/modelResults/echoSrContract';
 import ViewerModelResultReadyNotice from './ViewerModelResultReadyNotice';
 import { ViewerRunningJobsIndicator } from '../runningJobs/ViewerRunningJobsIndicator';
@@ -1020,6 +1021,10 @@ export function ViewerModelResultsProvider({
           onClose={closeResult}
           onMinimize={() => setResultMinimized(true)}
           onSelectView={loadSelectedView}
+          patientSex={patientSexFromDisplaySets(
+            getActiveDisplaySets(servicesManager.services.displaySetService),
+            openedResult.result.studyInstanceUID
+          )}
           measuredResult={
             latestResults.find(
               item =>

@@ -262,6 +262,9 @@ export interface PanEchoResultPayload {
   diagnosis: string | null;
   diagnoses: Record<string, string>;
   predictions: Record<string, unknown>;
+  // The stored result as returned (asScreening, binaryProbabilities, ...), read by the
+  // structured echo report.
+  raw?: Record<string, unknown>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -301,5 +304,6 @@ export function parsePanEchoResultPayload(value: unknown): PanEchoResultPayload 
     diagnosis,
     diagnoses: parseDiagnoses(diagnosis),
     predictions: value.predictions,
+    raw: value,
   };
 }

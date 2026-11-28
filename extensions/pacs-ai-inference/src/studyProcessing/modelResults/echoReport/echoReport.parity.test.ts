@@ -30,7 +30,7 @@ describe('echo report parity with the Python engine', () => {
   });
 
   it.each((cases as { name: string }[]).map(c => [c.name, c]))('%s', (_name, testCase) => {
-    const c = testCase as {
+    const c = testCase as unknown as {
       model: string | null;
       result: unknown;
       measured: unknown;

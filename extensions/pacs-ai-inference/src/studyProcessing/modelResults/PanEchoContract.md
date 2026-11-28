@@ -30,3 +30,11 @@ PACS-342 verified the frontend contract against the PanEcho JSON inference imple
 The frontend treats diagnosis, recommendations, individual predictions, and unfamiliar output keys as optional. An object with a `predictions` object is renderable even when partial or empty. A non-object payload or a payload without a predictions object uses the explicit unsupported-payload fallback and retains raw result access.
 
 All fixtures are synthetic and contain no patient or study identifiers.
+
+## Structured echo report
+
+The template is the structured echo report described in [EchoReport.md](./EchoReport.md) (sections by
+structure, measured SR values first, the aortic valve as one subsection, conclusion of positive findings).
+It also reads `asScreening` (1.1.2+) and `binaryProbabilities` (1.1.4+, the sigmoid of each binary head,
+used for the probability of binary AI findings) from the stored result. Release lines 1.1 and 1.2 are
+matched; unknown output keys are not shown (the display list is in the thresholds file).
