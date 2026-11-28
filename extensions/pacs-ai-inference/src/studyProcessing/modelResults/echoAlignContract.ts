@@ -39,6 +39,9 @@ export interface EchoAlignOutputDefinition {
   label: string;
   unit?: string;
   group: EchoAlignOutputGroup;
+  // Binary heads: what a called / not-called finding means for this label.
+  called?: string;
+  notCalled?: string;
 }
 
 // Order and labels follow PAN_ECHO_OUTPUTS; EchoAlign-only outputs sit in the matching section.
@@ -47,24 +50,72 @@ export const ECHO_ALIGN_OUTPUTS: readonly EchoAlignOutputDefinition[] = [
   { head: 'lv_enlargement_grade', label: 'LV size', group: 'leftVentricle' },
   { head: 'lvh_grade', label: 'LV hypertrophy', group: 'leftVentricle' },
   { head: 'lv_systolic_dysfunction_grade', label: 'LV systolic function', group: 'leftVentricle' },
-  { head: 'rwma', label: 'LV wall motion abnormalities', group: 'leftVentricle' },
-  { head: 'septal_motion_abnormality', label: 'Septal motion abnormality', group: 'leftVentricle' },
+  {
+    head: 'rwma',
+    label: 'LV wall motion abnormalities',
+    group: 'leftVentricle',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
+  {
+    head: 'septal_motion_abnormality',
+    label: 'Septal motion abnormality',
+    group: 'leftVentricle',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
   {
     head: 'lv_diastolic_dysfunction_grade',
     label: 'LV diastolic function',
     group: 'leftVentricle',
   },
   { head: 'rvsp', label: 'RV systolic pressure', unit: 'mmHg', group: 'rightHeart' },
-  { head: 'rv_enlargement', label: 'RV size', group: 'rightHeart' },
-  { head: 'rv_systolic_dysfunction', label: 'RV systolic function', group: 'rightHeart' },
+  {
+    head: 'rv_enlargement',
+    label: 'RV size',
+    group: 'rightHeart',
+    called: 'Enlarged',
+    notCalled: 'Normal',
+  },
+  {
+    head: 'rv_systolic_dysfunction',
+    label: 'RV systolic function',
+    group: 'rightHeart',
+    called: 'Reduced',
+    notCalled: 'Normal',
+  },
   { head: 'pa_pressure', label: 'Pulmonary artery pressure', unit: 'mmHg', group: 'rightHeart' },
   { head: 'pulmonary_hypertension_grade', label: 'Pulmonary hypertension', group: 'rightHeart' },
   { head: 'la_enlargement_grade', label: 'Left atrial size', group: 'atria' },
   { head: 'lavi', label: 'LA volume index', unit: 'mL/m²', group: 'atria' },
-  { head: 'ra_enlargement', label: 'Right atrial size', group: 'atria' },
-  { head: 'elevated_ra_pressure', label: 'Elevated RA pressure', group: 'atria' },
-  { head: 'ivc_dilation', label: 'IVC dilation', group: 'atria' },
-  { head: 'bicuspid_av', label: 'Bicuspid aortic valve', group: 'valves' },
+  {
+    head: 'ra_enlargement',
+    label: 'Right atrial size',
+    group: 'atria',
+    called: 'Enlarged',
+    notCalled: 'Normal',
+  },
+  {
+    head: 'elevated_ra_pressure',
+    label: 'Elevated RA pressure',
+    group: 'atria',
+    called: 'Elevated',
+    notCalled: 'Not elevated',
+  },
+  {
+    head: 'ivc_dilation',
+    label: 'IVC dilation',
+    group: 'atria',
+    called: 'Dilated',
+    notCalled: 'Not dilated',
+  },
+  {
+    head: 'bicuspid_av',
+    label: 'Bicuspid aortic valve',
+    group: 'valves',
+    called: 'Bicuspid',
+    notCalled: 'Not detected',
+  },
   {
     head: 'transaortic_mean_gradient',
     label: 'Aortic valve mean gradient (AI estimate)',
@@ -77,23 +128,65 @@ export const ECHO_ALIGN_OUTPUTS: readonly EchoAlignOutputDefinition[] = [
     unit: 'mmHg',
     group: 'valves',
   },
-  { head: 'aortic_sclerosis', label: 'Aortic valve sclerosis', group: 'valves' },
-  { head: 'aortic_valve_replacement', label: 'Aortic valve replacement', group: 'valves' },
+  {
+    head: 'aortic_sclerosis',
+    label: 'Aortic valve sclerosis',
+    group: 'valves',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
+  {
+    head: 'aortic_valve_replacement',
+    label: 'Aortic valve replacement',
+    group: 'valves',
+    called: 'Prosthetic valve',
+    notCalled: 'Native valve',
+  },
   { head: 'aortic_regurgitation_grade', label: 'Aortic valve regurgitation', group: 'valves' },
-  { head: 'mitral_stenosis', label: 'Mitral valve stenosis', group: 'valves' },
+  {
+    head: 'mitral_stenosis',
+    label: 'Mitral valve stenosis',
+    group: 'valves',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
   { head: 'mitral_regurgitation_grade', label: 'Mitral valve regurgitation', group: 'valves' },
   { head: 'mitral_calcification_grade', label: 'Mitral annular calcification', group: 'valves' },
-  { head: 'mitral_valve_prolapse', label: 'Mitral valve prolapse', group: 'valves' },
+  {
+    head: 'mitral_valve_prolapse',
+    label: 'Mitral valve prolapse',
+    group: 'valves',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
   {
     head: 'tricuspid_regurgitation_grade',
     label: 'Tricuspid valve regurgitation',
     group: 'valves',
   },
-  { head: 'pulmonic_regurgitation', label: 'Pulmonic valve regurgitation', group: 'valves' },
+  {
+    head: 'pulmonic_regurgitation',
+    label: 'Pulmonic valve regurgitation',
+    group: 'valves',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
   { head: 'aortic_root_dimension', label: 'Aortic root diameter', unit: 'cm', group: 'other' },
-  { head: 'ascending_aorta_dilation', label: 'Ascending aorta dilation', group: 'other' },
-  { head: 'atrial_fibrillation', label: 'Atrial fibrillation', group: 'other' },
-  { head: 'pacemaker', label: 'Pacemaker', group: 'other' },
+  {
+    head: 'ascending_aorta_dilation',
+    label: 'Ascending aorta dilation',
+    group: 'other',
+    called: 'Dilated',
+    notCalled: 'Not dilated',
+  },
+  {
+    head: 'atrial_fibrillation',
+    label: 'Atrial fibrillation',
+    group: 'other',
+    called: 'Present',
+    notCalled: 'Absent',
+  },
+  { head: 'pacemaker', label: 'Pacemaker', group: 'other', called: 'Present', notCalled: 'Absent' },
 ] as const;
 
 // Shown in the aortic stenosis screening block, never as a diagnosis row.

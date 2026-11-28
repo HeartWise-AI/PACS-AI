@@ -52,25 +52,32 @@ function gradeLabel(grade: string): string {
 
 function displayHead(
   head: EchoAlignHead,
-  unit?: string
+  output: EchoAlignOutputDefinition
 ): Pick<EchoAlignDisplayRow, 'value' | 'classification'> {
   if (head.type === 'regression') {
-    return { value: `${head.value.toFixed(1)}${unit ? ` ${unit}` : ''}`, classification: null };
+    return {
+      value: `${head.value.toFixed(1)}${output.unit ? ` ${output.unit}` : ''}`,
+      classification: null,
+    };
   }
   if (head.type === 'classification') {
+    // The finding itself (e.g. "Reduced" for RV systolic function), then the AI probability.
     return {
-      value: percent(head.probability),
-      classification: head.called ? 'Present' : 'Not detected',
+      value: head.called ? (output.called ?? 'Present') : (output.notCalled ?? 'Absent'),
+      classification: `AI probability ${percent(head.probability)}`,
     };
   }
   const p = head.probabilities[head.grade];
-  return { value: gradeLabel(head.grade), classification: p === undefined ? null : percent(p) };
+  return {
+    value: gradeLabel(head.grade),
+    classification: p === undefined ? null : `AI probability ${percent(p)}`,
+  };
 }
 
 export function getEchoAlignDisplayRows(payload: EchoAlignResultPayload): EchoAlignDisplayRow[] {
   return ECHO_ALIGN_OUTPUTS.flatMap(output => {
     const head = payload.heads[output.head];
-    return head ? [{ ...output, ...displayHead(head, output.unit) }] : [];
+    return head ? [{ ...output, ...displayHead(head, output) }] : [];
   });
 }
 

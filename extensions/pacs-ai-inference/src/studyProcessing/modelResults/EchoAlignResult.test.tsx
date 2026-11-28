@@ -109,3 +109,25 @@ describe('EchoAlignResult', () => {
     }
   });
 });
+
+describe('EchoAlign binary findings', () => {
+  test('state the finding, not a neutral called flag', () => {
+    const rows = getEchoAlignDisplayRows(payload);
+    const rvFunction = rows.find(row => row.head === 'rv_systolic_dysfunction')!;
+    expect(rvFunction.label).toBe('RV systolic function');
+    expect(rvFunction.value).toBe('Normal');
+    expect(rvFunction.classification).toMatch(/^AI probability \d+ %$/);
+    const reduced = getEchoAlignDisplayRows({
+      ...payload,
+      heads: {
+        rv_systolic_dysfunction: {
+          type: 'classification',
+          probability: 0.9,
+          threshold: 0.1,
+          called: true,
+        },
+      },
+    });
+    expect(reduced[0].value).toBe('Reduced');
+  });
+});
