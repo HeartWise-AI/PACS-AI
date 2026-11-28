@@ -420,5 +420,12 @@
   "EchoAlignResearchBanner": "Research use only — EchoAlign (CC BY-NC 4.0), not for clinical decisions",
   "ProcessingEchoAlignTitle": "EchoAlign measurements and findings",
   "EchoAlignAsScreeningNote": "Screening scores, not a diagnosis. EchoAlign reads the 2D and colour clips, without the Doppler spectra: the AV peak velocity and gradients are AI estimates compressed towards the middle of the range, and on MHI the severe grade was never called. Use the measured Doppler values (Vmax, mean gradient, valve area).",
-  "ProcessingEchoAlignAssistiveNote": "AI-generated research estimates (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Not validated for clinical use; review the complete study."
+  "ProcessingEchoAlignAssistiveNote": "AI-generated research estimates (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Not validated for clinical use; review the complete study.",
+  "PanEchoAsCalibratedLabel": "MHI-calibrated screening label",
+  "PanEchoAsCalibratedSevere": "Significant AS likely, severe possible",
+  "PanEchoAsCalibratedSignificant": "Significant AS likely",
+  "PanEchoAsCalibratedNone": "No significant AS suspected",
+  "PanEchoAvVmaxCalibrated": "AV peak velocity (AI estimate, MHI-calibrated)",
+  "PanEchoAvVmaxUncorrected": "uncorrected model output {{value}} m/s",
+  "PanEchoAsCalibratedNote": "Screening label, not a diagnosis. 'Significant AS likely' means moderate or severe aortic stenosis is likely; the threshold and the AV peak velocity correction were fitted on MHI echos only (MHI locked test: sensitivity 0.81, specificity 0.91 against echos without AS). PanEcho reads the 2D clips only, without the Doppler spectra, and a negative label does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area)."
 }
