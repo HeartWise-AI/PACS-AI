@@ -54,13 +54,19 @@ export interface ViewerModelResultDrawerProps {
   // The study's echo-sr-measurements result, when it has one: its measured
   // values are shown first in the PanEcho and EchoPrime drawers.
   measuredResult?: ViewerModelResult | null;
+  // DICOM PatientSex of the open study ('M' / 'F'), for sex-specific cut-offs in the
+  // structured echo report; null when unknown (male cut-offs are used).
+  patientSex?: string | null;
 }
 
-// Echo AI models whose drawer shows the measured SR values first.
+// Echo AI models whose drawer uses the study's measured SR values.
 const MEASURED_FIRST_MODELS = new Set(['PanEcho', 'EchoPrime', ECHO_ALIGN_MODEL_NAME]);
-// Shown with their structured template like PanEcho, even when the model can render
-// an HTML report: EchoAlign's drawer matches PanEcho's (plus the research banner).
-const STRUCTURED_FIRST_MODELS = new Set([ECHO_ALIGN_MODEL_NAME]);
+// Structured echo report (sections by structure, measured values interleaved, conclusion):
+// the measured values go into the report instead of the block above it.
+const STRUCTURED_REPORT_MODELS = new Set(['PanEcho', ECHO_ALIGN_MODEL_NAME]);
+// Shown with their structured template, even when the model can render an HTML report: the
+// template interleaves the measured SR values, which the model's HTML report cannot load.
+const STRUCTURED_FIRST_MODELS = new Set(['PanEcho', ECHO_ALIGN_MODEL_NAME]);
 
 // The drawer title: study-service results get a readable name.
 export function viewerResultTitle(
@@ -119,6 +125,7 @@ export function ViewerModelResultDrawer({
   onMinimize,
   onSelectView,
   measuredResult = null,
+  patientSex = null,
 }: ViewerModelResultDrawerProps) {
   const { t } = useTranslation('AIModelButton');
   // The run and execution identify what is shown: a result first opened from
@@ -629,7 +636,7 @@ export function ViewerModelResultDrawer({
       </section>
 
       <div className="ohif-scrollbar min-h-0 grow overflow-y-auto">
-        {measuredPayload && (
+        {measuredPayload && !STRUCTURED_REPORT_MODELS.has(result.modelName) && (
           <div className="px-5 pt-4">
             <EchoSrCompactSummary payload={measuredPayload} />
           </div>
@@ -685,7 +692,11 @@ export function ViewerModelResultDrawer({
             className="px-5 py-5"
             data-testid="viewer-model-result-job-result"
           >
-            <ModelResultRenderer result={jobResult.result} />
+            <ModelResultRenderer
+              result={jobResult.result}
+              measured={measuredPayload}
+              patientSex={patientSex}
+            />
           </div>
         )}
         {showStructured &&
@@ -727,7 +738,11 @@ export function ViewerModelResultDrawer({
             {structuredState.status === 'ready' &&
               structuredState.result &&
               !isEmptyModelExecutionResult(structuredState.result.result) && (
-                <ModelResultRenderer result={structuredState.result} />
+                <ModelResultRenderer
+                  result={structuredState.result}
+                  measured={measuredPayload}
+                  patientSex={patientSex}
+                />
               )}
             {structuredState.status === 'error' && (
               <div

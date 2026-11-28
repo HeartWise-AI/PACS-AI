@@ -421,5 +421,12 @@
   "PanEchoAsCalibratedNone": "Pas de SA significative suspectée",
   "PanEchoAvVmaxCalibrated": "Vitesse de pointe aortique (estimation IA, calibrée ICM)",
   "PanEchoAvVmaxUncorrected": "sortie du modèle non corrigée {{value}} m/s",
-  "PanEchoAsCalibratedNote": "Étiquette de dépistage, pas un diagnostic. « SA significative probable » signifie qu'une sténose aortique modérée ou sévère est probable ; le seuil et la correction de la vitesse de pointe aortique ont été ajustés sur des échos de l'ICM seulement (test verrouillé ICM : sensibilité 0,81, spécificité 0,91 face aux échos sans SA). PanEcho lit seulement les clips 2D, sans les spectres Doppler, et une étiquette négative n'exclut pas une sténose aortique. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire)."
+  "PanEchoAsCalibratedNote": "Étiquette de dépistage, pas un diagnostic. « SA significative probable » signifie qu'une sténose aortique modérée ou sévère est probable ; le seuil et la correction de la vitesse de pointe aortique ont été ajustés sur des échos de l'ICM seulement (test verrouillé ICM : sensibilité 0,81, spécificité 0,91 face aux échos sans SA). PanEcho lit seulement les clips 2D, sans les spectres Doppler, et une étiquette négative n'exclut pas une sténose aortique. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire).",
+  "ProcessingPanEchoReportTitle": "Rapport d'écho structuré PanEcho",
+  "ProcessingEchoAlignReportTitle": "Rapport d'écho structuré EchoAlign",
+  "EchoReportDescription": "Par structure, dans l'ordre habituel de l'écho : valeurs mesurées du SR d'abord, puis les estimations de l'IA. La conclusion ne liste que les résultats positifs.",
+  "EchoReportAsScreeningTitle": "Dépistage de la sténose aortique",
+  "EchoReportAsModerateOrSevere": "P(SA modérée ou sévère), classificateur publié",
+  "EchoReportCalled": "Signalé",
+  "EchoReportNotCalled": "Non signalé"
 }

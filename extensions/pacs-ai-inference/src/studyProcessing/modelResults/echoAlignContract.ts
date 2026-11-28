@@ -31,6 +31,8 @@ export interface EchoAlignResultPayload {
   // Set when the model did not run on the study (TEE_NOT_SUPPORTED, NO_VIDEO_CLIPS, STUDY_TOO_LARGE).
   skipReason: string | null;
   skipMessage: string | null;
+  // The stored result as returned, read by the structured echo report.
+  raw?: Record<string, unknown>;
 }
 
 // Same groups as PanEcho.
@@ -286,6 +288,7 @@ export function parseEchoAlignResultPayload(value: unknown): EchoAlignResultPayl
     clipsUsed: finite(predictions.clipsUsed),
     skipReason: typeof predictions.skipReason === 'string' ? predictions.skipReason : null,
     skipMessage: typeof predictions.skipMessage === 'string' ? predictions.skipMessage : null,
+    raw: value,
   };
 }
 

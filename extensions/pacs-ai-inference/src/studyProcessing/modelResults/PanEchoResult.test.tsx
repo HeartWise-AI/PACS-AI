@@ -3,164 +3,112 @@ import { render } from '@testing-library/react';
 import { PanEchoResult } from './PanEchoResult';
 import { parsePanEchoResultPayload } from './panEchoContract';
 import { panEchoResultFixtures } from './panEchoFixtures';
+import { parseEchoSrResultPayload } from './echoSrContract';
+import { echoSrResultFixtures } from './echoSrFixtures';
 
+let mockLanguage = 'en-US';
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, options: Record<string, unknown> = {}) => String(options.defaultValue ?? ''),
+    t: (_key: string, options: Record<string, unknown> = {}) =>
+      String(options.defaultValue ?? '').replace(/\{\{(\w+)\}\}/g, (_m, name) => String(options[name] ?? '')),
+    i18n: { language: mockLanguage },
   }),
 }));
 
-// Rendered text plus every attribute value (what the serialized render tree exposed).
-function renderedContent(container: HTMLElement): string {
-  const attributeValues = Array.from(container.querySelectorAll('*')).flatMap(element =>
-    Array.from(element.attributes, attribute => attribute.value)
+afterEach(() => {
+  mockLanguage = 'en-US';
+});
+
+const sectionIds = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('[data-testid^="echo-report-section-"]'))
+    .map(element => element.getAttribute('data-testid'))
+    .filter(id => id && !id.endsWith('-title'));
+
+const conclusion = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('[data-testid="echo-report-conclusion-item"]')).map(
+    element => element.textContent
   );
-  return [container.textContent ?? '', ...attributeValues].join('\n');
-}
 
-describe('PanEchoResult', () => {
-  test.each(['successfulV1', 'partialV1'] as const)(
-    'renders responsive structured output for the %s fixture',
-    fixture => {
-      const payload = parsePanEchoResultPayload(panEchoResultFixtures[fixture])!;
-      const { container } = render(
-        <PanEchoResult
-          payload={payload}
-          modelName="PanEcho"
-          modelVersion="1.0.0"
-          status="completed"
-        />
-      );
+const calibratedPayload = (label: string) => ({
+  diagnosis: JSON.stringify({
+    'Aortic valve stenosis': `${label} (MHI-calibrated screening, not a diagnosis): P(severe AS) 0.19, P(any AS) 0.54`,
+    'Aortic valve peak velocity': '3.6 m/s (AI estimate, MHI-calibrated; uncorrected 2.7 m/s)',
+    'Left ventricular (LV) ejection fraction': '60.0 % (Normal)',
+    'Mitral valve regurgitation': 'Moderate|Severe',
+  }),
+  predictions: {
+    'Aortic valve stenosis': [0.35, 0.46, 0.19],
+    'Aortic valve peak velocity': 3.6,
+    'Aortic valve peak velocity (uncorrected)': 2.7,
+    'Left ventricular (LV) ejection fraction': 60,
+    'Mitral valve regurgitation': [0.2, 0.6, 0.2],
+  },
+});
 
-      expect(container.querySelectorAll('[data-testid="panecho-result"]')).toHaveLength(1);
-      expect(container.querySelectorAll('dl').length).toBeGreaterThan(1);
-      expect(renderedContent(container)).toContain('Completed');
+describe('PanEchoResult structured report', () => {
+  test.each(['successfulV1', 'partialV1'] as const)('renders the %s fixture by structure', fixture => {
+    const payload = parsePanEchoResultPayload(panEchoResultFixtures[fixture])!;
+    const { container } = render(
+      <PanEchoResult payload={payload} modelName="PanEcho" modelVersion="1.0.0" status="completed" />
+    );
+    expect(container.querySelectorAll('[data-testid="panecho-result"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="echo-structured-report"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="echo-report-conclusion"]')).not.toBeNull();
+    expect(container.textContent).toContain('Completed');
+  });
+
+  test('sections follow echo order with measured rows before AI rows, AV as one valve subsection', () => {
+    const payload = parsePanEchoResultPayload(calibratedPayload('Significant AS likely'))!;
+    const measured = parseEchoSrResultPayload(echoSrResultFixtures.severeGe)!;
+    const { container } = render(
+      <PanEchoResult payload={payload} measured={measured} patientSex="F" modelName="PanEcho" modelVersion="1.1.3" status="completed" />
+    );
+    const ids = sectionIds(container);
+    const order = ['lv', 'rv', 'atria', 'av', 'mv', 'tv', 'pv', 'aorta', 'other'];
+    const present = order.filter(id => ids.includes(`echo-report-section-${id}`));
+    expect(ids).toEqual(present.map(id => `echo-report-section-${id}`));
+    expect(ids).toContain('echo-report-section-lv');
+    expect(ids).toContain('echo-report-section-av');
+    expect(container.querySelector('[data-testid="echo-report-group-valves"]')).not.toBeNull();
+
+    const av = container.querySelector('[data-testid="echo-report-section-av"]')!;
+    const blocks = Array.from(av.querySelectorAll('[data-testid]')).map(e => e.getAttribute('data-testid'));
+    // Measured AS grade first, then measured AV values, then the AI screening.
+    expect(blocks.indexOf('echo-report-as-grade')).toBeGreaterThanOrEqual(0);
+    expect(blocks.indexOf('echo-report-as-grade')).toBeLessThan(blocks.indexOf('echo-report-measured-av'));
+    expect(blocks.indexOf('echo-report-measured-av')).toBeLessThan(blocks.indexOf('echo-report-as-screening'));
+    expect(av.querySelector('[data-testid="echo-report-as-grade"]')?.getAttribute('data-grade')).toBe('severe');
+    expect(av.querySelector('[data-testid="echo-report-as-calibrated"]')?.textContent).toContain('Significant AS likely');
+    expect(av.textContent).toContain('Screening label, not a diagnosis');
+    expect(av.querySelector('[data-testid="echo-report-as-vmax-uncorrected"]')?.textContent).toContain('2.7');
+
+    const lv = container.querySelector('[data-testid="echo-report-section-lv"]')!;
+    const lvBlocks = Array.from(lv.querySelectorAll('[data-testid]')).map(e => e.getAttribute('data-testid'));
+    if (lvBlocks.includes('echo-report-measured-lv')) {
+      expect(lvBlocks.indexOf('echo-report-measured-lv')).toBeLessThan(lvBlocks.indexOf('echo-report-ai-lv'));
     }
-  );
-
-  test('shows documented values, units, classifications, and unknown outputs', () => {
-    const payload = parsePanEchoResultPayload(panEchoResultFixtures.partialV1)!;
-    const { container } = render(
-      <PanEchoResult
-        payload={payload}
-        modelName="PanEcho"
-        modelVersion="1.4.0"
-        status="completed"
-      />
-    );
-
-    const rendered = renderedContent(container);
-    expect(rendered).toContain('37.6 %');
-    expect(rendered).toContain('Moderately Abnormal');
-    expect(rendered).toContain('Future echo measurement');
-    expect(rendered).toContain('Future echo classification');
-  });
-});
-
-describe('PanEcho aortic stenosis screening', () => {
-  const asPayload = {
-    diagnosis: JSON.stringify({
-      'Aortic valve stenosis': 'None',
-      'Aortic valve peak velocity': '2.4 m/s (Normal)',
-      'Left ventricular (LV) ejection fraction': '60.0 % (Normal)',
-    }),
-    predictions: {
-      'Aortic valve stenosis': [0.37, 0.43, 0.2],
-      'Aortic valve peak velocity': 2.4,
-      'Left ventricular (LV) ejection fraction': 60,
-    },
-  };
-
-  test.each(['1.1.1', '1.2.0'])('PanEcho %s has a structured template', version => {
-    const { resolveModelResultRenderer } = jest.requireActual('./modelResultRendererRegistry');
-    expect(
-      resolveModelResultRenderer({ modelName: 'PanEcho', modelVersion: version, result: asPayload })
-        .kind
-    ).toBe('panecho');
+    // The conclusion is the last block and lists the measured severe AS first for the AV.
+    const report = container.querySelector('[data-testid="echo-structured-report"]')!;
+    expect(report.lastElementChild?.getAttribute('data-testid')).toBe('echo-report-conclusion');
+    const items = conclusion(container);
+    expect(items.some(text => text?.startsWith('Aortic valve — Severe aortic stenosis (measured:'))).toBe(true);
+    expect(items.some(text => text?.startsWith('Mitral valve — Moderate or severe mitral regurgitation (AI estimate'))).toBe(true);
   });
 
-  test('shows screening scores and the Vmax estimate instead of the argmax class', () => {
-    const payload = parsePanEchoResultPayload(asPayload)!;
-    const { container } = render(
-      <PanEchoResult
-        payload={payload}
-        modelName="PanEcho"
-        modelVersion="1.1.1"
-        status="completed"
-      />
-    );
-    const screening = container.querySelector('[data-testid="panecho-as-screening"]')!;
-
-    expect(container.querySelector('[data-testid="panecho-as-severe"]')?.textContent).toContain(
-      '20 %'
-    );
-    expect(container.querySelector('[data-testid="panecho-as-any"]')?.textContent).toContain(
-      '57 %'
-    );
-    expect(
-      container.querySelector('[data-testid="panecho-av-vmax-estimate"]')?.textContent
-    ).toContain('AI estimate');
-    expect(
-      container.querySelector('[data-testid="panecho-av-vmax-estimate"]')?.textContent
-    ).toContain('2.4 m/s');
-    expect(screening.textContent).toContain('Screening scores, not a diagnosis');
-    expect(screening.textContent).toContain('under-estimates severe AS');
-    // The argmax label is never shown as a finding.
-    expect(
-      container.querySelector('[data-testid="panecho-output-Aortic valve stenosis"]')
-    ).toBeNull();
-    expect(
-      container.querySelector('[data-testid="panecho-output-Aortic valve peak velocity"]')
-    ).toBeNull();
-    expect(
-      container.querySelector(
-        '[data-testid="panecho-output-Left ventricular (LV) ejection fraction"]'
-      )
-    ).not.toBeNull();
-  });
-});
-
-describe('PanEcho 1.1.3 MHI-calibrated aortic stenosis label', () => {
-  const calibratedPayload = (label: string) => ({
-    diagnosis: JSON.stringify({
-      'Aortic valve stenosis': `${label} (MHI-calibrated screening, not a diagnosis): P(severe AS) 0.19, P(any AS) 0.54`,
-      'Aortic valve peak velocity': '3.6 m/s (AI estimate, MHI-calibrated; uncorrected 2.7 m/s)',
-      'Aortic valve peak velocity (uncorrected)': '2.7 m/s',
-      'Left ventricular (LV) ejection fraction': '60.0 % (Normal)',
-    }),
-    predictions: {
-      'Aortic valve stenosis': [0.35, 0.46, 0.19],
-      'Aortic valve peak velocity': 3.6,
-      'Aortic valve peak velocity (uncorrected)': 2.7,
-      'Left ventricular (LV) ejection fraction': 60,
-    },
-  });
-
-  test.each([
-    ['Significant AS likely, severe possible', 'Significant AS likely, severe possible'],
-    ['Significant AS likely', 'Significant AS likely'],
-    ['No significant AS suspected', 'No significant AS suspected'],
-  ])('shows the calibrated label %s, the corrected and the uncorrected Vmax', (label, text) => {
-    const payload = parsePanEchoResultPayload(calibratedPayload(label))!;
+  test('the standalone AS block and the measured block at the top are gone', () => {
+    const payload = parsePanEchoResultPayload(calibratedPayload('No significant AS suspected'))!;
     const { container } = render(
       <PanEchoResult payload={payload} modelName="PanEcho" modelVersion="1.1.3" status="completed" />
     );
-    expect(container.querySelector('[data-testid="panecho-as-calibrated"]')?.textContent).toContain(text);
-    const vmax = container.querySelector('[data-testid="panecho-av-vmax-estimate"]')!.textContent;
-    expect(vmax).toContain('MHI-calibrated');
-    expect(vmax).toContain('3.6 m/s');
-    expect(container.querySelector('[data-testid="panecho-av-vmax-uncorrected"]')?.textContent).toContain(
-      'uncorrected model output'
-    );
-    expect(container.textContent).toContain('Screening label, not a diagnosis');
-    // Neither AS row nor the uncorrected Vmax appears as a finding row.
-    expect(container.querySelector('[data-testid="panecho-output-Aortic valve stenosis"]')).toBeNull();
-    expect(
-      container.querySelector('[data-testid="panecho-output-Aortic valve peak velocity (uncorrected)"]')
-    ).toBeNull();
+    expect(container.querySelector('[data-testid="panecho-as-screening"]')).toBeNull();
+    expect(container.querySelector('[data-testid="echo-sr-compact"]')).toBeNull();
+    expect(container.textContent).not.toContain('Aortic stenosis: AI screening scores');
+    // The AS screening lives in the aortic valve subsection.
+    const av = container.querySelector('[data-testid="echo-report-section-av"]')!;
+    expect(av.querySelector('[data-testid="echo-report-as-screening"]')).not.toBeNull();
   });
 
-  test('1.1.2 screening scores have no calibrated label', () => {
+  test('1.1.2 screening scores have no calibrated label and the uncalibrated caveat', () => {
     const payload = parsePanEchoResultPayload({
       diagnosis: JSON.stringify({
         'Aortic valve stenosis': 'Screening score, not a diagnosis: P(severe AS) 0.20, P(any AS) 0.57',
@@ -170,7 +118,25 @@ describe('PanEcho 1.1.3 MHI-calibrated aortic stenosis label', () => {
     const { container } = render(
       <PanEchoResult payload={payload} modelName="PanEcho" modelVersion="1.1.2" status="completed" />
     );
-    expect(container.querySelector('[data-testid="panecho-as-calibrated"]')).toBeNull();
+    expect(container.querySelector('[data-testid="echo-report-as-calibrated"]')).toBeNull();
+    expect(container.querySelector('[data-testid="echo-report-as-severe"]')?.textContent).toContain('20 %');
+    expect(container.querySelector('[data-testid="echo-report-as-any"]')?.textContent).toContain('57 %');
     expect(container.textContent).toContain('Screening scores, not a diagnosis');
+    // An uncalibrated screening score is never a positive finding.
+    expect(container.querySelector('[data-testid="echo-report-no-abnormality"]')?.textContent).toBe(
+      'No significant abnormality detected (measured + AI)'
+    );
+  });
+
+  test('French strings come from the report config', () => {
+    mockLanguage = 'fr';
+    const payload = parsePanEchoResultPayload(calibratedPayload('Significant AS likely'))!;
+    const measured = parseEchoSrResultPayload(echoSrResultFixtures.severeGe)!;
+    const { container } = render(
+      <PanEchoResult payload={payload} measured={measured} modelName="PanEcho" modelVersion="1.1.3" status="completed" />
+    );
+    expect(container.textContent).toContain('Conclusion / Résultats pertinents');
+    expect(container.textContent).toContain('Valve aortique');
+    expect(conclusion(container).some(text => text?.startsWith('Valve aortique — Sténose aortique sévère (mesuré'))).toBe(true);
   });
 });

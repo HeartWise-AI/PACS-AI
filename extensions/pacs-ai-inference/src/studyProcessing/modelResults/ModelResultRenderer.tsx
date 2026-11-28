@@ -13,6 +13,7 @@ import { DeepRVResult } from './DeepRVResult';
 import { EchoAlignResult } from './EchoAlignResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { EchoSrResult } from './EchoSrResult';
+import type { EchoSrResultPayload } from './echoSrContract';
 import { PanEchoResult } from './PanEchoResult';
 import { UnsupportedModelResult } from './UnsupportedModelResult';
 import { resolveModelResultRenderer } from './modelResultRendererRegistry';
@@ -50,9 +51,13 @@ export class ModelResultRendererBoundary extends React.Component<
 
 export interface ModelResultRendererProps {
   result: ModelExecutionResult;
+  // Echo AI results (PanEcho, EchoAlign): the study's measured SR values, shown first in each
+  // section of the structured report, and the DICOM PatientSex for sex-specific cut-offs.
+  measured?: EchoSrResultPayload | null;
+  patientSex?: string | null;
 }
 
-export function ModelResultRenderer({ result }: ModelResultRendererProps) {
+export function ModelResultRenderer({ result, measured = null, patientSex = null }: ModelResultRendererProps) {
   const resolved = resolveModelResultRenderer(result);
   // Flat data is shown as readable tables; the generic tree stays available.
   const genericFallback = <ReadableOrGenericModelResult value={result.result} />;
@@ -108,6 +113,8 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
           modelName={result.modelName}
           modelVersion={result.modelVersion}
           status={result.status}
+          measured={measured}
+          patientSex={patientSex}
         />
       );
       break;
@@ -118,6 +125,8 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
           modelName={result.modelName}
           modelVersion={result.modelVersion}
           status={result.status}
+          measured={measured}
+          patientSex={patientSex}
         />
       );
       break;
@@ -142,7 +151,7 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
   }
 
   const boundaryFallback =
-    resolved.kind === 'panecho' || resolved.kind === 'echoprime' ? (
+    resolved.kind === 'panecho' || resolved.kind === 'echoprime' || resolved.kind === 'echoalign' ? (
       <UnsupportedModelResult
         modelName={result.modelName}
         modelVersion={result.modelVersion}

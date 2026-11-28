@@ -18,10 +18,20 @@ jest.mock('../studyProcessing/useModelExecutionResultViewer', () => ({
 }));
 
 jest.mock('../studyProcessing/modelResults/ModelResultRenderer', () => ({
-  ModelResultRenderer: ({ result }: { result: { modelName: string } }) => (
+  ModelResultRenderer: ({
+    result,
+    measured,
+    patientSex,
+  }: {
+    result: { modelName: string };
+    measured?: { asGrading?: { grade?: string } | null } | null;
+    patientSex?: string | null;
+  }) => (
     <div
       data-testid="structured-result"
       data-model={result.modelName}
+      data-measured-grade={measured?.asGrading?.grade ?? 'none'}
+      data-sex={patientSex ?? ''}
     />
   ),
 }));
@@ -146,7 +156,7 @@ describe('ViewerModelResultDrawer stored job results', () => {
     }
   );
 
-  test('shows the measured SR values first in the PanEcho drawer', async () => {
+  test('shows the measured SR values first in the EchoPrime drawer', async () => {
     const loadJobResult = jest.fn().mockResolvedValue({
       runId: '',
       executionId: '',
@@ -160,8 +170,8 @@ describe('ViewerModelResultDrawer stored job results', () => {
     const html = btoa('<html><body>report</body></html>');
     await render(
       result({
-        modelName: 'PanEcho',
-        modelVersion: '1.1.1',
+        modelName: 'EchoPrime',
+        modelVersion: '1.0.0',
         runId: 'run-1',
         executionId: 'ex-1',
         reportAvailable: true,
@@ -179,6 +189,49 @@ describe('ViewerModelResultDrawer stored job results', () => {
     const report = byTestId(renderer!, 'viewer-model-result-report')[0];
     // The measured block comes before the AI report.
     expect(compact.compareDocumentPosition(report) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test('PanEcho: the measured SR values go into the structured report, not a block above it', async () => {
+    const loadJobResult = jest.fn().mockImplementation((job: { studyServiceJobId: string }) =>
+      Promise.resolve({
+        runId: '',
+        executionId: '',
+        studyInstanceUID: '1.2.3',
+        modelName: job.studyServiceJobId === 'job-sr' ? 'echo-sr-measurements' : 'PanEcho',
+        modelVersion: job.studyServiceJobId === 'job-sr' ? '1.0.0' : '1.1.4',
+        status: 'completed',
+        completedAt: '',
+        result:
+          job.studyServiceJobId === 'job-sr'
+            ? echoSrResultFixtures.severeGe
+            : { diagnosis: '{}', predictions: { 'LV size': [0.1, 0.1, 0.8] } },
+      })
+    );
+    const loadReport = jest.fn();
+    await act(async () => {
+      renderer = rtlRender(
+        <ViewerModelResultDrawer
+          result={result({ modelName: 'PanEcho', modelVersion: '1.1.4', studyServiceJobId: 'job-pe', reportAvailable: true })}
+          repository={repository({
+            loadJobResult: loadJobResult as unknown as ViewerResultsRepository['loadJobResult'],
+            loadReport,
+          })}
+          measuredResult={result()}
+          patientSex="F"
+          onClose={jest.fn()}
+          onMinimize={jest.fn()}
+          onSelectView={jest.fn(() => true)}
+        />
+      );
+    });
+
+    // PanEcho is shown with its structured report even when an HTML report exists.
+    expect(loadReport).not.toHaveBeenCalled();
+    expect(byTestId(renderer!, 'echo-sr-compact')).toHaveLength(0);
+    const [structured] = byTestId(renderer!, 'structured-result');
+    expect(structured.getAttribute('data-model')).toBe('PanEcho');
+    expect(structured.getAttribute('data-measured-grade')).toBe('severe');
+    expect(structured.getAttribute('data-sex')).toBe('F');
   });
 
   test('does not show the measured block for angiogram models', async () => {

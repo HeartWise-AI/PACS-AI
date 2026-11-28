@@ -430,5 +430,12 @@
   "PanEchoAsCalibratedNone": "No significant AS suspected",
   "PanEchoAvVmaxCalibrated": "AV peak velocity (AI estimate, MHI-calibrated)",
   "PanEchoAvVmaxUncorrected": "uncorrected model output {{value}} m/s",
-  "PanEchoAsCalibratedNote": "Screening label, not a diagnosis. 'Significant AS likely' means moderate or severe aortic stenosis is likely; the threshold and the AV peak velocity correction were fitted on MHI echos only (MHI locked test: sensitivity 0.81, specificity 0.91 against echos without AS). PanEcho reads the 2D clips only, without the Doppler spectra, and a negative label does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area)."
+  "PanEchoAsCalibratedNote": "Screening label, not a diagnosis. 'Significant AS likely' means moderate or severe aortic stenosis is likely; the threshold and the AV peak velocity correction were fitted on MHI echos only (MHI locked test: sensitivity 0.81, specificity 0.91 against echos without AS). PanEcho reads the 2D clips only, without the Doppler spectra, and a negative label does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area).",
+  "ProcessingPanEchoReportTitle": "PanEcho structured echo report",
+  "ProcessingEchoAlignReportTitle": "EchoAlign structured echo report",
+  "EchoReportDescription": "By structure, in standard echo order: measured SR values first, then the AI estimates. The conclusion lists only positive findings.",
+  "EchoReportAsScreeningTitle": "Aortic stenosis screening",
+  "EchoReportAsModerateOrSevere": "P(moderate or severe AS), released classifier",
+  "EchoReportCalled": "Flagged",
+  "EchoReportNotCalled": "Not flagged"
 }
