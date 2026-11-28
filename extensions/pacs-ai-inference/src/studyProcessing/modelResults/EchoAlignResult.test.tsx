@@ -131,3 +131,34 @@ describe('EchoAlign binary findings', () => {
     expect(reduced[0].value).toBe('Reduced');
   });
 });
+
+describe('EchoAlign skipped studies', () => {
+  test('say why the model did not run, with the banner and no findings', () => {
+    const skipped = parseEchoAlignResultPayload({
+      diagnosis: '[Research use only] Not run: transesophageal echo (TEE) is not supported',
+      predictions: {
+        skipReason: 'TEE_NOT_SUPPORTED',
+        skipMessage: 'Not run: TEE',
+        clipsUsed: 0,
+        allHeads: {},
+        summary: {},
+        keyHeads: {},
+      },
+    })!;
+    expect(skipped.skipReason).toBe('TEE_NOT_SUPPORTED');
+    const { container } = render(
+      <EchoAlignResult
+        payload={skipped}
+        modelName="EchoAlign (research use only)"
+        modelVersion="0.1.5"
+        status="completed"
+      />
+    );
+    expect(container.querySelector('[data-testid="echoalign-research-banner"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="echoalign-skip-reason"]')?.textContent).toContain(
+      'transesophageal'
+    );
+    expect(container.querySelector('[data-testid="echoalign-partial-empty"]')).toBeNull();
+    expect(container.querySelectorAll('[data-testid^="echoalign-group-"]')).toHaveLength(0);
+  });
+});
