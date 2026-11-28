@@ -7,6 +7,7 @@ import {
 import {
   PAN_ECHO_AS_KEY,
   PAN_ECHO_AV_VMAX_KEY,
+  PAN_ECHO_AV_VMAX_UNCORRECTED_KEY,
   PAN_ECHO_OUTPUTS,
   getPanEchoAorticScreening,
   type PanEchoAorticScreening,
@@ -69,7 +70,7 @@ function formatValue(value: unknown, unit?: string): string {
 }
 
 // Shown in the aortic stenosis screening block, never as a diagnosis row.
-const SCREENING_KEYS = new Set([PAN_ECHO_AS_KEY, PAN_ECHO_AV_VMAX_KEY]);
+const SCREENING_KEYS = new Set([PAN_ECHO_AS_KEY, PAN_ECHO_AV_VMAX_KEY, PAN_ECHO_AV_VMAX_UNCORRECTED_KEY]);
 
 export function getPanEchoDisplayRows(payload: PanEchoResultPayload): PanEchoDisplayRow[] {
   const documentedKeys = new Set(PAN_ECHO_OUTPUTS.map(output => output.key));
@@ -92,7 +93,7 @@ export function getPanEchoDisplayRows(payload: PanEchoResultPayload): PanEchoDis
   const additionalKeys = Array.from(
     new Set([...Object.keys(payload.predictions), ...Object.keys(payload.diagnoses)])
   )
-    .filter(key => !documentedKeys.has(key))
+    .filter(key => !documentedKeys.has(key) && !SCREENING_KEYS.has(key))
     .sort((left, right) => left.localeCompare(right));
 
   return [
@@ -125,6 +126,21 @@ export function PanEchoAorticScreeningBlock({ screening }: { screening: PanEchoA
       >
         {t('PanEchoAsScreeningTitle', { defaultValue: 'Aortic stenosis: AI screening scores' })}
       </h4>
+      {screening.calibratedLabel && (
+        <div className="mb-2" data-testid="panecho-as-calibrated">
+          <span className="text-xs font-semibold text-[#c5cbc5]">
+            {t('PanEchoAsCalibratedLabel', { defaultValue: 'MHI-calibrated screening label' })}
+            {': '}
+          </span>
+          <span className="text-base font-bold text-white">
+            {screening.calibratedLabel === 'Significant AS likely, severe possible'
+              ? t('PanEchoAsCalibratedSevere', { defaultValue: 'Significant AS likely, severe possible' })
+              : screening.calibratedLabel === 'Significant AS likely'
+                ? t('PanEchoAsCalibratedSignificant', { defaultValue: 'Significant AS likely' })
+                : t('PanEchoAsCalibratedNone', { defaultValue: 'No significant AS suspected' })}
+          </span>
+        </div>
+      )}
       <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div data-testid="panecho-as-severe">
           <dt className="text-xs font-semibold text-[#c5cbc5]">
@@ -140,15 +156,30 @@ export function PanEchoAorticScreeningBlock({ screening }: { screening: PanEchoA
         </div>
         <div data-testid="panecho-av-vmax-estimate">
           <dt className="text-xs font-semibold text-[#c5cbc5]">
-            {t('PanEchoAvVmaxEstimate', { defaultValue: 'AV peak velocity (AI estimate)' })}
+            {screening.vmaxUncorrected === null
+              ? t('PanEchoAvVmaxEstimate', { defaultValue: 'AV peak velocity (AI estimate)' })
+              : t('PanEchoAvVmaxCalibrated', {
+                  defaultValue: 'AV peak velocity (AI estimate, MHI-calibrated)',
+                })}
           </dt>
           <dd className="text-lg font-bold tabular-nums text-white">
             {screening.vmaxEstimate === null ? '—' : `${screening.vmaxEstimate.toFixed(1)} m/s`}
           </dd>
+          {screening.vmaxUncorrected !== null && (
+            <dd className="text-xs text-[#c5cbc5]" data-testid="panecho-av-vmax-uncorrected">
+              {t('PanEchoAvVmaxUncorrected', {
+                defaultValue: 'uncorrected model output {{value}} m/s',
+                value: screening.vmaxUncorrected.toFixed(1),
+              })}
+            </dd>
+          )}
         </div>
       </dl>
       <p className="mt-2 text-xs leading-5 text-amber-100">
-        {t('PanEchoAsScreeningNote', {
+        {screening.calibratedLabel ? t('PanEchoAsCalibratedNote', {
+          defaultValue:
+            'Screening label, not a diagnosis. \'Significant AS likely\' means moderate or severe aortic stenosis is likely; the threshold and the AV peak velocity correction were fitted on MHI echos only (MHI locked test: sensitivity 0.81, specificity 0.91 against echos without AS). PanEcho reads the 2D clips only, without the Doppler spectra, and a negative label does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area).',
+        }) : t('PanEchoAsScreeningNote', {
           defaultValue:
             'Screening scores, not a diagnosis. PanEcho reads the 2D clips only, without the Doppler spectra: the AV peak velocity is an AI estimate that under-estimates severe AS, and a low score does not rule out aortic stenosis. Use the measured Doppler values (Vmax, mean gradient, valve area).',
         })}
@@ -160,7 +191,7 @@ export function PanEchoAorticScreeningBlock({ screening }: { screening: PanEchoA
 export function PanEchoResult({ payload, modelName, modelVersion, status }: PanEchoResultProps) {
   const { t } = useTranslation('StudyList');
   const rows = getPanEchoDisplayRows(payload);
-  const screening = getPanEchoAorticScreening(payload.predictions);
+  const screening = getPanEchoAorticScreening(payload.predictions, payload.diagnoses);
 
   return (
     <section

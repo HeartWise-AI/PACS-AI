@@ -119,3 +119,58 @@ describe('PanEcho aortic stenosis screening', () => {
     ).not.toBeNull();
   });
 });
+
+describe('PanEcho 1.1.3 MHI-calibrated aortic stenosis label', () => {
+  const calibratedPayload = (label: string) => ({
+    diagnosis: JSON.stringify({
+      'Aortic valve stenosis': `${label} (MHI-calibrated screening, not a diagnosis): P(severe AS) 0.19, P(any AS) 0.54`,
+      'Aortic valve peak velocity': '3.6 m/s (AI estimate, MHI-calibrated; uncorrected 2.7 m/s)',
+      'Aortic valve peak velocity (uncorrected)': '2.7 m/s',
+      'Left ventricular (LV) ejection fraction': '60.0 % (Normal)',
+    }),
+    predictions: {
+      'Aortic valve stenosis': [0.35, 0.46, 0.19],
+      'Aortic valve peak velocity': 3.6,
+      'Aortic valve peak velocity (uncorrected)': 2.7,
+      'Left ventricular (LV) ejection fraction': 60,
+    },
+  });
+
+  test.each([
+    ['Significant AS likely, severe possible', 'Significant AS likely, severe possible'],
+    ['Significant AS likely', 'Significant AS likely'],
+    ['No significant AS suspected', 'No significant AS suspected'],
+  ])('shows the calibrated label %s, the corrected and the uncorrected Vmax', (label, text) => {
+    const payload = parsePanEchoResultPayload(calibratedPayload(label))!;
+    const { container } = render(
+      <PanEchoResult payload={payload} modelName="PanEcho" modelVersion="1.1.3" status="completed" />
+    );
+    expect(container.querySelector('[data-testid="panecho-as-calibrated"]')?.textContent).toContain(text);
+    const vmax = container.querySelector('[data-testid="panecho-av-vmax-estimate"]')!.textContent;
+    expect(vmax).toContain('MHI-calibrated');
+    expect(vmax).toContain('3.6 m/s');
+    expect(container.querySelector('[data-testid="panecho-av-vmax-uncorrected"]')?.textContent).toContain(
+      'uncorrected model output'
+    );
+    expect(container.textContent).toContain('Screening label, not a diagnosis');
+    // Neither AS row nor the uncorrected Vmax appears as a finding row.
+    expect(container.querySelector('[data-testid="panecho-output-Aortic valve stenosis"]')).toBeNull();
+    expect(
+      container.querySelector('[data-testid="panecho-output-Aortic valve peak velocity (uncorrected)"]')
+    ).toBeNull();
+  });
+
+  test('1.1.2 screening scores have no calibrated label', () => {
+    const payload = parsePanEchoResultPayload({
+      diagnosis: JSON.stringify({
+        'Aortic valve stenosis': 'Screening score, not a diagnosis: P(severe AS) 0.20, P(any AS) 0.57',
+      }),
+      predictions: { 'Aortic valve stenosis': [0.37, 0.43, 0.2], 'Aortic valve peak velocity': 2.4 },
+    })!;
+    const { container } = render(
+      <PanEchoResult payload={payload} modelName="PanEcho" modelVersion="1.1.2" status="completed" />
+    );
+    expect(container.querySelector('[data-testid="panecho-as-calibrated"]')).toBeNull();
+    expect(container.textContent).toContain('Screening scores, not a diagnosis');
+  });
+});

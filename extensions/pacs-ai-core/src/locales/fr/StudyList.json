@@ -411,5 +411,12 @@
   "EchoAlignResearchBanner": "Recherche seulement — EchoAlign (CC BY-NC 4.0), pas pour des décisions cliniques",
   "ProcessingEchoAlignTitle": "Mesures et résultats EchoAlign",
   "EchoAlignAsScreeningNote": "Scores de dépistage, pas un diagnostic. EchoAlign lit les clips 2D et couleur, sans les spectres Doppler : la vitesse de pointe aortique et les gradients sont des estimations de l'IA resserrées vers le milieu de l'échelle, et à l'ICM le grade sévère n'a jamais été attribué. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire).",
-  "ProcessingEchoAlignAssistiveNote": "Estimations de recherche générées par l'IA (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Non validées pour un usage clinique ; revoir l'examen complet."
+  "ProcessingEchoAlignAssistiveNote": "Estimations de recherche générées par l'IA (EchoAlign, MBZUAI BioMedIA / iCardio.ai / DKFZ, arXiv:2611.27517). Non validées pour un usage clinique ; revoir l'examen complet.",
+  "PanEchoAsCalibratedLabel": "Étiquette de dépistage calibrée sur l'ICM",
+  "PanEchoAsCalibratedSevere": "SA significative probable, sévère possible",
+  "PanEchoAsCalibratedSignificant": "SA significative probable",
+  "PanEchoAsCalibratedNone": "Pas de SA significative suspectée",
+  "PanEchoAvVmaxCalibrated": "Vitesse de pointe aortique (estimation IA, calibrée ICM)",
+  "PanEchoAvVmaxUncorrected": "sortie du modèle non corrigée {{value}} m/s",
+  "PanEchoAsCalibratedNote": "Étiquette de dépistage, pas un diagnostic. « SA significative probable » signifie qu'une sténose aortique modérée ou sévère est probable ; le seuil et la correction de la vitesse de pointe aortique ont été ajustés sur des échos de l'ICM seulement (test verrouillé ICM : sensibilité 0,81, spécificité 0,91 face aux échos sans SA). PanEcho lit seulement les clips 2D, sans les spectres Doppler, et une étiquette négative n'exclut pas une sténose aortique. Utilisez les valeurs Doppler mesurées (Vmax, gradient moyen, surface valvulaire)."
 }

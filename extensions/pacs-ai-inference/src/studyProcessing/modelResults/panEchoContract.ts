@@ -28,12 +28,34 @@ export const PAN_ECHO_AV_VMAX_KEY = 'Aortic valve peak velocity';
 // Head order of the AS classifier (PanEcho tasks.pkl class_names).
 export const PAN_ECHO_AS_CLASSES = ['Mild|Moderate', 'None', 'Severe'] as const;
 
+// PanEcho 1.1.3+ adds an MHI-calibrated screening label (thresholds on P(severe) and
+// P(any AS) fitted on MHI echos) and a corrected AV Vmax; the uncorrected model output is kept.
+export const PAN_ECHO_AV_VMAX_UNCORRECTED_KEY = 'Aortic valve peak velocity (uncorrected)';
+export type PanEchoCalibratedAsLabel =
+  | 'Significant AS likely, severe possible'
+  | 'Significant AS likely'
+  | 'No significant AS suspected';
+const CALIBRATED_AS_LABEL =
+  /^(Significant AS likely, severe possible|Significant AS likely|No significant AS suspected) \(MHI-calibrated screening/;
+
 export interface PanEchoAorticScreening {
   // P(Severe) and P(Mild|Moderate) + P(Severe), 0..1; null when not returned.
   severe: number | null;
   any: number | null;
-  // AI-estimated AV peak velocity (m/s); null when not returned.
+  // AI-estimated AV peak velocity (m/s); null when not returned. Corrected (calibrated)
+  // when vmaxUncorrected is present.
   vmaxEstimate: number | null;
+  // MHI-calibrated screening label (PanEcho 1.1.3+); null for uncalibrated versions.
+  calibratedLabel: PanEchoCalibratedAsLabel | null;
+  vmaxUncorrected: number | null;
+}
+
+export function getPanEchoCalibratedAsLabel(
+  diagnoses: Record<string, string> | undefined
+): PanEchoCalibratedAsLabel | null {
+  const text = diagnoses?.[PAN_ECHO_AS_KEY];
+  const match = typeof text === 'string' ? text.match(CALIBRATED_AS_LABEL) : null;
+  return match ? (match[1] as PanEchoCalibratedAsLabel) : null;
 }
 
 function probability(value: unknown): number | null {
@@ -43,10 +65,12 @@ function probability(value: unknown): number | null {
 }
 
 export function getPanEchoAorticScreening(
-  predictions: Record<string, unknown>
+  predictions: Record<string, unknown>,
+  diagnoses?: Record<string, string>
 ): PanEchoAorticScreening | null {
   const scores = predictions[PAN_ECHO_AS_KEY];
   const vmax = predictions[PAN_ECHO_AV_VMAX_KEY];
+  const uncorrected = predictions[PAN_ECHO_AV_VMAX_UNCORRECTED_KEY];
   let severe: number | null = null;
   let any: number | null = null;
   if (Array.isArray(scores) && scores.length === PAN_ECHO_AS_CLASSES.length) {
@@ -55,10 +79,13 @@ export function getPanEchoAorticScreening(
     any = mildModerate !== null && severe !== null ? Math.min(1, mildModerate + severe) : null;
   }
   const vmaxEstimate = typeof vmax === 'number' && Number.isFinite(vmax) ? vmax : null;
-  if (severe === null && any === null && vmaxEstimate === null) {
+  const vmaxUncorrected =
+    typeof uncorrected === 'number' && Number.isFinite(uncorrected) ? uncorrected : null;
+  const calibratedLabel = getPanEchoCalibratedAsLabel(diagnoses);
+  if (severe === null && any === null && vmaxEstimate === null && calibratedLabel === null) {
     return null;
   }
-  return { severe, any, vmaxEstimate };
+  return { severe, any, vmaxEstimate, calibratedLabel, vmaxUncorrected };
 }
 
 export type PanEchoOutputGroup = 'leftVentricle' | 'rightHeart' | 'atria' | 'valves' | 'other';
