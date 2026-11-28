@@ -10,6 +10,7 @@ import { DeepCoroMaceResult } from './DeepCoroMaceResult';
 import { DeepCoroSyntaxResult } from './DeepCoroSyntaxResult';
 import { DeepRVClipResult } from './DeepRVClipResult';
 import { DeepRVResult } from './DeepRVResult';
+import { EchoAlignResult } from './EchoAlignResult';
 import { EchoPrimeResult } from './EchoPrimeResult';
 import { EchoSrResult } from './EchoSrResult';
 import { PanEchoResult } from './PanEchoResult';
@@ -103,6 +104,16 @@ export function ModelResultRenderer({ result }: ModelResultRendererProps) {
     case 'panecho':
       customResult = (
         <PanEchoResult
+          payload={resolved.payload}
+          modelName={result.modelName}
+          modelVersion={result.modelVersion}
+          status={result.status}
+        />
+      );
+      break;
+    case 'echoalign':
+      customResult = (
+        <EchoAlignResult
           payload={resolved.payload}
           modelName={result.modelName}
           modelVersion={result.modelVersion}
