@@ -100,3 +100,19 @@ describe('conclusion', () => {
     expect(conclusionLines(report, 'fr')).toEqual(['Aucune anomalie significative détectée (mesures + IA)']);
   });
 });
+
+import roundingCases from './__fixtures__/roundingCases.json';
+import { formatNumber } from './echoReport';
+
+describe('Python rounding semantics', () => {
+  test('formatNumber matches Python f"{v:.{d}f}" (exact ties to even, near-ties by the exact binary value)', () => {
+    for (const [value, digits, expected] of roundingCases as [number, number, string][]) {
+      expect([value, digits, formatNumber(value, digits)]).toEqual([value, digits, expected]);
+    }
+  });
+
+  test('1.05 cm septum in a man is mild LVH, as in Python (round(1.05, 1) == 1.1)', () => {
+    const lvh = ECHO_REPORT_CONFIG.measuredRules.find((r: { id: string }) => r.id === 'lvh');
+    expect(gradeValue(lvh, 1.05, 'male', 1)).toBe(1);
+  });
+});

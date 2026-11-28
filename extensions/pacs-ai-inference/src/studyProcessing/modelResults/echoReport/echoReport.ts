@@ -59,15 +59,22 @@ export function normalizeSex(sex: unknown): 'male' | 'female' | null {
 // ---------------------------------------------------------------------------------------------
 
 function toFixedPy(value: number, digits: number): string {
-  const scaled = value * 10 ** digits;
-  if (Number.isInteger(scaled * 2) && !Number.isInteger(scaled)) {
-    // Exact tie (e.g. 1.25 to 1 digit): Python rounds half to even.
-    const floor = Math.floor(scaled);
-    const even = floor % 2 === 0 ? floor : floor + 1;
-    return (even / 10 ** digits).toFixed(digits);
+  // Number.prototype.toFixed is correctly rounded except on exact binary ties, where it rounds
+  // away from zero and Python rounds half to even. Detect a tie on the exact decimal expansion of
+  // the double (toFixed(100) is exact for these magnitudes), never on value * 10 ** digits, which
+  // can itself round (1.05 * 10 === 10.5 although 1.05 is below the tie).
+  const exact = Math.abs(value).toFixed(100);
+  const point = exact.indexOf('.');
+  const rest = exact.slice(point + 1 + digits);
+  let text = value.toFixed(digits);
+  if (/^50*$/.test(rest)) {
+    const truncated = Number(exact.slice(0, point + 1 + digits).replace(/\.$/, ''));
+    const lastDigit = Number(exact.charAt(point + digits === point ? point - 1 : point + digits));
+    const down = truncated.toFixed(digits);
+    const up = (truncated + 10 ** -digits).toFixed(digits);
+    text = `${value < 0 ? '-' : ''}${lastDigit % 2 === 0 ? down : up}`;
   }
-  const text = value.toFixed(digits);
-  return text === `-${(0).toFixed(digits)}` ? (0).toFixed(digits) : text;
+  return text;
 }
 
 export function roundPy(value: number, digits: number): number {
@@ -158,7 +165,7 @@ const GENERIC_NAMES = new Set([
 
 function measurementLabel(entry: Rec): string {
   let label = String(entry.measurement ?? '');
-  const qualifiers = ['method', 'flowDirection', 'mode', 'view']
+  const qualifiers = ['method', 'flowDirection', 'cardiacPhase', 'mode', 'view']
     .filter(key => entry[key])
     .map(key => String(entry[key]));
   const site = String(entry.site ?? '');

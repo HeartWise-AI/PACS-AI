@@ -145,6 +145,21 @@
      "method": "Teichholz"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.05,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -299,6 +314,22 @@
        "display": "64 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.05,
+       "unit": "cm",
+       "display": "1.05 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -337,6 +368,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -1792,6 +1831,21 @@
      "method": "Teichholz"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.05,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -1975,6 +2029,22 @@
        "display": "64 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.05,
+       "unit": "cm",
+       "display": "1.05 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -2013,6 +2083,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -2897,6 +2975,21 @@
      "method": "Method of Disks, Biplane"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.06,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -3051,6 +3144,22 @@
        "display": "35 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.06,
+       "unit": "cm",
+       "display": "1.06 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -3089,6 +3198,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -4783,6 +4900,21 @@
      "method": "Teichholz"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.05,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -4943,6 +5075,22 @@
        "display": "64 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.05,
+       "unit": "cm",
+       "display": "1.05 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -4981,6 +5129,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -6070,6 +6226,21 @@
      "method": "Teichholz"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.05,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -6224,6 +6395,22 @@
        "display": "64 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.05,
+       "unit": "cm",
+       "display": "1.05 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -6262,6 +6449,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -7286,6 +7481,21 @@
      "method": "Teichholz"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.05,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -7469,6 +7679,22 @@
        "display": "64 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.05,
+       "unit": "cm",
+       "display": "1.05 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -7507,6 +7733,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [
@@ -9238,6 +9472,21 @@
      "method": "Method of Disks, Biplane"
     },
     {
+     "site": "Left Ventricle",
+     "measurement": "Left Ventricular End Diastolic Volume",
+     "value": 110.0,
+     "unit": "ml",
+     "method": "Biplane",
+     "cardiacPhase": "End Diastole"
+    },
+    {
+     "site": "Left Ventricle",
+     "measurement": "Interventricular Septum Diastolic Thickness",
+     "value": 1.06,
+     "unit": "cm",
+     "cardiacPhase": "End Diastole"
+    },
+    {
      "site": "Left Ventricle Outflow Tract",
      "measurement": "Peak Gradient",
      "value": 4.1,
@@ -9392,6 +9641,22 @@
        "display": "35 %"
       },
       {
+       "label": "Left Ventricular End Diastolic Volume (Biplane, End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Left Ventricular End Diastolic Volume",
+       "value": 110.0,
+       "unit": "mL",
+       "display": "110 mL"
+      },
+      {
+       "label": "Interventricular Septum Diastolic Thickness (End Diastole)",
+       "site": "Left Ventricle",
+       "measurement": "Interventricular Septum Diastolic Thickness",
+       "value": 1.06,
+       "unit": "cm",
+       "display": "1.06 cm"
+      },
+      {
        "label": "Left Ventricle Outflow Tract peak Gradient (Doppler Pulsed)",
        "site": "Left Ventricle Outflow Tract",
        "measurement": "Peak Gradient",
@@ -9430,6 +9695,14 @@
        "value": -19.0,
        "unit": "%",
        "display": "-19 %"
+      },
+      {
+       "label": "LVEDV index (computed from the SR volume and BSA)",
+       "labelFr": "VTDVG indexé (calculé à partir du volume et de la SC du SR)",
+       "value": 55.0,
+       "unit": "mL/m²",
+       "derived": true,
+       "display": "55 mL/m²"
       }
      ],
      "ai": [],
